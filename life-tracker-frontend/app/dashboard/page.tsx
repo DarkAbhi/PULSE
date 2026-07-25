@@ -5,7 +5,6 @@ import { Car, ArrowRight } from "lucide-react";
 import GreetingHeader from "./greeting-header";
 import GymVisitCard from "./gym-visit-card";
 import NotificationCenter from "./notification-center";
-import NextMonthPurchaseForm from "./next-month-purchase-form";
 import NamePromptDialog from "./name-prompt-dialog";
 import FinancialHorizonCard, { HorizonSummary } from "./financial-horizon-card";
 import { AppNotification } from "../components/notification-list";
@@ -180,24 +179,6 @@ export default async function DashboardPage() {
           ) : (
             <NotificationCenter initialNotifications={notifications} />
           )}
-        </section>
-
-        <section
-          className="mt-12 max-w-xl rounded-2xl border border-border bg-card p-6 shadow-sm"
-          aria-labelledby="next-month-heading"
-        >
-          <div>
-            <h2
-              className="text-lg font-semibold text-foreground"
-              id="next-month-heading"
-            >
-              Next month purchases
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              A small place for the things you&apos;ll need soon. Managed in your Financial Horizon.
-            </p>
-          </div>
-          <NextMonthPurchaseForm />
         </section>
       </div>
 

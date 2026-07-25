@@ -122,33 +122,3 @@ export async function markGymReminderVisitedAction(notificationID: number) {
   }
 }
 
-export async function addNextMonthPurchaseAction(
-  name: string,
-  price: number,
-  url: string | null
-) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
-  try {
-    const response = await fetch(`${apiBaseURL}/api/next-month-purchases`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: cookieHeader,
-      },
-      body: JSON.stringify({ name, price, url }),
-    });
-
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      return { ok: false, error: body.error ?? "We couldn't save that item." };
-    }
-
-    revalidatePath("/dashboard");
-    revalidatePath("/financial-horizon");
-    return { ok: true };
-  } catch {
-    return { ok: false, error: "We couldn't reach the server." };
-  }
-}

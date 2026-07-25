@@ -53,6 +53,7 @@ func (a *API) Router() http.Handler {
 		api.Post("/auth/logout", authHandler.Logout)
 		api.Get("/profile", profileHandler.GetProfile)
 		api.Put("/profile", profileHandler.SaveProfile)
+		api.Put("/profile/password", profileHandler.ChangePassword)
 		api.Get("/notifications", notifHandler.ListNotifications)
 		api.Delete("/notifications", notifHandler.ClearNotifications)
 		api.Delete("/notifications/{id}", notifHandler.DismissNotification)

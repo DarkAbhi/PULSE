@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import ThemeSettings from "./theme-settings";
 import LogoutButton from "./logout-button";
+import ChangePasswordButton from "./change-password-button";
 
 export const metadata = {
   title: "Profile | Life Tracker",
@@ -79,7 +80,10 @@ export default async function ProfilePage() {
           </p>
 
           <div className="mt-10 w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8 text-left">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Account Information</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <h2 className="text-lg font-semibold text-foreground">Account Information</h2>
+              <ChangePasswordButton />
+            </div>
             <div className="space-y-4 text-sm">
               <div className="flex justify-between py-2 border-b border-border">
                 <span className="text-muted-foreground">Display Name</span>

@@ -200,7 +200,7 @@ export default function StatementUploadDialog({
         return {
           name: tx.description || "Statement Transaction",
           amount: Math.abs(tx.amount),
-          type: tx.type || "debit",
+          type: (tx.type && tx.type.toLowerCase() === "credit" ? "credit" : "debit") as "debit" | "credit",
           transactionDate: formattedTxDate,
           categoryId: selectedCategoryMap[idx] ?? null,
           notes: `Imported from statement${

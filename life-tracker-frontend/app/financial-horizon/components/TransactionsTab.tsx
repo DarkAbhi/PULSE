@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Receipt, Plus, Tag, Search, Edit2, Trash2, Clock, Wallet } from "lucide-react";
+import { Receipt, Plus, Tag, Search, Edit2, Trash2, Clock, Wallet, FileUp } from "lucide-react";
 import { HorizonSummary, TransactionItem, CategoryItem } from "../../dashboard/financial-horizon-card";
 
 interface TransactionsTabProps {
@@ -12,6 +12,7 @@ interface TransactionsTabProps {
   onOpenEditTransaction: (tx: TransactionItem) => void;
   onConfirmDeleteTransaction: (tx: TransactionItem) => void;
   onOpenAddCategory: () => void;
+  onOpenStatementUpload?: () => void;
   isPending?: boolean;
 }
 
@@ -23,6 +24,7 @@ export default function TransactionsTab({
   onOpenEditTransaction,
   onConfirmDeleteTransaction,
   onOpenAddCategory,
+  onOpenStatementUpload,
   isPending = false,
 }: TransactionsTabProps) {
   const [txCategoryFilter, setTxCategoryFilter] = useState<string>("all");
@@ -54,7 +56,16 @@ export default function TransactionsTab({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          {onOpenStatementUpload && (
+            <button
+              onClick={onOpenStatementUpload}
+              disabled={isPending}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3.5 py-2 text-xs font-semibold text-primary transition hover:bg-primary/20"
+            >
+              <FileUp className="h-3.5 w-3.5" /> Import Statement
+            </button>
+          )}
           <button
             onClick={onOpenAddCategory}
             disabled={isPending}

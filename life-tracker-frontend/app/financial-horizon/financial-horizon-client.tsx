@@ -9,6 +9,7 @@ import TransactionDialog from "./transaction-dialog";
 import CategoryDialog from "./category-dialog";
 import BudgetDialog from "./budget-dialog";
 import PlannedPurchaseDialog from "./components/PlannedPurchaseDialog";
+import StatementUploadDialog from "./components/StatementUploadDialog";
 
 import QuickActionDropdown from "./components/QuickActionDropdown";
 import TabNavigation, { HorizonTab } from "./components/TabNavigation";
@@ -100,9 +101,50 @@ export default function FinancialHorizonClient({
 
   // Transaction & Category Dialog State
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+  const [isStatementUploadOpen, setIsStatementUploadOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionItem | null>(null);
   const [txToDelete, setTxToDelete] = useState<TransactionItem | null>(null);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+
+  const handleImportTransactions = async (
+    items: {
+      name: string;
+      amount: number;
+      transactionDate: string;
+      categoryId?: number | null;
+      notes?: string | null;
+    }[]
+  ) => {
+    let failedCount = 0;
+    const addedList: TransactionItem[] = [];
+
+    for (const item of items) {
+      const res = await addTransactionAction(
+        item.name,
+        item.amount,
+        item.transactionDate,
+        item.categoryId ?? null,
+        null,
+        item.notes ?? null
+      );
+
+      if (res.ok && res.transaction) {
+        addedList.push(res.transaction);
+      } else {
+        failedCount++;
+      }
+    }
+
+    if (addedList.length > 0) {
+      recalculateSummary({
+        transactionsUpdater: (prev) => [...addedList, ...prev],
+      });
+    }
+
+    if (failedCount > 0) {
+      setErrorMsg(`Failed to import ${failedCount} transaction(s).`);
+    }
+  };
 
   // Error & Transition Hook
   const [errorMsg, setErrorMsg] = useState("");
@@ -643,6 +685,7 @@ export default function FinancialHorizonClient({
             onOpenEditTransaction={handleOpenEditTransaction}
             onConfirmDeleteTransaction={setTxToDelete}
             onOpenAddCategory={() => setIsCategoryDialogOpen(true)}
+            onOpenStatementUpload={() => setIsStatementUploadOpen(true)}
             isPending={isPending}
           />
         )}
@@ -791,6 +834,14 @@ export default function FinancialHorizonClient({
         onSave={handleSavePlannedPurchase}
         currency={summary.currency}
         isPending={isPending}
+      />
+
+      {/* Statement Upload & Extraction Dialog */}
+      <StatementUploadDialog
+        isOpen={isStatementUploadOpen}
+        onClose={() => setIsStatementUploadOpen(false)}
+        categories={categories}
+        onImportTransactions={handleImportTransactions}
       />
     </main>
   );

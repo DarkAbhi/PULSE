@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"io"
 	"math"
 	"net/http"
 	"strconv"
@@ -958,6 +959,140 @@ func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	webutil.WriteJSON(w, http.StatusCreated, item)
+}
+
+type BulkTransactionsInput struct {
+	Items []TransactionInput `json:"items"`
+}
+
+func (h *Handler) BulkCreateTransactions(w http.ResponseWriter, r *http.Request) {
+	user, err := auth.GetSessionUser(h.DB, r)
+	if errors.Is(err, sql.ErrNoRows) {
+		webutil.Unauthorized(w, "session is invalid or expired")
+		return
+	}
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+
+	bodyBytes, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 5<<20))
+	if err != nil {
+		webutil.BadRequest(w, "invalid request body")
+		return
+	}
+
+	var inputs []TransactionInput
+	if err := json.Unmarshal(bodyBytes, &inputs); err != nil {
+		var container BulkTransactionsInput
+		if err2 := json.Unmarshal(bodyBytes, &container); err2 == nil && len(container.Items) > 0 {
+			inputs = container.Items
+		} else {
+			webutil.BadRequest(w, "invalid JSON array or items payload")
+			return
+		}
+	}
+
+	if len(inputs) == 0 {
+		webutil.BadRequest(w, "at least one transaction is required")
+		return
+	}
+
+	tx, err := h.DB.Begin()
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	defer tx.Rollback()
+
+	createdItems := make([]TransactionDTO, 0, len(inputs))
+
+	for _, in := range inputs {
+		in.Name = strings.TrimSpace(in.Name)
+		if in.Name == "" || len([]rune(in.Name)) > 255 {
+			webutil.BadRequest(w, "transaction name is required and must be under 255 characters")
+			return
+		}
+		if in.Amount <= 0 {
+			webutil.BadRequest(w, "amount must be greater than zero")
+			return
+		}
+
+		txTime := time.Now()
+		if in.TransactionDate != nil && strings.TrimSpace(*in.TransactionDate) != "" {
+			if parsed, err := time.Parse(time.RFC3339, strings.TrimSpace(*in.TransactionDate)); err == nil {
+				txTime = parsed
+			} else if parsed, err := time.Parse("2006-01-02T15:04", strings.TrimSpace(*in.TransactionDate)); err == nil {
+				txTime = parsed
+			} else if parsed, err := time.Parse("2006-01-02", strings.TrimSpace(*in.TransactionDate)); err == nil {
+				txTime = parsed
+			}
+		}
+
+		categoryName := "Other"
+		var categoryID sql.NullInt64
+		if in.CategoryID != nil && *in.CategoryID > 0 {
+			categoryID = sql.NullInt64{Int64: *in.CategoryID, Valid: true}
+			var cName string
+			err := tx.QueryRow(`SELECT name FROM financial_horizon_categories WHERE id = $1 AND (user_id IS NULL OR user_id = $2)`, *in.CategoryID, user.ID).Scan(&cName)
+			if err == nil {
+				categoryName = cName
+			}
+		} else if in.CategoryName != nil && strings.TrimSpace(*in.CategoryName) != "" {
+			categoryName = strings.TrimSpace(*in.CategoryName)
+		}
+
+		var budgetID sql.NullInt64
+		if in.BudgetID != nil && *in.BudgetID > 0 {
+			budgetID = sql.NullInt64{Int64: *in.BudgetID, Valid: true}
+		}
+
+		var notes sql.NullString
+		if in.Notes != nil && strings.TrimSpace(*in.Notes) != "" {
+			notes = sql.NullString{String: strings.TrimSpace(*in.Notes), Valid: true}
+		}
+
+		var item TransactionDTO
+		var catID, bID sql.NullInt64
+		var bName, notesVal sql.NullString
+
+		err = tx.QueryRow(`
+			INSERT INTO financial_horizon_transactions (user_id, name, amount, transaction_date, category_id, category_name, budget_id, notes)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+			RETURNING id, name, amount, transaction_date, category_id, category_name, budget_id, notes, created_at
+		`, user.ID, in.Name, in.Amount, txTime, categoryID, categoryName, budgetID, notes).Scan(
+			&item.ID, &item.Name, &item.Amount, &item.TransactionDate, &catID, &item.CategoryName, &bID, &notesVal, &item.CreatedAt,
+		)
+		if err != nil {
+			webutil.ServerError(w, err)
+			return
+		}
+
+		if catID.Valid {
+			id := catID.Int64
+			item.CategoryID = &id
+		}
+		if bID.Valid {
+			id := bID.Int64
+			item.BudgetID = &id
+			_ = tx.QueryRow(`SELECT name FROM financial_horizon_budgets WHERE id = $1 AND user_id = $2`, id, user.ID).Scan(&bName)
+			if bName.Valid {
+				item.BudgetName = &bName.String
+			}
+		}
+		if notesVal.Valid {
+			item.Notes = &notesVal.String
+		}
+
+		createdItems = append(createdItems, item)
+	}
+
+	if err := tx.Commit(); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+
+	webutil.WriteJSON(w, http.StatusCreated, createdItems)
 }
 
 func (h *Handler) UpdateTransaction(w http.ResponseWriter, r *http.Request) {

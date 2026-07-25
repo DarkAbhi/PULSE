@@ -373,6 +373,28 @@ func TestCategoriesAndTransactions(t *testing.T) {
 		}
 	}
 
+	// 4b. Bulk Create Transactions
+	{
+		bulkBody, _ := json.Marshal([]TransactionInput{
+			{Name: "Bulk Item 1", Amount: 500.0},
+			{Name: "Bulk Item 2", Amount: 1200.0},
+		})
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, "/api/horizon/transactions/bulk", bytes.NewReader(bulkBody))
+		req.AddCookie(cookie)
+		h.BulkCreateTransactions(rec, req)
+
+		if rec.Code != http.StatusCreated {
+			t.Fatalf("expected 201 Created for bulk insert, got %d", rec.Code)
+		}
+
+		var bulkTx []TransactionDTO
+		_ = json.NewDecoder(rec.Body).Decode(&bulkTx)
+		if len(bulkTx) != 2 {
+			t.Errorf("expected 2 bulk transactions, got %d", len(bulkTx))
+		}
+	}
+
 	// 5. Update Transaction
 	{
 		notes := "Updated price after discount"

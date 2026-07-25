@@ -33,6 +33,7 @@ import {
   deleteBudgetAction,
   addHorizonCategoryAction,
   addTransactionAction,
+  bulkAddTransactionsAction,
   updateTransactionAction,
   deleteTransactionAction,
 } from "./actions";
@@ -115,34 +116,17 @@ export default function FinancialHorizonClient({
       notes?: string | null;
     }[]
   ) => {
-    let failedCount = 0;
-    const addedList: TransactionItem[] = [];
+    if (items.length === 0) return;
 
-    for (const item of items) {
-      const res = await addTransactionAction(
-        item.name,
-        item.amount,
-        item.transactionDate,
-        item.categoryId ?? null,
-        null,
-        item.notes ?? null
-      );
+    const res = await bulkAddTransactionsAction(items);
 
-      if (res.ok && res.transaction) {
-        addedList.push(res.transaction);
-      } else {
-        failedCount++;
-      }
-    }
-
-    if (addedList.length > 0) {
+    if (res.ok && res.transactions && Array.isArray(res.transactions)) {
+      const newItems = res.transactions as TransactionItem[];
       recalculateSummary({
-        transactionsUpdater: (prev) => [...addedList, ...prev],
+        transactionsUpdater: (prev) => [...newItems, ...prev],
       });
-    }
-
-    if (failedCount > 0) {
-      setErrorMsg(`Failed to import ${failedCount} transaction(s).`);
+    } else {
+      setErrorMsg(res.error || "Failed to bulk add transactions.");
     }
   };
 

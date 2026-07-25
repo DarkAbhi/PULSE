@@ -25,6 +25,7 @@ export interface StatementExtractionResponse {
 export interface ExtractOptions {
   apiKey?: string;
   model?: string;
+  availableCategories?: string[];
 }
 
 /**
@@ -109,11 +110,19 @@ export async function extractStatementData(
 
   // 3. Request structured content generation from Gemini model
   const modelName = options?.model || "gemini-3.6-flash";
+  const categoryInstruction =
+    options?.availableCategories && options.availableCategories.length > 0
+      ? `Assign each transaction a 'suggestedCategory' selected from this list of available categories: ${JSON.stringify(
+          options.availableCategories
+        )}. If you cannot judge or if none fits well, assign "Other".`
+      : `Assign each transaction a 'suggestedCategory' based on what you think this transaction is. If you cannot judge, assign "Other".`;
+
   const prompt =
     "Extract all transaction details and account summary from this statement PDF file. " +
     "For each transaction, extract the date and time if present (in ISO 8601 format YYYY-MM-DDTHH:mm:ss). " +
     "If time is not specified in the statement, return only the date in YYYY-MM-DD format. " +
     "If both date and time are missing, leave the date field empty. " +
+    categoryInstruction + " " +
     "Identify whether this is a credit card, debit card, or bank account statement. " +
     "Return pure valid JSON adhering strictly to the JSON schema provided.";
 

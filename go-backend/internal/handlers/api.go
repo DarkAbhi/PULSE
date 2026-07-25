@@ -75,6 +75,7 @@ func (a *API) Router() http.Handler {
 		api.Post("/horizon/categories", horizonHandler.CreateCategory)
 		api.Get("/horizon/transactions", horizonHandler.ListTransactions)
 		api.Post("/horizon/transactions", horizonHandler.CreateTransaction)
+		api.Post("/horizon/transactions/bulk", horizonHandler.BulkCreateTransactions)
 		api.Put("/horizon/transactions/{id}", horizonHandler.UpdateTransaction)
 		api.Delete("/horizon/transactions/{id}", horizonHandler.DeleteTransaction)
 		// Daily logs

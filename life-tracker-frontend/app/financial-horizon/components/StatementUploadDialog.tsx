@@ -127,8 +127,10 @@ export default function StatementUploadDialog({
     setError(null);
 
     try {
+      const categoryNames = categories.map((c) => c.name);
       const res = await extractStatementData(selectedFile, {
         apiKey: customApiKey.trim() || undefined,
+        availableCategories: categoryNames,
       });
 
       setExtractionResult(res);
@@ -136,16 +138,22 @@ export default function StatementUploadDialog({
       if (res.data.transactions) {
         setSelectedTxIndexes(res.data.transactions.map((_, idx) => idx));
 
-        // Auto-match categories by suggestedCategory or default
+        // Find fallback 'Other' category ID if present in user categories
+        const defaultOtherCategory = categories.find(
+          (c) => c.name.toLowerCase() === "other"
+        );
+        const defaultOtherId = defaultOtherCategory ? defaultOtherCategory.id : null;
+
+        // Auto-match categories by suggestedCategory or default to 'Other'
         const initialCategoryMap: Record<number, number | null> = {};
         res.data.transactions.forEach((tx, idx) => {
           if (tx.suggestedCategory) {
             const match = categories.find(
               (c) => c.name.toLowerCase() === tx.suggestedCategory?.toLowerCase()
             );
-            initialCategoryMap[idx] = match ? match.id : null;
+            initialCategoryMap[idx] = match ? match.id : defaultOtherId;
           } else {
-            initialCategoryMap[idx] = null;
+            initialCategoryMap[idx] = defaultOtherId;
           }
         });
         setSelectedCategoryMap(initialCategoryMap);

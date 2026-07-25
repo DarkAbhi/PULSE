@@ -387,6 +387,51 @@ export async function addTransactionAction(
   }
 }
 
+export async function bulkAddTransactionsAction(
+  items: {
+    name: string;
+    amount: number;
+    transactionDate?: string | null;
+    categoryId?: number | null;
+    budgetId?: number | null;
+    notes?: string | null;
+  }[]
+) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  try {
+    const payload = items.map((item) => ({
+      name: item.name,
+      amount: item.amount,
+      transaction_date: item.transactionDate ?? null,
+      category_id: item.categoryId ?? null,
+      budget_id: item.budgetId ?? null,
+      notes: item.notes ?? null,
+    }));
+
+    const response = await fetch(`${apiBaseURL}/api/horizon/transactions/bulk`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const body = await response.json().catch(() => ([]));
+    if (!response.ok) {
+      return { ok: false, error: (body as any).error ?? "Failed to bulk add transactions." };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/financial-horizon");
+    return { ok: true, transactions: body };
+  } catch {
+    return { ok: false, error: "Unable to reach the server. Please try again." };
+  }
+}
+
 export async function updateTransactionAction(
   id: number,
   name: string,

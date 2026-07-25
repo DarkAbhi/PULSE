@@ -28,15 +28,17 @@ export default function TransactionsTab({
   isPending = false,
 }: TransactionsTabProps) {
   const [txCategoryFilter, setTxCategoryFilter] = useState<string>("all");
+  const [txTypeFilter, setTxTypeFilter] = useState<"all" | "debit" | "credit">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const filteredTransactions = transactions.filter((t) => {
     const matchesCategory = txCategoryFilter === "all" || t.category_name === txCategoryFilter;
+    const matchesType = txTypeFilter === "all" || (t.type || "debit") === txTypeFilter;
     const matchesSearch =
       !searchQuery.trim() ||
       t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (t.notes && t.notes.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCategory && matchesSearch;
+    return matchesCategory && matchesType && matchesSearch;
   });
 
   return (
@@ -52,7 +54,7 @@ export default function TransactionsTab({
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Log day-to-day transaction records with date & time, category, and optional budget allocations.
+            Log day-to-day transaction records with date & time, category, type (debit/credit), and optional budget allocations.
           </p>
         </div>
 
@@ -84,45 +86,81 @@ export default function TransactionsTab({
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Categories Pill List */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none max-w-full sm:max-w-2xl">
-          <button
-            onClick={() => setTxCategoryFilter("all")}
-            className={`rounded-xl px-3 py-1.5 text-xs font-medium transition ${
-              txCategoryFilter === "all"
-                ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
-            }`}
-          >
-            All Categories
-          </button>
-          {categories.map((cat) => {
-            const count = transactions.filter((t) => t.category_id === cat.id || t.category_name === cat.name).length;
-            const isSelected = txCategoryFilter === cat.name;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setTxCategoryFilter(isSelected ? "all" : cat.name)}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs transition border shrink-0 ${
-                  isSelected
-                    ? "border-primary bg-primary/10 text-primary font-semibold"
-                    : "border-border/60 bg-card text-muted-foreground hover:border-border hover:text-foreground"
-                }`}
-              >
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ backgroundColor: cat.color || "#64748b" }}
-                />
-                <span>{cat.name}</span>
-                {count > 0 && (
-                  <span className="ml-0.5 rounded-md bg-secondary px-1.5 py-0.2 text-[10px] font-bold">
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Transaction Type Filter Segment */}
+          <div className="inline-flex rounded-xl border border-border bg-secondary/30 p-1 text-xs">
+            <button
+              onClick={() => setTxTypeFilter("all")}
+              className={`rounded-lg px-2.5 py-1 font-semibold transition ${
+                txTypeFilter === "all"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All Types
+            </button>
+            <button
+              onClick={() => setTxTypeFilter("debit")}
+              className={`rounded-lg px-2.5 py-1 font-semibold transition ${
+                txTypeFilter === "debit"
+                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Debit
+            </button>
+            <button
+              onClick={() => setTxTypeFilter("credit")}
+              className={`rounded-lg px-2.5 py-1 font-semibold transition ${
+                txTypeFilter === "credit"
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Credit
+            </button>
+          </div>
+
+          {/* Categories Pill List */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none max-w-full sm:max-w-xl">
+            <button
+              onClick={() => setTxCategoryFilter("all")}
+              className={`rounded-xl px-3 py-1.5 text-xs font-medium transition shrink-0 ${
+                txCategoryFilter === "all"
+                  ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                  : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              }`}
+            >
+              All Categories
+            </button>
+            {categories.map((cat) => {
+              const count = transactions.filter((t) => t.category_id === cat.id || t.category_name === cat.name).length;
+              const isSelected = txCategoryFilter === cat.name;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setTxCategoryFilter(isSelected ? "all" : cat.name)}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs transition border shrink-0 ${
+                    isSelected
+                      ? "border-primary bg-primary/10 text-primary font-semibold"
+                      : "border-border/60 bg-card text-muted-foreground hover:border-border hover:text-foreground"
+                  }`}
+                >
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: cat.color || "#64748b" }}
+                  />
+                  <span>{cat.name}</span>
+                  {count > 0 && (
+                    <span className="ml-0.5 rounded-md bg-secondary px-1.5 py-0.2 text-[10px] font-bold">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Search Input */}
@@ -148,7 +186,7 @@ export default function TransactionsTab({
           <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
             {transactions.length === 0
               ? "Log your financial transactions to track actual spending against pre-filled categories and monthly budgets."
-              : "Try adjusting your search or category filters to find what you're looking for."}
+              : "Try adjusting your search or filters to find what you're looking for."}
           </p>
           {transactions.length === 0 && (
             <button
@@ -164,6 +202,7 @@ export default function TransactionsTab({
           {filteredTransactions.map((tx) => {
             const matchingCat = categories.find((c) => c.id === tx.category_id || c.name === tx.category_name);
             const catColor = matchingCat?.color || "#64748b";
+            const isCredit = tx.type === "credit";
 
             const formattedDate = tx.transaction_date
               ? new Date(tx.transaction_date).toLocaleString("en-IN", {
@@ -197,6 +236,15 @@ export default function TransactionsTab({
                       >
                         {tx.category_name}
                       </span>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
+                          isCredit
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                            : "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
+                        }`}
+                      >
+                        {isCredit ? "Credit" : "Debit"}
+                      </span>
                       {tx.budget_name && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-medium text-primary">
                           <Wallet className="h-3 w-3" /> {tx.budget_name}
@@ -214,8 +262,13 @@ export default function TransactionsTab({
                 </div>
 
                 <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
-                  <span className="font-extrabold text-foreground text-lg" suppressHydrationWarning>
-                    {summary.currency}{tx.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  <span
+                    className={`font-extrabold text-lg ${
+                      isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    {isCredit ? "+" : "-"}{summary.currency}{tx.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </span>
                   <div className="flex items-center gap-1">
                     <button

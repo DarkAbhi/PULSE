@@ -76,6 +76,7 @@ type CategoryDTO struct {
 type TransactionInput struct {
 	Name            string  `json:"name"`
 	Amount          float64 `json:"amount"`
+	Type            *string `json:"type"`
 	TransactionDate *string `json:"transaction_date"`
 	CategoryID      *int64  `json:"category_id"`
 	CategoryName    *string `json:"category_name"`
@@ -87,6 +88,7 @@ type TransactionDTO struct {
 	ID              int64     `json:"id"`
 	Name            string    `json:"name"`
 	Amount          float64   `json:"amount"`
+	Type            string    `json:"type"`
 	TransactionDate time.Time `json:"transaction_date"`
 	CategoryID      *int64    `json:"category_id"`
 	CategoryName    string    `json:"category_name"`
@@ -711,12 +713,23 @@ func (h *Handler) fetchCategories(userID int64) ([]CategoryDTO, error) {
 	return categories, nil
 }
 
+func parseTransactionType(raw *string) string {
+	if raw == nil {
+		return "debit"
+	}
+	val := strings.ToLower(strings.TrimSpace(*raw))
+	if val == "credit" {
+		return "credit"
+	}
+	return "debit"
+}
+
 func (h *Handler) fetchTransactions(userID int64, limit int) ([]TransactionDTO, float64, error) {
 	if limit <= 0 {
 		limit = 50
 	}
 	query := `
-		SELECT t.id, t.name, t.amount, t.transaction_date, t.category_id, COALESCE(c.name, t.category_name), t.budget_id, b.name, t.notes, t.created_at
+		SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id, COALESCE(c.name, t.category_name), t.budget_id, b.name, t.notes, t.created_at
 		FROM financial_horizon_transactions t
 		LEFT JOIN financial_horizon_categories c ON t.category_id = c.id
 		LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id
@@ -737,8 +750,11 @@ func (h *Handler) fetchTransactions(userID int64, limit int) ([]TransactionDTO, 
 		var catID, bID sql.NullInt64
 		var bName, notes sql.NullString
 
-		if err := rows.Scan(&item.ID, &item.Name, &item.Amount, &item.TransactionDate, &catID, &item.CategoryName, &bID, &bName, &notes, &item.CreatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.Name, &item.Amount, &item.Type, &item.TransactionDate, &catID, &item.CategoryName, &bID, &bName, &notes, &item.CreatedAt); err != nil {
 			return nil, 0, err
+		}
+		if item.Type == "" {
+			item.Type = "debit"
 		}
 		if catID.Valid {
 			id := catID.Int64
@@ -925,16 +941,18 @@ func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		notes = sql.NullString{String: strings.TrimSpace(*in.Notes), Valid: true}
 	}
 
+	txType := parseTransactionType(in.Type)
+
 	var item TransactionDTO
 	var catID, bID sql.NullInt64
 	var bName, notesVal sql.NullString
 
 	err = h.DB.QueryRow(`
-		INSERT INTO financial_horizon_transactions (user_id, name, amount, transaction_date, category_id, category_name, budget_id, notes)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING id, name, amount, transaction_date, category_id, category_name, budget_id, notes, created_at
-	`, user.ID, in.Name, in.Amount, txTime, categoryID, categoryName, budgetID, notes).Scan(
-		&item.ID, &item.Name, &item.Amount, &item.TransactionDate, &catID, &item.CategoryName, &bID, &notesVal, &item.CreatedAt,
+		INSERT INTO financial_horizon_transactions (user_id, name, amount, type, transaction_date, category_id, category_name, budget_id, notes)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, notes, created_at
+	`, user.ID, in.Name, in.Amount, txType, txTime, categoryID, categoryName, budgetID, notes).Scan(
+		&item.ID, &item.Name, &item.Amount, &item.Type, &item.TransactionDate, &catID, &item.CategoryName, &bID, &notesVal, &item.CreatedAt,
 	)
 
 	if err != nil {
@@ -1052,16 +1070,18 @@ func (h *Handler) BulkCreateTransactions(w http.ResponseWriter, r *http.Request)
 			notes = sql.NullString{String: strings.TrimSpace(*in.Notes), Valid: true}
 		}
 
+		txType := parseTransactionType(in.Type)
+
 		var item TransactionDTO
 		var catID, bID sql.NullInt64
 		var bName, notesVal sql.NullString
 
 		err = tx.QueryRow(`
-			INSERT INTO financial_horizon_transactions (user_id, name, amount, transaction_date, category_id, category_name, budget_id, notes)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-			RETURNING id, name, amount, transaction_date, category_id, category_name, budget_id, notes, created_at
-		`, user.ID, in.Name, in.Amount, txTime, categoryID, categoryName, budgetID, notes).Scan(
-			&item.ID, &item.Name, &item.Amount, &item.TransactionDate, &catID, &item.CategoryName, &bID, &notesVal, &item.CreatedAt,
+			INSERT INTO financial_horizon_transactions (user_id, name, amount, type, transaction_date, category_id, category_name, budget_id, notes)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+			RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, notes, created_at
+		`, user.ID, in.Name, in.Amount, txType, txTime, categoryID, categoryName, budgetID, notes).Scan(
+			&item.ID, &item.Name, &item.Amount, &item.Type, &item.TransactionDate, &catID, &item.CategoryName, &bID, &notesVal, &item.CreatedAt,
 		)
 		if err != nil {
 			webutil.ServerError(w, err)
@@ -1162,17 +1182,19 @@ func (h *Handler) UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 		notes = sql.NullString{String: strings.TrimSpace(*in.Notes), Valid: true}
 	}
 
+	txType := parseTransactionType(in.Type)
+
 	var item TransactionDTO
 	var catID, bID sql.NullInt64
 	var bName, notesVal sql.NullString
 
 	err = h.DB.QueryRow(`
 		UPDATE financial_horizon_transactions
-		SET name = $1, amount = $2, transaction_date = $3, category_id = $4, category_name = $5, budget_id = $6, notes = $7, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $8 AND user_id = $9
-		RETURNING id, name, amount, transaction_date, category_id, category_name, budget_id, notes, created_at
-	`, in.Name, in.Amount, txTime, categoryID, categoryName, budgetID, notes, txID, user.ID).Scan(
-		&item.ID, &item.Name, &item.Amount, &item.TransactionDate, &catID, &item.CategoryName, &bID, &notesVal, &item.CreatedAt,
+		SET name = $1, amount = $2, type = $3, transaction_date = $4, category_id = $5, category_name = $6, budget_id = $7, notes = $8, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $9 AND user_id = $10
+		RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, notes, created_at
+	`, in.Name, in.Amount, txType, txTime, categoryID, categoryName, budgetID, notes, txID, user.ID).Scan(
+		&item.ID, &item.Name, &item.Amount, &item.Type, &item.TransactionDate, &catID, &item.CategoryName, &bID, &notesVal, &item.CreatedAt,
 	)
 
 	if errors.Is(err, sql.ErrNoRows) {

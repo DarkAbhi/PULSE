@@ -349,6 +349,7 @@ export async function addHorizonCategoryAction(name: string, icon?: string, colo
 export async function addTransactionAction(
   name: string,
   amount: number,
+  type?: "debit" | "credit",
   transactionDate?: string | null,
   categoryId?: number | null,
   budgetId?: number | null,
@@ -367,6 +368,7 @@ export async function addTransactionAction(
       body: JSON.stringify({
         name,
         amount,
+        type: type ?? "debit",
         transaction_date: transactionDate ?? null,
         category_id: categoryId ?? null,
         budget_id: budgetId ?? null,
@@ -391,6 +393,7 @@ export async function bulkAddTransactionsAction(
   items: {
     name: string;
     amount: number;
+    type?: "debit" | "credit";
     transactionDate?: string | null;
     categoryId?: number | null;
     budgetId?: number | null;
@@ -404,6 +407,7 @@ export async function bulkAddTransactionsAction(
     const payload = items.map((item) => ({
       name: item.name,
       amount: item.amount,
+      type: item.type ?? "debit",
       transaction_date: item.transactionDate ?? null,
       category_id: item.categoryId ?? null,
       budget_id: item.budgetId ?? null,
@@ -436,6 +440,7 @@ export async function updateTransactionAction(
   id: number,
   name: string,
   amount: number,
+  type?: "debit" | "credit",
   transactionDate?: string | null,
   categoryId?: number | null,
   budgetId?: number | null,
@@ -454,6 +459,7 @@ export async function updateTransactionAction(
       body: JSON.stringify({
         name,
         amount,
+        type: type ?? "debit",
         transaction_date: transactionDate ?? null,
         category_id: categoryId ?? null,
         budget_id: budgetId ?? null,

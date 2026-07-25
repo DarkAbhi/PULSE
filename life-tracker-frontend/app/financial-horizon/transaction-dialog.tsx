@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useId } from "react";
-import { X, Receipt, Wallet } from "lucide-react";
+import { X, Receipt, Wallet, ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { TransactionItem, CategoryItem, BudgetItem } from "../dashboard/financial-horizon-card";
 
 export interface TransactionDialogProps {
@@ -11,6 +11,7 @@ export interface TransactionDialogProps {
     id?: number;
     name: string;
     amount: number;
+    type?: "debit" | "credit";
     transactionDate: string;
     categoryId?: number | null;
     budgetId?: number | null;
@@ -37,6 +38,7 @@ export default function TransactionDialog({
 
   const [txName, setTxName] = useState("");
   const [txAmount, setTxAmount] = useState("");
+  const [txType, setTxType] = useState<"debit" | "credit">("debit");
   const [txDate, setTxDate] = useState("");
   const [txCategoryId, setTxCategoryId] = useState<number | null>(null);
   const [txBudgetId, setTxBudgetId] = useState<number | null>(null);
@@ -51,6 +53,7 @@ export default function TransactionDialog({
     if (editingTransaction) {
       setTxName(editingTransaction.name);
       setTxAmount(editingTransaction.amount.toString());
+      setTxType(editingTransaction.type || "debit");
       const d = editingTransaction.transaction_date ? new Date(editingTransaction.transaction_date) : new Date();
       const localIso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       setTxDate(localIso);
@@ -60,6 +63,7 @@ export default function TransactionDialog({
     } else {
       setTxName("");
       setTxAmount("");
+      setTxType("debit");
       const now = new Date();
       const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       setTxDate(localIso);
@@ -110,6 +114,7 @@ export default function TransactionDialog({
         id: editingTransaction?.id,
         name: txName.trim(),
         amount: parsedAmount,
+        type: txType,
         transactionDate: isoDate,
         categoryId: txCategoryId,
         budgetId: txBudgetId,
@@ -154,6 +159,37 @@ export default function TransactionDialog({
               {errorMsg}
             </div>
           )}
+
+          {/* Transaction Type Segment */}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-muted-foreground">Transaction Type</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setTxType("debit")}
+                className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-semibold transition ${
+                  txType === "debit"
+                    ? "border-rose-500/50 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold"
+                    : "border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                <ArrowDownRight className="h-4 w-4 text-rose-500" />
+                Debit (Expense)
+              </button>
+              <button
+                type="button"
+                onClick={() => setTxType("credit")}
+                className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-semibold transition ${
+                  txType === "credit"
+                    ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold"
+                    : "border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
+              >
+                <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+                Credit (Income / Refund)
+              </button>
+            </div>
+          </div>
 
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground">Transaction Title / Description</label>

@@ -349,7 +349,7 @@ func TestCategoriesAndTransactions(t *testing.T) {
 
 		var tx TransactionDTO
 		_ = json.NewDecoder(rec.Body).Decode(&tx)
-		if tx.Name != "Sony Headphones" || tx.Amount != 15000.0 || tx.CategoryName != "Gadgets & Electronics" {
+		if tx.Name != "Sony Headphones" || tx.Amount != 15000.0 || tx.CategoryName != "Gadgets & Electronics" || tx.Type != "debit" {
 			t.Errorf("unexpected transaction DTO: %+v", tx)
 		}
 		transactionID = tx.ID
@@ -373,11 +373,12 @@ func TestCategoriesAndTransactions(t *testing.T) {
 		}
 	}
 
-	// 4b. Bulk Create Transactions
+	// 4b. Bulk Create Transactions (one debit, one credit)
 	{
+		creditType := "credit"
 		bulkBody, _ := json.Marshal([]TransactionInput{
 			{Name: "Bulk Item 1", Amount: 500.0},
-			{Name: "Bulk Item 2", Amount: 1200.0},
+			{Name: "Salary Credit", Amount: 1200.0, Type: &creditType},
 		})
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/api/horizon/transactions/bulk", bytes.NewReader(bulkBody))
@@ -393,14 +394,19 @@ func TestCategoriesAndTransactions(t *testing.T) {
 		if len(bulkTx) != 2 {
 			t.Errorf("expected 2 bulk transactions, got %d", len(bulkTx))
 		}
+		if bulkTx[0].Type != "debit" || bulkTx[1].Type != "credit" {
+			t.Errorf("unexpected bulk transaction types: %+v", bulkTx)
+		}
 	}
 
-	// 5. Update Transaction
+	// 5. Update Transaction (change type to credit)
 	{
 		notes := "Updated price after discount"
+		creditType := "credit"
 		body, _ := json.Marshal(TransactionInput{
 			Name:       "Sony Headphones Pro",
 			Amount:     13500.0,
+			Type:       &creditType,
 			CategoryID: &defaultCategoryID,
 			Notes:      &notes,
 		})
@@ -419,7 +425,7 @@ func TestCategoriesAndTransactions(t *testing.T) {
 
 		var tx TransactionDTO
 		_ = json.NewDecoder(rec.Body).Decode(&tx)
-		if tx.Amount != 13500.0 || tx.Name != "Sony Headphones Pro" {
+		if tx.Amount != 13500.0 || tx.Name != "Sony Headphones Pro" || tx.Type != "credit" {
 			t.Errorf("unexpected updated transaction: %+v", tx)
 		}
 	}

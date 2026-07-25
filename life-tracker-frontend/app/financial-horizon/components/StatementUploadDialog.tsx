@@ -31,6 +31,7 @@ interface StatementUploadDialogProps {
     transactions: {
       name: string;
       amount: number;
+      type?: "debit" | "credit";
       transactionDate: string;
       categoryId?: number | null;
       notes?: string | null;
@@ -199,6 +200,7 @@ export default function StatementUploadDialog({
         return {
           name: tx.description || "Statement Transaction",
           amount: Math.abs(tx.amount),
+          type: tx.type || "debit",
           transactionDate: formattedTxDate,
           categoryId: selectedCategoryMap[idx] ?? null,
           notes: `Imported from statement${

@@ -212,6 +212,7 @@ export default function OverviewTab({
             {recentTransactions.map((tx) => {
               const matchingCat = categories.find((c) => c.id === tx.category_id || c.name === tx.category_name);
               const catColor = matchingCat?.color || "#64748b";
+              const isCredit = tx.type === "credit";
               const formattedDate = tx.transaction_date
                 ? new Date(tx.transaction_date).toLocaleString("en-IN", {
                     dateStyle: "medium",
@@ -232,7 +233,7 @@ export default function OverviewTab({
                       <Receipt className="h-4.5 w-4.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-bold text-foreground text-sm truncate">{tx.name}</h4>
                         <span
                           className="inline-flex items-center rounded-full px-2 py-0.2 text-[10px] font-semibold border"
@@ -244,6 +245,15 @@ export default function OverviewTab({
                         >
                           {tx.category_name}
                         </span>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.2 text-[10px] font-semibold border ${
+                            isCredit
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                              : "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
+                          }`}
+                        >
+                          {isCredit ? "Credit" : "Debit"}
+                        </span>
                       </div>
                       <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1" suppressHydrationWarning>
@@ -253,8 +263,13 @@ export default function OverviewTab({
                     </div>
                   </div>
 
-                  <span className="font-extrabold text-foreground text-base shrink-0" suppressHydrationWarning>
-                    {summary.currency}{tx.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  <span
+                    className={`font-extrabold text-base shrink-0 ${
+                      isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+                    }`}
+                    suppressHydrationWarning
+                  >
+                    {isCredit ? "+" : "-"}{summary.currency}{tx.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               );

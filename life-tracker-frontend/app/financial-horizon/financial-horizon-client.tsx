@@ -111,6 +111,7 @@ export default function FinancialHorizonClient({
     items: {
       name: string;
       amount: number;
+      type?: "debit" | "credit";
       transactionDate: string;
       categoryId?: number | null;
       notes?: string | null;
@@ -486,6 +487,7 @@ export default function FinancialHorizonClient({
     id?: number;
     name: string;
     amount: number;
+    type?: "debit" | "credit";
     transactionDate: string;
     categoryId?: number | null;
     budgetId?: number | null;
@@ -498,6 +500,7 @@ export default function FinancialHorizonClient({
           data.id,
           data.name,
           data.amount,
+          data.type,
           data.transactionDate,
           data.categoryId,
           data.budgetId,
@@ -517,6 +520,7 @@ export default function FinancialHorizonClient({
         const res = await addTransactionAction(
           data.name,
           data.amount,
+          data.type,
           data.transactionDate,
           data.categoryId,
           data.budgetId,

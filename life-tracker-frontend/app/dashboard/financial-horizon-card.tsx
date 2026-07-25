@@ -39,6 +39,7 @@ export type TransactionItem = {
   id: number;
   name: string;
   amount: number;
+  type?: "debit" | "credit";
   transaction_date: string;
   category_id?: number | null;
   category_name: string;

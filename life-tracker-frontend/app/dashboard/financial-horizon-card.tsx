@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Compass, ArrowRight, Wallet, ShieldAlert, Sparkles } from "lucide-react";
+import { Compass, ArrowRight } from "lucide-react";
 
 export type BudgetItem = {
   id: number;
@@ -84,7 +84,6 @@ export default function FinancialHorizonCard({
             <h3 className="text-xl font-semibold text-foreground">
               Financial Horizon
             </h3>
-            <p className="text-xs text-muted-foreground">Monthly Baseline</p>
           </div>
         </div>
         <p className="mt-4 text-sm text-muted-foreground">
@@ -112,14 +111,9 @@ export default function FinancialHorizonCard({
             <Compass className="h-6 w-6" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-xl font-semibold text-foreground">
-                Financial Horizon
-              </h3>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                <Sparkles className="h-3 w-3" /> Baseline
-              </span>
-            </div>
+            <h3 className="text-xl font-semibold text-foreground">
+              Financial Horizon
+            </h3>
             <p className="text-xs text-muted-foreground">Uncommitted Monthly Cash Pool</p>
           </div>
         </div>

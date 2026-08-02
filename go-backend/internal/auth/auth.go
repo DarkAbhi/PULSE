@@ -145,22 +145,37 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 
-// GetSessionUser retrieves the session user using the cookie and DB connection.
+// GetSessionUser retrieves the session user using cookie or HTTP authorization headers.
 func GetSessionUser(db *sql.DB, r *http.Request) (SessionUser, error) {
-	cookie, err := r.Cookie(SessionCookieName)
-	if err != nil || cookie.Value == "" {
+	token := ExtractSessionToken(r)
+	if token == "" {
 		return SessionUser{}, sql.ErrNoRows
 	}
 
-	hash := sha256.Sum256([]byte(cookie.Value))
+	hash := sha256.Sum256([]byte(token))
 	var user SessionUser
-	err = db.QueryRow(`
+	err := db.QueryRow(`
 		SELECT users.id, users.username
 		FROM user_sessions
 		JOIN users ON users.id = user_sessions.user_id
 		WHERE user_sessions.token_hash = $1 AND user_sessions.expires_at > NOW()
 	`, hex.EncodeToString(hash[:])).Scan(&user.ID, &user.Username)
 	return user, err
+}
+
+func ExtractSessionToken(r *http.Request) string {
+	if authHeader := r.Header.Get("Authorization"); authHeader != "" {
+		if strings.HasPrefix(strings.ToLower(authHeader), "bearer ") {
+			return strings.TrimSpace(authHeader[7:])
+		}
+	}
+	if headerToken := r.Header.Get("X-Session-Token"); headerToken != "" {
+		return strings.TrimSpace(headerToken)
+	}
+	if cookie, err := r.Cookie(SessionCookieName); err == nil && cookie.Value != "" {
+		return cookie.Value
+	}
+	return ""
 }
 
 func newSessionToken() (string, error) {

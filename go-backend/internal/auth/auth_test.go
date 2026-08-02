@@ -102,19 +102,32 @@ func TestLoginAndSession(t *testing.T) {
 		}
 	}
 
-	// 6. Test GetSessionUser directly
+	// 6. Test GetSessionUser directly (with cookie)
 	{
 		req := httptest.NewRequest(http.MethodGet, "/auth/session", nil)
 		req.AddCookie(sessionCookie)
 		user, err := GetSessionUser(db, req)
 		if err != nil {
-			t.Fatalf("expected GetSessionUser to succeed, got %v", err)
+			t.Fatalf("expected GetSessionUser to succeed with cookie, got %v", err)
 		}
 		if user.Username != "admin" {
 			t.Errorf("expected username admin, got %q", user.Username)
 		}
 		if user.ID <= 0 {
 			t.Errorf("expected positive user ID, got %d", user.ID)
+		}
+	}
+
+	// 7. Test GetSessionUser directly (with Authorization: Bearer header)
+	{
+		req := httptest.NewRequest(http.MethodGet, "/auth/session", nil)
+		req.Header.Set("Authorization", "Bearer "+sessionCookie.Value)
+		user, err := GetSessionUser(db, req)
+		if err != nil {
+			t.Fatalf("expected GetSessionUser to succeed with Bearer header, got %v", err)
+		}
+		if user.Username != "admin" {
+			t.Errorf("expected username admin, got %q", user.Username)
 		}
 	}
 }

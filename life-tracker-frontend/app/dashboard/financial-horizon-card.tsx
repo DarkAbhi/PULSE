@@ -35,6 +35,28 @@ export type CategoryItem = {
   user_id?: number | null;
 };
 
+export type SubscriptionItem = {
+  id: number;
+  name: string;
+  amount: number;
+  billing_cycle: "monthly" | "yearly";
+  billing_day?: number | null;
+  renewal_date?: string | null;
+  next_renewal_date: string;
+  monthly_equivalent_amount: number;
+  status: "active" | "paused" | "cancelled";
+  category_id?: number | null;
+  category_name?: string | null;
+  budget_id?: number | null;
+  budget_name?: string | null;
+  deduction_id?: number | null;
+  notes?: string | null;
+  linked_transaction_count: number;
+  total_spent: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type TransactionItem = {
   id: number;
   name: string;
@@ -45,6 +67,8 @@ export type TransactionItem = {
   category_name: string;
   budget_id?: number | null;
   budget_name?: string | null;
+  subscription_id?: number | null;
+  subscription_name?: string | null;
   notes?: string | null;
   created_at: string;
 };
@@ -57,10 +81,12 @@ export type HorizonSummary = {
   remaining_amount: number;
   committed_ratio: number;
   total_budgets_allocated: number;
+  total_subscription_burn?: number;
   budgets: BudgetItem[];
   deductions: DeductionItem[];
   categories?: CategoryItem[];
   transactions?: TransactionItem[];
+  subscriptions?: SubscriptionItem[];
   projections: ProjectionItem[];
 };
 

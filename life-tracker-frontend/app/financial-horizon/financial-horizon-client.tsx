@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Compass, X } from "lucide-react";
 
@@ -8,6 +8,7 @@ import ConfirmationDialog from "../components/design-system/confirmation-dialog"
 import TransactionDialog from "./transaction-dialog";
 import CategoryDialog from "./category-dialog";
 import BudgetDialog from "./budget-dialog";
+import SubscriptionDialog from "./subscription-dialog";
 import PlannedPurchaseDialog from "./components/PlannedPurchaseDialog";
 import StatementUploadDialog from "./components/StatementUploadDialog";
 
@@ -16,10 +17,11 @@ import TabNavigation, { HorizonTab } from "./components/TabNavigation";
 import HeaderMetrics from "./components/HeaderMetrics";
 import OverviewTab from "./components/OverviewTab";
 import TransactionsTab from "./components/TransactionsTab";
+import SubscriptionsTab from "./components/SubscriptionsTab";
 import FixedObligationsTab from "./components/FixedObligationsTab";
 import PlannedPurchasesTab from "./components/PlannedPurchasesTab";
 
-import { HorizonSummary, DeductionItem, BudgetItem, CategoryItem, TransactionItem } from "../dashboard/financial-horizon-card";
+import { HorizonSummary, DeductionItem, BudgetItem, CategoryItem, TransactionItem, SubscriptionItem } from "../dashboard/financial-horizon-card";
 import {
   updateHorizonConfigAction,
   addDeductionAction,
@@ -36,6 +38,10 @@ import {
   bulkAddTransactionsAction,
   updateTransactionAction,
   deleteTransactionAction,
+  addSubscriptionAction,
+  updateSubscriptionAction,
+  deleteSubscriptionAction,
+  getSubscriptionTransactionsAction,
 } from "./actions";
 
 export type NextMonthPurchaseItem = {
@@ -99,6 +105,40 @@ export default function FinancialHorizonClient({
   // Transactions & Categories State
   const [transactions, setTransactions] = useState<TransactionItem[]>(initialSummary.transactions ?? []);
   const [categories, setCategories] = useState<CategoryItem[]>(initialSummary.categories ?? []);
+
+  // Subscriptions State
+  const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>(initialSummary.subscriptions ?? []);
+  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
+  const [editingSubscription, setEditingSubscription] = useState<SubscriptionItem | null>(null);
+  const [subToDelete, setSubToDelete] = useState<SubscriptionItem | null>(null);
+  const [deletingSubId, setDeletingSubId] = useState<number | null>(null);
+  const [viewingSubTransactions, setViewingSubTransactions] = useState<SubscriptionItem | null>(null);
+  const [subTransactionsList, setSubTransactionsList] = useState<TransactionItem[]>([]);
+  const [isLoadingSubTx, setIsLoadingSubTx] = useState(false);
+
+  useEffect(() => {
+    if (initialSummary) {
+      setSummary(initialSummary);
+      setSubscriptions(initialSummary.subscriptions ?? []);
+    }
+  }, [initialSummary]);
+
+  const updateSubscriptionsState = (newSubsUpdater: (prev: SubscriptionItem[]) => SubscriptionItem[]) => {
+    setSubscriptions((prev) => {
+      const nextSubs = newSubsUpdater(prev);
+      const activeSubs = nextSubs.filter((s) => s.status === "active");
+      const newBurn = activeSubs.reduce(
+        (sum, s) => sum + (s.monthly_equivalent_amount || s.amount),
+        0
+      );
+      setSummary((prevSummary) => ({
+        ...prevSummary,
+        total_subscription_burn: newBurn,
+        subscriptions: nextSubs,
+      }));
+      return nextSubs;
+    });
+  };
 
   // Transaction & Category Dialog State
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
@@ -491,6 +531,7 @@ export default function FinancialHorizonClient({
     transactionDate: string;
     categoryId?: number | null;
     budgetId?: number | null;
+    subscriptionId?: number | null;
     notes?: string | null;
   }) => {
     setErrorMsg("");
@@ -504,6 +545,7 @@ export default function FinancialHorizonClient({
           data.transactionDate,
           data.categoryId,
           data.budgetId,
+          data.subscriptionId,
           data.notes
         );
         if (res.ok && res.transaction) {
@@ -524,6 +566,7 @@ export default function FinancialHorizonClient({
           data.transactionDate,
           data.categoryId,
           data.budgetId,
+          data.subscriptionId,
           data.notes
         );
         if (res.ok && res.transaction) {
@@ -565,6 +608,120 @@ export default function FinancialHorizonClient({
         setErrorMsg(res.error ?? "Failed to add category.");
       }
     });
+  };
+
+  // Subscription Handlers
+  const handleOpenAddSubscription = () => {
+    setEditingSubscription(null);
+    setIsSubscriptionDialogOpen(true);
+  };
+
+  const handleOpenEditSubscription = (sub: SubscriptionItem) => {
+    setEditingSubscription(sub);
+    setIsSubscriptionDialogOpen(true);
+  };
+
+  const handleSaveSubscription = async (data: {
+    name: string;
+    amount: number;
+    billing_cycle: string;
+    billing_day?: number | null;
+    renewal_date?: string | null;
+    status: string;
+    category_id?: number | null;
+    budget_id?: number | null;
+    notes?: string | null;
+  }) => {
+    setErrorMsg("");
+    if (editingSubscription) {
+      const res = await updateSubscriptionAction(editingSubscription.id, data);
+      if (res.ok && res.subscription) {
+        const updatedSub = res.subscription as SubscriptionItem;
+        updateSubscriptionsState((prev) =>
+          prev.map((s) => (s.id === editingSubscription.id ? updatedSub : s))
+        );
+        setIsSubscriptionDialogOpen(false);
+        setEditingSubscription(null);
+      } else {
+        throw new Error(res.error ?? "Failed to update subscription.");
+      }
+    } else {
+      const res = await addSubscriptionAction(data);
+      if (res.ok && res.subscription) {
+        const newSub = res.subscription as SubscriptionItem;
+        updateSubscriptionsState((prev) => [newSub, ...prev]);
+        setIsSubscriptionDialogOpen(false);
+      } else {
+        throw new Error(res.error ?? "Failed to add subscription.");
+      }
+    }
+  };
+
+  const handleDeleteSubscription = (id: number) => {
+    setErrorMsg("");
+    setDeletingSubId(id);
+    startTransition(async () => {
+      const res = await deleteSubscriptionAction(id);
+      if (res.ok) {
+        updateSubscriptionsState((prev) => prev.filter((s) => s.id !== id));
+        setSubToDelete(null);
+      } else {
+        setErrorMsg(res.error ?? "Failed to delete subscription.");
+      }
+      setDeletingSubId(null);
+    });
+  };
+
+  const handleToggleSubscriptionStatus = (sub: SubscriptionItem, newStatus: string) => {
+    startTransition(async () => {
+      const res = await updateSubscriptionAction(sub.id, {
+        name: sub.name,
+        amount: sub.amount,
+        billing_cycle: sub.billing_cycle,
+        billing_day: sub.billing_day,
+        status: newStatus,
+        category_id: sub.category_id,
+        budget_id: sub.budget_id,
+        notes: sub.notes,
+      });
+      if (res.ok && res.subscription) {
+        const updatedSub = res.subscription as SubscriptionItem;
+        updateSubscriptionsState((prev) =>
+          prev.map((s) => (s.id === sub.id ? updatedSub : s))
+        );
+      }
+    });
+  };
+
+  const handleLogSubscriptionPayment = (sub: SubscriptionItem) => {
+    setEditingTransaction({
+      id: 0,
+      name: `${sub.name} Payment`,
+      amount: sub.amount,
+      type: "debit",
+      transaction_date: new Date().toISOString(),
+      category_id: sub.category_id,
+      category_name: sub.category_name || "Subscriptions",
+      budget_id: sub.budget_id,
+      budget_name: sub.budget_name,
+      subscription_id: sub.id,
+      subscription_name: sub.name,
+      notes: `Recurring payment for ${sub.name}`,
+      created_at: new Date().toISOString(),
+    });
+    setIsTransactionDialogOpen(true);
+  };
+
+  const handleViewSubscriptionTransactions = async (sub: SubscriptionItem) => {
+    setViewingSubTransactions(sub);
+    setIsLoadingSubTx(true);
+    const res = await getSubscriptionTransactionsAction(sub.id);
+    if (res.ok && res.transactions) {
+      setSubTransactionsList(res.transactions as TransactionItem[]);
+    } else {
+      setSubTransactionsList([]);
+    }
+    setIsLoadingSubTx(false);
   };
 
   return (
@@ -645,6 +802,7 @@ export default function FinancialHorizonClient({
           activeTab={activeTab}
           onTabChange={setActiveTab}
           transactionsCount={transactions.length}
+          subscriptionsCount={subscriptions.filter((s) => s.status === "active").length}
           fixedObligationsCount={summary.deductions.filter((d) => d.is_active).length}
           plannedPurchasesCount={purchases.length}
         />
@@ -675,6 +833,21 @@ export default function FinancialHorizonClient({
             onOpenAddCategory={() => setIsCategoryDialogOpen(true)}
             onOpenStatementUpload={() => setIsStatementUploadOpen(true)}
             isPending={isPending}
+          />
+        )}
+
+        {activeTab === "subscriptions" && (
+          <SubscriptionsTab
+            subscriptions={subscriptions}
+            categories={categories}
+            budgets={summary.budgets ?? []}
+            currency={summary.currency}
+            onAddSubscription={handleOpenAddSubscription}
+            onEditSubscription={handleOpenEditSubscription}
+            onDeleteSubscription={setSubToDelete}
+            onToggleStatus={handleToggleSubscriptionStatus}
+            onLogPayment={handleLogSubscriptionPayment}
+            onViewTransactions={handleViewSubscriptionTransactions}
           />
         )}
 
@@ -779,6 +952,88 @@ export default function FinancialHorizonClient({
         variant="destructive"
       />
 
+      {/* Confirmation Dialog for Subscription Deletion */}
+      <ConfirmationDialog
+        isOpen={!!subToDelete}
+        onClose={() => setSubToDelete(null)}
+        onConfirm={() => {
+          if (subToDelete) handleDeleteSubscription(subToDelete.id);
+        }}
+        title={subToDelete ? `Delete ${subToDelete.name}?` : ""}
+        description="This will permanently delete this subscription. Linked past transactions will remain intact."
+        confirmText="Delete subscription"
+        confirmLoadingText="Deleting…"
+        isLoading={deletingSubId !== null}
+        error={errorMsg}
+        variant="destructive"
+      />
+
+      {/* Subscription Linked Transactions Dialog */}
+      {viewingSubTransactions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-6 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <div>
+                <h3 className="text-lg font-bold text-foreground">
+                  {viewingSubTransactions.name} Payment History
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {subTransactionsList.length} recorded payments • Total spent: {summary.currency}{subTransactionsList.reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingSubTransactions(null)}
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-4 max-h-96 overflow-y-auto space-y-2 pr-1">
+              {isLoadingSubTx ? (
+                <div className="py-8 text-center text-xs text-muted-foreground">
+                  Loading linked transactions...
+                </div>
+              ) : subTransactionsList.length === 0 ? (
+                <div className="py-8 text-center text-xs text-muted-foreground">
+                  No linked transactions recorded for this subscription yet.
+                </div>
+              ) : (
+                subTransactionsList.map((tx) => (
+                  <div
+                    key={tx.id}
+                    className="flex items-center justify-between rounded-xl border border-border/60 bg-background p-3 text-sm"
+                  >
+                    <div>
+                      <span className="font-semibold text-foreground">{tx.name}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {new Date(tx.transaction_date).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    <span className="font-bold text-foreground">
+                      {summary.currency}{tx.amount.toLocaleString()}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="mt-5 flex justify-end border-t border-border/60 pt-3">
+              <button
+                onClick={() => setViewingSubTransactions(null)}
+                className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Transaction Entry Dialog */}
       <TransactionDialog
         isOpen={isTransactionDialogOpen}
@@ -790,8 +1045,23 @@ export default function FinancialHorizonClient({
         editingTransaction={editingTransaction}
         categories={categories}
         budgets={summary.budgets ?? []}
+        subscriptions={subscriptions}
         currency={summary.currency}
         isPending={isPending}
+      />
+
+      {/* Subscription Entry Dialog */}
+      <SubscriptionDialog
+        isOpen={isSubscriptionDialogOpen}
+        onClose={() => {
+          setIsSubscriptionDialogOpen(false);
+          setEditingSubscription(null);
+        }}
+        onSave={handleSaveSubscription}
+        editingSubscription={editingSubscription}
+        categories={categories}
+        budgets={summary.budgets ?? []}
+        currency={summary.currency}
       />
 
       {/* Category Entry Dialog */}

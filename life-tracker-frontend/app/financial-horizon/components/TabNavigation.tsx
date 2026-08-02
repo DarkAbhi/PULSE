@@ -1,13 +1,14 @@
 "use client";
 
-import { LayoutDashboard, Receipt, Calendar, ShoppingBag } from "lucide-react";
+import { LayoutDashboard, Receipt, Calendar, CreditCard, ShoppingBag } from "lucide-react";
 
-export type HorizonTab = "overview" | "transactions" | "fixed" | "planner";
+export type HorizonTab = "overview" | "transactions" | "subscriptions" | "fixed" | "planner";
 
 interface TabNavigationProps {
   activeTab: HorizonTab;
   onTabChange: (tab: HorizonTab) => void;
   transactionsCount: number;
+  subscriptionsCount?: number;
   fixedObligationsCount: number;
   plannedPurchasesCount: number;
 }
@@ -16,6 +17,7 @@ export default function TabNavigation({
   activeTab,
   onTabChange,
   transactionsCount,
+  subscriptionsCount = 0,
   fixedObligationsCount,
   plannedPurchasesCount,
 }: TabNavigationProps) {
@@ -32,8 +34,14 @@ export default function TabNavigation({
       count: transactionsCount,
     },
     {
+      id: "subscriptions" as HorizonTab,
+      label: "Subscriptions",
+      icon: CreditCard,
+      count: subscriptionsCount,
+    },
+    {
       id: "fixed" as HorizonTab,
-      label: "Fixed Obligations & Subscriptions",
+      label: "Fixed Obligations",
       icon: Calendar,
       count: fixedObligationsCount,
     },

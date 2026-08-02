@@ -353,6 +353,7 @@ export async function addTransactionAction(
   transactionDate?: string | null,
   categoryId?: number | null,
   budgetId?: number | null,
+  subscriptionId?: number | null,
   notes?: string | null
 ) {
   const cookieStore = await cookies();
@@ -372,6 +373,7 @@ export async function addTransactionAction(
         transaction_date: transactionDate ?? null,
         category_id: categoryId ?? null,
         budget_id: budgetId ?? null,
+        subscription_id: subscriptionId ?? null,
         notes: notes ?? null,
       }),
     });
@@ -397,6 +399,7 @@ export async function bulkAddTransactionsAction(
     transactionDate?: string | null;
     categoryId?: number | null;
     budgetId?: number | null;
+    subscriptionId?: number | null;
     notes?: string | null;
   }[]
 ) {
@@ -411,6 +414,7 @@ export async function bulkAddTransactionsAction(
       transaction_date: item.transactionDate ?? null,
       category_id: item.categoryId ?? null,
       budget_id: item.budgetId ?? null,
+      subscription_id: item.subscriptionId ?? null,
       notes: item.notes ?? null,
     }));
 
@@ -444,6 +448,7 @@ export async function updateTransactionAction(
   transactionDate?: string | null,
   categoryId?: number | null,
   budgetId?: number | null,
+  subscriptionId?: number | null,
   notes?: string | null
 ) {
   const cookieStore = await cookies();
@@ -463,6 +468,7 @@ export async function updateTransactionAction(
         transaction_date: transactionDate ?? null,
         category_id: categoryId ?? null,
         budget_id: budgetId ?? null,
+        subscription_id: subscriptionId ?? null,
         notes: notes ?? null,
       }),
     });
@@ -499,6 +505,127 @@ export async function deleteTransactionAction(id: number) {
     return { ok: true };
   } catch {
     return { ok: false, error: "Unable to reach the server. Please try again." };
+  }
+}
+
+// Subscription Actions
+export async function addSubscriptionAction(data: {
+  name: string;
+  amount: number;
+  billing_cycle: string;
+  billing_day?: number | null;
+  renewal_date?: string | null;
+  status?: string;
+  category_id?: number | null;
+  budget_id?: number | null;
+  notes?: string | null;
+}) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  try {
+    const response = await fetch(`${apiBaseURL}/api/horizon/subscriptions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify(data),
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { ok: false, error: body.error ?? "Failed to create subscription." };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/financial-horizon");
+    return { ok: true, subscription: body };
+  } catch {
+    return { ok: false, error: "Unable to reach the server. Please try again." };
+  }
+}
+
+export async function updateSubscriptionAction(
+  id: number,
+  data: {
+    name: string;
+    amount: number;
+    billing_cycle: string;
+    billing_day?: number | null;
+    renewal_date?: string | null;
+    status?: string;
+    category_id?: number | null;
+    budget_id?: number | null;
+    notes?: string | null;
+  }
+) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  try {
+    const response = await fetch(`${apiBaseURL}/api/horizon/subscriptions/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify(data),
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { ok: false, error: body.error ?? "Failed to update subscription." };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/financial-horizon");
+    return { ok: true, subscription: body };
+  } catch {
+    return { ok: false, error: "Unable to reach the server. Please try again." };
+  }
+}
+
+export async function deleteSubscriptionAction(id: number) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  try {
+    const response = await fetch(`${apiBaseURL}/api/horizon/subscriptions/${id}`, {
+      method: "DELETE",
+      headers: { Cookie: cookieHeader },
+    });
+
+    if (!response.ok) {
+      return { ok: false, error: "Failed to delete subscription." };
+    }
+
+    revalidatePath("/dashboard");
+    revalidatePath("/financial-horizon");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Unable to reach the server. Please try again." };
+  }
+}
+
+export async function getSubscriptionTransactionsAction(subscriptionId: number) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  try {
+    const response = await fetch(`${apiBaseURL}/api/horizon/subscriptions/${subscriptionId}/transactions`, {
+      headers: { Cookie: cookieHeader },
+      cache: "no-store",
+    });
+
+    const body = await response.json().catch(() => ([]));
+    if (!response.ok) {
+      return { ok: false, error: "Failed to fetch subscription transactions." };
+    }
+
+    return { ok: true, transactions: body };
+  } catch {
+    return { ok: false, error: "Unable to reach the server." };
   }
 }
 

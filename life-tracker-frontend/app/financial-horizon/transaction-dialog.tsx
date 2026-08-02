@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useId } from "react";
 import { X, Receipt, Wallet, ArrowDownRight, ArrowUpRight } from "lucide-react";
-import { TransactionItem, CategoryItem, BudgetItem } from "../dashboard/financial-horizon-card";
+import { TransactionItem, CategoryItem, BudgetItem, SubscriptionItem } from "../dashboard/financial-horizon-card";
 
 export interface TransactionDialogProps {
   isOpen: boolean;
@@ -15,11 +15,13 @@ export interface TransactionDialogProps {
     transactionDate: string;
     categoryId?: number | null;
     budgetId?: number | null;
+    subscriptionId?: number | null;
     notes?: string | null;
   }) => Promise<void> | void;
   editingTransaction?: TransactionItem | null;
   categories: CategoryItem[];
   budgets: BudgetItem[];
+  subscriptions?: SubscriptionItem[];
   currency: string;
   isPending?: boolean;
 }
@@ -31,6 +33,7 @@ export default function TransactionDialog({
   editingTransaction,
   categories,
   budgets,
+  subscriptions = [],
   currency,
   isPending = false,
 }: TransactionDialogProps) {
@@ -42,6 +45,7 @@ export default function TransactionDialog({
   const [txDate, setTxDate] = useState("");
   const [txCategoryId, setTxCategoryId] = useState<number | null>(null);
   const [txBudgetId, setTxBudgetId] = useState<number | null>(null);
+  const [txSubscriptionId, setTxSubscriptionId] = useState<number | null>(null);
   const [txNotes, setTxNotes] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -59,6 +63,7 @@ export default function TransactionDialog({
       setTxDate(localIso);
       setTxCategoryId(editingTransaction.category_id ?? null);
       setTxBudgetId(editingTransaction.budget_id ?? null);
+      setTxSubscriptionId(editingTransaction.subscription_id ?? null);
       setTxNotes(editingTransaction.notes ?? "");
     } else {
       setTxName("");
@@ -69,6 +74,7 @@ export default function TransactionDialog({
       setTxDate(localIso);
       setTxCategoryId(categories.length > 0 ? categories[0].id : null);
       setTxBudgetId(null);
+      setTxSubscriptionId(null);
       setTxNotes("");
     }
   }, [isOpen, editingTransaction, categories]);
@@ -118,6 +124,7 @@ export default function TransactionDialog({
         transactionDate: isoDate,
         categoryId: txCategoryId,
         budgetId: txBudgetId,
+        subscriptionId: txSubscriptionId,
         notes: txNotes.trim() || null,
       });
     } catch {
@@ -196,7 +203,7 @@ export default function TransactionDialog({
             <input
               type="text"
               required
-              placeholder="e.g. Weekly Grocery Shopping, Coffee, Gasoline"
+              placeholder="e.g. Netflix Monthly Payment, Spotify"
               value={txName}
               onChange={(e) => setTxName(e.target.value)}
               className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -230,13 +237,13 @@ export default function TransactionDialog({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">Category</label>
               <select
                 value={txCategoryId ?? ""}
                 onChange={(e) => setTxCategoryId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -247,16 +254,32 @@ export default function TransactionDialog({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Link to Budget (Optional)</label>
+              <label className="text-xs font-semibold text-muted-foreground">Link to Budget</label>
               <select
                 value={txBudgetId ?? ""}
                 onChange={(e) => setTxBudgetId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">-- Unlinked --</option>
                 {budgets.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.name} ({currency}{b.allocated_amount.toLocaleString()})
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-muted-foreground">Link to Subscription</label>
+              <select
+                value={txSubscriptionId ?? ""}
+                onChange={(e) => setTxSubscriptionId(e.target.value ? parseInt(e.target.value, 10) : null)}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">-- Unlinked --</option>
+                {subscriptions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({currency}{s.amount})
                   </option>
                 ))}
               </select>

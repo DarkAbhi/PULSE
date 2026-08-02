@@ -79,6 +79,11 @@ func (a *API) Router() http.Handler {
 		api.Post("/horizon/transactions/bulk", horizonHandler.BulkCreateTransactions)
 		api.Put("/horizon/transactions/{id}", horizonHandler.UpdateTransaction)
 		api.Delete("/horizon/transactions/{id}", horizonHandler.DeleteTransaction)
+		api.Get("/horizon/subscriptions", horizonHandler.ListSubscriptions)
+		api.Post("/horizon/subscriptions", horizonHandler.CreateSubscription)
+		api.Put("/horizon/subscriptions/{id}", horizonHandler.UpdateSubscription)
+		api.Delete("/horizon/subscriptions/{id}", horizonHandler.DeleteSubscription)
+		api.Get("/horizon/subscriptions/{id}/transactions", horizonHandler.ListSubscriptionTransactions)
 		// Daily logs
 		api.Get("/workout/today", gymHandler.GymVisitedToday)
 		api.Post("/workout/today", gymHandler.AddWorkoutForDay)

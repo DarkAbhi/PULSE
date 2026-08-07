@@ -46,20 +46,21 @@ export default async function DashboardPage() {
   let horizonError = "";
 
   try {
-    const [profileRes, gymRes, notificationsRes, horizonRes] = await Promise.all([
-      fetch(`${apiBaseURL}/api/profile`, {
-        headers: { Cookie: cookieHeader },
-      }),
-      fetch(`${apiBaseURL}/api/workout/today`, {
-        headers: { Cookie: cookieHeader },
-      }),
-      fetch(`${apiBaseURL}/api/notifications?limit=5`, {
-        headers: { Cookie: cookieHeader },
-      }),
-      fetch(`${apiBaseURL}/api/horizon`, {
-        headers: { Cookie: cookieHeader },
-      }),
-    ]);
+    const [profileRes, gymRes, notificationsRes, horizonRes] =
+      await Promise.all([
+        fetch(`${apiBaseURL}/api/profile`, {
+          headers: { Cookie: cookieHeader },
+        }),
+        fetch(`${apiBaseURL}/api/workout/today`, {
+          headers: { Cookie: cookieHeader },
+        }),
+        fetch(`${apiBaseURL}/api/notifications?limit=5`, {
+          headers: { Cookie: cookieHeader },
+        }),
+        fetch(`${apiBaseURL}/api/horizon`, {
+          headers: { Cookie: cookieHeader },
+        }),
+      ]);
 
     if (!profileRes.ok) {
       redirect("/");
@@ -119,7 +120,7 @@ export default async function DashboardPage() {
           </h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <Link
-              className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg"
+              className="rounded-2xl border border-border bg-card p-6 shadow-sm"
               href="/garage"
             >
               <div
@@ -134,24 +135,25 @@ export default async function DashboardPage() {
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Keep the details of your vehicles close at hand.
               </p>
-              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition group-hover:opacity-80">
-                Explore garage{" "}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+                Explore garage <ArrowRight className="h-4 w-4" />
               </span>
             </Link>
 
-            <GymVisitCard initialVisited={gymVisited} initialVisitID={gymVisitID} />
+            <GymVisitCard
+              initialVisited={gymVisited}
+              initialVisitID={gymVisitID}
+            />
 
-            <FinancialHorizonCard summary={horizonSummary} error={horizonError} />
+            <FinancialHorizonCard
+              summary={horizonSummary}
+              error={horizonError}
+            />
           </div>
         </section>
-
-
       </div>
 
-      {needsProfile && (
-        <NamePromptDialog initialDisplayName={displayName} />
-      )}
+      {needsProfile && <NamePromptDialog initialDisplayName={displayName} />}
     </main>
   );
 }

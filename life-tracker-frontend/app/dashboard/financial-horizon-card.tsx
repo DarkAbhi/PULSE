@@ -101,7 +101,7 @@ export default function FinancialHorizonCard({
 }: FinancialHorizonCardProps) {
   if (error || !summary) {
     return (
-      <div className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-200 hover:shadow-md">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
             <Compass className="h-6 w-6" />
@@ -113,24 +113,31 @@ export default function FinancialHorizonCard({
           </div>
         </div>
         <p className="mt-4 text-sm text-muted-foreground">
-          {error ?? "Set up your monthly income and fixed obligations to calculate uncommitted cash flow."}
+          {error ??
+            "Set up your monthly income and fixed obligations to calculate uncommitted cash flow."}
         </p>
         <Link
-          className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition group-hover:opacity-80"
+          className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
           href="/financial-horizon"
         >
-          Set up horizon <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          Set up horizon <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
     );
   }
 
-  const { base_amount, currency, total_deductions, remaining_amount, committed_ratio } = summary;
+  const {
+    base_amount,
+    currency,
+    total_deductions,
+    remaining_amount,
+    committed_ratio,
+  } = summary;
   const isHealthy = remaining_amount >= 0;
   const committedPercent = Math.min(100, Math.max(0, committed_ratio));
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-secondary/30 p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-secondary/30 p-6 shadow-sm">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-inner">
@@ -140,23 +147,35 @@ export default function FinancialHorizonCard({
             <h3 className="text-xl font-semibold text-foreground">
               Financial Horizon
             </h3>
-            <p className="text-xs text-muted-foreground">Uncommitted Monthly Cash Pool</p>
+            <p className="text-xs text-muted-foreground">
+              Uncommitted Monthly Cash Pool
+            </p>
           </div>
         </div>
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 rounded-xl bg-background/60 p-4 backdrop-blur-sm">
         <div>
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Starting Pool</span>
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Starting Pool
+          </span>
           <p className="mt-1 text-lg font-bold text-foreground">
-            {currency}{base_amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            {currency}
+            {base_amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </p>
         </div>
 
         <div>
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Uncommitted</span>
-          <p className={`mt-1 text-lg font-extrabold ${isHealthy ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-            {currency}{remaining_amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Uncommitted
+          </span>
+          <p
+            className={`mt-1 text-lg font-extrabold ${isHealthy ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
+          >
+            {currency}
+            {remaining_amount.toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+            })}
           </p>
         </div>
       </div>
@@ -164,12 +183,21 @@ export default function FinancialHorizonCard({
       <div className="mt-4">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
           <span>Committed ({committedPercent.toFixed(1)}%)</span>
-          <span>Fixed: {currency}{total_deductions.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+          <span>
+            Fixed: {currency}
+            {total_deductions.toLocaleString("en-IN", {
+              minimumFractionDigits: 2,
+            })}
+          </span>
         </div>
         <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
           <div
             className={`h-full transition-all duration-500 rounded-full ${
-              committedPercent > 80 ? "bg-rose-500" : committedPercent > 50 ? "bg-amber-500" : "bg-emerald-500"
+              committedPercent > 80
+                ? "bg-rose-500"
+                : committedPercent > 50
+                  ? "bg-amber-500"
+                  : "bg-emerald-500"
             }`}
             style={{ width: `${committedPercent}%` }}
           />
@@ -177,11 +205,10 @@ export default function FinancialHorizonCard({
       </div>
 
       <Link
-        className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition group-hover:opacity-80"
+        className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
         href="/financial-horizon"
       >
-        View full horizon{" "}
-        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+        View full horizon <ArrowRight className="h-4 w-4" />
       </Link>
     </div>
   );

@@ -55,7 +55,7 @@ export default function GymVisitCard({
   return (
     <>
       <article
-        className="cursor-pointer rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg"
+        className="cursor-pointer rounded-2xl border border-border bg-card p-6 shadow-sm"
         onClick={() => router.push("/gym-visits")}
       >
         <div
@@ -68,7 +68,9 @@ export default function GymVisitCard({
             <Dumbbell className="h-6 w-6" />
           )}
         </div>
-        <h3 className="mt-5 text-xl font-semibold text-foreground">Gym visit</h3>
+        <h3 className="mt-5 text-xl font-semibold text-foreground">
+          Gym visit
+        </h3>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           {gymVisited
             ? "You showed up for yourself today. Wonderful work."

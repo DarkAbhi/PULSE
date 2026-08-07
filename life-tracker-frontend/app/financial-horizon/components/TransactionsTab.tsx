@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { Receipt, Plus, Tag, Search, Edit2, Trash2, Clock, Wallet, FileUp } from "lucide-react";
 import { HorizonSummary, TransactionItem, CategoryItem } from "../../dashboard/financial-horizon-card";
+import type { TransactionPage } from "../actions";
 
 interface TransactionsTabProps {
   summary: HorizonSummary;
   transactions: TransactionItem[];
+  transactionPage: TransactionPage;
   categories: CategoryItem[];
   onOpenAddTransaction: () => void;
   onOpenEditTransaction: (tx: TransactionItem) => void;
@@ -14,11 +16,14 @@ interface TransactionsTabProps {
   onOpenAddCategory: () => void;
   onOpenStatementUpload?: () => void;
   isPending?: boolean;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
 }
 
 export default function TransactionsTab({
   summary,
   transactions,
+  transactionPage,
   categories,
   onOpenAddTransaction,
   onOpenEditTransaction,
@@ -26,6 +31,8 @@ export default function TransactionsTab({
   onOpenAddCategory,
   onOpenStatementUpload,
   isPending = false,
+  onPageChange,
+  onPageSizeChange,
 }: TransactionsTabProps) {
   const [txCategoryFilter, setTxCategoryFilter] = useState<string>("all");
   const [txTypeFilter, setTxTypeFilter] = useState<"all" | "debit" | "credit">("all");
@@ -50,7 +57,7 @@ export default function TransactionsTab({
             <Receipt className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-bold text-foreground">Transaction History</h2>
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              {transactions.length} Logged
+              {transactionPage.total} Logged
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -290,6 +297,41 @@ export default function TransactionsTab({
               </div>
             );
           })}
+
+          {transactionPage.total_pages > 1 && (
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+              <label className="text-xs text-muted-foreground">
+                <span className="sr-only">Transactions per page</span>
+                <select
+                  value={transactionPage.page_size}
+                  onChange={(event) => onPageSizeChange(Number(event.target.value))}
+                  disabled={isPending}
+                  className="rounded-lg border border-border bg-card px-2 py-1.5 text-foreground"
+                >
+                  <option value={10}>10 per page</option>
+                  <option value={25}>25 per page</option>
+                </select>
+              </label>
+              <nav className="flex flex-wrap items-center justify-center gap-2" aria-label="Transaction pages">
+                {Array.from({ length: transactionPage.total_pages }, (_, index) => index + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => onPageChange(page)}
+                  disabled={isPending || page === transactionPage.page}
+                  aria-current={page === transactionPage.page ? "page" : undefined}
+                  className={`min-w-9 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                    page === transactionPage.page
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border bg-card text-foreground hover:bg-secondary"
+                  } disabled:cursor-not-allowed disabled:opacity-60`}
+                >
+                  {page}
+                </button>
+                ))}
+              </nav>
+            </div>
+          )}
         </div>
       )}
     </section>

@@ -42,7 +42,9 @@ import {
   updateSubscriptionAction,
   deleteSubscriptionAction,
   getSubscriptionTransactionsAction,
+  getTransactionsPageAction,
 } from "./actions";
+import type { TransactionPage } from "./actions";
 
 export type NextMonthPurchaseItem = {
   id: number;
@@ -55,12 +57,14 @@ interface FinancialHorizonClientProps {
   initialSummary: HorizonSummary;
   initialPurchases: NextMonthPurchaseItem[];
   initialPurchasesTotal: number;
+  initialTransactionPage: TransactionPage;
 }
 
 export default function FinancialHorizonClient({
   initialSummary,
   initialPurchases,
   initialPurchasesTotal,
+  initialTransactionPage,
 }: FinancialHorizonClientProps) {
   // Navigation & Active Tab State
   const [activeTab, setActiveTab] = useState<HorizonTab>("overview");
@@ -86,9 +90,11 @@ export default function FinancialHorizonClient({
   const [budgetToDelete, setBudgetToDelete] = useState<BudgetItem | null>(null);
   const [deletingBudgetId, setDeletingBudgetId] = useState<number | null>(null);
 
-  // Fixed Deduction Form State
+  // Fixed Deduction Form & Confirmation State
   const [isAddingDeduction, setIsAddingDeduction] = useState(false);
   const [editingDeductionId, setEditingDeductionId] = useState<number | null>(null);
+  const [deductionToDelete, setDeductionToDelete] = useState<DeductionItem | null>(null);
+  const [deletingDeductionId, setDeletingDeductionId] = useState<number | null>(null);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<string>("housing");
@@ -103,7 +109,8 @@ export default function FinancialHorizonClient({
   const [isClearingPurchases, setIsClearingPurchases] = useState(false);
 
   // Transactions & Categories State
-  const [transactions, setTransactions] = useState<TransactionItem[]>(initialSummary.transactions ?? []);
+  const [transactions, setTransactions] = useState<TransactionItem[]>(initialTransactionPage.transactions as TransactionItem[]);
+  const [transactionPage, setTransactionPage] = useState(initialTransactionPage);
   const [categories, setCategories] = useState<CategoryItem[]>(initialSummary.categories ?? []);
 
   // Subscriptions State
@@ -131,11 +138,21 @@ export default function FinancialHorizonClient({
         (sum, s) => sum + (s.monthly_equivalent_amount || s.amount),
         0
       );
-      setSummary((prevSummary) => ({
-        ...prevSummary,
-        total_subscription_burn: newBurn,
-        subscriptions: nextSubs,
-      }));
+      setSummary((prevSummary) => {
+        const totalFixed = prevSummary.total_deductions + newBurn;
+        const remainingAmount = prevSummary.base_amount - totalFixed;
+        const committedRatio =
+          prevSummary.base_amount > 0
+            ? Math.round((totalFixed / prevSummary.base_amount) * 10000) / 100
+            : 0;
+        return {
+          ...prevSummary,
+          total_subscription_burn: newBurn,
+          subscriptions: nextSubs,
+          remaining_amount: remainingAmount,
+          committed_ratio: committedRatio,
+        };
+      });
       return nextSubs;
     });
   };
@@ -175,11 +192,26 @@ export default function FinancialHorizonClient({
   const [errorMsg, setErrorMsg] = useState("");
   const [isPending, startTransition] = useTransition();
 
+  const loadTransactionsPage = (page: number, pageSize = transactionPage.page_size) => {
+    setErrorMsg("");
+    startTransition(async () => {
+      const res = await getTransactionsPageAction(page, pageSize);
+      if (res.ok) {
+        setTransactions(res.data.transactions as TransactionItem[]);
+        setTransactionPage(res.data);
+      } else {
+        setErrorMsg(res.error);
+      }
+    });
+  };
+
   // Calculated Metrics
   const purchasesTotal = purchases.reduce((sum, item) => sum + item.price, 0);
-  const uncommittedPool = summary.base_amount - summary.total_deductions;
+  const subscriptionBurnTotal = summary.total_subscription_burn ?? 0;
+  const totalFixedObligations = summary.total_deductions + subscriptionBurnTotal;
+  const uncommittedPool = summary.base_amount - totalFixedObligations;
   const netRemainingPool = uncommittedPool - purchasesTotal;
-  const totalCommitted = summary.total_deductions + purchasesTotal;
+  const totalCommitted = totalFixedObligations + purchasesTotal;
   const totalCommittedRatio =
     summary.base_amount > 0
       ? Math.round((totalCommitted / summary.base_amount) * 10000) / 100
@@ -209,11 +241,13 @@ export default function FinancialHorizonClient({
         .filter((d) => d.is_active)
         .reduce((sum, d) => sum + d.amount, 0);
 
+      const totalSubscriptionBurn = prev.total_subscription_burn ?? 0;
+      const totalFixedObligations = totalDeductions + totalSubscriptionBurn;
       const totalBudgetsAllocated = newBudgetsList.reduce((sum, b) => sum + b.allocated_amount, 0);
-      const remainingAmount = prev.base_amount - totalDeductions;
+      const remainingAmount = prev.base_amount - totalFixedObligations;
       const committedRatio =
         prev.base_amount > 0
-          ? Math.round((totalDeductions / prev.base_amount) * 10000) / 100
+          ? Math.round((totalFixedObligations / prev.base_amount) * 10000) / 100
           : 0;
 
       // Recalculate budget used amounts from active deductions AND transactions
@@ -455,15 +489,21 @@ export default function FinancialHorizonClient({
     });
   };
 
-  const handleDeleteDeduction = (id: number) => {
+  const handleConfirmDeleteDeduction = () => {
+    if (!deductionToDelete) return;
+    const id = deductionToDelete.id;
+    setDeletingDeductionId(id);
+    setErrorMsg("");
     startTransition(async () => {
       const res = await deleteDeductionAction(id);
+      setDeletingDeductionId(null);
       if (res.ok) {
+        setDeductionToDelete(null);
         recalculateSummary({
           deductionsUpdater: (prev) => prev.filter((d) => d.id !== id),
         });
       } else {
-        setErrorMsg(res.error ?? "Failed to delete item.");
+        setErrorMsg(res.error ?? "Failed to delete obligation.");
       }
     });
   };
@@ -801,7 +841,7 @@ export default function FinancialHorizonClient({
         <TabNavigation
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          transactionsCount={transactions.length}
+          transactionsCount={transactionPage.total}
           subscriptionsCount={subscriptions.filter((s) => s.status === "active").length}
           fixedObligationsCount={summary.deductions.filter((d) => d.is_active).length}
           plannedPurchasesCount={purchases.length}
@@ -826,12 +866,15 @@ export default function FinancialHorizonClient({
           <TransactionsTab
             summary={summary}
             transactions={transactions}
+            transactionPage={transactionPage}
             categories={categories}
             onOpenAddTransaction={handleOpenAddTransaction}
             onOpenEditTransaction={handleOpenEditTransaction}
             onConfirmDeleteTransaction={setTxToDelete}
             onOpenAddCategory={() => setIsCategoryDialogOpen(true)}
             onOpenStatementUpload={() => setIsStatementUploadOpen(true)}
+            onPageChange={loadTransactionsPage}
+            onPageSizeChange={(pageSize) => loadTransactionsPage(1, pageSize)}
             isPending={isPending}
           />
         )}
@@ -854,6 +897,7 @@ export default function FinancialHorizonClient({
         {activeTab === "fixed" && (
           <FixedObligationsTab
             summary={summary}
+            subscriptions={subscriptions}
             activeCategory={activeCategory}
             setActiveCategory={setActiveCategory}
             isAddingDeduction={isAddingDeduction}
@@ -873,7 +917,12 @@ export default function FinancialHorizonClient({
             onCancelDeductionForm={handleCancelDeductionForm}
             onSaveDeduction={handleSaveDeduction}
             onToggleDeductionActive={handleToggleDeductionActive}
-            onDeleteDeduction={handleDeleteDeduction}
+            onDeleteDeduction={setDeductionToDelete}
+            onEditSubscription={(sub) => {
+              setEditingSubscription(sub);
+              setIsSubscriptionDialogOpen(true);
+            }}
+            onNavigateToSubscriptions={() => setActiveTab("subscriptions")}
             isPending={isPending}
           />
         )}
@@ -892,6 +941,20 @@ export default function FinancialHorizonClient({
           />
         )}
       </div>
+
+      {/* Confirmation Dialog for Fixed Obligation Deletion */}
+      <ConfirmationDialog
+        isOpen={!!deductionToDelete}
+        onClose={() => { setDeductionToDelete(null); setErrorMsg(""); }}
+        onConfirm={handleConfirmDeleteDeduction}
+        title={deductionToDelete ? `Delete "${deductionToDelete.name}"?` : ""}
+        description="This will permanently delete this fixed obligation. This action cannot be undone."
+        confirmText="Delete obligation"
+        confirmLoadingText="Deleting…"
+        isLoading={deletingDeductionId !== null}
+        error={errorMsg}
+        variant="destructive"
+      />
 
       {/* Confirmation Dialog for Budget Deletion */}
       <ConfirmationDialog

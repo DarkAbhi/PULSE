@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import FinancialHorizonClient, { NextMonthPurchaseItem } from "./financial-horizon-client";
 import { HorizonSummary } from "../dashboard/financial-horizon-card";
+import type { TransactionPage } from "./actions";
 
 export const metadata = {
   title: "Financial Horizon | Life Tracker",
@@ -29,11 +30,14 @@ export default async function FinancialHorizonPage() {
   }
 
   // Fetch financial horizon details and next month purchases in parallel
-  const [horizonRes, purchasesRes] = await Promise.all([
+  const [horizonRes, purchasesRes, transactionsRes] = await Promise.all([
     fetch(`${apiBaseURL}/api/horizon`, {
       headers: { Cookie: cookieHeader },
     }),
     fetch(`${apiBaseURL}/api/next-month-purchases`, {
+      headers: { Cookie: cookieHeader },
+    }),
+    fetch(`${apiBaseURL}/api/horizon/transactions?page=1&page_size=10`, {
       headers: { Cookie: cookieHeader },
     }),
   ]);
@@ -60,6 +64,9 @@ export default async function FinancialHorizonPage() {
   }
 
   const initialSummary = (await horizonRes.json()) as HorizonSummary;
+  const initialTransactionPage: TransactionPage = transactionsRes.ok
+    ? await transactionsRes.json()
+    : { transactions: [], page: 1, page_size: 10, total: 0, total_pages: 0 };
 
   let initialPurchases: NextMonthPurchaseItem[] = [];
   let initialPurchasesTotal = 0;
@@ -73,6 +80,7 @@ export default async function FinancialHorizonPage() {
   return (
     <FinancialHorizonClient
       initialSummary={initialSummary}
+      initialTransactionPage={initialTransactionPage}
       initialPurchases={initialPurchases}
       initialPurchasesTotal={initialPurchasesTotal}
     />

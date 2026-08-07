@@ -122,10 +122,11 @@ func (h *Handler) fetchHorizonSummary(userID int64) (*HorizonSummaryDTO, error) 
 		}
 	}
 
-	remainingAmount := baseAmount - totalDeductions
+	totalFixedObligations := totalDeductions + totalSubscriptionBurn
+	remainingAmount := baseAmount - totalFixedObligations
 	var committedRatio float64
 	if baseAmount > 0 {
-		committedRatio = math.Round((totalDeductions/baseAmount)*10000) / 100
+		committedRatio = math.Round((totalFixedObligations/baseAmount)*10000) / 100
 	}
 
 	projections := []ProjectionDTO{

@@ -8,6 +8,33 @@ const apiBaseURL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   "http://localhost:8080";
 
+export type TransactionPage = {
+  transactions: unknown[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+};
+
+export async function getTransactionsPageAction(page: number, pageSize: number = 10) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  try {
+    const response = await fetch(
+      `${apiBaseURL}/api/horizon/transactions?page=${page}&page_size=${pageSize}`,
+      { headers: { Cookie: cookieHeader } }
+    );
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { ok: false as const, error: body.error ?? "Failed to load transactions." };
+    }
+    return { ok: true as const, data: body as TransactionPage };
+  } catch {
+    return { ok: false as const, error: "Unable to reach the server. Please try again." };
+  }
+}
+
 export async function updateHorizonConfigAction(baseAmount: number, currency: string = "₹") {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
@@ -628,4 +655,3 @@ export async function getSubscriptionTransactionsAction(subscriptionId: number) 
     return { ok: false, error: "Unable to reach the server." };
   }
 }
-

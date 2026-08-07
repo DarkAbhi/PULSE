@@ -80,10 +80,10 @@ func TestTransactionsCRUDAndBulk(t *testing.T) {
 			t.Fatalf("expected 200 OK, got %d", rec.Code)
 		}
 
-		var transactionsList []TransactionDTO
-		_ = json.NewDecoder(rec.Body).Decode(&transactionsList)
-		if len(transactionsList) != 1 {
-			t.Errorf("expected 1 transaction, got %d", len(transactionsList))
+		var transactionsPage PaginatedTransactionsDTO
+		_ = json.NewDecoder(rec.Body).Decode(&transactionsPage)
+		if len(transactionsPage.Transactions) != 1 || transactionsPage.Total != 1 || transactionsPage.Page != 1 {
+			t.Errorf("unexpected paginated transaction response: %+v", transactionsPage)
 		}
 	}
 
@@ -109,6 +109,23 @@ func TestTransactionsCRUDAndBulk(t *testing.T) {
 		}
 		if bulkTx[0].Type != "debit" || bulkTx[1].Type != "credit" {
 			t.Errorf("unexpected bulk transaction types: %+v", bulkTx)
+		}
+	}
+
+	{
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/api/horizon/transactions?page=2&page_size=2", nil)
+		req.AddCookie(cookie)
+		h.ListTransactions(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK for paginated list, got %d", rec.Code)
+		}
+
+		var transactionsPage PaginatedTransactionsDTO
+		_ = json.NewDecoder(rec.Body).Decode(&transactionsPage)
+		if len(transactionsPage.Transactions) != 1 || transactionsPage.Total != 3 || transactionsPage.Page != 2 || transactionsPage.TotalPages != 2 {
+			t.Errorf("unexpected second page response: %+v", transactionsPage)
 		}
 	}
 

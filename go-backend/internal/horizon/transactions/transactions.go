@@ -46,6 +46,17 @@ type BulkTransactionsInput struct {
 	Items []TransactionInput `json:"items"`
 }
 
+// PaginatedTransactionsDTO is the response returned by the transaction list
+// endpoint. Keeping the pagination details beside the records lets clients
+// render numbered page controls without loading the complete history.
+type PaginatedTransactionsDTO struct {
+	Transactions []TransactionDTO `json:"transactions"`
+	Page         int              `json:"page"`
+	PageSize     int              `json:"page_size"`
+	Total        int              `json:"total"`
+	TotalPages   int              `json:"total_pages"`
+}
+
 type Handler struct {
 	DB *sql.DB
 }
@@ -149,21 +160,119 @@ func (h *Handler) ListTransactions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limitStr := r.URL.Query().Get("limit")
-	limit := 50
-	if limitStr != "" {
-		if parsed, err := strconv.Atoi(limitStr); err == nil && parsed > 0 {
-			limit = parsed
+	page := 1
+	if rawPage := r.URL.Query().Get("page"); rawPage != "" {
+		if parsed, err := strconv.Atoi(rawPage); err == nil && parsed > 0 {
+			page = parsed
 		}
 	}
 
-	transactions, _, err := h.FetchTransactions(user.ID, limit)
+	pageSize := 10
+	if rawPageSize := r.URL.Query().Get("page_size"); rawPageSize != "" {
+		if parsed, err := strconv.Atoi(rawPageSize); err == nil && parsed > 0 {
+			pageSize = parsed
+		}
+	}
+	// Avoid allowing a caller to turn a paginated endpoint back into a full
+	// table scan and response.
+	if pageSize > 100 {
+		pageSize = 100
+	}
+
+	var total int
+	if err := h.DB.QueryRow(`SELECT COUNT(*) FROM financial_horizon_transactions WHERE user_id = $1`, user.ID).Scan(&total); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+
+	totalPages := (total + pageSize - 1) / pageSize
+	if totalPages > 0 && page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * pageSize
+
+	transactions, err := h.fetchTransactionsPage(user.ID, pageSize, offset)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	webutil.WriteJSON(w, http.StatusOK, transactions)
+	webutil.WriteJSON(w, http.StatusOK, PaginatedTransactionsDTO{
+		Transactions: transactions,
+		Page:         page,
+		PageSize:     pageSize,
+		Total:        total,
+		TotalPages:   totalPages,
+	})
+}
+
+func (h *Handler) fetchTransactionsPage(userID int64, limit, offset int) ([]TransactionDTO, error) {
+	query := `
+		SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id, COALESCE(c.name, t.category_name), t.budget_id, b.name, t.subscription_id, s.name, t.notes, t.created_at
+		FROM financial_horizon_transactions t
+		LEFT JOIN financial_horizon_categories c ON t.category_id = c.id
+		LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id
+		LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id
+		WHERE t.user_id = $1
+		ORDER BY t.transaction_date DESC, t.id DESC
+		LIMIT $2 OFFSET $3
+	`
+	rows, err := h.DB.Query(query, userID, limit, offset)
+	if err != nil {
+		fallbackQuery := `
+			SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id, COALESCE(c.name, t.category_name), t.budget_id, b.name, NULL, NULL, t.notes, t.created_at
+			FROM financial_horizon_transactions t
+			LEFT JOIN financial_horizon_categories c ON t.category_id = c.id
+			LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id
+			WHERE t.user_id = $1
+			ORDER BY t.transaction_date DESC, t.id DESC
+			LIMIT $2 OFFSET $3
+		`
+		rows, err = h.DB.Query(fallbackQuery, userID, limit, offset)
+		if err != nil {
+			return nil, err
+		}
+	}
+	defer rows.Close()
+
+	items := make([]TransactionDTO, 0)
+	for rows.Next() {
+		var item TransactionDTO
+		var catID, bID, sID sql.NullInt64
+		var bName, sName, notes sql.NullString
+		if err := rows.Scan(&item.ID, &item.Name, &item.Amount, &item.Type, &item.TransactionDate, &catID, &item.CategoryName, &bID, &bName, &sID, &sName, &notes, &item.CreatedAt); err != nil {
+			return nil, err
+		}
+		if item.Type == "" {
+			item.Type = "debit"
+		}
+		if catID.Valid {
+			id := catID.Int64
+			item.CategoryID = &id
+		}
+		if bID.Valid {
+			id := bID.Int64
+			item.BudgetID = &id
+		}
+		if bName.Valid {
+			item.BudgetName = &bName.String
+		}
+		if sID.Valid {
+			id := sID.Int64
+			item.SubscriptionID = &id
+		}
+		if sName.Valid {
+			item.SubscriptionName = &sName.String
+		}
+		if notes.Valid {
+			item.Notes = &notes.String
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 func (h *Handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {

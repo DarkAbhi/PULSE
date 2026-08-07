@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 import {
   Calendar,
   Plus,
@@ -16,8 +16,9 @@ import {
   CreditCard,
   Receipt,
   X,
+  ExternalLink,
 } from "lucide-react";
-import { HorizonSummary, DeductionItem } from "../../dashboard/financial-horizon-card";
+import { HorizonSummary, DeductionItem, SubscriptionItem } from "../../dashboard/financial-horizon-card";
 
 const CATEGORIES = [
   { id: "housing", label: "Housing & Rent", icon: Home, color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" },
@@ -30,6 +31,7 @@ const CATEGORIES = [
 
 interface FixedObligationsTabProps {
   summary: HorizonSummary;
+  subscriptions?: SubscriptionItem[];
   activeCategory: string;
   setActiveCategory: (cat: string) => void;
   isAddingDeduction: boolean;
@@ -49,12 +51,15 @@ interface FixedObligationsTabProps {
   onCancelDeductionForm: () => void;
   onSaveDeduction: (e: React.FormEvent) => void;
   onToggleDeductionActive: (item: DeductionItem) => void;
-  onDeleteDeduction: (id: number) => void;
+  onDeleteDeduction: (item: DeductionItem) => void;
+  onEditSubscription?: (sub: SubscriptionItem) => void;
+  onNavigateToSubscriptions?: () => void;
   isPending?: boolean;
 }
 
 export default function FixedObligationsTab({
   summary,
+  subscriptions = [],
   activeCategory,
   setActiveCategory,
   isAddingDeduction,
@@ -75,6 +80,8 @@ export default function FixedObligationsTab({
   onSaveDeduction,
   onToggleDeductionActive,
   onDeleteDeduction,
+  onEditSubscription,
+  onNavigateToSubscriptions,
   isPending = false,
 }: FixedObligationsTabProps) {
   const getCategoryConfig = (catKey: string) => {
@@ -88,26 +95,55 @@ export default function FixedObligationsTab({
     );
   };
 
+  // Active subscriptions automatically included in Fixed Obligations view
+  const activeSubscriptions = useMemo(() => {
+    const subs = subscriptions.length > 0 ? subscriptions : summary.subscriptions ?? [];
+    return subs.filter((s) => s.status === "active");
+  }, [subscriptions, summary.subscriptions]);
+
   const filteredDeductions = summary.deductions.filter((d) =>
     activeCategory === "all" ? true : d.category === activeCategory
   );
 
+  const filteredSubscriptions = useMemo(() => {
+    if (activeCategory === "all" || activeCategory === "subscription") {
+      return activeSubscriptions;
+    }
+    return [];
+  }, [activeSubscriptions, activeCategory]);
+
   const activeDeductionsCount = summary.deductions.filter((d) => d.is_active).length;
+  const totalActiveCount = activeDeductionsCount + activeSubscriptions.length;
+
+  const totalDeductionsAmount = summary.deductions
+    .filter((d) => d.is_active)
+    .reduce((sum, d) => sum + d.amount, 0);
+
+  const totalSubscriptionsAmount = activeSubscriptions.reduce(
+    (sum, s) => sum + (s.monthly_equivalent_amount || s.amount),
+    0
+  );
+
+  const totalFixedCommitments = totalDeductionsAmount + totalSubscriptionsAmount;
+  const totalItemsCount = summary.deductions.length + activeSubscriptions.length;
 
   return (
     <section className="space-y-6">
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Calendar className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-bold text-foreground">Fixed Obligations & Subscriptions</h2>
             <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-              {activeDeductionsCount} Active
+              {totalActiveCount} Active
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 px-2.5 py-0.5 text-xs font-semibold text-purple-600 dark:text-purple-400 border border-purple-500/20">
+              {summary.currency}{totalFixedCommitments.toLocaleString("en-IN", { minimumFractionDigits: 2 })}/mo
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Non-negotiable monthly expenses subtracted directly from your starting baseline income.
+            Non-negotiable monthly expenses and active recurring subscriptions subtracted directly from your starting baseline income.
           </p>
         </div>
 
@@ -130,10 +166,12 @@ export default function FixedObligationsTab({
               : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
           }`}
         >
-          All ({summary.deductions.length})
+          All ({totalItemsCount})
         </button>
         {CATEGORIES.map((cat) => {
-          const count = summary.deductions.filter((d) => d.category === cat.id).length;
+          const deductionCount = summary.deductions.filter((d) => d.category === cat.id).length;
+          const subCount = cat.id === "subscription" ? activeSubscriptions.length : 0;
+          const count = deductionCount + subCount;
           return (
             <button
               key={cat.id}
@@ -257,7 +295,7 @@ export default function FixedObligationsTab({
       )}
 
       {/* Cards Grid */}
-      {filteredDeductions.length === 0 ? (
+      {filteredDeductions.length === 0 && filteredSubscriptions.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
           <Receipt className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
           <h3 className="mt-3 text-base font-semibold text-foreground">No fixed obligations found</h3>
@@ -273,6 +311,7 @@ export default function FixedObligationsTab({
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Render Manual Fixed Obligations */}
           {filteredDeductions.map((item) => {
             const catCfg = getCategoryConfig(item.category);
             const IconComponent = catCfg.icon;
@@ -280,7 +319,7 @@ export default function FixedObligationsTab({
 
             return (
               <div
-                key={item.id}
+                key={`deduction-${item.id}`}
                 className={`group relative rounded-2xl border bg-card p-5 shadow-xs transition duration-200 hover:shadow-md ${
                   item.is_active ? "border-border" : "border-border/50 opacity-60 bg-secondary/20"
                 }`}
@@ -346,11 +385,99 @@ export default function FixedObligationsTab({
                     <Edit2 className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => onDeleteDeduction(item.id)}
+                    onClick={() => onDeleteDeduction(item)}
                     className="rounded-lg p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 transition"
                     title="Delete obligation"
                   >
                     <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Render Auto-Included Active Subscriptions */}
+          {filteredSubscriptions.map((sub) => {
+            const monthlyAmount = sub.monthly_equivalent_amount || sub.amount;
+
+            return (
+              <div
+                key={`subscription-${sub.id}`}
+                className="group relative flex flex-col justify-between rounded-2xl border border-purple-500/30 bg-gradient-to-br from-card via-card to-purple-500/5 p-5 shadow-xs transition duration-200 hover:shadow-md hover:border-purple-500/60"
+              >
+                <div>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20">
+                        <Tv className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-foreground text-base leading-tight">
+                          {sub.name}
+                        </h4>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-purple-500/10 px-2 py-0.5 text-xs font-semibold text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                            Subscription
+                          </span>
+                          {sub.billing_cycle === "yearly" && (
+                            <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                              Yearly
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-baseline justify-between">
+                    <div>
+                      <span className="text-xs text-muted-foreground">Monthly Equivalent</span>
+                      <p className="text-xl font-bold text-foreground">
+                        {summary.currency}
+                        {monthlyAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      </p>
+                      {sub.billing_cycle === "yearly" && (
+                        <span className="text-xs text-muted-foreground block mt-0.5">
+                          ({summary.currency}{sub.amount.toLocaleString()}/year)
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-1 rounded-lg border border-purple-500/20">
+                      <Calendar className="h-3 w-3" />
+                      <span>
+                        {sub.billing_cycle === "yearly"
+                          ? `Renews ${new Date(sub.next_renewal_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+                          : `Due ${sub.billing_day ?? 1}st`}
+                      </span>
+                    </div>
+                  </div>
+
+                  {sub.budget_name && (
+                    <div className="mt-3 flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
+                      <Target className="h-3.5 w-3.5" />
+                      <span>Budget: <strong>{sub.budget_name}</strong></span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3 text-xs">
+                  <span className="text-muted-foreground italic truncate max-w-[150px]">
+                    {sub.category_name ?? "Recurring Subscription"}
+                  </span>
+
+                  <button
+                    onClick={() => {
+                      if (onEditSubscription) {
+                        onEditSubscription(sub);
+                      } else if (onNavigateToSubscriptions) {
+                        onNavigateToSubscriptions();
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 rounded-lg bg-purple-500/10 px-2.5 py-1 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition"
+                  >
+                    <span>Manage</span>
+                    <ExternalLink className="h-3 w-3" />
                   </button>
                 </div>
               </div>

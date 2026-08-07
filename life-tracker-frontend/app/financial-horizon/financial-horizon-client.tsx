@@ -627,10 +627,22 @@ export default function FinancialHorizonClient({
     startTransition(async () => {
       const res = await deleteTransactionAction(txToDelete.id);
       if (res.ok) {
-        recalculateSummary({
-          transactionsUpdater: (prev) => prev.filter((t) => t.id !== txToDelete.id),
-        });
         setTxToDelete(null);
+        // Re-fetch the current page so the list refills to the page size
+        // (a pure local filter would leave a gap when more transactions exist)
+        const pageRes = await getTransactionsPageAction(
+          transactionPage.page,
+          transactionPage.page_size
+        );
+        if (pageRes.ok) {
+          setTransactions(pageRes.data.transactions as TransactionItem[]);
+          setTransactionPage(pageRes.data);
+        } else {
+          // Fallback: remove locally if re-fetch fails
+          recalculateSummary({
+            transactionsUpdater: (prev) => prev.filter((t) => t.id !== txToDelete.id),
+          });
+        }
       } else {
         setErrorMsg(res.error ?? "Failed to delete transaction.");
       }

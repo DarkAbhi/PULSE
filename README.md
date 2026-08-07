@@ -6,20 +6,15 @@ Yes, Django is a bit too much at this stage. I do plan to scale this at some poi
 
 ### Setup to run
 
-Create a .env file with the following variables, replace the values inside `{}` with your values.
+Copy `.env.example` to `.env`, then fill in the values:
 
-```
-APP_ENV=production|development
-
-DB_NAME={db_name}
-DB_USERNAME={db_username}
-DB_PASSWORD={db_password}
-DB_HOSTNAME={db_hostname}
-DB_PORT={db_port}
-DB_SSLMODE={db_sslmode}
-
-BOT_API_KEY={telegram_bot_api_key}
-```
+- `APP_ENV`: application environment (`production` or `development`).
+- `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOSTNAME`, `DB_PORT`, and
+  `DB_SSLMODE`: PostgreSQL database connection details.
+- `BOT_API_KEY`: Telegram bot token obtained from BotFather.
+- `NEXT_PUBLIC_GEMINI_API_KEY`: Gemini key used in the browser for statement
+  extraction. It is included in the public frontend bundle, so restrict it by
+  allowed origins and APIs.
 
 Run the production version using
 

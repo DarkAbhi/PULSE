@@ -46,6 +46,8 @@ services:
     build:
       context: ./life-tracker-frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_GEMINI_API_KEY: ${NEXT_PUBLIC_GEMINI_API_KEY}
     container_name: life-web
     depends_on:
       backend:
@@ -55,6 +57,7 @@ services:
       PORT: 3000
       NEXT_PUBLIC_API_BASE_URL: http://backend:8080
       NEXT_PUBLIC_INTERNAL_API_BASE_URL: http://backend:8080
+      NEXT_PUBLIC_GEMINI_API_KEY: ${NEXT_PUBLIC_GEMINI_API_KEY}
     ports:
       - "3000:3000"
     restart: unless-stopped

@@ -1,7 +1,22 @@
 "use client";
 
-import { Target, Plus, Wallet, Edit2, Trash2, Receipt, ArrowRight, ArrowUpRight, Clock } from "lucide-react";
-import { HorizonSummary, BudgetItem, TransactionItem, CategoryItem } from "../../dashboard/financial-horizon-card";
+import {
+  Target,
+  Plus,
+  Wallet,
+  Edit2,
+  Trash2,
+  Receipt,
+  ArrowRight,
+  ArrowUpRight,
+  Clock,
+} from "lucide-react";
+import {
+  HorizonSummary,
+  BudgetItem,
+  TransactionItem,
+  CategoryItem,
+} from "../../dashboard/financial-horizon-card";
 import { HorizonTab } from "./TabNavigation";
 
 interface OverviewTabProps {
@@ -29,8 +44,12 @@ export default function OverviewTab({
 }: OverviewTabProps) {
   const recentTransactions = [...transactions]
     .sort((a, b) => {
-      const dateA = a.transaction_date ? new Date(a.transaction_date).getTime() : 0;
-      const dateB = b.transaction_date ? new Date(b.transaction_date).getTime() : 0;
+      const dateA = a.transaction_date
+        ? new Date(a.transaction_date).getTime()
+        : 0;
+      const dateB = b.transaction_date
+        ? new Date(b.transaction_date).getTime()
+        : 0;
       return dateB - dateA;
     })
     .slice(0, 5);
@@ -43,13 +62,16 @@ export default function OverviewTab({
           <div>
             <div className="flex items-center gap-2">
               <Target className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-bold text-foreground">Active Monthly Budgets</h2>
+              <h2 className="text-xl font-bold text-foreground">
+                Active Monthly Budgets
+              </h2>
               <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
                 1st – End of Month
               </span>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Set monthly spending allocations. Assigning fixed obligations automatically deducts from your available budget balance.
+              Set monthly spending allocations. Assigning fixed obligations
+              automatically deducts from your available budget balance.
             </p>
           </div>
 
@@ -65,9 +87,12 @@ export default function OverviewTab({
         {(summary.budgets ?? []).length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
             <Target className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
-            <h3 className="mt-3 text-base font-semibold text-foreground">No monthly budgets configured</h3>
+            <h3 className="mt-3 text-base font-semibold text-foreground">
+              No monthly budgets configured
+            </h3>
             <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
-              Create monthly budgets (e.g. Housing, Utilities, SIPs) to track allocations and link your fixed obligations.
+              Create monthly budgets (e.g. Housing, Utilities, SIPs) to track
+              allocations and link your fixed obligations.
             </p>
             <button
               onClick={onOpenAddBudget}
@@ -79,14 +104,16 @@ export default function OverviewTab({
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {(summary.budgets ?? []).map((b) => {
-              const linkedDeductions = summary.deductions.filter((d) => d.budget_id === b.id);
+              const linkedDeductions = summary.deductions.filter(
+                (d) => d.budget_id === b.id,
+              );
               const isOverBudget = b.available_amount < 0;
               const pct = Math.min(100, Math.max(0, b.usage_percentage));
 
               return (
                 <div
                   key={b.id}
-                  className="group relative rounded-2xl border border-border bg-card p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-md flex flex-col justify-between"
+                  className="group relative rounded-2xl border border-border bg-card p-5 shadow-sm flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-start justify-between">
@@ -95,9 +122,12 @@ export default function OverviewTab({
                           <Wallet className="h-4 w-4" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-foreground text-base leading-tight">{b.name}</h4>
+                          <h4 className="font-bold text-foreground text-base leading-tight">
+                            {b.name}
+                          </h4>
                           <span className="text-xs text-muted-foreground">
-                            {linkedDeductions.length} linked obligation{linkedDeductions.length === 1 ? "" : "s"}
+                            {linkedDeductions.length} linked obligation
+                            {linkedDeductions.length === 1 ? "" : "s"}
                           </span>
                         </div>
                       </div>
@@ -123,15 +153,25 @@ export default function OverviewTab({
                     {/* Amounts Display */}
                     <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-secondary/30 p-3">
                       <div>
-                        <span className="text-[11px] font-semibold text-muted-foreground uppercase">Allocated</span>
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase">
+                          Allocated
+                        </span>
                         <p className="text-sm font-bold text-foreground mt-0.5">
-                          {summary.currency}{b.allocated_amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          {summary.currency}
+                          {b.allocated_amount.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                          })}
                         </p>
                       </div>
                       <div>
-                        <span className="text-[11px] font-semibold text-muted-foreground uppercase">Committed/Used</span>
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase">
+                          Committed/Used
+                        </span>
                         <p className="text-sm font-bold text-amber-600 dark:text-amber-400 mt-0.5">
-                          {summary.currency}{b.used_amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          {summary.currency}
+                          {b.used_amount.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                          })}
                         </p>
                       </div>
                     </div>
@@ -139,19 +179,30 @@ export default function OverviewTab({
                     {/* Usage Progress Bar */}
                     <div className="mt-4 space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground font-medium">Available Balance</span>
+                        <span className="text-muted-foreground font-medium">
+                          Available Balance
+                        </span>
                         <span
                           className={`font-bold ${
-                            isOverBudget ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
+                            isOverBudget
+                              ? "text-rose-600 dark:text-rose-400"
+                              : "text-emerald-600 dark:text-emerald-400"
                           }`}
                         >
-                          {summary.currency}{b.available_amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          {summary.currency}
+                          {b.available_amount.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                          })}
                         </span>
                       </div>
                       <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
                         <div
                           className={`h-full transition-all duration-500 rounded-full ${
-                            isOverBudget ? "bg-rose-500" : pct > 80 ? "bg-amber-500" : "bg-emerald-500"
+                            isOverBudget
+                              ? "bg-rose-500"
+                              : pct > 80
+                                ? "bg-amber-500"
+                                : "bg-emerald-500"
                           }`}
                           style={{ width: `${pct}%` }}
                         />
@@ -167,14 +218,17 @@ export default function OverviewTab({
                   {/* Linked items chips */}
                   {linkedDeductions.length > 0 && (
                     <div className="mt-4 border-t border-border/50 pt-3">
-                      <span className="text-[11px] font-semibold text-muted-foreground uppercase">Linked Obligations:</span>
+                      <span className="text-[11px] font-semibold text-muted-foreground uppercase">
+                        Linked Obligations:
+                      </span>
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         {linkedDeductions.map((item) => (
                           <span
                             key={item.id}
                             className="inline-flex items-center gap-1 rounded-md bg-background border border-border px-2 py-0.5 text-[11px] font-medium text-foreground"
                           >
-                            {item.name} ({summary.currency}{item.amount})
+                            {item.name} ({summary.currency}
+                            {item.amount})
                           </span>
                         ))}
                       </div>
@@ -192,7 +246,9 @@ export default function OverviewTab({
         <div className="flex items-center justify-between border-b border-border pb-4">
           <div className="flex items-center gap-2">
             <Receipt className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-bold text-foreground">Recent Activity</h2>
+            <h2 className="text-xl font-bold text-foreground">
+              Recent Activity
+            </h2>
           </div>
           <button
             onClick={() => onNavigateTab("transactions")}
@@ -210,7 +266,9 @@ export default function OverviewTab({
         ) : (
           <div className="space-y-3">
             {recentTransactions.map((tx) => {
-              const matchingCat = categories.find((c) => c.id === tx.category_id || c.name === tx.category_name);
+              const matchingCat = categories.find(
+                (c) => c.id === tx.category_id || c.name === tx.category_name,
+              );
               const catColor = matchingCat?.color || "#64748b";
               const isCredit = tx.type === "credit";
               const formattedDate = tx.transaction_date
@@ -234,7 +292,9 @@ export default function OverviewTab({
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-bold text-foreground text-sm truncate">{tx.name}</h4>
+                        <h4 className="font-bold text-foreground text-sm truncate">
+                          {tx.name}
+                        </h4>
                         <span
                           className="inline-flex items-center rounded-full px-2 py-0.2 text-[10px] font-semibold border"
                           style={{
@@ -256,7 +316,10 @@ export default function OverviewTab({
                         </span>
                       </div>
                       <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1" suppressHydrationWarning>
+                        <span
+                          className="flex items-center gap-1"
+                          suppressHydrationWarning
+                        >
                           <Clock className="h-3 w-3" /> {formattedDate}
                         </span>
                       </div>
@@ -265,11 +328,17 @@ export default function OverviewTab({
 
                   <span
                     className={`font-extrabold text-base shrink-0 ${
-                      isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+                      isCredit
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-foreground"
                     }`}
                     suppressHydrationWarning
                   >
-                    {isCredit ? "+" : "-"}{summary.currency}{tx.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    {isCredit ? "+" : "-"}
+                    {summary.currency}
+                    {tx.amount.toLocaleString("en-IN", {
+                      minimumFractionDigits: 2,
+                    })}
                   </span>
                 </div>
               );
@@ -285,9 +354,12 @@ export default function OverviewTab({
             <ArrowUpRight className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-foreground">Future Horizon Projections</h2>
+            <h2 className="text-xl font-bold text-foreground">
+              Future Horizon Projections
+            </h2>
             <p className="text-sm text-muted-foreground">
-              Projected uncommitted cash pool accumulation based on maintaining your baseline uncommitted cash flow.
+              Projected uncommitted cash pool accumulation based on maintaining
+              your baseline uncommitted cash flow.
             </p>
           </div>
         </div>
@@ -311,11 +383,14 @@ export default function OverviewTab({
 
                 <p className="mt-4 text-2xl font-extrabold text-foreground">
                   {summary.currency}
-                  {projectedReserve.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                  {projectedReserve.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                  })}
                 </p>
 
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Estimated net uncommitted reserve pool accumulated over {months} months.
+                  Estimated net uncommitted reserve pool accumulated over{" "}
+                  {months} months.
                 </p>
               </div>
             );

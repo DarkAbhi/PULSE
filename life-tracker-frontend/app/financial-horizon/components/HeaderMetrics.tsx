@@ -5,8 +5,7 @@ import { HorizonSummary } from "../../dashboard/financial-horizon-card";
 
 interface HeaderMetricsProps {
   summary: HorizonSummary;
-  purchasesTotal: number;
-  netRemainingPool: number;
+  uncommittedPool: number;
   totalCommitted: number;
   totalCommittedRatio: number;
   isEditingBase: boolean;
@@ -21,8 +20,7 @@ interface HeaderMetricsProps {
 
 export default function HeaderMetrics({
   summary,
-  purchasesTotal,
-  netRemainingPool,
+  uncommittedPool,
   totalCommitted,
   totalCommittedRatio,
   isEditingBase,
@@ -127,8 +125,12 @@ export default function HeaderMetrics({
           </p>
           <p className="mt-1 text-xs text-muted-foreground flex items-center gap-2">
             <span>Fixed ({summary.currency}{summary.total_deductions.toLocaleString("en-IN")})</span>
-            <span>+</span>
-            <span>Planned ({summary.currency}{purchasesTotal.toLocaleString("en-IN")})</span>
+            {(summary.total_subscription_burn ?? 0) > 0 && (
+              <>
+                <span>+</span>
+                <span>Subscriptions ({summary.currency}{(summary.total_subscription_burn ?? 0).toLocaleString("en-IN")})</span>
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -146,27 +148,27 @@ export default function HeaderMetrics({
           </div>
           <span
             className={`rounded-full px-2.5 py-0.5 text-xs font-bold border ${
-              netRemainingPool >= 0
+              uncommittedPool >= 0
                 ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                 : "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
             }`}
           >
-            {netRemainingPool >= 0 ? "Surplus" : "Deficit"}
+            {uncommittedPool >= 0 ? "Surplus" : "Deficit"}
           </span>
         </div>
         <div className="mt-3">
           <p
             className={`text-2xl font-extrabold tracking-tight ${
-              netRemainingPool >= 0
+              uncommittedPool >= 0
                 ? "text-emerald-600 dark:text-emerald-400"
                 : "text-rose-600 dark:text-rose-400"
             }`}
           >
             {summary.currency}
-            {netRemainingPool.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            {uncommittedPool.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
           </p>
           <p className="mt-1 text-xs text-muted-foreground font-medium">
-            Net available cash remaining after fixed & planned expenses
+            Uncommitted cash remaining after fixed obligations &amp; subscriptions
           </p>
         </div>
       </div>

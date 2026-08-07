@@ -852,10 +852,13 @@ export default function FinancialHorizonClient({
         {/* Header Streamlined KPI Metrics Cards */}
         <HeaderMetrics
           summary={summary}
-          purchasesTotal={purchasesTotal}
-          netRemainingPool={netRemainingPool}
-          totalCommitted={totalCommitted}
-          totalCommittedRatio={totalCommittedRatio}
+          uncommittedPool={uncommittedPool}
+          totalCommitted={totalFixedObligations}
+          totalCommittedRatio={
+            summary.base_amount > 0
+              ? Math.round((totalFixedObligations / summary.base_amount) * 10000) / 100
+              : 0
+          }
           isEditingBase={isEditingBase}
           setIsEditingBase={setIsEditingBase}
           baseInput={baseInput}
@@ -882,7 +885,7 @@ export default function FinancialHorizonClient({
             summary={summary}
             transactions={transactions}
             categories={categories}
-            netRemainingPool={netRemainingPool}
+            uncommittedPool={uncommittedPool}
             onOpenAddBudget={handleOpenAddBudgetForm}
             onOpenEditBudget={handleOpenEditBudgetForm}
             onConfirmDeleteBudget={setBudgetToDelete}
@@ -967,6 +970,7 @@ export default function FinancialHorizonClient({
             summary={summary}
             purchases={purchases}
             purchasesTotal={purchasesTotal}
+            uncommittedPool={uncommittedPool}
             netRemainingPool={netRemainingPool}
             onOpenAddPurchase={() => setIsPlannedPurchaseDialogOpen(true)}
             onConfirmDeletePurchase={setPurchaseToDelete}

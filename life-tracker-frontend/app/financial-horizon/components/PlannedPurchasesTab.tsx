@@ -1,6 +1,6 @@
 "use client";
 
-import { ShoppingBag, Plus, Trash2, ExternalLink } from "lucide-react";
+import { ShoppingBag, Plus, Trash2, ExternalLink, Wallet, TrendingDown } from "lucide-react";
 import { HorizonSummary } from "../../dashboard/financial-horizon-card";
 import { NextMonthPurchaseItem } from "../financial-horizon-client";
 
@@ -8,6 +8,7 @@ interface PlannedPurchasesTabProps {
   summary: HorizonSummary;
   purchases: NextMonthPurchaseItem[];
   purchasesTotal: number;
+  uncommittedPool: number;
   netRemainingPool: number;
   onOpenAddPurchase: () => void;
   onConfirmDeletePurchase: (item: NextMonthPurchaseItem) => void;
@@ -20,6 +21,7 @@ export default function PlannedPurchasesTab({
   summary,
   purchases,
   purchasesTotal,
+  uncommittedPool,
   netRemainingPool,
   onOpenAddPurchase,
   onConfirmDeletePurchase,
@@ -27,8 +29,79 @@ export default function PlannedPurchasesTab({
   isPending = false,
   isClearingPurchases = false,
 }: PlannedPurchasesTabProps) {
+  const hasPurchases = purchases.length > 0;
+
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
+      {/* Pool Impact Summary */}
+      <section className="grid gap-4 sm:grid-cols-2">
+        {/* Pool Before Purchases */}
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Wallet className="h-4 w-4" />
+            </div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Pool Before Purchases
+            </span>
+          </div>
+          <p className="text-2xl font-extrabold text-foreground tracking-tight">
+            {summary.currency}{uncommittedPool.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Uncommitted cash after fixed obligations &amp; subscriptions
+          </p>
+        </div>
+
+        {/* Pool After Purchases */}
+        <div className={`rounded-2xl border p-5 shadow-sm ${
+          !hasPurchases
+            ? "border-border bg-card"
+            : netRemainingPool >= 0
+            ? "border-emerald-500/30 bg-gradient-to-br from-card via-card to-emerald-500/10"
+            : "border-rose-500/30 bg-gradient-to-br from-card via-card to-rose-500/10"
+        }`}>
+          <div className="flex items-center gap-2 mb-3">
+            <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${
+              !hasPurchases
+                ? "bg-muted/40 text-muted-foreground"
+                : netRemainingPool >= 0
+                ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                : "bg-rose-500/20 text-rose-600 dark:text-rose-400"
+            }`}>
+              <TrendingDown className="h-4 w-4" />
+            </div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Pool After Purchases
+            </span>
+            {hasPurchases && (
+              <span className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-bold border ${
+                netRemainingPool >= 0
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                  : "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
+              }`}>
+                {netRemainingPool >= 0 ? "Surplus" : "Deficit"}
+              </span>
+            )}
+          </div>
+          <p className={`text-2xl font-extrabold tracking-tight ${
+            !hasPurchases
+              ? "text-muted-foreground"
+              : netRemainingPool >= 0
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-rose-600 dark:text-rose-400"
+          }`}>
+            {summary.currency}{(hasPurchases ? netRemainingPool : uncommittedPool).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {hasPurchases
+              ? `After deducting ${summary.currency}${purchasesTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })} in planned purchases`
+              : "Add planned purchases below to see the impact"}
+          </p>
+        </div>
+      </section>
+
+      <div className="space-y-10">
       {/* Planned Purchases Section */}
       <section className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
@@ -119,6 +192,7 @@ export default function PlannedPurchasesTab({
           </div>
         )}
       </section>
+      </div>
     </div>
   );
 }

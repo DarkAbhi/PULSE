@@ -23,7 +23,7 @@ interface OverviewTabProps {
   summary: HorizonSummary;
   transactions: TransactionItem[];
   categories: CategoryItem[];
-  netRemainingPool: number;
+  uncommittedPool: number;
   onOpenAddBudget: () => void;
   onOpenEditBudget: (b: BudgetItem) => void;
   onConfirmDeleteBudget: (b: BudgetItem) => void;
@@ -35,7 +35,7 @@ export default function OverviewTab({
   summary,
   transactions,
   categories,
-  netRemainingPool,
+  uncommittedPool,
   onOpenAddBudget,
   onOpenEditBudget,
   onConfirmDeleteBudget,
@@ -358,8 +358,8 @@ export default function OverviewTab({
               Future Horizon Projections
             </h2>
             <p className="text-sm text-muted-foreground">
-              Projected uncommitted cash pool accumulation based on maintaining
-              your baseline uncommitted cash flow.
+            Projected uncommitted cash pool accumulation based on maintaining
+              your baseline uncommitted cash flow (fixed obligations &amp; subscriptions only).
             </p>
           </div>
         </div>
@@ -367,7 +367,7 @@ export default function OverviewTab({
         <div className="mt-6 grid gap-5 sm:grid-cols-3">
           {[3, 6, 12].map((months) => {
             const label = months === 12 ? "1 Year" : `${months} Months`;
-            const projectedReserve = Math.max(0, netRemainingPool * months);
+            const projectedReserve = Math.max(0, uncommittedPool * months);
 
             return (
               <div

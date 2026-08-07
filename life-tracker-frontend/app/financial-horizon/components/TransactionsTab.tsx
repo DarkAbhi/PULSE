@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Receipt, Plus, Tag, Search, Edit2, Trash2, Clock, Wallet, FileUp } from "lucide-react";
 import { HorizonSummary, TransactionItem, CategoryItem } from "../../dashboard/financial-horizon-card";
 import type { TransactionPage } from "../actions";
@@ -18,6 +17,13 @@ interface TransactionsTabProps {
   isPending?: boolean;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
+  // Filter state — owned by parent so filter changes trigger server re-fetches
+  txTypeFilter: "all" | "debit" | "credit";
+  onTxTypeFilterChange: (v: "all" | "debit" | "credit") => void;
+  searchQuery: string;
+  onSearchQueryChange: (v: string) => void;
+  txCategoryFilter: string;
+  onTxCategoryFilterChange: (v: string) => void;
 }
 
 export default function TransactionsTab({
@@ -33,19 +39,17 @@ export default function TransactionsTab({
   isPending = false,
   onPageChange,
   onPageSizeChange,
+  txTypeFilter,
+  onTxTypeFilterChange,
+  searchQuery,
+  onSearchQueryChange,
+  txCategoryFilter,
+  onTxCategoryFilterChange,
 }: TransactionsTabProps) {
-  const [txCategoryFilter, setTxCategoryFilter] = useState<string>("all");
-  const [txTypeFilter, setTxTypeFilter] = useState<"all" | "debit" | "credit">("all");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-
+  // Category filter is still applied client-side (it's not sent to the API)
+  // because categories are metadata on already-fetched records.
   const filteredTransactions = transactions.filter((t) => {
-    const matchesCategory = txCategoryFilter === "all" || t.category_name === txCategoryFilter;
-    const matchesType = txTypeFilter === "all" || (t.type || "debit") === txTypeFilter;
-    const matchesSearch =
-      !searchQuery.trim() ||
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (t.notes && t.notes.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCategory && matchesType && matchesSearch;
+    return txCategoryFilter === "all" || t.category_name === txCategoryFilter;
   });
 
   return (
@@ -98,7 +102,7 @@ export default function TransactionsTab({
           {/* Transaction Type Filter Segment */}
           <div className="inline-flex rounded-xl border border-border bg-secondary/30 p-1 text-xs">
             <button
-              onClick={() => setTxTypeFilter("all")}
+              onClick={() => onTxTypeFilterChange("all")}
               className={`rounded-lg px-2.5 py-1 font-semibold transition ${
                 txTypeFilter === "all"
                   ? "bg-background text-foreground shadow-xs"
@@ -108,7 +112,7 @@ export default function TransactionsTab({
               All Types
             </button>
             <button
-              onClick={() => setTxTypeFilter("debit")}
+              onClick={() => onTxTypeFilterChange("debit")}
               className={`rounded-lg px-2.5 py-1 font-semibold transition ${
                 txTypeFilter === "debit"
                   ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 shadow-xs"
@@ -118,7 +122,7 @@ export default function TransactionsTab({
               Debit
             </button>
             <button
-              onClick={() => setTxTypeFilter("credit")}
+              onClick={() => onTxTypeFilterChange("credit")}
               className={`rounded-lg px-2.5 py-1 font-semibold transition ${
                 txTypeFilter === "credit"
                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-xs"
@@ -132,7 +136,7 @@ export default function TransactionsTab({
           {/* Categories Pill List */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none max-w-full sm:max-w-xl">
             <button
-              onClick={() => setTxCategoryFilter("all")}
+              onClick={() => onTxCategoryFilterChange("all")}
               className={`rounded-xl px-3 py-1.5 text-xs font-medium transition shrink-0 ${
                 txCategoryFilter === "all"
                   ? "bg-primary text-primary-foreground font-semibold shadow-xs"
@@ -147,7 +151,7 @@ export default function TransactionsTab({
               return (
                 <button
                   key={cat.id}
-                  onClick={() => setTxCategoryFilter(isSelected ? "all" : cat.name)}
+                  onClick={() => onTxCategoryFilterChange(isSelected ? "all" : cat.name)}
                   className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs transition border shrink-0 ${
                     isSelected
                       ? "border-primary bg-primary/10 text-primary font-semibold"
@@ -177,7 +181,7 @@ export default function TransactionsTab({
             type="text"
             placeholder="Search transactions..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => onSearchQueryChange(e.target.value)}
             className="w-full rounded-xl border border-border bg-background pl-9 pr-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>

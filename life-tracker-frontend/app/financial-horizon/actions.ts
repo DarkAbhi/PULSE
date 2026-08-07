@@ -16,13 +16,25 @@ export type TransactionPage = {
   total_pages: number;
 };
 
-export async function getTransactionsPageAction(page: number, pageSize: number = 10) {
+export async function getTransactionsPageAction(
+  page: number,
+  pageSize: number = 10,
+  txType?: "debit" | "credit" | "all",
+  search?: string
+) {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
   try {
+    const params = new URLSearchParams({
+      page: String(page),
+      page_size: String(pageSize),
+    });
+    if (txType && txType !== "all") params.set("type", txType);
+    if (search && search.trim()) params.set("search", search.trim());
+
     const response = await fetch(
-      `${apiBaseURL}/api/horizon/transactions?page=${page}&page_size=${pageSize}`,
+      `${apiBaseURL}/api/horizon/transactions?${params.toString()}`,
       { headers: { Cookie: cookieHeader } }
     );
     const body = await response.json().catch(() => ({}));

@@ -1,6 +1,6 @@
 "use client";
 
-import { ShoppingBag, Plus, Trash2, ExternalLink, ArrowUpRight, Sparkles } from "lucide-react";
+import { ShoppingBag, Plus, Trash2, ExternalLink } from "lucide-react";
 import { HorizonSummary } from "../../dashboard/financial-horizon-card";
 import { NextMonthPurchaseItem } from "../financial-horizon-client";
 
@@ -118,73 +118,6 @@ export default function PlannedPurchasesTab({
             ))}
           </div>
         )}
-      </section>
-
-      {/* Detailed Future Horizon Cash Pool Analysis */}
-      <section className="rounded-3xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-8 shadow-sm space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <ArrowUpRight className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-foreground">Future Cash Pool Horizon Analysis</h2>
-            <p className="text-sm text-muted-foreground">
-              Deep dive calculation breakdown of your baseline monthly cash pool reserve across multi-month timelines.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-5 sm:grid-cols-3">
-          {[3, 6, 12].map((months) => {
-            const label = months === 12 ? "1 Year Horizon" : `${months} Months Horizon`;
-            const grossUncommitted = (summary.base_amount - summary.total_deductions) * months;
-            const projectedReserve = Math.max(0, netRemainingPool * months);
-
-            return (
-              <div
-                key={months}
-                className="rounded-2xl border border-border bg-card/80 p-6 shadow-sm backdrop-blur-xs transition duration-200 hover:shadow-md space-y-4"
-              >
-                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <span>{label}</span>
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-600 dark:text-emerald-400 font-bold">
-                    {months} Months
-                  </span>
-                </div>
-
-                <div>
-                  <span className="text-xs text-muted-foreground">Projected Net Reserve</span>
-                  <p className="text-2xl font-extrabold text-foreground mt-0.5">
-                    {summary.currency}
-                    {projectedReserve.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-
-                <div className="border-t border-border/60 pt-3 space-y-1.5 text-xs text-muted-foreground">
-                  <div className="flex justify-between">
-                    <span>Base Uncommitted Pool:</span>
-                    <span className="font-semibold text-foreground">
-                      {summary.currency}{grossUncommitted.toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Planned Purchases Impact:</span>
-                    <span className="font-semibold text-amber-600 dark:text-amber-400">
-                      - {summary.currency}{(purchasesTotal * months).toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="rounded-2xl bg-secondary/40 border border-border p-4 text-xs text-muted-foreground flex items-center gap-3">
-          <Sparkles className="h-5 w-5 text-emerald-500 shrink-0" />
-          <span>
-            Maintaining a positive baseline pool of <strong>{summary.currency}{netRemainingPool.toLocaleString("en-IN")}</strong> each month ensures steady compounding liquidity over the next 12 months.
-          </span>
-        </div>
       </section>
     </div>
   );

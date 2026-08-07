@@ -179,8 +179,30 @@ func (h *Handler) ListTransactions(w http.ResponseWriter, r *http.Request) {
 		pageSize = 100
 	}
 
+	// Optional filters
+	txType := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("type")))
+	if txType != "debit" && txType != "credit" {
+		txType = ""
+	}
+	search := strings.TrimSpace(r.URL.Query().Get("search"))
+
+	// Build a reusable WHERE clause that respects the active filters.
+	// args always starts with userID at $1.
+	countArgs := []interface{}{user.ID}
+	countWhere := "WHERE t.user_id = $1"
+	if txType != "" {
+		countArgs = append(countArgs, txType)
+		countWhere += " AND t.type = $" + strconv.Itoa(len(countArgs))
+	}
+	if search != "" {
+		countArgs = append(countArgs, "%"+strings.ToLower(search)+"%")
+		idx := strconv.Itoa(len(countArgs))
+		countWhere += " AND (LOWER(t.name) LIKE $" + idx + " OR LOWER(t.notes) LIKE $" + idx + ")"
+	}
+
 	var total int
-	if err := h.DB.QueryRow(`SELECT COUNT(*) FROM financial_horizon_transactions WHERE user_id = $1`, user.ID).Scan(&total); err != nil {
+	countQuery := "SELECT COUNT(*) FROM financial_horizon_transactions t " + countWhere
+	if err := h.DB.QueryRow(countQuery, countArgs...).Scan(&total); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
@@ -189,9 +211,12 @@ func (h *Handler) ListTransactions(w http.ResponseWriter, r *http.Request) {
 	if totalPages > 0 && page > totalPages {
 		page = totalPages
 	}
+	if totalPages == 0 {
+		page = 1
+	}
 	offset := (page - 1) * pageSize
 
-	transactions, err := h.fetchTransactionsPage(user.ID, pageSize, offset)
+	transactions, err := h.fetchTransactionsPage(user.ID, pageSize, offset, txType, search)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -206,29 +231,47 @@ func (h *Handler) ListTransactions(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (h *Handler) fetchTransactionsPage(userID int64, limit, offset int) ([]TransactionDTO, error) {
+func (h *Handler) fetchTransactionsPage(userID int64, limit, offset int, txType, search string) ([]TransactionDTO, error) {
+	// Build dynamic WHERE clause to honour optional filters.
+	args := []interface{}{userID}
+	where := "WHERE t.user_id = $1"
+	if txType != "" {
+		args = append(args, txType)
+		where += " AND t.type = $" + strconv.Itoa(len(args))
+	}
+	if search != "" {
+		args = append(args, "%"+strings.ToLower(search)+"%")
+		idx := strconv.Itoa(len(args))
+		where += " AND (LOWER(t.name) LIKE $" + idx + " OR LOWER(t.notes) LIKE $" + idx + ")"
+	}
+	// LIMIT and OFFSET are always the last two positional args.
+	args = append(args, limit, offset)
+	limitIdx := strconv.Itoa(len(args) - 1)
+	offsetIdx := strconv.Itoa(len(args))
+
 	query := `
 		SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id, COALESCE(c.name, t.category_name), t.budget_id, b.name, t.subscription_id, s.name, t.notes, t.created_at
 		FROM financial_horizon_transactions t
 		LEFT JOIN financial_horizon_categories c ON t.category_id = c.id
 		LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id
 		LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id
-		WHERE t.user_id = $1
+		` + where + `
 		ORDER BY t.transaction_date DESC, t.id DESC
-		LIMIT $2 OFFSET $3
+		LIMIT $` + limitIdx + ` OFFSET $` + offsetIdx + `
 	`
-	rows, err := h.DB.Query(query, userID, limit, offset)
+	rows, err := h.DB.Query(query, args...)
 	if err != nil {
+		// Fallback without subscription join (older DB schemas).
 		fallbackQuery := `
 			SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id, COALESCE(c.name, t.category_name), t.budget_id, b.name, NULL, NULL, t.notes, t.created_at
 			FROM financial_horizon_transactions t
 			LEFT JOIN financial_horizon_categories c ON t.category_id = c.id
 			LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id
-			WHERE t.user_id = $1
+			` + where + `
 			ORDER BY t.transaction_date DESC, t.id DESC
-			LIMIT $2 OFFSET $3
+			LIMIT $` + limitIdx + ` OFFSET $` + offsetIdx + `
 		`
-		rows, err = h.DB.Query(fallbackQuery, userID, limit, offset)
+		rows, err = h.DB.Query(fallbackQuery, args...)
 		if err != nil {
 			return nil, err
 		}

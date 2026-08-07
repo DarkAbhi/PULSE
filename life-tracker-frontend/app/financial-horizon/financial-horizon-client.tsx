@@ -113,6 +113,11 @@ export default function FinancialHorizonClient({
   const [transactionPage, setTransactionPage] = useState(initialTransactionPage);
   const [categories, setCategories] = useState<CategoryItem[]>(initialSummary.categories ?? []);
 
+  // Transaction filter state — owned here so re-fetches happen server-side
+  const [txTypeFilter, setTxTypeFilter] = useState<"all" | "debit" | "credit">("all");
+  const [txSearchQuery, setTxSearchQuery] = useState<string>("");
+  const [txCategoryFilter, setTxCategoryFilter] = useState<string>("all");
+
   // Subscriptions State
   const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>(initialSummary.subscriptions ?? []);
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
@@ -192,10 +197,15 @@ export default function FinancialHorizonClient({
   const [errorMsg, setErrorMsg] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  const loadTransactionsPage = (page: number, pageSize = transactionPage.page_size) => {
+  const loadTransactionsPage = (
+    page: number,
+    pageSize = transactionPage.page_size,
+    typeFilter: "all" | "debit" | "credit" = txTypeFilter,
+    search: string = txSearchQuery
+  ) => {
     setErrorMsg("");
     startTransition(async () => {
-      const res = await getTransactionsPageAction(page, pageSize);
+      const res = await getTransactionsPageAction(page, pageSize, typeFilter, search);
       if (res.ok) {
         setTransactions(res.data.transactions as TransactionItem[]);
         setTransactionPage(res.data);
@@ -204,6 +214,12 @@ export default function FinancialHorizonClient({
       }
     });
   };
+
+  // Re-fetch from page 1 whenever type or search filter changes
+  useEffect(() => {
+    loadTransactionsPage(1, transactionPage.page_size, txTypeFilter, txSearchQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [txTypeFilter, txSearchQuery]);
 
   // Calculated Metrics
   const purchasesTotal = purchases.reduce((sum, item) => sum + item.price, 0);
@@ -628,17 +644,18 @@ export default function FinancialHorizonClient({
       const res = await deleteTransactionAction(txToDelete.id);
       if (res.ok) {
         setTxToDelete(null);
-        // Re-fetch the current page so the list refills to the page size
-        // (a pure local filter would leave a gap when more transactions exist)
+        // Re-fetch the current page (with active filters) so the list
+        // refills to the page size instead of leaving a gap.
         const pageRes = await getTransactionsPageAction(
           transactionPage.page,
-          transactionPage.page_size
+          transactionPage.page_size,
+          txTypeFilter,
+          txSearchQuery
         );
         if (pageRes.ok) {
           setTransactions(pageRes.data.transactions as TransactionItem[]);
           setTransactionPage(pageRes.data);
         } else {
-          // Fallback: remove locally if re-fetch fails
           recalculateSummary({
             transactionsUpdater: (prev) => prev.filter((t) => t.id !== txToDelete.id),
           });
@@ -885,9 +902,15 @@ export default function FinancialHorizonClient({
             onConfirmDeleteTransaction={setTxToDelete}
             onOpenAddCategory={() => setIsCategoryDialogOpen(true)}
             onOpenStatementUpload={() => setIsStatementUploadOpen(true)}
-            onPageChange={loadTransactionsPage}
+            onPageChange={(page) => loadTransactionsPage(page)}
             onPageSizeChange={(pageSize) => loadTransactionsPage(1, pageSize)}
             isPending={isPending}
+            txTypeFilter={txTypeFilter}
+            onTxTypeFilterChange={(v) => setTxTypeFilter(v)}
+            searchQuery={txSearchQuery}
+            onSearchQueryChange={(v) => setTxSearchQuery(v)}
+            txCategoryFilter={txCategoryFilter}
+            onTxCategoryFilterChange={(v) => setTxCategoryFilter(v)}
           />
         )}
 

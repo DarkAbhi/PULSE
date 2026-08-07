@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Car, ArrowRight } from "lucide-react";
 import GreetingHeader from "./greeting-header";
 import GymVisitCard from "./gym-visit-card";
-import NotificationCenter from "./notification-center";
+import NotificationDropdown from "./notification-dropdown";
 import NamePromptDialog from "./name-prompt-dialog";
 import FinancialHorizonCard, { HorizonSummary } from "./financial-horizon-card";
 import { AppNotification } from "../components/notification-list";
@@ -42,7 +42,6 @@ export default async function DashboardPage() {
   let gymVisited = false;
   let gymVisitID: number | null = null;
   let notifications: AppNotification[] = [];
-  let notificationsError = "";
   let horizonSummary: HorizonSummary | null = null;
   let horizonError = "";
 
@@ -75,8 +74,6 @@ export default async function DashboardPage() {
 
     if (notificationsRes.ok) {
       notifications = (await notificationsRes.json()) as AppNotification[];
-    } else {
-      notificationsError = "We couldn't load your notifications.";
     }
 
     if (horizonRes.ok) {
@@ -97,17 +94,20 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-6xl">
         <header className="mb-10 flex items-start justify-between gap-4">
           <GreetingHeader username={username} displayName={displayName} />
-          <Link
-            className="group shrink-0 rounded-full border border-border bg-card p-1 shadow-sm transition hover:shadow-md hover:border-primary/50"
-            href="/profile"
-            aria-label="Profile"
-          >
-            <img
-              alt="Profile placeholder"
-              className="h-12 w-12 rounded-full object-cover transition duration-200 group-hover:scale-105"
-              src="/avatar-placeholder.jpg"
-            />
-          </Link>
+          <div className="flex shrink-0 items-center gap-3">
+            <NotificationDropdown initialNotifications={notifications} />
+            <Link
+              className="group rounded-full border border-border bg-card p-1 shadow-sm transition hover:shadow-md hover:border-primary/50"
+              href="/profile"
+              aria-label="Profile"
+            >
+              <img
+                alt="Profile placeholder"
+                className="h-12 w-12 rounded-full object-cover transition duration-200 group-hover:scale-105"
+                src="/avatar-placeholder.jpg"
+              />
+            </Link>
+          </div>
         </header>
 
         <section aria-labelledby="categories-heading">
@@ -149,37 +149,7 @@ export default async function DashboardPage() {
           </div>
         </section>
 
-        <section className="mt-12" aria-labelledby="notifications-heading">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <h2
-                className="text-lg font-semibold text-foreground"
-                id="notifications-heading"
-              >
-                Notification center
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Recent updates from your spaces.
-              </p>
-            </div>
-            <Link
-              className="shrink-0 flex items-center gap-1.5 text-sm font-semibold text-primary transition hover:opacity-85"
-              href="/notifications"
-            >
-              View all <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-          {notificationsError ? (
-            <p
-              className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive"
-              role="alert"
-            >
-              {notificationsError}
-            </p>
-          ) : (
-            <NotificationCenter initialNotifications={notifications} />
-          )}
-        </section>
+
       </div>
 
       {needsProfile && (

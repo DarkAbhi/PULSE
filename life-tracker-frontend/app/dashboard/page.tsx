@@ -111,15 +111,12 @@ export default async function DashboardPage() {
         </header>
 
         <section aria-labelledby="categories-heading">
-          <div className="mb-4 flex items-center justify-between">
-            <h2
-              className="text-lg font-semibold text-foreground"
-              id="categories-heading"
-            >
-              Your spaces
-            </h2>
-            <span className="text-sm text-muted-foreground">More coming soon</span>
-          </div>
+          <h2
+            id="categories-heading"
+            className="mb-4 text-lg font-semibold text-foreground"
+          >
+            Your spaces
+          </h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <Link
               className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg"

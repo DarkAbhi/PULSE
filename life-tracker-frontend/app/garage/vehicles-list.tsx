@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Car } from "lucide-react";
 import { FuelForm, FuelFormItem } from "../components/fuel-form";
 import ConfirmationDialog from "../components/design-system/confirmation-dialog";
+import LocalDate from "../components/local-date";
 import { markAirFillAction, saveFuelAction } from "./actions";
 
 type Vehicle = {
@@ -27,12 +28,12 @@ const localDateTime = () =>
     .toISOString()
     .slice(0, 16);
 
-const airFillFormatter = new Intl.DateTimeFormat("en-IN", {
+const airFillDateOptions: Intl.DateTimeFormatOptions = {
   day: "numeric",
   month: "short",
   hour: "numeric",
   minute: "2-digit",
-});
+};
 
 interface VehiclesListProps {
   vehicles: Vehicle[];
@@ -139,7 +140,7 @@ export default function VehiclesList({
             </h2>
             <p className="mt-4 text-sm text-muted-foreground">
               {latestAirFills[vehicle.id]
-                ? `Air last filled ${airFillFormatter.format(new Date(latestAirFills[vehicle.id]))}`
+                ? <>Air last filled <LocalDate dateString={latestAirFills[vehicle.id]} options={airFillDateOptions} /></>
                 : "No air fill recorded yet."}
             </p>
             <button

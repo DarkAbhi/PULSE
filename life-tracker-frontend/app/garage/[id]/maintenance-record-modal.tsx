@@ -3,10 +3,11 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createMaintenanceRecord, SaveMaintenancePayload, updateMaintenanceRecord } from "./actions";
-import { MaintenanceRecord } from "./types";
+import { MaintenanceAttachment, MaintenanceRecord } from "./types";
 
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
 type Category = (typeof categories)[number];
+const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
 const localDate = (value?: string) =>
   value ? new Date(value).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
@@ -22,8 +23,37 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
   const [notes, setNotes] = useState(record?.notes ?? "");
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [attachments, setAttachments] = useState<MaintenanceAttachment[]>(record?.attachments ?? []);
+  const [isUploading, setIsUploading] = useState(false);
 
   function close() { router.replace(`/garage/${vehicleId}`); }
+
+  async function uploadAttachment(file: File) {
+    if (!record) return;
+    setError("");
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments`, { method: "POST", body: formData, credentials: "include" });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) { setError(body.error ?? "We couldn't upload that file."); return; }
+      setAttachments((current) => [...current, body as MaintenanceAttachment]);
+      router.refresh();
+    } catch { setError("We couldn't reach the server."); }
+    finally { setIsUploading(false); }
+  }
+
+  async function deleteAttachment(attachmentId: number) {
+    if (!record) return;
+    setError("");
+    try {
+      const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments/${attachmentId}`, { method: "DELETE", credentials: "include" });
+      if (!response.ok) { setError("We couldn't delete that file."); return; }
+      setAttachments((current) => current.filter((attachment) => attachment.id !== attachmentId));
+      router.refresh();
+    } catch { setError("We couldn't reach the server."); }
+  }
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -51,6 +81,17 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
         <label className="text-sm font-medium sm:col-span-2">Service centre or provider (optional)<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" maxLength={160} value={provider} onChange={(e) => setProvider(e.target.value)} /></label>
         <label className="text-sm font-medium sm:col-span-2">Notes (optional)<textarea className="mt-1 min-h-24 w-full rounded-lg border border-border bg-background px-3 py-2" value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
       </div>
+      <section className="mt-6 rounded-xl border border-border p-4">
+        <h3 className="font-semibold">Receipts and service bills</h3>
+        {!record ? <p className="mt-1 text-sm text-muted-foreground">Save this record first, then reopen it to attach receipts or bills.</p> : <>
+          <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-border px-3 py-2 text-sm font-semibold text-primary hover:bg-accent">
+            {isUploading ? "Uploading…" : "Upload file"}
+            <input className="sr-only" disabled={isUploading} type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAttachment(file); event.currentTarget.value = ""; }} />
+          </label>
+          <p className="mt-2 text-xs text-muted-foreground">Files are stored privately in your configured S3 bucket. Maximum 10 MB per file.</p>
+          {attachments.length > 0 && <ul className="mt-3 space-y-2">{attachments.map((attachment) => <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm" key={attachment.id}><a className="font-medium text-primary hover:underline" href={`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments/${attachment.id}`}>{attachment.file_name}</a><button className="font-semibold text-destructive hover:opacity-80" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</button></li>)}</ul>}
+        </>}
+      </section>
       {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
       <div className="mt-6 flex gap-3"><button className="flex-1 rounded-lg border border-border px-4 py-3 text-sm font-semibold" disabled={isPending} onClick={close} type="button">Cancel</button><button className="flex-1 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-50" disabled={isPending} type="submit">{isPending ? "Saving…" : "Save record"}</button></div>
     </form>

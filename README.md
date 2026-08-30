@@ -15,6 +15,11 @@ Copy `.env.example` to `.env`, then fill in the values:
 - `NEXT_PUBLIC_GEMINI_API_KEY`: Gemini key used in the browser for statement
   extraction. It is included in the public frontend bundle, so restrict it by
   allowed origins and APIs.
+- Optional Garage receipt storage: set `S3_BUCKET` and `AWS_REGION`, plus
+  standard AWS credentials (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) or
+  run the backend with an IAM role. `S3_ENDPOINT` and `S3_FORCE_PATH_STYLE=true`
+  support S3-compatible storage such as MinIO. These values are backend-only;
+  do not use `NEXT_PUBLIC_` names for credentials.
 
 Run the production version using
 

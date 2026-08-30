@@ -30,14 +30,15 @@ type maintenanceRecordPayload struct {
 }
 
 type maintenanceRecord struct {
-	ID           int64     `json:"id"`
-	Category     string    `json:"category"`
-	Title        string    `json:"title"`
-	Amount       float64   `json:"amount"`
-	OccurredAt   time.Time `json:"occurred_at"`
-	OdometerKM   *float64  `json:"odometer_km"`
-	ProviderName *string   `json:"provider_name"`
-	Notes        *string   `json:"notes"`
+	ID           int64                   `json:"id"`
+	Category     string                  `json:"category"`
+	Title        string                  `json:"title"`
+	Amount       float64                 `json:"amount"`
+	OccurredAt   time.Time               `json:"occurred_at"`
+	OdometerKM   *float64                `json:"odometer_km"`
+	ProviderName *string                 `json:"provider_name"`
+	Notes        *string                 `json:"notes"`
+	Attachments  []maintenanceAttachment `json:"attachments"`
 }
 
 func normalizeMaintenanceRecord(p *maintenanceRecordPayload) error {
@@ -160,6 +161,10 @@ func (h *Handler) DeleteMaintenanceRecord(w http.ResponseWriter, r *http.Request
 	recordID, err := strconv.ParseInt(chi.URLParam(r, "recordID"), 10, 64)
 	if err != nil || recordID <= 0 {
 		webutil.BadRequest(w, "invalid maintenance record id")
+		return
+	}
+	if err := h.deleteMaintenanceAttachmentObjects(r.Context(), recordID, user.ID); err != nil {
+		webutil.ServerError(w, err)
 		return
 	}
 	result, err := h.DB.Exec(`DELETE FROM vehicle_maintenance_records WHERE id=$1 AND vehicle_id=$2 AND user_id=$3`, recordID, vehicleID, user.ID)

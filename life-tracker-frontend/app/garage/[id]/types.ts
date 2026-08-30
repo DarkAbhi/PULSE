@@ -24,4 +24,13 @@ export type MaintenanceRecord = {
   odometer_km: number | null;
   provider_name: string | null;
   notes: string | null;
+  attachments: MaintenanceAttachment[];
+};
+
+export type MaintenanceAttachment = {
+  id: number;
+  file_name: string;
+  content_type: string;
+  size_bytes: number;
+  created_at: string;
 };

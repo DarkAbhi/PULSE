@@ -48,7 +48,8 @@ type fuelFillHistory struct {
 }
 
 type Handler struct {
-	DB *sql.DB
+	DB          *sql.DB
+	attachments *attachmentStorage
 }
 
 func NewHandler(db *sql.DB) *Handler {
@@ -288,6 +289,28 @@ func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		record.OccurredAt = record.OccurredAt.UTC()
+		attachmentRows, err := h.DB.Query(`SELECT id,file_name,content_type,size_bytes,created_at FROM vehicle_maintenance_attachments WHERE maintenance_record_id=$1 AND user_id=$2 ORDER BY created_at ASC`, record.ID, user.ID)
+		if err != nil {
+			webutil.ServerError(w, err)
+			return
+		}
+		record.Attachments = []maintenanceAttachment{}
+		for attachmentRows.Next() {
+			var attachment maintenanceAttachment
+			if err := attachmentRows.Scan(&attachment.ID, &attachment.FileName, &attachment.ContentType, &attachment.SizeBytes, &attachment.CreatedAt); err != nil {
+				attachmentRows.Close()
+				webutil.ServerError(w, err)
+				return
+			}
+			attachment.CreatedAt = attachment.CreatedAt.UTC()
+			record.Attachments = append(record.Attachments, attachment)
+		}
+		if err := attachmentRows.Err(); err != nil {
+			attachmentRows.Close()
+			webutil.ServerError(w, err)
+			return
+		}
+		attachmentRows.Close()
 		maintenance = append(maintenance, record)
 	}
 	if err := maintenanceRows.Err(); err != nil {

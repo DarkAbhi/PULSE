@@ -118,33 +118,32 @@ export default async function DashboardPage() {
           >
             Your spaces
           </h2>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <Link
-              className="rounded-2xl border border-border bg-card p-6 shadow-sm"
-              href="/garage"
-            >
-              <div
-                className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-secondary-foreground"
-                aria-hidden="true"
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.68fr)]">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Link
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm"
+                href="/garage"
               >
-                <Car className="h-6 w-6" />
-              </div>
-              <h3 className="mt-5 text-xl font-semibold text-foreground">
-                Garage
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Keep the details of your vehicles close at hand.
-              </p>
-              <span className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
-                Explore garage <ArrowRight className="h-4 w-4" />
-              </span>
-            </Link>
+                <div className="flex min-w-0 items-center gap-3">
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground"
+                    aria-hidden="true"
+                  >
+                    <Car className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-foreground">Garage</h3>
+                    <p className="truncate text-xs text-muted-foreground">Vehicles & upkeep</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </Link>
 
-            <GymVisitCard
-              initialVisited={gymVisited}
-              initialVisitID={gymVisitID}
-            />
-
+              <GymVisitCard
+                initialVisited={gymVisited}
+                initialVisitID={gymVisitID}
+              />
+            </div>
             <FinancialHorizonCard
               summary={horizonSummary}
               error={horizonError}

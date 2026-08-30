@@ -25,6 +25,29 @@ type SavedExercise = {
   }>;
 };
 
+type GymVisit = {
+  id: number;
+  created_at: string;
+};
+
+const indiaTimeZone = "Asia/Kolkata";
+
+const visitDateFormatter = new Intl.DateTimeFormat("en-IN", {
+  dateStyle: "full",
+  timeZone: indiaTimeZone,
+});
+
+const visitDateKeyFormatter = new Intl.DateTimeFormat("en-CA", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  timeZone: indiaTimeZone,
+});
+
+function isToday(date: Date) {
+  return visitDateKeyFormatter.format(date) === visitDateKeyFormatter.format(new Date());
+}
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
@@ -47,23 +70,40 @@ export default async function GymVisitPage({ params }: PageProps) {
 
   let exercises: SavedExercise[] = [];
   let error = "";
+  let workoutTitle = "Workout";
 
   try {
-    const response = await fetch(
-      `${apiBaseURL}/api/gym-visits/${visitID}/exercises`,
-      {
+    const [exercisesResponse, visitsResponse] = await Promise.all([
+      fetch(`${apiBaseURL}/api/gym-visits/${visitID}/exercises`, {
         headers: {
           Cookie: cookieHeader,
         },
-      }
-    );
-    if (response.status === 404) {
+      }),
+      fetch(`${apiBaseURL}/api/gym-visits`, {
+        headers: {
+          Cookie: cookieHeader,
+        },
+      }),
+    ]);
+    if (exercisesResponse.status === 404) {
       redirect("/dashboard");
     }
-    if (!response.ok) {
+    if (!exercisesResponse.ok) {
       error = "We couldn't load this gym visit. Please try again.";
     } else {
-      exercises = (await response.json()) as SavedExercise[];
+      exercises = (await exercisesResponse.json()) as SavedExercise[];
+    }
+
+    if (visitsResponse.ok) {
+      const visit = ((await visitsResponse.json()) as GymVisit[]).find(
+        ({ id }) => id === Number(visitID)
+      );
+      if (visit) {
+        const visitDate = new Date(visit.created_at);
+        workoutTitle = isToday(visitDate)
+          ? "Today's workout"
+          : visitDateFormatter.format(visitDate);
+      }
     }
   } catch {
     error = "We couldn't reach the server. Please try again.";
@@ -86,7 +126,7 @@ export default async function GymVisitPage({ params }: PageProps) {
             Gym Visit
           </p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Today&apos;s workout
+            {workoutTitle}
           </h1>
           <p className="mt-3 text-base text-muted-foreground">
             Capture what you did, one exercise and set at a time.

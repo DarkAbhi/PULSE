@@ -55,60 +55,65 @@ export default function GymVisitCard({
   return (
     <>
       <article
-        className="cursor-pointer rounded-2xl border border-border bg-card p-6 shadow-sm"
+        className="cursor-pointer rounded-xl border border-border bg-card px-4 py-3 shadow-sm"
         onClick={() => router.push("/gym-visits")}
       >
-        <div
-          className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-secondary-foreground"
-          aria-hidden="true"
-        >
-          {gymVisited ? (
-            <Check className="h-6 w-6 text-emerald-primary" />
-          ) : (
-            <Dumbbell className="h-6 w-6" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground"
+              aria-hidden="true"
+            >
+              {gymVisited ? (
+                <Check className="h-4 w-4 text-emerald-primary" />
+              ) : (
+                <Dumbbell className="h-4 w-4" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-semibold text-foreground">Gym visit</h3>
+              <p className="truncate text-xs text-muted-foreground">
+                {gymVisited ? "Completed today" : "Not logged today"}
+              </p>
+            </div>
+          </div>
+          {gymVisited && (
+            <span className="shrink-0 rounded-full bg-emerald-primary/10 px-2 py-1 text-xs font-semibold text-emerald-primary">
+              Done
+            </span>
           )}
         </div>
-        <h3 className="mt-5 text-xl font-semibold text-foreground">
-          Gym visit
-        </h3>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          {gymVisited
-            ? "You showed up for yourself today. Wonderful work."
-            : "A little movement can make a big difference."}
-        </p>
         {gymError && (
           <p className="mt-3 text-sm text-destructive" role="alert">
             {gymError}
           </p>
         )}
-        <button
-          className="mt-5 w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-          disabled={isMarkingGym}
-          onClick={(event) => {
-            event.stopPropagation();
-            if (gymVisited) {
-              setIsConfirmingAnotherVisit(true);
-              return;
-            }
-            void handleMarkGymVisit();
-          }}
-          type="button"
-        >
-          {isMarkingGym
-            ? "Marking your visit…"
-            : gymVisited
-              ? "Mark another gym visit"
-              : "Mark that I visited the gym today"}
-        </button>
-        {gymVisited && gymVisitID && (
-          <Link
-            className="mt-3 flex items-center justify-center gap-1.5 w-full rounded-lg border border-border px-4 py-3 text-center text-sm font-semibold text-primary transition hover:bg-accent"
-            href={`/gym-visits/${gymVisitID}`}
-            onClick={(event) => event.stopPropagation()}
+        <div className="mt-3 flex items-center gap-3">
+          <button
+            className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+            disabled={isMarkingGym}
+            onClick={(event) => {
+              event.stopPropagation();
+              if (gymVisited) {
+                setIsConfirmingAnotherVisit(true);
+                return;
+              }
+              void handleMarkGymVisit();
+            }}
+            type="button"
           >
-            Log exercises from this visit <ArrowRight className="h-4 w-4" />
-          </Link>
-        )}
+            {isMarkingGym ? "Marking…" : gymVisited ? "Add visit" : "Mark visited"}
+          </button>
+          {gymVisited && gymVisitID && (
+            <Link
+              className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:opacity-80"
+              href={`/gym-visits/${gymVisitID}`}
+              onClick={(event) => event.stopPropagation()}
+            >
+              Log exercises <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
+        </div>
       </article>
 
       <ConfirmationDialog

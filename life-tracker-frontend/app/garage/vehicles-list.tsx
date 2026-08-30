@@ -45,9 +45,8 @@ export default function VehiclesList({
   latestAirFills: initialAirFills,
 }: VehiclesListProps) {
   const router = useRouter();
-  const [latestAirFills, setLatestAirFills] = useState<Record<number, string>>(
-    initialAirFills
-  );
+  const [latestAirFills, setLatestAirFills] =
+    useState<Record<number, string>>(initialAirFills);
   const [pendingAirFillVehicle, setPendingAirFillVehicle] =
     useState<Vehicle | null>(null);
   const [isMarkingAirFill, startMarkingAirFill] = useTransition();
@@ -69,7 +68,9 @@ export default function VehiclesList({
     startMarkingAirFill(async () => {
       const res = await markAirFillAction(pendingAirFillVehicle.id);
       if (!res.ok) {
-        setAirFillError(res.error ?? "We couldn't record the air fill. Please try again.");
+        setAirFillError(
+          res.error ?? "We couldn't record the air fill. Please try again.",
+        );
       } else {
         setLatestAirFills((current) => ({
           ...current,
@@ -125,7 +126,7 @@ export default function VehiclesList({
       >
         {vehicles.map((vehicle) => (
           <article
-            className="cursor-pointer rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            className="cursor-pointer rounded-2xl border border-border bg-card p-6 shadow-sm"
             key={vehicle.id}
             onClick={() => router.push(`/garage/${vehicle.id}`)}
           >
@@ -139,12 +140,20 @@ export default function VehiclesList({
               {vehicle.name}
             </h2>
             <p className="mt-4 text-sm text-muted-foreground">
-              {latestAirFills[vehicle.id]
-                ? <>Air last filled <LocalDate dateString={latestAirFills[vehicle.id]} options={airFillDateOptions} /></>
-                : "No air fill recorded yet."}
+              {latestAirFills[vehicle.id] ? (
+                <>
+                  Air last filled{" "}
+                  <LocalDate
+                    dateString={latestAirFills[vehicle.id]}
+                    options={airFillDateOptions}
+                  />
+                </>
+              ) : (
+                "No air fill recorded yet."
+              )}
             </p>
             <button
-              className="mt-4 w-full rounded-lg border border-border px-4 py-3 text-sm font-semibold text-primary transition hover:bg-accent"
+              className="mt-4 w-full rounded-lg border border-border px-4 py-3 text-sm font-semibold text-primary"
               onClick={(event) => {
                 event.stopPropagation();
                 setAirFillError("");
@@ -155,7 +164,7 @@ export default function VehiclesList({
               Mark air filled now
             </button>
             <button
-              className="mt-3 w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              className="mt-3 w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
               onClick={(event) => {
                 event.stopPropagation();
                 setFuelError("");

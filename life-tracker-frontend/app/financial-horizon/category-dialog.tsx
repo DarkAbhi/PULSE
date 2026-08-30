@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useId } from "react";
 import { X, Tag } from "lucide-react";
+import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
 
 export interface CategoryDialogProps {
   isOpen: boolean;
@@ -66,14 +67,11 @@ export default function CategoryDialog({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-xs transition-opacity duration-200"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-labelledby={titleId}
-      aria-modal="true"
+    <Dialog
+      labelledBy={titleId}
+      onBackdropClick={handleBackdropClick}
+      panelClassName="scale-100 transition-all duration-200 sm:p-6"
     >
-      <div className="w-full max-w-md scale-100 transform rounded-2xl border border-border bg-card p-6 shadow-2xl transition-all duration-200">
         <div className="flex items-center justify-between border-b border-border pb-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -125,25 +123,23 @@ export default function CategoryDialog({
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-            <button
+          <DialogActions className="border-t border-border pt-4">
+            <DialogAction
               type="button"
+              variant="secondary"
               disabled={isPending}
               onClick={onClose}
-              className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-secondary transition disabled:opacity-50"
             >
               Cancel
-            </button>
-            <button
+            </DialogAction>
+            <DialogAction
               type="submit"
               disabled={isPending}
-              className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow hover:opacity-90 transition active:scale-95 disabled:opacity-50"
             >
               {isPending ? "Saving…" : "Save Category"}
-            </button>
-          </div>
+            </DialogAction>
+          </DialogActions>
         </form>
-      </div>
-    </div>
+    </Dialog>
   );
 }

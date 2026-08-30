@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createMaintenanceRecord, SaveMaintenancePayload, updateMaintenanceRecord } from "./actions";
 import { MaintenanceAttachment, MaintenanceRecord } from "./types";
+import Dialog, { DialogAction, DialogActions } from "../../components/design-system/dialog";
 
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
 type Category = (typeof categories)[number];
@@ -68,8 +69,8 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
     });
   }
 
-  return <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-xs sm:p-6" role="dialog" aria-modal="true" aria-labelledby="maintenance-record-title">
-    <form className="w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8" onSubmit={submit}>
+  return <Dialog labelledBy="maintenance-record-title" size="lg" panelClassName="p-6 sm:p-8">
+    <form onSubmit={submit}>
       <h2 className="text-2xl font-bold tracking-tight" id="maintenance-record-title">{record ? "Edit record" : "Add maintenance or expense"}</h2>
       <p className="mt-2 text-sm text-muted-foreground">Keep this vehicle&apos;s costs and maintenance history together.</p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -93,7 +94,7 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
         </>}
       </section>
       {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
-      <div className="mt-6 flex gap-3"><button className="flex-1 rounded-lg border border-border px-4 py-3 text-sm font-semibold" disabled={isPending} onClick={close} type="button">Cancel</button><button className="flex-1 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-50" disabled={isPending} type="submit">{isPending ? "Saving…" : "Save record"}</button></div>
+      <DialogActions><DialogAction variant="secondary" disabled={isPending} onClick={close} type="button">Cancel</DialogAction><DialogAction disabled={isPending} type="submit">{isPending ? "Saving…" : "Save record"}</DialogAction></DialogActions>
     </form>
-  </div>;
+  </Dialog>;
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Lock, Eye, EyeOff, X, CheckCircle2, KeyRound } from "lucide-react";
+import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
 
 interface ChangePasswordDialogProps {
   isOpen: boolean;
@@ -98,13 +99,7 @@ export default function ChangePasswordDialog({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 sm:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="change-password-title"
-    >
-      <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8">
+    <Dialog labelledBy="change-password-title" panelClassName="relative">
         <button
           onClick={handleClose}
           type="button"
@@ -216,27 +211,17 @@ export default function ChangePasswordDialog({
               </div>
             </div>
 
-            <div className="mt-6 flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={isSubmitting}
-                className="rounded-xl border border-border bg-transparent px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted disabled:opacity-50"
-              >
+            <DialogActions>
+              <DialogAction type="button" variant="secondary" onClick={handleClose} disabled={isSubmitting}>
                 Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-50"
-              >
+              </DialogAction>
+              <DialogAction type="submit" disabled={isSubmitting}>
                 <Lock className="h-4 w-4" />
                 <span>{isSubmitting ? "Updating..." : "Save Password"}</span>
-              </button>
-            </div>
+              </DialogAction>
+            </DialogActions>
           </form>
         )}
-      </div>
-    </div>
+    </Dialog>
   );
 }

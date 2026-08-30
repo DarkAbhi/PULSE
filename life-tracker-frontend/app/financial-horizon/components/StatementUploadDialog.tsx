@@ -22,6 +22,7 @@ import {
   StatementTransaction,
 } from "../../../services/credit-card-statement-extractor";
 import { CategoryItem } from "../../dashboard/financial-horizon-card";
+import Dialog from "../../components/design-system/dialog";
 
 interface StatementUploadDialogProps {
   isOpen: boolean;
@@ -219,8 +220,7 @@ export default function StatementUploadDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="relative w-full max-w-3xl rounded-3xl border border-border bg-card shadow-2xl overflow-hidden my-8">
+    <Dialog panelClassName="relative rounded-3xl p-0 overflow-hidden" size="xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-secondary/30">
           <div className="flex items-center gap-2.5">
@@ -565,7 +565,6 @@ export default function StatementUploadDialog({
             </button>
           )}
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 }

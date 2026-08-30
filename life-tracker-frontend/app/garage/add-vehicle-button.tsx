@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { addVehicleAction } from "./actions";
+import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
 
 export default function AddVehicleButton() {
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -39,13 +40,7 @@ export default function AddVehicleButton() {
       </button>
 
       {isAddOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-xs sm:p-6"
-          role="dialog"
-          aria-labelledby="add-vehicle-title"
-          aria-modal="true"
-        >
-          <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8">
+        <Dialog labelledBy="add-vehicle-title">
             <h2
               className="text-2xl font-bold tracking-tight text-foreground"
               id="add-vehicle-title"
@@ -77,26 +72,24 @@ export default function AddVehicleButton() {
                   {error}
                 </p>
               )}
-              <div className="flex gap-3 pt-2">
-                <button
-                  className="flex-1 rounded-lg border border-btn-cancel-border bg-btn-cancel-bg text-btn-cancel-text hover:bg-btn-cancel-hover px-4 py-3 text-sm font-semibold transition"
+              <DialogActions>
+                <DialogAction
+                  variant="secondary"
                   disabled={isPending}
                   onClick={() => setIsAddOpen(false)}
                   type="button"
                 >
                   Cancel
-                </button>
-                <button
-                  className="flex-1 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                </DialogAction>
+                <DialogAction
                   disabled={isPending}
                   type="submit"
                 >
                   {isPending ? "Adding…" : "Add vehicle"}
-                </button>
-              </div>
+                </DialogAction>
+              </DialogActions>
             </form>
-          </section>
-        </div>
+        </Dialog>
       )}
     </>
   );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Compass, X } from "lucide-react";
 
 import ConfirmationDialog from "../components/design-system/confirmation-dialog";
+import Dialog, { DialogAction } from "../components/design-system/dialog";
 import TransactionDialog from "./transaction-dialog";
 import CategoryDialog from "./category-dialog";
 import BudgetDialog from "./budget-dialog";
@@ -1078,8 +1079,7 @@ export default function FinancialHorizonClient({
 
       {/* Subscription Linked Transactions Dialog */}
       {viewingSubTransactions && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-6 shadow-2xl">
+        <Dialog size="wide" panelClassName="p-6 sm:p-6">
             <div className="flex items-center justify-between border-b border-border pb-4">
               <div>
                 <h3 className="text-lg font-bold text-foreground">
@@ -1130,16 +1130,16 @@ export default function FinancialHorizonClient({
               )}
             </div>
 
-            <div className="mt-5 flex justify-end border-t border-border/60 pt-3">
-              <button
+            <div className="mt-5 border-t border-border/60 pt-3">
+              <DialogAction
+                className="w-full"
+                variant="secondary"
                 onClick={() => setViewingSubTransactions(null)}
-                className="rounded-xl border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground"
               >
                 Close
-              </button>
+              </DialogAction>
             </div>
-          </div>
-        </div>
+        </Dialog>
       )}
 
       {/* Transaction Entry Dialog */}

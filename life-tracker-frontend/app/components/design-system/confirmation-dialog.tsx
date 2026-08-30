@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, ReactNode, useId } from "react";
+import Dialog, { DialogAction, DialogActions } from "./dialog";
 
 export interface ConfirmationDialogProps {
   isOpen: boolean;
@@ -51,22 +52,12 @@ export default function ConfirmationDialog({
     }
   };
 
-  // Determine button color classes based on variant
-  const buttonColors = {
-    destructive: "bg-destructive hover:bg-destructive/90 disabled:bg-destructive/50 text-destructive-foreground focus:ring-destructive/20",
-    positive: "bg-emerald-primary hover:bg-emerald-hover disabled:bg-emerald-primary/50 text-white dark:text-stone-950 focus:ring-emerald-ring",
-    amber: "bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-primary-foreground focus:ring-ring/20",
-  };
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay-bg px-6 backdrop-blur-xs transition-opacity duration-300"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-labelledby={titleId}
-      aria-modal="true"
+    <Dialog
+      labelledBy={titleId}
+      onBackdropClick={handleBackdropClick}
+      panelClassName="scale-100 transition-all duration-300 ease-out"
     >
-      <section className="w-full max-w-md scale-100 transform rounded-2xl bg-card border border-border p-8 shadow-2xl transition-all duration-300 ease-out">
         <h2
           className="text-2xl font-bold tracking-tight text-foreground"
           id={titleId}
@@ -83,25 +74,26 @@ export default function ConfirmationDialog({
           </p>
         )}
 
-        <div className="mt-6 flex gap-3">
-          <button
-            className="flex-1 rounded-lg border border-btn-cancel-border bg-btn-cancel-bg px-4 py-3 text-sm font-semibold text-btn-cancel-text transition hover:bg-btn-cancel-hover focus:outline-none focus:ring-4 focus:ring-ring/15 disabled:opacity-50 disabled:cursor-not-allowed"
+        <DialogActions>
+          <DialogAction
+            className="w-full"
+            variant="secondary"
             disabled={isLoading}
             onClick={onClose}
             type="button"
           >
             {cancelText}
-          </button>
-          <button
-            className={`flex-1 rounded-lg px-4 py-3 text-sm font-semibold transition focus:outline-none focus:ring-4 disabled:cursor-not-allowed ${buttonColors[variant]}`}
+          </DialogAction>
+          <DialogAction
+            className="w-full"
+            variant={variant === "destructive" ? "destructive" : "primary"}
             disabled={isLoading}
             onClick={onConfirm}
             type="button"
           >
             {isLoading ? confirmLoadingText ?? "Loading…" : confirmText}
-          </button>
-        </div>
-      </section>
-    </div>
+          </DialogAction>
+        </DialogActions>
+    </Dialog>
   );
 }

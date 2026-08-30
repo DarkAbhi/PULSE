@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { saveNameAction } from "./actions";
+import Dialog, { DialogAction } from "../components/design-system/dialog";
 
 interface NamePromptDialogProps {
   initialDisplayName: string;
@@ -27,13 +28,7 @@ export default function NamePromptDialog({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-xs sm:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="name-dialog-title"
-    >
-      <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8">
+    <Dialog labelledBy="name-dialog-title">
         <h2
           className="text-2xl font-bold tracking-tight text-foreground"
           id="name-dialog-title"
@@ -64,15 +59,14 @@ export default function NamePromptDialog({
               {error}
             </p>
           )}
-          <button
-            className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-muted"
+          <DialogAction
+            className="mt-6 w-full"
             disabled={isPending}
             type="submit"
           >
             {isPending ? "Saving…" : "Continue"}
-          </button>
+          </DialogAction>
         </form>
-      </section>
-    </div>
+    </Dialog>
   );
 }

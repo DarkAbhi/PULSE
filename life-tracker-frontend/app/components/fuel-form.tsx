@@ -1,6 +1,7 @@
 "use client";
 
 import { SubmitEvent } from "react";
+import { DialogAction, DialogActions } from "./design-system/dialog";
 
 export type FuelFormItem = {
   fuelType: string;
@@ -79,7 +80,7 @@ export function FuelForm({
       ))}
       {items.length < 2 && <button className="text-sm font-semibold text-primary" onClick={() => onItemsChange([...items, newFuelItem()])} type="button">+ Add second fuel tank</button>}
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
-      <div className="flex gap-3"><button className="flex-1 rounded-lg border border-btn-cancel-border bg-btn-cancel-bg text-btn-cancel-text hover:bg-btn-cancel-hover px-4 py-3 text-sm font-semibold" disabled={isSaving} onClick={onCancel} type="button">Cancel</button><button className="flex-1 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground px-4 py-3 text-sm font-semibold" disabled={isSaving} type="submit">{isSaving ? savingLabel : submitLabel}</button></div>
+      <DialogActions><DialogAction variant="secondary" disabled={isSaving} onClick={onCancel} type="button">Cancel</DialogAction><DialogAction disabled={isSaving} type="submit">{isSaving ? savingLabel : submitLabel}</DialogAction></DialogActions>
     </form>
   );
 }

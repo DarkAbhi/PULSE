@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, CreditCard, Calendar, AlertCircle } from "lucide-react";
 import { SubscriptionItem, BudgetItem, CategoryItem } from "../dashboard/financial-horizon-card";
+import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
 
 interface SubscriptionDialogProps {
   isOpen: boolean;
@@ -142,8 +143,7 @@ export default function SubscriptionDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-border/80 bg-card p-6 shadow-2xl transition-all">
+    <Dialog panelClassName="border-border/80 p-6 sm:p-6 transition-all" size="md">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border/60 pb-4">
           <div className="flex items-center gap-2.5">
@@ -327,24 +327,22 @@ export default function SubscriptionDialog({
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border/60">
-            <button
+          <DialogActions className="border-t border-border/60 pt-3">
+            <DialogAction
               type="button"
+              variant="secondary"
               onClick={onClose}
-              className="rounded-xl border border-border/80 px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground transition"
             >
               Cancel
-            </button>
-            <button
+            </DialogAction>
+            <DialogAction
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:opacity-90 disabled:opacity-50 transition"
             >
               {isSubmitting ? "Saving..." : editingSubscription ? "Save Changes" : "Add Subscription"}
-            </button>
-          </div>
+            </DialogAction>
+          </DialogActions>
         </form>
-      </div>
-    </div>
+    </Dialog>
   );
 }

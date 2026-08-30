@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Car } from "lucide-react";
 import { FuelForm, FuelFormItem } from "../components/fuel-form";
 import ConfirmationDialog from "../components/design-system/confirmation-dialog";
+import Dialog from "../components/design-system/dialog";
 import LocalDate from "../components/local-date";
 import { markAirFillAction, saveFuelAction } from "./actions";
 
@@ -196,13 +197,7 @@ export default function VehiclesList({
       />
 
       {fuelVehicle && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-xs sm:p-6"
-          role="dialog"
-          aria-labelledby="fuel-title"
-          aria-modal="true"
-        >
-          <section className="w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8">
+        <Dialog labelledBy="fuel-title" size="lg">
             <h2
               className="text-2xl font-bold tracking-tight text-foreground"
               id="fuel-title"
@@ -231,8 +226,7 @@ export default function VehiclesList({
               stationName={stationName}
               submitLabel="Save fuel entry"
             />
-          </section>
-        </div>
+        </Dialog>
       )}
     </>
   );

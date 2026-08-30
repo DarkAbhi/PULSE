@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FuelForm, FuelFormItem } from "../../components/fuel-form";
 import { FuelFill, FuelItem } from "./types";
 import { saveFuelFill } from "./actions";
+import Dialog from "../../components/design-system/dialog";
 
 interface EditFuelModalProps {
   vehicleId: string;
@@ -78,13 +79,7 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
 
   return (
     <>
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-xs sm:p-6"
-        role="dialog"
-        aria-labelledby="fuel-title"
-        aria-modal="true"
-      >
-        <section className="w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8">
+      <Dialog labelledBy="fuel-title" size="lg">
           <h2
             className="text-2xl font-bold tracking-tight text-foreground"
             id="fuel-title"
@@ -113,8 +108,7 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
             stationName={station}
             submitLabel="Save changes"
           />
-        </section>
-      </div>
+      </Dialog>
 
       {/* Error Toast Notification */}
       {toastError && (

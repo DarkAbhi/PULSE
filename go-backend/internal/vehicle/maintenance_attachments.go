@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"io"
 	"mime"
 	"net/http"
 	"os"
@@ -127,7 +126,14 @@ func (h *Handler) CreateMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 		return
 	}
 	key := fmt.Sprintf("garage/user-%d/vehicle-%d/maintenance-%d/%s-%s", user.ID, vehicleID, recordID, uuid.NewString(), fileName)
-	_, err = store.client.PutObject(r.Context(), &s3.PutObjectInput{Bucket: aws.String(store.bucket), Key: aws.String(key), Body: io.LimitReader(file, maxMaintenanceAttachmentBytes+1), ContentType: aws.String(contentType), ContentDisposition: aws.String("attachment; filename=\"" + fileName + "\"")})
+	_, err = store.client.PutObject(r.Context(), &s3.PutObjectInput{
+		Bucket:             aws.String(store.bucket),
+		Key:                aws.String(key),
+		Body:               file,
+		ContentLength:      aws.Int64(header.Size),
+		ContentType:        aws.String(contentType),
+		ContentDisposition: aws.String("attachment; filename=\"" + fileName + "\""),
+	})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return

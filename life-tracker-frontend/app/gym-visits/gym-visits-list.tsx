@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Dumbbell, ArrowRight } from "lucide-react";
 
 export type GymVisit = {
@@ -23,14 +23,16 @@ const timeFormatter = new Intl.DateTimeFormat("en-IN", {
 });
 
 export default function GymVisitsList({ visits }: GymVisitsListProps) {
-  const visitsByDate = useMemo(() => {
+  const [visitsByDate, setVisitsByDate] = useState<[string, GymVisit[]][]>([]);
+
+  useEffect(() => {
     const grouped = new Map<string, GymVisit[]>();
     for (const visit of visits) {
       const date = new Date(visit.created_at);
       const dateLabel = dateFormatter.format(date);
       grouped.set(dateLabel, [...(grouped.get(dateLabel) ?? []), visit]);
     }
-    return [...grouped.entries()];
+    setVisitsByDate([...grouped.entries()]);
   }, [visits]);
 
   return (

@@ -1,11 +1,13 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { AirFill, FuelFill } from "./types";
+import { AirFill, FuelFill, MaintenanceRecord } from "./types";
 import DeleteButton from "./delete-button";
 import EditFuelModal from "./edit-fuel-modal";
+import MaintenanceRecordModal from "./maintenance-record-modal";
+import MaintenanceRecordActions from "./maintenance-record-actions";
 import LocalDate from "../../components/local-date";
-import { ArrowLeft, Fuel, Gauge, Wind } from "lucide-react";
+import { ArrowLeft, Fuel, Gauge, Plus, ReceiptText, Wind } from "lucide-react";
 
 const apiBaseURL =
   process.env.NEXT_PUBLIC_INTERNAL_API_BASE_URL ??
@@ -14,12 +16,12 @@ const apiBaseURL =
 
 interface PageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ edit?: string }>;
+  searchParams: Promise<{ edit?: string; maintenance?: string; "edit-maintenance"?: string }>;
 }
 
 export default async function VehiclePage({ params, searchParams }: PageProps) {
   const { id } = await params;
-  const { edit } = await searchParams;
+  const { edit, maintenance, "edit-maintenance": editMaintenance } = await searchParams;
   
   // Forward cookies from incoming request to backend for auth/session validation
   const cookieStore = await cookies();
@@ -62,6 +64,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
     vehicle_name: string;
     air_fills: AirFill[];
     fuel_fillups: FuelFill[];
+    maintenance_records: MaintenanceRecord[];
     average_mileage_km_per_litre: Record<string, number>;
   };
 
@@ -69,6 +72,9 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
 
   const editingFill = edit
     ? data.fuel_fillups.find((fill) => fill.id === Number(edit))
+    : null;
+  const editingMaintenanceRecord = editMaintenance
+    ? data.maintenance_records.find((record) => record.id === Number(editMaintenance))
     : null;
 
   return (
@@ -176,8 +182,37 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
             </div>
           </section>
         </div>
+        <section className="mt-8">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-xl font-semibold">
+              <ReceiptText className="h-5 w-5 text-primary" /> Maintenance & expenses
+            </h2>
+            <Link className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90" href={`/garage/${id}?maintenance=new`}>
+              <Plus className="h-4 w-4" /> Add record
+            </Link>
+          </div>
+          <div className="mt-4 space-y-3">
+            {data.maintenance_records.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">No maintenance or expense records yet.</p>
+            ) : data.maintenance_records.map((record) => (
+              <article className="rounded-2xl border border-border bg-card p-5 shadow-sm" key={record.id}>
+                <div className="flex flex-wrap justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{record.title}</p>
+                    <p className="mt-1 text-sm text-muted-foreground"><span className="capitalize">{record.category}</span> · <LocalDate dateString={record.occurred_at} />{record.odometer_km != null ? ` · ${record.odometer_km} km` : ""}</p>
+                  </div>
+                  <div className="flex items-start gap-4"><p className="font-semibold">₹{record.amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p><MaintenanceRecordActions vehicleId={id} recordId={record.id} /></div>
+                </div>
+                {record.provider_name && <p className="mt-2 text-sm text-muted-foreground">{record.provider_name}</p>}
+                {record.notes && <p className="mt-2 text-sm text-muted-foreground">{record.notes}</p>}
+              </article>
+            ))}
+          </div>
+        </section>
       </div>
       {editingFill && <EditFuelModal vehicleId={id} fill={editingFill} />}
+      {maintenance === "new" && <MaintenanceRecordModal vehicleId={id} />}
+      {editingMaintenanceRecord && <MaintenanceRecordModal vehicleId={id} record={editingMaintenanceRecord} />}
     </main>
   );
 }

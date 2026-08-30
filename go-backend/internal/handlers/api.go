@@ -107,9 +107,12 @@ func (a *API) Router() http.Handler {
 			v.Post("/air-fills", vehicleHandler.CreateVehicleAirFill)
 			v.Post("/fuel-fillups", vehicleHandler.CreateFuelFillup)
 			v.Put("/fuel-fillups/{fillupID}", vehicleHandler.UpdateFuelFillup)
+			v.Post("/maintenance-records", vehicleHandler.CreateMaintenanceRecord)
+			v.Put("/maintenance-records/{recordID}", vehicleHandler.UpdateMaintenanceRecord)
 			v.Get("/history", vehicleHandler.VehicleHistory)
 			v.Delete("/air-fills/{airFillID}", vehicleHandler.DeleteVehicleAirFill)
 			v.Delete("/fuel-fillups/{fillupID}", vehicleHandler.DeleteFuelFillup)
+			v.Delete("/maintenance-records/{recordID}", vehicleHandler.DeleteMaintenanceRecord)
 		})
 	})
 

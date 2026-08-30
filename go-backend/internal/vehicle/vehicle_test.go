@@ -448,3 +448,73 @@ func TestVehicleHistoryAndDeleteLogs(t *testing.T) {
 		}
 	}
 }
+
+func TestMaintenanceRecords(t *testing.T) {
+	db, shutdown := testhelper.StartPostgres(t)
+	defer shutdown()
+	h := NewHandler(db)
+	cookie := loginUser(t, db)
+
+	var vehicleID int64
+	if err := db.QueryRow(`INSERT INTO vehicles (name) VALUES ('Honda City') RETURNING id`).Scan(&vehicleID); err != nil {
+		t.Fatalf("failed to seed vehicle: %v", err)
+	}
+
+	request := func(method, path string, body []byte, recordID int64) (*httptest.ResponseRecorder, *http.Request) {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(method, path, bytes.NewReader(body))
+		req.AddCookie(cookie)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
+		if recordID != 0 {
+			rctx.URLParams.Add("recordID", strconv.FormatInt(recordID, 10))
+		}
+		return rec, req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+	}
+
+	payload, _ := json.Marshal(maintenanceRecordPayload{Category: "service", Title: "Annual service", Amount: 4500, OdometerKM: floatPtr(42000)})
+	rec, req := request(http.MethodPost, "/vehicles/{id}/maintenance-records", payload, 0)
+	h.CreateMaintenanceRecord(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var created maintenanceRecord
+	if err := json.NewDecoder(rec.Body).Decode(&created); err != nil {
+		t.Fatalf("decode created record: %v", err)
+	}
+	if created.Category != "service" || created.Amount != 4500 || created.OdometerKM == nil || *created.OdometerKM != 42000 {
+		t.Fatalf("unexpected created record: %+v", created)
+	}
+
+	updatedPayload, _ := json.Marshal(maintenanceRecordPayload{Category: "repair", Title: "Brake-pad repair", Amount: 5200})
+	rec, req = request(http.MethodPut, "/vehicles/{id}/maintenance-records/{recordID}", updatedPayload, created.ID)
+	h.UpdateMaintenanceRecord(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var updated maintenanceRecord
+	_ = json.NewDecoder(rec.Body).Decode(&updated)
+	if updated.Category != "repair" || updated.Title != "Brake-pad repair" || updated.Amount != 5200 {
+		t.Fatalf("unexpected updated record: %+v", updated)
+	}
+
+	rec, req = request(http.MethodGet, "/vehicles/{id}/history", nil, 0)
+	h.VehicleHistory(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected history to load, got %d", rec.Code)
+	}
+	var history map[string]any
+	_ = json.NewDecoder(rec.Body).Decode(&history)
+	records := history["maintenance_records"].([]any)
+	if len(records) != 1 {
+		t.Fatalf("expected one maintenance record in history, got %v", records)
+	}
+
+	rec, req = request(http.MethodDelete, "/vehicles/{id}/maintenance-records/{recordID}", nil, created.ID)
+	h.DeleteMaintenanceRecord(rec, req)
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", rec.Code)
+	}
+}
+
+func floatPtr(value float64) *float64 { return &value }

@@ -19,6 +19,16 @@ export interface SaveFuelPayload {
   }[];
 }
 
+export interface SaveMaintenancePayload {
+  category: "service" | "repair" | "insurance" | "washing" | "tyres";
+  title: string;
+  amount: number;
+  occurred_at: string;
+  odometer_km: number | null;
+  provider_name: string | null;
+  notes: string | null;
+}
+
 async function getAuthHeader() {
   const cookieStore = await cookies();
   return {
@@ -79,6 +89,44 @@ export async function saveFuelFill(vehicleId: string, fuelFillId: number, payloa
     revalidatePath(`/garage/${vehicleId}`);
     return { ok: true };
   } catch (err) {
+    return { ok: false, error: "We couldn't reach the server." };
+  }
+}
+
+export async function createMaintenanceRecord(vehicleId: string, payload: SaveMaintenancePayload) {
+  return saveMaintenanceRecord(vehicleId, payload, "POST");
+}
+
+export async function updateMaintenanceRecord(vehicleId: string, recordId: number, payload: SaveMaintenancePayload) {
+  return saveMaintenanceRecord(vehicleId, payload, "PUT", recordId);
+}
+
+async function saveMaintenanceRecord(vehicleId: string, payload: SaveMaintenancePayload, method: "POST" | "PUT", recordId?: number) {
+  try {
+    const headers = await getAuthHeader();
+    const suffix = recordId ? `/${recordId}` : "";
+    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records${suffix}`, {
+      method,
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: body.error ?? "We couldn't save that record." };
+    revalidatePath(`/garage/${vehicleId}`);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "We couldn't reach the server." };
+  }
+}
+
+export async function deleteMaintenanceRecord(vehicleId: string, recordId: number) {
+  try {
+    const headers = await getAuthHeader();
+    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${recordId}`, { method: "DELETE", headers });
+    if (!response.ok) return { ok: false, error: "We couldn't delete that record." };
+    revalidatePath(`/garage/${vehicleId}`);
+    return { ok: true };
+  } catch {
     return { ok: false, error: "We couldn't reach the server." };
   }
 }

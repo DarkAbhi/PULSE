@@ -274,7 +274,27 @@ func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
 		rows.Close()
 		fuels = append(fuels, fill)
 	}
-	webutil.WriteJSON(w, http.StatusOK, map[string]any{"vehicle_name": vehicleName, "air_fills": air, "fuel_fillups": fuels, "average_mileage_km_per_litre": h.averageFuelEconomies(vehicleID, user.ID)})
+	maintenanceRows, err := h.DB.Query(`SELECT id,category,title,amount,occurred_at,odometer_km,provider_name,notes FROM vehicle_maintenance_records WHERE vehicle_id=$1 AND user_id=$2 ORDER BY occurred_at DESC,id DESC`, vehicleID, user.ID)
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	defer maintenanceRows.Close()
+	maintenance := make([]maintenanceRecord, 0)
+	for maintenanceRows.Next() {
+		var record maintenanceRecord
+		if err := maintenanceRows.Scan(&record.ID, &record.Category, &record.Title, &record.Amount, &record.OccurredAt, &record.OdometerKM, &record.ProviderName, &record.Notes); err != nil {
+			webutil.ServerError(w, err)
+			return
+		}
+		record.OccurredAt = record.OccurredAt.UTC()
+		maintenance = append(maintenance, record)
+	}
+	if err := maintenanceRows.Err(); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	webutil.WriteJSON(w, http.StatusOK, map[string]any{"vehicle_name": vehicleName, "air_fills": air, "fuel_fillups": fuels, "maintenance_records": maintenance, "average_mileage_km_per_litre": h.averageFuelEconomies(vehicleID, user.ID)})
 }
 
 // DeleteVehicleAirFill deletes an air fill record.

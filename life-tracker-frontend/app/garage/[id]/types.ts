@@ -14,3 +14,14 @@ export type FuelFill = {
   notes: string | null;
   items: FuelItem[];
 };
+
+export type MaintenanceRecord = {
+  id: number;
+  category: "service" | "repair" | "insurance" | "washing" | "tyres";
+  title: string;
+  amount: number;
+  occurred_at: string;
+  odometer_km: number | null;
+  provider_name: string | null;
+  notes: string | null;
+};

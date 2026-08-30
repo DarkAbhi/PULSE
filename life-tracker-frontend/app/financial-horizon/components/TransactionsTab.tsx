@@ -60,9 +60,6 @@ export default function TransactionsTab({
           <div className="flex items-center gap-2">
             <Receipt className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-bold text-foreground">Transaction History</h2>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-              {transactionPage.total} Logged
-            </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             Log day-to-day transaction records with date & time, category, type (debit/credit), and optional budget allocations.

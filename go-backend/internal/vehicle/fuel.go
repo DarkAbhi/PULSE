@@ -250,3 +250,78 @@ func (h *Handler) latestFuelEconomy(vehicleID int64, fuelType string) *float64 {
 	}
 	return latest
 }
+
+type fuelMileageEntry struct {
+	FuelType   string
+	FillType   string
+	OdometerKM float64
+	Quantity   float64
+}
+
+// calculateAverageFuelEconomies returns the weighted average fuel economy for
+// each fuel type. Entries must be supplied in chronological order. It only uses
+// complete full-tank-to-full-tank intervals; partial fills between those two
+// readings are included, while missed fills reset the calculation because their
+// fuel use is unknown.
+func calculateAverageFuelEconomies(entries []fuelMileageEntry) map[string]float64 {
+	type totals struct {
+		distance float64
+		quantity float64
+	}
+
+	previousFull := map[string]*float64{}
+	accumulated := map[string]float64{}
+	totalsByFuel := map[string]totals{}
+	for _, entry := range entries {
+		if entry.FillType == "missed" {
+			previousFull[entry.FuelType] = nil
+			accumulated[entry.FuelType] = 0
+			continue
+		}
+		if entry.FillType == "partial" {
+			if previousFull[entry.FuelType] != nil {
+				accumulated[entry.FuelType] += entry.Quantity
+			}
+			continue
+		}
+
+		if previous := previousFull[entry.FuelType]; previous != nil && entry.OdometerKM > *previous {
+			total := totalsByFuel[entry.FuelType]
+			total.distance += entry.OdometerKM - *previous
+			total.quantity += accumulated[entry.FuelType] + entry.Quantity
+			totalsByFuel[entry.FuelType] = total
+		}
+		value := entry.OdometerKM
+		previousFull[entry.FuelType] = &value
+		accumulated[entry.FuelType] = 0
+	}
+
+	averages := map[string]float64{}
+	for fuelType, total := range totalsByFuel {
+		if total.quantity > 0 {
+			averages[fuelType] = total.distance / total.quantity
+		}
+	}
+	return averages
+}
+
+func (h *Handler) averageFuelEconomies(vehicleID, userID int64) map[string]float64 {
+	rows, err := h.DB.Query(`SELECT i.fuel_type, f.odometer_km, i.fill_type, i.quantity FROM vehicle_fuel_fillups f JOIN vehicle_fuel_items i ON i.fillup_id=f.id WHERE f.vehicle_id=$1 AND f.user_id=$2 ORDER BY i.fuel_type, f.filled_at, f.id`, vehicleID, userID)
+	if err != nil {
+		return map[string]float64{}
+	}
+	defer rows.Close()
+
+	entries := []fuelMileageEntry{}
+	for rows.Next() {
+		var entry fuelMileageEntry
+		if err := rows.Scan(&entry.FuelType, &entry.OdometerKM, &entry.FillType, &entry.Quantity); err != nil {
+			return map[string]float64{}
+		}
+		entries = append(entries, entry)
+	}
+	if rows.Err() != nil {
+		return map[string]float64{}
+	}
+	return calculateAverageFuelEconomies(entries)
+}

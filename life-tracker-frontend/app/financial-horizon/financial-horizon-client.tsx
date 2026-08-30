@@ -111,6 +111,8 @@ export default function FinancialHorizonClient({
   // Transactions & Categories State
   const [transactions, setTransactions] = useState<TransactionItem[]>(initialTransactionPage.transactions as TransactionItem[]);
   const [transactionPage, setTransactionPage] = useState(initialTransactionPage);
+  // Keep a stable total that is never affected by type/search filters
+  const [totalTransactionsCount, setTotalTransactionsCount] = useState(initialTransactionPage.total);
   const [categories, setCategories] = useState<CategoryItem[]>(initialSummary.categories ?? []);
 
   // Transaction filter state — owned here so re-fetches happen server-side
@@ -188,6 +190,7 @@ export default function FinancialHorizonClient({
       recalculateSummary({
         transactionsUpdater: (prev) => [...newItems, ...prev],
       });
+      setTotalTransactionsCount((prev) => prev + newItems.length);
     } else {
       setErrorMsg(res.error || "Failed to bulk add transactions.");
     }
@@ -629,6 +632,7 @@ export default function FinancialHorizonClient({
           recalculateSummary({
             transactionsUpdater: (prev) => [res.transaction, ...prev],
           });
+          setTotalTransactionsCount((prev) => prev + 1);
           setIsTransactionDialogOpen(false);
         } else {
           setErrorMsg(res.error ?? "Failed to add transaction.");
@@ -655,10 +659,12 @@ export default function FinancialHorizonClient({
         if (pageRes.ok) {
           setTransactions(pageRes.data.transactions as TransactionItem[]);
           setTransactionPage(pageRes.data);
+          setTotalTransactionsCount((prev) => Math.max(0, prev - 1));
         } else {
           recalculateSummary({
             transactionsUpdater: (prev) => prev.filter((t) => t.id !== txToDelete.id),
           });
+          setTotalTransactionsCount((prev) => Math.max(0, prev - 1));
         }
       } else {
         setErrorMsg(res.error ?? "Failed to delete transaction.");
@@ -873,7 +879,7 @@ export default function FinancialHorizonClient({
         <TabNavigation
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          transactionsCount={transactionPage.total}
+          transactionsCount={totalTransactionsCount}
           subscriptionsCount={subscriptions.filter((s) => s.status === "active").length}
           fixedObligationsCount={summary.deductions.filter((d) => d.is_active).length}
           plannedPurchasesCount={purchases.length}

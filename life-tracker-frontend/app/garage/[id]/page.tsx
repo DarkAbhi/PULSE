@@ -5,7 +5,7 @@ import { AirFill, FuelFill } from "./types";
 import DeleteButton from "./delete-button";
 import EditFuelModal from "./edit-fuel-modal";
 import LocalDate from "../../components/local-date";
-import { ArrowLeft, Fuel, Wind } from "lucide-react";
+import { ArrowLeft, Fuel, Gauge, Wind } from "lucide-react";
 
 const apiBaseURL =
   process.env.NEXT_PUBLIC_INTERNAL_API_BASE_URL ??
@@ -62,7 +62,10 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
     vehicle_name: string;
     air_fills: AirFill[];
     fuel_fillups: FuelFill[];
+    average_mileage_km_per_litre: Record<string, number>;
   };
+
+  const mileageEntries = Object.entries(data.average_mileage_km_per_litre);
 
   const editingFill = edit
     ? data.fuel_fillups.find((fill) => fill.id === Number(edit))
@@ -85,6 +88,27 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
             <h2 className="flex items-center gap-2 text-xl font-semibold">
               <Fuel className="h-5 w-5 text-primary" /> Fuel fill-ups
             </h2>
+            <aside className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+              <h3 className="flex items-center gap-2 font-semibold text-foreground">
+                <Gauge className="h-5 w-5 text-primary" /> Average mileage
+              </h3>
+              {mileageEntries.length === 0 ? (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Add two full-tank fuel entries to calculate mileage.
+                </p>
+              ) : (
+                <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+                  {mileageEntries.map(([fuelType, mileage]) => (
+                    <p className="text-sm text-muted-foreground" key={fuelType}>
+                      <span className="capitalize">{fuelType}</span>{" "}
+                      <span className="font-semibold text-foreground">
+                        {mileage.toFixed(1)} km/L
+                      </span>
+                    </p>
+                  ))}
+                </div>
+              )}
+            </aside>
             <div className="mt-4 space-y-3">
               {data.fuel_fillups.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No fuel entries yet.</p>

@@ -238,6 +238,28 @@ func TestFuelFillupsAndEconomy(t *testing.T) {
 			t.Errorf("expected economy to be 15.0, got %v", economies["petrol"])
 		}
 	}
+
+	// 3. Vehicle history exposes the average mileage from all reliable intervals.
+	{
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/{id}/history", nil)
+		req.AddCookie(cookie)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		h.VehicleHistory(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Errorf("expected 200, got %d", rec.Code)
+		}
+		var out map[string]any
+		_ = json.NewDecoder(rec.Body).Decode(&out)
+		averages := out["average_mileage_km_per_litre"].(map[string]any)
+		if averages["petrol"].(float64) != 15.0 {
+			t.Errorf("expected average mileage to be 15.0, got %v", averages["petrol"])
+		}
+	}
 }
 
 func TestAirFillsAndReminders(t *testing.T) {
@@ -372,6 +394,9 @@ func TestVehicleHistoryAndDeleteLogs(t *testing.T) {
 		}
 		if len(out["fuel_fillups"].([]any)) != 1 {
 			t.Errorf("expected 1 fuel fillup, got %v", out["fuel_fillups"])
+		}
+		if len(out["average_mileage_km_per_litre"].(map[string]any)) != 0 {
+			t.Errorf("expected no mileage with one fill-up, got %v", out["average_mileage_km_per_litre"])
 		}
 	}
 

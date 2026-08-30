@@ -274,7 +274,7 @@ func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
 		rows.Close()
 		fuels = append(fuels, fill)
 	}
-	webutil.WriteJSON(w, http.StatusOK, map[string]any{"vehicle_name": vehicleName, "air_fills": air, "fuel_fillups": fuels})
+	webutil.WriteJSON(w, http.StatusOK, map[string]any{"vehicle_name": vehicleName, "air_fills": air, "fuel_fillups": fuels, "average_mileage_km_per_litre": h.averageFuelEconomies(vehicleID, user.ID)})
 }
 
 // DeleteVehicleAirFill deletes an air fill record.

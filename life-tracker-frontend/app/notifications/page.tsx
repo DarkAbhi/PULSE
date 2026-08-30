@@ -34,7 +34,7 @@ export default async function NotificationsPage() {
   if (!response.ok) {
     return (
       <main className="min-h-screen bg-[#fffaf3] px-6 py-10 text-stone-800 sm:px-10 lg:px-16">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-6xl">
           <Link
             className="flex items-center gap-1 text-sm font-semibold text-amber-800 transition hover:text-amber-950"
             href="/dashboard"

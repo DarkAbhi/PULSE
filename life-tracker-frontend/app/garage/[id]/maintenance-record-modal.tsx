@@ -38,8 +38,8 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
     });
   }
 
-  return <div className="fixed inset-0 z-20 overflow-y-auto bg-overlay-bg px-6 py-8" role="dialog" aria-modal="true" aria-labelledby="maintenance-record-title">
-    <form className="mx-auto w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8" onSubmit={submit}>
+  return <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-xs sm:p-6" role="dialog" aria-modal="true" aria-labelledby="maintenance-record-title">
+    <form className="w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8" onSubmit={submit}>
       <h2 className="text-2xl font-bold tracking-tight" id="maintenance-record-title">{record ? "Edit record" : "Add maintenance or expense"}</h2>
       <p className="mt-2 text-sm text-muted-foreground">Keep this vehicle&apos;s costs and maintenance history together.</p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2">

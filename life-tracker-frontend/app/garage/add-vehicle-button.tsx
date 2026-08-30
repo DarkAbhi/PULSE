@@ -40,12 +40,12 @@ export default function AddVehicleButton() {
 
       {isAddOpen && (
         <div
-          className="fixed inset-0 flex items-center justify-center bg-overlay-bg px-6 z-10"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-xs sm:p-6"
           role="dialog"
           aria-labelledby="add-vehicle-title"
           aria-modal="true"
         >
-          <section className="w-full max-w-md rounded-2xl bg-card border border-border p-8 shadow-2xl">
+          <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8">
             <h2
               className="text-2xl font-bold tracking-tight text-foreground"
               id="add-vehicle-title"

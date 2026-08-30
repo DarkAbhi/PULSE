@@ -197,12 +197,12 @@ export default function VehiclesList({
 
       {fuelVehicle && (
         <div
-          className="fixed inset-0 z-10 overflow-y-auto bg-overlay-bg px-6 py-8"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-xs sm:p-6"
           role="dialog"
           aria-labelledby="fuel-title"
           aria-modal="true"
         >
-          <section className="mx-auto w-full max-w-2xl rounded-2xl bg-card border border-border p-6 shadow-2xl sm:p-8">
+          <section className="w-full max-w-2xl rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8">
             <h2
               className="text-2xl font-bold tracking-tight text-foreground"
               id="fuel-title"

@@ -50,8 +50,8 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
 
   if (!response.ok) {
     return (
-      <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10">
-        <div className="mx-auto max-w-4xl">
+      <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
+        <div className="mx-auto max-w-6xl">
           <p className="rounded-xl bg-destructive/10 p-4 text-destructive">
             We couldn't load this vehicle's history.
           </p>
@@ -78,8 +78,8 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
     : null;
 
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10">
-      <div className="mx-auto max-w-4xl">
+    <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
+      <div className="mx-auto max-w-6xl">
         <Link className="flex items-center gap-1 text-sm font-semibold text-primary hover:opacity-80" href="/garage">
           <ArrowLeft className="h-4 w-4" /> Garage
         </Link>

@@ -47,7 +47,7 @@ export default async function GymVisitsPage() {
 
   return (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-6xl">
         <Link
           className="flex items-center gap-1 text-sm font-semibold text-primary transition hover:opacity-80 w-fit"
           href="/dashboard"

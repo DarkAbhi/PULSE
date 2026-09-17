@@ -358,8 +358,9 @@ export default function OverviewTab({
               Future Horizon Projections
             </h2>
             <p className="text-sm text-muted-foreground">
-            Projected uncommitted cash pool accumulation based on maintaining
-              your baseline uncommitted cash flow (fixed obligations &amp; subscriptions only).
+              Projected uncommitted cash pool accumulation based on maintaining
+              your baseline uncommitted cash flow (fixed obligations &amp;
+              subscriptions only).
             </p>
           </div>
         </div>
@@ -372,7 +373,7 @@ export default function OverviewTab({
             return (
               <div
                 key={months}
-                className="rounded-2xl border border-border bg-card/80 p-6 shadow-sm backdrop-blur-xs transition duration-200 hover:-translate-y-1 hover:shadow-md"
+                className="rounded-2xl border border-border bg-card/80 p-6 shadow-sm backdrop-blur-xs"
               >
                 <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <span>{label} Horizon</span>

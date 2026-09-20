@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Car, ArrowRight } from "lucide-react";
+import { Car, ArrowRight, Utensils } from "lucide-react";
 import GreetingHeader from "./greeting-header";
 import GymVisitCard from "./gym-visit-card";
 import NotificationDropdown from "./notification-dropdown";
@@ -134,6 +134,25 @@ export default async function DashboardPage() {
                   <div className="min-w-0">
                     <h3 className="font-semibold text-foreground">Garage</h3>
                     <p className="truncate text-xs text-muted-foreground">Vehicles & upkeep</p>
+                  </div>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              </Link>
+
+              <Link
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm"
+                href="/meal-plan"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground"
+                    aria-hidden="true"
+                  >
+                    <Utensils className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-foreground">Meal Plan</h3>
+                    <p className="truncate text-xs text-muted-foreground">Weekly meals</p>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />

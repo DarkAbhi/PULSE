@@ -12,6 +12,7 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/gym"
 	"github.com/DarkAbhi/life-backend/internal/health"
 	"github.com/DarkAbhi/life-backend/internal/horizon"
+	"github.com/DarkAbhi/life-backend/internal/mealplan"
 	"github.com/DarkAbhi/life-backend/internal/meditation"
 	"github.com/DarkAbhi/life-backend/internal/notification"
 	"github.com/DarkAbhi/life-backend/internal/profile"
@@ -41,6 +42,7 @@ func (a *API) Router() http.Handler {
 	sportHandler := sport.NewHandler(a.DB)
 	vehicleHandler := vehicle.NewHandler(a.DB)
 	horizonHandler := horizon.NewHandler(a.DB)
+	mealPlanHandler := mealplan.NewHandler(a.DB)
 
 	// Health (outside /api so Docker or Kubernetes health probes stay simple)
 	r.Get("/healthz", healthHandler.Healthz) // liveness
@@ -93,6 +95,14 @@ func (a *API) Router() http.Handler {
 		api.Post("/gym-visits/{id}/exercises", gymHandler.CreateGymVisitExercise)
 		api.Post("/meditation/today", meditationHandler.AddMeditationForDay)
 		api.Post("/sport/today", sportHandler.AddSportForDay)
+
+		// Meal plans & meal times
+		api.Get("/meal-times", mealPlanHandler.ListMealTimes)
+		api.Post("/meal-times", mealPlanHandler.CreateMealTime)
+		api.Delete("/meal-times/{id}", mealPlanHandler.DeleteMealTime)
+		api.Get("/meal-plans", mealPlanHandler.ListMealPlans)
+		api.Post("/meal-plans", mealPlanHandler.CreateMealPlan)
+		api.Delete("/meal-plans/{id}", mealPlanHandler.DeleteMealPlan)
 
 		// Vehicles
 		api.Get("/vehicles", vehicleHandler.ListVehicles)

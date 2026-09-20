@@ -13,6 +13,7 @@ import (
 	db "github.com/DarkAbhi/life-backend/internal/db"
 	"github.com/DarkAbhi/life-backend/internal/gym"
 	"github.com/DarkAbhi/life-backend/internal/handlers"
+	"github.com/DarkAbhi/life-backend/internal/mealplan"
 	"github.com/DarkAbhi/life-backend/internal/vehicle"
 )
 
@@ -66,6 +67,9 @@ func main() {
 
 	// --- Normal server boot ---
 	d := db.ConnectDB()
+	if err := mealplan.EnsureDefaultMealTimes(d); err != nil {
+		log.Printf("⚠️ warning: failed to ensure default meal times: %v\n", err)
+	}
 	go vehicle.RunAirFillReminderJob(d)
 	go gym.RunGymReminderJob(d)
 

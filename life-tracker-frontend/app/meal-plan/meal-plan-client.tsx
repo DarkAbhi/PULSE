@@ -270,50 +270,48 @@ export default function MealPlanClient({
 
   return (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         {/* Top Header */}
-        <header className="mb-8">
-          <Link
-            className="flex items-center gap-1.5 text-sm font-semibold text-primary transition hover:opacity-80 w-fit"
-            href="/dashboard"
-          >
-            <ArrowLeft className="h-4 w-4" /> Dashboard
-          </Link>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold tracking-wider text-primary uppercase">
-                Life Tracker
-              </p>
-              <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-                Meal Plan
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Plan and track your meals across daily time ranges.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsManageMealTimesOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-xs transition hover:bg-secondary"
-              >
-                <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
-                Meal Times
-              </button>
-              <button
-                onClick={handleCurrentWeek}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-xs transition hover:bg-secondary"
-              >
-                <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                Current Week
-              </button>
-            </div>
+        <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <Link
+              className="flex items-center gap-1 text-sm font-semibold text-primary transition hover:opacity-80 w-fit"
+              href="/dashboard"
+            >
+              <ArrowLeft className="h-4 w-4" /> Dashboard
+            </Link>
+            <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-primary uppercase">
+              Life Tracker
+            </p>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Meal Plan
+            </h1>
+            <p className="mt-3 text-base text-muted-foreground">
+              Plan and track your daily meals.
+            </p>
+          </div>
+          <div className="flex items-center gap-2.5 shrink-0 sm:pt-2">
+            <button
+              onClick={() => setIsManageMealTimesOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-semibold text-foreground shadow-xs transition hover:bg-secondary"
+            >
+              <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
+              Meal Times
+            </button>
+            <button
+              onClick={handleCurrentWeek}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-semibold text-foreground shadow-xs transition hover:bg-secondary"
+            >
+              <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+              Current Week
+            </button>
           </div>
         </header>
 
         {/* Week Navigator & Calendar Bar */}
-        <section className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6 mb-8">
+        <section className="rounded-2xl border border-border bg-card p-5 sm:p-6 mb-10 shadow-sm">
           <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <span className="text-base font-semibold text-foreground">
                 {formattedWeekRange}
               </span>
@@ -321,7 +319,7 @@ export default function MealPlanClient({
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               )}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={handlePrevWeek}
                 aria-label="Previous week"
@@ -339,14 +337,14 @@ export default function MealPlanClient({
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-2 sm:gap-3">
             {weekDays.map((day) => {
               const active = day.isSelected;
               return (
                 <button
                   key={day.dateStr}
                   onClick={() => setSelectedDate(day.dateStr)}
-                  className={`group relative flex flex-col items-center justify-center rounded-xl p-2.5 sm:p-3 text-center transition focus:outline-hidden focus:ring-2 focus:ring-primary/30 ${
+                  className={`group relative flex flex-col items-center justify-center rounded-xl p-3 sm:p-3.5 text-center transition focus:outline-hidden focus:ring-2 focus:ring-primary/30 ${
                     active
                       ? "bg-primary text-primary-foreground shadow-md font-semibold"
                       : "border border-border/70 bg-background/50 hover:bg-secondary/60 text-foreground"
@@ -397,10 +395,10 @@ export default function MealPlanClient({
         </section>
 
         {/* Selected Day Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold text-foreground">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
                 {selectedDayObj.dayFull}
               </h2>
               {selectedDayObj.isToday && (
@@ -409,7 +407,7 @@ export default function MealPlanClient({
                 </span>
               )}
             </div>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <p className="text-sm text-muted-foreground mt-1">
               {new Date(selectedDate + "T00:00:00").toLocaleDateString(undefined, {
                 month: "long",
                 day: "numeric",
@@ -431,20 +429,20 @@ export default function MealPlanClient({
 
         {/* Meal Times Sections or Empty State */}
         {dayMeals.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/60 p-12 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-secondary-foreground mb-3">
-              <Utensils className="h-6 w-6 text-muted-foreground" />
+          <div className="rounded-2xl border border-dashed border-border bg-card/60 p-12 sm:p-16 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-secondary-foreground mb-4">
+              <Utensils className="h-7 w-7 text-muted-foreground" />
             </div>
-            <h3 className="text-base font-semibold text-foreground">
+            <h3 className="text-lg font-semibold text-foreground">
               No meals planned for this day yet
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">
-              Click "Add meal" to start planning {selectedDayObj.dayFull}.
+            <p className="mt-1.5 text-sm text-muted-foreground max-w-sm mx-auto">
+              Start planning your meals for {selectedDayObj.dayFull}.
             </p>
-            <div className="mt-5">
+            <div className="mt-6">
               <button
                 onClick={() => handleOpenAddMeal()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
               >
                 <Plus className="h-4 w-4" />
                 Add meal
@@ -453,13 +451,13 @@ export default function MealPlanClient({
           </div>
         ) : (
           <>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-5 sm:grid-cols-2">
               {mealTimes.map((mt) => {
                 const slotMeals = dayMeals.filter((m) => m.meal_time_id === mt.id);
                 return (
                   <div
                     key={mt.id}
-                    className="flex flex-col justify-between rounded-2xl border border-border bg-card p-5 shadow-xs"
+                    className="flex flex-col justify-between rounded-2xl border border-border bg-card p-6 shadow-xs"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2 border-b border-border/70 pb-3 mb-3">

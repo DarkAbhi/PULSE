@@ -29,6 +29,8 @@ export interface SaveMaintenancePayload {
   notes: string | null;
 }
 
+import { SaveTirePressurePayload } from "./types";
+
 async function getAuthHeader() {
   const cookieStore = await cookies();
   return {
@@ -133,10 +135,7 @@ export async function deleteMaintenanceRecord(vehicleId: string, recordId: numbe
 
 export async function saveTirePressure(
   vehicleId: string,
-  payload: {
-    front_tire_pressure: number | null;
-    rear_tire_pressure: number | null;
-  }
+  payload: SaveTirePressurePayload
 ) {
   try {
     const headers = await getAuthHeader();

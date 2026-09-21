@@ -146,7 +146,7 @@ func TestVehiclesCRUD(t *testing.T) {
 		// 5.5a Negative pressure validation
 		{
 			negVal := -5.0
-			body, _ := json.Marshal(tirePressurePayload{FrontTirePressure: &negVal})
+			body, _ := json.Marshal(tirePressurePayload{FrontTirePressureSolo: &negVal})
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodPut, "/vehicles/{id}/tire-pressure", bytes.NewReader(body))
 			req.AddCookie(cookie)
@@ -160,11 +160,18 @@ func TestVehiclesCRUD(t *testing.T) {
 			}
 		}
 
-		// 5.5b Valid tire pressure update
+		// 5.5b Valid solo and pillion tire pressure update
 		{
-			front := 32.5
-			rear := 35.0
-			body, _ := json.Marshal(tirePressurePayload{FrontTirePressure: &front, RearTirePressure: &rear})
+			frontSolo := 29.0
+			rearSolo := 33.0
+			frontPillion := 32.0
+			rearPillion := 36.0
+			body, _ := json.Marshal(tirePressurePayload{
+				FrontTirePressureSolo:    &frontSolo,
+				RearTirePressureSolo:     &rearSolo,
+				FrontTirePressurePillion: &frontPillion,
+				RearTirePressurePillion:  &rearPillion,
+			})
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodPut, "/vehicles/{id}/tire-pressure", bytes.NewReader(body))
 			req.AddCookie(cookie)
@@ -179,15 +186,21 @@ func TestVehiclesCRUD(t *testing.T) {
 
 			var out vehicleDTO
 			_ = json.NewDecoder(rec.Body).Decode(&out)
-			if out.FrontTirePressure == nil || *out.FrontTirePressure != 32.5 {
-				t.Errorf("expected front tire pressure 32.5, got %v", out.FrontTirePressure)
+			if out.FrontTirePressureSolo == nil || *out.FrontTirePressureSolo != 29.0 {
+				t.Errorf("expected front solo tire pressure 29.0, got %v", out.FrontTirePressureSolo)
 			}
-			if out.RearTirePressure == nil || *out.RearTirePressure != 35.0 {
-				t.Errorf("expected rear tire pressure 35.0, got %v", out.RearTirePressure)
+			if out.RearTirePressureSolo == nil || *out.RearTirePressureSolo != 33.0 {
+				t.Errorf("expected rear solo tire pressure 33.0, got %v", out.RearTirePressureSolo)
+			}
+			if out.FrontTirePressurePillion == nil || *out.FrontTirePressurePillion != 32.0 {
+				t.Errorf("expected front pillion tire pressure 32.0, got %v", out.FrontTirePressurePillion)
+			}
+			if out.RearTirePressurePillion == nil || *out.RearTirePressurePillion != 36.0 {
+				t.Errorf("expected rear pillion tire pressure 36.0, got %v", out.RearTirePressurePillion)
 			}
 		}
 
-		// 5.5c Verify GetVehicle returns tire pressure
+		// 5.5c Verify GetVehicle returns solo and pillion tire pressures
 		{
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/vehicles/{id}", nil)
@@ -202,11 +215,17 @@ func TestVehiclesCRUD(t *testing.T) {
 
 			var out vehicleDTO
 			_ = json.NewDecoder(rec.Body).Decode(&out)
-			if out.FrontTirePressure == nil || *out.FrontTirePressure != 32.5 {
-				t.Errorf("expected front tire pressure 32.5, got %v", out.FrontTirePressure)
+			if out.FrontTirePressureSolo == nil || *out.FrontTirePressureSolo != 29.0 {
+				t.Errorf("expected front solo tire pressure 29.0, got %v", out.FrontTirePressureSolo)
 			}
-			if out.RearTirePressure == nil || *out.RearTirePressure != 35.0 {
-				t.Errorf("expected rear tire pressure 35.0, got %v", out.RearTirePressure)
+			if out.RearTirePressureSolo == nil || *out.RearTirePressureSolo != 33.0 {
+				t.Errorf("expected rear solo tire pressure 33.0, got %v", out.RearTirePressureSolo)
+			}
+			if out.FrontTirePressurePillion == nil || *out.FrontTirePressurePillion != 32.0 {
+				t.Errorf("expected front pillion tire pressure 32.0, got %v", out.FrontTirePressurePillion)
+			}
+			if out.RearTirePressurePillion == nil || *out.RearTirePressurePillion != 36.0 {
+				t.Errorf("expected rear pillion tire pressure 36.0, got %v", out.RearTirePressurePillion)
 			}
 		}
 	}

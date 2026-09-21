@@ -15,23 +15,35 @@ import (
 )
 
 type vehiclePayload struct {
-	Name              *string  `json:"name"`
-	IsActive          *bool    `json:"is_active"`
-	FrontTirePressure *float64 `json:"front_tire_pressure"`
-	RearTirePressure  *float64 `json:"rear_tire_pressure"`
+	Name                     *string  `json:"name"`
+	IsActive                 *bool    `json:"is_active"`
+	FrontTirePressureSolo    *float64 `json:"front_tire_pressure_solo"`
+	RearTirePressureSolo     *float64 `json:"rear_tire_pressure_solo"`
+	FrontTirePressurePillion *float64 `json:"front_tire_pressure_pillion"`
+	RearTirePressurePillion  *float64 `json:"rear_tire_pressure_pillion"`
+	FrontTirePressure        *float64 `json:"front_tire_pressure"`
+	RearTirePressure         *float64 `json:"rear_tire_pressure"`
 }
 
 type tirePressurePayload struct {
-	FrontTirePressure *float64 `json:"front_tire_pressure"`
-	RearTirePressure  *float64 `json:"rear_tire_pressure"`
+	FrontTirePressureSolo    *float64 `json:"front_tire_pressure_solo"`
+	RearTirePressureSolo     *float64 `json:"rear_tire_pressure_solo"`
+	FrontTirePressurePillion *float64 `json:"front_tire_pressure_pillion"`
+	RearTirePressurePillion  *float64 `json:"rear_tire_pressure_pillion"`
+	FrontTirePressure        *float64 `json:"front_tire_pressure"`
+	RearTirePressure         *float64 `json:"rear_tire_pressure"`
 }
 
 type vehicleDTO struct {
-	ID                int64    `json:"id"`
-	Name              string   `json:"name"`
-	IsActive          bool     `json:"is_active"`
-	FrontTirePressure *float64 `json:"front_tire_pressure"`
-	RearTirePressure  *float64 `json:"rear_tire_pressure"`
+	ID                       int64    `json:"id"`
+	Name                     string   `json:"name"`
+	IsActive                 bool     `json:"is_active"`
+	FrontTirePressureSolo    *float64 `json:"front_tire_pressure_solo"`
+	RearTirePressureSolo     *float64 `json:"rear_tire_pressure_solo"`
+	FrontTirePressurePillion *float64 `json:"front_tire_pressure_pillion"`
+	RearTirePressurePillion  *float64 `json:"rear_tire_pressure_pillion"`
+	FrontTirePressure        *float64 `json:"front_tire_pressure,omitempty"`
+	RearTirePressure         *float64 `json:"rear_tire_pressure,omitempty"`
 }
 
 type airFillHistory struct {
@@ -111,16 +123,50 @@ func (h *Handler) CreateVehicle(w http.ResponseWriter, r *http.Request) {
 		isActive = *p.IsActive
 	}
 
+	frontSolo := p.FrontTirePressureSolo
+	if frontSolo == nil && p.FrontTirePressure != nil {
+		frontSolo = p.FrontTirePressure
+	}
+	rearSolo := p.RearTirePressureSolo
+	if rearSolo == nil && p.RearTirePressure != nil {
+		rearSolo = p.RearTirePressure
+	}
+	frontPillion := p.FrontTirePressurePillion
+	rearPillion := p.RearTirePressurePillion
+
+	if frontSolo != nil && *frontSolo < 0 {
+		webutil.BadRequest(w, "front solo tire pressure cannot be negative")
+		return
+	}
+	if rearSolo != nil && *rearSolo < 0 {
+		webutil.BadRequest(w, "rear solo tire pressure cannot be negative")
+		return
+	}
+	if frontPillion != nil && *frontPillion < 0 {
+		webutil.BadRequest(w, "front pillion tire pressure cannot be negative")
+		return
+	}
+	if rearPillion != nil && *rearPillion < 0 {
+		webutil.BadRequest(w, "rear pillion tire pressure cannot be negative")
+		return
+	}
+
 	const q = `
-        INSERT INTO vehicles (name, is_active, front_tire_pressure, rear_tire_pressure)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id, name, is_active, front_tire_pressure, rear_tire_pressure;
+        INSERT INTO vehicles (name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion;
     `
 	var out vehicleDTO
-	if err := h.DB.QueryRow(q, *p.Name, isActive, p.FrontTirePressure, p.RearTirePressure).Scan(&out.ID, &out.Name, &out.IsActive, &out.FrontTirePressure, &out.RearTirePressure); err != nil {
+	if err := h.DB.QueryRow(q, *p.Name, isActive, frontSolo, rearSolo, frontPillion, rearPillion).Scan(
+		&out.ID, &out.Name, &out.IsActive,
+		&out.FrontTirePressureSolo, &out.RearTirePressureSolo,
+		&out.FrontTirePressurePillion, &out.RearTirePressurePillion,
+	); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
+	out.FrontTirePressure = out.FrontTirePressureSolo
+	out.RearTirePressure = out.RearTirePressureSolo
 	webutil.WriteJSON(w, http.StatusCreated, out)
 }
 
@@ -131,9 +177,13 @@ func (h *Handler) GetVehicle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	const q = `SELECT id, name, is_active, front_tire_pressure, rear_tire_pressure FROM vehicles WHERE id=$1;`
+	const q = `SELECT id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1;`
 	var out vehicleDTO
-	err := h.DB.QueryRow(q, id).Scan(&out.ID, &out.Name, &out.IsActive, &out.FrontTirePressure, &out.RearTirePressure)
+	err := h.DB.QueryRow(q, id).Scan(
+		&out.ID, &out.Name, &out.IsActive,
+		&out.FrontTirePressureSolo, &out.RearTirePressureSolo,
+		&out.FrontTirePressurePillion, &out.RearTirePressurePillion,
+	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
@@ -142,6 +192,8 @@ func (h *Handler) GetVehicle(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
+	out.FrontTirePressure = out.FrontTirePressureSolo
+	out.RearTirePressure = out.RearTirePressureSolo
 	webutil.WriteJSON(w, http.StatusOK, out)
 }
 
@@ -159,12 +211,14 @@ func (h *Handler) UpdateVehicle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load current values
-	const sel = `SELECT name, is_active, front_tire_pressure, rear_tire_pressure FROM vehicles WHERE id=$1;`
+	const sel = `SELECT name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1;`
 	var curName string
 	var curActive bool
-	var curFront *float64
-	var curRear *float64
-	if err := h.DB.QueryRow(sel, id).Scan(&curName, &curActive, &curFront, &curRear); err != nil {
+	var curFrontSolo *float64
+	var curRearSolo *float64
+	var curFrontPillion *float64
+	var curRearPillion *float64
+	if err := h.DB.QueryRow(sel, id).Scan(&curName, &curActive, &curFrontSolo, &curRearSolo, &curFrontPillion, &curRearPillion); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
 			return
@@ -179,36 +233,67 @@ func (h *Handler) UpdateVehicle(w http.ResponseWriter, r *http.Request) {
 	if p.IsActive != nil {
 		curActive = *p.IsActive
 	}
-	if p.FrontTirePressure != nil {
-		if *p.FrontTirePressure < 0 {
-			webutil.BadRequest(w, "front tire pressure cannot be negative")
-			return
-		}
-		curFront = p.FrontTirePressure
+
+	frontSolo := p.FrontTirePressureSolo
+	if frontSolo == nil && p.FrontTirePressure != nil {
+		frontSolo = p.FrontTirePressure
 	}
-	if p.RearTirePressure != nil {
-		if *p.RearTirePressure < 0 {
-			webutil.BadRequest(w, "rear tire pressure cannot be negative")
+	if frontSolo != nil {
+		if *frontSolo < 0 {
+			webutil.BadRequest(w, "front solo tire pressure cannot be negative")
 			return
 		}
-		curRear = p.RearTirePressure
+		curFrontSolo = frontSolo
+	}
+
+	rearSolo := p.RearTirePressureSolo
+	if rearSolo == nil && p.RearTirePressure != nil {
+		rearSolo = p.RearTirePressure
+	}
+	if rearSolo != nil {
+		if *rearSolo < 0 {
+			webutil.BadRequest(w, "rear solo tire pressure cannot be negative")
+			return
+		}
+		curRearSolo = rearSolo
+	}
+
+	if p.FrontTirePressurePillion != nil {
+		if *p.FrontTirePressurePillion < 0 {
+			webutil.BadRequest(w, "front pillion tire pressure cannot be negative")
+			return
+		}
+		curFrontPillion = p.FrontTirePressurePillion
+	}
+	if p.RearTirePressurePillion != nil {
+		if *p.RearTirePressurePillion < 0 {
+			webutil.BadRequest(w, "rear pillion tire pressure cannot be negative")
+			return
+		}
+		curRearPillion = p.RearTirePressurePillion
 	}
 
 	const upd = `
         UPDATE vehicles
-        SET name=$1, is_active=$2, front_tire_pressure=$3, rear_tire_pressure=$4, updated_at=now()
-        WHERE id=$5
-        RETURNING id, name, is_active, front_tire_pressure, rear_tire_pressure;
+        SET name=$1, is_active=$2, front_tire_pressure_solo=$3, rear_tire_pressure_solo=$4, front_tire_pressure_pillion=$5, rear_tire_pressure_pillion=$6, updated_at=now()
+        WHERE id=$7
+        RETURNING id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion;
     `
 	var out vehicleDTO
-	if err := h.DB.QueryRow(upd, curName, curActive, curFront, curRear, id).Scan(&out.ID, &out.Name, &out.IsActive, &out.FrontTirePressure, &out.RearTirePressure); err != nil {
+	if err := h.DB.QueryRow(upd, curName, curActive, curFrontSolo, curRearSolo, curFrontPillion, curRearPillion, id).Scan(
+		&out.ID, &out.Name, &out.IsActive,
+		&out.FrontTirePressureSolo, &out.RearTirePressureSolo,
+		&out.FrontTirePressurePillion, &out.RearTirePressurePillion,
+	); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
+	out.FrontTirePressure = out.FrontTirePressureSolo
+	out.RearTirePressure = out.RearTirePressureSolo
 	webutil.WriteJSON(w, http.StatusOK, out)
 }
 
-// UpdateVehicleTirePressure updates the front and rear tire pressures for a vehicle.
+// UpdateVehicleTirePressure updates the solo and pillion tire pressures for a vehicle.
 func (h *Handler) UpdateVehicleTirePressure(w http.ResponseWriter, r *http.Request) {
 	_, err := auth.GetSessionUser(h.DB, r)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -230,23 +315,46 @@ func (h *Handler) UpdateVehicleTirePressure(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if p.FrontTirePressure != nil && *p.FrontTirePressure < 0 {
-		webutil.BadRequest(w, "front tire pressure cannot be negative")
+	frontSolo := p.FrontTirePressureSolo
+	if frontSolo == nil && p.FrontTirePressure != nil {
+		frontSolo = p.FrontTirePressure
+	}
+	rearSolo := p.RearTirePressureSolo
+	if rearSolo == nil && p.RearTirePressure != nil {
+		rearSolo = p.RearTirePressure
+	}
+	frontPillion := p.FrontTirePressurePillion
+	rearPillion := p.RearTirePressurePillion
+
+	if frontSolo != nil && *frontSolo < 0 {
+		webutil.BadRequest(w, "front solo tire pressure cannot be negative")
 		return
 	}
-	if p.RearTirePressure != nil && *p.RearTirePressure < 0 {
-		webutil.BadRequest(w, "rear tire pressure cannot be negative")
+	if rearSolo != nil && *rearSolo < 0 {
+		webutil.BadRequest(w, "rear solo tire pressure cannot be negative")
+		return
+	}
+	if frontPillion != nil && *frontPillion < 0 {
+		webutil.BadRequest(w, "front pillion tire pressure cannot be negative")
+		return
+	}
+	if rearPillion != nil && *rearPillion < 0 {
+		webutil.BadRequest(w, "rear pillion tire pressure cannot be negative")
 		return
 	}
 
 	const upd = `
 		UPDATE vehicles
-		SET front_tire_pressure=$1, rear_tire_pressure=$2, updated_at=now()
-		WHERE id=$3
-		RETURNING id, name, is_active, front_tire_pressure, rear_tire_pressure;
+		SET front_tire_pressure_solo=$1, rear_tire_pressure_solo=$2, front_tire_pressure_pillion=$3, rear_tire_pressure_pillion=$4, updated_at=now()
+		WHERE id=$5
+		RETURNING id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion;
 	`
 	var out vehicleDTO
-	if err := h.DB.QueryRow(upd, p.FrontTirePressure, p.RearTirePressure, id).Scan(&out.ID, &out.Name, &out.IsActive, &out.FrontTirePressure, &out.RearTirePressure); err != nil {
+	if err := h.DB.QueryRow(upd, frontSolo, rearSolo, frontPillion, rearPillion, id).Scan(
+		&out.ID, &out.Name, &out.IsActive,
+		&out.FrontTirePressureSolo, &out.RearTirePressureSolo,
+		&out.FrontTirePressurePillion, &out.RearTirePressurePillion,
+	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
 			return
@@ -254,6 +362,8 @@ func (h *Handler) UpdateVehicleTirePressure(w http.ResponseWriter, r *http.Reque
 		webutil.ServerError(w, err)
 		return
 	}
+	out.FrontTirePressure = out.FrontTirePressureSolo
+	out.RearTirePressure = out.RearTirePressureSolo
 	webutil.WriteJSON(w, http.StatusOK, out)
 }
 
@@ -293,9 +403,13 @@ func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var vehicleName string
-	var frontTirePressure *float64
-	var rearTirePressure *float64
-	if err := h.DB.QueryRow(`SELECT name, front_tire_pressure, rear_tire_pressure FROM vehicles WHERE id=$1`, vehicleID).Scan(&vehicleName, &frontTirePressure, &rearTirePressure); err != nil {
+	var frontTirePressureSolo *float64
+	var rearTirePressureSolo *float64
+	var frontTirePressurePillion *float64
+	var rearTirePressurePillion *float64
+	if err := h.DB.QueryRow(`SELECT name, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1`, vehicleID).Scan(
+		&vehicleName, &frontTirePressureSolo, &rearTirePressureSolo, &frontTirePressurePillion, &rearTirePressurePillion,
+	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
 			return
@@ -395,8 +509,12 @@ func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
 	}
 	webutil.WriteJSON(w, http.StatusOK, map[string]any{
 		"vehicle_name":                 vehicleName,
-		"front_tire_pressure":          frontTirePressure,
-		"rear_tire_pressure":           rearTirePressure,
+		"front_tire_pressure_solo":     frontTirePressureSolo,
+		"rear_tire_pressure_solo":      rearTirePressureSolo,
+		"front_tire_pressure_pillion":  frontTirePressurePillion,
+		"rear_tire_pressure_pillion":   rearTirePressurePillion,
+		"front_tire_pressure":          frontTirePressureSolo,
+		"rear_tire_pressure":           rearTirePressureSolo,
 		"air_fills":                    air,
 		"fuel_fillups":                 fuels,
 		"maintenance_records":          maintenance,

@@ -37,8 +37,12 @@ export type MaintenanceAttachment = {
 
 export type VehicleHistoryData = {
   vehicle_name: string;
-  front_tire_pressure: number | null;
-  rear_tire_pressure: number | null;
+  front_tire_pressure_solo: number | null;
+  rear_tire_pressure_solo: number | null;
+  front_tire_pressure_pillion: number | null;
+  rear_tire_pressure_pillion: number | null;
+  front_tire_pressure?: number | null;
+  rear_tire_pressure?: number | null;
   air_fills: AirFill[];
   fuel_fillups: FuelFill[];
   maintenance_records: MaintenanceRecord[];
@@ -46,7 +50,9 @@ export type VehicleHistoryData = {
 };
 
 export type SaveTirePressurePayload = {
-  front_tire_pressure: number | null;
-  rear_tire_pressure: number | null;
+  front_tire_pressure_solo: number | null;
+  rear_tire_pressure_solo: number | null;
+  front_tire_pressure_pillion: number | null;
+  rear_tire_pressure_pillion: number | null;
 };
 

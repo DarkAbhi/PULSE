@@ -159,9 +159,11 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
               <Wind className="h-5 w-5 text-primary" /> Air fills
             </h2>
             <TirePressureCard
+              frontTirePressurePillion={data.front_tire_pressure_pillion}
+              frontTirePressureSolo={data.front_tire_pressure_solo}
+              rearTirePressurePillion={data.rear_tire_pressure_pillion}
+              rearTirePressureSolo={data.rear_tire_pressure_solo}
               vehicleId={id}
-              frontTirePressure={data.front_tire_pressure}
-              rearTirePressure={data.rear_tire_pressure}
             />
             <div className="mt-4 space-y-3">
               {data.air_fills.length === 0 ? (

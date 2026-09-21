@@ -40,6 +40,26 @@ func TestMealPlan_Unauthorized(t *testing.T) {
 		}
 	})
 
+	t.Run("UpdateMealPlanConsumed without session", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPatch, "/api/meal-plans/1/consumed", bytes.NewBufferString(`{"is_consumed":true}`))
+		rec := httptest.NewRecorder()
+		h.UpdateMealPlanConsumed(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("expected 401 Unauthorized, got %d", rec.Code)
+		}
+	})
+
+	t.Run("UpdateMealPlan without session", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPatch, "/api/meal-plans/1", bytes.NewBufferString(`{"name":"Updated Meal"}`))
+		rec := httptest.NewRecorder()
+		h.UpdateMealPlan(rec, req)
+
+		if rec.Code != http.StatusUnauthorized {
+			t.Errorf("expected 401 Unauthorized, got %d", rec.Code)
+		}
+	})
+
 	t.Run("ListMealTimes without session", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/meal-times", nil)
 		rec := httptest.NewRecorder()

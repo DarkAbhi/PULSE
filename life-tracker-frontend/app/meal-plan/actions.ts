@@ -25,6 +25,7 @@ export type MealPlan = {
   meal_time_name?: string;
   start_time?: string;
   end_time?: string;
+  is_consumed: boolean;
   created_at: string;
 };
 
@@ -178,5 +179,60 @@ export async function deleteMealPlanAction(id: number) {
     return { ok: true };
   } catch {
     return { ok: false, error: "Network error while deleting meal." };
+  }
+}
+
+export async function updateMealPlanConsumedAction(id: number, isConsumed: boolean) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  try {
+    const res = await fetch(`${apiBaseURL}/api/meal-plans/${id}/consumed`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify({ is_consumed: isConsumed }),
+    });
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, error: body.error ?? "Failed to update meal status." };
+    }
+
+    revalidatePath("/meal-plan");
+    return { ok: true, meal: body as MealPlan };
+  } catch {
+    return { ok: false, error: "Network error while updating meal status." };
+  }
+}
+
+export async function updateMealPlanAction(
+  id: number,
+  input: { name?: string; date?: string; meal_time_id?: number; is_consumed?: boolean }
+) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  try {
+    const res = await fetch(`${apiBaseURL}/api/meal-plans/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieHeader,
+      },
+      body: JSON.stringify(input),
+    });
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, error: body.error ?? "Failed to update meal." };
+    }
+
+    revalidatePath("/meal-plan");
+    return { ok: true, meal: body as MealPlan };
+  } catch {
+    return { ok: false, error: "Network error while updating meal." };
   }
 }

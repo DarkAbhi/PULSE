@@ -13,6 +13,7 @@ import {
   Clock,
   Settings2,
   Loader2,
+  Check,
 } from "lucide-react";
 import Dialog, { DialogActions, DialogAction } from "../components/design-system/dialog";
 import ConfirmationDialog from "../components/design-system/confirmation-dialog";
@@ -24,6 +25,7 @@ import {
   getMealPlansAction,
   createMealTimeAction,
   deleteMealTimeAction,
+  updateMealPlanConsumedAction,
 } from "./actions";
 
 interface MealPlanClientProps {
@@ -107,12 +109,11 @@ export default function MealPlanClient({
     return {
       date: d,
       dateStr,
-      dayShort: d.toLocaleDateString(undefined, { weekday: "short" }),
-      dayFull: d.toLocaleDateString(undefined, { weekday: "long" }),
-      monthDay: d.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      dayShort: d.toLocaleDateString("en-IN", { weekday: "short" }),
+      dayFull: d.toLocaleDateString("en-IN", { weekday: "long" }),
+      monthDay: d.toLocaleDateString("en-IN", { month: "short", day: "numeric" }),
       isToday: dateStr === todayStr,
       isSelected: dateStr === selectedDate,
-      mealsCount: meals.filter((m) => m.date === dateStr).length,
     };
   });
 
@@ -145,10 +146,10 @@ export default function MealPlanClient({
   };
 
   const selectedDayObj = weekDays.find((d) => d.dateStr === selectedDate) ?? {
-    dayFull: new Date(selectedDate + "T00:00:00").toLocaleDateString(undefined, {
+    dayFull: new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", {
       weekday: "long",
     }),
-    monthDay: new Date(selectedDate + "T00:00:00").toLocaleDateString(undefined, {
+    monthDay: new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", {
       month: "long",
       day: "numeric",
       year: "numeric",
@@ -200,6 +201,24 @@ export default function MealPlanClient({
       if (res.ok) {
         setMeals((prev) => prev.filter((m) => m.id !== mealToDelete.id));
         setMealToDelete(null);
+      }
+    });
+  };
+
+  const handleToggleConsumed = (meal: MealPlan) => {
+    const nextConsumed = !meal.is_consumed;
+    // Optimistic update
+    setMeals((prev) =>
+      prev.map((m) => (m.id === meal.id ? { ...m, is_consumed: nextConsumed } : m))
+    );
+
+    startTransition(async () => {
+      const res = await updateMealPlanConsumedAction(meal.id, nextConsumed);
+      if (!res.ok) {
+        // Revert on failure
+        setMeals((prev) =>
+          prev.map((m) => (m.id === meal.id ? { ...m, is_consumed: !nextConsumed } : m))
+        );
       }
     });
   };
@@ -256,10 +275,10 @@ export default function MealPlanClient({
     });
   };
 
-  const formattedWeekRange = `${currentMonday.toLocaleDateString(undefined, {
+  const formattedWeekRange = `${currentMonday.toLocaleDateString("en-IN", {
     month: "short",
     day: "numeric",
-  })} – ${addDays(currentMonday, 6).toLocaleDateString(undefined, {
+  })} – ${addDays(currentMonday, 6).toLocaleDateString("en-IN", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -312,7 +331,7 @@ export default function MealPlanClient({
         <section className="rounded-2xl border border-border bg-card p-5 sm:p-6 mb-10 shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2.5">
-              <span className="text-base font-semibold text-foreground">
+              <span className="text-base font-semibold text-foreground" suppressHydrationWarning>
                 {formattedWeekRange}
               </span>
               {isLoadingWeek && (
@@ -367,7 +386,7 @@ export default function MealPlanClient({
                     {day.date.getDate()}
                   </span>
 
-                  <div className="mt-1.5 flex items-center gap-1 min-h-[6px]">
+                  <div className="mt-1.5 flex items-center justify-center min-h-[6px]">
                     {day.isToday && (
                       <span
                         className={`h-1.5 w-1.5 rounded-full ${
@@ -375,17 +394,6 @@ export default function MealPlanClient({
                         }`}
                         title="Today"
                       />
-                    )}
-                    {day.mealsCount > 0 && (
-                      <span
-                        className={`text-[10px] leading-none px-1 rounded-full ${
-                          active
-                            ? "bg-primary-foreground/25 text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground font-medium"
-                        }`}
-                      >
-                        {day.mealsCount}
-                      </span>
                     )}
                   </div>
                 </button>
@@ -407,8 +415,8 @@ export default function MealPlanClient({
                 </span>
               )}
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {new Date(selectedDate + "T00:00:00").toLocaleDateString(undefined, {
+            <p className="text-sm text-muted-foreground mt-1" suppressHydrationWarning>
+              {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
@@ -491,11 +499,34 @@ export default function MealPlanClient({
                           {slotMeals.map((meal) => (
                             <li
                               key={meal.id}
-                              className="flex items-center justify-between py-2.5 group"
+                              className={`flex items-center justify-between py-2 px-1 rounded-lg transition group ${
+                                meal.is_consumed ? "bg-muted/20" : "hover:bg-muted/10"
+                              }`}
                             >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <span className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                                <span className="text-sm font-medium text-foreground truncate">
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+                                <button
+                                  type="button"
+                                  role="checkbox"
+                                  aria-checked={meal.is_consumed}
+                                  onClick={() => handleToggleConsumed(meal)}
+                                  disabled={isPending}
+                                  title={meal.is_consumed ? "Mark as not consumed" : "Mark as consumed"}
+                                  className={`cursor-pointer flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-md border transition focus:outline-hidden focus:ring-2 focus:ring-primary/20 ${
+                                    meal.is_consumed
+                                      ? "border-emerald-600 bg-emerald-600 text-white dark:border-emerald-500 dark:bg-emerald-500 shadow-2xs"
+                                      : "border-border/80 bg-background hover:border-emerald-500 text-transparent"
+                                  }`}
+                                >
+                                  <Check className="h-3 w-3 stroke-[2.5]" />
+                                </button>
+                                <span
+                                  onClick={() => handleToggleConsumed(meal)}
+                                  className={`text-sm truncate transition cursor-pointer select-none ${
+                                    meal.is_consumed
+                                      ? "text-muted-foreground line-through font-normal"
+                                      : "text-foreground font-medium"
+                                  }`}
+                                >
                                   {meal.name}
                                 </span>
                               </div>
@@ -503,7 +534,7 @@ export default function MealPlanClient({
                                 onClick={() => setMealToDelete(meal)}
                                 aria-label={`Delete ${meal.name}`}
                                 disabled={isPending}
-                                className="opacity-70 hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition"
+                                className="opacity-70 hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition shrink-0"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -525,13 +556,44 @@ export default function MealPlanClient({
                 </h3>
                 <ul className="divide-y divide-border/50">
                   {unassignedMeals.map((meal) => (
-                    <li key={meal.id} className="flex items-center justify-between py-2.5">
-                      <span className="text-sm font-medium text-foreground">{meal.name}</span>
+                    <li
+                      key={meal.id}
+                      className={`flex items-center justify-between py-2 px-1 rounded-lg transition group ${
+                        meal.is_consumed ? "bg-muted/20" : "hover:bg-muted/10"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
+                        <button
+                          type="button"
+                          role="checkbox"
+                          aria-checked={meal.is_consumed}
+                          onClick={() => handleToggleConsumed(meal)}
+                          disabled={isPending}
+                          title={meal.is_consumed ? "Mark as not consumed" : "Mark as consumed"}
+                          className={`cursor-pointer flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-md border transition focus:outline-hidden focus:ring-2 focus:ring-primary/20 ${
+                            meal.is_consumed
+                              ? "border-emerald-600 bg-emerald-600 text-white dark:border-emerald-500 dark:bg-emerald-500 shadow-2xs"
+                              : "border-border/80 bg-background hover:border-emerald-500 text-transparent"
+                          }`}
+                        >
+                          <Check className="h-3 w-3 stroke-[2.5]" />
+                        </button>
+                        <span
+                          onClick={() => handleToggleConsumed(meal)}
+                          className={`text-sm truncate transition cursor-pointer select-none ${
+                            meal.is_consumed
+                              ? "text-muted-foreground line-through font-normal"
+                              : "text-foreground font-medium"
+                          }`}
+                        >
+                          {meal.name}
+                        </span>
+                      </div>
                       <button
                         onClick={() => setMealToDelete(meal)}
                         aria-label={`Delete ${meal.name}`}
                         disabled={isPending}
-                        className="p-1 text-muted-foreground hover:text-destructive transition"
+                        className="p-1 text-muted-foreground hover:text-destructive transition shrink-0"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -562,9 +624,9 @@ export default function MealPlanClient({
                 <h2 id={addMealTitleId} className="text-lg font-bold text-foreground">
                   Add Meal
                 </h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground" suppressHydrationWarning>
                   For {selectedDayObj.dayFull},{" "}
-                  {new Date(selectedDate + "T00:00:00").toLocaleDateString(undefined, {
+                  {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", {
                     month: "short",
                     day: "numeric",
                   })}

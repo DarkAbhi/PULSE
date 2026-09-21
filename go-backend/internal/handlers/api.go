@@ -102,6 +102,9 @@ func (a *API) Router() http.Handler {
 		api.Delete("/meal-times/{id}", mealPlanHandler.DeleteMealTime)
 		api.Get("/meal-plans", mealPlanHandler.ListMealPlans)
 		api.Post("/meal-plans", mealPlanHandler.CreateMealPlan)
+		api.Patch("/meal-plans/{id}/consumed", mealPlanHandler.UpdateMealPlanConsumed)
+		api.Patch("/meal-plans/{id}", mealPlanHandler.UpdateMealPlan)
+		api.Put("/meal-plans/{id}", mealPlanHandler.UpdateMealPlan)
 		api.Delete("/meal-plans/{id}", mealPlanHandler.DeleteMealPlan)
 
 		// Vehicles

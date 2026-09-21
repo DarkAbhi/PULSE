@@ -63,6 +63,7 @@ type MealPlanDTO struct {
 	MealTimeName *string   `json:"meal_time_name,omitempty"`
 	StartTime    *string   `json:"start_time,omitempty"`
 	EndTime      *string   `json:"end_time,omitempty"`
+	IsConsumed   bool      `json:"is_consumed"`
 	CreatedAt    time.Time `json:"created_at"`
 }
 
@@ -70,6 +71,18 @@ type CreateMealPlanInput struct {
 	Date       string `json:"date"`
 	Name       string `json:"name"`
 	MealTimeID *int64 `json:"meal_time_id,omitempty"`
+	IsConsumed *bool  `json:"is_consumed,omitempty"`
+}
+
+type UpdateMealPlanConsumedInput struct {
+	IsConsumed bool `json:"is_consumed"`
+}
+
+type UpdateMealPlanInput struct {
+	Date       *string `json:"date,omitempty"`
+	Name       *string `json:"name,omitempty"`
+	MealTimeID *int64  `json:"meal_time_id,omitempty"`
+	IsConsumed *bool   `json:"is_consumed,omitempty"`
 }
 
 type Handler struct {
@@ -252,6 +265,7 @@ func (h *Handler) ListMealPlans(w http.ResponseWriter, r *http.Request) {
 		SELECT mp.id, TO_CHAR(mp.date, 'YYYY-MM-DD'), mp.name, mp.meal_time_id, mt.name,
 		       TO_CHAR(COALESCE(mp.start_time, mt.start_time), 'HH24:MI'),
 		       TO_CHAR(COALESCE(mp.end_time, mt.end_time), 'HH24:MI'),
+		       mp.is_consumed,
 		       mp.created_at
 		FROM meal_plans mp
 		LEFT JOIN meal_times mt ON mp.meal_time_id = mt.id
@@ -303,7 +317,7 @@ func (h *Handler) ListMealPlans(w http.ResponseWriter, r *http.Request) {
 		var item MealPlanDTO
 		var mtID sql.NullInt64
 		var mtName, startTime, endTime sql.NullString
-		if err := rows.Scan(&item.ID, &item.Date, &item.Name, &mtID, &mtName, &startTime, &endTime, &item.CreatedAt); err != nil {
+		if err := rows.Scan(&item.ID, &item.Date, &item.Name, &mtID, &mtName, &startTime, &endTime, &item.IsConsumed, &item.CreatedAt); err != nil {
 			webutil.ServerError(w, err)
 			return
 		}
@@ -378,24 +392,30 @@ func (h *Handler) CreateMealPlan(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	isConsumed := false
+	if input.IsConsumed != nil {
+		isConsumed = *input.IsConsumed
+	}
+
 	var item MealPlanDTO
 	var mtID sql.NullInt64
 	var mtName, resStartTime, resEndTime sql.NullString
 
 	err = h.DB.QueryRow(`
 		WITH inserted AS (
-			INSERT INTO meal_plans (user_id, date, name, meal_time_id, start_time, end_time)
-			VALUES ($1, $2::date, $3, $4, $5::time, $6::time)
-			RETURNING id, date, name, meal_time_id, start_time, end_time, created_at
+			INSERT INTO meal_plans (user_id, date, name, meal_time_id, start_time, end_time, is_consumed)
+			VALUES ($1, $2::date, $3, $4, $5::time, $6::time, $7)
+			RETURNING id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
 		)
 		SELECT i.id, TO_CHAR(i.date, 'YYYY-MM-DD'), i.name, i.meal_time_id, mt.name,
 		       TO_CHAR(COALESCE(i.start_time, mt.start_time), 'HH24:MI'),
 		       TO_CHAR(COALESCE(i.end_time, mt.end_time), 'HH24:MI'),
+		       i.is_consumed,
 		       i.created_at
 		FROM inserted i
 		LEFT JOIN meal_times mt ON i.meal_time_id = mt.id
-	`, user.ID, input.Date, input.Name, input.MealTimeID, startTime, endTime).
-		Scan(&item.ID, &item.Date, &item.Name, &mtID, &mtName, &resStartTime, &resEndTime, &item.CreatedAt)
+	`, user.ID, input.Date, input.Name, input.MealTimeID, startTime, endTime, isConsumed).
+		Scan(&item.ID, &item.Date, &item.Name, &mtID, &mtName, &resStartTime, &resEndTime, &item.IsConsumed, &item.CreatedAt)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -448,4 +468,207 @@ func (h *Handler) DeleteMealPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// UpdateMealPlanConsumed updates the is_consumed checklist status for a meal.
+func (h *Handler) UpdateMealPlanConsumed(w http.ResponseWriter, r *http.Request) {
+	user, err := auth.GetSessionUser(h.DB, r)
+	if errors.Is(err, sql.ErrNoRows) {
+		webutil.Unauthorized(w, "session is invalid or expired")
+		return
+	}
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+
+	id, ok := webutil.ParseID(w, r)
+	if !ok {
+		return
+	}
+
+	var input UpdateMealPlanConsumedInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		webutil.BadRequest(w, "invalid request body")
+		return
+	}
+
+	var item MealPlanDTO
+	var mtID sql.NullInt64
+	var mtName, resStartTime, resEndTime sql.NullString
+
+	err = h.DB.QueryRow(`
+		WITH updated AS (
+			UPDATE meal_plans
+			SET is_consumed = $1, updated_at = CURRENT_TIMESTAMP
+			WHERE id = $2 AND user_id = $3
+			RETURNING id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
+		)
+		SELECT u.id, TO_CHAR(u.date, 'YYYY-MM-DD'), u.name, u.meal_time_id, mt.name,
+		       TO_CHAR(COALESCE(u.start_time, mt.start_time), 'HH24:MI'),
+		       TO_CHAR(COALESCE(u.end_time, mt.end_time), 'HH24:MI'),
+		       u.is_consumed,
+		       u.created_at
+		FROM updated u
+		LEFT JOIN meal_times mt ON u.meal_time_id = mt.id
+	`, input.IsConsumed, id, user.ID).Scan(&item.ID, &item.Date, &item.Name, &mtID, &mtName, &resStartTime, &resEndTime, &item.IsConsumed, &item.CreatedAt)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		webutil.WriteJSON(w, http.StatusNotFound, map[string]string{"error": "meal not found"})
+		return
+	}
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+
+	if mtID.Valid {
+		idVal := mtID.Int64
+		item.MealTimeID = &idVal
+	}
+	if mtName.Valid {
+		item.MealTimeName = &mtName.String
+	}
+	if resStartTime.Valid {
+		item.StartTime = &resStartTime.String
+	}
+	if resEndTime.Valid {
+		item.EndTime = &resEndTime.String
+	}
+
+	webutil.WriteJSON(w, http.StatusOK, item)
+}
+
+// UpdateMealPlan allows updating meal plan fields (name, date, meal_time_id, is_consumed).
+func (h *Handler) UpdateMealPlan(w http.ResponseWriter, r *http.Request) {
+	user, err := auth.GetSessionUser(h.DB, r)
+	if errors.Is(err, sql.ErrNoRows) {
+		webutil.Unauthorized(w, "session is invalid or expired")
+		return
+	}
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+
+	id, ok := webutil.ParseID(w, r)
+	if !ok {
+		return
+	}
+
+	var input UpdateMealPlanInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		webutil.BadRequest(w, "invalid request body")
+		return
+	}
+
+	// Fetch current meal plan
+	var currentName, currentDate string
+	var currentMtID sql.NullInt64
+	var currentIsConsumed bool
+	err = h.DB.QueryRow(`
+		SELECT name, TO_CHAR(date, 'YYYY-MM-DD'), meal_time_id, is_consumed
+		FROM meal_plans
+		WHERE id = $1 AND user_id = $2
+	`, id, user.ID).Scan(&currentName, &currentDate, &currentMtID, &currentIsConsumed)
+	if errors.Is(err, sql.ErrNoRows) {
+		webutil.WriteJSON(w, http.StatusNotFound, map[string]string{"error": "meal not found"})
+		return
+	}
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+
+	newName := currentName
+	if input.Name != nil {
+		trimmed := strings.TrimSpace(*input.Name)
+		if trimmed == "" {
+			webutil.BadRequest(w, "meal name cannot be empty")
+			return
+		}
+		newName = trimmed
+	}
+
+	newDate := currentDate
+	if input.Date != nil {
+		trimmed := strings.TrimSpace(*input.Date)
+		if _, err := time.Parse("2006-01-02", trimmed); err != nil {
+			webutil.BadRequest(w, "invalid date format, expected YYYY-MM-DD")
+			return
+		}
+		newDate = trimmed
+	}
+
+	newMtID := currentMtID
+	var startTime, endTime sql.NullString
+	if input.MealTimeID != nil {
+		newMtID = sql.NullInt64{Int64: *input.MealTimeID, Valid: true}
+		err := h.DB.QueryRow(`
+			SELECT TO_CHAR(start_time, 'HH24:MI:SS'), TO_CHAR(end_time, 'HH24:MI:SS')
+			FROM meal_times
+			WHERE id = $1 AND (user_id IS NULL OR user_id = $2)
+		`, *input.MealTimeID, user.ID).Scan(&startTime, &endTime)
+		if errors.Is(err, sql.ErrNoRows) {
+			webutil.BadRequest(w, "specified meal_time_id not found")
+			return
+		}
+		if err != nil {
+			webutil.ServerError(w, err)
+			return
+		}
+	} else if currentMtID.Valid {
+		_ = h.DB.QueryRow(`
+			SELECT TO_CHAR(start_time, 'HH24:MI:SS'), TO_CHAR(end_time, 'HH24:MI:SS')
+			FROM meal_times
+			WHERE id = $1 AND (user_id IS NULL OR user_id = $2)
+		`, currentMtID.Int64, user.ID).Scan(&startTime, &endTime)
+	}
+
+	newIsConsumed := currentIsConsumed
+	if input.IsConsumed != nil {
+		newIsConsumed = *input.IsConsumed
+	}
+
+	var item MealPlanDTO
+	var resMtID sql.NullInt64
+	var mtName, resStartTime, resEndTime sql.NullString
+
+	err = h.DB.QueryRow(`
+		WITH updated AS (
+			UPDATE meal_plans
+			SET name = $1, date = $2::date, meal_time_id = $3, start_time = $4::time, end_time = $5::time, is_consumed = $6, updated_at = CURRENT_TIMESTAMP
+			WHERE id = $7 AND user_id = $8
+			RETURNING id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
+		)
+		SELECT u.id, TO_CHAR(u.date, 'YYYY-MM-DD'), u.name, u.meal_time_id, mt.name,
+		       TO_CHAR(COALESCE(u.start_time, mt.start_time), 'HH24:MI'),
+		       TO_CHAR(COALESCE(u.end_time, mt.end_time), 'HH24:MI'),
+		       u.is_consumed,
+		       u.created_at
+		FROM updated u
+		LEFT JOIN meal_times mt ON u.meal_time_id = mt.id
+	`, newName, newDate, newMtID, startTime, endTime, newIsConsumed, id, user.ID).
+		Scan(&item.ID, &item.Date, &item.Name, &resMtID, &mtName, &resStartTime, &resEndTime, &item.IsConsumed, &item.CreatedAt)
+
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+
+	if resMtID.Valid {
+		idVal := resMtID.Int64
+		item.MealTimeID = &idVal
+	}
+	if mtName.Valid {
+		item.MealTimeName = &mtName.String
+	}
+	if resStartTime.Valid {
+		item.StartTime = &resStartTime.String
+	}
+	if resEndTime.Valid {
+		item.EndTime = &resEndTime.String
+	}
+
+	webutil.WriteJSON(w, http.StatusOK, item)
 }

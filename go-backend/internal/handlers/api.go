@@ -113,6 +113,8 @@ func (a *API) Router() http.Handler {
 			v.Get("/", vehicleHandler.GetVehicle)       // retrieve by id
 			v.Put("/", vehicleHandler.UpdateVehicle)    // full/partial update
 			v.Patch("/", vehicleHandler.UpdateVehicle)  // alias to update
+			v.Put("/tire-pressure", vehicleHandler.UpdateVehicleTirePressure)
+			v.Patch("/tire-pressure", vehicleHandler.UpdateVehicleTirePressure)
 			v.Delete("/", vehicleHandler.DeleteVehicle) // delete
 			v.Post("/air-fills", vehicleHandler.CreateVehicleAirFill)
 			v.Post("/fuel-fillups", vehicleHandler.CreateFuelFillup)

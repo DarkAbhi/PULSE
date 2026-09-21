@@ -34,3 +34,19 @@ export type MaintenanceAttachment = {
   size_bytes: number;
   created_at: string;
 };
+
+export type VehicleHistoryData = {
+  vehicle_name: string;
+  front_tire_pressure: number | null;
+  rear_tire_pressure: number | null;
+  air_fills: AirFill[];
+  fuel_fillups: FuelFill[];
+  maintenance_records: MaintenanceRecord[];
+  average_mileage_km_per_litre: Record<string, number>;
+};
+
+export type SaveTirePressurePayload = {
+  front_tire_pressure: number | null;
+  rear_tire_pressure: number | null;
+};
+

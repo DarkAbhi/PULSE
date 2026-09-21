@@ -1,11 +1,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { AirFill, FuelFill, MaintenanceRecord } from "./types";
+import { AirFill, FuelFill, MaintenanceRecord, VehicleHistoryData } from "./types";
 import DeleteButton from "./delete-button";
 import EditFuelModal from "./edit-fuel-modal";
 import MaintenanceRecordModal from "./maintenance-record-modal";
 import MaintenanceRecordActions from "./maintenance-record-actions";
+import TirePressureCard from "./tire-pressure-card";
 import LocalDate from "../../components/local-date";
 import { ArrowLeft, Fuel, Gauge, Plus, ReceiptText, Wind } from "lucide-react";
 
@@ -60,13 +61,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
     );
   }
 
-  const data = await response.json() as {
-    vehicle_name: string;
-    air_fills: AirFill[];
-    fuel_fillups: FuelFill[];
-    maintenance_records: MaintenanceRecord[];
-    average_mileage_km_per_litre: Record<string, number>;
-  };
+  const data = (await response.json()) as VehicleHistoryData;
 
   const mileageEntries = Object.entries(data.average_mileage_km_per_litre);
 
@@ -163,22 +158,31 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
             <h2 className="flex items-center gap-2 text-xl font-semibold">
               <Wind className="h-5 w-5 text-primary" /> Air fills
             </h2>
+            <TirePressureCard
+              vehicleId={id}
+              frontTirePressure={data.front_tire_pressure}
+              rearTirePressure={data.rear_tire_pressure}
+            />
             <div className="mt-4 space-y-3">
-              {data.air_fills.map((fill) => (
-                <article
-                  className="flex items-center justify-between gap-3 rounded-2xl bg-card border border-border p-5 shadow-sm"
-                  key={fill.id}
-                >
-                  <span>
-                    Air filled · <LocalDate dateString={fill.filled_at} />
-                  </span>
-                  <DeleteButton
-                    vehicleId={id}
-                    recordId={fill.id}
-                    kind="air-fills"
-                  />
-                </article>
-              ))}
+              {data.air_fills.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No air fill records yet.</p>
+              ) : (
+                data.air_fills.map((fill) => (
+                  <article
+                    className="flex items-center justify-between gap-3 rounded-2xl bg-card border border-border p-5 shadow-sm"
+                    key={fill.id}
+                  >
+                    <span>
+                      Air filled · <LocalDate dateString={fill.filled_at} />
+                    </span>
+                    <DeleteButton
+                      vehicleId={id}
+                      recordId={fill.id}
+                      kind="air-fills"
+                    />
+                  </article>
+                ))
+              )}
             </div>
           </section>
         </div>

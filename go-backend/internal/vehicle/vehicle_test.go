@@ -140,6 +140,77 @@ func TestVehiclesCRUD(t *testing.T) {
 		}
 	}
 
+	// 5.5 Update vehicle tire pressure
+	{
+		cookie := loginUser(t, db)
+		// 5.5a Negative pressure validation
+		{
+			negVal := -5.0
+			body, _ := json.Marshal(tirePressurePayload{FrontTirePressure: &negVal})
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPut, "/vehicles/{id}/tire-pressure", bytes.NewReader(body))
+			req.AddCookie(cookie)
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			h.UpdateVehicleTirePressure(rec, req)
+			if rec.Code != http.StatusBadRequest {
+				t.Errorf("expected 400 for negative tire pressure, got %d", rec.Code)
+			}
+		}
+
+		// 5.5b Valid tire pressure update
+		{
+			front := 32.5
+			rear := 35.0
+			body, _ := json.Marshal(tirePressurePayload{FrontTirePressure: &front, RearTirePressure: &rear})
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPut, "/vehicles/{id}/tire-pressure", bytes.NewReader(body))
+			req.AddCookie(cookie)
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			h.UpdateVehicleTirePressure(rec, req)
+			if rec.Code != http.StatusOK {
+				t.Errorf("expected 200 for tire pressure update, got %d: %s", rec.Code, rec.Body.String())
+			}
+
+			var out vehicleDTO
+			_ = json.NewDecoder(rec.Body).Decode(&out)
+			if out.FrontTirePressure == nil || *out.FrontTirePressure != 32.5 {
+				t.Errorf("expected front tire pressure 32.5, got %v", out.FrontTirePressure)
+			}
+			if out.RearTirePressure == nil || *out.RearTirePressure != 35.0 {
+				t.Errorf("expected rear tire pressure 35.0, got %v", out.RearTirePressure)
+			}
+		}
+
+		// 5.5c Verify GetVehicle returns tire pressure
+		{
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "/vehicles/{id}", nil)
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+			h.GetVehicle(rec, req)
+			if rec.Code != http.StatusOK {
+				t.Errorf("expected 200, got %d", rec.Code)
+			}
+
+			var out vehicleDTO
+			_ = json.NewDecoder(rec.Body).Decode(&out)
+			if out.FrontTirePressure == nil || *out.FrontTirePressure != 32.5 {
+				t.Errorf("expected front tire pressure 32.5, got %v", out.FrontTirePressure)
+			}
+			if out.RearTirePressure == nil || *out.RearTirePressure != 35.0 {
+				t.Errorf("expected rear tire pressure 35.0, got %v", out.RearTirePressure)
+			}
+		}
+	}
+
 	// 6. Delete vehicle
 	{
 		rec := httptest.NewRecorder()

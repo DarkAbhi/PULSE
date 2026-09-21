@@ -130,3 +130,34 @@ export async function deleteMaintenanceRecord(vehicleId: string, recordId: numbe
     return { ok: false, error: "We couldn't reach the server." };
   }
 }
+
+export async function saveTirePressure(
+  vehicleId: string,
+  payload: {
+    front_tire_pressure: number | null;
+    rear_tire_pressure: number | null;
+  }
+) {
+  try {
+    const headers = await getAuthHeader();
+    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}/tire-pressure`, {
+      method: "PUT",
+      headers: {
+        ...headers,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      return { ok: false, error: body.error ?? "We couldn't save tire pressure values." };
+    }
+
+    revalidatePath(`/garage/${vehicleId}`);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "We couldn't reach the server." };
+  }
+}
+

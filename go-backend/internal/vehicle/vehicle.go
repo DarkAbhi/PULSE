@@ -15,14 +15,23 @@ import (
 )
 
 type vehiclePayload struct {
-	Name     *string `json:"name"`
-	IsActive *bool   `json:"is_active"`
+	Name              *string  `json:"name"`
+	IsActive          *bool    `json:"is_active"`
+	FrontTirePressure *float64 `json:"front_tire_pressure"`
+	RearTirePressure  *float64 `json:"rear_tire_pressure"`
+}
+
+type tirePressurePayload struct {
+	FrontTirePressure *float64 `json:"front_tire_pressure"`
+	RearTirePressure  *float64 `json:"rear_tire_pressure"`
 }
 
 type vehicleDTO struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	IsActive bool   `json:"is_active"`
+	ID                int64    `json:"id"`
+	Name              string   `json:"name"`
+	IsActive          bool     `json:"is_active"`
+	FrontTirePressure *float64 `json:"front_tire_pressure"`
+	RearTirePressure  *float64 `json:"rear_tire_pressure"`
 }
 
 type airFillHistory struct {
@@ -103,12 +112,12 @@ func (h *Handler) CreateVehicle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	const q = `
-        INSERT INTO vehicles (name, is_active)
-        VALUES ($1, $2)
-        RETURNING id, name, is_active;
+        INSERT INTO vehicles (name, is_active, front_tire_pressure, rear_tire_pressure)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, name, is_active, front_tire_pressure, rear_tire_pressure;
     `
 	var out vehicleDTO
-	if err := h.DB.QueryRow(q, *p.Name, isActive).Scan(&out.ID, &out.Name, &out.IsActive); err != nil {
+	if err := h.DB.QueryRow(q, *p.Name, isActive, p.FrontTirePressure, p.RearTirePressure).Scan(&out.ID, &out.Name, &out.IsActive, &out.FrontTirePressure, &out.RearTirePressure); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
@@ -122,9 +131,9 @@ func (h *Handler) GetVehicle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	const q = `SELECT id, name, is_active FROM vehicles WHERE id=$1;`
+	const q = `SELECT id, name, is_active, front_tire_pressure, rear_tire_pressure FROM vehicles WHERE id=$1;`
 	var out vehicleDTO
-	err := h.DB.QueryRow(q, id).Scan(&out.ID, &out.Name, &out.IsActive)
+	err := h.DB.QueryRow(q, id).Scan(&out.ID, &out.Name, &out.IsActive, &out.FrontTirePressure, &out.RearTirePressure)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
@@ -150,10 +159,12 @@ func (h *Handler) UpdateVehicle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Load current values
-	const sel = `SELECT name, is_active FROM vehicles WHERE id=$1;`
+	const sel = `SELECT name, is_active, front_tire_pressure, rear_tire_pressure FROM vehicles WHERE id=$1;`
 	var curName string
 	var curActive bool
-	if err := h.DB.QueryRow(sel, id).Scan(&curName, &curActive); err != nil {
+	var curFront *float64
+	var curRear *float64
+	if err := h.DB.QueryRow(sel, id).Scan(&curName, &curActive, &curFront, &curRear); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
 			return
@@ -168,15 +179,78 @@ func (h *Handler) UpdateVehicle(w http.ResponseWriter, r *http.Request) {
 	if p.IsActive != nil {
 		curActive = *p.IsActive
 	}
+	if p.FrontTirePressure != nil {
+		if *p.FrontTirePressure < 0 {
+			webutil.BadRequest(w, "front tire pressure cannot be negative")
+			return
+		}
+		curFront = p.FrontTirePressure
+	}
+	if p.RearTirePressure != nil {
+		if *p.RearTirePressure < 0 {
+			webutil.BadRequest(w, "rear tire pressure cannot be negative")
+			return
+		}
+		curRear = p.RearTirePressure
+	}
 
 	const upd = `
         UPDATE vehicles
-        SET name=$1, is_active=$2, updated_at=now()
-        WHERE id=$3
-        RETURNING id, name, is_active;
+        SET name=$1, is_active=$2, front_tire_pressure=$3, rear_tire_pressure=$4, updated_at=now()
+        WHERE id=$5
+        RETURNING id, name, is_active, front_tire_pressure, rear_tire_pressure;
     `
 	var out vehicleDTO
-	if err := h.DB.QueryRow(upd, curName, curActive, id).Scan(&out.ID, &out.Name, &out.IsActive); err != nil {
+	if err := h.DB.QueryRow(upd, curName, curActive, curFront, curRear, id).Scan(&out.ID, &out.Name, &out.IsActive, &out.FrontTirePressure, &out.RearTirePressure); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	webutil.WriteJSON(w, http.StatusOK, out)
+}
+
+// UpdateVehicleTirePressure updates the front and rear tire pressures for a vehicle.
+func (h *Handler) UpdateVehicleTirePressure(w http.ResponseWriter, r *http.Request) {
+	_, err := auth.GetSessionUser(h.DB, r)
+	if errors.Is(err, sql.ErrNoRows) {
+		webutil.Unauthorized(w, "session is invalid or expired")
+		return
+	}
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	id, ok := webutil.ParseID(w, r)
+	if !ok {
+		return
+	}
+
+	var p tirePressurePayload
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		webutil.BadRequest(w, "invalid JSON")
+		return
+	}
+
+	if p.FrontTirePressure != nil && *p.FrontTirePressure < 0 {
+		webutil.BadRequest(w, "front tire pressure cannot be negative")
+		return
+	}
+	if p.RearTirePressure != nil && *p.RearTirePressure < 0 {
+		webutil.BadRequest(w, "rear tire pressure cannot be negative")
+		return
+	}
+
+	const upd = `
+		UPDATE vehicles
+		SET front_tire_pressure=$1, rear_tire_pressure=$2, updated_at=now()
+		WHERE id=$3
+		RETURNING id, name, is_active, front_tire_pressure, rear_tire_pressure;
+	`
+	var out vehicleDTO
+	if err := h.DB.QueryRow(upd, p.FrontTirePressure, p.RearTirePressure, id).Scan(&out.ID, &out.Name, &out.IsActive, &out.FrontTirePressure, &out.RearTirePressure); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.NotFound(w, r)
+			return
+		}
 		webutil.ServerError(w, err)
 		return
 	}
@@ -219,7 +293,9 @@ func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var vehicleName string
-	if err := h.DB.QueryRow(`SELECT name FROM vehicles WHERE id=$1`, vehicleID).Scan(&vehicleName); err != nil {
+	var frontTirePressure *float64
+	var rearTirePressure *float64
+	if err := h.DB.QueryRow(`SELECT name, front_tire_pressure, rear_tire_pressure FROM vehicles WHERE id=$1`, vehicleID).Scan(&vehicleName, &frontTirePressure, &rearTirePressure); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
 			return
@@ -317,7 +393,15 @@ func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	webutil.WriteJSON(w, http.StatusOK, map[string]any{"vehicle_name": vehicleName, "air_fills": air, "fuel_fillups": fuels, "maintenance_records": maintenance, "average_mileage_km_per_litre": h.averageFuelEconomies(vehicleID, user.ID)})
+	webutil.WriteJSON(w, http.StatusOK, map[string]any{
+		"vehicle_name":                 vehicleName,
+		"front_tire_pressure":          frontTirePressure,
+		"rear_tire_pressure":           rearTirePressure,
+		"air_fills":                    air,
+		"fuel_fillups":                 fuels,
+		"maintenance_records":          maintenance,
+		"average_mileage_km_per_litre": h.averageFuelEconomies(vehicleID, user.ID),
+	})
 }
 
 // DeleteVehicleAirFill deletes an air fill record.

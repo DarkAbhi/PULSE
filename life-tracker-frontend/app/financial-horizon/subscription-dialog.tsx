@@ -119,6 +119,10 @@ export default function SubscriptionDialog({
         return;
       }
       parsedRenewalDate = renewalDate;
+      const parsedDate = new Date(renewalDate);
+      if (!isNaN(parsedDate.getDate())) {
+        parsedBillingDay = parsedDate.getDate();
+      }
     }
 
     setIsSubmitting(true);

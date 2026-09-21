@@ -294,11 +294,6 @@ func (h *Handler) CreateSubscription(w http.ResponseWriter, r *http.Request) {
 		cycle = "monthly"
 	}
 
-	var bDay sql.NullInt64
-	if in.BillingDay != nil && *in.BillingDay >= 1 && *in.BillingDay <= 31 {
-		bDay = sql.NullInt64{Int64: int64(*in.BillingDay), Valid: true}
-	}
-
 	var rDate sql.NullTime
 	if in.RenewalDate != nil && strings.TrimSpace(*in.RenewalDate) != "" {
 		if parsed, err := time.Parse(time.RFC3339, strings.TrimSpace(*in.RenewalDate)); err == nil {
@@ -306,6 +301,15 @@ func (h *Handler) CreateSubscription(w http.ResponseWriter, r *http.Request) {
 		} else if parsed, err := time.Parse("2006-01-02", strings.TrimSpace(*in.RenewalDate)); err == nil {
 			rDate = sql.NullTime{Time: parsed, Valid: true}
 		}
+	}
+
+	var bDay sql.NullInt64
+	if in.BillingDay != nil && *in.BillingDay >= 1 && *in.BillingDay <= 31 {
+		bDay = sql.NullInt64{Int64: int64(*in.BillingDay), Valid: true}
+	} else if rDate.Valid {
+		bDay = sql.NullInt64{Int64: int64(rDate.Time.Day()), Valid: true}
+	} else if cycle == "monthly" {
+		bDay = sql.NullInt64{Int64: 1, Valid: true}
 	}
 
 	status := "active"
@@ -430,11 +434,6 @@ func (h *Handler) UpdateSubscription(w http.ResponseWriter, r *http.Request) {
 		cycle = "monthly"
 	}
 
-	var bDay sql.NullInt64
-	if in.BillingDay != nil && *in.BillingDay >= 1 && *in.BillingDay <= 31 {
-		bDay = sql.NullInt64{Int64: int64(*in.BillingDay), Valid: true}
-	}
-
 	var rDate sql.NullTime
 	if in.RenewalDate != nil && strings.TrimSpace(*in.RenewalDate) != "" {
 		if parsed, err := time.Parse(time.RFC3339, strings.TrimSpace(*in.RenewalDate)); err == nil {
@@ -442,6 +441,15 @@ func (h *Handler) UpdateSubscription(w http.ResponseWriter, r *http.Request) {
 		} else if parsed, err := time.Parse("2006-01-02", strings.TrimSpace(*in.RenewalDate)); err == nil {
 			rDate = sql.NullTime{Time: parsed, Valid: true}
 		}
+	}
+
+	var bDay sql.NullInt64
+	if in.BillingDay != nil && *in.BillingDay >= 1 && *in.BillingDay <= 31 {
+		bDay = sql.NullInt64{Int64: int64(*in.BillingDay), Valid: true}
+	} else if rDate.Valid {
+		bDay = sql.NullInt64{Int64: int64(rDate.Time.Day()), Valid: true}
+	} else if cycle == "monthly" {
+		bDay = sql.NullInt64{Int64: 1, Valid: true}
 	}
 
 	status := "active"

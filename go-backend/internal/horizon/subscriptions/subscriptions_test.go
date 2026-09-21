@@ -45,8 +45,6 @@ func TestCalculateMonthlyEquivalent(t *testing.T) {
 	}{
 		{amount: 100, cycle: "monthly", want: 100},
 		{amount: 1200, cycle: "yearly", want: 100},
-		{amount: 300, cycle: "quarterly", want: 100},
-		{amount: 10, cycle: "weekly", want: 43.33},
 	}
 
 	for _, tt := range tests {

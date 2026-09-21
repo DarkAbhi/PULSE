@@ -755,6 +755,7 @@ export default function FinancialHorizonClient({
         amount: sub.amount,
         billing_cycle: sub.billing_cycle,
         billing_day: sub.billing_day,
+        renewal_date: sub.renewal_date,
         status: newStatus,
         category_id: sub.category_id,
         budget_id: sub.budget_id,

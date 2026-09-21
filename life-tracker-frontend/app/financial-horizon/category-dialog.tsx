@@ -84,7 +84,7 @@ export default function CategoryDialog({
           <button
             onClick={onClose}
             disabled={isPending}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition disabled:opacity-50"
+            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition disabled:opacity-50"
             title="Close dialog"
           >
             <X className="h-5 w-5" />

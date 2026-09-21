@@ -152,7 +152,7 @@ export default function TransactionDialog({
           <button
             onClick={onClose}
             disabled={isPending}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition disabled:opacity-50"
+            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition disabled:opacity-50"
             title="Close dialog"
           >
             <X className="h-5 w-5" />
@@ -173,7 +173,7 @@ export default function TransactionDialog({
               <button
                 type="button"
                 onClick={() => setTxType("debit")}
-                className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-semibold transition ${
+                className={`cursor-pointer flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-semibold transition ${
                   txType === "debit"
                     ? "border-rose-500/50 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold"
                     : "border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -185,7 +185,7 @@ export default function TransactionDialog({
               <button
                 type="button"
                 onClick={() => setTxType("credit")}
-                className={`flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-semibold transition ${
+                className={`cursor-pointer flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-semibold transition ${
                   txType === "credit"
                     ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold"
                     : "border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground"

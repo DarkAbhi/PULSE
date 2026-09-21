@@ -801,7 +801,7 @@ export default function MealPlanClient({
                 setIsManageMealTimesOpen(false);
                 handleOpenAddMealTime();
               }}
-              className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
+              className="cursor-pointer inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Custom
@@ -833,7 +833,7 @@ export default function MealPlanClient({
                     onClick={() => setMealTimeToDelete(mt)}
                     aria-label={`Delete ${mt.name}`}
                     disabled={isPending}
-                    className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition disabled:opacity-50"
+                    className="cursor-pointer p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition disabled:opacity-50"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

@@ -78,7 +78,7 @@ export function FuelForm({
           </div>
         </fieldset>
       ))}
-      {items.length < 2 && <button className="text-sm font-semibold text-primary" onClick={() => onItemsChange([...items, newFuelItem()])} type="button">+ Add second fuel tank</button>}
+      {items.length < 2 && <button className="cursor-pointer text-sm font-semibold text-primary" onClick={() => onItemsChange([...items, newFuelItem()])} type="button">+ Add second fuel tank</button>}
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
       <DialogActions><DialogAction variant="secondary" disabled={isSaving} onClick={onCancel} type="button">Cancel</DialogAction><DialogAction disabled={isSaving} type="submit">{isSaving ? savingLabel : submitLabel}</DialogAction></DialogActions>
     </form>

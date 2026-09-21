@@ -236,7 +236,7 @@ export default function StatementUploadDialog({
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition"
+            className="cursor-pointer rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition"
           >
             <X className="h-5 w-5" />
           </button>
@@ -253,7 +253,7 @@ export default function StatementUploadDialog({
               <button
                 type="button"
                 onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                className="text-primary hover:underline font-semibold text-[11px]"
+                className="cursor-pointer text-primary hover:underline font-semibold text-[11px]"
               >
                 {showApiKeyInput ? "Hide Custom Key" : "Set Custom API Key"}
               </button>
@@ -317,7 +317,7 @@ export default function StatementUploadDialog({
                   </p>
                   <button
                     type="button"
-                    className="mt-2 inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-1.5 text-xs font-semibold text-foreground shadow-xs hover:bg-secondary"
+                    className="cursor-pointer mt-2 inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-1.5 text-xs font-semibold text-foreground shadow-xs hover:bg-secondary"
                   >
                     Browse Computer
                   </button>
@@ -355,7 +355,7 @@ export default function StatementUploadDialog({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setActiveView("json")}
-                    className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+                    className={`cursor-pointer inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
                       activeView === "json"
                         ? "bg-primary text-primary-foreground shadow-xs"
                         : "bg-secondary/60 text-muted-foreground hover:text-foreground"
@@ -365,7 +365,7 @@ export default function StatementUploadDialog({
                   </button>
                   <button
                     onClick={() => setActiveView("preview")}
-                    className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+                    className={`cursor-pointer inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
                       activeView === "preview"
                         ? "bg-primary text-primary-foreground shadow-xs"
                         : "bg-secondary/60 text-muted-foreground hover:text-foreground"
@@ -379,7 +379,7 @@ export default function StatementUploadDialog({
                 {activeView === "json" ? (
                   <button
                     onClick={handleCopyJson}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-secondary"
+                    className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-secondary"
                   >
                     {copied ? (
                       <>
@@ -395,7 +395,7 @@ export default function StatementUploadDialog({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={toggleSelectAll}
-                      className="text-xs text-primary font-semibold hover:underline"
+                      className="cursor-pointer text-xs text-primary font-semibold hover:underline"
                     >
                       {selectedTxIndexes.length === extractionResult.data.transactions.length
                         ? "Deselect All"
@@ -518,14 +518,14 @@ export default function StatementUploadDialog({
           {extractionResult ? (
             <button
               onClick={() => setExtractionResult(null)}
-              className="text-xs font-semibold text-muted-foreground hover:text-foreground transition"
+              className="cursor-pointer text-xs font-semibold text-muted-foreground hover:text-foreground transition"
             >
               Upload Another Statement
             </button>
           ) : (
             <button
               onClick={onClose}
-              className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:bg-secondary transition"
+              className="cursor-pointer rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:bg-secondary transition"
             >
               Cancel
             </button>
@@ -535,7 +535,7 @@ export default function StatementUploadDialog({
             <button
               onClick={handleExtract}
               disabled={!selectedFile || isLoading}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow transition hover:opacity-90 disabled:opacity-50"
+              className="cursor-pointer disabled:cursor-not-allowed inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow transition hover:opacity-90 disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -551,7 +551,7 @@ export default function StatementUploadDialog({
             <button
               onClick={handleImport}
               disabled={selectedTxIndexes.length === 0 || isImporting}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow transition hover:opacity-90 disabled:opacity-50"
+              className="cursor-pointer disabled:cursor-not-allowed inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow transition hover:opacity-90 disabled:opacity-50"
             >
               {isImporting ? (
                 <>

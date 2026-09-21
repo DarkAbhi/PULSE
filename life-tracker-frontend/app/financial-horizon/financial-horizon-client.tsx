@@ -1091,7 +1091,7 @@ export default function FinancialHorizonClient({
               </div>
               <button
                 onClick={() => setViewingSubTransactions(null)}
-                className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                className="cursor-pointer rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
               >
                 <X className="h-5 w-5" />
               </button>

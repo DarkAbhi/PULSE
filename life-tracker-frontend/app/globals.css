@@ -161,4 +161,13 @@
   :is(.dark, html.dark, [data-theme="dark"]) input[type="date"]::-webkit-calendar-picker-indicator {
     filter: brightness(0) invert(1) !important;
   }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }

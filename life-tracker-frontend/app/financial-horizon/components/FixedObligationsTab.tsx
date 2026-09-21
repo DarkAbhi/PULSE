@@ -29,6 +29,15 @@ const CATEGORIES = [
   { id: "other", label: "Other Fixed", icon: Receipt, color: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20" },
 ] as const;
 
+function formatOrdinalDay(day: number): string {
+  const mod10 = day % 10;
+  const mod100 = day % 100;
+  if (mod10 === 1 && mod100 !== 11) return `${day}st`;
+  if (mod10 === 2 && mod100 !== 12) return `${day}nd`;
+  if (mod10 === 3 && mod100 !== 13) return `${day}rd`;
+  return `${day}th`;
+}
+
 interface FixedObligationsTabProps {
   summary: HorizonSummary;
   subscriptions?: SubscriptionItem[];
@@ -364,7 +373,7 @@ export default function FixedObligationsTab({
                   {item.due_day && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary/60 px-2 py-1 rounded-lg">
                       <Calendar className="h-3 w-3" />
-                      <span>Due {item.due_day}th</span>
+                      <span>Due {formatOrdinalDay(item.due_day)}</span>
                     </div>
                   )}
                 </div>
@@ -448,7 +457,7 @@ export default function FixedObligationsTab({
                       <span>
                         {sub.billing_cycle === "yearly"
                           ? `Renews ${new Date(sub.next_renewal_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
-                          : `Due ${sub.billing_day ?? 1}st`}
+                          : `Due ${formatOrdinalDay(sub.billing_day ?? 1)}`}
                       </span>
                     </div>
                   </div>

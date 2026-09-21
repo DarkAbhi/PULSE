@@ -1,6 +1,10 @@
 "use client";
 
-import { ButtonHTMLAttributes, ReactNode } from "react";
+import { ButtonHTMLAttributes, createContext, ReactNode, useContext, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+
+const DialogFooterContext = createContext<HTMLElement | null>(null);
+const DialogFormContext = createContext<string | undefined>(undefined);
 
 const widths = {
   sm: "max-w-md",
@@ -20,8 +24,7 @@ export interface DialogProps {
 
 /**
  * Shared dialog frame that keeps every modal clear of the viewport edges.
- * Content taller than the available space scrolls inside the panel instead
- * of pushing the panel flush against the browser window.
+ * Content scrolls inside the panel while DialogActions remain in its footer.
  */
 export default function Dialog({
   children,
@@ -30,6 +33,8 @@ export default function Dialog({
   panelClassName = "",
   size = "sm",
 }: DialogProps) {
+  const [footer, setFooter] = useState<HTMLElement | null>(null);
+
   return (
     <div
       aria-labelledby={labelledBy}
@@ -42,9 +47,12 @@ export default function Dialog({
         onClick={onBackdropClick}
       >
         <section
-          className={`w-full ${widths[size]} max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-8 lg:max-h-[calc(100dvh-4rem)] ${panelClassName}`}
+          className={`flex w-full ${widths[size]} max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-8 lg:max-h-[calc(100dvh-4rem)] ${panelClassName}`}
         >
-          {children}
+          <DialogFooterContext.Provider value={footer}>
+            <div className="min-h-0 overflow-y-auto">{children}</div>
+            <div className="shrink-0" ref={setFooter} />
+          </DialogFooterContext.Provider>
         </section>
       </div>
     </div>
@@ -52,7 +60,30 @@ export default function Dialog({
 }
 
 export function DialogActions({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`mt-6 grid gap-3 sm:grid-cols-2 ${className}`}>{children}</div>;
+  const footer = useContext(DialogFooterContext);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const generatedFormId = useId();
+  const [formId, setFormId] = useState<string>();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const form = actionsRef.current?.closest("form");
+    if (form) {
+      if (!form.id) form.id = generatedFormId;
+      setFormId(form.id);
+    }
+    setReady(true);
+  }, [generatedFormId]);
+
+  const actions = (
+    <DialogFormContext.Provider value={formId}>
+      <div ref={actionsRef} className={`mt-6 grid gap-3 sm:grid-cols-2 ${className}`}>
+        {children}
+      </div>
+    </DialogFormContext.Provider>
+  );
+
+  return footer && ready ? createPortal(actions, footer) : actions;
 }
 
 type DialogActionProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -60,6 +91,7 @@ type DialogActionProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 export function DialogAction({ className = "", variant = "primary", ...props }: DialogActionProps) {
+  const formId = useContext(DialogFormContext);
   const variants = {
     primary: "bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary/20",
     secondary: "border border-btn-cancel-border bg-btn-cancel-bg text-btn-cancel-text hover:bg-btn-cancel-hover focus:ring-ring/15",
@@ -70,6 +102,7 @@ export function DialogAction({ className = "", variant = "primary", ...props }: 
     <button
       className={`inline-flex min-h-11 items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold transition focus:outline-none focus:ring-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
       {...props}
+      form={props.form ?? (props.type !== "button" && props.type !== "reset" ? formId : undefined)}
     />
   );
 }

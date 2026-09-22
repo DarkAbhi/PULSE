@@ -154,7 +154,7 @@ func GetSessionUser(db *sql.DB, r *http.Request) (SessionUser, error) {
 
 	hash := sha256.Sum256([]byte(token))
 	var user SessionUser
-	err := db.QueryRow(`
+	err := db.QueryRowContext(r.Context(), `
 		SELECT users.id, users.username
 		FROM user_sessions
 		JOIN users ON users.id = user_sessions.user_id

@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/DarkAbhi/life-backend/internal/gym"
@@ -31,6 +33,7 @@ func (a *API) Router() http.Handler {
 	}
 	r := chi.NewRouter()
 	r.Use(cors)
+	r.Use(middleware.Timeout(15 * time.Second))
 
 	authHandler := auth.NewHandler(a.DB)
 	healthHandler := health.NewHandler(a.DB)

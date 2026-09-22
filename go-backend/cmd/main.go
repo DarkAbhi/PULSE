@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -86,6 +87,13 @@ func main() {
 	r = middleware.Logger(r)
 	r = middleware.Recoverer(r)
 
+	srv := &http.Server{
+		Addr:              ":" + port,
+		Handler:           r,
+		ReadHeaderTimeout: 5 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
 	log.Printf("🚀 Server starting on :%s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, r))
+	log.Fatal(srv.ListenAndServe())
 }

@@ -31,6 +31,23 @@ import {
 interface MealPlanClientProps {
   initialMeals: MealPlan[];
   initialMealTimes: MealTime[];
+  initialTodayStr?: string;
+}
+
+const APP_TIMEZONE = "Asia/Kolkata";
+
+function getTodayYMD(tz: string = APP_TIMEZONE): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function parseYMD(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 
 function formatYMD(d: Date): string {
@@ -69,10 +86,15 @@ function formatTimeDisplay(timeStr?: string): string {
 export default function MealPlanClient({
   initialMeals,
   initialMealTimes,
+  initialTodayStr,
 }: MealPlanClientProps) {
-  const [todayStr] = useState(() => formatYMD(new Date()));
-  const [currentMonday, setCurrentMonday] = useState(() => getMonday(new Date()));
-  const [selectedDate, setSelectedDate] = useState(() => formatYMD(new Date()));
+  const [todayStr] = useState(() => initialTodayStr ?? getTodayYMD());
+  const [currentMonday, setCurrentMonday] = useState(() =>
+    getMonday(parseYMD(initialTodayStr ?? getTodayYMD()))
+  );
+  const [selectedDate, setSelectedDate] = useState(
+    () => initialTodayStr ?? getTodayYMD()
+  );
   const [meals, setMeals] = useState<MealPlan[]>(initialMeals);
   const [mealTimes, setMealTimes] = useState<MealTime[]>(initialMealTimes);
   const [isLoadingWeek, setIsLoadingWeek] = useState(false);
@@ -140,16 +162,16 @@ export default function MealPlanClient({
   const handlePrevWeek = () => setCurrentMonday((prev) => addDays(prev, -7));
   const handleNextWeek = () => setCurrentMonday((prev) => addDays(prev, 7));
   const handleCurrentWeek = () => {
-    const today = new Date();
-    setCurrentMonday(getMonday(today));
-    setSelectedDate(formatYMD(today));
+    const today = getTodayYMD();
+    setCurrentMonday(getMonday(parseYMD(today)));
+    setSelectedDate(today);
   };
 
   const selectedDayObj = weekDays.find((d) => d.dateStr === selectedDate) ?? {
-    dayFull: new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", {
+    dayFull: parseYMD(selectedDate).toLocaleDateString("en-IN", {
       weekday: "long",
     }),
-    monthDay: new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", {
+    monthDay: parseYMD(selectedDate).toLocaleDateString("en-IN", {
       month: "long",
       day: "numeric",
       year: "numeric",
@@ -416,7 +438,7 @@ export default function MealPlanClient({
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-1" suppressHydrationWarning>
-              {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", {
+              {parseYMD(selectedDate).toLocaleDateString("en-IN", {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
@@ -626,7 +648,7 @@ export default function MealPlanClient({
                 </h2>
                 <p className="text-xs text-muted-foreground" suppressHydrationWarning>
                   For {selectedDayObj.dayFull},{" "}
-                  {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", {
+                  {parseYMD(selectedDate).toLocaleDateString("en-IN", {
                     month: "short",
                     day: "numeric",
                   })}

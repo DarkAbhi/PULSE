@@ -12,6 +12,17 @@ const apiBaseURL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   "http://localhost:8080";
 
+const APP_TIMEZONE = "Asia/Kolkata";
+
+function getTodayYMD(tz: string = APP_TIMEZONE): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
 export default async function MealPlanPage() {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
@@ -51,5 +62,13 @@ export default async function MealPlanPage() {
     // If backend is unreachable, client will handle gracefully
   }
 
-  return <MealPlanClient initialMeals={initialMeals} initialMealTimes={initialMealTimes} />;
+  const todayStr = getTodayYMD();
+
+  return (
+    <MealPlanClient
+      initialMeals={initialMeals}
+      initialMealTimes={initialMealTimes}
+      initialTodayStr={todayStr}
+    />
+  );
 }

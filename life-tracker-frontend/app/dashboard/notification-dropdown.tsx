@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, ArrowRight, X } from "lucide-react";
@@ -93,14 +95,14 @@ export default function NotificationDropdown({
   return (
     <div className="relative">
       {/* Bell button */}
-      <button
+      <Button variant="iconSecondary" size="lg"
         ref={buttonRef}
         type="button"
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
         aria-haspopup="true"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="relative flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card shadow-sm transition hover:border-primary/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="relative"
       >
         <Bell className="h-5 w-5 text-foreground" />
         {unreadCount > 0 && (
@@ -111,7 +113,7 @@ export default function NotificationDropdown({
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
-      </button>
+      </Button>
 
       {/* Dropdown panel */}
       {open && (
@@ -131,14 +133,13 @@ export default function NotificationDropdown({
                 </p>
               )}
             </div>
-            <button
+            <Button variant="icon" size="sm"
               type="button"
               aria-label="Close notifications"
               onClick={() => setOpen(false)}
-              className="rounded-md p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
 
           {/* Body */}
@@ -191,26 +192,26 @@ export default function NotificationDropdown({
                             />
                           </p>
                         </div>
-                        <button
+                        <Button variant="tertiary" size="sm"
                           type="button"
                           aria-label={`Dismiss ${n.title}`}
                           disabled={isBusy}
                           onClick={() => void handleDismiss(n.id)}
-                          className="shrink-0 rounded-md px-2 py-1 text-[11px] font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                          className="shrink-0"
                         >
                           {dismissingIds.has(n.id) ? "…" : "Dismiss"}
-                        </button>
+                        </Button>
                       </div>
 
                       {isGym && (
-                        <button
+                        <Button variant="primary" size="sm"
                           type="button"
                           disabled={isBusy}
                           onClick={() => void handleMarkGymVisited(n.id)}
-                          className="mt-3 w-full rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="mt-3 w-full"
                         >
                           {gymVisitIds.has(n.id) ? "Saving…" : "I visited the gym"}
-                        </button>
+                        </Button>
                       )}
                     </li>
                   );

@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { Receipt, Plus, Tag, Search, Edit2, Trash2, Clock, Wallet, FileUp } from "lucide-react";
 import { HorizonSummary, TransactionItem, CategoryItem } from "../../dashboard/financial-horizon-card";
 import type { TransactionPage } from "../actions";
@@ -68,28 +70,25 @@ export default function TransactionsTab({
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {onOpenStatementUpload && (
-            <button
+            <Button variant="soft" size="sm"
               onClick={onOpenStatementUpload}
               disabled={isPending}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 px-3.5 py-2 text-xs font-semibold text-primary transition hover:bg-primary/20"
             >
               <FileUp className="h-3.5 w-3.5" /> Import Statement
-            </button>
+            </Button>
           )}
-          <button
+          <Button variant="secondary" size="sm"
             onClick={onOpenAddCategory}
             disabled={isPending}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-2 text-xs font-semibold text-foreground transition hover:bg-secondary"
           >
             <Tag className="h-3.5 w-3.5 text-muted-foreground" /> Add Category
-          </button>
-          <button
+          </Button>
+          <Button variant="primary" size="sm"
             onClick={onOpenAddTransaction}
             disabled={isPending}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow transition hover:opacity-90 active:scale-95"
           >
             <Plus className="h-4 w-4" /> Add Transaction
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -98,62 +97,39 @@ export default function TransactionsTab({
         <div className="flex items-center gap-3 flex-wrap">
           {/* Transaction Type Filter Segment */}
           <div className="inline-flex rounded-xl border border-border bg-secondary/30 p-1 text-xs">
-            <button
+            <Button variant={txTypeFilter === "all" ? "primary" : "secondary"} size="sm"
               onClick={() => onTxTypeFilterChange("all")}
-              className={`rounded-lg px-2.5 py-1 font-semibold transition ${
-                txTypeFilter === "all"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
             >
               All Types
-            </button>
-            <button
+            </Button>
+            <Button variant={txTypeFilter === "debit" ? "primary" : "secondary"} size="sm"
               onClick={() => onTxTypeFilterChange("debit")}
-              className={`rounded-lg px-2.5 py-1 font-semibold transition ${
-                txTypeFilter === "debit"
-                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
             >
               Debit
-            </button>
-            <button
+            </Button>
+            <Button variant={txTypeFilter === "credit" ? "primary" : "secondary"} size="sm"
               onClick={() => onTxTypeFilterChange("credit")}
-              className={`rounded-lg px-2.5 py-1 font-semibold transition ${
-                txTypeFilter === "credit"
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
             >
               Credit
-            </button>
+            </Button>
           </div>
 
           {/* Categories Pill List */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none max-w-full sm:max-w-xl">
-            <button
+            <Button variant={txCategoryFilter === "all" ? "primary" : "secondary"} size="sm"
               onClick={() => onTxCategoryFilterChange("all")}
-              className={`rounded-xl px-3 py-1.5 text-xs font-medium transition shrink-0 ${
-                txCategoryFilter === "all"
-                  ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                  : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
-              }`}
+              className="shrink-0"
             >
               All Categories
-            </button>
+            </Button>
             {categories.map((cat) => {
               const count = transactions.filter((t) => t.category_id === cat.id || t.category_name === cat.name).length;
               const isSelected = txCategoryFilter === cat.name;
               return (
-                <button
+                <Button variant={isSelected ? "soft" : "secondary"} size="sm"
                   key={cat.id}
                   onClick={() => onTxCategoryFilterChange(isSelected ? "all" : cat.name)}
-                  className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs transition border shrink-0 ${
-                    isSelected
-                      ? "border-primary bg-primary/10 text-primary font-semibold"
-                      : "border-border/60 bg-card text-muted-foreground hover:border-border hover:text-foreground"
-                  }`}
+                  className="shrink-0"
                 >
                   <span
                     className="h-2 w-2 rounded-full"
@@ -165,7 +141,7 @@ export default function TransactionsTab({
                       {count}
                     </span>
                   )}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -197,12 +173,12 @@ export default function TransactionsTab({
               : "Try adjusting your search or filters to find what you're looking for."}
           </p>
           {transactions.length === 0 && (
-            <button
+            <Button variant="primary" size="md"
               onClick={onOpenAddTransaction}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
+              className="mt-4"
             >
               <Plus className="h-4 w-4" /> Log First Transaction
-            </button>
+            </Button>
           )}
         </div>
       ) : (
@@ -279,20 +255,18 @@ export default function TransactionsTab({
                     {isCredit ? "+" : "-"}{summary.currency}{tx.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </span>
                   <div className="flex items-center gap-1">
-                    <button
+                    <Button variant="icon"
                       onClick={() => onOpenEditTransaction(tx)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition"
                       title="Edit transaction"
                     >
                       <Edit2 className="h-4 w-4" />
-                    </button>
-                    <button
+                    </Button>
+                    <Button variant="iconDanger"
                       onClick={() => onConfirmDeleteTransaction(tx)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 transition"
                       title="Delete transaction"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -315,20 +289,15 @@ export default function TransactionsTab({
               </label>
               <nav className="flex flex-wrap items-center justify-center gap-2" aria-label="Transaction pages">
                 {Array.from({ length: transactionPage.total_pages }, (_, index) => index + 1).map((page) => (
-                <button
+                <Button variant={page === transactionPage.page ? "primary" : "secondary"} size="sm"
                   key={page}
                   type="button"
                   onClick={() => onPageChange(page)}
                   disabled={isPending || page === transactionPage.page}
                   aria-current={page === transactionPage.page ? "page" : undefined}
-                  className={`min-w-9 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                    page === transactionPage.page
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-border bg-card text-foreground hover:bg-secondary"
-                  } disabled:cursor-not-allowed disabled:opacity-60`}
                 >
                   {page}
-                </button>
+                </Button>
                 ))}
               </nav>
             </div>

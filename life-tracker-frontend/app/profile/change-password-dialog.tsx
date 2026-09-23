@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useState } from "react";
 import { Lock, Eye, EyeOff, X, CheckCircle2, KeyRound } from "lucide-react";
 import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
@@ -100,14 +102,14 @@ export default function ChangePasswordDialog({
 
   return (
     <Dialog labelledBy="change-password-title" panelClassName="relative">
-        <button
+        <Button variant="icon" size="sm"
           onClick={handleClose}
           type="button"
-          className="cursor-pointer absolute right-4 top-4 rounded-lg p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
           aria-label="Close modal"
+          className="absolute right-4 top-4"
         >
           <X className="h-5 w-5" />
-        </button>
+        </Button>
 
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -152,13 +154,14 @@ export default function ChangePasswordDialog({
                   required
                   className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
-                <button
+                <Button variant="icon" size="sm"
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
                   {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -177,13 +180,14 @@ export default function ChangePasswordDialog({
                   minLength={6}
                   className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
-                <button
+                <Button variant="icon" size="sm"
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
                   {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -201,13 +205,14 @@ export default function ChangePasswordDialog({
                   required
                   className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
-                <button
+                <Button variant="icon" size="sm"
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                </Button>
               </div>
             </div>
 

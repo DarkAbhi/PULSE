@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FuelForm, FuelFormItem } from "../../components/fuel-form";
@@ -117,14 +119,13 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
           role="alert"
         >
           <span className="text-sm font-medium">{toastError}</span>
-          <button
+          <Button variant="iconDanger" size="sm"
             onClick={() => setToastError("")}
-            className="text-destructive hover:opacity-80 font-bold"
             type="button"
             aria-label="Close"
           >
             &times;
-          </button>
+          </Button>
         </div>
       )}
     </>

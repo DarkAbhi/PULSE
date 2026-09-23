@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { useState, useRef } from "react";
 import {
   X,
@@ -234,12 +236,12 @@ export default function StatementUploadDialog({
               </p>
             </div>
           </div>
-          <button
+          <Button variant="icon"
             onClick={onClose}
-            className="cursor-pointer rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
         {/* Content Body */}
@@ -250,13 +252,12 @@ export default function StatementUploadDialog({
               <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
                 <Key className="h-3.5 w-3.5 text-primary" /> Gemini API Key Config
               </span>
-              <button
+              <Button variant="tertiary" size="md"
                 type="button"
                 onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                className="cursor-pointer text-primary hover:underline font-semibold text-[11px]"
               >
                 {showApiKeyInput ? "Hide Custom Key" : "Set Custom API Key"}
-              </button>
+              </Button>
             </div>
             {showApiKeyInput && (
               <input
@@ -315,12 +316,12 @@ export default function StatementUploadDialog({
                   <p className="text-xs text-muted-foreground">
                     Supports monthly Credit Card, Debit Card, or Bank Account statements
                   </p>
-                  <button
+                  <Button variant="secondary" size="sm"
                     type="button"
-                    className="cursor-pointer mt-2 inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-1.5 text-xs font-semibold text-foreground shadow-xs hover:bg-secondary"
+                    className="mt-2"
                   >
                     Browse Computer
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -353,33 +354,22 @@ export default function StatementUploadDialog({
               {/* Header Tabs: Pure JSON vs Transaction List */}
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button variant={activeView === "json" ? "primary" : "secondary"} size="sm"
                     onClick={() => setActiveView("json")}
-                    className={`cursor-pointer inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                      activeView === "json"
-                        ? "bg-primary text-primary-foreground shadow-xs"
-                        : "bg-secondary/60 text-muted-foreground hover:text-foreground"
-                    }`}
                   >
                     <Code2 className="h-3.5 w-3.5" /> Pure JSON Output
-                  </button>
-                  <button
+                  </Button>
+                  <Button variant={activeView === "preview" ? "primary" : "secondary"} size="sm"
                     onClick={() => setActiveView("preview")}
-                    className={`cursor-pointer inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                      activeView === "preview"
-                        ? "bg-primary text-primary-foreground shadow-xs"
-                        : "bg-secondary/60 text-muted-foreground hover:text-foreground"
-                    }`}
                   >
                     <List className="h-3.5 w-3.5" /> Transactions (
                     {extractionResult.data.transactions?.length || 0})
-                  </button>
+                  </Button>
                 </div>
 
                 {activeView === "json" ? (
-                  <button
+                  <Button variant="secondary" size="sm"
                     onClick={handleCopyJson}
-                    className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-secondary"
                   >
                     {copied ? (
                       <>
@@ -390,17 +380,16 @@ export default function StatementUploadDialog({
                         <Copy className="h-3.5 w-3.5" /> Copy JSON
                       </>
                     )}
-                  </button>
+                  </Button>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <button
+                    <Button variant="tertiary" size="sm"
                       onClick={toggleSelectAll}
-                      className="cursor-pointer text-xs text-primary font-semibold hover:underline"
                     >
                       {selectedTxIndexes.length === extractionResult.data.transactions.length
                         ? "Deselect All"
                         : "Select All"}
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -516,26 +505,23 @@ export default function StatementUploadDialog({
         {/* Footer Actions */}
         <div className="flex items-center justify-between border-t border-border px-6 py-4 bg-secondary/20">
           {extractionResult ? (
-            <button
+            <Button variant="tertiary" size="sm"
               onClick={() => setExtractionResult(null)}
-              className="cursor-pointer text-xs font-semibold text-muted-foreground hover:text-foreground transition"
             >
               Upload Another Statement
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button variant="secondary" size="sm"
               onClick={onClose}
-              className="cursor-pointer rounded-xl border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground hover:bg-secondary transition"
             >
               Cancel
-            </button>
+            </Button>
           )}
 
           {!extractionResult ? (
-            <button
+            <Button variant="primary" size="sm"
               onClick={handleExtract}
               disabled={!selectedFile || isLoading}
-              className="cursor-pointer disabled:cursor-not-allowed inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow transition hover:opacity-90 disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -546,12 +532,11 @@ export default function StatementUploadDialog({
                   <Sparkles className="h-4 w-4" /> Extract Transactions
                 </>
               )}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button variant="primary" size="sm"
               onClick={handleImport}
               disabled={selectedTxIndexes.length === 0 || isImporting}
-              className="cursor-pointer disabled:cursor-not-allowed inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-primary-foreground shadow transition hover:opacity-90 disabled:opacity-50"
             >
               {isImporting ? (
                 <>
@@ -562,7 +547,7 @@ export default function StatementUploadDialog({
                   <Plus className="h-4 w-4" /> Import {selectedTxIndexes.length} Transactions
                 </>
               )}
-            </button>
+            </Button>
           )}
         </div>
     </Dialog>

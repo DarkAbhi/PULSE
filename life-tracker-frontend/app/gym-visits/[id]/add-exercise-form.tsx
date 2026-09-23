@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { addExercise } from "./actions";
@@ -112,13 +114,13 @@ export default function AddExerciseForm({ visitID }: AddExerciseFormProps) {
               </label>
             </div>
           ))}
-          <button
-            className="flex items-center gap-1 text-sm font-semibold text-primary transition hover:opacity-80"
+          <Button variant="tertiary" size="md"
+            icon={<Plus className="h-4 w-4" />}
             onClick={() => setSets((currentSets) => [...currentSets, newSet()])}
             type="button"
           >
-            <Plus className="h-4 w-4" /> Add another set
-          </button>
+            Add another set
+          </Button>
         </fieldset>
 
         {error && (
@@ -126,13 +128,13 @@ export default function AddExerciseForm({ visitID }: AddExerciseFormProps) {
             {error}
           </p>
         )}
-        <button
-          className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+        <Button variant="primary" size="lg"
+          className="w-full"
           disabled={isPending}
           type="submit"
         >
           {isPending ? "Saving exercise…" : "Save exercise"}
-        </button>
+        </Button>
       </form>
     </aside>
   );

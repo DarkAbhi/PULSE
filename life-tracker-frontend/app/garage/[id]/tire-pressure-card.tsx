@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { useState } from "react";
 import { Gauge, Pencil, User, Users } from "lucide-react";
 import TirePressureModal from "./tire-pressure-modal";
@@ -77,9 +79,9 @@ export default function TirePressureCard({
               </p>
             )}
           </div>
-          <button
+          <Button variant="secondary" size="sm"
             type="button"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow-xs hover:bg-accent shrink-0"
+            className="shrink-0"
             onClick={() => setIsOpen(true)}
           >
             {hasAnyPressure ? (
@@ -89,7 +91,7 @@ export default function TirePressureCard({
             ) : (
               "Set pressure"
             )}
-          </button>
+          </Button>
         </div>
       </aside>
 

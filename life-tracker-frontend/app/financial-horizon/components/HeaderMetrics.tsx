@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { Edit2, Sparkles, Wallet, Lock } from "lucide-react";
 import { HorizonSummary } from "../../dashboard/financial-horizon-card";
 
@@ -45,13 +47,12 @@ export default function HeaderMetrics({
               Starting Pool (Base Income)
             </span>
           </div>
-          <button
+          <Button variant="icon"
             onClick={() => setIsEditingBase(!isEditingBase)}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition"
             title="Edit Base Income"
           >
             <Edit2 className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
 
         {isEditingBase ? (
@@ -76,20 +77,18 @@ export default function HeaderMetrics({
               />
             </div>
             <div className="flex gap-2 justify-end">
-              <button
+              <Button variant="secondary" size="sm"
                 type="button"
                 onClick={() => setIsEditingBase(false)}
-                className="rounded-xl px-3 py-1 text-xs font-semibold border border-border hover:bg-secondary"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button variant="primary" size="sm"
                 type="submit"
                 disabled={isPending}
-                className="rounded-xl bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:opacity-90 shadow"
               >
                 Save
-              </button>
+              </Button>
             </div>
           </form>
         ) : (

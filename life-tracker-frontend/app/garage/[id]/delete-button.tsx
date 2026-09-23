@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { useState, useEffect, useTransition } from "react";
 import { deleteAirFill, deleteFuelFill } from "./actions";
 import ConfirmationDialog from "../../components/design-system/confirmation-dialog";
@@ -42,13 +44,12 @@ export default function DeleteButton({
 
   return (
     <>
-      <button
-        className="flex items-center gap-1 text-sm font-semibold text-destructive disabled:opacity-50 transition hover:opacity-80"
+      <Button variant="destructiveOutline" size="sm"
         onClick={() => setIsOpen(true)}
         type="button"
       >
         <Trash2 className="h-4 w-4" /> Delete
-      </button>
+      </Button>
 
       <ConfirmationDialog
         isOpen={isOpen}
@@ -69,14 +70,13 @@ export default function DeleteButton({
           role="alert"
         >
           <span className="text-sm font-medium">{toastError}</span>
-          <button
+          <Button variant="iconDanger" size="sm"
             onClick={() => setToastError("")}
-            className="text-destructive hover:opacity-80 font-bold"
             type="button"
             aria-label="Close"
           >
             &times;
-          </button>
+          </Button>
         </div>
       )}
     </>

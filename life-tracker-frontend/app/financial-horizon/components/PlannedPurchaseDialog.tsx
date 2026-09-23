@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { useState, useEffect, useId } from "react";
 import { X, ShoppingBag } from "lucide-react";
 import Dialog, { DialogAction, DialogActions } from "../../components/design-system/dialog";
@@ -94,13 +96,13 @@ export default function PlannedPurchaseDialog({
               Add Planned Purchase
             </h3>
           </div>
-          <button
+          <Button variant="icon"
             onClick={onClose}
             disabled={isPending}
-            className="rounded-lg p-1 text-muted-foreground hover:bg-secondary hover:text-foreground transition"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
         {errorMsg && (

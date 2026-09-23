@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useState, useEffect } from "react";
 import { X, CreditCard, Calendar, AlertCircle } from "lucide-react";
 import { SubscriptionItem, BudgetItem, CategoryItem } from "../dashboard/financial-horizon-card";
@@ -75,10 +77,10 @@ export default function SubscriptionDialog({
       setBillingDay(new Date().getDate().toString());
       setRenewalDate(new Date().toISOString().slice(0, 10));
       setStatus("active");
-      
+
       const defaultSubCategory = categories.find(c => c.name.toLowerCase().includes("subscription"));
       setCategoryId(defaultSubCategory ? defaultSubCategory.id.toString() : "");
-      
+
       setBudgetId("");
       setNotes("");
     }
@@ -163,12 +165,12 @@ export default function SubscriptionDialog({
               </p>
             </div>
           </div>
-          <button
+          <Button variant="icon"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
         {/* Error alert */}

@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useState, useEffect, useTransition, useId } from "react";
 import Link from "next/link";
 import {
@@ -332,20 +334,18 @@ export default function MealPlanClient({
             </p>
           </div>
           <div className="flex items-center gap-2.5 shrink-0 sm:pt-2">
-            <button
+            <Button variant="secondary" size="sm"
               onClick={() => setIsManageMealTimesOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-semibold text-foreground shadow-xs transition hover:bg-secondary"
             >
               <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
               Meal Times
-            </button>
-            <button
+            </Button>
+            <Button variant="secondary" size="sm"
               onClick={handleCurrentWeek}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-semibold text-foreground shadow-xs transition hover:bg-secondary"
             >
               <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
               Current Week
-            </button>
+            </Button>
           </div>
         </header>
 
@@ -361,35 +361,29 @@ export default function MealPlanClient({
               )}
             </div>
             <div className="flex items-center gap-1.5">
-              <button
+              <Button variant="iconSecondary"
                 onClick={handlePrevWeek}
                 aria-label="Previous week"
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-foreground transition hover:bg-secondary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
               >
                 <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
+              </Button>
+              <Button variant="iconSecondary"
                 onClick={handleNextWeek}
                 aria-label="Next week"
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-card text-foreground transition hover:bg-secondary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
               >
                 <ChevronRight className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-2 sm:gap-3">
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-7 sm:gap-3">
             {weekDays.map((day) => {
               const active = day.isSelected;
               return (
-                <button
+                <Button variant={active ? "primary" : "secondary"} size="sm"
                   key={day.dateStr}
                   onClick={() => setSelectedDate(day.dateStr)}
-                  className={`group relative flex flex-col items-center justify-center rounded-xl p-3 sm:p-3.5 text-center transition focus:outline-hidden focus:ring-2 focus:ring-primary/30 ${
-                    active
-                      ? "bg-primary text-primary-foreground shadow-md font-semibold"
-                      : "border border-border/70 bg-background/50 hover:bg-secondary/60 text-foreground"
-                  }`}
+                  className="w-full min-w-0 flex-col"
                 >
                   <span
                     className={`text-xs uppercase tracking-wider ${
@@ -418,7 +412,7 @@ export default function MealPlanClient({
                       />
                     )}
                   </div>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -447,13 +441,12 @@ export default function MealPlanClient({
           </div>
 
           {dayMeals.length > 0 && (
-            <button
+            <Button variant="primary" size="md"
               onClick={() => handleOpenAddMeal()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-xs transition hover:bg-primary/90 focus:outline-hidden focus:ring-2 focus:ring-primary/20"
             >
               <Plus className="h-4 w-4" />
               Add meal
-            </button>
+            </Button>
           )}
         </div>
 
@@ -470,13 +463,12 @@ export default function MealPlanClient({
               Start planning your meals for {selectedDayObj.dayFull}.
             </p>
             <div className="mt-6">
-              <button
+              <Button variant="primary" size="md"
                 onClick={() => handleOpenAddMeal()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
               >
                 <Plus className="h-4 w-4" />
                 Add meal
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -502,14 +494,13 @@ export default function MealPlanClient({
                             </span>
                           </div>
                         </div>
-                        <button
+                        <Button variant="secondary" size="sm"
                           onClick={() => handleOpenAddMeal(mt.id)}
                           title={`Add to ${mt.name}`}
-                          className="inline-flex items-center gap-1 rounded-md bg-secondary/80 hover:bg-secondary px-2.5 py-1 text-xs font-semibold text-foreground transition"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           Add
-                        </button>
+                        </Button>
                       </div>
 
                       {slotMeals.length === 0 ? (
@@ -526,21 +517,17 @@ export default function MealPlanClient({
                               }`}
                             >
                               <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                                <button
+                                <Button variant={meal.is_consumed ? "primary" : "secondary"} size="sm"
                                   type="button"
                                   role="checkbox"
                                   aria-checked={meal.is_consumed}
                                   onClick={() => handleToggleConsumed(meal)}
                                   disabled={isPending}
                                   title={meal.is_consumed ? "Mark as not consumed" : "Mark as consumed"}
-                                  className={`cursor-pointer flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-md border transition focus:outline-hidden focus:ring-2 focus:ring-primary/20 ${
-                                    meal.is_consumed
-                                      ? "border-emerald-600 bg-emerald-600 text-white dark:border-emerald-500 dark:bg-emerald-500 shadow-2xs"
-                                      : "border-border/80 bg-background hover:border-emerald-500 text-transparent"
-                                  }`}
+                                  className="shrink-0"
                                 >
-                                  <Check className="h-3 w-3 stroke-[2.5]" />
-                                </button>
+                                  {meal.is_consumed && <Check className="h-3 w-3 stroke-[2.5]" />}
+                                </Button>
                                 <span
                                   onClick={() => handleToggleConsumed(meal)}
                                   className={`text-sm truncate transition cursor-pointer select-none ${
@@ -552,14 +539,14 @@ export default function MealPlanClient({
                                   {meal.name}
                                 </span>
                               </div>
-                              <button
+                              <Button variant="iconDanger" size="sm"
                                 onClick={() => setMealToDelete(meal)}
                                 aria-label={`Delete ${meal.name}`}
                                 disabled={isPending}
-                                className="opacity-70 hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition shrink-0"
+                                className="shrink-0"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
-                              </button>
+                              </Button>
                             </li>
                           ))}
                         </ul>
@@ -585,21 +572,17 @@ export default function MealPlanClient({
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                        <button
+                        <Button variant={meal.is_consumed ? "primary" : "secondary"} size="sm"
                           type="button"
                           role="checkbox"
                           aria-checked={meal.is_consumed}
                           onClick={() => handleToggleConsumed(meal)}
                           disabled={isPending}
                           title={meal.is_consumed ? "Mark as not consumed" : "Mark as consumed"}
-                          className={`cursor-pointer flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-md border transition focus:outline-hidden focus:ring-2 focus:ring-primary/20 ${
-                            meal.is_consumed
-                              ? "border-emerald-600 bg-emerald-600 text-white dark:border-emerald-500 dark:bg-emerald-500 shadow-2xs"
-                              : "border-border/80 bg-background hover:border-emerald-500 text-transparent"
-                          }`}
+                          className="shrink-0"
                         >
-                          <Check className="h-3 w-3 stroke-[2.5]" />
-                        </button>
+                          {meal.is_consumed && <Check className="h-3 w-3 stroke-[2.5]" />}
+                        </Button>
                         <span
                           onClick={() => handleToggleConsumed(meal)}
                           className={`text-sm truncate transition cursor-pointer select-none ${
@@ -611,14 +594,14 @@ export default function MealPlanClient({
                           {meal.name}
                         </span>
                       </div>
-                      <button
+                      <Button variant="iconDanger" size="sm"
                         onClick={() => setMealToDelete(meal)}
                         aria-label={`Delete ${meal.name}`}
                         disabled={isPending}
-                        className="p-1 text-muted-foreground hover:text-destructive transition shrink-0"
+                        className="shrink-0"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      </Button>
                     </li>
                   ))}
                 </ul>
@@ -674,13 +657,13 @@ export default function MealPlanClient({
                 >
                   Time of Day
                 </label>
-                <button
+                <Button variant="tertiary" size="sm"
+                  icon={<Plus className="h-3 w-3" />}
                   type="button"
                   onClick={handleOpenAddMealTime}
-                  className="text-xs text-primary hover:underline inline-flex items-center gap-1"
                 >
-                  <Plus className="h-3 w-3" /> New meal time
-                </button>
+                  New meal time
+                </Button>
               </div>
               <select
                 id="meal-time-select"
@@ -880,16 +863,15 @@ export default function MealPlanClient({
                 </p>
               </div>
             </div>
-            <button
+            <Button variant="primary" size="sm"
               onClick={() => {
                 setIsManageMealTimesOpen(false);
                 handleOpenAddMealTime();
               }}
-              className="cursor-pointer inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
               <Plus className="h-3.5 w-3.5" />
               Add Custom
-            </button>
+            </Button>
           </div>
 
           <ul className="divide-y divide-border/60 my-4 max-h-80 overflow-y-auto pr-1">
@@ -913,14 +895,13 @@ export default function MealPlanClient({
                 </div>
 
                 {!mt.is_default && (
-                  <button
+                  <Button variant="iconDanger" size="sm"
                     onClick={() => setMealTimeToDelete(mt)}
                     aria-label={`Delete ${mt.name}`}
                     disabled={isPending}
-                    className="cursor-pointer p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition disabled:opacity-50"
                   >
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </Button>
                 )}
               </li>
             ))}

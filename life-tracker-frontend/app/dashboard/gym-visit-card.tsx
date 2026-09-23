@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -89,8 +91,7 @@ export default function GymVisitCard({
           </p>
         )}
         <div className="mt-3 flex items-center gap-3">
-          <button
-            className="rounded-md bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+          <Button variant="primary" size="sm"
             disabled={isMarkingGym}
             onClick={(event) => {
               event.stopPropagation();
@@ -103,7 +104,7 @@ export default function GymVisitCard({
             type="button"
           >
             {isMarkingGym ? "Marking…" : gymVisited ? "Add visit" : "Mark visited"}
-          </button>
+          </Button>
           {gymVisited && gymVisitID && (
             <Link
               className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:opacity-80"

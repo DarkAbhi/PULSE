@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "./components/design-system/button";
+
 import { SubmitEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -118,13 +120,13 @@ export default function Home() {
             />
           </div>
 
-          <button
-            className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus:outline-none focus:ring-4 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+          <Button variant="primary" size="lg"
+            className="w-full"
             disabled={isSubmitting}
             type="submit"
           >
             {isSubmitting ? "Signing in…" : "Continue"}
-          </button>
+          </Button>
           {error && <p className="text-center text-sm text-destructive" role="alert">{error}</p>}
         </form>
       </section>

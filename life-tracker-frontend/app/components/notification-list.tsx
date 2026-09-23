@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "./design-system/button";
+
 import { useRef, useState } from "react";
 import LocalDate from "./local-date";
 
@@ -86,9 +88,8 @@ function NotificationCard({ notification, onDismiss, onMarkGymVisited }: { notif
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{notification.source}</p>
             <h3 className="mt-1 font-semibold text-foreground">{notification.title}</h3>
           </div>
-          <button
+          <Button variant="tertiary" size="sm"
             aria-label={`Dismiss ${notification.title}`}
-            className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-muted-foreground transition hover:bg-muted hover:text-foreground"
             disabled={isDismissing}
             onClick={(event) => {
                event.stopPropagation();
@@ -96,14 +97,15 @@ function NotificationCard({ notification, onDismiss, onMarkGymVisited }: { notif
             }}
             onPointerDown={(event) => event.stopPropagation()}
             type="button"
+            className="shrink-0"
           >
             Dismiss
-          </button>
+          </Button>
         </div>
         {notification.body && <p className="mt-2 text-sm leading-6 text-muted-foreground">{notification.body}</p>}
         {isGymReminder && onMarkGymVisited && (
-          <button
-            className="mt-4 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+          <Button variant="primary" size="md"
+            className="mt-4"
             disabled={isMarkingGymVisited || isDismissing}
             onClick={(event) => {
               event.stopPropagation();
@@ -113,7 +115,7 @@ function NotificationCard({ notification, onDismiss, onMarkGymVisited }: { notif
             type="button"
           >
             {isMarkingGymVisited ? "Saving your visit…" : "I visited the gym"}
-          </button>
+          </Button>
         )}
         <p className="mt-3 text-xs text-muted-foreground/80">
           <LocalDate

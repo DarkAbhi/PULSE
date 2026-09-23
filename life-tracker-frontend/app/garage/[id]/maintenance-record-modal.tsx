@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createMaintenanceRecord, SaveMaintenancePayload, updateMaintenanceRecord } from "./actions";
@@ -90,7 +92,7 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
             <input className="sr-only" disabled={isUploading} type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAttachment(file); event.currentTarget.value = ""; }} />
           </label>
           <p className="mt-2 text-xs text-muted-foreground">Files are stored privately in your configured S3 bucket. Maximum 10 MB per file.</p>
-          {attachments.length > 0 && <ul className="mt-3 space-y-2">{attachments.map((attachment) => <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm" key={attachment.id}><a className="font-medium text-primary hover:underline" href={`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments/${attachment.id}`}>{attachment.file_name}</a><button className="cursor-pointer font-semibold text-destructive hover:opacity-80" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</button></li>)}</ul>}
+          {attachments.length > 0 && <ul className="mt-3 space-y-2">{attachments.map((attachment) => <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm" key={attachment.id}><a className="font-medium text-primary hover:underline" href={`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments/${attachment.id}`}>{attachment.file_name}</a><Button variant="destructiveOutline" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</Button></li>)}</ul>}
         </>}
       </section>
       {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}

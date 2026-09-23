@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { useState, useMemo } from "react";
 import {
   CreditCard,
@@ -316,12 +318,11 @@ export default function SubscriptionsTab({
           </select>
 
           {/* Add Subscription Button */}
-          <button
+          <Button variant="primary" size="sm"
             onClick={onAddSubscription}
-            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-xs hover:opacity-90 transition"
           >
             <Plus className="h-4 w-4" /> Add Subscription
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -340,12 +341,12 @@ export default function SubscriptionsTab({
               : "Keep track of your recurring monthly, yearly, and software subscriptions in one place."}
           </p>
           {!searchQuery && cycleFilter === "all" && statusFilter === "all" && (
-            <button
+            <Button variant="primary" size="sm"
               onClick={onAddSubscription}
-              className="mt-4 flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-xs hover:opacity-90 transition"
+              className="mt-4"
             >
               <Plus className="h-4 w-4" /> Add Your First Subscription
-            </button>
+            </Button>
           )}
         </div>
       ) : (
@@ -470,43 +471,39 @@ export default function SubscriptionsTab({
                 {/* Card Footer Actions */}
                 <div className="mt-5 pt-3 border-t border-border/60 flex items-center justify-between gap-2">
                   {/* Left: Linked Transactions Trigger */}
-                  <button
+                  <Button variant="tertiary" size="sm"
                     onClick={() => onViewTransactions(sub)}
-                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground transition"
                     title="View payment history"
                   >
                     <Receipt className="h-3.5 w-3.5 text-primary" />
                     <span>{sub.linked_transaction_count || 0} Paid</span>
-                  </button>
+                  </Button>
 
                   {/* Right Action Buttons */}
                   <div className="flex items-center gap-1">
                     {/* Log Payment Quick Button */}
-                    <button
+                    <Button variant="soft" size="sm"
                       onClick={() => onLogPayment(sub)}
-                      className="rounded-lg bg-primary/10 px-2.5 py-1.5 text-xs font-bold text-primary hover:bg-primary/20 transition"
                       title="Log payment transaction for this subscription"
                     >
                       Log Payment
-                    </button>
+                    </Button>
 
                     {/* Edit Button */}
-                    <button
+                    <Button variant="icon"
                       onClick={() => onEditSubscription(sub)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition"
                       title="Edit Subscription"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
 
                     {/* Delete Button */}
-                    <button
+                    <Button variant="iconDanger" size="sm"
                       onClick={() => onDeleteSubscription(sub)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition"
                       title="Delete Subscription"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>

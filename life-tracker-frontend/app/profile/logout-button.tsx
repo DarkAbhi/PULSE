@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
@@ -49,8 +51,8 @@ export default function LogoutButton() {
   return (
     <>
       <div className="mt-6 w-full">
-        <button
-          className="flex items-center justify-center gap-2 w-full rounded-lg border border-destructive/30 bg-transparent px-4 py-3 text-sm font-semibold text-destructive transition hover:bg-destructive/10 focus:outline-none focus:ring-4 focus:ring-destructive/20 cursor-pointer"
+        <Button variant="destructiveOutline" size="lg"
+          className="w-full"
           onClick={() => {
             setLogoutError("");
             setIsConfirmingLogout(true);
@@ -59,7 +61,7 @@ export default function LogoutButton() {
         >
           <LogOut className="h-4 w-4" />
           <span>Sign out</span>
-        </button>
+        </Button>
       </div>
 
       <ConfirmationDialog

@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { useState, useRef, useEffect } from "react";
 import { Plus, ChevronDown, Receipt, Calendar, ShoppingBag, Target, Tag } from "lucide-react";
 
@@ -52,17 +54,16 @@ export default function QuickActionDropdown({
 
   return (
     <div className="relative inline-block text-left" ref={containerRef}>
-      <button
+      <Button variant="primary" size="md"
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={isPending}
-        className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition hover:opacity-95 active:scale-95 disabled:opacity-50"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
         <Plus className="h-4 w-4 stroke-[2.5]" />
         <span>Quick Action</span>
         <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
-      </button>
+      </Button>
 
       {isOpen && (
         <div className="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-2xl border border-border bg-card p-2 shadow-xl ring-1 ring-black/5 animate-in fade-in-50 zoom-in-95">
@@ -71,9 +72,8 @@ export default function QuickActionDropdown({
           </div>
 
           <div className="space-y-1">
-            <button
+            <Button variant="menuItem"
               onClick={() => handleAction(onLogTransaction)}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-foreground transition hover:bg-primary/10 hover:text-primary"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                 <Receipt className="h-4 w-4" />
@@ -82,11 +82,10 @@ export default function QuickActionDropdown({
                 <div className="font-semibold leading-tight">Log Transaction</div>
                 <div className="text-[11px] text-muted-foreground">Record daily expense/income</div>
               </div>
-            </button>
+            </Button>
 
-            <button
+            <Button variant="menuItem"
               onClick={() => handleAction(onAddFixedObligation)}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-foreground transition hover:bg-primary/10 hover:text-primary"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
                 <Calendar className="h-4 w-4" />
@@ -95,11 +94,10 @@ export default function QuickActionDropdown({
                 <div className="font-semibold leading-tight">Add Fixed Obligation</div>
                 <div className="text-[11px] text-muted-foreground">Rent, EMI, SIP, subscriptions</div>
               </div>
-            </button>
+            </Button>
 
-            <button
+            <Button variant="menuItem"
               onClick={() => handleAction(onAddPlannedPurchase)}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-foreground transition hover:bg-primary/10 hover:text-primary"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
                 <ShoppingBag className="h-4 w-4" />
@@ -108,13 +106,12 @@ export default function QuickActionDropdown({
                 <div className="font-semibold leading-tight">Add Planned Purchase</div>
                 <div className="text-[11px] text-muted-foreground">Next month target items</div>
               </div>
-            </button>
+            </Button>
 
             <div className="my-1 border-t border-border/60" />
 
-            <button
+            <Button variant="menuItem"
               onClick={() => handleAction(onAddBudget)}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-foreground transition hover:bg-primary/10 hover:text-primary"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
                 <Target className="h-4 w-4" />
@@ -123,11 +120,10 @@ export default function QuickActionDropdown({
                 <div className="font-semibold leading-tight">Add Monthly Budget</div>
                 <div className="text-[11px] text-muted-foreground">Allocate category target</div>
               </div>
-            </button>
+            </Button>
 
-            <button
+            <Button variant="menuItem"
               onClick={() => handleAction(onAddCategory)}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-foreground transition hover:bg-primary/10 hover:text-primary"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-500/10 text-slate-600 dark:text-slate-400">
                 <Tag className="h-4 w-4" />
@@ -136,7 +132,7 @@ export default function QuickActionDropdown({
                 <div className="font-semibold leading-tight">Add Category Tag</div>
                 <div className="text-[11px] text-muted-foreground">Create custom tx category</div>
               </div>
-            </button>
+            </Button>
           </div>
         </div>
       )}

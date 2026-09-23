@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Sun, Moon, Monitor } from "lucide-react";
@@ -27,19 +29,15 @@ export default function ThemeSettings() {
       </p>
       <div className="grid grid-cols-3 gap-3">
         {options.map(({ value, label, Icon }) => (
-          <button
+          <Button variant={mounted && theme === value ? "soft" : "secondary"} size="sm"
             key={value}
             type="button"
             onClick={() => setTheme(value)}
-            className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-sm font-semibold transition cursor-pointer ${
-              mounted && theme === value
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
+            className="w-full flex-col"
           >
             <Icon className="h-5 w-5" />
             <span>{label}</span>
-          </button>
+          </Button>
         ))}
       </div>
     </div>

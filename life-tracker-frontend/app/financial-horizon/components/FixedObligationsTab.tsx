@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { useMemo } from "react";
 import {
   Calendar,
@@ -156,43 +158,33 @@ export default function FixedObligationsTab({
           </p>
         </div>
 
-        <button
+        <Button variant="primary" size="sm"
           onClick={onOpenAddDeduction}
           disabled={isPending}
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow transition hover:opacity-90 active:scale-95 shrink-0"
+          className="shrink-0"
         >
           <Plus className="h-4 w-4" /> Add Fixed Obligation
-        </button>
+        </Button>
       </div>
 
       {/* Category Filter Pills */}
       <div className="flex flex-wrap gap-2">
-        <button
+        <Button variant={activeCategory === "all" ? "primary" : "secondary"} size="sm"
           onClick={() => setActiveCategory("all")}
-          className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-            activeCategory === "all"
-              ? "bg-primary text-primary-foreground shadow-xs"
-              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-          }`}
         >
           All ({totalItemsCount})
-        </button>
+        </Button>
         {CATEGORIES.map((cat) => {
           const deductionCount = summary.deductions.filter((d) => d.category === cat.id).length;
           const subCount = cat.id === "subscription" ? activeSubscriptions.length : 0;
           const count = deductionCount + subCount;
           return (
-            <button
+            <Button variant={activeCategory === cat.id ? "primary" : "secondary"} size="sm"
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
-                activeCategory === cat.id
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              }`}
             >
               {cat.label} ({count})
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -204,12 +196,13 @@ export default function FixedObligationsTab({
             <h3 className="text-lg font-bold text-foreground">
               {editingDeductionId !== null ? "Edit Fixed Obligation" : "Add Fixed Obligation"}
             </h3>
-            <button
+            <Button variant="icon"
               onClick={onCancelDeductionForm}
-              className="rounded-lg p-1 text-muted-foreground hover:bg-secondary"
+              type="button"
+              aria-label="Cancel deduction"
             >
               <X className="h-5 w-5" />
-            </button>
+            </Button>
           </div>
 
           <form onSubmit={onSaveDeduction} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -284,20 +277,18 @@ export default function FixedObligationsTab({
             </div>
 
             <div className="sm:col-span-2 lg:col-span-3 flex justify-end gap-3 pt-2">
-              <button
+              <Button variant="secondary" size="md"
                 type="button"
                 onClick={onCancelDeductionForm}
-                className="rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-secondary"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button variant="primary" size="md"
                 type="submit"
                 disabled={isPending}
-                className="rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 shadow"
               >
                 {editingDeductionId !== null ? "Update Obligation" : "Save Obligation"}
-              </button>
+              </Button>
             </div>
           </form>
         </section>
@@ -311,12 +302,12 @@ export default function FixedObligationsTab({
           <p className="mt-1 text-sm text-muted-foreground">
             Add your rent, SIP investments, bills, or debt EMIs to calculate your exact baseline.
           </p>
-          <button
+          <Button variant="primary" size="md"
             onClick={onOpenAddDeduction}
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
+            className="mt-4"
           >
             <Plus className="h-4 w-4" /> Add Obligation
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -348,9 +339,8 @@ export default function FixedObligationsTab({
                     </div>
                   </div>
 
-                  <button
+                  <Button variant="icon" size="sm"
                     onClick={() => onToggleDeductionActive(item)}
-                    className="text-muted-foreground hover:text-foreground transition"
                     title={item.is_active ? "Deactivate obligation" : "Activate obligation"}
                   >
                     {item.is_active ? (
@@ -358,7 +348,7 @@ export default function FixedObligationsTab({
                     ) : (
                       <ToggleLeft className="h-6 w-6 text-muted-foreground" />
                     )}
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="mt-4 flex items-baseline justify-between">
@@ -386,20 +376,18 @@ export default function FixedObligationsTab({
                 )}
 
                 <div className="mt-4 flex items-center justify-end gap-2 border-t border-border/50 pt-3">
-                  <button
+                  <Button variant="icon"
                     onClick={() => onOpenEditDeduction(item)}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition"
                     title="Edit obligation"
                   >
                     <Edit2 className="h-4 w-4" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button variant="iconDanger"
                     onClick={() => onDeleteDeduction(item)}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 transition"
                     title="Delete obligation"
                   >
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             );
@@ -475,7 +463,7 @@ export default function FixedObligationsTab({
                     {sub.category_name ?? "Recurring Subscription"}
                   </span>
 
-                  <button
+                  <Button variant="soft" size="sm"
                     onClick={() => {
                       if (onEditSubscription) {
                         onEditSubscription(sub);
@@ -483,11 +471,10 @@ export default function FixedObligationsTab({
                         onNavigateToSubscriptions();
                       }
                     }}
-                    className="inline-flex items-center gap-1 rounded-lg bg-purple-500/10 px-2.5 py-1 text-xs font-semibold text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition"
                   >
                     <span>Manage</span>
                     <ExternalLink className="h-3 w-3" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             );

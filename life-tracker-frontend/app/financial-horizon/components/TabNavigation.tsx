@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { LayoutDashboard, Receipt, Calendar, CreditCard, ShoppingBag } from "lucide-react";
 
 export type HorizonTab = "overview" | "transactions" | "subscriptions" | "fixed" | "planner";
@@ -61,14 +63,10 @@ export default function TabNavigation({
           const isActive = activeTab === tab.id;
 
           return (
-            <button
+            <Button variant={isActive ? "primary" : "secondary"} size="md"
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`group flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-150 ${
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-card text-muted-foreground border border-border/60 hover:border-border hover:bg-secondary/70 hover:text-foreground"
-              }`}
+              className="shrink-0"
             >
               <Icon className={`h-4 w-4 transition-transform group-hover:scale-110 ${isActive ? "text-primary-foreground" : "text-muted-foreground"}`} />
               <span>{tab.label}</span>
@@ -83,7 +81,7 @@ export default function TabNavigation({
                   {tab.count}
                 </span>
               )}
-            </button>
+            </Button>
           );
         })}
       </nav>

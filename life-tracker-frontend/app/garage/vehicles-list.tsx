@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Car } from "lucide-react";
@@ -153,19 +155,19 @@ export default function VehiclesList({
                 "No air fill recorded yet."
               )}
             </p>
-            <button
-              className="mt-4 w-full rounded-lg border border-border px-4 py-3 text-sm font-semibold text-primary"
+            <Button variant="secondary" size="lg"
               onClick={(event) => {
                 event.stopPropagation();
                 setAirFillError("");
                 setPendingAirFillVehicle(vehicle);
               }}
               type="button"
+              className="mt-4 w-full"
             >
               Mark air filled now
-            </button>
-            <button
-              className="mt-3 w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
+            </Button>
+            <Button variant="primary" size="lg"
+              className="mt-3 w-full"
               onClick={(event) => {
                 event.stopPropagation();
                 setFuelError("");
@@ -174,7 +176,7 @@ export default function VehiclesList({
               type="button"
             >
               Add fuel
-            </button>
+            </Button>
           </article>
         ))}
       </section>

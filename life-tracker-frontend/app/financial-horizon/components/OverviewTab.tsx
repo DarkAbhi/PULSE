@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import {
   Target,
   Plus,
@@ -75,13 +77,13 @@ export default function OverviewTab({
             </p>
           </div>
 
-          <button
+          <Button variant="soft" size="sm"
             onClick={onOpenAddBudget}
             disabled={isPending}
-            className="inline-flex items-center gap-2 rounded-xl bg-primary/10 border border-primary/20 px-4 py-2 text-xs font-semibold text-primary transition hover:bg-primary/20 shrink-0"
+            className="shrink-0"
           >
             <Plus className="h-4 w-4" /> Add Monthly Budget
-          </button>
+          </Button>
         </div>
 
         {(summary.budgets ?? []).length === 0 ? (
@@ -94,12 +96,12 @@ export default function OverviewTab({
               Create monthly budgets (e.g. Housing, Utilities, SIPs) to track
               allocations and link your fixed obligations.
             </p>
-            <button
+            <Button variant="primary" size="md"
               onClick={onOpenAddBudget}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90"
+              className="mt-4"
             >
               <Plus className="h-4 w-4" /> Add Your First Budget
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -133,20 +135,18 @@ export default function OverviewTab({
                       </div>
 
                       <div className="flex items-center gap-1">
-                        <button
+                        <Button variant="icon"
                           onClick={() => onOpenEditBudget(b)}
-                          className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition"
                           title="Edit Budget"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                        <button
+                        </Button>
+                        <Button variant="iconDanger"
                           onClick={() => onConfirmDeleteBudget(b)}
-                          className="rounded-lg p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 transition"
                           title="Delete Budget"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -250,13 +250,12 @@ export default function OverviewTab({
               Recent Activity
             </h2>
           </div>
-          <button
+          <Button variant="tertiary" size="sm"
             onClick={() => onNavigateTab("transactions")}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition hover:underline"
           >
             <span>View All ({transactions.length})</span>
             <ArrowRight className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
 
         {recentTransactions.length === 0 ? (

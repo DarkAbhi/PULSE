@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { ShoppingBag, Plus, Trash2, ExternalLink, Wallet, TrendingDown } from "lucide-react";
 import { HorizonSummary } from "../../dashboard/financial-horizon-card";
 import { NextMonthPurchaseItem } from "../financial-horizon-client";
@@ -120,22 +122,21 @@ export default function PlannedPurchasesTab({
               Total Planned: {summary.currency}{purchasesTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </div>
 
-            <button
+            <Button variant="warning" size="sm"
               onClick={onOpenAddPurchase}
               disabled={isPending}
-              className="inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 px-4 py-2 text-xs font-semibold text-white shadow transition active:scale-95 disabled:opacity-50"
+              className="active:scale-95"
             >
               <Plus className="h-4 w-4" /> Add Planned Purchase
-            </button>
+            </Button>
 
             {purchases.length > 0 && (
-              <button
+              <Button variant="destructiveOutline" size="sm"
                 onClick={onConfirmClearAllPurchases}
                 disabled={isPending || isClearingPurchases}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-destructive/40 px-3 py-2 text-xs font-semibold text-destructive transition hover:bg-destructive/10"
               >
                 <Trash2 className="h-3.5 w-3.5" /> Clear All
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -148,12 +149,12 @@ export default function PlannedPurchasesTab({
             <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
               Planning major buys next month? Add them here to calculate how much surplus pool remains after accounting for them.
             </p>
-            <button
+            <Button variant="warning" size="md"
               onClick={onOpenAddPurchase}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow"
+              className="mt-4"
             >
               <Plus className="h-4 w-4" /> Add Next Month Purchase
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -179,13 +180,12 @@ export default function PlannedPurchasesTab({
                   <span className="font-bold text-foreground text-sm">
                     {summary.currency}{item.price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                   </span>
-                  <button
+                  <Button variant="iconDanger"
                     onClick={() => onConfirmDeletePurchase(item)}
-                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500 transition"
                     title="Delete purchase"
                   >
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}

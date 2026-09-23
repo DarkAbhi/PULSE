@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../../components/design-system/button";
+
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
@@ -31,13 +33,12 @@ export default function DeleteVisitButton({ visitID }: DeleteVisitButtonProps) {
 
   return (
     <>
-      <button
-        className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive/10"
+      <Button variant="destructiveOutline" size="md"
         onClick={() => setIsConfirmingDelete(true)}
         type="button"
       >
         <Trash2 className="h-4 w-4" /> Delete visit
-      </button>
+      </Button>
 
       <ConfirmationDialog
         isOpen={isConfirmingDelete}

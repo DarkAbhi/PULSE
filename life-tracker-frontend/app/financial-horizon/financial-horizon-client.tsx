@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Compass, X } from "lucide-react";
@@ -851,9 +853,9 @@ export default function FinancialHorizonClient({
             role="alert"
           >
             <span>{errorMsg}</span>
-            <button onClick={() => setErrorMsg("")} className="p-1 hover:opacity-80">
+            <Button variant="iconDanger" size="sm" onClick={() => setErrorMsg("")}>
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
         )}
 
@@ -1090,12 +1092,12 @@ export default function FinancialHorizonClient({
                   {subTransactionsList.length} recorded payments • Total spent: {summary.currency}{subTransactionsList.reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
                 </p>
               </div>
-              <button
+              <Button variant="icon"
                 onClick={() => setViewingSubTransactions(null)}
-                className="cursor-pointer rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                aria-label="Close transactions"
               >
                 <X className="h-5 w-5" />
-              </button>
+              </Button>
             </div>
 
             <div className="mt-4 max-h-96 overflow-y-auto space-y-2 pr-1">

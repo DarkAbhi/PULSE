@@ -1,7 +1,8 @@
 "use client";
 
-import { ButtonHTMLAttributes, createContext, ReactNode, useContext, useEffect, useId, useRef, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Button, { type ButtonProps } from "./button";
 
 const DialogFooterContext = createContext<HTMLElement | null>(null);
 const DialogFormContext = createContext<string | undefined>(undefined);
@@ -86,23 +87,20 @@ export function DialogActions({ children, className = "" }: { children: ReactNod
   return footer && ready ? createPortal(actions, footer) : actions;
 }
 
-type DialogActionProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type DialogActionProps = ButtonProps & {
   variant?: "primary" | "secondary" | "destructive";
 };
 
 export function DialogAction({ className = "", variant = "primary", ...props }: DialogActionProps) {
   const formId = useContext(DialogFormContext);
-  const variants = {
-    primary: "bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary/20",
-    secondary: "border border-btn-cancel-border bg-btn-cancel-bg text-btn-cancel-text hover:bg-btn-cancel-hover focus:ring-ring/15",
-    destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive/20",
-  };
-
   return (
-    <button
-      className={`inline-flex min-h-11 items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold transition focus:outline-none focus:ring-4 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+    <Button
+      className={className}
+      size="lg"
+      variant={variant}
       {...props}
       form={props.form ?? (props.type !== "button" && props.type !== "reset" ? formId : undefined)}
+      type={props.type ?? "submit"}
     />
   );
 }

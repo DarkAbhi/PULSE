@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useState, useEffect, useId } from "react";
 import { X, Receipt, Wallet, ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { TransactionItem, CategoryItem, BudgetItem, SubscriptionItem } from "../dashboard/financial-horizon-card";
@@ -149,14 +151,14 @@ export default function TransactionDialog({
               {editingTransaction ? "Edit Transaction" : "Log New Transaction"}
             </h2>
           </div>
-          <button
+          <Button variant="icon"
             onClick={onClose}
             disabled={isPending}
-            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition disabled:opacity-50"
+            aria-label="Close"
             title="Close dialog"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
@@ -170,30 +172,20 @@ export default function TransactionDialog({
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground">Transaction Type</label>
             <div className="grid grid-cols-2 gap-2">
-              <button
+              <Button variant={txType === "debit" ? "soft" : "secondary"} size="md"
                 type="button"
                 onClick={() => setTxType("debit")}
-                className={`cursor-pointer flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-semibold transition ${
-                  txType === "debit"
-                    ? "border-rose-500/50 bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold"
-                    : "border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}
               >
                 <ArrowDownRight className="h-4 w-4 text-rose-500" />
                 Debit (Expense)
-              </button>
-              <button
+              </Button>
+              <Button variant={txType === "credit" ? "soft" : "secondary"} size="md"
                 type="button"
                 onClick={() => setTxType("credit")}
-                className={`cursor-pointer flex items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-semibold transition ${
-                  txType === "credit"
-                    ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold"
-                    : "border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground"
-                }`}
               >
                 <ArrowUpRight className="h-4 w-4 text-emerald-500" />
                 Credit (Income / Refund)
-              </button>
+              </Button>
             </div>
           </div>
 

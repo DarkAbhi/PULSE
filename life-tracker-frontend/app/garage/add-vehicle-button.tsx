@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { addVehicleAction } from "./actions";
@@ -28,16 +30,17 @@ export default function AddVehicleButton() {
 
   return (
     <>
-      <button
-        className="shrink-0 flex items-center gap-1.5 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus:outline-none focus:ring-4 focus:ring-primary/20"
+      <Button variant="primary" size="lg"
+        className="shrink-0"
+        icon={<Plus className="h-4 w-4" />}
         onClick={() => {
           setError("");
           setIsAddOpen(true);
         }}
         type="button"
       >
-        <Plus className="h-4 w-4" /> Add vehicle
-      </button>
+        Add vehicle
+      </Button>
 
       {isAddOpen && (
         <Dialog labelledBy="add-vehicle-title">

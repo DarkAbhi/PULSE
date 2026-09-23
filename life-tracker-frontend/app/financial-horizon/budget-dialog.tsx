@@ -1,5 +1,7 @@
 "use client";
 
+import Button from "../components/design-system/button";
+
 import { useState, useEffect, useId } from "react";
 import { X, Target } from "lucide-react";
 import { BudgetItem } from "../dashboard/financial-horizon-card";
@@ -100,14 +102,14 @@ export default function BudgetDialog({
               {editingBudget ? "Edit Monthly Budget" : "Create Monthly Budget"}
             </h2>
           </div>
-          <button
+          <Button variant="icon"
             onClick={onClose}
             disabled={isPending}
-            className="cursor-pointer rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition disabled:opacity-50"
+            aria-label="Close"
             title="Close dialog"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">

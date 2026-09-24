@@ -1,6 +1,7 @@
 package vehicle
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -32,8 +34,9 @@ func (h *Handler) CreateVehicleAirFill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var vehicleExists bool
-	if err := h.DB.QueryRow(`SELECT EXISTS(SELECT 1 FROM vehicles WHERE id = $1)`, vehicleID).Scan(&vehicleExists); err != nil {
+	q := sqlc.New(h.DB)
+	vehicleExists, err := q.VehicleExists(r.Context(), vehicleID)
+	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
@@ -42,12 +45,8 @@ func (h *Handler) CreateVehicleAirFill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var filledAt time.Time
-	if err := h.DB.QueryRow(`
-		INSERT INTO vehicle_air_fills (vehicle_id, user_id)
-		VALUES ($1, $2)
-		RETURNING filled_at
-	`, vehicleID, user.ID).Scan(&filledAt); err != nil {
+	filledAt, err := q.CreateVehicleAirFill(r.Context(), sqlc.CreateVehicleAirFillParams{VehicleID: vehicleID, UserID: user.ID})
+	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
@@ -66,31 +65,17 @@ func (h *Handler) ListLatestVehicleAirFills(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	rows, err := h.DB.Query(`
-		SELECT DISTINCT ON (vehicle_id) vehicle_id, filled_at
-		FROM vehicle_air_fills
-		WHERE user_id = $1
-		ORDER BY vehicle_id, filled_at DESC, id DESC
-	`, user.ID)
+	rows, err := sqlc.New(h.DB).ListLatestVehicleAirFills(r.Context(), user.ID)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	defer rows.Close()
 
 	fills := make([]vehicleAirFillDTO, 0)
-	for rows.Next() {
-		var fill vehicleAirFillDTO
-		if err := rows.Scan(&fill.VehicleID, &fill.FilledAt); err != nil {
-			webutil.ServerError(w, err)
-			return
-		}
+	for _, row := range rows {
+		fill := vehicleAirFillDTO{VehicleID: row.VehicleID, FilledAt: row.FilledAt}
 		fill.FilledAt = fill.FilledAt.UTC()
 		fills = append(fills, fill)
-	}
-	if err := rows.Err(); err != nil {
-		webutil.ServerError(w, err)
-		return
 	}
 	webutil.WriteJSON(w, http.StatusOK, fills)
 }
@@ -107,28 +92,12 @@ func RunAirFillReminderJob(database *sql.DB) {
 }
 
 func createDueAirFillReminders(database *sql.DB) {
-	rows, err := database.Query(`
-		SELECT id FROM vehicle_air_fills
-		WHERE reminder_notification_id IS NULL
-			AND filled_at <= NOW() - INTERVAL '30 days'
-		LIMIT 100
-	`)
+	rows, err := sqlc.New(database).ListDueAirFillReminders(context.Background())
 	if err != nil {
 		log.Printf("air-fill reminder scan failed: %v", err)
 		return
 	}
-	defer rows.Close()
-
-	var airFillIDs []int64
-	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			log.Printf("air-fill reminder scan failed: %v", err)
-			return
-		}
-		airFillIDs = append(airFillIDs, id)
-	}
-	for _, airFillID := range airFillIDs {
+	for _, airFillID := range rows {
 		if err := createAirFillReminder(database, airFillID); err != nil {
 			log.Printf("air-fill reminder failed for fill %d: %v", airFillID, err)
 		}
@@ -141,19 +110,9 @@ func createAirFillReminder(database *sql.DB, airFillID int64) error {
 		return err
 	}
 	defer tx.Rollback()
+	q := sqlc.New(tx)
 
-	var userID int64
-	var vehicleID int64
-	var vehicleName string
-	err = tx.QueryRow(`
-		SELECT vehicle_air_fills.user_id, vehicle_air_fills.vehicle_id, vehicles.name
-		FROM vehicle_air_fills
-		JOIN vehicles ON vehicles.id = vehicle_air_fills.vehicle_id
-		WHERE vehicle_air_fills.id = $1
-			AND vehicle_air_fills.reminder_notification_id IS NULL
-			AND vehicle_air_fills.filled_at <= NOW() - INTERVAL '30 days'
-		FOR UPDATE
-	`, airFillID).Scan(&userID, &vehicleID, &vehicleName)
+	row, err := q.LockDueAirFillReminder(context.Background(), airFillID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil
 	}
@@ -161,16 +120,11 @@ func createAirFillReminder(database *sql.DB, airFillID int64) error {
 		return err
 	}
 
-	var notificationID int64
-	err = tx.QueryRow(`
-		INSERT INTO notifications (user_id, source, title, body, target_path, priority, metadata)
-		VALUES ($1, 'Garage', $2, $3, '/garage', 1, jsonb_build_object('vehicle_id', $4::bigint))
-		RETURNING id
-	`, userID, "Time to check "+vehicleName+"'s air", "It has been 30 days since you last filled air in "+vehicleName+".", vehicleID).Scan(&notificationID)
+	notificationID, err := q.CreateAirFillNotification(context.Background(), sqlc.CreateAirFillNotificationParams{UserID: row.UserID, Title: "Time to check " + row.Name + "'s air", Body: sql.NullString{String: "It has been 30 days since you last filled air in " + row.Name + ".", Valid: true}, Column4: row.VehicleID})
 	if err != nil {
 		return err
 	}
-	if _, err := tx.Exec(`UPDATE vehicle_air_fills SET reminder_notification_id = $1 WHERE id = $2`, notificationID, airFillID); err != nil {
+	if err := q.LinkAirFillReminder(context.Background(), sqlc.LinkAirFillReminderParams{ReminderNotificationID: sql.NullInt64{Int64: notificationID, Valid: true}, ID: airFillID}); err != nil {
 		return err
 	}
 	return tx.Commit()

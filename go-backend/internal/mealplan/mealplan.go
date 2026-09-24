@@ -1,6 +1,7 @@
 package mealplan
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -27,12 +29,9 @@ var defaultMealTimes = []DefaultMealTime{
 
 // EnsureDefaultMealTimes guarantees default meal times exist in the database.
 func EnsureDefaultMealTimes(db *sql.DB) error {
+	q := sqlc.New(db)
 	for _, mt := range defaultMealTimes {
-		_, err := db.Exec(`
-			INSERT INTO meal_times (name, start_time, end_time, is_default)
-			VALUES ($1, $2::time, $3::time, true)
-			ON CONFLICT (COALESCE(user_id, 0), LOWER(name)) DO NOTHING
-		`, mt.Name, mt.StartTime, mt.EndTime)
+		err := q.EnsureDefaultMealTime(context.Background(), sqlc.EnsureDefaultMealTimeParams{Name: mt.Name, Column2: mt.StartTime, Column3: mt.EndTime})
 		if err != nil {
 			return err
 		}
@@ -123,28 +122,17 @@ func (h *Handler) ListMealTimes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := h.DB.Query(`
-		SELECT id, name, TO_CHAR(start_time, 'HH24:MI'), TO_CHAR(end_time, 'HH24:MI'), is_default, user_id
-		FROM meal_times
-		WHERE user_id IS NULL OR user_id = $1
-		ORDER BY start_time ASC, id ASC
-	`, user.ID)
+	rows, err := sqlc.New(h.DB).ListMealTimes(r.Context(), sql.NullInt64{Int64: user.ID, Valid: true})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	defer rows.Close()
 
 	times := make([]MealTimeDTO, 0)
-	for rows.Next() {
-		var mt MealTimeDTO
-		var uid sql.NullInt64
-		if err := rows.Scan(&mt.ID, &mt.Name, &mt.StartTime, &mt.EndTime, &mt.IsDefault, &uid); err != nil {
-			webutil.ServerError(w, err)
-			return
-		}
-		if uid.Valid {
-			id := uid.Int64
+	for _, row := range rows {
+		mt := MealTimeDTO{ID: row.ID, Name: row.Name, StartTime: row.StartTime, EndTime: row.EndTime, IsDefault: row.IsDefault}
+		if row.UserID.Valid {
+			id := row.UserID.Int64
 			mt.UserID = &id
 		}
 		times = append(times, mt)
@@ -189,13 +177,7 @@ func (h *Handler) CreateMealTime(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var mt MealTimeDTO
-	var uid sql.NullInt64
-	err = h.DB.QueryRow(`
-		INSERT INTO meal_times (user_id, name, start_time, end_time, is_default)
-		VALUES ($1, $2, $3::time, $4::time, false)
-		RETURNING id, name, TO_CHAR(start_time, 'HH24:MI'), TO_CHAR(end_time, 'HH24:MI'), is_default, user_id
-	`, user.ID, input.Name, startTime, endTime).Scan(&mt.ID, &mt.Name, &mt.StartTime, &mt.EndTime, &mt.IsDefault, &uid)
+	row, err := sqlc.New(h.DB).CreateMealTime(r.Context(), sqlc.CreateMealTimeParams{UserID: sql.NullInt64{Int64: user.ID, Valid: true}, Name: input.Name, Column3: startTime, Column4: endTime})
 	if err != nil {
 		if strings.Contains(err.Error(), "meal_times_user_name_idx") {
 			webutil.BadRequest(w, "a meal time with this name already exists")
@@ -205,8 +187,9 @@ func (h *Handler) CreateMealTime(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if uid.Valid {
-		id := uid.Int64
+	mt := MealTimeDTO{ID: row.ID, Name: row.Name, StartTime: row.StartTime, EndTime: row.EndTime, IsDefault: row.IsDefault}
+	if row.UserID.Valid {
+		id := row.UserID.Int64
 		mt.UserID = &id
 	}
 
@@ -230,13 +213,12 @@ func (h *Handler) DeleteMealTime(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.DB.Exec(`DELETE FROM meal_times WHERE id = $1 AND user_id = $2 AND is_default = false`, id, user.ID)
+	rows, err := sqlc.New(h.DB).DeleteMealTime(r.Context(), sqlc.DeleteMealTimeParams{ID: id, UserID: sql.NullInt64{Int64: user.ID, Valid: true}})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	rows, _ := res.RowsAffected()
 	if rows == 0 {
 		webutil.WriteJSON(w, http.StatusNotFound, map[string]string{"error": "custom meal time not found or cannot be deleted"})
 		return
@@ -261,28 +243,22 @@ func (h *Handler) ListMealPlans(w http.ResponseWriter, r *http.Request) {
 	startDate := strings.TrimSpace(r.URL.Query().Get("start_date"))
 	endDate := strings.TrimSpace(r.URL.Query().Get("end_date"))
 
-	baseQuery := `
-		SELECT mp.id, TO_CHAR(mp.date, 'YYYY-MM-DD'), mp.name, mp.meal_time_id, mt.name,
-		       TO_CHAR(COALESCE(mp.start_time, mt.start_time), 'HH24:MI'),
-		       TO_CHAR(COALESCE(mp.end_time, mt.end_time), 'HH24:MI'),
-		       mp.is_consumed,
-		       mp.created_at
-		FROM meal_plans mp
-		LEFT JOIN meal_times mt ON mp.meal_time_id = mt.id
-	`
-
-	var rows *sql.Rows
-
+	q := sqlc.New(h.DB)
+	items := make([]MealPlanDTO, 0)
 	switch {
 	case date != "":
 		if _, err := time.Parse("2006-01-02", date); err != nil {
 			webutil.BadRequest(w, "invalid date format, expected YYYY-MM-DD")
 			return
 		}
-		rows, err = h.DB.Query(baseQuery+`
-			WHERE mp.user_id = $1 AND mp.date = $2::date
-			ORDER BY COALESCE(mp.start_time, mt.start_time) ASC NULLS LAST, mp.created_at ASC, mp.id ASC
-		`, user.ID, date)
+		rows, err := q.ListMealPlansByDate(r.Context(), sqlc.ListMealPlansByDateParams{UserID: user.ID, Column2: date})
+		if err != nil {
+			webutil.ServerError(w, err)
+			return
+		}
+		for _, row := range rows {
+			items = append(items, mealPlanDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
+		}
 
 	case startDate != "" && endDate != "":
 		if _, err := time.Parse("2006-01-02", startDate); err != nil {
@@ -293,51 +269,44 @@ func (h *Handler) ListMealPlans(w http.ResponseWriter, r *http.Request) {
 			webutil.BadRequest(w, "invalid end_date format, expected YYYY-MM-DD")
 			return
 		}
-		rows, err = h.DB.Query(baseQuery+`
-			WHERE mp.user_id = $1 AND mp.date >= $2::date AND mp.date <= $3::date
-			ORDER BY mp.date ASC, COALESCE(mp.start_time, mt.start_time) ASC NULLS LAST, mp.created_at ASC, mp.id ASC
-		`, user.ID, startDate, endDate)
-
-	default:
-		rows, err = h.DB.Query(baseQuery+`
-			WHERE mp.user_id = $1
-			ORDER BY mp.date DESC, COALESCE(mp.start_time, mt.start_time) ASC NULLS LAST, mp.created_at ASC, mp.id ASC
-			LIMIT 100
-		`, user.ID)
-	}
-
-	if err != nil {
-		webutil.ServerError(w, err)
-		return
-	}
-	defer rows.Close()
-
-	items := make([]MealPlanDTO, 0)
-	for rows.Next() {
-		var item MealPlanDTO
-		var mtID sql.NullInt64
-		var mtName, startTime, endTime sql.NullString
-		if err := rows.Scan(&item.ID, &item.Date, &item.Name, &mtID, &mtName, &startTime, &endTime, &item.IsConsumed, &item.CreatedAt); err != nil {
+		rows, err := q.ListMealPlansByRange(r.Context(), sqlc.ListMealPlansByRangeParams{UserID: user.ID, Column2: startDate, Column3: endDate})
+		if err != nil {
 			webutil.ServerError(w, err)
 			return
 		}
-		if mtID.Valid {
-			id := mtID.Int64
-			item.MealTimeID = &id
+		for _, row := range rows {
+			items = append(items, mealPlanDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
 		}
-		if mtName.Valid {
-			item.MealTimeName = &mtName.String
+
+	default:
+		rows, err := q.ListRecentMealPlans(r.Context(), user.ID)
+		if err != nil {
+			webutil.ServerError(w, err)
+			return
 		}
-		if startTime.Valid {
-			item.StartTime = &startTime.String
+		for _, row := range rows {
+			items = append(items, mealPlanDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
 		}
-		if endTime.Valid {
-			item.EndTime = &endTime.String
-		}
-		items = append(items, item)
 	}
 
 	webutil.WriteJSON(w, http.StatusOK, items)
+}
+
+func mealPlanDTO(id int64, date, name string, mealTimeID sql.NullInt64, mealTimeName sql.NullString, start, end string, consumed bool, created time.Time) MealPlanDTO {
+	item := MealPlanDTO{ID: id, Date: date, Name: name, IsConsumed: consumed, CreatedAt: created}
+	if mealTimeID.Valid {
+		item.MealTimeID = &mealTimeID.Int64
+	}
+	if mealTimeName.Valid {
+		item.MealTimeName = &mealTimeName.String
+	}
+	if start != "" {
+		item.StartTime = &start
+	}
+	if end != "" {
+		item.EndTime = &end
+	}
+	return item
 }
 
 // CreateMealPlan creates a new meal for a given date, optionally with meal_time_id.
@@ -374,14 +343,9 @@ func (h *Handler) CreateMealPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var startTime, endTime sql.NullString
+	var startTime, endTime string
 	if input.MealTimeID != nil {
-		// Look up start_time and end_time from meal_times
-		err := h.DB.QueryRow(`
-			SELECT TO_CHAR(start_time, 'HH24:MI:SS'), TO_CHAR(end_time, 'HH24:MI:SS')
-			FROM meal_times
-			WHERE id = $1 AND (user_id IS NULL OR user_id = $2)
-		`, *input.MealTimeID, user.ID).Scan(&startTime, &endTime)
+		rangeRow, err := sqlc.New(h.DB).GetMealTimeRange(r.Context(), sqlc.GetMealTimeRangeParams{ID: *input.MealTimeID, UserID: sql.NullInt64{Int64: user.ID, Valid: true}})
 		if errors.Is(err, sql.ErrNoRows) {
 			webutil.BadRequest(w, "specified meal_time_id not found")
 			return
@@ -390,6 +354,7 @@ func (h *Handler) CreateMealPlan(w http.ResponseWriter, r *http.Request) {
 			webutil.ServerError(w, err)
 			return
 		}
+		startTime, endTime = rangeRow.StartTime, rangeRow.EndTime
 	}
 
 	isConsumed := false
@@ -397,43 +362,17 @@ func (h *Handler) CreateMealPlan(w http.ResponseWriter, r *http.Request) {
 		isConsumed = *input.IsConsumed
 	}
 
-	var item MealPlanDTO
 	var mtID sql.NullInt64
-	var mtName, resStartTime, resEndTime sql.NullString
-
-	err = h.DB.QueryRow(`
-		WITH inserted AS (
-			INSERT INTO meal_plans (user_id, date, name, meal_time_id, start_time, end_time, is_consumed)
-			VALUES ($1, $2::date, $3, $4, $5::time, $6::time, $7)
-			RETURNING id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
-		)
-		SELECT i.id, TO_CHAR(i.date, 'YYYY-MM-DD'), i.name, i.meal_time_id, mt.name,
-		       TO_CHAR(COALESCE(i.start_time, mt.start_time), 'HH24:MI'),
-		       TO_CHAR(COALESCE(i.end_time, mt.end_time), 'HH24:MI'),
-		       i.is_consumed,
-		       i.created_at
-		FROM inserted i
-		LEFT JOIN meal_times mt ON i.meal_time_id = mt.id
-	`, user.ID, input.Date, input.Name, input.MealTimeID, startTime, endTime, isConsumed).
-		Scan(&item.ID, &item.Date, &item.Name, &mtID, &mtName, &resStartTime, &resEndTime, &item.IsConsumed, &item.CreatedAt)
+	if input.MealTimeID != nil {
+		mtID = sql.NullInt64{Int64: *input.MealTimeID, Valid: true}
+	}
+	row, err := sqlc.New(h.DB).CreateMealPlan(r.Context(), sqlc.CreateMealPlanParams{UserID: user.ID, Column2: input.Date, Name: input.Name, MealTimeID: mtID, Column5: startTime, Column6: endTime, IsConsumed: isConsumed})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	if mtID.Valid {
-		id := mtID.Int64
-		item.MealTimeID = &id
-	}
-	if mtName.Valid {
-		item.MealTimeName = &mtName.String
-	}
-	if resStartTime.Valid {
-		item.StartTime = &resStartTime.String
-	}
-	if resEndTime.Valid {
-		item.EndTime = &resEndTime.String
-	}
+	item := mealPlanDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt)
 
 	webutil.WriteJSON(w, http.StatusCreated, item)
 }
@@ -455,13 +394,12 @@ func (h *Handler) DeleteMealPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.DB.Exec(`DELETE FROM meal_plans WHERE id = $1 AND user_id = $2`, id, user.ID)
+	rowsAffected, err := sqlc.New(h.DB).DeleteMealPlan(r.Context(), sqlc.DeleteMealPlanParams{ID: id, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	rowsAffected, _ := res.RowsAffected()
 	if rowsAffected == 0 {
 		webutil.WriteJSON(w, http.StatusNotFound, map[string]string{"error": "meal not found"})
 		return
@@ -493,25 +431,7 @@ func (h *Handler) UpdateMealPlanConsumed(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var item MealPlanDTO
-	var mtID sql.NullInt64
-	var mtName, resStartTime, resEndTime sql.NullString
-
-	err = h.DB.QueryRow(`
-		WITH updated AS (
-			UPDATE meal_plans
-			SET is_consumed = $1, updated_at = CURRENT_TIMESTAMP
-			WHERE id = $2 AND user_id = $3
-			RETURNING id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
-		)
-		SELECT u.id, TO_CHAR(u.date, 'YYYY-MM-DD'), u.name, u.meal_time_id, mt.name,
-		       TO_CHAR(COALESCE(u.start_time, mt.start_time), 'HH24:MI'),
-		       TO_CHAR(COALESCE(u.end_time, mt.end_time), 'HH24:MI'),
-		       u.is_consumed,
-		       u.created_at
-		FROM updated u
-		LEFT JOIN meal_times mt ON u.meal_time_id = mt.id
-	`, input.IsConsumed, id, user.ID).Scan(&item.ID, &item.Date, &item.Name, &mtID, &mtName, &resStartTime, &resEndTime, &item.IsConsumed, &item.CreatedAt)
+	row, err := sqlc.New(h.DB).SetMealPlanConsumed(r.Context(), sqlc.SetMealPlanConsumedParams{IsConsumed: input.IsConsumed, ID: id, UserID: user.ID})
 
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.WriteJSON(w, http.StatusNotFound, map[string]string{"error": "meal not found"})
@@ -522,19 +442,7 @@ func (h *Handler) UpdateMealPlanConsumed(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if mtID.Valid {
-		idVal := mtID.Int64
-		item.MealTimeID = &idVal
-	}
-	if mtName.Valid {
-		item.MealTimeName = &mtName.String
-	}
-	if resStartTime.Valid {
-		item.StartTime = &resStartTime.String
-	}
-	if resEndTime.Valid {
-		item.EndTime = &resEndTime.String
-	}
+	item := mealPlanDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt)
 
 	webutil.WriteJSON(w, http.StatusOK, item)
 }
@@ -563,14 +471,8 @@ func (h *Handler) UpdateMealPlan(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch current meal plan
-	var currentName, currentDate string
-	var currentMtID sql.NullInt64
-	var currentIsConsumed bool
-	err = h.DB.QueryRow(`
-		SELECT name, TO_CHAR(date, 'YYYY-MM-DD'), meal_time_id, is_consumed
-		FROM meal_plans
-		WHERE id = $1 AND user_id = $2
-	`, id, user.ID).Scan(&currentName, &currentDate, &currentMtID, &currentIsConsumed)
+	q := sqlc.New(h.DB)
+	current, err := q.GetMealPlanForUpdate(r.Context(), sqlc.GetMealPlanForUpdateParams{ID: id, UserID: user.ID})
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.WriteJSON(w, http.StatusNotFound, map[string]string{"error": "meal not found"})
 		return
@@ -580,7 +482,7 @@ func (h *Handler) UpdateMealPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newName := currentName
+	newName := current.Name
 	if input.Name != nil {
 		trimmed := strings.TrimSpace(*input.Name)
 		if trimmed == "" {
@@ -590,7 +492,7 @@ func (h *Handler) UpdateMealPlan(w http.ResponseWriter, r *http.Request) {
 		newName = trimmed
 	}
 
-	newDate := currentDate
+	newDate := current.Date
 	if input.Date != nil {
 		trimmed := strings.TrimSpace(*input.Date)
 		if _, err := time.Parse("2006-01-02", trimmed); err != nil {
@@ -600,15 +502,11 @@ func (h *Handler) UpdateMealPlan(w http.ResponseWriter, r *http.Request) {
 		newDate = trimmed
 	}
 
-	newMtID := currentMtID
-	var startTime, endTime sql.NullString
+	newMtID := current.MealTimeID
+	var startTime, endTime string
 	if input.MealTimeID != nil {
 		newMtID = sql.NullInt64{Int64: *input.MealTimeID, Valid: true}
-		err := h.DB.QueryRow(`
-			SELECT TO_CHAR(start_time, 'HH24:MI:SS'), TO_CHAR(end_time, 'HH24:MI:SS')
-			FROM meal_times
-			WHERE id = $1 AND (user_id IS NULL OR user_id = $2)
-		`, *input.MealTimeID, user.ID).Scan(&startTime, &endTime)
+		rangeRow, err := q.GetMealTimeRange(r.Context(), sqlc.GetMealTimeRangeParams{ID: *input.MealTimeID, UserID: sql.NullInt64{Int64: user.ID, Valid: true}})
 		if errors.Is(err, sql.ErrNoRows) {
 			webutil.BadRequest(w, "specified meal_time_id not found")
 			return
@@ -617,58 +515,27 @@ func (h *Handler) UpdateMealPlan(w http.ResponseWriter, r *http.Request) {
 			webutil.ServerError(w, err)
 			return
 		}
-	} else if currentMtID.Valid {
-		_ = h.DB.QueryRow(`
-			SELECT TO_CHAR(start_time, 'HH24:MI:SS'), TO_CHAR(end_time, 'HH24:MI:SS')
-			FROM meal_times
-			WHERE id = $1 AND (user_id IS NULL OR user_id = $2)
-		`, currentMtID.Int64, user.ID).Scan(&startTime, &endTime)
+		startTime, endTime = rangeRow.StartTime, rangeRow.EndTime
+	} else if current.MealTimeID.Valid {
+		rangeRow, err := q.GetMealTimeRange(r.Context(), sqlc.GetMealTimeRangeParams{ID: current.MealTimeID.Int64, UserID: sql.NullInt64{Int64: user.ID, Valid: true}})
+		if err == nil {
+			startTime, endTime = rangeRow.StartTime, rangeRow.EndTime
+		}
 	}
 
-	newIsConsumed := currentIsConsumed
+	newIsConsumed := current.IsConsumed
 	if input.IsConsumed != nil {
 		newIsConsumed = *input.IsConsumed
 	}
 
-	var item MealPlanDTO
-	var resMtID sql.NullInt64
-	var mtName, resStartTime, resEndTime sql.NullString
-
-	err = h.DB.QueryRow(`
-		WITH updated AS (
-			UPDATE meal_plans
-			SET name = $1, date = $2::date, meal_time_id = $3, start_time = $4::time, end_time = $5::time, is_consumed = $6, updated_at = CURRENT_TIMESTAMP
-			WHERE id = $7 AND user_id = $8
-			RETURNING id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
-		)
-		SELECT u.id, TO_CHAR(u.date, 'YYYY-MM-DD'), u.name, u.meal_time_id, mt.name,
-		       TO_CHAR(COALESCE(u.start_time, mt.start_time), 'HH24:MI'),
-		       TO_CHAR(COALESCE(u.end_time, mt.end_time), 'HH24:MI'),
-		       u.is_consumed,
-		       u.created_at
-		FROM updated u
-		LEFT JOIN meal_times mt ON u.meal_time_id = mt.id
-	`, newName, newDate, newMtID, startTime, endTime, newIsConsumed, id, user.ID).
-		Scan(&item.ID, &item.Date, &item.Name, &resMtID, &mtName, &resStartTime, &resEndTime, &item.IsConsumed, &item.CreatedAt)
+	row, err := q.UpdateMealPlan(r.Context(), sqlc.UpdateMealPlanParams{Name: newName, Column2: newDate, MealTimeID: newMtID, Column4: startTime, Column5: endTime, IsConsumed: newIsConsumed, ID: id, UserID: user.ID})
 
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	if resMtID.Valid {
-		idVal := resMtID.Int64
-		item.MealTimeID = &idVal
-	}
-	if mtName.Valid {
-		item.MealTimeName = &mtName.String
-	}
-	if resStartTime.Valid {
-		item.StartTime = &resStartTime.String
-	}
-	if resEndTime.Valid {
-		item.EndTime = &resEndTime.String
-	}
+	item := mealPlanDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt)
 
 	webutil.WriteJSON(w, http.StatusOK, item)
 }

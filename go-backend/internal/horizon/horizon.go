@@ -1,6 +1,7 @@
 package horizon
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -9,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/horizon/budgets"
 	"github.com/DarkAbhi/life-backend/internal/horizon/categories"
 	"github.com/DarkAbhi/life-backend/internal/horizon/deductions"
@@ -59,12 +61,14 @@ func (h *Handler) fetchHorizonSummary(userID int64) (*HorizonSummaryDTO, error) 
 	var baseAmount float64
 	var currency string
 
-	err := h.DB.QueryRow(`SELECT base_amount, currency FROM financial_horizon_configs WHERE user_id = $1`, userID).Scan(&baseAmount, &currency)
+	config, err := sqlc.New(h.DB).GetHorizonConfig(context.Background(), userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		baseAmount = 0
 		currency = "₹"
 	} else if err != nil {
 		return nil, err
+	} else {
+		baseAmount, currency = config.BaseAmount, config.Currency
 	}
 
 	// Fetch Budgets
@@ -180,12 +184,7 @@ func (h *Handler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 		currency = strings.TrimSpace(*in.Currency)
 	}
 
-	_, err = h.DB.Exec(`
-		INSERT INTO financial_horizon_configs (user_id, base_amount, currency, updated_at)
-		VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
-		ON CONFLICT (user_id) DO UPDATE
-		SET base_amount = EXCLUDED.base_amount, currency = EXCLUDED.currency, updated_at = CURRENT_TIMESTAMP
-	`, user.ID, in.BaseAmount, currency)
+	err = sqlc.New(h.DB).UpsertHorizonConfig(r.Context(), sqlc.UpsertHorizonConfigParams{UserID: user.ID, BaseAmount: in.BaseAmount, Currency: currency})
 
 	if err != nil {
 		webutil.ServerError(w, err)

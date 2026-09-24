@@ -1,6 +1,7 @@
 package budgets
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -9,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -35,20 +37,16 @@ func NewHandler(db *sql.DB) *Handler {
 }
 
 func (h *Handler) FetchBudgets(userID int64) ([]BudgetDTO, float64, error) {
-	rows, err := h.DB.Query(`SELECT id, name, allocated_amount FROM financial_horizon_budgets WHERE user_id = $1 ORDER BY created_at ASC, id ASC`, userID)
+	rows, err := sqlc.New(h.DB).ListBudgets(context.Background(), userID)
 	if err != nil {
 		return nil, 0, err
 	}
-	defer rows.Close()
 
 	budgetsList := make([]BudgetDTO, 0)
 	var totalBudgetsAllocated float64
 
-	for rows.Next() {
-		var b BudgetDTO
-		if err := rows.Scan(&b.ID, &b.Name, &b.AllocatedAmount); err != nil {
-			return nil, 0, err
-		}
+	for _, row := range rows {
+		b := BudgetDTO{ID: row.ID, Name: row.Name, AllocatedAmount: row.AllocatedAmount}
 		totalBudgetsAllocated += b.AllocatedAmount
 		budgetsList = append(budgetsList, b)
 	}
@@ -84,18 +82,14 @@ func (h *Handler) CreateBudget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var b BudgetDTO
-	err = h.DB.QueryRow(`
-		INSERT INTO financial_horizon_budgets (user_id, name, allocated_amount)
-		VALUES ($1, $2, $3)
-		RETURNING id, name, allocated_amount
-	`, user.ID, in.Name, in.AllocatedAmount).Scan(&b.ID, &b.Name, &b.AllocatedAmount)
+	row, err := sqlc.New(h.DB).CreateBudget(r.Context(), sqlc.CreateBudgetParams{UserID: user.ID, Name: in.Name, AllocatedAmount: in.AllocatedAmount})
 
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
+	b := BudgetDTO{ID: row.ID, Name: row.Name, AllocatedAmount: row.AllocatedAmount}
 	b.UsedAmount = 0
 	b.AvailableAmount = b.AllocatedAmount
 	b.UsagePercentage = 0
@@ -136,13 +130,7 @@ func (h *Handler) UpdateBudget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var b BudgetDTO
-	err = h.DB.QueryRow(`
-		UPDATE financial_horizon_budgets
-		SET name = $1, allocated_amount = $2, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $3 AND user_id = $4
-		RETURNING id, name, allocated_amount
-	`, in.Name, in.AllocatedAmount, budgetID, user.ID).Scan(&b.ID, &b.Name, &b.AllocatedAmount)
+	row, err := sqlc.New(h.DB).UpdateBudget(r.Context(), sqlc.UpdateBudgetParams{Name: in.Name, AllocatedAmount: in.AllocatedAmount, ID: budgetID, UserID: user.ID})
 
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
@@ -153,12 +141,8 @@ func (h *Handler) UpdateBudget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var usedAmount float64
-	err = h.DB.QueryRow(`
-		SELECT COALESCE(SUM(amount), 0)
-		FROM financial_horizon_deductions
-		WHERE budget_id = $1 AND user_id = $2 AND is_active = true
-	`, budgetID, user.ID).Scan(&usedAmount)
+	b := BudgetDTO{ID: row.ID, Name: row.Name, AllocatedAmount: row.AllocatedAmount}
+	usedAmount, err := sqlc.New(h.DB).GetBudgetUsedAmount(r.Context(), sqlc.GetBudgetUsedAmountParams{BudgetID: sql.NullInt64{Int64: budgetID, Valid: true}, UserID: user.ID})
 
 	if err != nil {
 		webutil.ServerError(w, err)
@@ -190,17 +174,12 @@ func (h *Handler) DeleteBudget(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.DB.Exec(`DELETE FROM financial_horizon_budgets WHERE id = $1 AND user_id = $2`, budgetID, user.ID)
+	deleted, err := sqlc.New(h.DB).DeleteBudget(r.Context(), sqlc.DeleteBudgetParams{ID: budgetID, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	deleted, err := result.RowsAffected()
-	if err != nil {
-		webutil.ServerError(w, err)
-		return
-	}
 	if deleted == 0 {
 		http.NotFound(w, r)
 		return

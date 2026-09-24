@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -42,11 +43,7 @@ func (h *Handler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var name string
-	err = h.DB.QueryRow(
-		`SELECT display_name FROM user_profiles WHERE user_id = $1`,
-		user.ID,
-	).Scan(&name)
+	name, err := sqlc.New(h.DB).GetProfileName(r.Context(), user.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.WriteJSON(w, http.StatusOK, map[string]any{"has_profile": false})
 		return
@@ -84,12 +81,7 @@ func (h *Handler) SaveProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.DB.Exec(`
-		INSERT INTO user_profiles (user_id, display_name)
-		VALUES ($1, $2)
-		ON CONFLICT (user_id)
-		DO UPDATE SET display_name = EXCLUDED.display_name, updated_at = NOW()
-	`, user.ID, name)
+	err = sqlc.New(h.DB).SaveProfile(r.Context(), sqlc.SaveProfileParams{UserID: user.ID, DisplayName: name})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -126,8 +118,7 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var storedHash string
-	err = h.DB.QueryRow(`SELECT password_hash FROM users WHERE id = $1`, user.ID).Scan(&storedHash)
+	storedHash, err := sqlc.New(h.DB).GetPasswordHash(r.Context(), user.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "user not found")
 		return
@@ -148,7 +139,7 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.DB.Exec(`UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`, string(newHash), user.ID)
+	err = sqlc.New(h.DB).UpdatePasswordHash(r.Context(), sqlc.UpdatePasswordHashParams{PasswordHash: string(newHash), ID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -156,4 +147,3 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 	webutil.WriteJSON(w, http.StatusOK, map[string]string{"message": "password updated successfully"})
 }
-

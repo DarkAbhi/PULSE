@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/timeutil"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
@@ -44,19 +45,17 @@ func (h *Handler) NextMonthPurchases(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	month := timeutil.NextMonthDate()
-	rows, err := h.DB.Query(`SELECT id,name,price,url FROM next_month_purchases WHERE user_id=$1 AND target_month=$2::date ORDER BY created_at DESC,id DESC`, user.ID, month)
+	rows, err := sqlc.New(h.DB).ListNextMonthPurchases(r.Context(), sqlc.ListNextMonthPurchasesParams{UserID: user.ID, Column2: month})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	defer rows.Close()
 	items := make([]purchaseDTO, 0)
 	total := 0.0
-	for rows.Next() {
-		var item purchaseDTO
-		if err := rows.Scan(&item.ID, &item.Name, &item.Price, &item.URL); err != nil {
-			webutil.ServerError(w, err)
-			return
+	for _, row := range rows {
+		item := purchaseDTO{ID: row.ID, Name: row.Name, Price: row.Price}
+		if row.Url.Valid {
+			item.URL = &row.Url.String
 		}
 		total += item.Price
 		items = append(items, item)
@@ -84,11 +83,18 @@ func (h *Handler) CreateNextMonthPurchase(w http.ResponseWriter, r *http.Request
 		webutil.BadRequest(w, "name and a valid price are required")
 		return
 	}
-	var item purchaseDTO
-	err = h.DB.QueryRow(`INSERT INTO next_month_purchases (user_id,target_month,name,price,url) VALUES ($1,$2::date,$3,$4,$5) RETURNING id,name,price,url`, user.ID, timeutil.NextMonthDate(), in.Name, in.Price, in.URL).Scan(&item.ID, &item.Name, &item.Price, &item.URL)
+	url := sql.NullString{}
+	if in.URL != nil {
+		url = sql.NullString{String: *in.URL, Valid: true}
+	}
+	row, err := sqlc.New(h.DB).CreateNextMonthPurchase(r.Context(), sqlc.CreateNextMonthPurchaseParams{UserID: user.ID, Column2: timeutil.NextMonthDate(), Name: in.Name, Price: in.Price, Url: url})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
+	}
+	item := purchaseDTO{ID: row.ID, Name: row.Name, Price: row.Price}
+	if row.Url.Valid {
+		item.URL = &row.Url.String
 	}
 	webutil.WriteJSON(w, http.StatusCreated, item)
 }
@@ -108,12 +114,7 @@ func (h *Handler) DeleteNextMonthPurchase(w http.ResponseWriter, r *http.Request
 	if !ok {
 		return
 	}
-	result, err := h.DB.Exec(`DELETE FROM next_month_purchases WHERE id=$1 AND user_id=$2 AND target_month=$3::date`, purchaseID, user.ID, timeutil.NextMonthDate())
-	if err != nil {
-		webutil.ServerError(w, err)
-		return
-	}
-	deleted, err := result.RowsAffected()
+	deleted, err := sqlc.New(h.DB).DeleteNextMonthPurchase(r.Context(), sqlc.DeleteNextMonthPurchaseParams{ID: purchaseID, UserID: user.ID, Column3: timeutil.NextMonthDate()})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -136,7 +137,7 @@ func (h *Handler) ClearNextMonthPurchases(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if _, err := h.DB.Exec(`DELETE FROM next_month_purchases WHERE user_id=$1 AND target_month=$2::date`, user.ID, timeutil.NextMonthDate()); err != nil {
+	if err := sqlc.New(h.DB).ClearNextMonthPurchases(r.Context(), sqlc.ClearNextMonthPurchasesParams{UserID: user.ID, Column2: timeutil.NextMonthDate()}); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}

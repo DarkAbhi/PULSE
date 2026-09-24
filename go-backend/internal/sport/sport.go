@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -29,7 +30,7 @@ func (h *Handler) AddSportForDay(w http.ResponseWriter, r *http.Request) {
 	}
 	switch body.Sport {
 	case "cricket", "football", "badminton":
-		_, err := h.DB.Exec(`INSERT INTO sports (name) VALUES ($1);`, body.Sport)
+		err := sqlc.New(h.DB).AddSport(r.Context(), body.Sport)
 		if err != nil {
 			webutil.ServerError(w, err)
 			return

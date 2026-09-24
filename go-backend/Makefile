@@ -5,7 +5,10 @@ else
 	SILENT = @
 endif
 
-.PHONY: test test-integration cover
+.PHONY: test test-integration cover sqlc-generate
+
+sqlc-generate:
+	go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0 generate
 
 ## Tests
 test:
@@ -19,5 +22,4 @@ test-integration:
 cover:
 	@echo "📈 Coverage"
 	$(SILENT) go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out
-
 

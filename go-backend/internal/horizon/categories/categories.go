@@ -1,6 +1,7 @@
 package categories
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -35,26 +37,16 @@ func NewHandler(db *sql.DB) *Handler {
 }
 
 func (h *Handler) FetchCategories(userID int64) ([]CategoryDTO, error) {
-	rows, err := h.DB.Query(`
-		SELECT id, name, icon, color, is_default, user_id
-		FROM financial_horizon_categories
-		WHERE user_id IS NULL OR user_id = $1
-		ORDER BY is_default DESC, name ASC
-	`, userID)
+	rows, err := sqlc.New(h.DB).ListCategories(context.Background(), sql.NullInt64{Int64: userID, Valid: true})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
 	categories := make([]CategoryDTO, 0)
-	for rows.Next() {
-		var c CategoryDTO
-		var uid sql.NullInt64
-		if err := rows.Scan(&c.ID, &c.Name, &c.Icon, &c.Color, &c.IsDefault, &uid); err != nil {
-			return nil, err
-		}
-		if uid.Valid {
-			u := uid.Int64
+	for _, row := range rows {
+		c := CategoryDTO{ID: row.ID, Name: row.Name, Icon: row.Icon, Color: row.Color, IsDefault: row.IsDefault}
+		if row.UserID.Valid {
+			u := row.UserID.Int64
 			c.UserID = &u
 		}
 		categories = append(categories, c)
@@ -116,21 +108,16 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 		color = strings.TrimSpace(*in.Color)
 	}
 
-	var c CategoryDTO
-	var userID sql.NullInt64
-	err = h.DB.QueryRow(`
-		INSERT INTO financial_horizon_categories (user_id, name, icon, color, is_default)
-		VALUES ($1, $2, $3, $4, false)
-		RETURNING id, name, icon, color, is_default, user_id
-	`, user.ID, in.Name, icon, color).Scan(&c.ID, &c.Name, &c.Icon, &c.Color, &c.IsDefault, &userID)
+	row, err := sqlc.New(h.DB).CreateCategory(r.Context(), sqlc.CreateCategoryParams{UserID: sql.NullInt64{Int64: user.ID, Valid: true}, Name: in.Name, Icon: icon, Color: color})
 
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	if userID.Valid {
-		u := userID.Int64
+	c := CategoryDTO{ID: row.ID, Name: row.Name, Icon: row.Icon, Color: row.Color, IsDefault: row.IsDefault}
+	if row.UserID.Valid {
+		u := row.UserID.Int64
 		c.UserID = &u
 	}
 
@@ -138,8 +125,8 @@ func (h *Handler) CreateCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 func SeedDefaultCategories(db *sql.DB) error {
-	var count int
-	err := db.QueryRow(`SELECT COUNT(*) FROM financial_horizon_categories WHERE is_default = true`).Scan(&count)
+	q := sqlc.New(db)
+	count, err := q.CountDefaultCategories(context.Background())
 	if err != nil {
 		return err
 	}
@@ -165,11 +152,7 @@ func SeedDefaultCategories(db *sql.DB) error {
 	}
 
 	for _, c := range defaultCategories {
-		_, _ = db.Exec(`
-			INSERT INTO financial_horizon_categories (name, icon, color, is_default)
-			VALUES ($1, $2, $3, true)
-			ON CONFLICT DO NOTHING
-		`, c.name, c.icon, c.color)
+		_ = q.SeedDefaultCategory(context.Background(), sqlc.SeedDefaultCategoryParams{Name: c.name, Icon: c.icon, Color: c.color})
 	}
 	return nil
 }

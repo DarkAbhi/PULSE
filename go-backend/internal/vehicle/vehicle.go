@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -77,32 +78,26 @@ func NewHandler(db *sql.DB) *Handler {
 	return &Handler{DB: db}
 }
 
+func vehicleDTOFromFields(id int64, name string, active bool, frontSolo, rearSolo, frontPillion, rearPillion *float64) vehicleDTO {
+	return vehicleDTO{ID: id, Name: name, IsActive: active, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, FrontTirePressure: frontSolo, RearTirePressure: rearSolo}
+}
+
 // ListVehicles lists all vehicles.
 func (h *Handler) ListVehicles(w http.ResponseWriter, r *http.Request) {
-	const q = `SELECT id, name FROM vehicles ORDER BY id ASC;`
-	rows, err := h.DB.Query(q)
+	rows, err := sqlc.New(h.DB).ListVehicles(r.Context())
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	defer rows.Close()
 
 	type vehicleItem struct {
 		ID   int64  `json:"id"`
 		Name string `json:"name"`
 	}
 	out := make([]vehicleItem, 0)
-	for rows.Next() {
-		var v vehicleItem
-		if err := rows.Scan(&v.ID, &v.Name); err != nil {
-			webutil.ServerError(w, err)
-			return
-		}
+	for _, row := range rows {
+		v := vehicleItem{ID: row.ID, Name: row.Name}
 		out = append(out, v)
-	}
-	if err := rows.Err(); err != nil {
-		webutil.ServerError(w, err)
-		return
 	}
 	webutil.WriteJSON(w, http.StatusOK, out)
 }
@@ -151,22 +146,12 @@ func (h *Handler) CreateVehicle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	const q = `
-        INSERT INTO vehicles (name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion;
-    `
-	var out vehicleDTO
-	if err := h.DB.QueryRow(q, *p.Name, isActive, frontSolo, rearSolo, frontPillion, rearPillion).Scan(
-		&out.ID, &out.Name, &out.IsActive,
-		&out.FrontTirePressureSolo, &out.RearTirePressureSolo,
-		&out.FrontTirePressurePillion, &out.RearTirePressurePillion,
-	); err != nil {
+	row, err := sqlc.New(h.DB).CreateVehicle(r.Context(), sqlc.CreateVehicleParams{Name: *p.Name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion})
+	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	out.FrontTirePressure = out.FrontTirePressureSolo
-	out.RearTirePressure = out.RearTirePressureSolo
+	out := vehicleDTOFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion)
 	webutil.WriteJSON(w, http.StatusCreated, out)
 }
 
@@ -177,13 +162,7 @@ func (h *Handler) GetVehicle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	const q = `SELECT id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1;`
-	var out vehicleDTO
-	err := h.DB.QueryRow(q, id).Scan(
-		&out.ID, &out.Name, &out.IsActive,
-		&out.FrontTirePressureSolo, &out.RearTirePressureSolo,
-		&out.FrontTirePressurePillion, &out.RearTirePressurePillion,
-	)
+	row, err := sqlc.New(h.DB).GetVehicle(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
@@ -192,8 +171,7 @@ func (h *Handler) GetVehicle(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	out.FrontTirePressure = out.FrontTirePressureSolo
-	out.RearTirePressure = out.RearTirePressureSolo
+	out := vehicleDTOFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion)
 	webutil.WriteJSON(w, http.StatusOK, out)
 }
 
@@ -210,15 +188,8 @@ func (h *Handler) UpdateVehicle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Load current values
-	const sel = `SELECT name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1;`
-	var curName string
-	var curActive bool
-	var curFrontSolo *float64
-	var curRearSolo *float64
-	var curFrontPillion *float64
-	var curRearPillion *float64
-	if err := h.DB.QueryRow(sel, id).Scan(&curName, &curActive, &curFrontSolo, &curRearSolo, &curFrontPillion, &curRearPillion); err != nil {
+	current, err := sqlc.New(h.DB).GetVehicleForUpdate(r.Context(), id)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
 			return
@@ -226,6 +197,9 @@ func (h *Handler) UpdateVehicle(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
+	curName, curActive := current.Name, current.IsActive
+	curFrontSolo, curRearSolo := current.FrontTirePressureSolo, current.RearTirePressureSolo
+	curFrontPillion, curRearPillion := current.FrontTirePressurePillion, current.RearTirePressurePillion
 
 	if p.Name != nil {
 		curName = *p.Name
@@ -273,23 +247,12 @@ func (h *Handler) UpdateVehicle(w http.ResponseWriter, r *http.Request) {
 		curRearPillion = p.RearTirePressurePillion
 	}
 
-	const upd = `
-        UPDATE vehicles
-        SET name=$1, is_active=$2, front_tire_pressure_solo=$3, rear_tire_pressure_solo=$4, front_tire_pressure_pillion=$5, rear_tire_pressure_pillion=$6, updated_at=now()
-        WHERE id=$7
-        RETURNING id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion;
-    `
-	var out vehicleDTO
-	if err := h.DB.QueryRow(upd, curName, curActive, curFrontSolo, curRearSolo, curFrontPillion, curRearPillion, id).Scan(
-		&out.ID, &out.Name, &out.IsActive,
-		&out.FrontTirePressureSolo, &out.RearTirePressureSolo,
-		&out.FrontTirePressurePillion, &out.RearTirePressurePillion,
-	); err != nil {
+	row, err := sqlc.New(h.DB).UpdateVehicle(r.Context(), sqlc.UpdateVehicleParams{Name: curName, IsActive: curActive, FrontTirePressureSolo: curFrontSolo, RearTirePressureSolo: curRearSolo, FrontTirePressurePillion: curFrontPillion, RearTirePressurePillion: curRearPillion, ID: id})
+	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	out.FrontTirePressure = out.FrontTirePressureSolo
-	out.RearTirePressure = out.RearTirePressureSolo
+	out := vehicleDTOFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion)
 	webutil.WriteJSON(w, http.StatusOK, out)
 }
 
@@ -343,18 +306,8 @@ func (h *Handler) UpdateVehicleTirePressure(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	const upd = `
-		UPDATE vehicles
-		SET front_tire_pressure_solo=$1, rear_tire_pressure_solo=$2, front_tire_pressure_pillion=$3, rear_tire_pressure_pillion=$4, updated_at=now()
-		WHERE id=$5
-		RETURNING id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion;
-	`
-	var out vehicleDTO
-	if err := h.DB.QueryRow(upd, frontSolo, rearSolo, frontPillion, rearPillion, id).Scan(
-		&out.ID, &out.Name, &out.IsActive,
-		&out.FrontTirePressureSolo, &out.RearTirePressureSolo,
-		&out.FrontTirePressurePillion, &out.RearTirePressurePillion,
-	); err != nil {
+	row, err := sqlc.New(h.DB).UpdateVehicleTirePressure(r.Context(), sqlc.UpdateVehicleTirePressureParams{FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, ID: id})
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
 			return
@@ -362,8 +315,7 @@ func (h *Handler) UpdateVehicleTirePressure(w http.ResponseWriter, r *http.Reque
 		webutil.ServerError(w, err)
 		return
 	}
-	out.FrontTirePressure = out.FrontTirePressureSolo
-	out.RearTirePressure = out.RearTirePressureSolo
+	out := vehicleDTOFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion)
 	webutil.WriteJSON(w, http.StatusOK, out)
 }
 
@@ -374,12 +326,11 @@ func (h *Handler) DeleteVehicle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := h.DB.Exec(`DELETE FROM vehicles WHERE id=$1;`, id)
+	n, err := sqlc.New(h.DB).DeleteVehicle(r.Context(), id)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	n, _ := res.RowsAffected()
 	if n == 0 {
 		http.NotFound(w, r)
 		return
@@ -402,14 +353,9 @@ func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var vehicleName string
-	var frontTirePressureSolo *float64
-	var rearTirePressureSolo *float64
-	var frontTirePressurePillion *float64
-	var rearTirePressurePillion *float64
-	if err := h.DB.QueryRow(`SELECT name, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1`, vehicleID).Scan(
-		&vehicleName, &frontTirePressureSolo, &rearTirePressureSolo, &frontTirePressurePillion, &rearTirePressurePillion,
-	); err != nil {
+	q := sqlc.New(h.DB)
+	header, err := q.GetVehicleHistoryHeader(r.Context(), vehicleID)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)
 			return
@@ -417,104 +363,70 @@ func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	airRows, err := h.DB.Query(`SELECT id,filled_at FROM vehicle_air_fills WHERE vehicle_id=$1 AND user_id=$2 ORDER BY filled_at DESC,id DESC`, vehicleID, user.ID)
+	airRows, err := q.ListVehicleAirFills(r.Context(), sqlc.ListVehicleAirFillsParams{VehicleID: vehicleID, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	defer airRows.Close()
 	air := make([]airFillHistory, 0)
-	for airRows.Next() {
-		var item airFillHistory
-		if err := airRows.Scan(&item.ID, &item.FilledAt); err != nil {
-			webutil.ServerError(w, err)
-			return
-		}
-		item.FilledAt = item.FilledAt.UTC()
+	for _, row := range airRows {
+		item := airFillHistory{ID: row.ID, FilledAt: row.FilledAt.UTC()}
 		air = append(air, item)
 	}
-	fuelRows, err := h.DB.Query(`SELECT id,odometer_km,filled_at,station_name,notes FROM vehicle_fuel_fillups WHERE vehicle_id=$1 AND user_id=$2 ORDER BY filled_at DESC,id DESC`, vehicleID, user.ID)
+	fuelRows, err := q.ListVehicleFuelFillups(r.Context(), sqlc.ListVehicleFuelFillupsParams{VehicleID: vehicleID, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	defer fuelRows.Close()
 	fuels := make([]fuelFillHistory, 0)
-	for fuelRows.Next() {
-		var fill fuelFillHistory
-		if err := fuelRows.Scan(&fill.ID, &fill.OdometerKM, &fill.FilledAt, &fill.StationName, &fill.Notes); err != nil {
-			webutil.ServerError(w, err)
-			return
+	for _, row := range fuelRows {
+		fill := fuelFillHistory{ID: row.ID, OdometerKM: row.OdometerKm, FilledAt: row.FilledAt.UTC()}
+		if row.StationName.Valid {
+			fill.StationName = &row.StationName.String
 		}
-		fill.FilledAt = fill.FilledAt.UTC()
-		rows, err := h.DB.Query(`SELECT fuel_type,fill_type,quantity,unit_price,total_cost FROM vehicle_fuel_items WHERE fillup_id=$1 ORDER BY id`, fill.ID)
+		if row.Notes.Valid {
+			fill.Notes = &row.Notes.String
+		}
+		rows, err := q.ListFuelItems(r.Context(), fill.ID)
 		if err != nil {
 			webutil.ServerError(w, err)
 			return
 		}
 		fill.Items = []fuelHistoryItem{}
-		for rows.Next() {
-			var item fuelHistoryItem
-			if err := rows.Scan(&item.FuelType, &item.FillType, &item.Quantity, &item.UnitPrice, &item.TotalCost); err != nil {
-				rows.Close()
-				webutil.ServerError(w, err)
-				return
-			}
+		for _, row := range rows {
+			item := fuelHistoryItem{FuelType: row.FuelType, FillType: row.FillType, Quantity: row.Quantity, UnitPrice: row.UnitPrice, TotalCost: row.TotalCost}
 			fill.Items = append(fill.Items, item)
 		}
-		rows.Close()
 		fuels = append(fuels, fill)
 	}
-	maintenanceRows, err := h.DB.Query(`SELECT id,category,title,amount,occurred_at,odometer_km,provider_name,notes FROM vehicle_maintenance_records WHERE vehicle_id=$1 AND user_id=$2 ORDER BY occurred_at DESC,id DESC`, vehicleID, user.ID)
+	maintenanceRows, err := q.ListVehicleMaintenanceRecords(r.Context(), sqlc.ListVehicleMaintenanceRecordsParams{VehicleID: vehicleID, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	defer maintenanceRows.Close()
 	maintenance := make([]maintenanceRecord, 0)
-	for maintenanceRows.Next() {
-		var record maintenanceRecord
-		if err := maintenanceRows.Scan(&record.ID, &record.Category, &record.Title, &record.Amount, &record.OccurredAt, &record.OdometerKM, &record.ProviderName, &record.Notes); err != nil {
-			webutil.ServerError(w, err)
-			return
-		}
-		record.OccurredAt = record.OccurredAt.UTC()
-		attachmentRows, err := h.DB.Query(`SELECT id,file_name,content_type,size_bytes,created_at FROM vehicle_maintenance_attachments WHERE maintenance_record_id=$1 AND user_id=$2 ORDER BY created_at ASC`, record.ID, user.ID)
+	for _, row := range maintenanceRows {
+		record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt, row.OdometerKm, row.ProviderName, row.Notes)
+		attachmentRows, err := q.ListMaintenanceAttachments(r.Context(), sqlc.ListMaintenanceAttachmentsParams{MaintenanceRecordID: record.ID, UserID: user.ID})
 		if err != nil {
 			webutil.ServerError(w, err)
 			return
 		}
 		record.Attachments = []maintenanceAttachment{}
-		for attachmentRows.Next() {
-			var attachment maintenanceAttachment
-			if err := attachmentRows.Scan(&attachment.ID, &attachment.FileName, &attachment.ContentType, &attachment.SizeBytes, &attachment.CreatedAt); err != nil {
-				attachmentRows.Close()
-				webutil.ServerError(w, err)
-				return
-			}
-			attachment.CreatedAt = attachment.CreatedAt.UTC()
+		for _, row := range attachmentRows {
+			attachment := maintenanceAttachment{ID: row.ID, FileName: row.FileName, ContentType: row.ContentType, SizeBytes: row.SizeBytes, CreatedAt: row.CreatedAt.UTC()}
 			record.Attachments = append(record.Attachments, attachment)
 		}
-		if err := attachmentRows.Err(); err != nil {
-			attachmentRows.Close()
-			webutil.ServerError(w, err)
-			return
-		}
-		attachmentRows.Close()
 		maintenance = append(maintenance, record)
 	}
-	if err := maintenanceRows.Err(); err != nil {
-		webutil.ServerError(w, err)
-		return
-	}
 	webutil.WriteJSON(w, http.StatusOK, map[string]any{
-		"vehicle_name":                 vehicleName,
-		"front_tire_pressure_solo":     frontTirePressureSolo,
-		"rear_tire_pressure_solo":      rearTirePressureSolo,
-		"front_tire_pressure_pillion":  frontTirePressurePillion,
-		"rear_tire_pressure_pillion":   rearTirePressurePillion,
-		"front_tire_pressure":          frontTirePressureSolo,
-		"rear_tire_pressure":           rearTirePressureSolo,
+		"vehicle_name":                 header.Name,
+		"front_tire_pressure_solo":     header.FrontTirePressureSolo,
+		"rear_tire_pressure_solo":      header.RearTirePressureSolo,
+		"front_tire_pressure_pillion":  header.FrontTirePressurePillion,
+		"rear_tire_pressure_pillion":   header.RearTirePressurePillion,
+		"front_tire_pressure":          header.FrontTirePressureSolo,
+		"rear_tire_pressure":           header.RearTirePressureSolo,
 		"air_fills":                    air,
 		"fuel_fillups":                 fuels,
 		"maintenance_records":          maintenance,
@@ -524,15 +436,15 @@ func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
 
 // DeleteVehicleAirFill deletes an air fill record.
 func (h *Handler) DeleteVehicleAirFill(w http.ResponseWriter, r *http.Request) {
-	h.deleteVehicleRecord(w, r, "vehicle_air_fills", "airFillID")
+	h.deleteVehicleRecord(w, r, false, "airFillID")
 }
 
 // DeleteFuelFillup deletes a fuel fillup record.
 func (h *Handler) DeleteFuelFillup(w http.ResponseWriter, r *http.Request) {
-	h.deleteVehicleRecord(w, r, "vehicle_fuel_fillups", "fillupID")
+	h.deleteVehicleRecord(w, r, true, "fillupID")
 }
 
-func (h *Handler) deleteVehicleRecord(w http.ResponseWriter, r *http.Request, table, param string) {
+func (h *Handler) deleteVehicleRecord(w http.ResponseWriter, r *http.Request, fuel bool, param string) {
 	user, err := auth.GetSessionUser(h.DB, r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
@@ -551,12 +463,13 @@ func (h *Handler) deleteVehicleRecord(w http.ResponseWriter, r *http.Request, ta
 		webutil.BadRequest(w, "invalid record id")
 		return
 	}
-	result, err := h.DB.Exec(`DELETE FROM `+table+` WHERE id=$1 AND vehicle_id=$2 AND user_id=$3`, recordID, vehicleID, user.ID)
-	if err != nil {
-		webutil.ServerError(w, err)
-		return
+	q := sqlc.New(h.DB)
+	var n int64
+	if fuel {
+		n, err = q.DeleteVehicleFuelFillup(r.Context(), sqlc.DeleteVehicleFuelFillupParams{ID: recordID, VehicleID: vehicleID, UserID: user.ID})
+	} else {
+		n, err = q.DeleteVehicleAirFill(r.Context(), sqlc.DeleteVehicleAirFillParams{ID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	}
-	n, err := result.RowsAffected()
 	if err != nil {
 		webutil.ServerError(w, err)
 		return

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -44,43 +45,21 @@ func (h *Handler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 		limit = parsedLimit
 	}
 
-	rows, err := h.DB.Query(`
-		SELECT id, source, title, body, target_path, priority, created_at
-		FROM notifications
-		WHERE user_id = $1 AND dismissed_at IS NULL
-		ORDER BY created_at DESC, id DESC
-		LIMIT $2
-	`, user.ID, limit)
+	rows, err := sqlc.New(h.DB).ListActiveNotifications(r.Context(), sqlc.ListActiveNotificationsParams{UserID: user.ID, Limit: int32(limit)})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	defer rows.Close()
-
 	notifications := make([]notificationDTO, 0)
-	for rows.Next() {
-		var notification notificationDTO
-		var createdAt sql.NullTime
-		if err := rows.Scan(
-			&notification.ID,
-			&notification.Source,
-			&notification.Title,
-			&notification.Body,
-			&notification.TargetPath,
-			&notification.Priority,
-			&createdAt,
-		); err != nil {
-			webutil.ServerError(w, err)
-			return
+	for _, row := range rows {
+		notification := notificationDTO{ID: row.ID, Source: row.Source, Title: row.Title, Priority: int(row.Priority), CreatedAt: row.CreatedAt.UTC().Format("2006-01-02T15:04:05Z")}
+		if row.Body.Valid {
+			notification.Body = &row.Body.String
 		}
-		if createdAt.Valid {
-			notification.CreatedAt = createdAt.Time.UTC().Format("2006-01-02T15:04:05Z")
+		if row.TargetPath.Valid {
+			notification.TargetPath = &row.TargetPath.String
 		}
 		notifications = append(notifications, notification)
-	}
-	if err := rows.Err(); err != nil {
-		webutil.ServerError(w, err)
-		return
 	}
 	webutil.WriteJSON(w, http.StatusOK, notifications)
 }
@@ -95,16 +74,7 @@ func (h *Handler) DismissNotification(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.DB.Exec(`
-		UPDATE notifications
-		SET dismissed_at = NOW()
-		WHERE id = $1 AND user_id = $2 AND dismissed_at IS NULL
-	`, notificationID, user.ID)
-	if err != nil {
-		webutil.ServerError(w, err)
-		return
-	}
-	updated, err := result.RowsAffected()
+	updated, err := sqlc.New(h.DB).DismissNotification(r.Context(), sqlc.DismissNotificationParams{ID: notificationID, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -121,11 +91,7 @@ func (h *Handler) ClearNotifications(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if _, err := h.DB.Exec(`
-		UPDATE notifications
-		SET dismissed_at = NOW()
-		WHERE user_id = $1 AND dismissed_at IS NULL
-	`, user.ID); err != nil {
+	if err := sqlc.New(h.DB).DismissAllNotifications(r.Context(), user.ID); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}

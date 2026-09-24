@@ -14,6 +14,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -57,12 +58,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userID int64
-	var passwordHash string
-	err := h.DB.QueryRow(
-		`SELECT id, password_hash FROM users WHERE username = $1`,
-		username,
-	).Scan(&userID, &passwordHash)
+	loginUser, err := sqlc.New(h.DB).GetLoginUser(r.Context(), username)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "invalid username or password")
 		return
@@ -71,7 +67,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	if bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(body.Password)) != nil {
+	if bcrypt.CompareHashAndPassword([]byte(loginUser.PasswordHash), []byte(body.Password)) != nil {
 		webutil.Unauthorized(w, "invalid username or password")
 		return
 	}
@@ -84,12 +80,9 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	expiresAt := time.Now().UTC().Add(SessionLifetime)
 	hash := sha256.Sum256([]byte(token))
-	if _, err := h.DB.Exec(
-		`INSERT INTO user_sessions (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`,
-		userID,
-		hex.EncodeToString(hash[:]),
-		expiresAt,
-	); err != nil {
+	if err := sqlc.New(h.DB).CreateSession(r.Context(), sqlc.CreateSessionParams{
+		UserID: loginUser.ID, TokenHash: hex.EncodeToString(hash[:]), ExpiresAt: expiresAt,
+	}); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
@@ -125,10 +118,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(SessionCookieName)
 	if err == nil && cookie.Value != "" {
 		hash := sha256.Sum256([]byte(cookie.Value))
-		_, _ = h.DB.Exec(
-			`DELETE FROM user_sessions WHERE token_hash = $1`,
-			hex.EncodeToString(hash[:]),
-		)
+		_ = sqlc.New(h.DB).DeleteSession(r.Context(), hex.EncodeToString(hash[:]))
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -144,7 +134,6 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	webutil.WriteJSON(w, http.StatusOK, map[string]string{"message": "logged out"})
 }
 
-
 // GetSessionUser retrieves the session user using cookie or HTTP authorization headers.
 func GetSessionUser(db *sql.DB, r *http.Request) (SessionUser, error) {
 	token := ExtractSessionToken(r)
@@ -153,14 +142,8 @@ func GetSessionUser(db *sql.DB, r *http.Request) (SessionUser, error) {
 	}
 
 	hash := sha256.Sum256([]byte(token))
-	var user SessionUser
-	err := db.QueryRowContext(r.Context(), `
-		SELECT users.id, users.username
-		FROM user_sessions
-		JOIN users ON users.id = user_sessions.user_id
-		WHERE user_sessions.token_hash = $1 AND user_sessions.expires_at > NOW()
-	`, hex.EncodeToString(hash[:])).Scan(&user.ID, &user.Username)
-	return user, err
+	user, err := sqlc.New(db).GetSessionUser(r.Context(), hex.EncodeToString(hash[:]))
+	return SessionUser{ID: user.ID, Username: user.Username}, err
 }
 
 func ExtractSessionToken(r *http.Request) string {

@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -76,6 +77,24 @@ func optionalString(value string) *string {
 	return &value
 }
 
+func nullableString(value *string) sql.NullString {
+	if value == nil {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: *value, Valid: true}
+}
+
+func maintenanceRecordDTO(id int64, category, title string, amount float64, occurredAt time.Time, odometer *float64, provider, notes sql.NullString) maintenanceRecord {
+	record := maintenanceRecord{ID: id, Category: category, Title: title, Amount: amount, OccurredAt: occurredAt.UTC(), OdometerKM: odometer}
+	if provider.Valid {
+		record.ProviderName = &provider.String
+	}
+	if notes.Valid {
+		record.Notes = &notes.String
+	}
+	return record
+}
+
 func (h *Handler) CreateMaintenanceRecord(w http.ResponseWriter, r *http.Request) {
 	user, ok := h.maintenanceUser(w, r)
 	if !ok {
@@ -98,13 +117,12 @@ func (h *Handler) CreateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 	if p.OccurredAt != nil {
 		occurredAt = *p.OccurredAt
 	}
-	var record maintenanceRecord
-	err := h.DB.QueryRow(`INSERT INTO vehicle_maintenance_records (vehicle_id,user_id,category,title,amount,occurred_at,odometer_km,provider_name,notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id,category,title,amount,occurred_at,odometer_km,provider_name,notes`, vehicleID, user.ID, p.Category, p.Title, p.Amount, occurredAt, p.OdometerKM, p.ProviderName, p.Notes).Scan(&record.ID, &record.Category, &record.Title, &record.Amount, &record.OccurredAt, &record.OdometerKM, &record.ProviderName, &record.Notes)
+	row, err := sqlc.New(h.DB).CreateMaintenanceRecord(r.Context(), sqlc.CreateMaintenanceRecordParams{VehicleID: vehicleID, UserID: user.ID, Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: occurredAt, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableString(p.Notes)})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	record.OccurredAt = record.OccurredAt.UTC()
+	record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt, row.OdometerKm, row.ProviderName, row.Notes)
 	webutil.WriteJSON(w, http.StatusCreated, record)
 }
 
@@ -135,8 +153,7 @@ func (h *Handler) UpdateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 	if p.OccurredAt != nil {
 		occurredAt = *p.OccurredAt
 	}
-	var record maintenanceRecord
-	err = h.DB.QueryRow(`UPDATE vehicle_maintenance_records SET category=$1,title=$2,amount=$3,occurred_at=$4,odometer_km=$5,provider_name=$6,notes=$7,updated_at=CURRENT_TIMESTAMP WHERE id=$8 AND vehicle_id=$9 AND user_id=$10 RETURNING id,category,title,amount,occurred_at,odometer_km,provider_name,notes`, p.Category, p.Title, p.Amount, occurredAt, p.OdometerKM, p.ProviderName, p.Notes, recordID, vehicleID, user.ID).Scan(&record.ID, &record.Category, &record.Title, &record.Amount, &record.OccurredAt, &record.OdometerKM, &record.ProviderName, &record.Notes)
+	row, err := sqlc.New(h.DB).UpdateMaintenanceRecord(r.Context(), sqlc.UpdateMaintenanceRecordParams{Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: occurredAt, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableString(p.Notes), ID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
@@ -145,7 +162,7 @@ func (h *Handler) UpdateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 		webutil.ServerError(w, err)
 		return
 	}
-	record.OccurredAt = record.OccurredAt.UTC()
+	record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt, row.OdometerKm, row.ProviderName, row.Notes)
 	webutil.WriteJSON(w, http.StatusOK, record)
 }
 
@@ -167,12 +184,7 @@ func (h *Handler) DeleteMaintenanceRecord(w http.ResponseWriter, r *http.Request
 		webutil.ServerError(w, err)
 		return
 	}
-	result, err := h.DB.Exec(`DELETE FROM vehicle_maintenance_records WHERE id=$1 AND vehicle_id=$2 AND user_id=$3`, recordID, vehicleID, user.ID)
-	if err != nil {
-		webutil.ServerError(w, err)
-		return
-	}
-	count, err := result.RowsAffected()
+	count, err := sqlc.New(h.DB).DeleteMaintenanceRecord(r.Context(), sqlc.DeleteMaintenanceRecordParams{ID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return

@@ -19,6 +19,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -138,14 +139,13 @@ func (h *Handler) CreateMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 		webutil.ServerError(w, err)
 		return
 	}
-	var attachment maintenanceAttachment
-	err = h.DB.QueryRow(`INSERT INTO vehicle_maintenance_attachments (maintenance_record_id,user_id,storage_key,file_name,content_type,size_bytes) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id,file_name,content_type,size_bytes,created_at`, recordID, user.ID, key, fileName, contentType, header.Size).Scan(&attachment.ID, &attachment.FileName, &attachment.ContentType, &attachment.SizeBytes, &attachment.CreatedAt)
+	row, err := sqlc.New(h.DB).CreateMaintenanceAttachment(r.Context(), sqlc.CreateMaintenanceAttachmentParams{MaintenanceRecordID: recordID, UserID: user.ID, StorageKey: key, FileName: fileName, ContentType: contentType, SizeBytes: header.Size})
 	if err != nil {
 		_, _ = store.client.DeleteObject(r.Context(), &s3.DeleteObjectInput{Bucket: aws.String(store.bucket), Key: aws.String(key)})
 		webutil.ServerError(w, err)
 		return
 	}
-	attachment.CreatedAt = attachment.CreatedAt.UTC()
+	attachment := maintenanceAttachment{ID: row.ID, FileName: row.FileName, ContentType: row.ContentType, SizeBytes: row.SizeBytes, CreatedAt: row.CreatedAt.UTC()}
 	webutil.WriteJSON(w, http.StatusCreated, attachment)
 }
 
@@ -168,8 +168,7 @@ func (h *Handler) DownloadMaintenanceAttachment(w http.ResponseWriter, r *http.R
 		webutil.BadRequest(w, "invalid attachment id")
 		return
 	}
-	var key string
-	err = h.DB.QueryRow(`SELECT a.storage_key FROM vehicle_maintenance_attachments a JOIN vehicle_maintenance_records r ON r.id=a.maintenance_record_id WHERE a.id=$1 AND a.maintenance_record_id=$2 AND r.vehicle_id=$3 AND a.user_id=$4`, attachmentID, recordID, vehicleID, user.ID).Scan(&key)
+	key, err := sqlc.New(h.DB).GetMaintenanceAttachmentKey(r.Context(), sqlc.GetMaintenanceAttachmentKeyParams{ID: attachmentID, MaintenanceRecordID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
@@ -211,8 +210,7 @@ func (h *Handler) DeleteMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 		webutil.BadRequest(w, "invalid attachment id")
 		return
 	}
-	var key string
-	err = h.DB.QueryRow(`SELECT a.storage_key FROM vehicle_maintenance_attachments a JOIN vehicle_maintenance_records r ON r.id=a.maintenance_record_id WHERE a.id=$1 AND a.maintenance_record_id=$2 AND r.vehicle_id=$3 AND a.user_id=$4`, attachmentID, recordID, vehicleID, user.ID).Scan(&key)
+	key, err := sqlc.New(h.DB).GetMaintenanceAttachmentKey(r.Context(), sqlc.GetMaintenanceAttachmentKeyParams{ID: attachmentID, MaintenanceRecordID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
@@ -230,7 +228,7 @@ func (h *Handler) DeleteMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 		webutil.ServerError(w, err)
 		return
 	}
-	if _, err := h.DB.Exec(`DELETE FROM vehicle_maintenance_attachments WHERE id=$1 AND user_id=$2`, attachmentID, user.ID); err != nil {
+	if err := sqlc.New(h.DB).DeleteMaintenanceAttachment(r.Context(), sqlc.DeleteMaintenanceAttachmentParams{ID: attachmentID, UserID: user.ID}); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
@@ -238,22 +236,11 @@ func (h *Handler) DeleteMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 }
 
 func (h *Handler) deleteMaintenanceAttachmentObjects(ctx context.Context, recordID, userID int64) error {
-	rows, err := h.DB.QueryContext(ctx, `SELECT storage_key FROM vehicle_maintenance_attachments WHERE maintenance_record_id=$1 AND user_id=$2`, recordID, userID)
+	rows, err := sqlc.New(h.DB).ListMaintenanceAttachmentKeys(ctx, sqlc.ListMaintenanceAttachmentKeysParams{MaintenanceRecordID: recordID, UserID: userID})
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
-	keys := []string{}
-	for rows.Next() {
-		var key string
-		if err := rows.Scan(&key); err != nil {
-			return err
-		}
-		keys = append(keys, key)
-	}
-	if err := rows.Err(); err != nil {
-		return err
-	}
+	keys := rows
 	if len(keys) == 0 {
 		return nil
 	}
@@ -270,8 +257,8 @@ func (h *Handler) deleteMaintenanceAttachmentObjects(ctx context.Context, record
 }
 
 func (h *Handler) ownsMaintenanceRecord(ctx context.Context, recordID, vehicleID, userID int64) bool {
-	var found bool
-	if err := h.DB.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM vehicle_maintenance_records WHERE id=$1 AND vehicle_id=$2 AND user_id=$3)`, recordID, vehicleID, userID).Scan(&found); err != nil {
+	found, err := sqlc.New(h.DB).OwnsMaintenanceRecord(ctx, sqlc.OwnsMaintenanceRecordParams{ID: recordID, VehicleID: vehicleID, UserID: userID})
+	if err != nil {
 		return false
 	}
 	return found

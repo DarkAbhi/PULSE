@@ -114,6 +114,18 @@ func TestTransactionsCRUDAndBulk(t *testing.T) {
 
 	{
 		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/api/horizon/transactions?type=credit&search=salary", nil)
+		req.AddCookie(cookie)
+		h.ListTransactions(rec, req)
+		var page PaginatedTransactionsDTO
+		_ = json.NewDecoder(rec.Body).Decode(&page)
+		if rec.Code != http.StatusOK || page.Total != 1 || len(page.Transactions) != 1 || page.Transactions[0].Name != "Salary Credit" {
+			t.Fatalf("unexpected filtered transactions: status=%d page=%+v", rec.Code, page)
+		}
+	}
+
+	{
+		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/api/horizon/transactions?page=2&page_size=2", nil)
 		req.AddCookie(cookie)
 		h.ListTransactions(rec, req)

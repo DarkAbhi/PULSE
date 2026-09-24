@@ -1,11 +1,13 @@
 package gym
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"log"
 	"time"
 
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/timeutil"
 )
 
@@ -32,25 +34,16 @@ func createDueGymReminders(database *sql.DB, now time.Time) {
 	}
 
 	reminderDate := localNow.Format("2006-01-02")
-	rows, err := database.Query(`SELECT id FROM users`)
+	rows, err := sqlc.New(database).ListGymReminderUsers(context.Background())
 	if err != nil {
 		log.Printf("gym reminder user scan failed: %v", err)
 		return
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var userID int64
-		if err := rows.Scan(&userID); err != nil {
-			log.Printf("gym reminder user scan failed: %v", err)
-			return
-		}
+	for _, userID := range rows {
 		if err := createGymReminder(database, userID, reminderDate); err != nil {
 			log.Printf("gym reminder failed for user %d: %v", userID, err)
 		}
-	}
-	if err := rows.Err(); err != nil {
-		log.Printf("gym reminder user scan failed: %v", err)
 	}
 }
 
@@ -60,26 +53,16 @@ func createGymReminder(database *sql.DB, userID int64, reminderDate string) erro
 		return err
 	}
 	defer tx.Rollback()
+	q := sqlc.New(tx)
 
-	var notificationID int64
-	err = tx.QueryRow(`
-		INSERT INTO notifications (user_id, source, title, body, target_path, priority, metadata)
-		SELECT $1, $2, 'Time for the gym', 'Your 3:30 PM gym reminder. Mark your visit when you are done.', '/gym-visits', 1, jsonb_build_object('reminder_date', $3::text)
-		WHERE NOT EXISTS (
-			SELECT 1 FROM gym_reminder_deliveries WHERE user_id = $1 AND reminder_date = $3::date
-		)
-		RETURNING id
-	`, userID, gymReminderSource, reminderDate).Scan(&notificationID)
+	notificationID, err := q.CreateGymReminderNotification(context.Background(), sqlc.CreateGymReminderNotificationParams{UserID: userID, Source: gymReminderSource, Column3: reminderDate})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	if _, err := tx.Exec(`
-		INSERT INTO gym_reminder_deliveries (user_id, reminder_date, notification_id)
-		VALUES ($1, $2::date, $3)
-	`, userID, reminderDate, notificationID); err != nil {
+	if err := q.RecordGymReminderDelivery(context.Background(), sqlc.RecordGymReminderDeliveryParams{UserID: userID, Column2: reminderDate, NotificationID: notificationID}); err != nil {
 		return err
 	}
 	return tx.Commit()

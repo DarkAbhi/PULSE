@@ -82,6 +82,14 @@ The Makefile currently lists `go-test`, `go-test-integration`, and `go-cover`
 in `.PHONY`, but does not define targets for them. They are therefore not
 available commands until corresponding recipes are added.
 
+### Backend SQL queries
+
+Backend queries live in `go-backend/queries/*.sql`. The generated Go package is
+`go-backend/internal/db/sqlc`; application code calls its methods. After editing
+a query or a migration, run `cd go-backend && make sqlc-generate` and commit the
+generated files. Generation uses the migration files as the schema and does not
+change the database. Apply migrations separately before running the backend.
+
 ## Project structure
 
 ```

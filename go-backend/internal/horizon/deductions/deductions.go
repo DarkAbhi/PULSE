@@ -1,6 +1,7 @@
 package deductions
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -8,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -48,29 +50,22 @@ var ValidCategories = map[string]bool{
 }
 
 func (h *Handler) FetchDeductions(userID int64, budgetUsedMap map[int64]float64) ([]DeductionDTO, float64, error) {
-	rows, err := h.DB.Query(`SELECT id, name, category, amount, due_day, is_active, budget_id FROM financial_horizon_deductions WHERE user_id = $1 ORDER BY is_active DESC, created_at DESC, id DESC`, userID)
+	rows, err := sqlc.New(h.DB).ListDeductions(context.Background(), userID)
 	if err != nil {
 		return nil, 0, err
 	}
-	defer rows.Close()
 
 	deductions := make([]DeductionDTO, 0)
 	var totalDeductions float64
 
-	for rows.Next() {
-		var item DeductionDTO
-		var dueDay sql.NullInt64
-		var budgetID sql.NullInt64
-
-		if err := rows.Scan(&item.ID, &item.Name, &item.Category, &item.Amount, &dueDay, &item.IsActive, &budgetID); err != nil {
-			return nil, 0, err
-		}
-		if dueDay.Valid {
-			d := int(dueDay.Int64)
+	for _, row := range rows {
+		item := DeductionDTO{ID: row.ID, Name: row.Name, Category: row.Category, Amount: row.Amount, IsActive: row.IsActive}
+		if row.DueDay.Valid {
+			d := int(row.DueDay.Int16)
 			item.DueDay = &d
 		}
-		if budgetID.Valid {
-			bID := budgetID.Int64
+		if row.BudgetID.Valid {
+			bID := row.BudgetID.Int64
 			item.BudgetID = &bID
 			if item.IsActive && budgetUsedMap != nil {
 				budgetUsedMap[bID] += item.Amount
@@ -134,29 +129,25 @@ func (h *Handler) CreateDeduction(w http.ResponseWriter, r *http.Request) {
 		budgetID = sql.NullInt64{Int64: *in.BudgetID, Valid: true}
 	}
 
-	var item DeductionDTO
-	var dueDay sql.NullInt64
+	var dueDay sql.NullInt16
 	if in.DueDay != nil {
-		dueDay = sql.NullInt64{Int64: int64(*in.DueDay), Valid: true}
+		dueDay = sql.NullInt16{Int16: int16(*in.DueDay), Valid: true}
 	}
 
-	err = h.DB.QueryRow(`
-		INSERT INTO financial_horizon_deductions (user_id, name, category, amount, due_day, is_active, budget_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, name, category, amount, due_day, is_active, budget_id
-	`, user.ID, in.Name, category, in.Amount, dueDay, isActive, budgetID).Scan(&item.ID, &item.Name, &item.Category, &item.Amount, &dueDay, &item.IsActive, &budgetID)
+	row, err := sqlc.New(h.DB).CreateDeduction(r.Context(), sqlc.CreateDeductionParams{UserID: user.ID, Name: in.Name, Category: category, Amount: in.Amount, DueDay: dueDay, IsActive: isActive, BudgetID: budgetID})
 
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	if dueDay.Valid {
-		d := int(dueDay.Int64)
+	item := DeductionDTO{ID: row.ID, Name: row.Name, Category: row.Category, Amount: row.Amount, IsActive: row.IsActive}
+	if row.DueDay.Valid {
+		d := int(row.DueDay.Int16)
 		item.DueDay = &d
 	}
-	if budgetID.Valid {
-		bID := budgetID.Int64
+	if row.BudgetID.Valid {
+		bID := row.BudgetID.Int64
 		item.BudgetID = &bID
 	}
 
@@ -216,18 +207,12 @@ func (h *Handler) UpdateDeduction(w http.ResponseWriter, r *http.Request) {
 		budgetID = sql.NullInt64{Int64: *in.BudgetID, Valid: true}
 	}
 
-	var item DeductionDTO
-	var dueDay sql.NullInt64
+	var dueDay sql.NullInt16
 	if in.DueDay != nil {
-		dueDay = sql.NullInt64{Int64: int64(*in.DueDay), Valid: true}
+		dueDay = sql.NullInt16{Int16: int16(*in.DueDay), Valid: true}
 	}
 
-	err = h.DB.QueryRow(`
-		UPDATE financial_horizon_deductions
-		SET name = $1, category = $2, amount = $3, due_day = $4, is_active = $5, budget_id = $6, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $7 AND user_id = $8
-		RETURNING id, name, category, amount, due_day, is_active, budget_id
-	`, in.Name, category, in.Amount, dueDay, isActive, budgetID, deductionID, user.ID).Scan(&item.ID, &item.Name, &item.Category, &item.Amount, &dueDay, &item.IsActive, &budgetID)
+	row, err := sqlc.New(h.DB).UpdateDeduction(r.Context(), sqlc.UpdateDeductionParams{Name: in.Name, Category: category, Amount: in.Amount, DueDay: dueDay, IsActive: isActive, BudgetID: budgetID, ID: deductionID, UserID: user.ID})
 
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
@@ -238,12 +223,13 @@ func (h *Handler) UpdateDeduction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if dueDay.Valid {
-		d := int(dueDay.Int64)
+	item := DeductionDTO{ID: row.ID, Name: row.Name, Category: row.Category, Amount: row.Amount, IsActive: row.IsActive}
+	if row.DueDay.Valid {
+		d := int(row.DueDay.Int16)
 		item.DueDay = &d
 	}
-	if budgetID.Valid {
-		bID := budgetID.Int64
+	if row.BudgetID.Valid {
+		bID := row.BudgetID.Int64
 		item.BudgetID = &bID
 	}
 
@@ -266,17 +252,12 @@ func (h *Handler) DeleteDeduction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.DB.Exec(`DELETE FROM financial_horizon_deductions WHERE id = $1 AND user_id = $2`, deductionID, user.ID)
+	deleted, err := sqlc.New(h.DB).DeleteDeduction(r.Context(), sqlc.DeleteDeductionParams{ID: deductionID, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	deleted, err := result.RowsAffected()
-	if err != nil {
-		webutil.ServerError(w, err)
-		return
-	}
 	if deleted == 0 {
 		http.NotFound(w, r)
 		return

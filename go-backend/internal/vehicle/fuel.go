@@ -1,6 +1,7 @@
 package vehicle
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -12,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -71,22 +73,23 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer tx.Rollback()
-	var previousOdometer sql.NullFloat64
-	if err := tx.QueryRow(`SELECT MAX(odometer_km) FROM vehicle_fuel_fillups WHERE vehicle_id=$1`, vehicleID).Scan(&previousOdometer); err != nil {
+	q := sqlc.New(tx)
+	previousOdometer, err := q.GetMaxFuelOdometer(r.Context(), vehicleID)
+	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	if previousOdometer.Valid && in.OdometerKM < previousOdometer.Float64 {
+	if in.OdometerKM < previousOdometer {
 		webutil.BadRequest(w, "odometer cannot be lower than a previous fuel entry")
 		return
 	}
-	var fillupID int64
-	if err := tx.QueryRow(`INSERT INTO vehicle_fuel_fillups (vehicle_id,user_id,odometer_km,filled_at,station_name,notes) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`, vehicleID, user.ID, in.OdometerKM, filledAt, in.StationName, in.Notes).Scan(&fillupID); err != nil {
+	fillupID, err := q.CreateFuelFillup(r.Context(), sqlc.CreateFuelFillupParams{VehicleID: vehicleID, UserID: user.ID, OdometerKm: in.OdometerKM, FilledAt: filledAt, StationName: nullableString(in.StationName), Notes: nullableString(in.Notes)})
+	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 	for _, item := range in.Items {
-		if _, err := tx.Exec(`INSERT INTO vehicle_fuel_items (fillup_id,fuel_type,fill_type,quantity,unit_price,total_cost) VALUES ($1,$2,$3,$4,$5,$6)`, fillupID, item.FuelType, item.FillType, *item.Quantity, *item.UnitPrice, *item.TotalCost); err != nil {
+		if err := q.CreateFuelItem(r.Context(), sqlc.CreateFuelItemParams{FillupID: fillupID, FuelType: item.FuelType, FillType: item.FillType, Quantity: *item.Quantity, UnitPrice: *item.UnitPrice, TotalCost: *item.TotalCost}); err != nil {
 			webutil.ServerError(w, err)
 			return
 		}
@@ -147,24 +150,24 @@ func (h *Handler) UpdateFuelFillup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer tx.Rollback()
-	var found int
-	if err := tx.QueryRow(`SELECT 1 FROM vehicle_fuel_fillups WHERE id=$1 AND vehicle_id=$2 AND user_id=$3 FOR UPDATE`, fillupID, vehicleID, user.ID).Scan(&found); errors.Is(err, sql.ErrNoRows) {
+	q := sqlc.New(tx)
+	if _, err := q.LockFuelFillup(r.Context(), sqlc.LockFuelFillupParams{ID: fillupID, VehicleID: vehicleID, UserID: user.ID}); errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
 	} else if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	if _, err := tx.Exec(`UPDATE vehicle_fuel_fillups SET odometer_km=$1,filled_at=$2,station_name=$3,notes=$4 WHERE id=$5`, in.OdometerKM, filledAt, in.StationName, in.Notes, fillupID); err != nil {
+	if err := q.UpdateFuelFillup(r.Context(), sqlc.UpdateFuelFillupParams{OdometerKm: in.OdometerKM, FilledAt: filledAt, StationName: nullableString(in.StationName), Notes: nullableString(in.Notes), ID: fillupID}); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	if _, err := tx.Exec(`DELETE FROM vehicle_fuel_items WHERE fillup_id=$1`, fillupID); err != nil {
+	if err := q.DeleteFuelItems(r.Context(), fillupID); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 	for _, item := range in.Items {
-		if _, err := tx.Exec(`INSERT INTO vehicle_fuel_items (fillup_id,fuel_type,fill_type,quantity,unit_price,total_cost) VALUES ($1,$2,$3,$4,$5,$6)`, fillupID, item.FuelType, item.FillType, *item.Quantity, *item.UnitPrice, *item.TotalCost); err != nil {
+		if err := q.CreateFuelItem(r.Context(), sqlc.CreateFuelItemParams{FillupID: fillupID, FuelType: item.FuelType, FillType: item.FillType, Quantity: *item.Quantity, UnitPrice: *item.UnitPrice, TotalCost: *item.TotalCost}); err != nil {
 			webutil.ServerError(w, err)
 			return
 		}
@@ -215,20 +218,15 @@ func normalizeFuelItem(item *fuelItemInput) error {
 }
 
 func (h *Handler) latestFuelEconomy(vehicleID int64, fuelType string) *float64 {
-	rows, err := h.DB.Query(`SELECT f.odometer_km, i.fill_type, i.quantity FROM vehicle_fuel_fillups f JOIN vehicle_fuel_items i ON i.fillup_id=f.id WHERE f.vehicle_id=$1 AND i.fuel_type=$2 ORDER BY f.filled_at, f.id`, vehicleID, fuelType)
+	rows, err := sqlc.New(h.DB).ListFuelEconomyEntries(context.Background(), sqlc.ListFuelEconomyEntriesParams{VehicleID: vehicleID, FuelType: fuelType})
 	if err != nil {
 		return nil
 	}
-	defer rows.Close()
 	var previousFull *float64
 	accumulated := 0.0
 	var latest *float64
-	for rows.Next() {
-		var odometer, quantity float64
-		var fillType string
-		if rows.Scan(&odometer, &fillType, &quantity) != nil {
-			return nil
-		}
+	for _, row := range rows {
+		odometer, quantity, fillType := row.OdometerKm, row.Quantity, row.FillType
 		if fillType == "missed" {
 			previousFull = nil
 			accumulated = 0
@@ -306,22 +304,15 @@ func calculateAverageFuelEconomies(entries []fuelMileageEntry) map[string]float6
 }
 
 func (h *Handler) averageFuelEconomies(vehicleID, userID int64) map[string]float64 {
-	rows, err := h.DB.Query(`SELECT i.fuel_type, f.odometer_km, i.fill_type, i.quantity FROM vehicle_fuel_fillups f JOIN vehicle_fuel_items i ON i.fillup_id=f.id WHERE f.vehicle_id=$1 AND f.user_id=$2 ORDER BY i.fuel_type, f.filled_at, f.id`, vehicleID, userID)
+	rows, err := sqlc.New(h.DB).ListAverageFuelEconomyEntries(context.Background(), sqlc.ListAverageFuelEconomyEntriesParams{VehicleID: vehicleID, UserID: userID})
 	if err != nil {
 		return map[string]float64{}
 	}
-	defer rows.Close()
 
 	entries := []fuelMileageEntry{}
-	for rows.Next() {
-		var entry fuelMileageEntry
-		if err := rows.Scan(&entry.FuelType, &entry.OdometerKM, &entry.FillType, &entry.Quantity); err != nil {
-			return map[string]float64{}
-		}
+	for _, row := range rows {
+		entry := fuelMileageEntry{FuelType: row.FuelType, OdometerKM: row.OdometerKm, FillType: row.FillType, Quantity: row.Quantity}
 		entries = append(entries, entry)
-	}
-	if rows.Err() != nil {
-		return map[string]float64{}
 	}
 	return calculateAverageFuelEconomies(entries)
 }

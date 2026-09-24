@@ -2,10 +2,40 @@ package mealplan
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
+	"github.com/DarkAbhi/life-backend/internal/testhelper"
 )
+
+func TestMealPlanSQLC(t *testing.T) {
+	db, cleanup := testhelper.StartPostgres(t)
+	defer cleanup()
+	ctx := context.Background()
+	q := sqlc.New(db)
+	created, err := q.CreateMealPlan(ctx, sqlc.CreateMealPlanParams{UserID: 1, Column2: "2026-09-21", Name: "Salad"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if created.Date != "2026-09-21" || created.StartTime != "" {
+		t.Fatalf("unexpected created meal: %+v", created)
+	}
+	updated, err := q.SetMealPlanConsumed(ctx, sqlc.SetMealPlanConsumedParams{IsConsumed: true, ID: created.ID, UserID: 1})
+	if err != nil || !updated.IsConsumed {
+		t.Fatalf("set consumed: %+v, %v", updated, err)
+	}
+	changed, err := q.UpdateMealPlan(ctx, sqlc.UpdateMealPlanParams{Name: "Soup", Column2: "2026-09-22", IsConsumed: true, ID: created.ID, UserID: 1})
+	if err != nil || changed.Name != "Soup" {
+		t.Fatalf("update meal: %+v, %v", changed, err)
+	}
+	rows, err := q.ListMealPlansByDate(ctx, sqlc.ListMealPlansByDateParams{UserID: 1, Column2: "2026-09-22"})
+	if err != nil || len(rows) != 1 || rows[0].ID != created.ID {
+		t.Fatalf("list meals: %+v, %v", rows, err)
+	}
+}
 
 func TestMealPlan_Unauthorized(t *testing.T) {
 	h := NewHandler(nil)

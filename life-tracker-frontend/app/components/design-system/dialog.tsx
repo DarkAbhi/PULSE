@@ -51,7 +51,13 @@ export default function Dialog({
           className={`flex w-full ${widths[size]} max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-8 lg:max-h-[calc(100dvh-4rem)] ${panelClassName}`}
         >
           <DialogFooterContext.Provider value={footer}>
-            <div className="min-h-0 overflow-y-auto">{children}</div>
+            <div
+              className={`min-h-0 overflow-y-auto ${
+                panelClassName.includes("p-0") ? "" : "-mx-1.5 -my-1 px-1.5 py-1"
+              }`}
+            >
+              {children}
+            </div>
             <div className="shrink-0" ref={setFooter} />
           </DialogFooterContext.Provider>
         </section>

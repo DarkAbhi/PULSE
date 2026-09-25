@@ -31,7 +31,6 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/profile"
 	"github.com/DarkAbhi/life-backend/internal/purchase"
 	"github.com/DarkAbhi/life-backend/internal/vehicle"
-	vehiclequery "github.com/DarkAbhi/life-backend/internal/vehicle/query"
 )
 
 func main() {
@@ -85,14 +84,8 @@ func run(ctx context.Context) error {
 	}
 	defer legacyDB.Close()
 
-	authService := auth.NewService(auth.NewRepository(pool))
-	sessionID := func(r *http.Request) (int64, error) {
-		user, err := authService.SessionUser(r.Context(), auth.ExtractSessionToken(r))
-		if errors.Is(err, auth.ErrSessionNotFound) {
-			return 0, sql.ErrNoRows
-		}
-		return user.ID, err
-	}
+	authRepository := auth.NewRepository(pool)
+	authService := auth.NewService(authRepository)
 	sessionLookup := func(r *http.Request) (auth.SessionUser, error) {
 		user, err := authService.SessionUser(r.Context(), auth.ExtractSessionToken(r))
 		if errors.Is(err, auth.ErrSessionNotFound) {
@@ -100,9 +93,25 @@ func run(ctx context.Context) error {
 		}
 		return user, err
 	}
-	notificationService := notification.NewService(notification.NewRepository(pool))
-	gymService := gym.NewService(gym.NewRepository(pool), notificationService, authService)
-	mealService := mealplan.NewService(mealplan.NewRepository(pool))
+	sessionID := func(r *http.Request) (int64, error) {
+		user, err := sessionLookup(r)
+		return user.ID, err
+	}
+	activityRepository := activity.NewRepository(pool)
+	activityService := activity.NewService(activityRepository)
+	purchaseRepository := purchase.NewRepository(pool)
+	purchaseService := purchase.NewService(purchaseRepository)
+	mealRepository := mealplan.NewRepository(pool)
+	mealService := mealplan.NewService(mealRepository)
+	notificationRepository := notification.NewRepository(pool)
+	notificationService := notification.NewService(notificationRepository)
+	gymRepository := gym.NewRepository(pool)
+	gymService := gym.NewService(gymRepository, notificationService, authService)
+	profileRepository := profile.NewRepository(pool)
+	profileService := profile.NewService(profileRepository, authService)
+	vehicleRepository := vehicle.NewRepository(legacyDB)
+	vehicleService := vehicle.NewService(vehicleRepository)
+	horizonService := horizon.NewService(legacyDB)
 	if err := mealService.EnsureDefaults(ctx); err != nil {
 		slog.Warn("ensure default meal times failed", "error", err)
 	}
@@ -110,7 +119,7 @@ func run(ctx context.Context) error {
 	if raw := os.Getenv("CORS_ALLOWED_ORIGINS"); raw != "" {
 		allowedOrigins = strings.Split(raw, ",")
 	}
-	vehicleHandler := vehicle.NewHandler(legacyDB, vehicle.NewService(vehiclequery.New(legacyDB)), sessionLookup)
+	vehicleHandler := vehicle.NewHandler(legacyDB, vehicleService, sessionLookup)
 	if err := vehicleHandler.ConfigureAttachments(ctx, vehicle.AttachmentConfig{
 		Bucket: os.Getenv("S3_BUCKET"), Region: os.Getenv("AWS_REGION"),
 		Endpoint: os.Getenv("S3_ENDPOINT"), ForcePathStyle: os.Getenv("S3_FORCE_PATH_STYLE") == "true",
@@ -121,15 +130,15 @@ func run(ctx context.Context) error {
 	api := &API{
 		DB:             legacyDB,
 		AllowedOrigins: allowedOrigins,
-		Activity:       activity.NewHandler(activity.NewService(activity.NewRepository(pool))),
-		Purchase:       purchase.NewHandler(purchase.NewService(purchase.NewRepository(pool)), sessionID),
+		Activity:       activity.NewHandler(activityService),
+		Purchase:       purchase.NewHandler(purchaseService, sessionID),
 		MealPlan:       mealplan.NewHandler(mealService, sessionID),
 		Notification:   notification.NewHandler(notificationService, sessionID),
 		Gym:            gym.NewHandler(gymService, sessionID),
 		Auth:           auth.NewHandler(authService, os.Getenv("APP_ENV") == "production"),
 		Vehicle:        vehicleHandler,
-		Horizon:        horizon.NewHandler(legacyDB, horizon.NewService(legacyDB), sessionLookup),
-		Profile:        profile.NewHandler(profile.NewService(profile.NewRepository(pool), authService), sessionID),
+		Horizon:        horizon.NewHandler(legacyDB, horizonService, sessionLookup),
+		Profile:        profile.NewHandler(profileService, sessionID),
 	}
 	handler := middleware.Recoverer(middleware.Logger(api.Router()))
 	port := os.Getenv("PORT")

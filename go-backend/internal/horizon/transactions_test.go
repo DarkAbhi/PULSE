@@ -38,10 +38,12 @@ func transactionsLoginUser(t *testing.T, db *sql.DB) *http.Cookie {
 }
 
 func TestTransactionsCRUDAndBulk(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
+	pool := testPool(t, dsn)
+	defer pool.Close()
 
-	h := NewTransactionsHandler(db, testSessionLookup(db))
+	h := NewTransactionsHandler(pool, testSessionLookup(db))
 	cookie := transactionsLoginUser(t, db)
 
 	var transactionID int64

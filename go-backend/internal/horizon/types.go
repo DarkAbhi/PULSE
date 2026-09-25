@@ -3,6 +3,8 @@ package horizon
 import (
 	"database/sql"
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
 )
 
@@ -44,7 +46,7 @@ type SessionLookup func(*http.Request) (auth.SessionUser, error)
 type Handler struct {
 	sessions      SessionLookup
 	service       *Service
-	DB            *sql.DB
+	DB            *pgxpool.Pool
 	Budgets       *BudgetsHandler
 	Deductions    *DeductionsHandler
 	Categories    *CategoriesHandler
@@ -52,7 +54,7 @@ type Handler struct {
 	Subscriptions *SubscriptionsHandler
 }
 
-func NewHandler(db *sql.DB, service *Service, lookup SessionLookup) *Handler {
+func NewHandler(db *pgxpool.Pool, service *Service, lookup SessionLookup) *Handler {
 	return &Handler{
 		sessions:      lookup,
 		service:       service,
@@ -66,3 +68,13 @@ func NewHandler(db *sql.DB, service *Service, lookup SessionLookup) *Handler {
 }
 
 func (h *Handler) sessionUser(r *http.Request) (auth.SessionUser, error) { return h.sessions(r) }
+
+func pgTime(value sql.NullTime) pgtype.Timestamptz {
+	return pgtype.Timestamptz{Time: value.Time, Valid: value.Valid}
+}
+func pgText(value sql.NullString) pgtype.Text {
+	return pgtype.Text{String: value.String, Valid: value.Valid}
+}
+func sqlText(value pgtype.Text) sql.NullString {
+	return sql.NullString{String: value.String, Valid: value.Valid}
+}

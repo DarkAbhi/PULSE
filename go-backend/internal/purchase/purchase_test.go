@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -49,7 +48,10 @@ func TestNextMonthPurchases(t *testing.T) {
 		t.Fatal(poolErr)
 	}
 	defer pool.Close()
-	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return user.ID, err
+	})
 	cookie := loginUser(t, db)
 
 	// Seed purchases
@@ -93,7 +95,10 @@ func TestCreateNextMonthPurchase(t *testing.T) {
 		t.Fatal(poolErr)
 	}
 	defer pool.Close()
-	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return user.ID, err
+	})
 	cookie := loginUser(t, db)
 
 	// 1. Create - Invalid JSON
@@ -161,7 +166,10 @@ func TestDeleteNextMonthPurchase(t *testing.T) {
 		t.Fatal(poolErr)
 	}
 	defer pool.Close()
-	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return user.ID, err
+	})
 	cookie := loginUser(t, db)
 
 	// Seed one purchase
@@ -207,7 +215,10 @@ func TestClearNextMonthPurchases(t *testing.T) {
 		t.Fatal(poolErr)
 	}
 	defer pool.Close()
-	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return user.ID, err
+	})
 	cookie := loginUser(t, db)
 
 	// Seed purchases

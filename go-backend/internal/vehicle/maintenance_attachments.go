@@ -152,7 +152,7 @@ func (h *Handler) CreateMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 		webutil.ServerError(w, err)
 		return
 	}
-	attachment := maintenanceAttachment{ID: row.ID, FileName: row.FileName, ContentType: row.ContentType, SizeBytes: row.SizeBytes, CreatedAt: row.CreatedAt.UTC()}
+	attachment := maintenanceAttachment{ID: row.ID, FileName: row.FileName, ContentType: row.ContentType, SizeBytes: row.SizeBytes, CreatedAt: row.CreatedAt.Time.UTC()}
 	webutil.WriteJSON(w, http.StatusCreated, attachment)
 }
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
 	"strings"
 
@@ -30,10 +31,10 @@ type CategoryDTO struct {
 
 type CategoriesHandler struct {
 	sessions SessionLookup
-	DB       *sql.DB
+	DB       *pgxpool.Pool
 }
 
-func NewCategoriesHandler(db *sql.DB, sessions SessionLookup) *CategoriesHandler {
+func NewCategoriesHandler(db *pgxpool.Pool, sessions SessionLookup) *CategoriesHandler {
 	return &CategoriesHandler{DB: db, sessions: sessions}
 }
 func (h *CategoriesHandler) sessionUser(r *http.Request) (auth.SessionUser, error) {
@@ -128,7 +129,7 @@ func (h *CategoriesHandler) CreateCategory(w http.ResponseWriter, r *http.Reques
 	webutil.WriteJSON(w, http.StatusCreated, c)
 }
 
-func SeedDefaultCategories(db *sql.DB) error {
+func SeedDefaultCategories(db *pgxpool.Pool) error {
 	q := query.New(db)
 	count, err := q.CountDefaultCategories(context.Background())
 	if err != nil {

@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -47,7 +46,10 @@ func TestListNotifications(t *testing.T) {
 		t.Fatal(poolErr)
 	}
 	defer pool.Close()
-	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return user.ID, err
+	})
 	cookie := loginUser(t, db)
 
 	// Seed notifications
@@ -119,7 +121,10 @@ func TestDismissNotification(t *testing.T) {
 		t.Fatal(poolErr)
 	}
 	defer pool.Close()
-	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return user.ID, err
+	})
 	cookie := loginUser(t, db)
 
 	// Seed notification
@@ -171,7 +176,10 @@ func TestClearNotifications(t *testing.T) {
 		t.Fatal(poolErr)
 	}
 	defer pool.Close()
-	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return user.ID, err
+	})
 	cookie := loginUser(t, db)
 
 	// Seed notifications

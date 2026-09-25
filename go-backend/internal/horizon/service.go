@@ -4,13 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"math"
 
 	"github.com/DarkAbhi/life-backend/internal/horizon/query"
 )
 
 type Service struct {
-	db            *sql.DB
+	db            *pgxpool.Pool
 	budgets       *BudgetsHandler
 	deductions    *DeductionsHandler
 	categories    *CategoriesHandler
@@ -18,7 +19,7 @@ type Service struct {
 	subscriptions *SubscriptionsHandler
 }
 
-func NewService(db *sql.DB) *Service {
+func NewService(db *pgxpool.Pool) *Service {
 	return &Service{
 		db:            db,
 		budgets:       NewBudgetsHandler(db, nil),

@@ -5,7 +5,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"context"
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestHealthz(t *testing.T) {
@@ -21,10 +23,15 @@ func TestHealthz(t *testing.T) {
 }
 
 func TestReadyz(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	_, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, err := pgxpool.New(context.Background(), dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	h := NewHandler(pool)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"math"
 	"net/http"
 	"strings"
@@ -59,10 +60,10 @@ type SubscriptionSummaryDTO struct {
 
 type SubscriptionsHandler struct {
 	sessions SessionLookup
-	DB       *sql.DB
+	DB       *pgxpool.Pool
 }
 
-func NewSubscriptionsHandler(db *sql.DB, sessions SessionLookup) *SubscriptionsHandler {
+func NewSubscriptionsHandler(db *pgxpool.Pool, sessions SessionLookup) *SubscriptionsHandler {
 	return &SubscriptionsHandler{DB: db, sessions: sessions}
 }
 func (h *SubscriptionsHandler) sessionUser(r *http.Request) (auth.SessionUser, error) {
@@ -158,7 +159,7 @@ func (h *SubscriptionsHandler) FetchSubscriptions(userID int64) ([]SubscriptionD
 	var totalMonthlyBurn float64
 
 	for _, row := range rows {
-		s := SubscriptionDTO{ID: row.ID, Name: row.Name, Amount: row.Amount, BillingCycle: row.BillingCycle, Status: row.Status, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt, LinkedTransactionCount: int(row.LinkedCount), TotalSpent: row.TotalSpent}
+		s := SubscriptionDTO{ID: row.ID, Name: row.Name, Amount: row.Amount, BillingCycle: row.BillingCycle, Status: row.Status, CreatedAt: row.CreatedAt.Time, UpdatedAt: row.UpdatedAt.Time, LinkedTransactionCount: int(row.LinkedCount), TotalSpent: row.TotalSpent}
 		if row.BillingDay.Valid {
 			day := int(row.BillingDay.Int32)
 			s.BillingDay = &day
@@ -316,14 +317,14 @@ func (h *SubscriptionsHandler) CreateSubscription(w http.ResponseWriter, r *http
 	}
 
 	q := query.New(h.DB)
-	row, err := q.CreateSubscription(r.Context(), query.CreateSubscriptionParams{UserID: user.ID, Name: in.Name, Amount: in.Amount, BillingCycle: cycle, BillingDay: bDay, RenewalDate: rDate, Status: status, CategoryID: catID, BudgetID: bID, DeductionID: dID, Notes: notes})
+	row, err := q.CreateSubscription(r.Context(), query.CreateSubscriptionParams{UserID: user.ID, Name: in.Name, Amount: in.Amount, BillingCycle: cycle, BillingDay: bDay, RenewalDate: pgTime(rDate), Status: status, CategoryID: catID, BudgetID: bID, DeductionID: dID, Notes: pgText(notes)})
 
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	s := SubscriptionDTO{ID: row.ID, Name: row.Name, Amount: row.Amount, BillingCycle: row.BillingCycle, Status: row.Status, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}
+	s := SubscriptionDTO{ID: row.ID, Name: row.Name, Amount: row.Amount, BillingCycle: row.BillingCycle, Status: row.Status, CreatedAt: row.CreatedAt.Time, UpdatedAt: row.UpdatedAt.Time}
 	if row.BillingDay.Valid {
 		day := int(row.BillingDay.Int32)
 		s.BillingDay = &day
@@ -444,7 +445,7 @@ func (h *SubscriptionsHandler) UpdateSubscription(w http.ResponseWriter, r *http
 	}
 
 	q := query.New(h.DB)
-	row, err := q.UpdateSubscription(r.Context(), query.UpdateSubscriptionParams{Name: in.Name, Amount: in.Amount, BillingCycle: cycle, BillingDay: bDay, RenewalDate: rDate, Status: status, CategoryID: catID, BudgetID: bID, DeductionID: dID, Notes: notes, ID: subID, UserID: user.ID})
+	row, err := q.UpdateSubscription(r.Context(), query.UpdateSubscriptionParams{Name: in.Name, Amount: in.Amount, BillingCycle: cycle, BillingDay: bDay, RenewalDate: pgTime(rDate), Status: status, CategoryID: catID, BudgetID: bID, DeductionID: dID, Notes: pgText(notes), ID: subID, UserID: user.ID})
 
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
@@ -455,7 +456,7 @@ func (h *SubscriptionsHandler) UpdateSubscription(w http.ResponseWriter, r *http
 		return
 	}
 
-	s := SubscriptionDTO{ID: row.ID, Name: row.Name, Amount: row.Amount, BillingCycle: row.BillingCycle, Status: row.Status, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}
+	s := SubscriptionDTO{ID: row.ID, Name: row.Name, Amount: row.Amount, BillingCycle: row.BillingCycle, Status: row.Status, CreatedAt: row.CreatedAt.Time, UpdatedAt: row.UpdatedAt.Time}
 	if row.BillingDay.Valid {
 		day := int(row.BillingDay.Int32)
 		s.BillingDay = &day
@@ -580,7 +581,7 @@ func (h *SubscriptionsHandler) ListSubscriptionTransactions(w http.ResponseWrite
 			SubscriptionName *string   `json:"subscription_name,omitempty"`
 			Notes            *string   `json:"notes,omitempty"`
 			CreatedAt        time.Time `json:"created_at"`
-		}{ID: row.ID, Name: row.Name, Amount: row.Amount, Type: row.Type, TransactionDate: row.TransactionDate, CategoryName: row.CategoryName, CreatedAt: row.CreatedAt}
+		}{ID: row.ID, Name: row.Name, Amount: row.Amount, Type: row.Type, TransactionDate: row.TransactionDate.Time, CategoryName: row.CategoryName, CreatedAt: row.CreatedAt.Time}
 		if item.Type == "" {
 			item.Type = "debit"
 		}

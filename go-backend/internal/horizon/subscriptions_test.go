@@ -140,10 +140,12 @@ func TestCalculateNextRenewalAllCadences(t *testing.T) {
 }
 
 func TestSubscriptionsCRUD(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
+	pool := testPool(t, dsn)
+	defer pool.Close()
 
-	h := NewSubscriptionsHandler(db, testSessionLookup(db))
+	h := NewSubscriptionsHandler(pool, testSessionLookup(db))
 	cookie := subscriptionsLoginUser(t, db)
 
 	var subID int64

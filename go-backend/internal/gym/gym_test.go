@@ -344,5 +344,8 @@ func newTestGymService(t *testing.T, dsn string) *Service {
 
 func newTestGymHandler(t *testing.T, db *sql.DB, dsn string) *Handler {
 	service := newTestGymService(t, dsn)
-	return NewHandler(service, func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
+	return NewHandler(service, func(r *http.Request) (int64, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return user.ID, err
+	})
 }

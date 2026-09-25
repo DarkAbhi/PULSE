@@ -1,13 +1,13 @@
 package main
 
 import (
-	"database/sql"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/DarkAbhi/life-backend/internal/activity"
 	"github.com/DarkAbhi/life-backend/internal/auth"
@@ -22,7 +22,7 @@ import (
 )
 
 type API struct {
-	DB             *sql.DB
+	DB             *pgxpool.Pool
 	AllowedOrigins []string
 	Activity       *activity.Handler
 	Purchase       *purchase.Handler

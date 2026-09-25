@@ -8,7 +8,8 @@ package query
 import (
 	"context"
 	"database/sql"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createFuelFillup = `-- name: CreateFuelFillup :one
@@ -20,13 +21,13 @@ type CreateFuelFillupParams struct {
 	VehicleID   int64
 	UserID      int64
 	OdometerKm  float64
-	FilledAt    time.Time
+	FilledAt    pgtype.Timestamptz
 	StationName sql.NullString
-	Notes       sql.NullString
+	Notes       pgtype.Text
 }
 
 func (q *Queries) CreateFuelFillup(ctx context.Context, arg CreateFuelFillupParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, createFuelFillup,
+	row := q.db.QueryRow(ctx, createFuelFillup,
 		arg.VehicleID,
 		arg.UserID,
 		arg.OdometerKm,
@@ -54,7 +55,7 @@ type CreateFuelItemParams struct {
 }
 
 func (q *Queries) CreateFuelItem(ctx context.Context, arg CreateFuelItemParams) error {
-	_, err := q.db.ExecContext(ctx, createFuelItem,
+	_, err := q.db.Exec(ctx, createFuelItem,
 		arg.FillupID,
 		arg.FuelType,
 		arg.FillType,
@@ -70,7 +71,7 @@ DELETE FROM vehicle_fuel_items WHERE fillup_id=$1
 `
 
 func (q *Queries) DeleteFuelItems(ctx context.Context, fillupID int64) error {
-	_, err := q.db.ExecContext(ctx, deleteFuelItems, fillupID)
+	_, err := q.db.Exec(ctx, deleteFuelItems, fillupID)
 	return err
 }
 
@@ -79,7 +80,7 @@ SELECT COALESCE(MAX(odometer_km), -1)::double precision FROM vehicle_fuel_fillup
 `
 
 func (q *Queries) GetMaxFuelOdometer(ctx context.Context, vehicleID int64) (float64, error) {
-	row := q.db.QueryRowContext(ctx, getMaxFuelOdometer, vehicleID)
+	row := q.db.QueryRow(ctx, getMaxFuelOdometer, vehicleID)
 	var column_1 float64
 	err := row.Scan(&column_1)
 	return column_1, err
@@ -104,7 +105,7 @@ type ListAverageFuelEconomyEntriesRow struct {
 }
 
 func (q *Queries) ListAverageFuelEconomyEntries(ctx context.Context, arg ListAverageFuelEconomyEntriesParams) ([]ListAverageFuelEconomyEntriesRow, error) {
-	rows, err := q.db.QueryContext(ctx, listAverageFuelEconomyEntries, arg.VehicleID, arg.UserID)
+	rows, err := q.db.Query(ctx, listAverageFuelEconomyEntries, arg.VehicleID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -121,9 +122,6 @@ func (q *Queries) ListAverageFuelEconomyEntries(ctx context.Context, arg ListAve
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -149,7 +147,7 @@ type ListFuelEconomyEntriesRow struct {
 }
 
 func (q *Queries) ListFuelEconomyEntries(ctx context.Context, arg ListFuelEconomyEntriesParams) ([]ListFuelEconomyEntriesRow, error) {
-	rows, err := q.db.QueryContext(ctx, listFuelEconomyEntries, arg.VehicleID, arg.FuelType)
+	rows, err := q.db.Query(ctx, listFuelEconomyEntries, arg.VehicleID, arg.FuelType)
 	if err != nil {
 		return nil, err
 	}
@@ -161,9 +159,6 @@ func (q *Queries) ListFuelEconomyEntries(ctx context.Context, arg ListFuelEconom
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -182,7 +177,7 @@ type LockFuelFillupParams struct {
 }
 
 func (q *Queries) LockFuelFillup(ctx context.Context, arg LockFuelFillupParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, lockFuelFillup, arg.ID, arg.VehicleID, arg.UserID)
+	row := q.db.QueryRow(ctx, lockFuelFillup, arg.ID, arg.VehicleID, arg.UserID)
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
@@ -194,14 +189,14 @@ UPDATE vehicle_fuel_fillups SET odometer_km=$1,filled_at=$2,station_name=$3,note
 
 type UpdateFuelFillupParams struct {
 	OdometerKm  float64
-	FilledAt    time.Time
+	FilledAt    pgtype.Timestamptz
 	StationName sql.NullString
-	Notes       sql.NullString
+	Notes       pgtype.Text
 	ID          int64
 }
 
 func (q *Queries) UpdateFuelFillup(ctx context.Context, arg UpdateFuelFillupParams) error {
-	_, err := q.db.ExecContext(ctx, updateFuelFillup,
+	_, err := q.db.Exec(ctx, updateFuelFillup,
 		arg.OdometerKm,
 		arg.FilledAt,
 		arg.StationName,

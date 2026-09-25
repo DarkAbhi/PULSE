@@ -7,7 +7,8 @@ package query
 
 import (
 	"context"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createMaintenanceAttachment = `-- name: CreateMaintenanceAttachment :one
@@ -29,11 +30,11 @@ type CreateMaintenanceAttachmentRow struct {
 	FileName    string
 	ContentType string
 	SizeBytes   int64
-	CreatedAt   time.Time
+	CreatedAt   pgtype.Timestamptz
 }
 
 func (q *Queries) CreateMaintenanceAttachment(ctx context.Context, arg CreateMaintenanceAttachmentParams) (CreateMaintenanceAttachmentRow, error) {
-	row := q.db.QueryRowContext(ctx, createMaintenanceAttachment,
+	row := q.db.QueryRow(ctx, createMaintenanceAttachment,
 		arg.MaintenanceRecordID,
 		arg.UserID,
 		arg.StorageKey,
@@ -62,7 +63,7 @@ type DeleteMaintenanceAttachmentParams struct {
 }
 
 func (q *Queries) DeleteMaintenanceAttachment(ctx context.Context, arg DeleteMaintenanceAttachmentParams) error {
-	_, err := q.db.ExecContext(ctx, deleteMaintenanceAttachment, arg.ID, arg.UserID)
+	_, err := q.db.Exec(ctx, deleteMaintenanceAttachment, arg.ID, arg.UserID)
 	return err
 }
 
@@ -80,7 +81,7 @@ type GetMaintenanceAttachmentKeyParams struct {
 }
 
 func (q *Queries) GetMaintenanceAttachmentKey(ctx context.Context, arg GetMaintenanceAttachmentKeyParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, getMaintenanceAttachmentKey,
+	row := q.db.QueryRow(ctx, getMaintenanceAttachmentKey,
 		arg.ID,
 		arg.MaintenanceRecordID,
 		arg.VehicleID,
@@ -101,7 +102,7 @@ type ListMaintenanceAttachmentKeysParams struct {
 }
 
 func (q *Queries) ListMaintenanceAttachmentKeys(ctx context.Context, arg ListMaintenanceAttachmentKeysParams) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, listMaintenanceAttachmentKeys, arg.MaintenanceRecordID, arg.UserID)
+	rows, err := q.db.Query(ctx, listMaintenanceAttachmentKeys, arg.MaintenanceRecordID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -113,9 +114,6 @@ func (q *Queries) ListMaintenanceAttachmentKeys(ctx context.Context, arg ListMai
 			return nil, err
 		}
 		items = append(items, storage_key)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -134,7 +132,7 @@ type OwnsMaintenanceRecordParams struct {
 }
 
 func (q *Queries) OwnsMaintenanceRecord(ctx context.Context, arg OwnsMaintenanceRecordParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, ownsMaintenanceRecord, arg.ID, arg.VehicleID, arg.UserID)
+	row := q.db.QueryRow(ctx, ownsMaintenanceRecord, arg.ID, arg.VehicleID, arg.UserID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err

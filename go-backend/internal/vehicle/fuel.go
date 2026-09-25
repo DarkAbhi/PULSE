@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"github.com/jackc/pgx/v5/pgtype"
 	"net/http"
 	"strconv"
 	"strings"
@@ -66,12 +67,12 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 	if in.FilledAt != nil {
 		filledAt = *in.FilledAt
 	}
-	tx, err := h.DB.BeginTx(r.Context(), nil)
+	tx, err := h.DB.Begin(r.Context())
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	defer tx.Rollback()
+	defer tx.Rollback(r.Context())
 	q := query.New(tx)
 	previousOdometer, err := q.GetMaxFuelOdometer(r.Context(), vehicleID)
 	if err != nil {
@@ -82,7 +83,7 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 		webutil.BadRequest(w, "odometer cannot be lower than a previous fuel entry")
 		return
 	}
-	fillupID, err := q.CreateFuelFillup(r.Context(), query.CreateFuelFillupParams{VehicleID: vehicleID, UserID: user.ID, OdometerKm: in.OdometerKM, FilledAt: filledAt, StationName: nullableString(in.StationName), Notes: nullableString(in.Notes)})
+	fillupID, err := q.CreateFuelFillup(r.Context(), query.CreateFuelFillupParams{VehicleID: vehicleID, UserID: user.ID, OdometerKm: in.OdometerKM, FilledAt: pgtype.Timestamptz{Time: filledAt, Valid: true}, StationName: nullableString(in.StationName), Notes: nullableText(in.Notes)})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -93,7 +94,7 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit(r.Context()); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
@@ -143,12 +144,12 @@ func (h *Handler) UpdateFuelFillup(w http.ResponseWriter, r *http.Request) {
 	if in.FilledAt != nil {
 		filledAt = *in.FilledAt
 	}
-	tx, err := h.DB.BeginTx(r.Context(), nil)
+	tx, err := h.DB.Begin(r.Context())
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	defer tx.Rollback()
+	defer tx.Rollback(r.Context())
 	q := query.New(tx)
 	if _, err := q.LockFuelFillup(r.Context(), query.LockFuelFillupParams{ID: fillupID, VehicleID: vehicleID, UserID: user.ID}); errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
@@ -157,7 +158,7 @@ func (h *Handler) UpdateFuelFillup(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	if err := q.UpdateFuelFillup(r.Context(), query.UpdateFuelFillupParams{OdometerKm: in.OdometerKM, FilledAt: filledAt, StationName: nullableString(in.StationName), Notes: nullableString(in.Notes), ID: fillupID}); err != nil {
+	if err := q.UpdateFuelFillup(r.Context(), query.UpdateFuelFillupParams{OdometerKm: in.OdometerKM, FilledAt: pgtype.Timestamptz{Time: filledAt, Valid: true}, StationName: nullableString(in.StationName), Notes: nullableText(in.Notes), ID: fillupID}); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
@@ -171,7 +172,7 @@ func (h *Handler) UpdateFuelFillup(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit(r.Context()); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}

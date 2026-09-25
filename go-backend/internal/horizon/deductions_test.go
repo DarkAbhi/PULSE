@@ -38,10 +38,12 @@ func deductionsLoginUser(t *testing.T, db *sql.DB) *http.Cookie {
 }
 
 func TestUpdateAndDeleteDeduction(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
+	pool := testPool(t, dsn)
+	defer pool.Close()
 
-	h := NewDeductionsHandler(db, testSessionLookup(db))
+	h := NewDeductionsHandler(pool, testSessionLookup(db))
 	cookie := deductionsLoginUser(t, db)
 
 	var deductionID int64

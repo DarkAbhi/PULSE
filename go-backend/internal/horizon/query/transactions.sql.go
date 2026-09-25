@@ -8,7 +8,8 @@ package query
 import (
 	"context"
 	"database/sql"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const countFilteredTransactions = `-- name: CountFilteredTransactions :one
@@ -25,7 +26,7 @@ type CountFilteredTransactionsParams struct {
 }
 
 func (q *Queries) CountFilteredTransactions(ctx context.Context, arg CountFilteredTransactionsParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countFilteredTransactions, arg.UserID, arg.Column2, arg.Column3)
+	row := q.db.QueryRow(ctx, countFilteredTransactions, arg.UserID, arg.Column2, arg.Column3)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -42,12 +43,12 @@ type CreateTransactionParams struct {
 	Name            string
 	Amount          float64
 	Type            string
-	TransactionDate time.Time
+	TransactionDate pgtype.Timestamptz
 	CategoryID      sql.NullInt64
 	CategoryName    string
 	BudgetID        sql.NullInt64
 	SubscriptionID  sql.NullInt64
-	Notes           sql.NullString
+	Notes           pgtype.Text
 }
 
 type CreateTransactionRow struct {
@@ -55,17 +56,17 @@ type CreateTransactionRow struct {
 	Name            string
 	Amount          float64
 	Type            string
-	TransactionDate time.Time
+	TransactionDate pgtype.Timestamptz
 	CategoryID      sql.NullInt64
 	CategoryName    string
 	BudgetID        sql.NullInt64
 	SubscriptionID  sql.NullInt64
-	Notes           sql.NullString
-	CreatedAt       time.Time
+	Notes           pgtype.Text
+	CreatedAt       pgtype.Timestamptz
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (CreateTransactionRow, error) {
-	row := q.db.QueryRowContext(ctx, createTransaction,
+	row := q.db.QueryRow(ctx, createTransaction,
 		arg.UserID,
 		arg.Name,
 		arg.Amount,
@@ -104,11 +105,11 @@ type DeleteTransactionParams struct {
 }
 
 func (q *Queries) DeleteTransaction(ctx context.Context, arg DeleteTransactionParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, deleteTransaction, arg.ID, arg.UserID)
+	result, err := q.db.Exec(ctx, deleteTransaction, arg.ID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
-	return result.RowsAffected()
+	return result.RowsAffected(), nil
 }
 
 const getSubscriptionName = `-- name: GetSubscriptionName :one
@@ -121,7 +122,7 @@ type GetSubscriptionNameParams struct {
 }
 
 func (q *Queries) GetSubscriptionName(ctx context.Context, arg GetSubscriptionNameParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, getSubscriptionName, arg.ID, arg.UserID)
+	row := q.db.QueryRow(ctx, getSubscriptionName, arg.ID, arg.UserID)
 	var name string
 	err := row.Scan(&name)
 	return name, err
@@ -137,7 +138,7 @@ type GetUserCategoryNameParams struct {
 }
 
 func (q *Queries) GetUserCategoryName(ctx context.Context, arg GetUserCategoryNameParams) (string, error) {
-	row := q.db.QueryRowContext(ctx, getUserCategoryName, arg.ID, arg.UserID)
+	row := q.db.QueryRow(ctx, getUserCategoryName, arg.ID, arg.UserID)
 	var name string
 	err := row.Scan(&name)
 	return name, err
@@ -170,19 +171,19 @@ type ListFilteredTransactionsRow struct {
 	Name             string
 	Amount           float64
 	Type             string
-	TransactionDate  time.Time
+	TransactionDate  pgtype.Timestamptz
 	CategoryID       sql.NullInt64
 	CategoryName     string
 	BudgetID         sql.NullInt64
 	BudgetName       sql.NullString
 	SubscriptionID   sql.NullInt64
 	SubscriptionName sql.NullString
-	Notes            sql.NullString
-	CreatedAt        time.Time
+	Notes            pgtype.Text
+	CreatedAt        pgtype.Timestamptz
 }
 
 func (q *Queries) ListFilteredTransactions(ctx context.Context, arg ListFilteredTransactionsParams) ([]ListFilteredTransactionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listFilteredTransactions,
+	rows, err := q.db.Query(ctx, listFilteredTransactions,
 		arg.UserID,
 		arg.Column2,
 		arg.Column3,
@@ -214,9 +215,6 @@ func (q *Queries) ListFilteredTransactions(ctx context.Context, arg ListFiltered
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -250,19 +248,19 @@ type ListFilteredTransactionsLegacyRow struct {
 	Name             string
 	Amount           float64
 	Type             string
-	TransactionDate  time.Time
+	TransactionDate  pgtype.Timestamptz
 	CategoryID       sql.NullInt64
 	CategoryName     string
 	BudgetID         sql.NullInt64
 	BudgetName       sql.NullString
 	SubscriptionID   sql.NullInt64
-	SubscriptionName sql.NullString
-	Notes            sql.NullString
-	CreatedAt        time.Time
+	SubscriptionName pgtype.Text
+	Notes            pgtype.Text
+	CreatedAt        pgtype.Timestamptz
 }
 
 func (q *Queries) ListFilteredTransactionsLegacy(ctx context.Context, arg ListFilteredTransactionsLegacyParams) ([]ListFilteredTransactionsLegacyRow, error) {
-	rows, err := q.db.QueryContext(ctx, listFilteredTransactionsLegacy,
+	rows, err := q.db.Query(ctx, listFilteredTransactionsLegacy,
 		arg.UserID,
 		arg.Column2,
 		arg.Column3,
@@ -295,9 +293,6 @@ func (q *Queries) ListFilteredTransactionsLegacy(ctx context.Context, arg ListFi
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -326,19 +321,19 @@ type ListRecentTransactionsRow struct {
 	Name             string
 	Amount           float64
 	Type             string
-	TransactionDate  time.Time
+	TransactionDate  pgtype.Timestamptz
 	CategoryID       sql.NullInt64
 	CategoryName     string
 	BudgetID         sql.NullInt64
 	BudgetName       sql.NullString
 	SubscriptionID   sql.NullInt64
 	SubscriptionName sql.NullString
-	Notes            sql.NullString
-	CreatedAt        time.Time
+	Notes            pgtype.Text
+	CreatedAt        pgtype.Timestamptz
 }
 
 func (q *Queries) ListRecentTransactions(ctx context.Context, arg ListRecentTransactionsParams) ([]ListRecentTransactionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listRecentTransactions, arg.UserID, arg.Limit)
+	rows, err := q.db.Query(ctx, listRecentTransactions, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -364,9 +359,6 @@ func (q *Queries) ListRecentTransactions(ctx context.Context, arg ListRecentTran
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -395,19 +387,19 @@ type ListRecentTransactionsLegacyRow struct {
 	Name             string
 	Amount           float64
 	Type             string
-	TransactionDate  time.Time
+	TransactionDate  pgtype.Timestamptz
 	CategoryID       sql.NullInt64
 	CategoryName     string
 	BudgetID         sql.NullInt64
 	BudgetName       sql.NullString
 	SubscriptionID   sql.NullInt64
-	SubscriptionName sql.NullString
-	Notes            sql.NullString
-	CreatedAt        time.Time
+	SubscriptionName pgtype.Text
+	Notes            pgtype.Text
+	CreatedAt        pgtype.Timestamptz
 }
 
 func (q *Queries) ListRecentTransactionsLegacy(ctx context.Context, arg ListRecentTransactionsLegacyParams) ([]ListRecentTransactionsLegacyRow, error) {
-	rows, err := q.db.QueryContext(ctx, listRecentTransactionsLegacy, arg.UserID, arg.Limit)
+	rows, err := q.db.Query(ctx, listRecentTransactionsLegacy, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -434,9 +426,6 @@ func (q *Queries) ListRecentTransactionsLegacy(ctx context.Context, arg ListRece
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -455,12 +444,12 @@ type UpdateTransactionParams struct {
 	Name            string
 	Amount          float64
 	Type            string
-	TransactionDate time.Time
+	TransactionDate pgtype.Timestamptz
 	CategoryID      sql.NullInt64
 	CategoryName    string
 	BudgetID        sql.NullInt64
 	SubscriptionID  sql.NullInt64
-	Notes           sql.NullString
+	Notes           pgtype.Text
 	ID              int64
 	UserID          int64
 }
@@ -470,17 +459,17 @@ type UpdateTransactionRow struct {
 	Name            string
 	Amount          float64
 	Type            string
-	TransactionDate time.Time
+	TransactionDate pgtype.Timestamptz
 	CategoryID      sql.NullInt64
 	CategoryName    string
 	BudgetID        sql.NullInt64
 	SubscriptionID  sql.NullInt64
-	Notes           sql.NullString
-	CreatedAt       time.Time
+	Notes           pgtype.Text
+	CreatedAt       pgtype.Timestamptz
 }
 
 func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (UpdateTransactionRow, error) {
-	row := q.db.QueryRowContext(ctx, updateTransaction,
+	row := q.db.QueryRow(ctx, updateTransaction,
 		arg.Name,
 		arg.Amount,
 		arg.Type,

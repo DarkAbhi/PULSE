@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"io"
 	"net/http"
 	"strconv"
@@ -61,10 +63,10 @@ type PaginatedTransactionsDTO struct {
 
 type TransactionsHandler struct {
 	sessions SessionLookup
-	DB       *sql.DB
+	DB       *pgxpool.Pool
 }
 
-func NewTransactionsHandler(db *sql.DB, sessions SessionLookup) *TransactionsHandler {
+func NewTransactionsHandler(db *pgxpool.Pool, sessions SessionLookup) *TransactionsHandler {
 	return &TransactionsHandler{DB: db, sessions: sessions}
 }
 func (h *TransactionsHandler) sessionUser(r *http.Request) (auth.SessionUser, error) {
@@ -95,7 +97,7 @@ func (h *TransactionsHandler) FetchTransactions(userID int64, limit int) ([]Tran
 		transactions := make([]TransactionDTO, 0, len(legacy))
 		var total float64
 		for _, row := range legacy {
-			item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, row.SubscriptionName, row.Notes, row.CreatedAt)
+			item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, sqlText(row.SubscriptionName), sqlText(row.Notes), row.CreatedAt.Time)
 			total += item.Amount
 			transactions = append(transactions, item)
 		}
@@ -105,7 +107,7 @@ func (h *TransactionsHandler) FetchTransactions(userID int64, limit int) ([]Tran
 	transactions := make([]TransactionDTO, 0)
 	var total float64
 	for _, row := range rows {
-		item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, row.SubscriptionName, row.Notes, row.CreatedAt)
+		item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, row.SubscriptionName, sqlText(row.Notes), row.CreatedAt.Time)
 		total += item.Amount
 		transactions = append(transactions, item)
 	}
@@ -237,14 +239,14 @@ func (h *TransactionsHandler) fetchTransactionsPage(userID int64, limit, offset 
 		}
 		items := make([]TransactionDTO, 0, len(legacy))
 		for _, row := range legacy {
-			items = append(items, transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, row.SubscriptionName, row.Notes, row.CreatedAt))
+			items = append(items, transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, sqlText(row.SubscriptionName), sqlText(row.Notes), row.CreatedAt.Time))
 		}
 		return items, nil
 	}
 
 	items := make([]TransactionDTO, 0)
 	for _, row := range rows {
-		items = append(items, transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, row.SubscriptionName, row.Notes, row.CreatedAt))
+		items = append(items, transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, row.SubscriptionName, sqlText(row.Notes), row.CreatedAt.Time))
 	}
 	return items, nil
 }
@@ -318,14 +320,14 @@ func (h *TransactionsHandler) CreateTransaction(w http.ResponseWriter, r *http.R
 	txType := parseTransactionType(in.Type)
 
 	q := query.New(h.DB)
-	row, err := q.CreateTransaction(r.Context(), query.CreateTransactionParams{UserID: user.ID, Name: in.Name, Amount: in.Amount, Type: txType, TransactionDate: txTime, CategoryID: categoryID, CategoryName: categoryName, BudgetID: budgetID, SubscriptionID: subID, Notes: notes})
+	row, err := q.CreateTransaction(r.Context(), query.CreateTransactionParams{UserID: user.ID, Name: in.Name, Amount: in.Amount, Type: txType, TransactionDate: pgtype.Timestamptz{Time: txTime, Valid: true}, CategoryID: categoryID, CategoryName: categoryName, BudgetID: budgetID, SubscriptionID: subID, Notes: pgText(notes)})
 
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, row.Notes, row.CreatedAt)
+	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time)
 	enrichTransactionNames(r.Context(), q, user.ID, &item)
 
 	webutil.WriteJSON(w, http.StatusCreated, item)
@@ -364,12 +366,12 @@ func (h *TransactionsHandler) BulkCreateTransactions(w http.ResponseWriter, r *h
 		return
 	}
 
-	tx, err := h.DB.Begin()
+	tx, err := h.DB.Begin(r.Context())
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	defer tx.Rollback()
+	defer tx.Rollback(r.Context())
 	q := query.New(tx)
 
 	createdItems := make([]TransactionDTO, 0, len(inputs))
@@ -425,19 +427,19 @@ func (h *TransactionsHandler) BulkCreateTransactions(w http.ResponseWriter, r *h
 
 		txType := parseTransactionType(in.Type)
 
-		row, err := q.CreateTransaction(r.Context(), query.CreateTransactionParams{UserID: user.ID, Name: in.Name, Amount: in.Amount, Type: txType, TransactionDate: txTime, CategoryID: categoryID, CategoryName: categoryName, BudgetID: budgetID, SubscriptionID: subID, Notes: notes})
+		row, err := q.CreateTransaction(r.Context(), query.CreateTransactionParams{UserID: user.ID, Name: in.Name, Amount: in.Amount, Type: txType, TransactionDate: pgtype.Timestamptz{Time: txTime, Valid: true}, CategoryID: categoryID, CategoryName: categoryName, BudgetID: budgetID, SubscriptionID: subID, Notes: pgText(notes)})
 		if err != nil {
 			webutil.ServerError(w, err)
 			return
 		}
 
-		item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, row.Notes, row.CreatedAt)
+		item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time)
 		enrichTransactionNames(r.Context(), q, user.ID, &item)
 
 		createdItems = append(createdItems, item)
 	}
 
-	if err := tx.Commit(); err != nil {
+	if err := tx.Commit(r.Context()); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
@@ -519,7 +521,7 @@ func (h *TransactionsHandler) UpdateTransaction(w http.ResponseWriter, r *http.R
 	txType := parseTransactionType(in.Type)
 
 	q := query.New(h.DB)
-	row, err := q.UpdateTransaction(r.Context(), query.UpdateTransactionParams{Name: in.Name, Amount: in.Amount, Type: txType, TransactionDate: txTime, CategoryID: categoryID, CategoryName: categoryName, BudgetID: budgetID, SubscriptionID: subID, Notes: notes, ID: txID, UserID: user.ID})
+	row, err := q.UpdateTransaction(r.Context(), query.UpdateTransactionParams{Name: in.Name, Amount: in.Amount, Type: txType, TransactionDate: pgtype.Timestamptz{Time: txTime, Valid: true}, CategoryID: categoryID, CategoryName: categoryName, BudgetID: budgetID, SubscriptionID: subID, Notes: pgText(notes), ID: txID, UserID: user.ID})
 
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
@@ -530,7 +532,7 @@ func (h *TransactionsHandler) UpdateTransaction(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, row.Notes, row.CreatedAt)
+	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time)
 	enrichTransactionNames(r.Context(), q, user.ID, &item)
 
 	webutil.WriteJSON(w, http.StatusOK, item)

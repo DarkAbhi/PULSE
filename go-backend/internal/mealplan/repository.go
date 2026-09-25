@@ -3,38 +3,35 @@ package mealplan
 import (
 	"context"
 	"database/sql"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/DarkAbhi/life-backend/internal/mealplan/query"
 )
 
-type Repository struct{ db *pgxpool.Pool }
+type Repository struct{ queries *query.Queries }
 
-func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
+func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{queries: query.New(db)} }
 
-const createMealPlan = `-- name: CreateMealPlan :one
-WITH inserted AS (
-    INSERT INTO meal_plans (user_id, date, name, meal_time_id, start_time, end_time, is_consumed)
-    VALUES ($1, ($2::text)::date, $3, $4, NULLIF($5::text, '')::time, NULLIF($6::text, '')::time, $7)
-    RETURNING id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
-)
-SELECT i.id, TO_CHAR(i.date, 'YYYY-MM-DD') AS date, i.name, i.meal_time_id, mt.name AS meal_time_name,
-       (COALESCE(TO_CHAR(COALESCE(i.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
-       (COALESCE(TO_CHAR(COALESCE(i.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       i.is_consumed, i.created_at
-FROM inserted i LEFT JOIN meal_times mt ON i.meal_time_id = mt.id
-`
+type CreateMealPlanParams = query.CreateMealPlanParams
+type CreateMealTimeParams = query.CreateMealTimeParams
+type CreateMealTimeRow = query.CreateMealTimeRow
+type DeleteMealPlanParams = query.DeleteMealPlanParams
+type DeleteMealTimeParams = query.DeleteMealTimeParams
+type EnsureDefaultMealTimeParams = query.EnsureDefaultMealTimeParams
+type GetMealPlanForUpdateParams = query.GetMealPlanForUpdateParams
+type GetMealPlanForUpdateRow = query.GetMealPlanForUpdateRow
+type GetMealTimeRangeParams = query.GetMealTimeRangeParams
+type GetMealTimeRangeRow = query.GetMealTimeRangeRow
+type ListMealPlansByDateParams = query.ListMealPlansByDateParams
+type ListMealPlansByRangeParams = query.ListMealPlansByRangeParams
+type ListMealTimesRow = query.ListMealTimesRow
+type SetMealPlanConsumedParams = query.SetMealPlanConsumedParams
+type UpdateMealPlanParams = query.UpdateMealPlanParams
 
-type CreateMealPlanParams struct {
-	UserID     int64
-	Column2    string
-	Name       string
-	MealTimeID sql.NullInt64
-	Column5    string
-	Column6    string
-	IsConsumed bool
-}
-
-type CreateMealPlanRow struct {
+type mealPlanRow struct {
 	ID           int64
 	Date         string
 	Name         string
@@ -45,498 +42,79 @@ type CreateMealPlanRow struct {
 	IsConsumed   bool
 	CreatedAt    time.Time
 }
+type CreateMealPlanRow = mealPlanRow
+type ListMealPlansByDateRow = mealPlanRow
+type ListMealPlansByRangeRow = mealPlanRow
+type ListRecentMealPlansRow = mealPlanRow
+type SetMealPlanConsumedRow = mealPlanRow
+type UpdateMealPlanRow = mealPlanRow
 
-func (q *Repository) CreateMealPlan(ctx context.Context, arg CreateMealPlanParams) (CreateMealPlanRow, error) {
-	row := q.db.QueryRow(ctx, createMealPlan,
-		arg.UserID,
-		arg.Column2,
-		arg.Name,
-		arg.MealTimeID,
-		arg.Column5,
-		arg.Column6,
-		arg.IsConsumed,
-	)
-	var i CreateMealPlanRow
-	err := row.Scan(
-		&i.ID,
-		&i.Date,
-		&i.Name,
-		&i.MealTimeID,
-		&i.MealTimeName,
-		&i.StartTime,
-		&i.EndTime,
-		&i.IsConsumed,
-		&i.CreatedAt,
-	)
-	return i, err
+func makeMealPlanRow(id int64, date, name string, mealTimeID sql.NullInt64, mealTimeName sql.NullString, start, end string, consumed bool, created pgtype.Timestamptz) mealPlanRow {
+	return mealPlanRow{ID: id, Date: date, Name: name, MealTimeID: mealTimeID, MealTimeName: mealTimeName, StartTime: start, EndTime: end, IsConsumed: consumed, CreatedAt: created.Time}
 }
-
-const createMealTime = `-- name: CreateMealTime :one
-INSERT INTO meal_times (user_id, name, start_time, end_time, is_default)
-VALUES ($1, $2, ($3::text)::time, ($4::text)::time, false)
-RETURNING id, name, TO_CHAR(start_time, 'HH24:MI') AS start_time, TO_CHAR(end_time, 'HH24:MI') AS end_time, is_default, user_id
-`
-
-type CreateMealTimeParams struct {
-	UserID  sql.NullInt64
-	Name    string
-	Column3 string
-	Column4 string
+func (r *Repository) CreateMealPlan(ctx context.Context, arg CreateMealPlanParams) (CreateMealPlanRow, error) {
+	row, err := r.queries.CreateMealPlan(ctx, arg)
+	return makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
 }
-
-type CreateMealTimeRow struct {
-	ID        int64
-	Name      string
-	StartTime string
-	EndTime   string
-	IsDefault bool
-	UserID    sql.NullInt64
+func (r *Repository) CreateMealTime(ctx context.Context, arg CreateMealTimeParams) (CreateMealTimeRow, error) {
+	return r.queries.CreateMealTime(ctx, arg)
 }
-
-func (q *Repository) CreateMealTime(ctx context.Context, arg CreateMealTimeParams) (CreateMealTimeRow, error) {
-	row := q.db.QueryRow(ctx, createMealTime,
-		arg.UserID,
-		arg.Name,
-		arg.Column3,
-		arg.Column4,
-	)
-	var i CreateMealTimeRow
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.StartTime,
-		&i.EndTime,
-		&i.IsDefault,
-		&i.UserID,
-	)
-	return i, err
+func (r *Repository) DeleteMealPlan(ctx context.Context, arg DeleteMealPlanParams) (int64, error) {
+	return r.queries.DeleteMealPlan(ctx, arg)
 }
-
-const deleteMealPlan = `-- name: DeleteMealPlan :execrows
-DELETE FROM meal_plans WHERE id = $1 AND user_id = $2
-`
-
-type DeleteMealPlanParams struct {
-	ID     int64
-	UserID int64
+func (r *Repository) DeleteMealTime(ctx context.Context, arg DeleteMealTimeParams) (int64, error) {
+	return r.queries.DeleteMealTime(ctx, arg)
 }
-
-func (q *Repository) DeleteMealPlan(ctx context.Context, arg DeleteMealPlanParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteMealPlan, arg.ID, arg.UserID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+func (r *Repository) EnsureDefaultMealTime(ctx context.Context, arg EnsureDefaultMealTimeParams) error {
+	return r.queries.EnsureDefaultMealTime(ctx, arg)
 }
-
-const deleteMealTime = `-- name: DeleteMealTime :execrows
-DELETE FROM meal_times WHERE id = $1 AND user_id = $2 AND is_default = false
-`
-
-type DeleteMealTimeParams struct {
-	ID     int64
-	UserID sql.NullInt64
+func (r *Repository) GetMealPlanForUpdate(ctx context.Context, arg GetMealPlanForUpdateParams) (GetMealPlanForUpdateRow, error) {
+	return r.queries.GetMealPlanForUpdate(ctx, arg)
 }
-
-func (q *Repository) DeleteMealTime(ctx context.Context, arg DeleteMealTimeParams) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteMealTime, arg.ID, arg.UserID)
-	if err != nil {
-		return 0, err
-	}
-	return result.RowsAffected(), nil
+func (r *Repository) GetMealTimeRange(ctx context.Context, arg GetMealTimeRangeParams) (GetMealTimeRangeRow, error) {
+	return r.queries.GetMealTimeRange(ctx, arg)
 }
-
-const ensureDefaultMealTime = `-- name: EnsureDefaultMealTime :exec
-INSERT INTO meal_times (name, start_time, end_time, is_default)
-VALUES ($1, ($2::text)::time, ($3::text)::time, true)
-ON CONFLICT (COALESCE(user_id, 0), LOWER(name)) DO NOTHING
-`
-
-type EnsureDefaultMealTimeParams struct {
-	Name    string
-	Column2 string
-	Column3 string
-}
-
-func (q *Repository) EnsureDefaultMealTime(ctx context.Context, arg EnsureDefaultMealTimeParams) error {
-	_, err := q.db.Exec(ctx, ensureDefaultMealTime, arg.Name, arg.Column2, arg.Column3)
-	return err
-}
-
-const getMealPlanForUpdate = `-- name: GetMealPlanForUpdate :one
-SELECT name, TO_CHAR(date, 'YYYY-MM-DD') AS date, meal_time_id, is_consumed
-FROM meal_plans WHERE id = $1 AND user_id = $2
-`
-
-type GetMealPlanForUpdateParams struct {
-	ID     int64
-	UserID int64
-}
-
-type GetMealPlanForUpdateRow struct {
-	Name       string
-	Date       string
-	MealTimeID sql.NullInt64
-	IsConsumed bool
-}
-
-func (q *Repository) GetMealPlanForUpdate(ctx context.Context, arg GetMealPlanForUpdateParams) (GetMealPlanForUpdateRow, error) {
-	row := q.db.QueryRow(ctx, getMealPlanForUpdate, arg.ID, arg.UserID)
-	var i GetMealPlanForUpdateRow
-	err := row.Scan(
-		&i.Name,
-		&i.Date,
-		&i.MealTimeID,
-		&i.IsConsumed,
-	)
-	return i, err
-}
-
-const getMealTimeRange = `-- name: GetMealTimeRange :one
-SELECT TO_CHAR(start_time, 'HH24:MI:SS') AS start_time, TO_CHAR(end_time, 'HH24:MI:SS') AS end_time
-FROM meal_times WHERE id = $1 AND (user_id IS NULL OR user_id = $2)
-`
-
-type GetMealTimeRangeParams struct {
-	ID     int64
-	UserID sql.NullInt64
-}
-
-type GetMealTimeRangeRow struct {
-	StartTime string
-	EndTime   string
-}
-
-func (q *Repository) GetMealTimeRange(ctx context.Context, arg GetMealTimeRangeParams) (GetMealTimeRangeRow, error) {
-	row := q.db.QueryRow(ctx, getMealTimeRange, arg.ID, arg.UserID)
-	var i GetMealTimeRangeRow
-	err := row.Scan(&i.StartTime, &i.EndTime)
-	return i, err
-}
-
-const listMealPlansByDate = `-- name: ListMealPlansByDate :many
-SELECT mp.id, TO_CHAR(mp.date, 'YYYY-MM-DD') AS date, mp.name, mp.meal_time_id, mt.name AS meal_time_name,
-       (COALESCE(TO_CHAR(COALESCE(mp.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
-       (COALESCE(TO_CHAR(COALESCE(mp.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       mp.is_consumed, mp.created_at
-FROM meal_plans mp LEFT JOIN meal_times mt ON mp.meal_time_id = mt.id
-WHERE mp.user_id = $1 AND mp.date = ($2::text)::date
-ORDER BY COALESCE(mp.start_time, mt.start_time) ASC NULLS LAST, mp.created_at ASC, mp.id ASC
-`
-
-type ListMealPlansByDateParams struct {
-	UserID  int64
-	Column2 string
-}
-
-type ListMealPlansByDateRow struct {
-	ID           int64
-	Date         string
-	Name         string
-	MealTimeID   sql.NullInt64
-	MealTimeName sql.NullString
-	StartTime    string
-	EndTime      string
-	IsConsumed   bool
-	CreatedAt    time.Time
-}
-
-func (q *Repository) ListMealPlansByDate(ctx context.Context, arg ListMealPlansByDateParams) ([]ListMealPlansByDateRow, error) {
-	rows, err := q.db.Query(ctx, listMealPlansByDate, arg.UserID, arg.Column2)
+func (r *Repository) ListMealPlansByDate(ctx context.Context, arg ListMealPlansByDateParams) ([]ListMealPlansByDateRow, error) {
+	rows, err := r.queries.ListMealPlansByDate(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var items []ListMealPlansByDateRow
-	for rows.Next() {
-		var i ListMealPlansByDateRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Date,
-			&i.Name,
-			&i.MealTimeID,
-			&i.MealTimeName,
-			&i.StartTime,
-			&i.EndTime,
-			&i.IsConsumed,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
+	out := make([]ListMealPlansByDateRow, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
 	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+	return out, nil
 }
-
-const listMealPlansByRange = `-- name: ListMealPlansByRange :many
-SELECT mp.id, TO_CHAR(mp.date, 'YYYY-MM-DD') AS date, mp.name, mp.meal_time_id, mt.name AS meal_time_name,
-       (COALESCE(TO_CHAR(COALESCE(mp.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
-       (COALESCE(TO_CHAR(COALESCE(mp.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       mp.is_consumed, mp.created_at
-FROM meal_plans mp LEFT JOIN meal_times mt ON mp.meal_time_id = mt.id
-WHERE mp.user_id = $1 AND mp.date >= ($2::text)::date AND mp.date <= ($3::text)::date
-ORDER BY mp.date ASC, COALESCE(mp.start_time, mt.start_time) ASC NULLS LAST, mp.created_at ASC, mp.id ASC
-`
-
-type ListMealPlansByRangeParams struct {
-	UserID  int64
-	Column2 string
-	Column3 string
-}
-
-type ListMealPlansByRangeRow struct {
-	ID           int64
-	Date         string
-	Name         string
-	MealTimeID   sql.NullInt64
-	MealTimeName sql.NullString
-	StartTime    string
-	EndTime      string
-	IsConsumed   bool
-	CreatedAt    time.Time
-}
-
-func (q *Repository) ListMealPlansByRange(ctx context.Context, arg ListMealPlansByRangeParams) ([]ListMealPlansByRangeRow, error) {
-	rows, err := q.db.Query(ctx, listMealPlansByRange, arg.UserID, arg.Column2, arg.Column3)
+func (r *Repository) ListMealPlansByRange(ctx context.Context, arg ListMealPlansByRangeParams) ([]ListMealPlansByRangeRow, error) {
+	rows, err := r.queries.ListMealPlansByRange(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var items []ListMealPlansByRangeRow
-	for rows.Next() {
-		var i ListMealPlansByRangeRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Date,
-			&i.Name,
-			&i.MealTimeID,
-			&i.MealTimeName,
-			&i.StartTime,
-			&i.EndTime,
-			&i.IsConsumed,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
+	out := make([]ListMealPlansByRangeRow, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
 	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+	return out, nil
 }
-
-const listMealTimes = `-- name: ListMealTimes :many
-SELECT id, name, TO_CHAR(start_time, 'HH24:MI') AS start_time, TO_CHAR(end_time, 'HH24:MI') AS end_time, is_default, user_id
-FROM meal_times WHERE user_id IS NULL OR user_id = $1
-ORDER BY start_time ASC, id ASC
-`
-
-type ListMealTimesRow struct {
-	ID        int64
-	Name      string
-	StartTime string
-	EndTime   string
-	IsDefault bool
-	UserID    sql.NullInt64
+func (r *Repository) ListMealTimes(ctx context.Context, userID sql.NullInt64) ([]ListMealTimesRow, error) {
+	return r.queries.ListMealTimes(ctx, userID)
 }
-
-func (q *Repository) ListMealTimes(ctx context.Context, userID sql.NullInt64) ([]ListMealTimesRow, error) {
-	rows, err := q.db.Query(ctx, listMealTimes, userID)
+func (r *Repository) ListRecentMealPlans(ctx context.Context, userID int64) ([]ListRecentMealPlansRow, error) {
+	rows, err := r.queries.ListRecentMealPlans(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var items []ListMealTimesRow
-	for rows.Next() {
-		var i ListMealTimesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.StartTime,
-			&i.EndTime,
-			&i.IsDefault,
-			&i.UserID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
+	out := make([]ListRecentMealPlansRow, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
 	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+	return out, nil
 }
-
-const listRecentMealPlans = `-- name: ListRecentMealPlans :many
-SELECT mp.id, TO_CHAR(mp.date, 'YYYY-MM-DD') AS date, mp.name, mp.meal_time_id, mt.name AS meal_time_name,
-       (COALESCE(TO_CHAR(COALESCE(mp.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
-       (COALESCE(TO_CHAR(COALESCE(mp.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       mp.is_consumed, mp.created_at
-FROM meal_plans mp LEFT JOIN meal_times mt ON mp.meal_time_id = mt.id
-WHERE mp.user_id = $1
-ORDER BY mp.date DESC, COALESCE(mp.start_time, mt.start_time) ASC NULLS LAST, mp.created_at ASC, mp.id ASC
-LIMIT 100
-`
-
-type ListRecentMealPlansRow struct {
-	ID           int64
-	Date         string
-	Name         string
-	MealTimeID   sql.NullInt64
-	MealTimeName sql.NullString
-	StartTime    string
-	EndTime      string
-	IsConsumed   bool
-	CreatedAt    time.Time
+func (r *Repository) SetMealPlanConsumed(ctx context.Context, arg SetMealPlanConsumedParams) (SetMealPlanConsumedRow, error) {
+	row, err := r.queries.SetMealPlanConsumed(ctx, arg)
+	return makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
 }
-
-func (q *Repository) ListRecentMealPlans(ctx context.Context, userID int64) ([]ListRecentMealPlansRow, error) {
-	rows, err := q.db.Query(ctx, listRecentMealPlans, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListRecentMealPlansRow
-	for rows.Next() {
-		var i ListRecentMealPlansRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Date,
-			&i.Name,
-			&i.MealTimeID,
-			&i.MealTimeName,
-			&i.StartTime,
-			&i.EndTime,
-			&i.IsConsumed,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const setMealPlanConsumed = `-- name: SetMealPlanConsumed :one
-WITH updated AS (
-    UPDATE meal_plans SET is_consumed = $1, updated_at = CURRENT_TIMESTAMP
-    WHERE meal_plans.id = $2 AND meal_plans.user_id = $3
-    RETURNING id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
-)
-SELECT u.id, TO_CHAR(u.date, 'YYYY-MM-DD') AS date, u.name, u.meal_time_id, mt.name AS meal_time_name,
-       (COALESCE(TO_CHAR(COALESCE(u.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
-       (COALESCE(TO_CHAR(COALESCE(u.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       u.is_consumed, u.created_at
-FROM updated u LEFT JOIN meal_times mt ON u.meal_time_id = mt.id
-`
-
-type SetMealPlanConsumedParams struct {
-	IsConsumed bool
-	ID         int64
-	UserID     int64
-}
-
-type SetMealPlanConsumedRow struct {
-	ID           int64
-	Date         string
-	Name         string
-	MealTimeID   sql.NullInt64
-	MealTimeName sql.NullString
-	StartTime    string
-	EndTime      string
-	IsConsumed   bool
-	CreatedAt    time.Time
-}
-
-func (q *Repository) SetMealPlanConsumed(ctx context.Context, arg SetMealPlanConsumedParams) (SetMealPlanConsumedRow, error) {
-	row := q.db.QueryRow(ctx, setMealPlanConsumed, arg.IsConsumed, arg.ID, arg.UserID)
-	var i SetMealPlanConsumedRow
-	err := row.Scan(
-		&i.ID,
-		&i.Date,
-		&i.Name,
-		&i.MealTimeID,
-		&i.MealTimeName,
-		&i.StartTime,
-		&i.EndTime,
-		&i.IsConsumed,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const updateMealPlan = `-- name: UpdateMealPlan :one
-WITH updated AS (
-    UPDATE meal_plans
-    SET name = $1, date = ($2::text)::date, meal_time_id = $3,
-        start_time = NULLIF($4::text, '')::time, end_time = NULLIF($5::text, '')::time,
-        is_consumed = $6, updated_at = CURRENT_TIMESTAMP
-    WHERE meal_plans.id = $7 AND meal_plans.user_id = $8
-    RETURNING id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
-)
-SELECT u.id, TO_CHAR(u.date, 'YYYY-MM-DD') AS date, u.name, u.meal_time_id, mt.name AS meal_time_name,
-       (COALESCE(TO_CHAR(COALESCE(u.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
-       (COALESCE(TO_CHAR(COALESCE(u.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       u.is_consumed, u.created_at
-FROM updated u LEFT JOIN meal_times mt ON u.meal_time_id = mt.id
-`
-
-type UpdateMealPlanParams struct {
-	Name       string
-	Column2    string
-	MealTimeID sql.NullInt64
-	Column4    string
-	Column5    string
-	IsConsumed bool
-	ID         int64
-	UserID     int64
-}
-
-type UpdateMealPlanRow struct {
-	ID           int64
-	Date         string
-	Name         string
-	MealTimeID   sql.NullInt64
-	MealTimeName sql.NullString
-	StartTime    string
-	EndTime      string
-	IsConsumed   bool
-	CreatedAt    time.Time
-}
-
-func (q *Repository) UpdateMealPlan(ctx context.Context, arg UpdateMealPlanParams) (UpdateMealPlanRow, error) {
-	row := q.db.QueryRow(ctx, updateMealPlan,
-		arg.Name,
-		arg.Column2,
-		arg.MealTimeID,
-		arg.Column4,
-		arg.Column5,
-		arg.IsConsumed,
-		arg.ID,
-		arg.UserID,
-	)
-	var i UpdateMealPlanRow
-	err := row.Scan(
-		&i.ID,
-		&i.Date,
-		&i.Name,
-		&i.MealTimeID,
-		&i.MealTimeName,
-		&i.StartTime,
-		&i.EndTime,
-		&i.IsConsumed,
-		&i.CreatedAt,
-	)
-	return i, err
+func (r *Repository) UpdateMealPlan(ctx context.Context, arg UpdateMealPlanParams) (UpdateMealPlanRow, error) {
+	row, err := r.queries.UpdateMealPlan(ctx, arg)
+	return makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
 }

@@ -47,7 +47,10 @@ func TestGetProfile(t *testing.T) {
 		t.Fatal(poolErr)
 	}
 	defer pool.Close()
-	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
+	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return user.ID, err
+	})
 	cookie := loginUser(t, db)
 
 	// 1. GetProfile when user doesn't have a profile yet
@@ -105,7 +108,10 @@ func TestSaveProfile(t *testing.T) {
 		t.Fatal(poolErr)
 	}
 	defer pool.Close()
-	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
+	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return user.ID, err
+	})
 	cookie := loginUser(t, db)
 
 	// 1. Save profile - invalid JSON
@@ -191,7 +197,10 @@ func TestChangePassword(t *testing.T) {
 		t.Fatal(poolErr)
 	}
 	defer pool.Close()
-	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
+	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return user.ID, err
+	})
 	cookie := loginUser(t, db)
 
 	// Seed user in database

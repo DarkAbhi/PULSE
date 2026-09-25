@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/jackc/pgx/v5/pgtype"
 	"net/http"
 	"strconv"
 	"strings"
@@ -117,12 +118,12 @@ func (h *Handler) CreateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 	if p.OccurredAt != nil {
 		occurredAt = *p.OccurredAt
 	}
-	row, err := query.New(h.DB).CreateMaintenanceRecord(r.Context(), query.CreateMaintenanceRecordParams{VehicleID: vehicleID, UserID: user.ID, Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: occurredAt, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableString(p.Notes)})
+	row, err := query.New(h.DB).CreateMaintenanceRecord(r.Context(), query.CreateMaintenanceRecordParams{VehicleID: vehicleID, UserID: user.ID, Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: pgtype.Timestamptz{Time: occurredAt, Valid: true}, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableText(p.Notes)})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt, row.OdometerKm, row.ProviderName, row.Notes)
+	record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt.Time, row.OdometerKm, row.ProviderName, textToNullString(row.Notes))
 	webutil.WriteJSON(w, http.StatusCreated, record)
 }
 
@@ -153,7 +154,7 @@ func (h *Handler) UpdateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 	if p.OccurredAt != nil {
 		occurredAt = *p.OccurredAt
 	}
-	row, err := query.New(h.DB).UpdateMaintenanceRecord(r.Context(), query.UpdateMaintenanceRecordParams{Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: occurredAt, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableString(p.Notes), ID: recordID, VehicleID: vehicleID, UserID: user.ID})
+	row, err := query.New(h.DB).UpdateMaintenanceRecord(r.Context(), query.UpdateMaintenanceRecordParams{Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: pgtype.Timestamptz{Time: occurredAt, Valid: true}, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableText(p.Notes), ID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
@@ -162,7 +163,7 @@ func (h *Handler) UpdateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 		webutil.ServerError(w, err)
 		return
 	}
-	record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt, row.OdometerKm, row.ProviderName, row.Notes)
+	record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt.Time, row.OdometerKm, row.ProviderName, textToNullString(row.Notes))
 	webutil.WriteJSON(w, http.StatusOK, record)
 }
 
@@ -207,4 +208,15 @@ func (h *Handler) maintenanceUser(w http.ResponseWriter, r *http.Request) (auth.
 		return auth.SessionUser{}, false
 	}
 	return user, true
+}
+
+func nullableText(value *string) pgtype.Text {
+	if value == nil {
+		return pgtype.Text{}
+	}
+	return pgtype.Text{String: *value, Valid: true}
+}
+
+func textToNullString(value pgtype.Text) sql.NullString {
+	return sql.NullString{String: value.String, Valid: value.Valid}
 }

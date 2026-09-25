@@ -4,41 +4,40 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/DarkAbhi/life-backend/internal/purchase/query"
 )
 
-type Repository struct{ db *pgxpool.Pool }
+type Repository struct{ queries *query.Queries }
 
-func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
+func NewRepository(db *pgxpool.Pool) *Repository {
+	return &Repository{queries: query.New(db)}
+}
 
 func (r *Repository) List(ctx context.Context, userID int64, month string) ([]Purchase, error) {
-	rows, err := r.db.Query(ctx, `SELECT id, name, price, url FROM next_month_purchases WHERE user_id=$1 AND target_month=$2::date ORDER BY created_at DESC, id DESC`, userID, month)
+	rows, err := r.queries.ListPurchases(ctx, query.ListPurchasesParams{UserID: userID, Column2: month})
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	items := make([]Purchase, 0)
-	for rows.Next() {
-		var item Purchase
-		if err := rows.Scan(&item.ID, &item.Name, &item.Price, &item.URL); err != nil {
-			return nil, err
-		}
-		items = append(items, item)
+	items := make([]Purchase, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, Purchase{ID: row.ID, Name: row.Name, Price: row.Price, URL: row.Url})
 	}
-	return items, rows.Err()
+	return items, nil
 }
 
 func (r *Repository) Create(ctx context.Context, userID int64, month string, item Purchase) (Purchase, error) {
-	var saved Purchase
-	err := r.db.QueryRow(ctx, `INSERT INTO next_month_purchases (user_id,target_month,name,price,url) VALUES ($1,$2::date,$3,$4,$5) RETURNING id,name,price,url`, userID, month, item.Name, item.Price, item.URL).Scan(&saved.ID, &saved.Name, &saved.Price, &saved.URL)
-	return saved, err
+	row, err := r.queries.CreatePurchase(ctx, query.CreatePurchaseParams{
+		UserID: userID, Column2: month, Name: item.Name, Price: item.Price, Url: item.URL,
+	})
+	return Purchase{ID: row.ID, Name: row.Name, Price: row.Price, URL: row.Url}, err
 }
 
 func (r *Repository) Delete(ctx context.Context, userID, id int64, month string) (bool, error) {
-	tag, err := r.db.Exec(ctx, `DELETE FROM next_month_purchases WHERE id=$1 AND user_id=$2 AND target_month=$3::date`, id, userID, month)
-	return tag.RowsAffected() > 0, err
+	count, err := r.queries.DeletePurchase(ctx, query.DeletePurchaseParams{ID: id, UserID: userID, Column3: month})
+	return count > 0, err
 }
 
 func (r *Repository) Clear(ctx context.Context, userID int64, month string) error {
-	_, err := r.db.Exec(ctx, `DELETE FROM next_month_purchases WHERE user_id=$1 AND target_month=$2::date`, userID, month)
-	return err
+	return r.queries.ClearPurchases(ctx, query.ClearPurchasesParams{UserID: userID, Column2: month})
 }

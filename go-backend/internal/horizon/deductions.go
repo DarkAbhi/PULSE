@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
 	"strings"
 
@@ -34,10 +35,10 @@ type DeductionDTO struct {
 
 type DeductionsHandler struct {
 	sessions SessionLookup
-	DB       *sql.DB
+	DB       *pgxpool.Pool
 }
 
-func NewDeductionsHandler(db *sql.DB, sessions SessionLookup) *DeductionsHandler {
+func NewDeductionsHandler(db *pgxpool.Pool, sessions SessionLookup) *DeductionsHandler {
 	return &DeductionsHandler{DB: db, sessions: sessions}
 }
 func (h *DeductionsHandler) sessionUser(r *http.Request) (auth.SessionUser, error) {

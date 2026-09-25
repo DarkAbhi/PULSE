@@ -2,15 +2,59 @@ version: "2"
 sql:
   - engine: postgresql
     schema: migrations
-    queries: internal/horizon/query
+    queries: internal/activity/query
     gen:
       go:
         package: query
-        out: internal/horizon/query
-        sql_package: database/sql
+        out: internal/activity/query
+        sql_package: pgx/v5
+  - engine: postgresql
+    schema: migrations
+    queries: internal/profile/query
+    gen:
+      go:
+        package: query
+        out: internal/profile/query
+        sql_package: pgx/v5
+  - engine: postgresql
+    schema: migrations
+    queries: internal/auth/query
+    gen:
+      go:
+        package: query
+        out: internal/auth/query
+        sql_package: pgx/v5
+  - engine: postgresql
+    schema: migrations
+    queries: internal/purchase/query
+    gen:
+      go:
+        package: query
+        out: internal/purchase/query
+        sql_package: pgx/v5
+        emit_pointers_for_null_types: true
         overrides:
           - db_type: pg_catalog.numeric
             go_type: float64
+  - engine: postgresql
+    schema: migrations
+    queries: internal/notification/query
+    gen:
+      go:
+        package: query
+        out: internal/notification/query
+        sql_package: pgx/v5
+        emit_pointers_for_null_types: true
+  - engine: postgresql
+    schema: migrations
+    queries: internal/gym/query
+    gen:
+      go:
+        package: query
+        out: internal/gym/query
+        sql_package: pgx/v5
+        emit_pointers_for_null_types: true
+        overrides:
           - db_type: pg_catalog.numeric
             nullable: true
             go_type:
@@ -18,12 +62,35 @@ sql:
               pointer: true
   - engine: postgresql
     schema: migrations
-    queries: internal/vehicle/query
+    queries: internal/mealplan/query
     gen:
       go:
         package: query
-        out: internal/vehicle/query
-        sql_package: database/sql
+        out: internal/mealplan/query
+        sql_package: pgx/v5
+        overrides:
+          - db_type: pg_catalog.int8
+            nullable: true
+            go_type:
+              import: database/sql
+              type: NullInt64
+          - db_type: pg_catalog.varchar
+            nullable: true
+            go_type:
+              import: database/sql
+              type: NullString
+          - db_type: pg_catalog.timestamptz
+            go_type:
+              import: time
+              type: Time
+  - engine: postgresql
+    schema: migrations
+    queries: internal/horizon/query
+    gen:
+      go:
+        package: query
+        out: internal/horizon/query
+        sql_package: pgx/v5
         overrides:
           - db_type: pg_catalog.numeric
             go_type: float64
@@ -32,3 +99,64 @@ sql:
             go_type:
               type: float64
               pointer: true
+          - db_type: pg_catalog.int8
+            nullable: true
+            go_type:
+              import: database/sql
+              type: NullInt64
+          - db_type: pg_catalog.int4
+            nullable: true
+            go_type:
+              import: database/sql
+              type: NullInt32
+          - db_type: pg_catalog.int2
+            nullable: true
+            go_type:
+              import: database/sql
+              type: NullInt16
+          - db_type: pg_catalog.varchar
+            nullable: true
+            go_type:
+              import: database/sql
+              type: NullString
+          - db_type: pg_catalog.text
+            nullable: true
+            go_type:
+              import: database/sql
+              type: NullString
+          - db_type: pg_catalog.date
+            nullable: true
+            go_type:
+              import: database/sql
+              type: NullTime
+  - engine: postgresql
+    schema: migrations
+    queries: internal/vehicle/query
+    gen:
+      go:
+        package: query
+        out: internal/vehicle/query
+        sql_package: pgx/v5
+        overrides:
+          - db_type: pg_catalog.numeric
+            go_type: float64
+          - db_type: pg_catalog.numeric
+            nullable: true
+            go_type:
+              type: float64
+              pointer: true
+          - db_type: pg_catalog.varchar
+            nullable: true
+            go_type:
+              import: database/sql
+              type: NullString
+          - db_type: pg_catalog.text
+            nullable: true
+            go_type:
+              import: database/sql
+              type: NullString
+          - db_type: pg_catalog.int8
+            nullable: true
+            go_type:
+              import: database/sql
+              type: NullInt64

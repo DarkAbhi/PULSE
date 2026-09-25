@@ -77,13 +77,6 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("ping postgres: %w", err)
 	}
 
-	// The two remaining sqlc slices use database/sql until their migration is complete.
-	legacyDB, err := db.OpenSQL(ctx, dsn)
-	if err != nil {
-		return fmt.Errorf("open legacy database: %w", err)
-	}
-	defer legacyDB.Close()
-
 	authRepository := auth.NewRepository(pool)
 	authService := auth.NewService(authRepository)
 	sessionLookup := func(r *http.Request) (auth.SessionUser, error) {
@@ -109,9 +102,9 @@ func run(ctx context.Context) error {
 	gymService := gym.NewService(gymRepository, notificationService, authService)
 	profileRepository := profile.NewRepository(pool)
 	profileService := profile.NewService(profileRepository, authService)
-	vehicleRepository := vehicle.NewRepository(legacyDB)
+	vehicleRepository := vehicle.NewRepository(pool)
 	vehicleService := vehicle.NewService(vehicleRepository)
-	horizonService := horizon.NewService(legacyDB)
+	horizonService := horizon.NewService(pool)
 	if err := mealService.EnsureDefaults(ctx); err != nil {
 		slog.Warn("ensure default meal times failed", "error", err)
 	}
@@ -119,7 +112,7 @@ func run(ctx context.Context) error {
 	if raw := os.Getenv("CORS_ALLOWED_ORIGINS"); raw != "" {
 		allowedOrigins = strings.Split(raw, ",")
 	}
-	vehicleHandler := vehicle.NewHandler(legacyDB, vehicleService, sessionLookup)
+	vehicleHandler := vehicle.NewHandler(pool, vehicleService, sessionLookup)
 	if err := vehicleHandler.ConfigureAttachments(ctx, vehicle.AttachmentConfig{
 		Bucket: os.Getenv("S3_BUCKET"), Region: os.Getenv("AWS_REGION"),
 		Endpoint: os.Getenv("S3_ENDPOINT"), ForcePathStyle: os.Getenv("S3_FORCE_PATH_STYLE") == "true",
@@ -128,7 +121,7 @@ func run(ctx context.Context) error {
 	}
 
 	api := &API{
-		DB:             legacyDB,
+		DB:             pool,
 		AllowedOrigins: allowedOrigins,
 		Activity:       activity.NewHandler(activityService),
 		Purchase:       purchase.NewHandler(purchaseService, sessionID),
@@ -137,7 +130,7 @@ func run(ctx context.Context) error {
 		Gym:            gym.NewHandler(gymService, sessionID),
 		Auth:           auth.NewHandler(authService, os.Getenv("APP_ENV") == "production"),
 		Vehicle:        vehicleHandler,
-		Horizon:        horizon.NewHandler(legacyDB, horizonService, sessionLookup),
+		Horizon:        horizon.NewHandler(pool, horizonService, sessionLookup),
 		Profile:        profile.NewHandler(profileService, sessionID),
 	}
 	handler := middleware.Recoverer(middleware.Logger(api.Router()))

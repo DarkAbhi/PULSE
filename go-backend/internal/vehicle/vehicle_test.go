@@ -42,10 +42,12 @@ func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 }
 
 func TestVehiclesCRUD(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
+	pool := newTestPool(t, dsn)
+	defer pool.Close()
 
-	h := NewHandler(db, NewService(query.New(db)), testSessionLookup(db))
+	h := NewHandler(pool, NewService(query.New(pool)), testSessionLookup(db))
 
 	// 1. Create vehicle - missing name
 	{
@@ -258,10 +260,12 @@ func TestVehiclesCRUD(t *testing.T) {
 }
 
 func TestFuelFillupsAndEconomy(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
+	pool := newTestPool(t, dsn)
+	defer pool.Close()
 
-	h := NewHandler(db, NewService(query.New(db)), testSessionLookup(db))
+	h := NewHandler(pool, NewService(query.New(pool)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	// Seed vehicle
@@ -359,8 +363,10 @@ func TestFuelFillupsAndEconomy(t *testing.T) {
 func TestAirFillsAndReminders(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
+	pool := newTestPool(t, dsn)
+	defer pool.Close()
 
-	h := NewHandler(db, NewService(query.New(db)), testSessionLookup(db))
+	h := NewHandler(pool, NewService(query.New(pool)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	// Seed vehicle
@@ -418,11 +424,6 @@ func TestAirFillsAndReminders(t *testing.T) {
 		t.Fatalf("failed to update filled_at: %v", err)
 	}
 
-	pool, err := pgxpool.New(context.Background(), dsn)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer pool.Close()
 	reminders := NewReminderService(pool, notification.NewService(notification.NewRepository(pool)))
 	if err := reminders.CreateDue(context.Background()); err != nil {
 		t.Fatal(err)
@@ -443,10 +444,12 @@ func TestAirFillsAndReminders(t *testing.T) {
 }
 
 func TestVehicleHistoryAndDeleteLogs(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
+	pool := newTestPool(t, dsn)
+	defer pool.Close()
 
-	h := NewHandler(db, NewService(query.New(db)), testSessionLookup(db))
+	h := NewHandler(pool, NewService(query.New(pool)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	// Seed vehicle
@@ -552,9 +555,11 @@ func TestVehicleHistoryAndDeleteLogs(t *testing.T) {
 }
 
 func TestMaintenanceRecords(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
-	h := NewHandler(db, NewService(query.New(db)), testSessionLookup(db))
+	pool := newTestPool(t, dsn)
+	defer pool.Close()
+	h := NewHandler(pool, NewService(query.New(pool)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	var vehicleID int64
@@ -622,5 +627,17 @@ func TestMaintenanceRecords(t *testing.T) {
 func floatPtr(value float64) *float64 { return &value }
 
 func testSessionLookup(db *sql.DB) SessionLookup {
-	return func(r *http.Request) (auth.SessionUser, error) { return auth.GetSessionUser(db, r) }
+	return func(r *http.Request) (auth.SessionUser, error) {
+		user, err := testhelper.GetSessionUser(db, r)
+		return auth.SessionUser{ID: user.ID, Username: user.Username}, err
+	}
+}
+
+func newTestPool(t *testing.T, dsn string) *pgxpool.Pool {
+	t.Helper()
+	pool, err := pgxpool.New(context.Background(), dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return pool
 }

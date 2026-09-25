@@ -38,10 +38,12 @@ func budgetsLoginUser(t *testing.T, db *sql.DB) *http.Cookie {
 }
 
 func TestBudgetsCRUD(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
+	pool := testPool(t, dsn)
+	defer pool.Close()
 
-	h := NewBudgetsHandler(db, testSessionLookup(db))
+	h := NewBudgetsHandler(pool, testSessionLookup(db))
 	cookie := budgetsLoginUser(t, db)
 
 	var budgetID int64

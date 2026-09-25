@@ -28,7 +28,7 @@ type CreateBudgetRow struct {
 }
 
 func (q *Queries) CreateBudget(ctx context.Context, arg CreateBudgetParams) (CreateBudgetRow, error) {
-	row := q.db.QueryRowContext(ctx, createBudget, arg.UserID, arg.Name, arg.AllocatedAmount)
+	row := q.db.QueryRow(ctx, createBudget, arg.UserID, arg.Name, arg.AllocatedAmount)
 	var i CreateBudgetRow
 	err := row.Scan(&i.ID, &i.Name, &i.AllocatedAmount)
 	return i, err
@@ -44,11 +44,11 @@ type DeleteBudgetParams struct {
 }
 
 func (q *Queries) DeleteBudget(ctx context.Context, arg DeleteBudgetParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, deleteBudget, arg.ID, arg.UserID)
+	result, err := q.db.Exec(ctx, deleteBudget, arg.ID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
-	return result.RowsAffected()
+	return result.RowsAffected(), nil
 }
 
 const getBudgetUsedAmount = `-- name: GetBudgetUsedAmount :one
@@ -62,7 +62,7 @@ type GetBudgetUsedAmountParams struct {
 }
 
 func (q *Queries) GetBudgetUsedAmount(ctx context.Context, arg GetBudgetUsedAmountParams) (float64, error) {
-	row := q.db.QueryRowContext(ctx, getBudgetUsedAmount, arg.BudgetID, arg.UserID)
+	row := q.db.QueryRow(ctx, getBudgetUsedAmount, arg.BudgetID, arg.UserID)
 	var column_1 float64
 	err := row.Scan(&column_1)
 	return column_1, err
@@ -80,7 +80,7 @@ type ListBudgetsRow struct {
 }
 
 func (q *Queries) ListBudgets(ctx context.Context, userID int64) ([]ListBudgetsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listBudgets, userID)
+	rows, err := q.db.Query(ctx, listBudgets, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -92,9 +92,6 @@ func (q *Queries) ListBudgets(ctx context.Context, userID int64) ([]ListBudgetsR
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -123,7 +120,7 @@ type UpdateBudgetRow struct {
 }
 
 func (q *Queries) UpdateBudget(ctx context.Context, arg UpdateBudgetParams) (UpdateBudgetRow, error) {
-	row := q.db.QueryRowContext(ctx, updateBudget,
+	row := q.db.QueryRow(ctx, updateBudget,
 		arg.Name,
 		arg.AllocatedAmount,
 		arg.ID,

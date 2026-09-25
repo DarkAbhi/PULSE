@@ -8,7 +8,8 @@ package query
 import (
 	"context"
 	"database/sql"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createVehicle = `-- name: CreateVehicle :one
@@ -37,7 +38,7 @@ type CreateVehicleRow struct {
 }
 
 func (q *Queries) CreateVehicle(ctx context.Context, arg CreateVehicleParams) (CreateVehicleRow, error) {
-	row := q.db.QueryRowContext(ctx, createVehicle,
+	row := q.db.QueryRow(ctx, createVehicle,
 		arg.Name,
 		arg.IsActive,
 		arg.FrontTirePressureSolo,
@@ -63,11 +64,11 @@ DELETE FROM vehicles WHERE id=$1
 `
 
 func (q *Queries) DeleteVehicle(ctx context.Context, id int64) (int64, error) {
-	result, err := q.db.ExecContext(ctx, deleteVehicle, id)
+	result, err := q.db.Exec(ctx, deleteVehicle, id)
 	if err != nil {
 		return 0, err
 	}
-	return result.RowsAffected()
+	return result.RowsAffected(), nil
 }
 
 const deleteVehicleAirFill = `-- name: DeleteVehicleAirFill :execrows
@@ -81,11 +82,11 @@ type DeleteVehicleAirFillParams struct {
 }
 
 func (q *Queries) DeleteVehicleAirFill(ctx context.Context, arg DeleteVehicleAirFillParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, deleteVehicleAirFill, arg.ID, arg.VehicleID, arg.UserID)
+	result, err := q.db.Exec(ctx, deleteVehicleAirFill, arg.ID, arg.VehicleID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
-	return result.RowsAffected()
+	return result.RowsAffected(), nil
 }
 
 const deleteVehicleFuelFillup = `-- name: DeleteVehicleFuelFillup :execrows
@@ -99,11 +100,11 @@ type DeleteVehicleFuelFillupParams struct {
 }
 
 func (q *Queries) DeleteVehicleFuelFillup(ctx context.Context, arg DeleteVehicleFuelFillupParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, deleteVehicleFuelFillup, arg.ID, arg.VehicleID, arg.UserID)
+	result, err := q.db.Exec(ctx, deleteVehicleFuelFillup, arg.ID, arg.VehicleID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
-	return result.RowsAffected()
+	return result.RowsAffected(), nil
 }
 
 const getVehicle = `-- name: GetVehicle :one
@@ -122,7 +123,7 @@ type GetVehicleRow struct {
 }
 
 func (q *Queries) GetVehicle(ctx context.Context, id int64) (GetVehicleRow, error) {
-	row := q.db.QueryRowContext(ctx, getVehicle, id)
+	row := q.db.QueryRow(ctx, getVehicle, id)
 	var i GetVehicleRow
 	err := row.Scan(
 		&i.ID,
@@ -151,7 +152,7 @@ type GetVehicleForUpdateRow struct {
 }
 
 func (q *Queries) GetVehicleForUpdate(ctx context.Context, id int64) (GetVehicleForUpdateRow, error) {
-	row := q.db.QueryRowContext(ctx, getVehicleForUpdate, id)
+	row := q.db.QueryRow(ctx, getVehicleForUpdate, id)
 	var i GetVehicleForUpdateRow
 	err := row.Scan(
 		&i.Name,
@@ -178,7 +179,7 @@ type GetVehicleHistoryHeaderRow struct {
 }
 
 func (q *Queries) GetVehicleHistoryHeader(ctx context.Context, id int64) (GetVehicleHistoryHeaderRow, error) {
-	row := q.db.QueryRowContext(ctx, getVehicleHistoryHeader, id)
+	row := q.db.QueryRow(ctx, getVehicleHistoryHeader, id)
 	var i GetVehicleHistoryHeaderRow
 	err := row.Scan(
 		&i.Name,
@@ -203,7 +204,7 @@ type ListFuelItemsRow struct {
 }
 
 func (q *Queries) ListFuelItems(ctx context.Context, fillupID int64) ([]ListFuelItemsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listFuelItems, fillupID)
+	rows, err := q.db.Query(ctx, listFuelItems, fillupID)
 	if err != nil {
 		return nil, err
 	}
@@ -221,9 +222,6 @@ func (q *Queries) ListFuelItems(ctx context.Context, fillupID int64) ([]ListFuel
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -246,11 +244,11 @@ type ListMaintenanceAttachmentsRow struct {
 	FileName    string
 	ContentType string
 	SizeBytes   int64
-	CreatedAt   time.Time
+	CreatedAt   pgtype.Timestamptz
 }
 
 func (q *Queries) ListMaintenanceAttachments(ctx context.Context, arg ListMaintenanceAttachmentsParams) ([]ListMaintenanceAttachmentsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listMaintenanceAttachments, arg.MaintenanceRecordID, arg.UserID)
+	rows, err := q.db.Query(ctx, listMaintenanceAttachments, arg.MaintenanceRecordID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -269,9 +267,6 @@ func (q *Queries) ListMaintenanceAttachments(ctx context.Context, arg ListMainte
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -289,11 +284,11 @@ type ListVehicleAirFillsParams struct {
 
 type ListVehicleAirFillsRow struct {
 	ID       int64
-	FilledAt time.Time
+	FilledAt pgtype.Timestamptz
 }
 
 func (q *Queries) ListVehicleAirFills(ctx context.Context, arg ListVehicleAirFillsParams) ([]ListVehicleAirFillsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listVehicleAirFills, arg.VehicleID, arg.UserID)
+	rows, err := q.db.Query(ctx, listVehicleAirFills, arg.VehicleID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -305,9 +300,6 @@ func (q *Queries) ListVehicleAirFills(ctx context.Context, arg ListVehicleAirFil
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -328,13 +320,13 @@ type ListVehicleFuelFillupsParams struct {
 type ListVehicleFuelFillupsRow struct {
 	ID          int64
 	OdometerKm  float64
-	FilledAt    time.Time
+	FilledAt    pgtype.Timestamptz
 	StationName sql.NullString
-	Notes       sql.NullString
+	Notes       pgtype.Text
 }
 
 func (q *Queries) ListVehicleFuelFillups(ctx context.Context, arg ListVehicleFuelFillupsParams) ([]ListVehicleFuelFillupsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listVehicleFuelFillups, arg.VehicleID, arg.UserID)
+	rows, err := q.db.Query(ctx, listVehicleFuelFillups, arg.VehicleID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -352,9 +344,6 @@ func (q *Queries) ListVehicleFuelFillups(ctx context.Context, arg ListVehicleFue
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -377,14 +366,14 @@ type ListVehicleMaintenanceRecordsRow struct {
 	Category     string
 	Title        string
 	Amount       float64
-	OccurredAt   time.Time
+	OccurredAt   pgtype.Timestamptz
 	OdometerKm   *float64
 	ProviderName sql.NullString
-	Notes        sql.NullString
+	Notes        pgtype.Text
 }
 
 func (q *Queries) ListVehicleMaintenanceRecords(ctx context.Context, arg ListVehicleMaintenanceRecordsParams) ([]ListVehicleMaintenanceRecordsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listVehicleMaintenanceRecords, arg.VehicleID, arg.UserID)
+	rows, err := q.db.Query(ctx, listVehicleMaintenanceRecords, arg.VehicleID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -406,9 +395,6 @@ func (q *Queries) ListVehicleMaintenanceRecords(ctx context.Context, arg ListVeh
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -425,7 +411,7 @@ type ListVehiclesRow struct {
 }
 
 func (q *Queries) ListVehicles(ctx context.Context) ([]ListVehiclesRow, error) {
-	rows, err := q.db.QueryContext(ctx, listVehicles)
+	rows, err := q.db.Query(ctx, listVehicles)
 	if err != nil {
 		return nil, err
 	}
@@ -437,9 +423,6 @@ func (q *Queries) ListVehicles(ctx context.Context) ([]ListVehiclesRow, error) {
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -475,7 +458,7 @@ type UpdateVehicleRow struct {
 }
 
 func (q *Queries) UpdateVehicle(ctx context.Context, arg UpdateVehicleParams) (UpdateVehicleRow, error) {
-	row := q.db.QueryRowContext(ctx, updateVehicle,
+	row := q.db.QueryRow(ctx, updateVehicle,
 		arg.Name,
 		arg.IsActive,
 		arg.FrontTirePressureSolo,
@@ -523,7 +506,7 @@ type UpdateVehicleTirePressureRow struct {
 }
 
 func (q *Queries) UpdateVehicleTirePressure(ctx context.Context, arg UpdateVehicleTirePressureParams) (UpdateVehicleTirePressureRow, error) {
-	row := q.db.QueryRowContext(ctx, updateVehicleTirePressure,
+	row := q.db.QueryRow(ctx, updateVehicleTirePressure,
 		arg.FrontTirePressureSolo,
 		arg.RearTirePressureSolo,
 		arg.FrontTirePressurePillion,

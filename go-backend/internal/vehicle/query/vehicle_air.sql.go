@@ -7,7 +7,9 @@ package query
 
 import (
 	"context"
-	"time"
+	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createVehicleAirFill = `-- name: CreateVehicleAirFill :one
@@ -19,11 +21,37 @@ type CreateVehicleAirFillParams struct {
 	UserID    int64
 }
 
-func (q *Queries) CreateVehicleAirFill(ctx context.Context, arg CreateVehicleAirFillParams) (time.Time, error) {
-	row := q.db.QueryRowContext(ctx, createVehicleAirFill, arg.VehicleID, arg.UserID)
-	var filled_at time.Time
+func (q *Queries) CreateVehicleAirFill(ctx context.Context, arg CreateVehicleAirFillParams) (pgtype.Timestamptz, error) {
+	row := q.db.QueryRow(ctx, createVehicleAirFill, arg.VehicleID, arg.UserID)
+	var filled_at pgtype.Timestamptz
 	err := row.Scan(&filled_at)
 	return filled_at, err
+}
+
+const listDueAirFills = `-- name: ListDueAirFills :many
+SELECT id FROM vehicle_air_fills
+WHERE reminder_notification_id IS NULL AND filled_at <= NOW() - INTERVAL '30 days'
+LIMIT 100
+`
+
+func (q *Queries) ListDueAirFills(ctx context.Context) ([]int64, error) {
+	rows, err := q.db.Query(ctx, listDueAirFills)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listLatestVehicleAirFills = `-- name: ListLatestVehicleAirFills :many
@@ -33,11 +61,11 @@ WHERE user_id = $1 ORDER BY vehicle_id, filled_at DESC, id DESC
 
 type ListLatestVehicleAirFillsRow struct {
 	VehicleID int64
-	FilledAt  time.Time
+	FilledAt  pgtype.Timestamptz
 }
 
 func (q *Queries) ListLatestVehicleAirFills(ctx context.Context, userID int64) ([]ListLatestVehicleAirFillsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listLatestVehicleAirFills, userID)
+	rows, err := q.db.Query(ctx, listLatestVehicleAirFills, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -50,13 +78,45 @@ func (q *Queries) ListLatestVehicleAirFills(ctx context.Context, userID int64) (
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockDueAirFill = `-- name: LockDueAirFill :one
+SELECT vehicle_air_fills.user_id,vehicle_air_fills.vehicle_id,vehicles.name
+FROM vehicle_air_fills JOIN vehicles ON vehicles.id=vehicle_air_fills.vehicle_id
+WHERE vehicle_air_fills.id=$1 AND vehicle_air_fills.reminder_notification_id IS NULL
+AND vehicle_air_fills.filled_at <= NOW()-INTERVAL '30 days'
+FOR UPDATE
+`
+
+type LockDueAirFillRow struct {
+	UserID    int64
+	VehicleID int64
+	Name      string
+}
+
+func (q *Queries) LockDueAirFill(ctx context.Context, id int64) (LockDueAirFillRow, error) {
+	row := q.db.QueryRow(ctx, lockDueAirFill, id)
+	var i LockDueAirFillRow
+	err := row.Scan(&i.UserID, &i.VehicleID, &i.Name)
+	return i, err
+}
+
+const markAirFillReminderSent = `-- name: MarkAirFillReminderSent :exec
+UPDATE vehicle_air_fills SET reminder_notification_id=$1 WHERE id=$2
+`
+
+type MarkAirFillReminderSentParams struct {
+	ReminderNotificationID sql.NullInt64
+	ID                     int64
+}
+
+func (q *Queries) MarkAirFillReminderSent(ctx context.Context, arg MarkAirFillReminderSentParams) error {
+	_, err := q.db.Exec(ctx, markAirFillReminderSent, arg.ReminderNotificationID, arg.ID)
+	return err
 }
 
 const vehicleExists = `-- name: VehicleExists :one
@@ -64,7 +124,7 @@ SELECT EXISTS(SELECT 1 FROM vehicles WHERE id = $1)
 `
 
 func (q *Queries) VehicleExists(ctx context.Context, id int64) (bool, error) {
-	row := q.db.QueryRowContext(ctx, vehicleExists, id)
+	row := q.db.QueryRow(ctx, vehicleExists, id)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err

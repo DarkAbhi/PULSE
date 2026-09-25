@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"math"
 	"net/http"
 	"strings"
@@ -30,10 +31,10 @@ type BudgetDTO struct {
 
 type BudgetsHandler struct {
 	sessions SessionLookup
-	DB       *sql.DB
+	DB       *pgxpool.Pool
 }
 
-func NewBudgetsHandler(db *sql.DB, sessions SessionLookup) *BudgetsHandler {
+func NewBudgetsHandler(db *pgxpool.Pool, sessions SessionLookup) *BudgetsHandler {
 	return &BudgetsHandler{DB: db, sessions: sessions}
 }
 func (h *BudgetsHandler) sessionUser(r *http.Request) (auth.SessionUser, error) { return h.sessions(r) }

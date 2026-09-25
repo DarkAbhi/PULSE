@@ -6,16 +6,16 @@ package query
 
 import (
 	"database/sql"
-	"encoding/json"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type CreditCard struct {
 	ID        int64
 	Name      string
 	Link      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 }
 
 type FinancialHorizonBudget struct {
@@ -23,8 +23,8 @@ type FinancialHorizonBudget struct {
 	UserID          int64
 	Name            string
 	AllocatedAmount float64
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
 }
 
 type FinancialHorizonCategory struct {
@@ -34,16 +34,16 @@ type FinancialHorizonCategory struct {
 	Icon      string
 	Color     string
 	IsDefault bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 }
 
 type FinancialHorizonConfig struct {
 	UserID     int64
 	BaseAmount float64
 	Currency   string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
 }
 
 type FinancialHorizonDeduction struct {
@@ -54,8 +54,8 @@ type FinancialHorizonDeduction struct {
 	Amount    float64
 	DueDay    sql.NullInt16
 	IsActive  bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 	BudgetID  sql.NullInt64
 }
 
@@ -66,14 +66,14 @@ type FinancialHorizonSubscription struct {
 	Amount       float64
 	BillingCycle string
 	BillingDay   sql.NullInt32
-	RenewalDate  sql.NullTime
+	RenewalDate  pgtype.Timestamptz
 	Status       string
 	CategoryID   sql.NullInt64
 	BudgetID     sql.NullInt64
 	DeductionID  sql.NullInt64
-	Notes        sql.NullString
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	Notes        pgtype.Text
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
 }
 
 type FinancialHorizonTransaction struct {
@@ -81,13 +81,13 @@ type FinancialHorizonTransaction struct {
 	UserID          int64
 	Name            string
 	Amount          float64
-	TransactionDate time.Time
+	TransactionDate pgtype.Timestamptz
 	CategoryID      sql.NullInt64
 	CategoryName    string
 	BudgetID        sql.NullInt64
-	Notes           sql.NullString
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	Notes           pgtype.Text
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
 	Type            string
 	SubscriptionID  sql.NullInt64
 }
@@ -98,41 +98,41 @@ type GymExerciseSet struct {
 	SetNumber          int16
 	Reps               int16
 	Weight             *float64
-	CreatedAt          time.Time
+	CreatedAt          pgtype.Timestamptz
 }
 
 type GymReminderDelivery struct {
 	ID             int64
 	UserID         int64
-	ReminderDate   time.Time
+	ReminderDate   pgtype.Date
 	NotificationID int64
-	CreatedAt      time.Time
+	CreatedAt      pgtype.Timestamptz
 }
 
 type GymVisit struct {
 	ID        int64
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 }
 
 type GymVisitExercise struct {
 	ID         int64
 	GymVisitID int64
 	Name       string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
 }
 
 type MealPlan struct {
 	ID         int64
 	UserID     int64
-	Date       time.Time
+	Date       pgtype.Date
 	Name       string
 	MealTimeID sql.NullInt64
-	StartTime  sql.NullTime
-	EndTime    sql.NullTime
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	StartTime  pgtype.Time
+	EndTime    pgtype.Time
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
 	IsConsumed bool
 }
 
@@ -140,28 +140,28 @@ type MealTime struct {
 	ID        int64
 	UserID    sql.NullInt64
 	Name      string
-	StartTime time.Time
-	EndTime   time.Time
+	StartTime pgtype.Time
+	EndTime   pgtype.Time
 	IsDefault bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 }
 
 type Meditation struct {
 	ID        int64
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 }
 
 type NextMonthPurchase struct {
 	ID          int64
 	UserID      int64
-	TargetMonth time.Time
+	TargetMonth pgtype.Date
 	Name        string
 	Price       float64
-	Url         sql.NullString
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	Url         pgtype.Text
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
 }
 
 type Notification struct {
@@ -169,61 +169,61 @@ type Notification struct {
 	UserID      int64
 	Source      string
 	Title       string
-	Body        sql.NullString
+	Body        pgtype.Text
 	TargetPath  sql.NullString
 	Priority    int16
-	Metadata    json.RawMessage
-	ReadAt      sql.NullTime
-	DismissedAt sql.NullTime
-	CreatedAt   time.Time
+	Metadata    []byte
+	ReadAt      pgtype.Timestamptz
+	DismissedAt pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
 }
 
 type Sport struct {
 	ID        int64
 	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
 }
 
 type Trip struct {
 	ID          int64
 	Name        string
-	StartDate   time.Time
-	EndDate     time.Time
+	StartDate   pgtype.Date
+	EndDate     pgtype.Date
 	Description string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
 }
 
 type User struct {
 	ID           int64
 	Username     string
 	PasswordHash string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
 }
 
 type UserProfile struct {
 	UserID      int64
 	DisplayName string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
 }
 
 type UserSession struct {
 	ID        int64
 	UserID    int64
 	TokenHash string
-	ExpiresAt time.Time
-	CreatedAt time.Time
+	ExpiresAt pgtype.Timestamptz
+	CreatedAt pgtype.Timestamptz
 }
 
 type Vehicle struct {
 	ID                       int64
 	Name                     string
 	IsActive                 bool
-	CreatedAt                time.Time
-	UpdatedAt                time.Time
+	CreatedAt                pgtype.Timestamptz
+	UpdatedAt                pgtype.Timestamptz
 	FrontTirePressureSolo    *float64
 	RearTirePressureSolo     *float64
 	FrontTirePressurePillion *float64
@@ -234,9 +234,9 @@ type VehicleAirFill struct {
 	ID                     int64
 	VehicleID              int64
 	UserID                 int64
-	FilledAt               time.Time
+	FilledAt               pgtype.Timestamptz
 	ReminderNotificationID sql.NullInt64
-	CreatedAt              time.Time
+	CreatedAt              pgtype.Timestamptz
 }
 
 type VehicleFuelFillup struct {
@@ -244,10 +244,10 @@ type VehicleFuelFillup struct {
 	VehicleID   int64
 	UserID      int64
 	OdometerKm  float64
-	FilledAt    time.Time
+	FilledAt    pgtype.Timestamptz
 	StationName sql.NullString
-	Notes       sql.NullString
-	CreatedAt   time.Time
+	Notes       pgtype.Text
+	CreatedAt   pgtype.Timestamptz
 }
 
 type VehicleFuelItem struct {
@@ -258,7 +258,7 @@ type VehicleFuelItem struct {
 	Quantity  float64
 	UnitPrice float64
 	TotalCost float64
-	CreatedAt time.Time
+	CreatedAt pgtype.Timestamptz
 }
 
 type VehicleMaintenanceAttachment struct {
@@ -269,7 +269,7 @@ type VehicleMaintenanceAttachment struct {
 	FileName            string
 	ContentType         string
 	SizeBytes           int64
-	CreatedAt           time.Time
+	CreatedAt           pgtype.Timestamptz
 }
 
 type VehicleMaintenanceRecord struct {
@@ -279,10 +279,10 @@ type VehicleMaintenanceRecord struct {
 	Category     string
 	Title        string
 	Amount       float64
-	OccurredAt   time.Time
+	OccurredAt   pgtype.Timestamptz
 	OdometerKm   *float64
 	ProviderName sql.NullString
-	Notes        sql.NullString
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	Notes        pgtype.Text
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
 }

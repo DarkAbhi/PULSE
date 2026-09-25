@@ -2,11 +2,13 @@ package vehicle
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/DarkAbhi/life-backend/internal/vehicle/query"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -17,30 +19,17 @@ type airFillNotifier interface {
 type ReminderService struct {
 	db            *pgxpool.Pool
 	notifications airFillNotifier
+	queries       *query.Queries
 }
 
 func NewReminderService(db *pgxpool.Pool, notifications airFillNotifier) *ReminderService {
-	return &ReminderService{db: db, notifications: notifications}
+	return &ReminderService{db: db, notifications: notifications, queries: query.New(db)}
 }
 
 func (s *ReminderService) CreateDue(ctx context.Context) error {
-	rows, err := s.db.Query(ctx, `SELECT id FROM vehicle_air_fills WHERE reminder_notification_id IS NULL AND filled_at <= NOW() - INTERVAL '30 days' LIMIT 100`)
+	ids, err := s.queries.ListDueAirFills(ctx)
 	if err != nil {
 		return fmt.Errorf("list due air fills: %w", err)
-	}
-	ids := make([]int64, 0)
-	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			rows.Close()
-			return err
-		}
-		ids = append(ids, id)
-	}
-	err = rows.Err()
-	rows.Close()
-	if err != nil {
-		return err
 	}
 	var failures []error
 	for _, id := range ids {
@@ -56,20 +45,19 @@ func (s *ReminderService) create(ctx context.Context, id int64) error {
 		return err
 	}
 	defer tx.Rollback(ctx)
-	var userID, vehicleID int64
-	var name string
-	err = tx.QueryRow(ctx, `SELECT vehicle_air_fills.user_id,vehicle_air_fills.vehicle_id,vehicles.name FROM vehicle_air_fills JOIN vehicles ON vehicles.id=vehicle_air_fills.vehicle_id WHERE vehicle_air_fills.id=$1 AND vehicle_air_fills.reminder_notification_id IS NULL AND vehicle_air_fills.filled_at <= NOW()-INTERVAL '30 days' FOR UPDATE`, id).Scan(&userID, &vehicleID, &name)
+	q := s.queries.WithTx(tx)
+	fill, err := q.LockDueAirFill(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
 	if err != nil {
 		return err
 	}
-	notificationID, err := s.notifications.CreateAirFillReminder(ctx, tx, userID, vehicleID, name)
+	notificationID, err := s.notifications.CreateAirFillReminder(ctx, tx, fill.UserID, fill.VehicleID, fill.Name)
 	if err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `UPDATE vehicle_air_fills SET reminder_notification_id=$1 WHERE id=$2`, notificationID, id); err != nil {
+	if err := q.MarkAirFillReminderSent(ctx, query.MarkAirFillReminderSentParams{ReminderNotificationID: sql.NullInt64{Int64: notificationID, Valid: true}, ID: id}); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)

@@ -15,7 +15,7 @@ SELECT COUNT(*) FROM financial_horizon_categories WHERE is_default = true
 `
 
 func (q *Queries) CountDefaultCategories(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countDefaultCategories)
+	row := q.db.QueryRow(ctx, countDefaultCategories)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -44,7 +44,7 @@ type CreateCategoryRow struct {
 }
 
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (CreateCategoryRow, error) {
-	row := q.db.QueryRowContext(ctx, createCategory,
+	row := q.db.QueryRow(ctx, createCategory,
 		arg.UserID,
 		arg.Name,
 		arg.Icon,
@@ -79,7 +79,7 @@ type ListCategoriesRow struct {
 }
 
 func (q *Queries) ListCategories(ctx context.Context, userID sql.NullInt64) ([]ListCategoriesRow, error) {
-	rows, err := q.db.QueryContext(ctx, listCategories, userID)
+	rows, err := q.db.Query(ctx, listCategories, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -99,9 +99,6 @@ func (q *Queries) ListCategories(ctx context.Context, userID sql.NullInt64) ([]L
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -120,6 +117,6 @@ type SeedDefaultCategoryParams struct {
 }
 
 func (q *Queries) SeedDefaultCategory(ctx context.Context, arg SeedDefaultCategoryParams) error {
-	_, err := q.db.ExecContext(ctx, seedDefaultCategory, arg.Name, arg.Icon, arg.Color)
+	_, err := q.db.Exec(ctx, seedDefaultCategory, arg.Name, arg.Icon, arg.Color)
 	return err
 }

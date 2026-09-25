@@ -8,7 +8,8 @@ package query
 import (
 	"context"
 	"database/sql"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createMaintenanceRecord = `-- name: CreateMaintenanceRecord :one
@@ -23,10 +24,10 @@ type CreateMaintenanceRecordParams struct {
 	Category     string
 	Title        string
 	Amount       float64
-	OccurredAt   time.Time
+	OccurredAt   pgtype.Timestamptz
 	OdometerKm   *float64
 	ProviderName sql.NullString
-	Notes        sql.NullString
+	Notes        pgtype.Text
 }
 
 type CreateMaintenanceRecordRow struct {
@@ -34,14 +35,14 @@ type CreateMaintenanceRecordRow struct {
 	Category     string
 	Title        string
 	Amount       float64
-	OccurredAt   time.Time
+	OccurredAt   pgtype.Timestamptz
 	OdometerKm   *float64
 	ProviderName sql.NullString
-	Notes        sql.NullString
+	Notes        pgtype.Text
 }
 
 func (q *Queries) CreateMaintenanceRecord(ctx context.Context, arg CreateMaintenanceRecordParams) (CreateMaintenanceRecordRow, error) {
-	row := q.db.QueryRowContext(ctx, createMaintenanceRecord,
+	row := q.db.QueryRow(ctx, createMaintenanceRecord,
 		arg.VehicleID,
 		arg.UserID,
 		arg.Category,
@@ -77,11 +78,11 @@ type DeleteMaintenanceRecordParams struct {
 }
 
 func (q *Queries) DeleteMaintenanceRecord(ctx context.Context, arg DeleteMaintenanceRecordParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, deleteMaintenanceRecord, arg.ID, arg.VehicleID, arg.UserID)
+	result, err := q.db.Exec(ctx, deleteMaintenanceRecord, arg.ID, arg.VehicleID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
-	return result.RowsAffected()
+	return result.RowsAffected(), nil
 }
 
 const updateMaintenanceRecord = `-- name: UpdateMaintenanceRecord :one
@@ -95,10 +96,10 @@ type UpdateMaintenanceRecordParams struct {
 	Category     string
 	Title        string
 	Amount       float64
-	OccurredAt   time.Time
+	OccurredAt   pgtype.Timestamptz
 	OdometerKm   *float64
 	ProviderName sql.NullString
-	Notes        sql.NullString
+	Notes        pgtype.Text
 	ID           int64
 	VehicleID    int64
 	UserID       int64
@@ -109,14 +110,14 @@ type UpdateMaintenanceRecordRow struct {
 	Category     string
 	Title        string
 	Amount       float64
-	OccurredAt   time.Time
+	OccurredAt   pgtype.Timestamptz
 	OdometerKm   *float64
 	ProviderName sql.NullString
-	Notes        sql.NullString
+	Notes        pgtype.Text
 }
 
 func (q *Queries) UpdateMaintenanceRecord(ctx context.Context, arg UpdateMaintenanceRecordParams) (UpdateMaintenanceRecordRow, error) {
-	row := q.db.QueryRowContext(ctx, updateMaintenanceRecord,
+	row := q.db.QueryRow(ctx, updateMaintenanceRecord,
 		arg.Category,
 		arg.Title,
 		arg.Amount,

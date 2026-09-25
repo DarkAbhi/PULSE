@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -22,6 +23,7 @@ import (
 
 type testEnv struct {
 	DB       *sql.DB
+	Pool     *pgxpool.Pool
 	Shutdown func()
 }
 
@@ -79,9 +81,14 @@ func startPostgres(t *testing.T) *testEnv {
 		t.Fatalf("migrate up: %v", err)
 	}
 
+	pool, err := pgxpool.New(ctx, dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
 	return &testEnv{
-		DB: db,
+		DB: db, Pool: pool,
 		Shutdown: func() {
+			pool.Close()
 			_ = db.Close()
 			_ = container.Terminate(ctx)
 		},
@@ -92,7 +99,7 @@ func TestHealthEndpoints(t *testing.T) {
 	env := startPostgres(t)
 	defer env.Shutdown()
 
-	api := &API{DB: env.DB}
+	api := &API{DB: env.Pool}
 	router := api.Router()
 
 	rec := httptest.NewRecorder()

@@ -113,7 +113,7 @@ func TestLoginAndSession(t *testing.T) {
 	{
 		req := httptest.NewRequest(http.MethodGet, "/auth/session", nil)
 		req.AddCookie(sessionCookie)
-		user, err := GetSessionUser(db, req)
+		user, err := testhelper.GetSessionUser(db, req)
 		if err != nil {
 			t.Fatalf("expected GetSessionUser to succeed with cookie, got %v", err)
 		}
@@ -129,7 +129,7 @@ func TestLoginAndSession(t *testing.T) {
 	{
 		req := httptest.NewRequest(http.MethodGet, "/auth/session", nil)
 		req.Header.Set("Authorization", "Bearer "+sessionCookie.Value)
-		user, err := GetSessionUser(db, req)
+		user, err := testhelper.GetSessionUser(db, req)
 		if err != nil {
 			t.Fatalf("expected GetSessionUser to succeed with Bearer header, got %v", err)
 		}
@@ -163,7 +163,7 @@ func TestGetSessionUserExpired(t *testing.T) {
 		Value: token,
 	})
 
-	_, err = GetSessionUser(db, req)
+	_, err = testhelper.GetSessionUser(db, req)
 	if err == nil {
 		t.Fatal("expected GetSessionUser to fail for expired token, but got nil error")
 	}

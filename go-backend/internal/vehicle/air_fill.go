@@ -47,7 +47,7 @@ func (h *Handler) CreateVehicleAirFill(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	webutil.WriteJSON(w, http.StatusCreated, vehicleAirFillDTO{VehicleID: vehicleID, FilledAt: filledAt.UTC()})
+	webutil.WriteJSON(w, http.StatusCreated, vehicleAirFillDTO{VehicleID: vehicleID, FilledAt: filledAt.Time.UTC()})
 }
 
 // ListLatestVehicleAirFills lists the latest air fills across vehicles.
@@ -70,7 +70,7 @@ func (h *Handler) ListLatestVehicleAirFills(w http.ResponseWriter, r *http.Reque
 
 	fills := make([]vehicleAirFillDTO, 0)
 	for _, row := range rows {
-		fill := vehicleAirFillDTO{VehicleID: row.VehicleID, FilledAt: row.FilledAt}
+		fill := vehicleAirFillDTO{VehicleID: row.VehicleID, FilledAt: row.FilledAt.Time}
 		fill.FilledAt = fill.FilledAt.UTC()
 		fills = append(fills, fill)
 	}

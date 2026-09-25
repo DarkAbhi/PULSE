@@ -19,7 +19,7 @@ type GetHorizonConfigRow struct {
 }
 
 func (q *Queries) GetHorizonConfig(ctx context.Context, userID int64) (GetHorizonConfigRow, error) {
-	row := q.db.QueryRowContext(ctx, getHorizonConfig, userID)
+	row := q.db.QueryRow(ctx, getHorizonConfig, userID)
 	var i GetHorizonConfigRow
 	err := row.Scan(&i.BaseAmount, &i.Currency)
 	return i, err
@@ -39,6 +39,6 @@ type UpsertHorizonConfigParams struct {
 }
 
 func (q *Queries) UpsertHorizonConfig(ctx context.Context, arg UpsertHorizonConfigParams) error {
-	_, err := q.db.ExecContext(ctx, upsertHorizonConfig, arg.UserID, arg.BaseAmount, arg.Currency)
+	_, err := q.db.Exec(ctx, upsertHorizonConfig, arg.UserID, arg.BaseAmount, arg.Currency)
 	return err
 }

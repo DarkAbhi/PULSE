@@ -37,7 +37,7 @@ type CreateDeductionRow struct {
 }
 
 func (q *Queries) CreateDeduction(ctx context.Context, arg CreateDeductionParams) (CreateDeductionRow, error) {
-	row := q.db.QueryRowContext(ctx, createDeduction,
+	row := q.db.QueryRow(ctx, createDeduction,
 		arg.UserID,
 		arg.Name,
 		arg.Category,
@@ -69,11 +69,11 @@ type DeleteDeductionParams struct {
 }
 
 func (q *Queries) DeleteDeduction(ctx context.Context, arg DeleteDeductionParams) (int64, error) {
-	result, err := q.db.ExecContext(ctx, deleteDeduction, arg.ID, arg.UserID)
+	result, err := q.db.Exec(ctx, deleteDeduction, arg.ID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
-	return result.RowsAffected()
+	return result.RowsAffected(), nil
 }
 
 const listDeductions = `-- name: ListDeductions :many
@@ -93,7 +93,7 @@ type ListDeductionsRow struct {
 }
 
 func (q *Queries) ListDeductions(ctx context.Context, userID int64) ([]ListDeductionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listDeductions, userID)
+	rows, err := q.db.Query(ctx, listDeductions, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -113,9 +113,6 @@ func (q *Queries) ListDeductions(ctx context.Context, userID int64) ([]ListDeduc
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -152,7 +149,7 @@ type UpdateDeductionRow struct {
 }
 
 func (q *Queries) UpdateDeduction(ctx context.Context, arg UpdateDeductionParams) (UpdateDeductionRow, error) {
-	row := q.db.QueryRowContext(ctx, updateDeduction,
+	row := q.db.QueryRow(ctx, updateDeduction,
 		arg.Name,
 		arg.Category,
 		arg.Amount,

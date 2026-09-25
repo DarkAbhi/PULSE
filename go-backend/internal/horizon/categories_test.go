@@ -34,10 +34,12 @@ func categoriesLoginUser(t *testing.T, db *sql.DB) *http.Cookie {
 }
 
 func TestCategoriesListAndCreate(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
+	pool := testPool(t, dsn)
+	defer pool.Close()
 
-	h := NewCategoriesHandler(db, testSessionLookup(db))
+	h := NewCategoriesHandler(pool, testSessionLookup(db))
 	cookie := categoriesLoginUser(t, db)
 
 	{

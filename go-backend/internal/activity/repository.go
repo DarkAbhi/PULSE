@@ -6,26 +6,31 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/DarkAbhi/life-backend/internal/activity/query"
 )
 
-type Repository struct{ db *pgxpool.Pool }
+type Repository struct{ queries *query.Queries }
 
-func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
+func NewRepository(db *pgxpool.Pool) *Repository {
+	return &Repository{queries: query.New(db)}
+}
 
 func (r *Repository) MeditatedToday(ctx context.Context, start, end time.Time) (bool, error) {
-	var exists bool
-	err := r.db.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM meditations WHERE created_at >= $1 AND created_at < $2)`, start, end).Scan(&exists)
-	return exists, err
+	return r.queries.MeditatedToday(ctx, query.MeditatedTodayParams{
+		CreatedAt:   pgtype.Timestamptz{Time: start, Valid: true},
+		CreatedAt_2: pgtype.Timestamptz{Time: end, Valid: true},
+	})
 }
 
 func (r *Repository) AddMeditation(ctx context.Context) error {
-	_, err := r.db.Exec(ctx, `INSERT INTO meditations DEFAULT VALUES`)
-	return err
+	return r.queries.AddMeditation(ctx)
 }
 
 func (r *Repository) AddSport(ctx context.Context, name string) error {
-	_, err := r.db.Exec(ctx, `INSERT INTO sports (name) VALUES ($1)`, name)
+	err := r.queries.AddSport(ctx, name)
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == "23514" {
 		return ErrInvalidSport

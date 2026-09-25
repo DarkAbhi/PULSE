@@ -7,8 +7,6 @@ services:
     container_name: life-api-dev
     command: >
       sh -lc '
-        apt-get update -y &&
-        apt-get install -y curl git &&
         /usr/local/go/bin/go version &&
         if [ ! -x /go/bin/air ]; then GOBIN=/go/bin /usr/local/go/bin/go install github.com/air-verse/air@v1.61.5; fi &&
         /go/bin/air -c .air.toml
@@ -34,8 +32,14 @@ services:
       AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
       S3_ENDPOINT: ${S3_ENDPOINT:-}
       S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-}
+      OTEL_EXPORTER_OTLP_ENDPOINT: jaeger:4317
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
     ports:
       - "8080:8080"
+    networks:
+      default:
+        aliases:
+          - backend-api
 
   web-dev:
     image: node:24-bookworm-slim

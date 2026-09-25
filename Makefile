@@ -1,4 +1,4 @@
-.PHONY: build up down logs restart deploy ps docker-migrate-up docker-rollback docker-steps docker-version backend-logs web-logs bot-logs dev dev-down dev-logs go-test go-test-integration go-cover
+.PHONY: build up down logs restart deploy ps docker-migrate-up docker-rollback docker-steps docker-version backend-logs web-logs bot-logs dev dev-down dev-logs go-test go-test-integration go-cover monitoring-logs
 
 # ----- PROD -----
 build:
@@ -52,10 +52,10 @@ docker-version:
 
 # ----- DEV -----
 dev:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --remove-orphans backend-dev web-dev bot-dev
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev up -d --remove-orphans backend-dev web-dev bot-dev prometheus grafana jaeger
 
 dev-down:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml down --remove-orphans
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile dev down --remove-orphans
 
 dev-logs:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f --tail=200 backend-dev web-dev bot-dev
@@ -78,3 +78,8 @@ dev-steps:
 dev-version:
 	@echo "📌 Showing dev migration version"
 	@docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm --build migrate --version
+
+# ----- Observability & Monitoring -----
+monitoring-logs:
+	@docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f --tail=100 prometheus grafana jaeger
+

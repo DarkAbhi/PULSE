@@ -3,12 +3,12 @@ groups:
     rules:
       - alert: ServiceDown
         expr: up{job="life-backend"} == 0
-        for: 1m
+        for: 3m
         labels:
           severity: critical
         annotations:
           summary: "Life backend instance is down"
-          description: "Instance {{ $labels.instance }} has been unreachable for more than 1 minute."
+          description: "Instance {{ $labels.instance }} has been unreachable for more than 3 minutes."
 
       - alert: HighHTTPErrorRate
         expr: sum(rate(life_http_requests_total{status=~"5.."}[5m])) / sum(rate(life_http_requests_total[5m])) * 100 > 5

@@ -1,6 +1,6 @@
 global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+  scrape_interval: 5s
+  evaluation_interval: 5s
 
 rule_files:
   - "alerts.yml"
@@ -9,7 +9,7 @@ scrape_configs:
   - job_name: "life-backend"
     metrics_path: "/metrics"
     static_configs:
-      - targets: ["localhost:8080"]
+      - targets:
+          - "backend-api:8080"
         labels:
           service: "life-backend"
-          env: "development"

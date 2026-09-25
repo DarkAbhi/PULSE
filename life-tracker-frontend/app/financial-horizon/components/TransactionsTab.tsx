@@ -93,7 +93,7 @@ export default function TransactionsTab({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 flex-wrap">
           {/* Transaction Type Filter Segment */}
-          <div className="inline-flex rounded-xl border border-border bg-secondary/30 p-1 text-xs">
+          <div className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-secondary/30 p-1 text-xs">
             <Button variant={txTypeFilter === "all" ? "primary" : "secondary"} size="sm"
               onClick={() => onTxTypeFilterChange("all")}
             >

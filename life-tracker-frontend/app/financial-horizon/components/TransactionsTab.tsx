@@ -63,9 +63,6 @@ export default function TransactionsTab({
             <Receipt className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-bold text-foreground">Transaction History</h2>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Log day-to-day transaction records with date & time, category, type (debit/credit), and optional budget allocations.
-          </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">

@@ -129,16 +129,16 @@ export default function FinancialHorizonCard({
   const {
     base_amount,
     currency,
-    total_deductions,
     remaining_amount,
-    committed_ratio,
   } = summary;
   const isHealthy = remaining_amount >= 0;
-  const committedPercent = Math.min(100, Math.max(0, committed_ratio));
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-secondary/30 p-6 shadow-sm">
-      <div className="flex items-start justify-between">
+    <Link
+      href="/financial-horizon"
+      className="relative block overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-secondary/30 p-6 shadow-sm"
+    >
+      <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-inner">
             <Compass className="h-6 w-6" />
@@ -152,6 +152,7 @@ export default function FinancialHorizonCard({
             </p>
           </div>
         </div>
+        <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground" />
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4 rounded-xl bg-background/60 p-4 backdrop-blur-sm">
@@ -179,37 +180,6 @@ export default function FinancialHorizonCard({
           </p>
         </div>
       </div>
-
-      <div className="mt-4">
-        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-          <span>Committed ({committedPercent.toFixed(1)}%)</span>
-          <span>
-            Fixed: {currency}
-            {total_deductions.toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-            })}
-          </span>
-        </div>
-        <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-          <div
-            className={`h-full transition-all duration-500 rounded-full ${
-              committedPercent > 80
-                ? "bg-rose-500"
-                : committedPercent > 50
-                  ? "bg-amber-500"
-                  : "bg-emerald-500"
-            }`}
-            style={{ width: `${committedPercent}%` }}
-          />
-        </div>
-      </div>
-
-      <Link
-        className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
-        href="/financial-horizon"
-      >
-        View full horizon <ArrowRight className="h-4 w-4" />
-      </Link>
-    </div>
+    </Link>
   );
 }

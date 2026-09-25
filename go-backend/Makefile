@@ -5,7 +5,10 @@ else
 	SILENT = @
 endif
 
-.PHONY: test test-integration cover sqlc-generate
+.PHONY: test test-integration cover sqlc-generate swagger
+
+swagger:
+	go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g cmd/api/main.go -o docs --parseInternal
 
 sqlc-generate:
 	go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 generate

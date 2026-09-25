@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	"github.com/DarkAbhi/life-backend/internal/activity"
 	"github.com/DarkAbhi/life-backend/internal/auth"
@@ -48,6 +49,7 @@ func (a *API) Router() http.Handler {
 	// Health (outside /api so Docker or Kubernetes health probes stay simple)
 	r.Get("/healthz", healthHandler.Healthz) // liveness
 	r.Get("/readyz", healthHandler.Readyz)   // readiness (DB ping)
+	r.Get("/swagger/*", httpSwagger.Handler())
 
 	// All application APIs under /api
 	r.Route("/api", func(api chi.Router) {

@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/DarkAbhi/life-backend/docs"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -32,6 +33,13 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/purchase"
 	"github.com/DarkAbhi/life-backend/internal/vehicle"
 )
+
+// @title Life Backend API
+// @version 1.0
+// @description REST API for the Life Backend application.
+// @host localhost:8080
+// @BasePath /
+// @schemes http https
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

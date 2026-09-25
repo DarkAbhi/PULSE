@@ -1,0 +1,48 @@
+basePath: /
+host: localhost:8080
+info:
+  contact: {}
+  description: REST API for the Life Backend application.
+  title: Life Backend API
+  version: "1.0"
+paths:
+  /healthz:
+    get:
+      description: Returns OK when the API process is running.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Check liveness
+      tags:
+      - health
+  /readyz:
+    get:
+      description: Returns OK when the API can reach its database.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "503":
+          description: Service Unavailable
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Check readiness
+      tags:
+      - health
+schemes:
+- http
+- https
+swagger: "2.0"

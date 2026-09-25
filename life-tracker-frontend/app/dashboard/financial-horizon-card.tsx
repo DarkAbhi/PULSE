@@ -148,7 +148,7 @@ export default function FinancialHorizonCard({
               Financial Horizon
             </h3>
             <p className="text-xs text-muted-foreground">
-              Uncommitted Monthly Cash Pool
+              Your monthly room to move
             </p>
           </div>
         </div>

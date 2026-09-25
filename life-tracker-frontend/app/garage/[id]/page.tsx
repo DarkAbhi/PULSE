@@ -47,7 +47,26 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
   });
   
   if (response.status === 404) {
-    redirect("/garage");
+    return (
+      <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="rounded-2xl border border-border bg-card p-8 text-center">
+            <h2 className="text-xl font-semibold text-foreground">
+              Vehicle not found
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This vehicle may have been deleted or does not exist.
+            </p>
+            <Link
+              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition hover:opacity-80"
+              href="/garage"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to Garage
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (!response.ok) {

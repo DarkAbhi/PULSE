@@ -8,53 +8,30 @@ import {
   Wallet,
   Edit2,
   Trash2,
-  Receipt,
-  ArrowRight,
   ArrowUpRight,
-  Clock,
 } from "lucide-react";
 import {
   HorizonSummary,
   BudgetItem,
-  TransactionItem,
-  CategoryItem,
 } from "../../dashboard/financial-horizon-card";
-import { HorizonTab } from "./TabNavigation";
 
 interface OverviewTabProps {
   summary: HorizonSummary;
-  transactions: TransactionItem[];
-  categories: CategoryItem[];
   uncommittedPool: number;
   onOpenAddBudget: () => void;
   onOpenEditBudget: (b: BudgetItem) => void;
   onConfirmDeleteBudget: (b: BudgetItem) => void;
-  onNavigateTab: (tab: HorizonTab) => void;
   isPending?: boolean;
 }
 
 export default function OverviewTab({
   summary,
-  transactions,
-  categories,
   uncommittedPool,
   onOpenAddBudget,
   onOpenEditBudget,
   onConfirmDeleteBudget,
-  onNavigateTab,
   isPending = false,
 }: OverviewTabProps) {
-  const recentTransactions = [...transactions]
-    .sort((a, b) => {
-      const dateA = a.transaction_date
-        ? new Date(a.transaction_date).getTime()
-        : 0;
-      const dateB = b.transaction_date
-        ? new Date(b.transaction_date).getTime()
-        : 0;
-      return dateB - dateA;
-    })
-    .slice(0, 5);
 
   return (
     <div className="space-y-10">
@@ -234,111 +211,6 @@ export default function OverviewTab({
                       </div>
                     </div>
                   )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
-      {/* Recent Activity Section */}
-      <section className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-5">
-        <div className="flex items-center justify-between border-b border-border pb-4">
-          <div className="flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-bold text-foreground">
-              Recent Activity
-            </h2>
-          </div>
-          <Button variant="tertiary" size="sm"
-            onClick={() => onNavigateTab("transactions")}
-          >
-            <span>View All ({transactions.length})</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-
-        {recentTransactions.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            No recent transactions logged.
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {recentTransactions.map((tx) => {
-              const matchingCat = categories.find(
-                (c) => c.id === tx.category_id || c.name === tx.category_name,
-              );
-              const catColor = matchingCat?.color || "#64748b";
-              const isCredit = tx.type === "credit";
-              const formattedDate = tx.transaction_date
-                ? new Date(tx.transaction_date).toLocaleString("en-IN", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })
-                : "N/A";
-
-              return (
-                <div
-                  key={tx.id}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background p-3.5 shadow-xs transition hover:shadow-md"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white font-bold shadow-xs"
-                      style={{ backgroundColor: catColor }}
-                    >
-                      <Receipt className="h-4.5 w-4.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-bold text-foreground text-sm truncate">
-                          {tx.name}
-                        </h4>
-                        <span
-                          className="inline-flex items-center rounded-full px-2 py-0.2 text-[10px] font-semibold border"
-                          style={{
-                            backgroundColor: `${catColor}15`,
-                            color: catColor,
-                            borderColor: `${catColor}30`,
-                          }}
-                        >
-                          {tx.category_name}
-                        </span>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.2 text-[10px] font-semibold border ${
-                            isCredit
-                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                              : "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
-                          }`}
-                        >
-                          {isCredit ? "Credit" : "Debit"}
-                        </span>
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                        <span
-                          className="flex items-center gap-1"
-                          suppressHydrationWarning
-                        >
-                          <Clock className="h-3 w-3" /> {formattedDate}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <span
-                    className={`font-extrabold text-base shrink-0 ${
-                      isCredit
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-foreground"
-                    }`}
-                    suppressHydrationWarning
-                  >
-                    {isCredit ? "+" : "-"}
-                    {summary.currency}
-                    {tx.amount.toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </span>
                 </div>
               );
             })}

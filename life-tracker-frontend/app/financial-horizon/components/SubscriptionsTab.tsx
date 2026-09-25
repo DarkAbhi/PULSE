@@ -166,7 +166,7 @@ export default function SubscriptionsTab({
       {/* 1. Header Metrics Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Metric 1: Monthly Burn Rate */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition hover:shadow-md">
+        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Monthly Subscription Burn
@@ -191,7 +191,7 @@ export default function SubscriptionsTab({
         </div>
 
         {/* Metric 2: Annual Outlay */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition hover:shadow-md">
+        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Annual Outlay
@@ -216,7 +216,7 @@ export default function SubscriptionsTab({
         </div>
 
         {/* Metric 3: Active Subscriptions */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition hover:shadow-md">
+        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Active Subscriptions
@@ -239,7 +239,7 @@ export default function SubscriptionsTab({
         </div>
 
         {/* Metric 4: Next Renewal */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs transition hover:shadow-md">
+        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Next Upcoming Renewal

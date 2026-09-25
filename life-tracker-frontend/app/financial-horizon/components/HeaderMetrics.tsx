@@ -37,7 +37,7 @@ export default function HeaderMetrics({
   return (
     <section className="grid gap-5 sm:grid-cols-3">
       {/* Card 1: Starting Pool (Base Income) */}
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition duration-200 hover:shadow-md">
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -103,7 +103,7 @@ export default function HeaderMetrics({
       </div>
 
       {/* Card 2: Total Committed */}
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm transition duration-200 hover:shadow-md">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
@@ -135,7 +135,7 @@ export default function HeaderMetrics({
       </div>
 
       {/* Card 3: Net Available Pool (Primary visual focus) */}
-      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-card via-card to-emerald-500/10 p-5 shadow-md transition duration-200 hover:shadow-lg relative overflow-hidden">
+      <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-card via-card to-emerald-500/10 p-5 shadow-md relative overflow-hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">

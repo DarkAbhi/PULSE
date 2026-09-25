@@ -893,13 +893,10 @@ export default function FinancialHorizonClient({
         {activeTab === "overview" && (
           <OverviewTab
             summary={summary}
-            transactions={transactions}
-            categories={categories}
             uncommittedPool={uncommittedPool}
             onOpenAddBudget={handleOpenAddBudgetForm}
             onOpenEditBudget={handleOpenEditBudgetForm}
             onConfirmDeleteBudget={setBudgetToDelete}
-            onNavigateTab={setActiveTab}
             isPending={isPending}
           />
         )}

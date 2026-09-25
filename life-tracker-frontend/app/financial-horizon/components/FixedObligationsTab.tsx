@@ -320,7 +320,7 @@ export default function FixedObligationsTab({
             return (
               <div
                 key={`deduction-${item.id}`}
-                className={`group relative rounded-2xl border bg-card p-5 shadow-xs transition duration-200 hover:shadow-md ${
+                className={`group relative rounded-2xl border bg-card p-5 shadow-xs ${
                   item.is_active ? "border-border" : "border-border/50 opacity-60 bg-secondary/20"
                 }`}
               >
@@ -400,7 +400,7 @@ export default function FixedObligationsTab({
             return (
               <div
                 key={`subscription-${sub.id}`}
-                className="group relative flex flex-col justify-between rounded-2xl border border-purple-500/30 bg-gradient-to-br from-card via-card to-purple-500/5 p-5 shadow-xs transition duration-200 hover:shadow-md hover:border-purple-500/60"
+                className="group relative flex flex-col justify-between rounded-2xl border border-purple-500/30 bg-gradient-to-br from-card via-card to-purple-500/5 p-5 shadow-xs"
               >
                 <div>
                   <div className="flex items-start justify-between">

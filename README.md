@@ -94,93 +94,73 @@ change the database. Apply migrations separately before running the backend.
 
 ```
 life-backend/
-├── docker-compose.dev.yml
-├── docker-compose.yml
-├── Dockerfile (per-service in subfolders)
+├── .dockerignore
+├── .env.example
+├── .gitignore
 ├── LICENSE
 ├── Makefile
 ├── README.md
+├── docker-compose.dev.yml
+├── docker-compose.yml
 ├── go-backend/
+│   ├── .air.toml
 │   ├── Dockerfile
-│   ├── go.mod
-│   ├── go.sum
 │   ├── Makefile
 │   ├── cmd/
-│   │   └── main.go
+│   │   └── api/
+│   │       └── main.go
+│   ├── coverage.out
+│   ├── go.mod
+│   ├── go.sum
 │   ├── internal/
+│   │   ├── activity/
+│   │   ├── auth/
 │   │   ├── db/
-│   │   │   ├── migrations.go
-│   │   │   └── postgres.go
-│   │   └── handlers/
-│   │       ├── api.go
-│   │       ├── auth.go
-│   │       ├── auth_test.go
-│   │       ├── dates.go
-│   │       ├── fuel.go
-│   │       ├── gym_exercises.go
-│   │       ├── gym_reminders.go
-│   │       ├── gym_visits.go
-│   │       ├── handlers.go
-│   │       ├── handlers_test.go
-│   │       ├── health.go
-│   │       ├── helpers.go
-│   │       ├── next_month_purchases.go
-│   │       ├── notifications.go
-│   │       ├── profile.go
-│   │       ├── vehicle_air_fills.go
-│   │       └── vehicle_history.go
+│   │   ├── gym/
+│   │   ├── health/
+│   │   ├── horizon/
+│   │   ├── mealplan/
+│   │   ├── meditation/
+│   │   ├── notification/
+│   │   ├── profile/
+│   │   ├── purchase/
+│   │   ├── sport/
+│   │   ├── testhelper/
+│   │   ├── timeutil/
+│   │   ├── vehicle/
+│   │   └── webutil/
 │   ├── migrations/
-│   │   ├── 00001_init.down.sql
-│   │   ├── 00001_init.up.sql
-│   │   ├── 00002_auth.down.sql
-│   │   ├── 00002_auth.up.sql
-│   │   ├── 00003_user_profiles.down.sql
-│   │   ├── 00003_user_profiles.up.sql
-│   │   ├── 00004_gym_exercises.down.sql
-│   │   ├── 00004_gym_exercises.up.sql
-│   │   ├── 00005_notifications.down.sql
-│   │   ├── 00005_notifications.up.sql
-│   │   ├── 00006_vehicle_air_fills.down.sql
-│   │   ├── 00006_vehicle_air_fills.up.sql
-│   │   ├── 00007_vehicle_fuel.down.sql
-│   │   ├── 00007_vehicle_fuel.up.sql
-│   │   ├── 00008_next_month_purchases.down.sql
-│   │   ├── 00008_next_month_purchases.up.sql
-│   │   ├── 00009_gym_reminders.down.sql
-│   │   └── 00009_gym_reminders.up.sql
-│   └── tmp/
-│       ├── build-errors
-│       └── main
+│   ├── sqlc.yaml
 ├── life-tracker-frontend/
+│   ├── .DS_Store
+│   ├── .gitignore
+│   ├── .next/
 │   ├── Dockerfile
+│   ├── README.md
+│   ├── app/
+│   │   ├── components/
+│   │   ├── dashboard/
+│   │   ├── dialog-preview/
+│   │   ├── favicon.ico
+│   │   ├── financial-horizon/
+│   │   ├── garage/
+│   │   ├── globals.css
+│   │   ├── gym-visits/
+│   │   ├── layout.tsx
+│   │   ├── meal-plan/
+│   │   ├── notifications/
+│   │   ├── page.tsx
+│   │   └── profile/
 │   ├── next-env.d.ts
 │   ├── next.config.ts
+│   ├── node_modules/
+│   ├── package-lock.json
 │   ├── package.json
 │   ├── postcss.config.mjs
-│   ├── README.md
+│   ├── public/
+│   ├── services/
 │   ├── tsconfig.json
-│   ├── app/
-│   │   ├── globals.css
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   ├── components/
-│   │   │   ├── fuel-form.tsx
-│   │   │   └── notification-list.tsx
-│   │   ├── dashboard/
-│   │   │   └── page.tsx
-│   │   ├── garage/
-│   │   │   ├── page.tsx
-│   │   │   └── [id]/
-│   │   │       └── page.tsx
-│   │   ├── gym-visits/
-│   │   │   ├── page.tsx
-│   │   │   └── [id]/
-│   │   │       └── page.tsx
-│   │   ├── next-month/
-│   │   │   └── page.tsx
-│   │   └── notifications/
-│   │       └── page.tsx
-│   └── public/
+│   └── tsconfig.tsbuildinfo
 ├── telegram-bot/
 │   ├── Dockerfile
 │   ├── api_constants.py

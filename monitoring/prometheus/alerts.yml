@@ -1,0 +1,65 @@
+groups:
+  - name: life-backend-alerts
+    rules:
+      - alert: ServiceDown
+        expr: up{job="life-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Life backend instance is down"
+          description: "Instance {{ $labels.instance }} has been unreachable for more than 1 minute."
+
+      - alert: HighHTTPErrorRate
+        expr: sum(rate(life_http_requests_total{status=~"5.."}[5m])) / sum(rate(life_http_requests_total[5m])) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP 5xx error rate"
+          description: "5xx HTTP error rate is above 5% over 5 minutes (currently {{ $value | printf \"%.2f\" }}%)."
+
+      - alert: HighHTTPLatencyP99
+        expr: histogram_quantile(0.99, sum(rate(life_http_request_duration_seconds_bucket[5m])) by (le)) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High P99 HTTP latency"
+          description: "P99 latency has exceeded 1.0 second for 5 minutes (currently {{ $value | printf \"%.2f\" }}s)."
+
+      - alert: DBPoolNearExhaustion
+        expr: life_db_pool_acquired_connections / life_db_pool_max_connections > 0.8
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL connection pool near exhaustion"
+          description: "More than 80% of database pool connections are currently in use (currently {{ $value | printf \"%.2f\" }}%)."
+
+      - alert: DBPoolConnectionAcquireContention
+        expr: rate(life_db_pool_empty_acquire_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL pool acquire contention"
+          description: "Queries are waiting for available database pool connections over the last 5 minutes."
+
+      - alert: HighGoroutineCount
+        expr: go_goroutines{job="life-backend"} > 500
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of goroutines"
+          description: "Instance {{ $labels.instance }} has more than 500 goroutines for 10 minutes, potential goroutine leak."
+
+      - alert: HighMemoryUsage
+        expr: go_memstats_alloc_bytes{job="life-backend"} > 500 * 1024 * 1024
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Go heap memory usage"
+          description: "Instance {{ $labels.instance }} allocated heap exceeds 500MB."

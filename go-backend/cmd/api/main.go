@@ -18,7 +18,6 @@ import (
 	"time"
 
 	_ "github.com/DarkAbhi/life-backend/docs"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
@@ -29,6 +28,7 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/horizon"
 	"github.com/DarkAbhi/life-backend/internal/mealplan"
 	"github.com/DarkAbhi/life-backend/internal/notification"
+	"github.com/DarkAbhi/life-backend/internal/observability"
 	"github.com/DarkAbhi/life-backend/internal/profile"
 	"github.com/DarkAbhi/life-backend/internal/purchase"
 	"github.com/DarkAbhi/life-backend/internal/vehicle"
@@ -73,11 +73,22 @@ func run(ctx context.Context) error {
 		return db.ShowMigrationVersion(dsn)
 	}
 
+	obs, err := observability.Setup(ctx)
+	if err != nil {
+		return fmt.Errorf("setup observability: %w", err)
+	}
+	defer func() {
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = obs.Shutdown(shutdownCtx)
+	}()
+
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		return fmt.Errorf("open postgres pool: %w", err)
 	}
 	defer pool.Close()
+	observability.RegisterDBStatsCollector(pool)
 	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	err = pool.Ping(pingCtx)
 	cancel()
@@ -140,8 +151,9 @@ func run(ctx context.Context) error {
 		Vehicle:        vehicleHandler,
 		Horizon:        horizon.NewHandler(pool, horizonService, sessionLookup),
 		Profile:        profile.NewHandler(profileService, sessionID),
+		ObsConfig:      obs.Config,
 	}
-	handler := middleware.Recoverer(middleware.Logger(api.Router()))
+	handler := api.Router()
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

@@ -1,6 +1,7 @@
 package webutil
 
 import (
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -27,6 +28,12 @@ func ServerError(w http.ResponseWriter, err error) {
 	slog.Error("request failed", "error", err)
 	WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 }
+
+func ServerErrorContext(ctx context.Context, w http.ResponseWriter, err error) {
+	slog.ErrorContext(ctx, "request failed", "error", err)
+	WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+}
+
 
 func ParseID(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	idStr := chi.URLParam(r, "id")

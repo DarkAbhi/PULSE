@@ -1,0 +1,175 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "HTTP Golden Signals",
+      "type": "row"
+    },
+    {
+      "title": "Request Rate (RPS)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 1 },
+      "targets": [
+        {
+          "expr": "sum(rate(life_http_requests_total[1m])) by (status)",
+          "legendFormat": "Status {{status}}"
+        }
+      ]
+    },
+    {
+      "title": "HTTP Error Rate (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 1 },
+      "targets": [
+        {
+          "expr": "sum(rate(life_http_requests_total{status=~\"5..\"}[5m])) / sum(rate(life_http_requests_total[5m])) * 100",
+          "legendFormat": "5xx Error %"
+        },
+        {
+          "expr": "sum(rate(life_http_requests_total{status=~\"4..\"}[5m])) / sum(rate(life_http_requests_total[5m])) * 100",
+          "legendFormat": "4xx Client Error %"
+        }
+      ]
+    },
+    {
+      "title": "Request Duration Quantiles",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 1 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(life_http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P50 (Median)"
+        },
+        {
+          "expr": "histogram_quantile(0.90, sum(rate(life_http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P90"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(life_http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P99"
+        }
+      ]
+    },
+    {
+      "title": "In-Flight Requests",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 1 },
+      "targets": [
+        {
+          "expr": "sum(life_http_requests_in_flight) by (method)",
+          "legendFormat": "{{method}}"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "id": 101,
+      "title": "PostgreSQL Connection Pool",
+      "type": "row"
+    },
+    {
+      "title": "Connections (Acquired vs Idle vs Max)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "targets": [
+        {
+          "expr": "life_db_pool_acquired_connections",
+          "legendFormat": "Acquired (In Use)"
+        },
+        {
+          "expr": "life_db_pool_idle_connections",
+          "legendFormat": "Idle"
+        },
+        {
+          "expr": "life_db_pool_total_connections",
+          "legendFormat": "Total Established"
+        },
+        {
+          "expr": "life_db_pool_max_connections",
+          "legendFormat": "Max Configured"
+        }
+      ]
+    },
+    {
+      "title": "Connection Wait & Empty Acquires",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "targets": [
+        {
+          "expr": "rate(life_db_pool_empty_acquire_total[1m])",
+          "legendFormat": "Empty Acquires / sec"
+        },
+        {
+          "expr": "rate(life_db_pool_acquire_duration_seconds_total[1m])",
+          "legendFormat": "Acquire Wait Duration (s/s)"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "id": 102,
+      "title": "Go Runtime",
+      "type": "row"
+    },
+    {
+      "title": "Goroutines",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 19 },
+      "targets": [
+        {
+          "expr": "go_goroutines",
+          "legendFormat": "Goroutines"
+        }
+      ]
+    },
+    {
+      "title": "Heap Memory Allocation",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 19 },
+      "targets": [
+        {
+          "expr": "go_memstats_alloc_bytes",
+          "legendFormat": "Allocated Bytes"
+        },
+        {
+          "expr": "go_memstats_sys_bytes",
+          "legendFormat": "System Reserved Bytes"
+        }
+      ]
+    },
+    {
+      "title": "GC Pause Duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 19 },
+      "targets": [
+        {
+          "expr": "rate(go_gc_duration_seconds_sum[1m]) / rate(go_gc_duration_seconds_count[1m])",
+          "legendFormat": "Avg GC Pause"
+        }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["life-backend", "observability", "golden-signals"],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "title": "Life Backend - Observability & Golden Signals",
+  "uid": "life-backend-overview"
+}

@@ -17,6 +17,7 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/horizon"
 	"github.com/DarkAbhi/life-backend/internal/mealplan"
 	"github.com/DarkAbhi/life-backend/internal/notification"
+	"github.com/DarkAbhi/life-backend/internal/observability"
 	"github.com/DarkAbhi/life-backend/internal/profile"
 	"github.com/DarkAbhi/life-backend/internal/purchase"
 	"github.com/DarkAbhi/life-backend/internal/vehicle"
@@ -34,6 +35,7 @@ type API struct {
 	Horizon        *horizon.Handler
 	Auth           *auth.Handler
 	Profile        *profile.Handler
+	ObsConfig      observability.Config
 }
 
 func (a *API) Router() http.Handler {
@@ -41,6 +43,16 @@ func (a *API) Router() http.Handler {
 		panic("api DB is nil")
 	}
 	r := chi.NewRouter()
+
+	serviceName := a.ObsConfig.ServiceName
+	if serviceName == "" {
+		serviceName = "life-backend"
+	}
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(observability.HTTPMiddleware(serviceName))
+	r.Use(middleware.Recoverer)
 	r.Use(cors(a.AllowedOrigins))
 	r.Use(middleware.Timeout(15 * time.Second))
 
@@ -49,6 +61,11 @@ func (a *API) Router() http.Handler {
 	// Health (outside /api so Docker or Kubernetes health probes stay simple)
 	r.Get("/healthz", healthHandler.Healthz) // liveness
 	r.Get("/readyz", healthHandler.Readyz)   // readiness (DB ping)
+
+	// Prometheus Metrics & pprof Profiling
+	r.Handle("/metrics", observability.MetricsHandler())
+	observability.RegisterPprofRoutes(r, a.ObsConfig)
+
 	r.Get("/swagger/*", httpSwagger.Handler())
 
 	// All application APIs under /api

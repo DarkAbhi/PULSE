@@ -195,7 +195,7 @@ export default function TransactionsTab({
             return (
               <div
                 key={tx.id}
-                className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs transition hover:shadow-md"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs"
               >
                 <div className="flex items-start gap-3.5 min-w-0">
                   <div

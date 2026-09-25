@@ -357,12 +357,12 @@ export default function SubscriptionsTab({
             return (
               <div
                 key={sub.id}
-                className={`group relative flex flex-col justify-between rounded-2xl border bg-card p-5 shadow-xs transition duration-200 hover:shadow-md ${
+                className={`relative flex flex-col justify-between rounded-2xl border bg-card p-5 shadow-xs ${
                   sub.status === "cancelled"
                     ? "border-border/50 opacity-60"
                     : sub.status === "paused"
                     ? "border-amber-500/30 bg-amber-500/5"
-                    : "border-border/80 hover:border-primary/50"
+                    : "border-border/80"
                 }`}
               >
                 <div>
@@ -370,7 +370,7 @@ export default function SubscriptionsTab({
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-foreground text-base tracking-tight group-hover:text-primary transition">
+                        <h4 className="font-bold text-foreground text-base tracking-tight">
                           {sub.name}
                         </h4>
                       </div>

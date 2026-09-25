@@ -1,0 +1,37 @@
+url: http://localhost:3000
+---
+- launchApp:
+    clearState: true
+
+# 1. Login
+- assertVisible: Welcome back
+- tapOn: "Enter your password"
+- inputText: password
+- tapOn: Continue
+
+# 2. Dashboard -> Navigate to Garage
+- assertVisible: Your spaces
+- tapOn: Garage
+
+# 3. Garage page verification
+- assertVisible: Garage
+- assertVisible: A simple home for every vehicle in your life.
+- assertVisible: Add vehicle
+
+# 4. Open Add Vehicle modal
+- tapOn: Add vehicle
+- assertVisible: Add a vehicle
+- assertVisible: Give it a name you'll recognize right away.
+
+# 5. Fill vehicle details
+- tapOn: "e.g. Honda City"
+- inputText: "Honda Civic"
+
+# 6. Submit Add vehicle form
+- tapOn:
+    text: "Add vehicle"
+    index: 1
+
+# 7. Assert dialog closed and newly added vehicle appears in the list
+- assertNotVisible: "Add a vehicle"
+- assertVisible: "Honda Civic"

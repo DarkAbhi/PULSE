@@ -38,6 +38,23 @@ async function getAuthHeader() {
   };
 }
 
+export async function deleteVehicle(vehicleId: string) {
+  try {
+    const headers = await getAuthHeader();
+    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}`, {
+      method: "DELETE",
+      headers,
+    });
+    if (!response.ok) {
+      return { ok: false, error: "We couldn't delete this vehicle. Please try again." };
+    }
+    revalidatePath("/garage");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: "We couldn't reach the server. Please try again." };
+  }
+}
+
 export async function deleteFuelFill(vehicleId: string, recordId: number) {
   try {
     const headers = await getAuthHeader();

@@ -34,6 +34,29 @@ export async function addVehicleAction(name: string) {
   }
 }
 
+export async function deleteVehicleAction(vehicleID: number | string) {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore.toString();
+
+  try {
+    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleID}`, {
+      method: "DELETE",
+      headers: {
+        Cookie: cookieHeader,
+      },
+    });
+
+    if (!response.ok) {
+      return { ok: false, error: "We couldn't delete this vehicle. Please try again." };
+    }
+
+    revalidatePath("/garage");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "We couldn't reach the server. Please try again." };
+  }
+}
+
 export async function markAirFillAction(vehicleID: number) {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();

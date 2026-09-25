@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AirFill, FuelFill, MaintenanceRecord, VehicleHistoryData } from "./types";
 import DeleteButton from "./delete-button";
+import DeleteVehicleButton from "./delete-vehicle-button";
 import EditFuelModal from "./edit-fuel-modal";
 import MaintenanceRecordModal from "./maintenance-record-modal";
 import MaintenanceRecordActions from "./maintenance-record-actions";
@@ -75,13 +76,19 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
       <div className="mx-auto max-w-6xl">
-        <Link className="flex items-center gap-1 text-sm font-semibold text-primary hover:opacity-80" href="/garage">
-          <ArrowLeft className="h-4 w-4" /> Garage
-        </Link>
-        <p className="mt-6 text-sm font-semibold tracking-[0.18em] text-primary">
+        <div className="flex items-start justify-between gap-4">
+          <Link
+            className="flex items-center gap-1 text-sm font-semibold text-primary transition hover:opacity-80 w-fit"
+            href="/garage"
+          >
+            <ArrowLeft className="h-4 w-4" /> Garage
+          </Link>
+          <DeleteVehicleButton vehicleId={id} vehicleName={data.vehicle_name} />
+        </div>
+        <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-primary uppercase">
           VEHICLE HISTORY
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-foreground">
+        <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           {data.vehicle_name}
         </h1>
         <div className="mt-8 grid gap-8 lg:grid-cols-2">

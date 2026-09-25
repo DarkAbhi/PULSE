@@ -45,7 +45,7 @@ export default function GymVisitsList({ visits }: GymVisitsListProps) {
           <div className="space-y-3">
             {dateVisits.map((visit, index) => (
               <Link
-                className="flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                className="flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-sm"
                 href={`/gym-visits/${visit.id}`}
                 key={visit.id}
               >

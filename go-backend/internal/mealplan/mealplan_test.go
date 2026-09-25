@@ -5,16 +5,32 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
 )
+
+type duplicateTimeStore struct{ store }
+
+func (duplicateTimeStore) CreateTime(context.Context, CreateTimeParams) (CreateTimeRow, error) {
+	return CreateTimeRow{}, fmt.Errorf("insert meal time: %w", &pgconn.PgError{Code: "23505", ConstraintName: "meal_times_user_name_idx"})
+}
+
+func TestCreateTimeRecognizesWrappedUniqueViolation(t *testing.T) {
+	_, err := NewService(duplicateTimeStore{}).CreateTime(context.Background(), 1, CreateTimeInput{Name: "Lunch", StartTime: "12:00", EndTime: "13:00"})
+	if !errors.Is(err, ErrDuplicateTime) {
+		t.Fatalf("expected duplicate time, got %v", err)
+	}
+}
 
 func TestRepository(t *testing.T) {
 	_, dsn, cleanup := testhelper.StartPostgresWithDSN(t)

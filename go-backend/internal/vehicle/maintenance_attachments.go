@@ -97,7 +97,12 @@ func (h *Handler) CreateMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 		webutil.BadRequest(w, "invalid maintenance record id")
 		return
 	}
-	if !h.ownsMaintenanceRecord(r.Context(), recordID, vehicleID, user.ID) {
+	owned, err := h.ownsMaintenanceRecord(r.Context(), recordID, vehicleID, user.ID)
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	if !owned {
 		http.NotFound(w, r)
 		return
 	}
@@ -148,8 +153,13 @@ func (h *Handler) CreateMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 	}
 	row, err := query.New(h.DB).CreateMaintenanceAttachment(r.Context(), query.CreateMaintenanceAttachmentParams{MaintenanceRecordID: recordID, UserID: user.ID, StorageKey: key, FileName: fileName, ContentType: contentType, SizeBytes: header.Size})
 	if err != nil {
-		_, _ = store.client.DeleteObject(r.Context(), &s3.DeleteObjectInput{Bucket: aws.String(store.bucket), Key: aws.String(key)})
-		webutil.ServerError(w, err)
+		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), 5*time.Second)
+		defer cancel()
+		_, cleanupErr := store.client.DeleteObject(cleanupCtx, &s3.DeleteObjectInput{Bucket: aws.String(store.bucket), Key: aws.String(key)})
+		if cleanupErr != nil {
+			cleanupErr = fmt.Errorf("delete uploaded attachment after database failure: %w", cleanupErr)
+		}
+		webutil.ServerError(w, errors.Join(fmt.Errorf("create maintenance attachment: %w", err), cleanupErr))
 		return
 	}
 	attachment := maintenanceAttachment{ID: row.ID, FileName: row.FileName, ContentType: row.ContentType, SizeBytes: row.SizeBytes, CreatedAt: row.CreatedAt.Time.UTC()}
@@ -263,12 +273,12 @@ func (h *Handler) deleteMaintenanceAttachmentObjects(ctx context.Context, record
 	return nil
 }
 
-func (h *Handler) ownsMaintenanceRecord(ctx context.Context, recordID, vehicleID, userID int64) bool {
+func (h *Handler) ownsMaintenanceRecord(ctx context.Context, recordID, vehicleID, userID int64) (bool, error) {
 	isOwned, err := query.New(h.DB).OwnsMaintenanceRecord(ctx, query.OwnsMaintenanceRecordParams{ID: recordID, VehicleID: vehicleID, UserID: userID})
 	if err != nil {
-		return false
+		return false, fmt.Errorf("check maintenance record ownership: %w", err)
 	}
-	return isOwned
+	return isOwned, nil
 }
 
 func parseMaintenanceRouteID(r *http.Request, key string) (int64, error) {

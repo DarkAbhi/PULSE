@@ -44,7 +44,7 @@ func (h *Handler) Readyz(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
 	if err := h.DB.Ping(ctx); err != nil {
-		webutil.WriteJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "db not ready", "error": err.Error()})
+		webutil.WriteJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "db not ready"})
 		return
 	}
 	webutil.WriteJSON(w, http.StatusOK, map[string]string{"status": "ready"})

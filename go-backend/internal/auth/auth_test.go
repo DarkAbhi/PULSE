@@ -2,9 +2,11 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -12,10 +14,29 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"context"
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+type failingLogoutStore struct{ store }
+
+func (failingLogoutStore) DeleteSession(context.Context, string) error {
+	return errors.New("database unavailable")
+}
+
+func TestLogoutFailureKeepsCookie(t *testing.T) {
+	h := NewHandler(NewService(failingLogoutStore{}), false)
+	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	req.AddCookie(&http.Cookie{Name: SessionCookieName, Value: "session-token"})
+	rec := httptest.NewRecorder()
+	h.Logout(rec, req)
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", rec.Code)
+	}
+	if len(rec.Result().Cookies()) != 0 {
+		t.Fatal("logout failure cleared the session cookie")
+	}
+}
 
 func TestBootstrapPasswordHash(t *testing.T) {
 	const bootstrapHash = "$2y$12$bB7WwVq7nGJ4cfNTCX6kQODcNRLQvMjRhIFuH4Qv2.GAxlqNac4/S"

@@ -21,6 +21,19 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
 )
 
+func TestMaintenanceOwnershipReturnsDatabaseError(t *testing.T) {
+	pool, err := pgxpool.New(context.Background(), "postgres://user:pass@localhost:5432/life")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pool.Close()
+	h := &Handler{DB: pool}
+	owned, err := h.ownsMaintenanceRecord(context.Background(), 1, 1, 1)
+	if owned || err == nil {
+		t.Fatalf("expected database error, got owned=%v err=%v", owned, err)
+	}
+}
+
 func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 	t.Helper()
 	token := "vehicletesttoken"

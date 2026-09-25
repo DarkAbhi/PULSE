@@ -67,7 +67,7 @@ func (h *Handler) Save(w http.ResponseWriter, r *http.Request) {
 	}
 	name, err := h.service.Save(r.Context(), id, body.Name)
 	if errors.Is(err, ErrInvalidName) {
-		webutil.BadRequest(w, ErrInvalidName.Error())
+		webutil.BadRequest(w, "name must be between 1 and 120 characters")
 		return
 	}
 	if err != nil {

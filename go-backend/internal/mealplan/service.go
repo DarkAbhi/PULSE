@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 var ErrPlanNotFound = errors.New("mealplan: meal not found")
@@ -78,7 +80,8 @@ func (s *Service) CreateTime(ctx context.Context, userID int64, in CreateTimeInp
 	}
 	row, err := s.store.CreateTime(ctx, CreateTimeParams{UserID: sql.NullInt64{Int64: userID, Valid: true}, Name: in.Name, Column3: start, Column4: end})
 	if err != nil {
-		if strings.Contains(err.Error(), "meal_times_user_name_idx") {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "meal_times_user_name_idx" {
 			return TimeDTO{}, ErrDuplicateTime
 		}
 		return TimeDTO{}, fmt.Errorf("create meal time: %w", err)

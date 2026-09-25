@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"github.com/DarkAbhi/life-backend/internal/auth"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/DarkAbhi/life-backend/internal/horizon/query"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
@@ -70,7 +72,10 @@ func (h *CategoriesHandler) ListCategories(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	_ = SeedDefaultCategories(h.DB)
+	if err := SeedDefaultCategories(r.Context(), h.DB); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
 	categories, err := h.FetchCategories(user.ID)
 	if err != nil {
 		webutil.ServerError(w, err)
@@ -129,16 +134,8 @@ func (h *CategoriesHandler) CreateCategory(w http.ResponseWriter, r *http.Reques
 	webutil.WriteJSON(w, http.StatusCreated, c)
 }
 
-func SeedDefaultCategories(db *pgxpool.Pool) error {
+func SeedDefaultCategories(ctx context.Context, db *pgxpool.Pool) error {
 	q := query.New(db)
-	count, err := q.CountDefaultCategories(context.Background())
-	if err != nil {
-		return err
-	}
-	if count > 0 {
-		return nil
-	}
-
 	defaultCategories := []struct {
 		name  string
 		icon  string
@@ -155,9 +152,18 @@ func SeedDefaultCategories(db *pgxpool.Pool) error {
 		{"Subscriptions", "credit-card", "#6366f1"},
 		{"Other", "tag", "#64748b"},
 	}
+	count, err := q.CountDefaultCategories(ctx)
+	if err != nil {
+		return fmt.Errorf("count default categories: %w", err)
+	}
+	if count >= int64(len(defaultCategories)) {
+		return nil
+	}
 
 	for _, c := range defaultCategories {
-		_ = q.SeedDefaultCategory(context.Background(), query.SeedDefaultCategoryParams{Name: c.name, Icon: c.icon, Color: c.color})
+		if err := q.SeedDefaultCategory(ctx, query.SeedDefaultCategoryParams{Name: c.name, Icon: c.icon, Color: c.color}); err != nil {
+			return fmt.Errorf("seed default category %q: %w", c.name, err)
+		}
 	}
 	return nil
 }

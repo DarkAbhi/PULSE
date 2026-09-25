@@ -69,7 +69,10 @@ func (h *Handler) Session(w http.ResponseWriter, r *http.Request) {
 	webutil.WriteJSON(w, http.StatusOK, map[string]string{"username": user.Username})
 }
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
-	_ = h.service.Logout(r.Context(), ExtractSessionToken(r))
+	if err := h.service.Logout(r.Context(), ExtractSessionToken(r)); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
 	http.SetCookie(w, &http.Cookie{Name: SessionCookieName, Value: "", Path: "/", Expires: time.Unix(0, 0), MaxAge: -1, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: h.isSecure})
 	webutil.WriteJSON(w, http.StatusOK, map[string]string{"message": "logged out"})
 }

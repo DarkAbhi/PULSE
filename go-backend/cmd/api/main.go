@@ -81,7 +81,9 @@ func run(ctx context.Context) error {
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		_ = obs.Shutdown(shutdownCtx)
+		if err := obs.Shutdown(shutdownCtx); err != nil {
+			slog.Error("observability shutdown failed", "error", err)
+		}
 	}()
 
 	pool, err := pgxpool.New(ctx, dsn)

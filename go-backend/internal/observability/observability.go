@@ -33,8 +33,7 @@ func Setup(ctx context.Context) (*System, error) {
 	shutdown := func(shutdownCtx context.Context) error {
 		if shutdownTracer != nil {
 			if err := shutdownTracer(shutdownCtx); err != nil {
-				slog.ErrorContext(shutdownCtx, "error shutting down tracer", "error", err)
-				return err
+				return fmt.Errorf("shutdown tracer: %w", err)
 			}
 		}
 		return nil

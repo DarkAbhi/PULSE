@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"fmt"
 	"math"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/DarkAbhi/life-backend/internal/horizon/query"
 )
@@ -36,7 +38,9 @@ func (s *Service) UpsertConfig(ctx context.Context, userID int64, baseAmount flo
 
 func (s *Service) Summary(ctx context.Context, userID int64) (*SummaryDTO, error) {
 
-	_ = SeedDefaultCategories(s.db)
+	if err := SeedDefaultCategories(ctx, s.db); err != nil {
+		return nil, err
+	}
 
 	var baseAmount float64
 	var currency string
@@ -46,7 +50,7 @@ func (s *Service) Summary(ctx context.Context, userID int64) (*SummaryDTO, error
 		baseAmount = 0
 		currency = "₹"
 	} else if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get horizon config: %w", err)
 	} else {
 		baseAmount, currency = config.BaseAmount, config.Currency
 	}
@@ -54,7 +58,7 @@ func (s *Service) Summary(ctx context.Context, userID int64) (*SummaryDTO, error
 	// Fetch Budgets
 	budgetsList, totalBudgetsAllocated, err := s.budgets.FetchBudgets(userID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetch budgets: %w", err)
 	}
 
 	budgetsMap := make(map[int64]*BudgetDTO)
@@ -68,25 +72,25 @@ func (s *Service) Summary(ctx context.Context, userID int64) (*SummaryDTO, error
 	// Fetch Deductions
 	deductionsList, totalDeductions, err := s.deductions.FetchDeductions(userID, budgetUsedMap)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetch deductions: %w", err)
 	}
 
 	// Fetch Subscriptions
 	subscriptionsList, totalSubscriptionBurn, err := s.subscriptions.FetchSubscriptions(userID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetch subscriptions: %w", err)
 	}
 
 	// Fetch Categories
 	categoriesList, err := s.categories.FetchCategories(userID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetch categories: %w", err)
 	}
 
 	// Fetch Transactions
 	transactionsList, totalTransactions, err := s.transactions.FetchTransactions(userID, 50)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetch transactions: %w", err)
 	}
 
 	// Add transaction usage to budget map

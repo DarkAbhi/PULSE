@@ -2,6 +2,7 @@ package horizon
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
@@ -13,6 +14,26 @@ import (
 
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
 )
+
+func TestSeedDefaultCategoriesRepairsPartialSeed(t *testing.T) {
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
+	defer shutdown()
+	pool := testPool(t, dsn)
+	defer pool.Close()
+	if _, err := db.Exec("DELETE FROM financial_horizon_categories WHERE name = 'Other' AND is_default = true"); err != nil {
+		t.Fatal(err)
+	}
+	if err := SeedDefaultCategories(context.Background(), pool); err != nil {
+		t.Fatal(err)
+	}
+	var count int
+	if err := db.QueryRow("SELECT COUNT(*) FROM financial_horizon_categories WHERE is_default = true").Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 10 {
+		t.Fatalf("expected 10 default categories after repair, got %d", count)
+	}
+}
 
 func categoriesLoginUser(t *testing.T, db *sql.DB) *http.Cookie {
 	t.Helper()

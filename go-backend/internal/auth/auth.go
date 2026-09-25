@@ -1,3 +1,4 @@
+// Package auth authenticates users and manages their database-backed sessions.
 package auth
 
 import (

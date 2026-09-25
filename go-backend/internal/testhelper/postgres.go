@@ -1,3 +1,4 @@
+// Package testhelper provides PostgreSQL-backed integration test infrastructure.
 package testhelper
 
 import (

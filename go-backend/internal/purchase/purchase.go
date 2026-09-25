@@ -1,3 +1,4 @@
+// Package purchase manages purchases planned for the next month.
 package purchase
 
 import (

@@ -1,3 +1,4 @@
+// Package observability configures logs, metrics, tracing, and profiling.
 package observability
 
 import (

@@ -1,3 +1,4 @@
+// Package health exposes liveness and database readiness checks.
 package health
 
 import (
@@ -10,15 +11,17 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
+// Handler serves process and database health checks.
 type Handler struct {
 	DB *pgxpool.Pool
 }
 
+// NewHandler creates health checks backed by db.
 func NewHandler(db *pgxpool.Pool) *Handler {
 	return &Handler{DB: db}
 }
 
-// Healthz godoc
+// Healthz reports whether the API process can serve requests.
 // @Summary Check liveness
 // @Description Returns OK when the API process is running.
 // @Tags health
@@ -29,7 +32,7 @@ func (h *Handler) Healthz(w http.ResponseWriter, r *http.Request) {
 	webutil.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-// Readyz godoc
+// Readyz reports whether the API can reach PostgreSQL within two seconds.
 // @Summary Check readiness
 // @Description Returns OK when the API can reach its database.
 // @Tags health

@@ -1,7 +1,9 @@
+// Package timeutil centralizes calendar calculations in the application's timezone.
 package timeutil
 
 import "time"
 
+// IndiaTimeZone is the IANA timezone used for user-facing calendar dates.
 const IndiaTimeZone = "Asia/Kolkata"
 
 // DayBoundsIndia returns today's boundaries for the app's primary user timezone.
@@ -15,7 +17,7 @@ func DayBoundsIndia(t time.Time) (time.Time, time.Time) {
 	return start.UTC(), start.AddDate(0, 0, 1).UTC()
 }
 
-// NextMonthDate returns the string formatted date ("YYYY-MM-DD") representing the first day of next month in India timezone.
+// NextMonthDate returns the first day of next month in IndiaTimeZone as YYYY-MM-DD.
 func NextMonthDate() string {
 	location, err := time.LoadLocation(IndiaTimeZone)
 	if err != nil {

@@ -1,3 +1,4 @@
+// Package main runs the Life Backend HTTP API and database migration commands.
 package main
 
 import (

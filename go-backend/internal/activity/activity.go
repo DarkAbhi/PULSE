@@ -1,3 +1,4 @@
+// Package activity records daily meditation and sport activity.
 package activity
 
 import "errors"

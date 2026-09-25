@@ -1,3 +1,4 @@
+// Package db runs the application's PostgreSQL schema migrations.
 package db
 
 import (
@@ -24,6 +25,7 @@ func migrationsPath() (string, error) {
 	return "file://" + p, nil
 }
 
+// RunMigrations applies every pending migration using the configured database.
 func RunMigrations(dsn string) error {
 	src, err := migrationsPath()
 	if err != nil {
@@ -41,6 +43,7 @@ func RunMigrations(dsn string) error {
 	return nil
 }
 
+// RollbackMigration reverses the most recently applied migration.
 func RollbackMigration(dsn string) error {
 	src, err := migrationsPath()
 	if err != nil {
@@ -58,6 +61,7 @@ func RollbackMigration(dsn string) error {
 	return nil
 }
 
+// ShowMigrationVersion logs the current migration version and dirty state.
 func ShowMigrationVersion(dsn string) error {
 	src, err := migrationsPath()
 	if err != nil {
@@ -80,6 +84,7 @@ func ShowMigrationVersion(dsn string) error {
 	return nil
 }
 
+// RunMigrationSteps applies n migrations; a negative value rolls migrations back.
 func RunMigrationSteps(dsn string, n int) error {
 	src, err := migrationsPath()
 	if err != nil {

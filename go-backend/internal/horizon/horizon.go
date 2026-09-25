@@ -1,3 +1,4 @@
+// Package horizon manages financial plans, budgets, deductions, and transactions.
 package horizon
 
 import (

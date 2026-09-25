@@ -1,3 +1,4 @@
+// Package profile manages user profile names and password changes.
 package profile
 
 type profileBody struct {

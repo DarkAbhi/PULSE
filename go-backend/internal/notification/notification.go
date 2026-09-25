@@ -1,3 +1,4 @@
+// Package notification creates and manages user reminders.
 package notification
 
 import "time"

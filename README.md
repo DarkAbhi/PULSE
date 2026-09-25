@@ -1,8 +1,8 @@
 # Life tracker
 
-This is the backend that I use to track some of my personal data using a telegram bot.
-
-Yes, Django is a bit too much at this stage. I do plan to scale this at some point, where I think Django would better serve my purpose.
+Life Tracker is a personal-data application with a Go API, a Next.js web app,
+and a Telegram bot. See the [backend guide](go-backend/README.md) for local Go
+development, configuration, architecture, migrations, tests, and API docs.
 
 ### Setup to run
 
@@ -26,6 +26,10 @@ Run the production version using
 ```
 make deploy
 ```
+
+The Compose stack expects PostgreSQL to exist outside this repository. Make
+sure the configured database is reachable from Docker and run migrations before
+starting development with `make dev-migrate-up` followed by `make dev`.
 
 ## Make commands
 
@@ -84,11 +88,11 @@ available commands until corresponding recipes are added.
 
 ### Backend SQL queries
 
-Backend queries live in `go-backend/queries/*.sql`. The generated Go package is
-`go-backend/internal/db/sqlc`; application code calls its methods. After editing
-a query or a migration, run `cd go-backend && make sqlc-generate` and commit the
-generated files. Generation uses the migration files as the schema and does not
-change the database. Apply migrations separately before running the backend.
+Backend queries and generated sqlc code live together under
+`go-backend/internal/<feature>/query/`. After editing a query or migration, run
+`cd go-backend && make sqlc-generate` and commit the generated files. Generation
+uses the migration files as the schema and does not change the database. Apply
+migrations separately before running the backend.
 
 ## Project structure
 

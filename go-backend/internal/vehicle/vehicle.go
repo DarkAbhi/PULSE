@@ -1,3 +1,4 @@
+// Package vehicle manages vehicles, fuel, tire pressure, maintenance, and attachments.
 package vehicle
 
 import (

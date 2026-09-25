@@ -1,3 +1,4 @@
+// Package mealplan manages meal times, planned meals, and consumption status.
 package mealplan
 
 import (

@@ -23,6 +23,7 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/vehicle"
 )
 
+// API holds the dependencies used to build the HTTP handler.
 type API struct {
 	DB             *pgxpool.Pool
 	AllowedOrigins []string
@@ -38,6 +39,8 @@ type API struct {
 	ObsConfig      observability.Config
 }
 
+// Router builds the API handler, including operational and feature routes.
+// It panics when DB is nil because health and readiness checks require it.
 func (a *API) Router() http.Handler {
 	if a.DB == nil {
 		panic("api DB is nil")

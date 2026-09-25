@@ -1,3 +1,4 @@
+// Package gym records gym visits, exercises, sets, and visit reminders.
 package gym
 
 import "time"

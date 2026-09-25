@@ -38,7 +38,7 @@ func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 	}
 }
 
-func TestGetProfile(t *testing.T) {
+func TestShow(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
@@ -48,17 +48,17 @@ func TestGetProfile(t *testing.T) {
 	}
 	defer pool.Close()
 	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return user.ID, err
 	})
 	cookie := loginUser(t, db)
 
-	// 1. GetProfile when user doesn't have a profile yet
+	// 1. Show when the user doesn't have a profile yet
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/profile", nil)
 		req.AddCookie(cookie)
-		h.GetProfile(rec, req)
+		h.Show(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200 OK, got %d", rec.Code)
@@ -77,12 +77,12 @@ func TestGetProfile(t *testing.T) {
 		t.Fatalf("failed to seed profile: %v", err)
 	}
 
-	// 2. GetProfile when user has setup profile
+	// 2. Show when the user has set up a profile
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/profile", nil)
 		req.AddCookie(cookie)
-		h.GetProfile(rec, req)
+		h.Show(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200 OK, got %d", rec.Code)
@@ -99,7 +99,7 @@ func TestGetProfile(t *testing.T) {
 	}
 }
 
-func TestSaveProfile(t *testing.T) {
+func TestSave(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
@@ -109,7 +109,7 @@ func TestSaveProfile(t *testing.T) {
 	}
 	defer pool.Close()
 	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return user.ID, err
 	})
 	cookie := loginUser(t, db)
@@ -119,7 +119,7 @@ func TestSaveProfile(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPut, "/profile", bytes.NewReader([]byte("{invalid")))
 		req.AddCookie(cookie)
-		h.SaveProfile(rec, req)
+		h.Save(rec, req)
 
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("expected 400 Bad Request, got %d", rec.Code)
@@ -129,10 +129,10 @@ func TestSaveProfile(t *testing.T) {
 	// 2. Save profile - empty name
 	{
 		rec := httptest.NewRecorder()
-		body, _ := json.Marshal(profileBody{Name: ""})
+		body, _ := json.Marshal(saveBody{Name: ""})
 		req := httptest.NewRequest(http.MethodPut, "/profile", bytes.NewReader(body))
 		req.AddCookie(cookie)
-		h.SaveProfile(rec, req)
+		h.Save(rec, req)
 
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("expected 400 Bad Request, got %d", rec.Code)
@@ -142,10 +142,10 @@ func TestSaveProfile(t *testing.T) {
 	// 3. Save profile - successful create
 	{
 		rec := httptest.NewRecorder()
-		body, _ := json.Marshal(profileBody{Name: "New Name"})
+		body, _ := json.Marshal(saveBody{Name: "New Name"})
 		req := httptest.NewRequest(http.MethodPut, "/profile", bytes.NewReader(body))
 		req.AddCookie(cookie)
-		h.SaveProfile(rec, req)
+		h.Save(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200 OK, got %d", rec.Code)
@@ -171,10 +171,10 @@ func TestSaveProfile(t *testing.T) {
 	// 4. Save profile - successful update (on conflict)
 	{
 		rec := httptest.NewRecorder()
-		body, _ := json.Marshal(profileBody{Name: "Updated Name"})
+		body, _ := json.Marshal(saveBody{Name: "Updated Name"})
 		req := httptest.NewRequest(http.MethodPut, "/profile", bytes.NewReader(body))
 		req.AddCookie(cookie)
-		h.SaveProfile(rec, req)
+		h.Save(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200 OK, got %d", rec.Code)
@@ -198,7 +198,7 @@ func TestChangePassword(t *testing.T) {
 	}
 	defer pool.Close()
 	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return user.ID, err
 	})
 	cookie := loginUser(t, db)

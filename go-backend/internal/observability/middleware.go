@@ -16,16 +16,16 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
 // responseWriter wraps http.ResponseWriter to capture status and bytes written.
 type responseWriter struct {
 	http.ResponseWriter
-	status      int
-	bytes       int64
-	wroteHeader bool
+	status           int
+	bytes            int64
+	hasWrittenHeader bool
 }
 
 func newResponseWriter(w http.ResponseWriter) *responseWriter {
@@ -33,15 +33,15 @@ func newResponseWriter(w http.ResponseWriter) *responseWriter {
 }
 
 func (rw *responseWriter) WriteHeader(code int) {
-	if !rw.wroteHeader {
+	if !rw.hasWrittenHeader {
 		rw.status = code
-		rw.wroteHeader = true
+		rw.hasWrittenHeader = true
 		rw.ResponseWriter.WriteHeader(code)
 	}
 }
 
 func (rw *responseWriter) Write(b []byte) (int, error) {
-	if !rw.wroteHeader {
+	if !rw.hasWrittenHeader {
 		rw.WriteHeader(http.StatusOK)
 	}
 	n, err := rw.ResponseWriter.Write(b)

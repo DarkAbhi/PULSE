@@ -8,16 +8,16 @@ import (
 
 // Config holds observability configuration settings.
 type Config struct {
-	ServiceName          string
-	ServiceVersion      string
-	Environment         string
-	LogLevel            slog.Level
-	LogFormat           string // "json" or "text"
-	OTLPEndpoint        string // e.g. "localhost:4317"
-	OTLPInsecure        bool
-	PprofEnabled        bool
-	PprofAuthUser       string
-	PprofAuthPass       string
+	ServiceName    string
+	ServiceVersion string
+	Environment    string
+	LogLevel       slog.Level
+	LogFormat      string // "json" or "text"
+	OTLPEndpoint   string // e.g. "localhost:4317"
+	IsOTLPInsecure bool
+	IsPprofEnabled bool
+	PprofAuthUser  string
+	PprofAuthPass  string
 }
 
 // LoadConfigFromEnv builds Config from environment variables.
@@ -71,8 +71,8 @@ func LoadConfigFromEnv() Config {
 		}
 	}
 
-	pprofEnabled := strings.EqualFold(os.Getenv("PPROF_ENABLED"), "true")
-	otlpInsecure := !strings.EqualFold(os.Getenv("OTEL_EXPORTER_OTLP_INSECURE"), "false")
+	isPprofEnabled := strings.EqualFold(os.Getenv("PPROF_ENABLED"), "true")
+	isOTLPInsecure := !strings.EqualFold(os.Getenv("OTEL_EXPORTER_OTLP_INSECURE"), "false")
 
 	return Config{
 		ServiceName:    serviceName,
@@ -81,8 +81,8 @@ func LoadConfigFromEnv() Config {
 		LogLevel:       logLevel,
 		LogFormat:      strings.ToLower(logFormat),
 		OTLPEndpoint:   os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
-		OTLPInsecure:   otlpInsecure,
-		PprofEnabled:   pprofEnabled,
+		IsOTLPInsecure: isOTLPInsecure,
+		IsPprofEnabled: isPprofEnabled,
 		PprofAuthUser:  os.Getenv("PPROF_AUTH_USER"),
 		PprofAuthPass:  os.Getenv("PPROF_AUTH_PASS"),
 	}

@@ -34,7 +34,7 @@ func (s *Service) UpsertConfig(ctx context.Context, userID int64, baseAmount flo
 	return query.New(s.db).UpsertHorizonConfig(ctx, query.UpsertHorizonConfigParams{UserID: userID, BaseAmount: baseAmount, Currency: currency})
 }
 
-func (s *Service) Summary(ctx context.Context, userID int64) (*HorizonSummaryDTO, error) {
+func (s *Service) Summary(ctx context.Context, userID int64) (*SummaryDTO, error) {
 
 	_ = SeedDefaultCategories(s.db)
 
@@ -119,7 +119,7 @@ func (s *Service) Summary(ctx context.Context, userID int64) (*HorizonSummaryDTO
 		{Months: 12, Label: "1 Year", CumulativeUncommitted: math.Max(0, remainingAmount*12)},
 	}
 
-	return &HorizonSummaryDTO{
+	return &SummaryDTO{
 		BaseAmount:            baseAmount,
 		Currency:              currency,
 		TotalDeductions:       totalDeductions,

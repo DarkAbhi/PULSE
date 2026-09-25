@@ -12,7 +12,7 @@ import (
 // If PprofEnabled is false, the endpoints are not mounted.
 // If PprofAuthUser and PprofAuthPass are configured, endpoints are protected with HTTP Basic Auth.
 func RegisterPprofRoutes(r chi.Router, cfg Config) {
-	if !cfg.PprofEnabled {
+	if !cfg.IsPprofEnabled {
 		return
 	}
 
@@ -43,7 +43,7 @@ func basicAuthMiddleware(expectedUser, expectedPass string) func(http.Handler) h
 			if !ok || subtle.ConstantTimeCompare([]byte(user), []byte(expectedUser)) != 1 ||
 				subtle.ConstantTimeCompare([]byte(pass), []byte(expectedPass)) != 1 {
 				w.Header().Set("WWW-Authenticate", `Basic realm="pprof"`)
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
 			next.ServeHTTP(w, r)

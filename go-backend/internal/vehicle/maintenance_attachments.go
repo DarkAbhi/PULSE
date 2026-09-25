@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -38,10 +38,10 @@ type attachmentStorage struct {
 }
 
 type AttachmentConfig struct {
-	Bucket         string
-	Region         string
-	Endpoint       string
-	ForcePathStyle bool
+	Bucket               string
+	Region               string
+	Endpoint             string
+	ShouldForcePathStyle bool
 }
 
 func newAttachmentStorage(ctx context.Context, settings AttachmentConfig) (*attachmentStorage, error) {
@@ -51,9 +51,9 @@ func newAttachmentStorage(ctx context.Context, settings AttachmentConfig) (*atta
 	}
 	region := strings.TrimSpace(settings.Region)
 	if region == "" {
-		return nil, errors.New("AWS_REGION must be set when S3_BUCKET is configured")
+		return nil, errors.New("aws region must be set when s3 bucket is configured")
 	}
-	config, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion(region))
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
 		return nil, err
 	}
@@ -61,10 +61,10 @@ func newAttachmentStorage(ctx context.Context, settings AttachmentConfig) (*atta
 	if endpoint := strings.TrimSpace(settings.Endpoint); endpoint != "" {
 		options = append(options, func(o *s3.Options) { o.BaseEndpoint = aws.String(endpoint) })
 	}
-	if settings.ForcePathStyle {
+	if settings.ShouldForcePathStyle {
 		options = append(options, func(o *s3.Options) { o.UsePathStyle = true })
 	}
-	return &attachmentStorage{bucket: bucket, client: s3.NewFromConfig(config, options...)}, nil
+	return &attachmentStorage{bucket: bucket, client: s3.NewFromConfig(cfg, options...)}, nil
 }
 
 func (h *Handler) ConfigureAttachments(ctx context.Context, settings AttachmentConfig) error {
@@ -78,7 +78,7 @@ func (h *Handler) ConfigureAttachments(ctx context.Context, settings AttachmentC
 
 func (h *Handler) attachmentStore() (*attachmentStorage, error) {
 	if h.attachments == nil {
-		return nil, errors.New("S3 uploads are not configured")
+		return nil, errors.New("s3 uploads are not configured")
 	}
 	return h.attachments, nil
 }
@@ -103,7 +103,7 @@ func (h *Handler) CreateMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, maxMaintenanceAttachmentBytes+(1<<20))
 	if err := r.ParseMultipartForm(maxMaintenanceAttachmentBytes); err != nil {
-		webutil.BadRequest(w, "attachment must be 10 MB or smaller")
+		webutil.BadRequest(w, "attachment must be 10 mb or smaller")
 		return
 	}
 	file, header, err := r.FormFile("file")
@@ -113,7 +113,7 @@ func (h *Handler) CreateMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 	}
 	defer file.Close()
 	if header.Size <= 0 || header.Size > maxMaintenanceAttachmentBytes {
-		webutil.BadRequest(w, "attachment must be between 1 byte and 10 MB")
+		webutil.BadRequest(w, "attachment must be between 1 byte and 10 mb")
 		return
 	}
 	fileName := filepath.Base(strings.TrimSpace(header.Filename))
@@ -264,11 +264,11 @@ func (h *Handler) deleteMaintenanceAttachmentObjects(ctx context.Context, record
 }
 
 func (h *Handler) ownsMaintenanceRecord(ctx context.Context, recordID, vehicleID, userID int64) bool {
-	found, err := query.New(h.DB).OwnsMaintenanceRecord(ctx, query.OwnsMaintenanceRecordParams{ID: recordID, VehicleID: vehicleID, UserID: userID})
+	isOwned, err := query.New(h.DB).OwnsMaintenanceRecord(ctx, query.OwnsMaintenanceRecordParams{ID: recordID, VehicleID: vehicleID, UserID: userID})
 	if err != nil {
 		return false
 	}
-	return found
+	return isOwned
 }
 
 func parseMaintenanceRouteID(r *http.Request, key string) (int64, error) {

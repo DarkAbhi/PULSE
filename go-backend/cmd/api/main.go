@@ -135,7 +135,7 @@ func run(ctx context.Context) error {
 	vehicleHandler := vehicle.NewHandler(pool, vehicleService, sessionLookup)
 	if err := vehicleHandler.ConfigureAttachments(ctx, vehicle.AttachmentConfig{
 		Bucket: os.Getenv("S3_BUCKET"), Region: os.Getenv("AWS_REGION"),
-		Endpoint: os.Getenv("S3_ENDPOINT"), ForcePathStyle: os.Getenv("S3_FORCE_PATH_STYLE") == "true",
+		Endpoint: os.Getenv("S3_ENDPOINT"), ShouldForcePathStyle: os.Getenv("S3_FORCE_PATH_STYLE") == "true",
 	}); err != nil {
 		return fmt.Errorf("configure vehicle attachments: %w", err)
 	}
@@ -160,7 +160,7 @@ func run(ctx context.Context) error {
 		port = "8080"
 	}
 	server := &http.Server{Addr: ":" + port, Handler: handler, ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 60 * time.Second}
-	go gym.RunGymReminderJob(ctx, gymService)
+	go gym.RunReminderJob(ctx, gymService)
 	go vehicle.RunAirFillReminderJob(ctx, vehicle.NewReminderService(pool, notificationService))
 	serveErr := make(chan error, 1)
 	go func() { serveErr <- server.ListenAndServe() }()

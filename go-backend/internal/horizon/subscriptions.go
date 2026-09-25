@@ -254,7 +254,7 @@ func (h *SubscriptionsHandler) CreateSubscription(w http.ResponseWriter, r *http
 
 	var in SubscriptionInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 
@@ -382,7 +382,7 @@ func (h *SubscriptionsHandler) UpdateSubscription(w http.ResponseWriter, r *http
 
 	var in SubscriptionInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 

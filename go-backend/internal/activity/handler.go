@@ -23,7 +23,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 func (h *Handler) addMeditation(w http.ResponseWriter, r *http.Request) {
 	err := h.service.AddMeditation(r.Context(), time.Now())
 	if errors.Is(err, ErrAlreadyMeditated) {
-		webutil.BadRequest(w, "You have already meditated today.")
+		webutil.BadRequest(w, "you have already meditated today")
 		return
 	}
 	if err != nil {
@@ -38,12 +38,12 @@ func (h *Handler) addSport(w http.ResponseWriter, r *http.Request) {
 		Sport string `json:"sport"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		webutil.BadRequest(w, "Invalid JSON.")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 	err := h.service.AddSport(r.Context(), body.Sport)
 	if errors.Is(err, ErrInvalidSport) {
-		webutil.BadRequest(w, "This sport is not available yet.")
+		webutil.BadRequest(w, "this sport is not available yet")
 		return
 	}
 	if err != nil {

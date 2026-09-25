@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -48,7 +48,7 @@ func InitTracer(ctx context.Context, cfg Config) (func(context.Context) error, e
 		grpcOpts := []otlptracegrpc.Option{
 			otlptracegrpc.WithEndpoint(cfg.OTLPEndpoint),
 		}
-		if cfg.OTLPInsecure {
+		if cfg.IsOTLPInsecure {
 			grpcOpts = append(grpcOpts, otlptracegrpc.WithTLSCredentials(insecure.NewCredentials()))
 		}
 		exporter, err := otlptracegrpc.New(ctx, grpcOpts...)

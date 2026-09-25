@@ -8,23 +8,23 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/timeutil"
 )
 
-type activityStore interface {
-	MeditatedToday(context.Context, time.Time, time.Time) (bool, error)
+type store interface {
+	HasMeditatedToday(context.Context, time.Time, time.Time) (bool, error)
 	AddMeditation(context.Context) error
 	AddSport(context.Context, string) error
 }
 
-type Service struct{ store activityStore }
+type Service struct{ store store }
 
-func NewService(store activityStore) *Service { return &Service{store: store} }
+func NewService(store store) *Service { return &Service{store: store} }
 
 func (s *Service) AddMeditation(ctx context.Context, now time.Time) error {
 	start, end := timeutil.DayBoundsIndia(now.UTC())
-	exists, err := s.store.MeditatedToday(ctx, start, end)
+	hasMeditated, err := s.store.HasMeditatedToday(ctx, start, end)
 	if err != nil {
 		return fmt.Errorf("check meditation: %w", err)
 	}
-	if exists {
+	if hasMeditated {
 		return ErrAlreadyMeditated
 	}
 	if err := s.store.AddMeditation(ctx); err != nil {

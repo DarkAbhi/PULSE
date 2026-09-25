@@ -3,5 +3,5 @@ package activity
 
 import "errors"
 
-var ErrAlreadyMeditated = errors.New("already meditated today")
-var ErrInvalidSport = errors.New("invalid sport")
+var ErrAlreadyMeditated = errors.New("activity: already meditated today")
+var ErrInvalidSport = errors.New("activity: invalid sport")

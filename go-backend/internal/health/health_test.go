@@ -10,12 +10,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func TestHealthz(t *testing.T) {
-	h := NewHandler(nil)
+func TestLiveness(t *testing.T) {
+	h := New(nil)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 
-	h.Healthz(rec, req)
+	h.Liveness(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected 200, got %d", rec.Code)
@@ -31,7 +31,7 @@ func TestReadyz(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
-	h := NewHandler(pool)
+	h := New(pool)
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
 

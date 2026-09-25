@@ -27,14 +27,14 @@ func (r *Repository) VisitToday(ctx context.Context, start, end time.Time) (int6
 	})
 }
 func (r *Repository) AddVisit(ctx context.Context) (int64, error) { return r.queries.AddVisit(ctx) }
-func (r *Repository) ListVisits(ctx context.Context) ([]gymVisitListItem, error) {
+func (r *Repository) ListVisits(ctx context.Context) ([]visitListItem, error) {
 	rows, err := r.queries.ListVisits(ctx)
 	if err != nil {
 		return nil, err
 	}
-	items := make([]gymVisitListItem, 0, len(rows))
+	items := make([]visitListItem, 0, len(rows))
 	for _, row := range rows {
-		items = append(items, gymVisitListItem{ID: row.ID, CreatedAt: row.CreatedAt.Time.UTC()})
+		items = append(items, visitListItem{ID: row.ID, CreatedAt: row.CreatedAt.Time.UTC()})
 	}
 	return items, nil
 }
@@ -42,23 +42,23 @@ func (r *Repository) DeleteVisit(ctx context.Context, id int64) (bool, error) {
 	count, err := r.queries.DeleteVisit(ctx, id)
 	return count > 0, err
 }
-func (r *Repository) VisitExists(ctx context.Context, id int64) (bool, error) {
+func (r *Repository) HasVisit(ctx context.Context, id int64) (bool, error) {
 	return r.queries.VisitExists(ctx, id)
 }
-func (r *Repository) ListExercises(ctx context.Context, visitID int64) ([]gymExerciseDTO, error) {
+func (r *Repository) ListExercises(ctx context.Context, visitID int64) ([]exerciseDTO, error) {
 	rows, err := r.queries.ListExercises(ctx, visitID)
 	if err != nil {
 		return nil, err
 	}
-	items := make([]gymExerciseDTO, 0, len(rows))
+	items := make([]exerciseDTO, 0, len(rows))
 	for _, row := range rows {
 		sets, err := r.queries.ListSets(ctx, row.ID)
 		if err != nil {
 			return nil, err
 		}
-		item := gymExerciseDTO{ID: row.ID, Name: row.Name, Sets: make([]gymExerciseSetDTO, 0, len(sets))}
+		item := exerciseDTO{ID: row.ID, Name: row.Name, Sets: make([]exerciseSetDTO, 0, len(sets))}
 		for _, set := range sets {
-			item.Sets = append(item.Sets, gymExerciseSetDTO{
+			item.Sets = append(item.Sets, exerciseSetDTO{
 				ID: set.ID, SetNumber: int(set.SetNumber), Reps: int(set.Reps), Weight: set.Weight,
 			})
 		}
@@ -66,31 +66,31 @@ func (r *Repository) ListExercises(ctx context.Context, visitID int64) ([]gymExe
 	}
 	return items, nil
 }
-func (r *Repository) CreateExercise(ctx context.Context, visitID int64, name string, sets []exerciseSetInput) (gymExerciseDTO, error) {
+func (r *Repository) CreateExercise(ctx context.Context, visitID int64, name string, sets []exerciseSetInput) (exerciseDTO, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return gymExerciseDTO{}, err
+		return exerciseDTO{}, err
 	}
 	defer tx.Rollback(ctx)
 	q := r.queries.WithTx(tx)
 	row, err := q.CreateExercise(ctx, query.CreateExerciseParams{GymVisitID: visitID, Name: name})
 	if err != nil {
-		return gymExerciseDTO{}, err
+		return exerciseDTO{}, err
 	}
-	item := gymExerciseDTO{ID: row.ID, Name: row.Name, Sets: make([]gymExerciseSetDTO, 0, len(sets))}
+	item := exerciseDTO{ID: row.ID, Name: row.Name, Sets: make([]exerciseSetDTO, 0, len(sets))}
 	for i, set := range sets {
 		saved, err := q.CreateSet(ctx, query.CreateSetParams{
 			GymVisitExerciseID: row.ID, SetNumber: int16(i + 1), Reps: int16(set.Reps), Weight: set.Weight,
 		})
 		if err != nil {
-			return gymExerciseDTO{}, err
+			return exerciseDTO{}, err
 		}
-		item.Sets = append(item.Sets, gymExerciseSetDTO{
+		item.Sets = append(item.Sets, exerciseSetDTO{
 			ID: saved.ID, SetNumber: int(saved.SetNumber), Reps: int(saved.Reps), Weight: saved.Weight,
 		})
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return gymExerciseDTO{}, err
+		return exerciseDTO{}, err
 	}
 	return item, nil
 }
@@ -98,7 +98,7 @@ func (r *Repository) Begin(ctx context.Context) (pgx.Tx, error) { return r.db.Be
 func (r *Repository) AddVisitTx(ctx context.Context, tx pgx.Tx) (int64, error) {
 	return r.queries.WithTx(tx).AddVisit(ctx)
 }
-func (r *Repository) DeliveryExists(ctx context.Context, tx pgx.Tx, userID int64, date string) (bool, error) {
+func (r *Repository) HasDelivery(ctx context.Context, tx pgx.Tx, userID int64, date string) (bool, error) {
 	return r.queries.WithTx(tx).DeliveryExists(ctx, query.DeliveryExistsParams{UserID: userID, Column2: date})
 }
 func (r *Repository) RecordDelivery(ctx context.Context, tx pgx.Tx, userID int64, date string, notificationID int64) error {

@@ -10,13 +10,13 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
-type vehicleAirFillDTO struct {
+type airFillDTO struct {
 	VehicleID int64     `json:"vehicle_id"`
 	FilledAt  time.Time `json:"filled_at"`
 }
 
-// CreateVehicleAirFill records a new air fill event for a vehicle.
-func (h *Handler) CreateVehicleAirFill(w http.ResponseWriter, r *http.Request) {
+// CreateAirFill records a new air fill event for a vehicle.
+func (h *Handler) CreateAirFill(w http.ResponseWriter, r *http.Request) {
 	user, err := h.sessionUser(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
@@ -32,12 +32,12 @@ func (h *Handler) CreateVehicleAirFill(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := query.New(h.DB)
-	vehicleExists, err := q.VehicleExists(r.Context(), vehicleID)
+	hasVehicle, err := q.VehicleExists(r.Context(), vehicleID)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	if !vehicleExists {
+	if !hasVehicle {
 		http.NotFound(w, r)
 		return
 	}
@@ -47,11 +47,11 @@ func (h *Handler) CreateVehicleAirFill(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	webutil.WriteJSON(w, http.StatusCreated, vehicleAirFillDTO{VehicleID: vehicleID, FilledAt: filledAt.Time.UTC()})
+	webutil.WriteJSON(w, http.StatusCreated, airFillDTO{VehicleID: vehicleID, FilledAt: filledAt.Time.UTC()})
 }
 
-// ListLatestVehicleAirFills lists the latest air fills across vehicles.
-func (h *Handler) ListLatestVehicleAirFills(w http.ResponseWriter, r *http.Request) {
+// ListLatestAirFills lists the latest air fills across vehicles.
+func (h *Handler) ListLatestAirFills(w http.ResponseWriter, r *http.Request) {
 	user, err := h.sessionUser(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
@@ -68,9 +68,9 @@ func (h *Handler) ListLatestVehicleAirFills(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	fills := make([]vehicleAirFillDTO, 0)
+	fills := make([]airFillDTO, 0)
 	for _, row := range rows {
-		fill := vehicleAirFillDTO{VehicleID: row.VehicleID, FilledAt: row.FilledAt.Time}
+		fill := airFillDTO{VehicleID: row.VehicleID, FilledAt: row.FilledAt.Time}
 		fill.FilledAt = fill.FilledAt.UTC()
 		fills = append(fills, fill)
 	}

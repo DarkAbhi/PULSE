@@ -9,11 +9,11 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var ErrInvalidName = errors.New("name must be between 1 and 120 characters")
-var ErrCurrentPasswordRequired = errors.New("current password is required")
-var ErrNewPasswordTooShort = errors.New("new password must be at least 6 characters")
+var ErrInvalidName = errors.New("profile: name must be between 1 and 120 characters")
+var ErrCurrentPasswordRequired = errors.New("profile: current password is required")
+var ErrNewPasswordTooShort = errors.New("profile: new password must be at least 6 characters")
 
-type profileStore interface {
+type store interface {
 	Name(context.Context, int64) (string, error)
 	Save(context.Context, int64, string) error
 }
@@ -21,14 +21,14 @@ type passwordChanger interface {
 	ChangePassword(context.Context, int64, string, string) error
 }
 type Service struct {
-	store     profileStore
+	store     store
 	passwords passwordChanger
 }
 
-func NewService(store profileStore, passwords passwordChanger) *Service {
+func NewService(store store, passwords passwordChanger) *Service {
 	return &Service{store: store, passwords: passwords}
 }
-func (s *Service) Get(ctx context.Context, userID int64) (string, bool, error) {
+func (s *Service) Fetch(ctx context.Context, userID int64) (string, bool, error) {
 	name, err := s.store.Name(ctx, userID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", false, nil

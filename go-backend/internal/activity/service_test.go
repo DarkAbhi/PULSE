@@ -8,13 +8,13 @@ import (
 )
 
 type stubStore struct {
-	meditated   bool
-	meditations int
-	sports      []string
+	hasMeditated bool
+	meditations  int
+	sports       []string
 }
 
-func (s *stubStore) MeditatedToday(context.Context, time.Time, time.Time) (bool, error) {
-	return s.meditated, nil
+func (s *stubStore) HasMeditatedToday(context.Context, time.Time, time.Time) (bool, error) {
+	return s.hasMeditated, nil
 }
 func (s *stubStore) AddMeditation(context.Context) error { s.meditations++; return nil }
 func (s *stubStore) AddSport(_ context.Context, name string) error {
@@ -28,7 +28,7 @@ func TestService(t *testing.T) {
 	if err := service.AddMeditation(context.Background(), time.Now()); err != nil || store.meditations != 1 {
 		t.Fatalf("add meditation: %v, count %d", err, store.meditations)
 	}
-	store.meditated = true
+	store.hasMeditated = true
 	if err := service.AddMeditation(context.Background(), time.Now()); !errors.Is(err, ErrAlreadyMeditated) || store.meditations != 1 {
 		t.Fatalf("duplicate meditation: %v, count %d", err, store.meditations)
 	}

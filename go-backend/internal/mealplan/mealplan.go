@@ -8,20 +8,20 @@ import (
 	"time"
 )
 
-type DefaultMealTime struct {
+type DefaultTime struct {
 	Name      string
 	StartTime string
 	EndTime   string
 }
 
-var defaultMealTimes = []DefaultMealTime{
+var defaultTimes = []DefaultTime{
 	{Name: "Breakfast", StartTime: "07:00:00", EndTime: "10:00:00"},
 	{Name: "Lunch", StartTime: "12:00:00", EndTime: "14:30:00"},
 	{Name: "Evening Snacks", StartTime: "16:30:00", EndTime: "18:30:00"},
 	{Name: "Dinner", StartTime: "19:30:00", EndTime: "22:00:00"},
 }
 
-type MealTimeDTO struct {
+type TimeDTO struct {
 	ID        int64  `json:"id"`
 	Name      string `json:"name"`
 	StartTime string `json:"start_time"` // "HH:MM"
@@ -30,13 +30,13 @@ type MealTimeDTO struct {
 	UserID    *int64 `json:"user_id,omitempty"`
 }
 
-type CreateMealTimeInput struct {
+type CreateTimeInput struct {
 	Name      string `json:"name"`
 	StartTime string `json:"start_time"` // accepts "HH:MM" or "HH:MM:SS"
 	EndTime   string `json:"end_time"`   // accepts "HH:MM" or "HH:MM:SS"
 }
 
-type MealPlanDTO struct {
+type PlanDTO struct {
 	ID           int64     `json:"id"`
 	Date         string    `json:"date"`
 	Name         string    `json:"name"`
@@ -48,18 +48,18 @@ type MealPlanDTO struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-type CreateMealPlanInput struct {
+type CreatePlanInput struct {
 	Date       string `json:"date"`
 	Name       string `json:"name"`
 	MealTimeID *int64 `json:"meal_time_id,omitempty"`
 	IsConsumed *bool  `json:"is_consumed,omitempty"`
 }
 
-type UpdateMealPlanConsumedInput struct {
+type UpdatePlanConsumedInput struct {
 	IsConsumed bool `json:"is_consumed"`
 }
 
-type UpdateMealPlanInput struct {
+type UpdatePlanInput struct {
 	Date       *string `json:"date,omitempty"`
 	Name       *string `json:"name,omitempty"`
 	MealTimeID *int64  `json:"meal_time_id,omitempty"`
@@ -81,11 +81,11 @@ func parseTimeFlexible(val string) (string, error) {
 		}
 		return val, nil
 	}
-	return "", errors.New("invalid time format, expected HH:MM")
+	return "", errors.New("invalid time format, expected hh:mm")
 }
 
-func mealPlanDTO(id int64, date, name string, mealTimeID sql.NullInt64, mealTimeName sql.NullString, start, end string, consumed bool, created time.Time) MealPlanDTO {
-	item := MealPlanDTO{ID: id, Date: date, Name: name, IsConsumed: consumed, CreatedAt: created}
+func planDTO(id int64, date, name string, mealTimeID sql.NullInt64, mealTimeName sql.NullString, start, end string, isConsumed bool, created time.Time) PlanDTO {
+	item := PlanDTO{ID: id, Date: date, Name: name, IsConsumed: isConsumed, CreatedAt: created}
 	if mealTimeID.Valid {
 		item.MealTimeID = &mealTimeID.Int64
 	}

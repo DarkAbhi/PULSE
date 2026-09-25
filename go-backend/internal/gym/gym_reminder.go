@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func RunGymReminderJob(ctx context.Context, service *Service) {
+func RunReminderJob(ctx context.Context, service *Service) {
 	run := func(now time.Time) {
 		if err := service.CreateDueReminders(ctx, now); err != nil {
 			slog.Error("gym reminder job failed", "error", err)

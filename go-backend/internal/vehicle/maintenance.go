@@ -107,7 +107,7 @@ func (h *Handler) CreateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 	}
 	var p maintenanceRecordPayload
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&p); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 	if err := normalizeMaintenanceRecord(&p); err != nil {
@@ -143,7 +143,7 @@ func (h *Handler) UpdateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 	}
 	var p maintenanceRecordPayload
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&p); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 	if err := normalizeMaintenanceRecord(&p); err != nil {

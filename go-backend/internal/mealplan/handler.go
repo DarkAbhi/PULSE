@@ -21,15 +21,15 @@ func NewHandler(service *Service, userID func(*http.Request) (int64, error)) *Ha
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
-	r.Get("/meal-times", h.ListMealTimes)
-	r.Post("/meal-times", h.CreateMealTime)
-	r.Delete("/meal-times/{id}", h.DeleteMealTime)
-	r.Get("/meal-plans", h.ListMealPlans)
-	r.Post("/meal-plans", h.CreateMealPlan)
-	r.Patch("/meal-plans/{id}/consumed", h.UpdateMealPlanConsumed)
-	r.Patch("/meal-plans/{id}", h.UpdateMealPlan)
-	r.Put("/meal-plans/{id}", h.UpdateMealPlan)
-	r.Delete("/meal-plans/{id}", h.DeleteMealPlan)
+	r.Get("/meal-times", h.ListTimes)
+	r.Post("/meal-times", h.CreateTime)
+	r.Delete("/meal-times/{id}", h.DeleteTime)
+	r.Get("/meal-plans", h.ListPlans)
+	r.Post("/meal-plans", h.CreatePlan)
+	r.Patch("/meal-plans/{id}/consumed", h.UpdatePlanConsumed)
+	r.Patch("/meal-plans/{id}", h.UpdatePlan)
+	r.Put("/meal-plans/{id}", h.UpdatePlan)
+	r.Delete("/meal-plans/{id}", h.DeletePlan)
 }
 
 func (h *Handler) authenticatedUser(w http.ResponseWriter, r *http.Request) (int64, bool) {
@@ -45,54 +45,54 @@ func (h *Handler) authenticatedUser(w http.ResponseWriter, r *http.Request) (int
 	return id, true
 }
 
-func mealError(w http.ResponseWriter, err error) {
+func writeError(w http.ResponseWriter, err error) {
 	var invalid ValidationError
 	switch {
 	case errors.As(err, &invalid):
 		webutil.BadRequest(w, invalid.Message)
-	case errors.Is(err, ErrDuplicateMealTime):
+	case errors.Is(err, ErrDuplicateTime):
 		webutil.BadRequest(w, "a meal time with this name already exists")
-	case errors.Is(err, ErrMealTimeNotFound):
-		webutil.BadRequest(w, "specified meal_time_id not found")
-	case errors.Is(err, ErrMealNotFound):
+	case errors.Is(err, ErrTimeNotFound):
+		webutil.BadRequest(w, "specified meal time id not found")
+	case errors.Is(err, ErrPlanNotFound):
 		webutil.WriteJSON(w, http.StatusNotFound, map[string]string{"error": "meal not found"})
 	default:
 		webutil.ServerError(w, err)
 	}
 }
 
-func (h *Handler) ListMealTimes(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ListTimes(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
 	}
 	times, err := h.service.ListTimes(r.Context(), id)
 	if err != nil {
-		mealError(w, err)
+		writeError(w, err)
 		return
 	}
 	webutil.WriteJSON(w, http.StatusOK, times)
 }
 
-func (h *Handler) CreateMealTime(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreateTime(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
 	}
-	var in CreateMealTimeInput
+	var in CreateTimeInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		webutil.BadRequest(w, "invalid request body")
 		return
 	}
 	item, err := h.service.CreateTime(r.Context(), id, in)
 	if err != nil {
-		mealError(w, err)
+		writeError(w, err)
 		return
 	}
 	webutil.WriteJSON(w, http.StatusCreated, item)
 }
 
-func (h *Handler) DeleteMealTime(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) DeleteTime(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
@@ -102,18 +102,18 @@ func (h *Handler) DeleteMealTime(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err := h.service.DeleteTime(r.Context(), id, mealTimeID)
-	if errors.Is(err, ErrMealTimeNotFound) {
+	if errors.Is(err, ErrTimeNotFound) {
 		webutil.WriteJSON(w, http.StatusNotFound, map[string]string{"error": "custom meal time not found or cannot be deleted"})
 		return
 	}
 	if err != nil {
-		mealError(w, err)
+		writeError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *Handler) ListMealPlans(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ListPlans(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
@@ -121,31 +121,31 @@ func (h *Handler) ListMealPlans(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	items, err := h.service.ListPlans(r.Context(), id, q.Get("date"), q.Get("start_date"), q.Get("end_date"))
 	if err != nil {
-		mealError(w, err)
+		writeError(w, err)
 		return
 	}
 	webutil.WriteJSON(w, http.StatusOK, items)
 }
 
-func (h *Handler) CreateMealPlan(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CreatePlan(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
 	}
-	var in CreateMealPlanInput
+	var in CreatePlanInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		webutil.BadRequest(w, "invalid request body")
 		return
 	}
 	item, err := h.service.CreatePlan(r.Context(), id, in)
 	if err != nil {
-		mealError(w, err)
+		writeError(w, err)
 		return
 	}
 	webutil.WriteJSON(w, http.StatusCreated, item)
 }
 
-func (h *Handler) DeleteMealPlan(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) DeletePlan(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
@@ -155,13 +155,13 @@ func (h *Handler) DeleteMealPlan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.DeletePlan(r.Context(), id, mealID); err != nil {
-		mealError(w, err)
+		writeError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *Handler) UpdateMealPlanConsumed(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UpdatePlanConsumed(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
@@ -170,20 +170,20 @@ func (h *Handler) UpdateMealPlanConsumed(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
-	var in UpdateMealPlanConsumedInput
+	var in UpdatePlanConsumedInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		webutil.BadRequest(w, "invalid request body")
 		return
 	}
 	item, err := h.service.SetConsumed(r.Context(), id, mealID, in.IsConsumed)
 	if err != nil {
-		mealError(w, err)
+		writeError(w, err)
 		return
 	}
 	webutil.WriteJSON(w, http.StatusOK, item)
 }
 
-func (h *Handler) UpdateMealPlan(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) UpdatePlan(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
@@ -192,14 +192,14 @@ func (h *Handler) UpdateMealPlan(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var in UpdateMealPlanInput
+	var in UpdatePlanInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		webutil.BadRequest(w, "invalid request body")
 		return
 	}
 	item, err := h.service.UpdatePlan(r.Context(), id, mealID, in)
 	if err != nil {
-		mealError(w, err)
+		writeError(w, err)
 		return
 	}
 	webutil.WriteJSON(w, http.StatusOK, item)

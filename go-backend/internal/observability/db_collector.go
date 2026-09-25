@@ -9,12 +9,12 @@ import (
 type DBStatsCollector struct {
 	pool *pgxpool.Pool
 
-	totalConns          *prometheus.Desc
-	idleConns           *prometheus.Desc
-	acquiredConns       *prometheus.Desc
-	maxConns            *prometheus.Desc
-	acquireCount        *prometheus.Desc
-	emptyAcquireCount   *prometheus.Desc
+	totalConns           *prometheus.Desc
+	idleConns            *prometheus.Desc
+	acquiredConns        *prometheus.Desc
+	maxConns             *prometheus.Desc
+	acquireCount         *prometheus.Desc
+	emptyAcquireCount    *prometheus.Desc
 	acquireDurationNanos *prometheus.Desc
 }
 

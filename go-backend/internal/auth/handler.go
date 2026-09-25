@@ -18,12 +18,12 @@ type loginBody struct {
 }
 
 type Handler struct {
-	service *Service
-	secure  bool
+	service  *Service
+	isSecure bool
 }
 
-func NewHandler(service *Service, secure bool) *Handler {
-	return &Handler{service: service, secure: secure}
+func NewHandler(service *Service, isSecure bool) *Handler {
+	return &Handler{service: service, isSecure: isSecure}
 }
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/auth/login", h.Login)
@@ -36,7 +36,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var body loginBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 	username := strings.TrimSpace(body.Username)
@@ -53,7 +53,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	http.SetCookie(w, &http.Cookie{Name: SessionCookieName, Value: token, Path: "/", Expires: expires, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: h.secure})
+	http.SetCookie(w, &http.Cookie{Name: SessionCookieName, Value: token, Path: "/", Expires: expires, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: h.isSecure})
 	webutil.WriteJSON(w, http.StatusOK, map[string]string{"username": username})
 }
 func (h *Handler) Session(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +70,6 @@ func (h *Handler) Session(w http.ResponseWriter, r *http.Request) {
 }
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	_ = h.service.Logout(r.Context(), ExtractSessionToken(r))
-	http.SetCookie(w, &http.Cookie{Name: SessionCookieName, Value: "", Path: "/", Expires: time.Unix(0, 0), MaxAge: -1, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: h.secure})
+	http.SetCookie(w, &http.Cookie{Name: SessionCookieName, Value: "", Path: "/", Expires: time.Unix(0, 0), MaxAge: -1, HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: h.isSecure})
 	webutil.WriteJSON(w, http.StatusOK, map[string]string{"message": "logged out"})
 }

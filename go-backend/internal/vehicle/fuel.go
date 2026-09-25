@@ -50,7 +50,7 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 	}
 	var in fuelFillupInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 	if in.OdometerKM < 0 || len(in.Items) == 0 || len(in.Items) > 2 {
@@ -127,7 +127,7 @@ func (h *Handler) UpdateFuelFillup(w http.ResponseWriter, r *http.Request) {
 	}
 	var in fuelFillupInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 	if in.OdometerKM < 0 || len(in.Items) == 0 || len(in.Items) > 2 {

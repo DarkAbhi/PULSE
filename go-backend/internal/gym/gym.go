@@ -3,9 +3,9 @@ package gym
 
 import "time"
 
-const gymReminderSource = "Gym reminder"
+const reminderSource = "Gym reminder"
 
-type gymVisitListItem struct {
+type visitListItem struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 }
@@ -15,20 +15,20 @@ type exerciseSetInput struct {
 	Weight *float64 `json:"weight"`
 }
 
-type createGymExerciseBody struct {
+type createExerciseBody struct {
 	Name string             `json:"name"`
 	Sets []exerciseSetInput `json:"sets"`
 }
 
-type gymExerciseSetDTO struct {
+type exerciseSetDTO struct {
 	ID        int64    `json:"id"`
 	SetNumber int      `json:"set_number"`
 	Reps      int      `json:"reps"`
 	Weight    *float64 `json:"weight"`
 }
 
-type gymExerciseDTO struct {
-	ID   int64               `json:"id"`
-	Name string              `json:"name"`
-	Sets []gymExerciseSetDTO `json:"sets"`
+type exerciseDTO struct {
+	ID   int64            `json:"id"`
+	Name string           `json:"name"`
+	Sets []exerciseSetDTO `json:"sets"`
 }

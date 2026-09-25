@@ -16,19 +16,19 @@ type Handler struct {
 	DB *pgxpool.Pool
 }
 
-// NewHandler creates health checks backed by db.
-func NewHandler(db *pgxpool.Pool) *Handler {
+// New creates health checks backed by db.
+func New(db *pgxpool.Pool) *Handler {
 	return &Handler{DB: db}
 }
 
-// Healthz reports whether the API process can serve requests.
+// Liveness reports whether the API process can serve requests.
 // @Summary Check liveness
 // @Description Returns OK when the API process is running.
 // @Tags health
 // @Produce json
 // @Success 200 {object} map[string]string
 // @Router /healthz [get]
-func (h *Handler) Healthz(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Liveness(w http.ResponseWriter, r *http.Request) {
 	webutil.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 

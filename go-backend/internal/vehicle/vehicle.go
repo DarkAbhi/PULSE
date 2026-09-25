@@ -17,7 +17,7 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
-type vehiclePayload struct {
+type payload struct {
 	Name                     *string  `json:"name"`
 	IsActive                 *bool    `json:"is_active"`
 	FrontTirePressureSolo    *float64 `json:"front_tire_pressure_solo"`
@@ -37,7 +37,7 @@ type tirePressurePayload struct {
 	RearTirePressure         *float64 `json:"rear_tire_pressure"`
 }
 
-type vehicleDTO struct {
+type DTO struct {
 	ID                       int64    `json:"id"`
 	Name                     string   `json:"name"`
 	IsActive                 bool     `json:"is_active"`
@@ -86,12 +86,12 @@ type SessionLookup func(*http.Request) (auth.SessionUser, error)
 
 func (h *Handler) sessionUser(r *http.Request) (auth.SessionUser, error) { return h.sessions(r) }
 
-func vehicleDTOFromFields(id int64, name string, active bool, frontSolo, rearSolo, frontPillion, rearPillion *float64) vehicleDTO {
-	return vehicleDTO{ID: id, Name: name, IsActive: active, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, FrontTirePressure: frontSolo, RearTirePressure: rearSolo}
+func dtoFromFields(id int64, name string, isActive bool, frontSolo, rearSolo, frontPillion, rearPillion *float64) DTO {
+	return DTO{ID: id, Name: name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, FrontTirePressure: frontSolo, RearTirePressure: rearSolo}
 }
 
-// ListVehicles lists all vehicles.
-func (h *Handler) ListVehicles(w http.ResponseWriter, r *http.Request) {
+// List lists all vehicles.
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	rows, err := h.service.List(r.Context())
 	if err != nil {
 		webutil.ServerError(w, err)
@@ -110,53 +110,53 @@ func (h *Handler) ListVehicles(w http.ResponseWriter, r *http.Request) {
 	webutil.WriteJSON(w, http.StatusOK, out)
 }
 
-// CreateVehicle creates a new vehicle.
-func (h *Handler) CreateVehicle(w http.ResponseWriter, r *http.Request) {
-	var p vehiclePayload
+// Create creates a new vehicle.
+func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+	var p payload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
-	row, err := h.service.Create(r.Context(), VehicleChanges(p))
-	if h.writeVehicleError(w, r, err) {
+	row, err := h.service.Create(r.Context(), Changes(p))
+	if h.writeError(w, r, err) {
 		return
 	}
-	webutil.WriteJSON(w, http.StatusCreated, vehicleDTOFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
+	webutil.WriteJSON(w, http.StatusCreated, dtoFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
 }
 
-// GetVehicle gets a vehicle by ID.
-func (h *Handler) GetVehicle(w http.ResponseWriter, r *http.Request) {
+// Show gets a vehicle by ID.
+func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	id, ok := webutil.ParseID(w, r)
 	if !ok {
 		return
 	}
-	row, err := h.service.Get(r.Context(), id)
-	if h.writeVehicleError(w, r, err) {
+	row, err := h.service.Fetch(r.Context(), id)
+	if h.writeError(w, r, err) {
 		return
 	}
-	webutil.WriteJSON(w, http.StatusOK, vehicleDTOFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
+	webutil.WriteJSON(w, http.StatusOK, dtoFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
 }
 
-// UpdateVehicle updates a vehicle's properties.
-func (h *Handler) UpdateVehicle(w http.ResponseWriter, r *http.Request) {
+// Update updates a vehicle's properties.
+func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	id, ok := webutil.ParseID(w, r)
 	if !ok {
 		return
 	}
-	var p vehiclePayload
+	var p payload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
-	row, err := h.service.Update(r.Context(), id, VehicleChanges(p))
-	if h.writeVehicleError(w, r, err) {
+	row, err := h.service.Update(r.Context(), id, Changes(p))
+	if h.writeError(w, r, err) {
 		return
 	}
-	webutil.WriteJSON(w, http.StatusOK, vehicleDTOFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
+	webutil.WriteJSON(w, http.StatusOK, dtoFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
 }
 
-// UpdateVehicleTirePressure updates the solo and pillion tire pressures for a vehicle.
-func (h *Handler) UpdateVehicleTirePressure(w http.ResponseWriter, r *http.Request) {
+// UpdateTirePressure updates the solo and pillion tire pressures for a vehicle.
+func (h *Handler) UpdateTirePressure(w http.ResponseWriter, r *http.Request) {
 	_, err := h.sessionUser(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
@@ -172,29 +172,29 @@ func (h *Handler) UpdateVehicleTirePressure(w http.ResponseWriter, r *http.Reque
 	}
 	var p tirePressurePayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 	row, err := h.service.UpdatePressure(r.Context(), id, PressureChanges(p))
-	if h.writeVehicleError(w, r, err) {
+	if h.writeError(w, r, err) {
 		return
 	}
-	webutil.WriteJSON(w, http.StatusOK, vehicleDTOFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
+	webutil.WriteJSON(w, http.StatusOK, dtoFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
 }
 
-// DeleteVehicle deletes a vehicle by ID.
-func (h *Handler) DeleteVehicle(w http.ResponseWriter, r *http.Request) {
+// Delete deletes a vehicle by ID.
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, ok := webutil.ParseID(w, r)
 	if !ok {
 		return
 	}
-	if h.writeVehicleError(w, r, h.service.Delete(r.Context(), id)) {
+	if h.writeError(w, r, h.service.Delete(r.Context(), id)) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *Handler) writeVehicleError(w http.ResponseWriter, r *http.Request, err error) bool {
+func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, err error) bool {
 	if err == nil {
 		return false
 	}
@@ -210,8 +210,8 @@ func (h *Handler) writeVehicleError(w http.ResponseWriter, r *http.Request, err 
 	return true
 }
 
-// VehicleHistory returns the maintenance history of a vehicle.
-func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
+// History returns the maintenance history of a vehicle.
+func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 	user, err := h.sessionUser(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
@@ -306,17 +306,17 @@ func (h *Handler) VehicleHistory(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// DeleteVehicleAirFill deletes an air fill record.
-func (h *Handler) DeleteVehicleAirFill(w http.ResponseWriter, r *http.Request) {
-	h.deleteVehicleRecord(w, r, false, "airFillID")
+// DeleteAirFill deletes an air fill record.
+func (h *Handler) DeleteAirFill(w http.ResponseWriter, r *http.Request) {
+	h.deleteRecord(w, r, false, "airFillID")
 }
 
 // DeleteFuelFillup deletes a fuel fillup record.
 func (h *Handler) DeleteFuelFillup(w http.ResponseWriter, r *http.Request) {
-	h.deleteVehicleRecord(w, r, true, "fillupID")
+	h.deleteRecord(w, r, true, "fillupID")
 }
 
-func (h *Handler) deleteVehicleRecord(w http.ResponseWriter, r *http.Request, fuel bool, param string) {
+func (h *Handler) deleteRecord(w http.ResponseWriter, r *http.Request, isFuel bool, param string) {
 	user, err := h.sessionUser(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
@@ -337,7 +337,7 @@ func (h *Handler) deleteVehicleRecord(w http.ResponseWriter, r *http.Request, fu
 	}
 	q := query.New(h.DB)
 	var n int64
-	if fuel {
+	if isFuel {
 		n, err = q.DeleteVehicleFuelFillup(r.Context(), query.DeleteVehicleFuelFillupParams{ID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	} else {
 		n, err = q.DeleteVehicleAirFill(r.Context(), query.DeleteVehicleAirFillParams{ID: recordID, VehicleID: vehicleID, UserID: user.ID})

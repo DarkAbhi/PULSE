@@ -25,9 +25,9 @@ func TestRoutes(t *testing.T) {
 	r := chi.NewRouter()
 	h.RegisterRoutes(r)
 	for _, tc := range []struct {
-		path string
-		body string
-		want int
+		path     string
+		body     string
+		expected int
 	}{
 		{"/meditation/today", "", http.StatusCreated},
 		{"/meditation/today", "", http.StatusBadRequest},
@@ -36,8 +36,8 @@ func TestRoutes(t *testing.T) {
 	} {
 		rec := httptest.NewRecorder()
 		r.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, tc.path, bytes.NewBufferString(tc.body)))
-		if rec.Code != tc.want {
-			t.Fatalf("%s: got %d, want %d: %s", tc.path, rec.Code, tc.want, rec.Body.String())
+		if rec.Code != tc.expected {
+			t.Fatalf("%s: got %d, want %d: %s", tc.path, rec.Code, tc.expected, rec.Body.String())
 		}
 	}
 	var count int

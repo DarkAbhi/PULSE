@@ -3,7 +3,7 @@ package notification
 
 import "time"
 
-type Notification struct {
+type Item struct {
 	ID         int64
 	Source     string
 	Title      string

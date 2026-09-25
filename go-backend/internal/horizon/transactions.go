@@ -264,7 +264,7 @@ func (h *TransactionsHandler) CreateTransaction(w http.ResponseWriter, r *http.R
 
 	var in TransactionInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 
@@ -356,7 +356,7 @@ func (h *TransactionsHandler) BulkCreateTransactions(w http.ResponseWriter, r *h
 		if err2 := json.Unmarshal(bodyBytes, &container); err2 == nil && len(container.Items) > 0 {
 			inputs = container.Items
 		} else {
-			webutil.BadRequest(w, "invalid JSON array or items payload")
+			webutil.BadRequest(w, "invalid json array or items payload")
 			return
 		}
 	}
@@ -465,7 +465,7 @@ func (h *TransactionsHandler) UpdateTransaction(w http.ResponseWriter, r *http.R
 
 	var in TransactionInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 

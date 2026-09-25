@@ -11,7 +11,7 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
-func (h *Handler) GetHorizon(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Summary(w http.ResponseWriter, r *http.Request) {
 	user, err := h.sessionUser(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
@@ -44,7 +44,7 @@ func (h *Handler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 
 	var in ConfigInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 

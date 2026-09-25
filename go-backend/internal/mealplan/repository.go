@@ -15,23 +15,23 @@ type Repository struct{ queries *query.Queries }
 
 func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{queries: query.New(db)} }
 
-type CreateMealPlanParams = query.CreateMealPlanParams
-type CreateMealTimeParams = query.CreateMealTimeParams
-type CreateMealTimeRow = query.CreateMealTimeRow
-type DeleteMealPlanParams = query.DeleteMealPlanParams
-type DeleteMealTimeParams = query.DeleteMealTimeParams
-type EnsureDefaultMealTimeParams = query.EnsureDefaultMealTimeParams
-type GetMealPlanForUpdateParams = query.GetMealPlanForUpdateParams
-type GetMealPlanForUpdateRow = query.GetMealPlanForUpdateRow
-type GetMealTimeRangeParams = query.GetMealTimeRangeParams
-type GetMealTimeRangeRow = query.GetMealTimeRangeRow
-type ListMealPlansByDateParams = query.ListMealPlansByDateParams
-type ListMealPlansByRangeParams = query.ListMealPlansByRangeParams
-type ListMealTimesRow = query.ListMealTimesRow
-type SetMealPlanConsumedParams = query.SetMealPlanConsumedParams
-type UpdateMealPlanParams = query.UpdateMealPlanParams
+type CreatePlanParams = query.CreateMealPlanParams
+type CreateTimeParams = query.CreateMealTimeParams
+type CreateTimeRow = query.CreateMealTimeRow
+type DeletePlanParams = query.DeleteMealPlanParams
+type DeleteTimeParams = query.DeleteMealTimeParams
+type EnsureDefaultTimeParams = query.EnsureDefaultMealTimeParams
+type PlanForUpdateParams = query.GetMealPlanForUpdateParams
+type PlanForUpdateRow = query.GetMealPlanForUpdateRow
+type TimeRangeParams = query.GetMealTimeRangeParams
+type TimeRangeRow = query.GetMealTimeRangeRow
+type ListPlansByDateParams = query.ListMealPlansByDateParams
+type ListPlansByRangeParams = query.ListMealPlansByRangeParams
+type ListTimesRow = query.ListMealTimesRow
+type SetPlanConsumedParams = query.SetMealPlanConsumedParams
+type UpdatePlanParams = query.UpdateMealPlanParams
 
-type mealPlanRow struct {
+type planRow struct {
 	ID           int64
 	Date         string
 	Name         string
@@ -42,79 +42,79 @@ type mealPlanRow struct {
 	IsConsumed   bool
 	CreatedAt    time.Time
 }
-type CreateMealPlanRow = mealPlanRow
-type ListMealPlansByDateRow = mealPlanRow
-type ListMealPlansByRangeRow = mealPlanRow
-type ListRecentMealPlansRow = mealPlanRow
-type SetMealPlanConsumedRow = mealPlanRow
-type UpdateMealPlanRow = mealPlanRow
+type CreatePlanRow = planRow
+type ListPlansByDateRow = planRow
+type ListPlansByRangeRow = planRow
+type ListRecentPlansRow = planRow
+type SetPlanConsumedRow = planRow
+type UpdatePlanRow = planRow
 
-func makeMealPlanRow(id int64, date, name string, mealTimeID sql.NullInt64, mealTimeName sql.NullString, start, end string, consumed bool, created pgtype.Timestamptz) mealPlanRow {
-	return mealPlanRow{ID: id, Date: date, Name: name, MealTimeID: mealTimeID, MealTimeName: mealTimeName, StartTime: start, EndTime: end, IsConsumed: consumed, CreatedAt: created.Time}
+func makePlanRow(id int64, date, name string, mealTimeID sql.NullInt64, mealTimeName sql.NullString, start, end string, isConsumed bool, created pgtype.Timestamptz) planRow {
+	return planRow{ID: id, Date: date, Name: name, MealTimeID: mealTimeID, MealTimeName: mealTimeName, StartTime: start, EndTime: end, IsConsumed: isConsumed, CreatedAt: created.Time}
 }
-func (r *Repository) CreateMealPlan(ctx context.Context, arg CreateMealPlanParams) (CreateMealPlanRow, error) {
+func (r *Repository) CreatePlan(ctx context.Context, arg CreatePlanParams) (CreatePlanRow, error) {
 	row, err := r.queries.CreateMealPlan(ctx, arg)
-	return makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
+	return makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
 }
-func (r *Repository) CreateMealTime(ctx context.Context, arg CreateMealTimeParams) (CreateMealTimeRow, error) {
+func (r *Repository) CreateTime(ctx context.Context, arg CreateTimeParams) (CreateTimeRow, error) {
 	return r.queries.CreateMealTime(ctx, arg)
 }
-func (r *Repository) DeleteMealPlan(ctx context.Context, arg DeleteMealPlanParams) (int64, error) {
+func (r *Repository) DeletePlan(ctx context.Context, arg DeletePlanParams) (int64, error) {
 	return r.queries.DeleteMealPlan(ctx, arg)
 }
-func (r *Repository) DeleteMealTime(ctx context.Context, arg DeleteMealTimeParams) (int64, error) {
+func (r *Repository) DeleteTime(ctx context.Context, arg DeleteTimeParams) (int64, error) {
 	return r.queries.DeleteMealTime(ctx, arg)
 }
-func (r *Repository) EnsureDefaultMealTime(ctx context.Context, arg EnsureDefaultMealTimeParams) error {
+func (r *Repository) EnsureDefaultTime(ctx context.Context, arg EnsureDefaultTimeParams) error {
 	return r.queries.EnsureDefaultMealTime(ctx, arg)
 }
-func (r *Repository) GetMealPlanForUpdate(ctx context.Context, arg GetMealPlanForUpdateParams) (GetMealPlanForUpdateRow, error) {
+func (r *Repository) FetchPlanForUpdate(ctx context.Context, arg PlanForUpdateParams) (PlanForUpdateRow, error) {
 	return r.queries.GetMealPlanForUpdate(ctx, arg)
 }
-func (r *Repository) GetMealTimeRange(ctx context.Context, arg GetMealTimeRangeParams) (GetMealTimeRangeRow, error) {
+func (r *Repository) FetchTimeRange(ctx context.Context, arg TimeRangeParams) (TimeRangeRow, error) {
 	return r.queries.GetMealTimeRange(ctx, arg)
 }
-func (r *Repository) ListMealPlansByDate(ctx context.Context, arg ListMealPlansByDateParams) ([]ListMealPlansByDateRow, error) {
+func (r *Repository) ListPlansByDate(ctx context.Context, arg ListPlansByDateParams) ([]ListPlansByDateRow, error) {
 	rows, err := r.queries.ListMealPlansByDate(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]ListMealPlansByDateRow, 0, len(rows))
+	out := make([]ListPlansByDateRow, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
+		out = append(out, makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
 	}
 	return out, nil
 }
-func (r *Repository) ListMealPlansByRange(ctx context.Context, arg ListMealPlansByRangeParams) ([]ListMealPlansByRangeRow, error) {
+func (r *Repository) ListPlansByRange(ctx context.Context, arg ListPlansByRangeParams) ([]ListPlansByRangeRow, error) {
 	rows, err := r.queries.ListMealPlansByRange(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]ListMealPlansByRangeRow, 0, len(rows))
+	out := make([]ListPlansByRangeRow, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
+		out = append(out, makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
 	}
 	return out, nil
 }
-func (r *Repository) ListMealTimes(ctx context.Context, userID sql.NullInt64) ([]ListMealTimesRow, error) {
+func (r *Repository) ListTimes(ctx context.Context, userID sql.NullInt64) ([]ListTimesRow, error) {
 	return r.queries.ListMealTimes(ctx, userID)
 }
-func (r *Repository) ListRecentMealPlans(ctx context.Context, userID int64) ([]ListRecentMealPlansRow, error) {
+func (r *Repository) ListRecentPlans(ctx context.Context, userID int64) ([]ListRecentPlansRow, error) {
 	rows, err := r.queries.ListRecentMealPlans(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]ListRecentMealPlansRow, 0, len(rows))
+	out := make([]ListRecentPlansRow, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
+		out = append(out, makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
 	}
 	return out, nil
 }
-func (r *Repository) SetMealPlanConsumed(ctx context.Context, arg SetMealPlanConsumedParams) (SetMealPlanConsumedRow, error) {
+func (r *Repository) SetPlanConsumed(ctx context.Context, arg SetPlanConsumedParams) (SetPlanConsumedRow, error) {
 	row, err := r.queries.SetMealPlanConsumed(ctx, arg)
-	return makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
+	return makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
 }
-func (r *Repository) UpdateMealPlan(ctx context.Context, arg UpdateMealPlanParams) (UpdateMealPlanRow, error) {
+func (r *Repository) UpdatePlan(ctx context.Context, arg UpdatePlanParams) (UpdatePlanRow, error) {
 	row, err := r.queries.UpdateMealPlan(ctx, arg)
-	return makeMealPlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
+	return makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
 }

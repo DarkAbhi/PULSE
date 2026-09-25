@@ -18,7 +18,7 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{queries: query.New(db)}
 }
 
-func (r *Repository) MeditatedToday(ctx context.Context, start, end time.Time) (bool, error) {
+func (r *Repository) HasMeditatedToday(ctx context.Context, start, end time.Time) (bool, error) {
 	return r.queries.MeditatedToday(ctx, query.MeditatedTodayParams{
 		CreatedAt:   pgtype.Timestamptz{Time: start, Valid: true},
 		CreatedAt_2: pgtype.Timestamptz{Time: end, Valid: true},

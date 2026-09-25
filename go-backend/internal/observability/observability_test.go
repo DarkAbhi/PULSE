@@ -44,7 +44,7 @@ func TestLoadConfigFromEnv(t *testing.T) {
 	if cfg.LogFormat != "json" {
 		t.Fatalf("expected json format, got %s", cfg.LogFormat)
 	}
-	if !cfg.PprofEnabled {
+	if !cfg.IsPprofEnabled {
 		t.Fatal("expected pprof enabled")
 	}
 	if cfg.PprofAuthUser != "admin" || cfg.PprofAuthPass != "secret" {
@@ -129,9 +129,9 @@ func TestHTTPMiddlewareMetricsAndLogging(t *testing.T) {
 
 func TestPprofBasicAuth(t *testing.T) {
 	cfg := Config{
-		PprofEnabled:  true,
-		PprofAuthUser: "monitor",
-		PprofAuthPass: "secret123",
+		IsPprofEnabled: true,
+		PprofAuthUser:  "monitor",
+		PprofAuthPass:  "secret123",
 	}
 
 	r := chi.NewRouter()

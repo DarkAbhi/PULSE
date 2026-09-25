@@ -33,7 +33,7 @@ func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 	}
 }
 
-func TestGetHorizonDefault(t *testing.T) {
+func TestSummaryDefault(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 	pool := testPool(t, dsn)
@@ -45,13 +45,13 @@ func TestGetHorizonDefault(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/horizon", nil)
 	req.AddCookie(cookie)
-	h.GetHorizon(rec, req)
+	h.Summary(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200 OK, got %d", rec.Code)
 	}
 
-	var out HorizonSummaryDTO
+	var out SummaryDTO
 	if err := json.NewDecoder(rec.Body).Decode(&out); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
@@ -86,7 +86,7 @@ func TestUpdateConfigAndCalculations(t *testing.T) {
 			t.Fatalf("expected 200 OK, got %d", rec.Code)
 		}
 
-		var out HorizonSummaryDTO
+		var out SummaryDTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if out.BaseAmount != 100000.0 || out.RemainingAmount != 100000.0 {
 			t.Errorf("unexpected summary after config update: %+v", out)
@@ -123,9 +123,9 @@ func TestUpdateConfigAndCalculations(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/api/horizon", nil)
 		req.AddCookie(cookie)
-		h.GetHorizon(rec, req)
+		h.Summary(rec, req)
 
-		var out HorizonSummaryDTO
+		var out SummaryDTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if out.TotalDeductions != 50000.0 || out.RemainingAmount != 50000.0 || out.CommittedRatio != 50.0 {
 			t.Errorf("unexpected calculations: %+v", out)

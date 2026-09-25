@@ -24,7 +24,7 @@ type ProjectionDTO struct {
 	CumulativeUncommitted float64 `json:"cumulative_uncommitted"`
 }
 
-type HorizonSummaryDTO struct {
+type SummaryDTO struct {
 	BaseAmount            float64           `json:"base_amount"`
 	Currency              string            `json:"currency"`
 	TotalDeductions       float64           `json:"total_deductions"`

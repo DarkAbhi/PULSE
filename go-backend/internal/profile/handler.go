@@ -21,8 +21,8 @@ func NewHandler(service *Service, userID func(*http.Request) (int64, error)) *Ha
 	return &Handler{service: service, userID: userID}
 }
 func (h *Handler) RegisterRoutes(r chi.Router) {
-	r.Get("/profile", h.GetProfile)
-	r.Put("/profile", h.SaveProfile)
+	r.Get("/profile", h.Show)
+	r.Put("/profile", h.Save)
 	r.Put("/profile/password", h.ChangePassword)
 }
 func (h *Handler) authenticatedUser(w http.ResponseWriter, r *http.Request) (int64, bool) {
@@ -37,12 +37,12 @@ func (h *Handler) authenticatedUser(w http.ResponseWriter, r *http.Request) (int
 	}
 	return id, true
 }
-func (h *Handler) GetProfile(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
 	}
-	name, has, err := h.service.Get(r.Context(), id)
+	name, has, err := h.service.Fetch(r.Context(), id)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -53,16 +53,16 @@ func (h *Handler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	webutil.WriteJSON(w, http.StatusOK, map[string]any{"has_profile": true, "name": name})
 }
-func (h *Handler) SaveProfile(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Save(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	defer r.Body.Close()
-	var body profileBody
+	var body saveBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 	name, err := h.service.Save(r.Context(), id, body.Name)
@@ -85,7 +85,7 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var body changePasswordBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 	err := h.service.ChangePassword(r.Context(), id, body.CurrentPassword, body.NewPassword)

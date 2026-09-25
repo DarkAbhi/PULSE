@@ -39,18 +39,18 @@ func subscriptionsLoginUser(t *testing.T, db *sql.DB) *http.Cookie {
 
 func TestCalculateMonthlyEquivalent(t *testing.T) {
 	tests := []struct {
-		amount float64
-		cycle  string
-		want   float64
+		amount   float64
+		cycle    string
+		expected float64
 	}{
-		{amount: 100, cycle: "monthly", want: 100},
-		{amount: 1200, cycle: "yearly", want: 100},
+		{amount: 100, cycle: "monthly", expected: 100},
+		{amount: 1200, cycle: "yearly", expected: 100},
 	}
 
 	for _, tt := range tests {
 		got := CalculateMonthlyEquivalent(tt.amount, tt.cycle)
-		if got != tt.want {
-			t.Errorf("CalculateMonthlyEquivalent(%f, %q) = %f, want %f", tt.amount, tt.cycle, got, tt.want)
+		if got != tt.expected {
+			t.Errorf("CalculateMonthlyEquivalent(%f, %q) = %f, want %f", tt.amount, tt.cycle, got, tt.expected)
 		}
 	}
 }
@@ -73,67 +73,67 @@ func TestCalculateNextRenewalAllCadences(t *testing.T) {
 		renewalDate *time.Time
 		cycle       string
 		refTime     time.Time
-		want        time.Time
+		expected    time.Time
 	}{
 		// --- MONTHLY ---
 		{
-			name:       "monthly: day 1 on Aug 2 -> Aug 1 passed -> Sept 1 (30 days away)",
+			name:       "monthly: day 1 on aug 2 -> aug 1 passed -> sept 1 (30 days away)",
 			billingDay: &bDay1,
 			cycle:      "monthly",
 			refTime:    refTime,
-			want:       time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
+			expected:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			name:       "monthly: day 2 on Aug 2 -> due today (Aug 2)",
+			name:       "monthly: day 2 on aug 2 -> due today (aug 2)",
 			billingDay: &bDay2,
 			cycle:      "monthly",
 			refTime:    refTime,
-			want:       time.Date(2026, 8, 2, 0, 0, 0, 0, time.UTC),
+			expected:   time.Date(2026, 8, 2, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			name:       "monthly: day 15 on Aug 2 -> in future (Aug 15)",
+			name:       "monthly: day 15 on aug 2 -> in future (aug 15)",
 			billingDay: &bDay15,
 			cycle:      "monthly",
 			refTime:    refTime,
-			want:       time.Date(2026, 8, 15, 0, 0, 0, 0, time.UTC),
+			expected:   time.Date(2026, 8, 15, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			name:       "monthly: day 31 in April (30-day month) -> clamps to April 30",
+			name:       "monthly: day 31 in april (30-day month) -> clamps to april 30",
 			billingDay: &bDay31,
 			cycle:      "monthly",
 			refTime:    time.Date(2026, 4, 10, 0, 0, 0, 0, time.UTC),
-			want:       time.Date(2026, 4, 30, 0, 0, 0, 0, time.UTC),
+			expected:   time.Date(2026, 4, 30, 0, 0, 0, 0, time.UTC),
 		},
 
 		// --- YEARLY ---
 		{
-			name:        "yearly: Dec 15 renewal date evaluated on Aug 2 -> Dec 15, 2026",
+			name:        "yearly: dec 15 renewal date evaluated on aug 2 -> dec 15, 2026",
 			renewalDate: &renDateDec15,
 			cycle:       "yearly",
 			refTime:     refTime,
-			want:        time.Date(2026, 12, 15, 0, 0, 0, 0, time.UTC),
+			expected:    time.Date(2026, 12, 15, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			name:        "yearly: Jan 15 renewal date evaluated on Aug 2 -> Jan 15, 2027 (next year)",
+			name:        "yearly: jan 15 renewal date evaluated on aug 2 -> jan 15, 2027 (next year)",
 			renewalDate: &renDateJan15,
 			cycle:       "yearly",
 			refTime:     refTime,
-			want:        time.Date(2027, 1, 15, 0, 0, 0, 0, time.UTC),
+			expected:    time.Date(2027, 1, 15, 0, 0, 0, 0, time.UTC),
 		},
 		{
-			name:        "yearly: Aug 2 renewal date evaluated on Aug 2 -> Aug 2, 2026 (due today)",
+			name:        "yearly: aug 2 renewal date evaluated on aug 2 -> aug 2, 2026 (due today)",
 			renewalDate: &renDateAug2,
 			cycle:       "yearly",
 			refTime:     refTime,
-			want:        time.Date(2026, 8, 2, 0, 0, 0, 0, time.UTC),
+			expected:    time.Date(2026, 8, 2, 0, 0, 0, 0, time.UTC),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := CalculateNextRenewal(tt.billingDay, tt.renewalDate, tt.cycle, tt.refTime)
-			if !got.Equal(tt.want) {
-				t.Errorf("CalculateNextRenewal(%v, %v, %q, %v) = %v, want %v", tt.billingDay, tt.renewalDate, tt.cycle, tt.refTime, got, tt.want)
+			if !got.Equal(tt.expected) {
+				t.Errorf("CalculateNextRenewal(%v, %v, %q, %v) = %v, want %v", tt.billingDay, tt.renewalDate, tt.cycle, tt.refTime, got, tt.expected)
 			}
 		})
 	}

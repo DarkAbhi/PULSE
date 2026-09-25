@@ -12,7 +12,7 @@ import (
 
 func testSessionLookup(db *sql.DB) SessionLookup {
 	return func(r *http.Request) (auth.SessionUser, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return auth.SessionUser{ID: user.ID, Username: user.Username}, err
 	}
 }

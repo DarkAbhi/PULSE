@@ -70,7 +70,7 @@ func (h *BudgetsHandler) CreateBudget(w http.ResponseWriter, r *http.Request) {
 
 	var in BudgetInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 
@@ -118,7 +118,7 @@ func (h *BudgetsHandler) UpdateBudget(w http.ResponseWriter, r *http.Request) {
 
 	var in BudgetInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 

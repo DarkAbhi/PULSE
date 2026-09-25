@@ -13,8 +13,8 @@ type SessionUser struct {
 	Username string
 }
 
-// GetSessionUser supports integration tests that seed sessions with database/sql.
-func GetSessionUser(db *sql.DB, r *http.Request) (SessionUser, error) {
+// LookupSessionUser supports integration tests that seed sessions with database/sql.
+func LookupSessionUser(db *sql.DB, r *http.Request) (SessionUser, error) {
 	token := ""
 	if header := r.Header.Get("Authorization"); strings.HasPrefix(strings.ToLower(header), "bearer ") {
 		token = strings.TrimSpace(header[7:])

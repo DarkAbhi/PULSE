@@ -6,19 +6,19 @@ import (
 	"strings"
 )
 
-var ErrInvalidInput = errors.New("invalid purchase")
+var ErrInvalidItem = errors.New("purchase: invalid item")
 
-type Purchase struct {
+type Item struct {
 	ID    int64
 	Name  string
 	Price float64
 	URL   *string
 }
 
-func NewPurchase(name string, price float64, url *string) (Purchase, error) {
+func NewItem(name string, price float64, url *string) (Item, error) {
 	name = strings.TrimSpace(name)
 	if name == "" || len([]rune(name)) > 160 || price < 0 {
-		return Purchase{}, ErrInvalidInput
+		return Item{}, ErrInvalidItem
 	}
-	return Purchase{Name: name, Price: price, URL: url}, nil
+	return Item{Name: name, Price: price, URL: url}, nil
 }

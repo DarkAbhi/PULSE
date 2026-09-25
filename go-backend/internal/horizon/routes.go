@@ -3,7 +3,7 @@ package horizon
 import "github.com/go-chi/chi/v5"
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
-	r.Get("/horizon", h.GetHorizon)
+	r.Get("/horizon", h.Summary)
 	r.Put("/horizon/config", h.UpdateConfig)
 	r.Post("/horizon/budgets", h.CreateBudget)
 	r.Put("/horizon/budgets/{id}", h.UpdateBudget)

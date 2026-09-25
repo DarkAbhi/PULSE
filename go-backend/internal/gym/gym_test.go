@@ -41,17 +41,17 @@ func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 	}
 }
 
-func TestGymVisitedToday(t *testing.T) {
+func TestVisitedToday(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := newTestGymHandler(t, db, dsn)
+	h := newTestHandler(t, db, dsn)
 
 	// 1. Check visited when not visited
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/workout/today", nil)
-		h.GymVisitedToday(rec, req)
+		h.VisitedToday(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", rec.Code)
@@ -75,7 +75,7 @@ func TestGymVisitedToday(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/workout/today", nil)
-		h.GymVisitedToday(rec, req)
+		h.VisitedToday(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", rec.Code)
@@ -92,11 +92,11 @@ func TestGymVisitedToday(t *testing.T) {
 	}
 }
 
-func TestListGymVisitsAndDelete(t *testing.T) {
+func TestListVisitsAndDelete(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := newTestGymHandler(t, db, dsn)
+	h := newTestHandler(t, db, dsn)
 
 	// Seed gym visits
 	_, err := db.Exec(`
@@ -119,13 +119,13 @@ func TestListGymVisitsAndDelete(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/gym-visits", nil)
-		h.ListGymVisits(rec, req)
+		h.ListVisits(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200 OK, got %d", rec.Code)
 		}
 
-		var out []gymVisitListItem
+		var out []visitListItem
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if len(out) != 2 {
 			t.Errorf("expected 2 visits, got %d", len(out))
@@ -141,7 +141,7 @@ func TestListGymVisitsAndDelete(t *testing.T) {
 		rctx.URLParams.Add("id", strconv.FormatInt(latestID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		h.DeleteGymVisit(rec, req)
+		h.DeleteVisit(rec, req)
 
 		if rec.Code != http.StatusNoContent {
 			t.Errorf("expected 204 No Content, got %d", rec.Code)
@@ -160,7 +160,7 @@ func TestExercisesManagement(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := newTestGymHandler(t, db, dsn)
+	h := newTestHandler(t, db, dsn)
 
 	// Seed visit
 	var visitID int64
@@ -177,13 +177,13 @@ func TestExercisesManagement(t *testing.T) {
 		rctx.URLParams.Add("id", strconv.FormatInt(visitID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		h.GetGymVisitExercises(rec, req)
+		h.ListVisitExercises(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", rec.Code)
 		}
 
-		var out []gymExerciseDTO
+		var out []exerciseDTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if len(out) != 0 {
 			t.Errorf("expected 0 exercises, got %d", len(out))
@@ -193,7 +193,7 @@ func TestExercisesManagement(t *testing.T) {
 	// 2. Create Exercise - Input validation error (reps = 0)
 	{
 		rec := httptest.NewRecorder()
-		body, _ := json.Marshal(createGymExerciseBody{
+		body, _ := json.Marshal(createExerciseBody{
 			Name: "Bench Press",
 			Sets: []exerciseSetInput{{Reps: 0, Weight: nil}},
 		})
@@ -202,7 +202,7 @@ func TestExercisesManagement(t *testing.T) {
 		rctx.URLParams.Add("id", strconv.FormatInt(visitID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		h.CreateGymVisitExercise(rec, req)
+		h.CreateVisitExercise(rec, req)
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("expected 400 Bad Request, got %d", rec.Code)
 		}
@@ -212,7 +212,7 @@ func TestExercisesManagement(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		weightVal := 60.5
-		body, _ := json.Marshal(createGymExerciseBody{
+		body, _ := json.Marshal(createExerciseBody{
 			Name: "Bench Press",
 			Sets: []exerciseSetInput{{Reps: 10, Weight: &weightVal}},
 		})
@@ -221,13 +221,13 @@ func TestExercisesManagement(t *testing.T) {
 		rctx.URLParams.Add("id", strconv.FormatInt(visitID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		h.CreateGymVisitExercise(rec, req)
+		h.CreateVisitExercise(rec, req)
 
 		if rec.Code != http.StatusCreated {
 			t.Errorf("expected 201 Created, got %d", rec.Code)
 		}
 
-		var out gymExerciseDTO
+		var out exerciseDTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if out.Name != "Bench Press" || len(out.Sets) != 1 || *out.Sets[0].Weight != weightVal || out.Sets[0].Reps != 10 {
 			t.Errorf("unexpected saved exercise details: %+v", out)
@@ -235,11 +235,11 @@ func TestExercisesManagement(t *testing.T) {
 	}
 }
 
-func TestMarkGymReminderVisited(t *testing.T) {
+func TestMarkReminderVisited(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := newTestGymHandler(t, db, dsn)
+	h := newTestHandler(t, db, dsn)
 	cookie := loginUser(t, db)
 
 	// Seed gym reminder notification
@@ -261,7 +261,7 @@ func TestMarkGymReminderVisited(t *testing.T) {
 	rctx.URLParams.Add("id", strconv.FormatInt(notificationID, 10))
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-	h.MarkGymReminderVisited(rec, req)
+	h.MarkReminderVisited(rec, req)
 
 	if rec.Code != http.StatusCreated {
 		t.Errorf("expected 201 Created, got %d", rec.Code)
@@ -282,7 +282,7 @@ func TestMarkGymReminderVisited(t *testing.T) {
 	}
 }
 
-func TestCreateDueGymReminders(t *testing.T) {
+func TestCreateDueReminders(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
@@ -291,7 +291,7 @@ func TestCreateDueGymReminders(t *testing.T) {
 	testTime := time.Date(2026, 7, 15, 16, 0, 0, 0, loc).UTC()
 
 	// 1. Run reminder creation
-	if err := newTestGymService(t, dsn).CreateDueReminders(context.Background(), testTime); err != nil {
+	if err := newTestService(t, dsn).CreateDueReminders(context.Background(), testTime); err != nil {
 		t.Fatal(err)
 	}
 
@@ -322,7 +322,7 @@ func TestCreateDueGymReminders(t *testing.T) {
 	}
 
 	// 2. Running a second time on the same day should not create duplicates
-	if err := newTestGymService(t, dsn).CreateDueReminders(context.Background(), testTime.Add(5*time.Minute)); err != nil {
+	if err := newTestService(t, dsn).CreateDueReminders(context.Background(), testTime.Add(5*time.Minute)); err != nil {
 		t.Fatal(err)
 	}
 	_ = db.QueryRow(`SELECT COUNT(*) FROM notifications WHERE user_id = 1 AND source = 'Gym reminder'`).Scan(&notifCount)
@@ -331,7 +331,7 @@ func TestCreateDueGymReminders(t *testing.T) {
 	}
 }
 
-func newTestGymService(t *testing.T, dsn string) *Service {
+func newTestService(t *testing.T, dsn string) *Service {
 	t.Helper()
 	pool, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
@@ -342,10 +342,10 @@ func newTestGymService(t *testing.T, dsn string) *Service {
 	return NewService(NewRepository(pool), notifications, auth.NewService(auth.NewRepository(pool)))
 }
 
-func newTestGymHandler(t *testing.T, db *sql.DB, dsn string) *Handler {
-	service := newTestGymService(t, dsn)
+func newTestHandler(t *testing.T, db *sql.DB, dsn string) *Handler {
+	service := newTestService(t, dsn)
 	return NewHandler(service, func(r *http.Request) (int64, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return user.ID, err
 	})
 }

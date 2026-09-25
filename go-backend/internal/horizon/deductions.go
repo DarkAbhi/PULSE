@@ -99,7 +99,7 @@ func (h *DeductionsHandler) CreateDeduction(w http.ResponseWriter, r *http.Reque
 
 	var in DeductionInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 
@@ -177,7 +177,7 @@ func (h *DeductionsHandler) UpdateDeduction(w http.ResponseWriter, r *http.Reque
 
 	var in DeductionInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
-		webutil.BadRequest(w, "invalid JSON")
+		webutil.BadRequest(w, "invalid json")
 		return
 	}
 

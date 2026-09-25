@@ -14,12 +14,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var ErrInvalidCredentials = errors.New("invalid username or password")
-var ErrSessionNotFound = errors.New("session is invalid or expired")
-var ErrUserNotFound = errors.New("user not found")
-var ErrWrongPassword = errors.New("current password is incorrect")
+var ErrInvalidCredentials = errors.New("auth: invalid username or password")
+var ErrSessionNotFound = errors.New("auth: session is invalid or expired")
+var ErrUserNotFound = errors.New("auth: user not found")
+var ErrWrongPassword = errors.New("auth: current password is incorrect")
 
-type authStore interface {
+type store interface {
 	LoginUser(context.Context, string) (int64, string, error)
 	CreateSession(context.Context, int64, string, time.Time) error
 	DeleteSession(context.Context, string) error
@@ -28,9 +28,9 @@ type authStore interface {
 	UpdatePasswordHash(context.Context, int64, string) error
 	ListUserIDs(context.Context) ([]int64, error)
 }
-type Service struct{ store authStore }
+type Service struct{ store store }
 
-func NewService(store authStore) *Service { return &Service{store: store} }
+func NewService(store store) *Service { return &Service{store: store} }
 
 func (s *Service) Login(ctx context.Context, username, password string) (string, time.Time, error) {
 	username = strings.TrimSpace(username)

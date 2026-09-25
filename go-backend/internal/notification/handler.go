@@ -11,7 +11,7 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
-type notificationDTO struct {
+type itemDTO struct {
 	ID         int64   `json:"id"`
 	Source     string  `json:"source"`
 	Title      string  `json:"title"`
@@ -31,9 +31,9 @@ func NewHandler(service *Service, userID func(*http.Request) (int64, error)) *Ha
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
-	r.Get("/notifications", h.ListNotifications)
-	r.Delete("/notifications", h.ClearNotifications)
-	r.Delete("/notifications/{id}", h.DismissNotification)
+	r.Get("/notifications", h.List)
+	r.Delete("/notifications", h.Clear)
+	r.Delete("/notifications/{id}", h.Dismiss)
 }
 
 func (h *Handler) authenticatedUser(w http.ResponseWriter, r *http.Request) (int64, bool) {
@@ -49,7 +49,7 @@ func (h *Handler) authenticatedUser(w http.ResponseWriter, r *http.Request) (int
 	return id, true
 }
 
-func (h *Handler) ListNotifications(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
@@ -68,14 +68,14 @@ func (h *Handler) ListNotifications(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	out := make([]notificationDTO, 0, len(items))
+	out := make([]itemDTO, 0, len(items))
 	for _, item := range items {
-		out = append(out, notificationDTO{ID: item.ID, Source: item.Source, Title: item.Title, Body: item.Body, TargetPath: item.TargetPath, Priority: int(item.Priority), CreatedAt: item.CreatedAt.UTC().Format("2006-01-02T15:04:05Z")})
+		out = append(out, itemDTO{ID: item.ID, Source: item.Source, Title: item.Title, Body: item.Body, TargetPath: item.TargetPath, Priority: int(item.Priority), CreatedAt: item.CreatedAt.UTC().Format("2006-01-02T15:04:05Z")})
 	}
 	webutil.WriteJSON(w, http.StatusOK, out)
 }
 
-func (h *Handler) DismissNotification(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Dismiss(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return
@@ -84,19 +84,19 @@ func (h *Handler) DismissNotification(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	updated, err := h.service.Dismiss(r.Context(), id, notificationID)
+	isUpdated, err := h.service.Dismiss(r.Context(), id, notificationID)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	if !updated {
+	if !isUpdated {
 		http.NotFound(w, r)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *Handler) ClearNotifications(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Clear(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
 	if !ok {
 		return

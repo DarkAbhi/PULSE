@@ -39,7 +39,7 @@ func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 	}
 }
 
-func TestNextMonthPurchases(t *testing.T) {
+func TestListNextMonth(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
@@ -49,7 +49,7 @@ func TestNextMonthPurchases(t *testing.T) {
 	}
 	defer pool.Close()
 	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return user.ID, err
 	})
 	cookie := loginUser(t, db)
@@ -69,7 +69,7 @@ func TestNextMonthPurchases(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/next-month-purchases", nil)
 	req.AddCookie(cookie)
-	h.NextMonthPurchases(rec, req)
+	h.ListNextMonth(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected 200 OK, got %d", rec.Code)
@@ -86,7 +86,7 @@ func TestNextMonthPurchases(t *testing.T) {
 	}
 }
 
-func TestCreateNextMonthPurchase(t *testing.T) {
+func TestCreateNextMonth(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
@@ -96,7 +96,7 @@ func TestCreateNextMonthPurchase(t *testing.T) {
 	}
 	defer pool.Close()
 	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return user.ID, err
 	})
 	cookie := loginUser(t, db)
@@ -106,7 +106,7 @@ func TestCreateNextMonthPurchase(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/next-month-purchases", bytes.NewReader([]byte("{invalid")))
 		req.AddCookie(cookie)
-		h.CreateNextMonthPurchase(rec, req)
+		h.CreateNextMonth(rec, req)
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("expected 400 Bad Request, got %d", rec.Code)
 		}
@@ -115,10 +115,10 @@ func TestCreateNextMonthPurchase(t *testing.T) {
 	// 2. Create - Empty name
 	{
 		rec := httptest.NewRecorder()
-		body, _ := json.Marshal(purchaseInput{Name: "", Price: 10.0})
+		body, _ := json.Marshal(input{Name: "", Price: 10.0})
 		req := httptest.NewRequest(http.MethodPost, "/next-month-purchases", bytes.NewReader(body))
 		req.AddCookie(cookie)
-		h.CreateNextMonthPurchase(rec, req)
+		h.CreateNextMonth(rec, req)
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("expected 400 Bad Request, got %d", rec.Code)
 		}
@@ -127,10 +127,10 @@ func TestCreateNextMonthPurchase(t *testing.T) {
 	// 3. Create - Negative price
 	{
 		rec := httptest.NewRecorder()
-		body, _ := json.Marshal(purchaseInput{Name: "Book", Price: -5.0})
+		body, _ := json.Marshal(input{Name: "Book", Price: -5.0})
 		req := httptest.NewRequest(http.MethodPost, "/next-month-purchases", bytes.NewReader(body))
 		req.AddCookie(cookie)
-		h.CreateNextMonthPurchase(rec, req)
+		h.CreateNextMonth(rec, req)
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("expected 400 Bad Request, got %d", rec.Code)
 		}
@@ -140,16 +140,16 @@ func TestCreateNextMonthPurchase(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		urlStr := "http://book.com"
-		body, _ := json.Marshal(purchaseInput{Name: "Go Book", Price: 49.99, URL: &urlStr})
+		body, _ := json.Marshal(input{Name: "Go Book", Price: 49.99, URL: &urlStr})
 		req := httptest.NewRequest(http.MethodPost, "/next-month-purchases", bytes.NewReader(body))
 		req.AddCookie(cookie)
-		h.CreateNextMonthPurchase(rec, req)
+		h.CreateNextMonth(rec, req)
 
 		if rec.Code != http.StatusCreated {
 			t.Errorf("expected 21 Created, got %d", rec.Code)
 		}
 
-		var out purchaseDTO
+		var out itemDTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if out.Name != "Go Book" || out.Price != 49.99 || out.URL == nil || *out.URL != urlStr {
 			t.Errorf("unexpected response: %+v", out)
@@ -157,7 +157,7 @@ func TestCreateNextMonthPurchase(t *testing.T) {
 	}
 }
 
-func TestDeleteNextMonthPurchase(t *testing.T) {
+func TestDeleteNextMonth(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
@@ -167,7 +167,7 @@ func TestDeleteNextMonthPurchase(t *testing.T) {
 	}
 	defer pool.Close()
 	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return user.ID, err
 	})
 	cookie := loginUser(t, db)
@@ -192,7 +192,7 @@ func TestDeleteNextMonthPurchase(t *testing.T) {
 	rctx.URLParams.Add("id", strconv.FormatInt(purchaseID, 10))
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-	h.DeleteNextMonthPurchase(rec, req)
+	h.DeleteNextMonth(rec, req)
 
 	if rec.Code != http.StatusNoContent {
 		t.Errorf("expected 204 No Content, got %d", rec.Code)
@@ -206,7 +206,7 @@ func TestDeleteNextMonthPurchase(t *testing.T) {
 	}
 }
 
-func TestClearNextMonthPurchases(t *testing.T) {
+func TestClearNextMonth(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
@@ -216,7 +216,7 @@ func TestClearNextMonthPurchases(t *testing.T) {
 	}
 	defer pool.Close()
 	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return user.ID, err
 	})
 	cookie := loginUser(t, db)
@@ -236,7 +236,7 @@ func TestClearNextMonthPurchases(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodDelete, "/next-month-purchases", nil)
 	req.AddCookie(cookie)
-	h.ClearNextMonthPurchases(rec, req)
+	h.ClearNextMonth(rec, req)
 
 	if rec.Code != http.StatusNoContent {
 		t.Errorf("expected 204 No Content, got %d", rec.Code)

@@ -1,7 +1,7 @@
 // Package profile manages user profile names and password changes.
 package profile
 
-type profileBody struct {
+type saveBody struct {
 	Name string `json:"name"`
 }
 type changePasswordBody struct {

@@ -14,23 +14,23 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{queries: query.New(db)}
 }
 
-func (r *Repository) List(ctx context.Context, userID int64, month string) ([]Purchase, error) {
+func (r *Repository) List(ctx context.Context, userID int64, month string) ([]Item, error) {
 	rows, err := r.queries.ListPurchases(ctx, query.ListPurchasesParams{UserID: userID, Column2: month})
 	if err != nil {
 		return nil, err
 	}
-	items := make([]Purchase, 0, len(rows))
+	items := make([]Item, 0, len(rows))
 	for _, row := range rows {
-		items = append(items, Purchase{ID: row.ID, Name: row.Name, Price: row.Price, URL: row.Url})
+		items = append(items, Item{ID: row.ID, Name: row.Name, Price: row.Price, URL: row.Url})
 	}
 	return items, nil
 }
 
-func (r *Repository) Create(ctx context.Context, userID int64, month string, item Purchase) (Purchase, error) {
+func (r *Repository) Create(ctx context.Context, userID int64, month string, item Item) (Item, error) {
 	row, err := r.queries.CreatePurchase(ctx, query.CreatePurchaseParams{
 		UserID: userID, Column2: month, Name: item.Name, Price: item.Price, Url: item.URL,
 	})
-	return Purchase{ID: row.ID, Name: row.Name, Price: row.Price, URL: row.Url}, err
+	return Item{ID: row.ID, Name: row.Name, Price: row.Price, URL: row.Url}, err
 }
 
 func (r *Repository) Delete(ctx context.Context, userID, id int64, month string) (bool, error) {

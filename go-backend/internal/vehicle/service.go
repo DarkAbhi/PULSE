@@ -9,7 +9,7 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/vehicle/query"
 )
 
-type VehicleChanges struct {
+type Changes struct {
 	Name                     *string
 	IsActive                 *bool
 	FrontTirePressureSolo    *float64
@@ -29,52 +29,52 @@ type PressureChanges struct {
 	RearTirePressure         *float64
 }
 
-var ErrNotFound = errors.New("vehicle not found")
+var ErrNotFound = errors.New("vehicle: not found")
 
 type ValidationError struct{ Message string }
 
 func (e ValidationError) Error() string { return e.Message }
 
-type vehicleStore interface {
-	ListVehicles(context.Context) ([]query.ListVehiclesRow, error)
-	CreateVehicle(context.Context, query.CreateVehicleParams) (query.CreateVehicleRow, error)
-	GetVehicle(context.Context, int64) (query.GetVehicleRow, error)
-	GetVehicleForUpdate(context.Context, int64) (query.GetVehicleForUpdateRow, error)
-	UpdateVehicle(context.Context, query.UpdateVehicleParams) (query.UpdateVehicleRow, error)
-	UpdateVehicleTirePressure(context.Context, query.UpdateVehicleTirePressureParams) (query.UpdateVehicleTirePressureRow, error)
-	DeleteVehicle(context.Context, int64) (int64, error)
+type store interface {
+	List(context.Context) ([]query.ListVehiclesRow, error)
+	Create(context.Context, query.CreateVehicleParams) (query.CreateVehicleRow, error)
+	Fetch(context.Context, int64) (query.GetVehicleRow, error)
+	FetchForUpdate(context.Context, int64) (query.GetVehicleForUpdateRow, error)
+	Update(context.Context, query.UpdateVehicleParams) (query.UpdateVehicleRow, error)
+	UpdateTirePressure(context.Context, query.UpdateVehicleTirePressureParams) (query.UpdateVehicleTirePressureRow, error)
+	Delete(context.Context, int64) (int64, error)
 }
-type Service struct{ store vehicleStore }
+type Service struct{ store store }
 
-func NewService(store vehicleStore) *Service { return &Service{store: store} }
+func NewService(store store) *Service { return &Service{store: store} }
 
 func (s *Service) List(ctx context.Context) ([]query.ListVehiclesRow, error) {
-	rows, err := s.store.ListVehicles(ctx)
+	rows, err := s.store.List(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list vehicles: %w", err)
 	}
 	return rows, nil
 }
-func (s *Service) Create(ctx context.Context, p VehicleChanges) (query.CreateVehicleRow, error) {
+func (s *Service) Create(ctx context.Context, p Changes) (query.CreateVehicleRow, error) {
 	if p.Name == nil || *p.Name == "" {
 		return query.CreateVehicleRow{}, ValidationError{"name is required"}
 	}
-	active := true
+	isActive := true
 	if p.IsActive != nil {
-		active = *p.IsActive
+		isActive = *p.IsActive
 	}
 	frontSolo, rearSolo := legacyPressures(p.FrontTirePressureSolo, p.FrontTirePressure), legacyPressures(p.RearTirePressureSolo, p.RearTirePressure)
 	if err := validatePressures(frontSolo, rearSolo, p.FrontTirePressurePillion, p.RearTirePressurePillion); err != nil {
 		return query.CreateVehicleRow{}, err
 	}
-	row, err := s.store.CreateVehicle(ctx, query.CreateVehicleParams{Name: *p.Name, IsActive: active, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion})
+	row, err := s.store.Create(ctx, query.CreateVehicleParams{Name: *p.Name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion})
 	if err != nil {
 		return query.CreateVehicleRow{}, fmt.Errorf("create vehicle: %w", err)
 	}
 	return row, nil
 }
-func (s *Service) Get(ctx context.Context, id int64) (query.GetVehicleRow, error) {
-	row, err := s.store.GetVehicle(ctx, id)
+func (s *Service) Fetch(ctx context.Context, id int64) (query.GetVehicleRow, error) {
+	row, err := s.store.Fetch(ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return query.GetVehicleRow{}, ErrNotFound
 	}
@@ -83,20 +83,20 @@ func (s *Service) Get(ctx context.Context, id int64) (query.GetVehicleRow, error
 	}
 	return row, nil
 }
-func (s *Service) Update(ctx context.Context, id int64, p VehicleChanges) (query.UpdateVehicleRow, error) {
-	current, err := s.store.GetVehicleForUpdate(ctx, id)
+func (s *Service) Update(ctx context.Context, id int64, p Changes) (query.UpdateVehicleRow, error) {
+	current, err := s.store.FetchForUpdate(ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return query.UpdateVehicleRow{}, ErrNotFound
 	}
 	if err != nil {
 		return query.UpdateVehicleRow{}, fmt.Errorf("get vehicle for update: %w", err)
 	}
-	name, active := current.Name, current.IsActive
+	name, isActive := current.Name, current.IsActive
 	if p.Name != nil {
 		name = *p.Name
 	}
 	if p.IsActive != nil {
-		active = *p.IsActive
+		isActive = *p.IsActive
 	}
 	frontSolo, rearSolo := current.FrontTirePressureSolo, current.RearTirePressureSolo
 	frontPillion, rearPillion := current.FrontTirePressurePillion, current.RearTirePressurePillion
@@ -115,7 +115,7 @@ func (s *Service) Update(ctx context.Context, id int64, p VehicleChanges) (query
 	if err := validatePressures(frontSolo, rearSolo, frontPillion, rearPillion); err != nil {
 		return query.UpdateVehicleRow{}, err
 	}
-	row, err := s.store.UpdateVehicle(ctx, query.UpdateVehicleParams{Name: name, IsActive: active, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, ID: id})
+	row, err := s.store.Update(ctx, query.UpdateVehicleParams{Name: name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, ID: id})
 	if err != nil {
 		return query.UpdateVehicleRow{}, fmt.Errorf("update vehicle: %w", err)
 	}
@@ -126,7 +126,7 @@ func (s *Service) UpdatePressure(ctx context.Context, id int64, p PressureChange
 	if err := validatePressures(frontSolo, rearSolo, p.FrontTirePressurePillion, p.RearTirePressurePillion); err != nil {
 		return query.UpdateVehicleTirePressureRow{}, err
 	}
-	row, err := s.store.UpdateVehicleTirePressure(ctx, query.UpdateVehicleTirePressureParams{FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion, ID: id})
+	row, err := s.store.UpdateTirePressure(ctx, query.UpdateVehicleTirePressureParams{FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion, ID: id})
 	if errors.Is(err, sql.ErrNoRows) {
 		return query.UpdateVehicleTirePressureRow{}, ErrNotFound
 	}
@@ -136,7 +136,7 @@ func (s *Service) UpdatePressure(ctx context.Context, id int64, p PressureChange
 	return row, nil
 }
 func (s *Service) Delete(ctx context.Context, id int64) error {
-	n, err := s.store.DeleteVehicle(ctx, id)
+	n, err := s.store.Delete(ctx, id)
 	if err != nil {
 		return fmt.Errorf("delete vehicle: %w", err)
 	}

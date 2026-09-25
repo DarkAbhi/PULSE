@@ -19,7 +19,6 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/DarkAbhi/life-backend/internal/notification"
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
-	"github.com/DarkAbhi/life-backend/internal/vehicle/query"
 )
 
 func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
@@ -41,20 +40,20 @@ func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 	}
 }
 
-func TestVehiclesCRUD(t *testing.T) {
+func TestCRUD(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 	pool := newTestPool(t, dsn)
 	defer pool.Close()
 
-	h := NewHandler(pool, NewService(query.New(pool)), testSessionLookup(db))
+	h := NewHandler(pool, NewService(NewRepository(pool)), testSessionLookup(db))
 
 	// 1. Create vehicle - missing name
 	{
 		rec := httptest.NewRecorder()
-		body, _ := json.Marshal(vehiclePayload{Name: nil})
+		body, _ := json.Marshal(payload{Name: nil})
 		req := httptest.NewRequest(http.MethodPost, "/vehicles", bytes.NewReader(body))
-		h.CreateVehicle(rec, req)
+		h.Create(rec, req)
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("expected 400 Bad Request, got %d", rec.Code)
 		}
@@ -65,15 +64,15 @@ func TestVehiclesCRUD(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		name := "Tesla Model 3"
-		body, _ := json.Marshal(vehiclePayload{Name: &name})
+		body, _ := json.Marshal(payload{Name: &name})
 		req := httptest.NewRequest(http.MethodPost, "/vehicles", bytes.NewReader(body))
-		h.CreateVehicle(rec, req)
+		h.Create(rec, req)
 
 		if rec.Code != http.StatusCreated {
 			t.Errorf("expected 201 Created, got %d", rec.Code)
 		}
 
-		var out vehicleDTO
+		var out DTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if out.Name != "Tesla Model 3" || !out.IsActive {
 			t.Errorf("unexpected vehicle response: %+v", out)
@@ -85,7 +84,7 @@ func TestVehiclesCRUD(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/vehicles", nil)
-		h.ListVehicles(rec, req)
+		h.List(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", rec.Code)
@@ -109,13 +108,13 @@ func TestVehiclesCRUD(t *testing.T) {
 		rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		h.GetVehicle(rec, req)
+		h.Show(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", rec.Code)
 		}
 
-		var out vehicleDTO
+		var out DTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if out.ID != vehicleID || out.Name != "Tesla Model 3" {
 			t.Errorf("unexpected vehicle details: %+v", out)
@@ -126,20 +125,20 @@ func TestVehiclesCRUD(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		name := "Tesla Model S"
-		active := false
-		body, _ := json.Marshal(vehiclePayload{Name: &name, IsActive: &active})
+		isActive := false
+		body, _ := json.Marshal(payload{Name: &name, IsActive: &isActive})
 		req := httptest.NewRequest(http.MethodPut, "/vehicles/{id}", bytes.NewReader(body))
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		h.UpdateVehicle(rec, req)
+		h.Update(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", rec.Code)
 		}
 
-		var out vehicleDTO
+		var out DTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if out.Name != "Tesla Model S" || out.IsActive {
 			t.Errorf("unexpected updated response: %+v", out)
@@ -160,7 +159,7 @@ func TestVehiclesCRUD(t *testing.T) {
 			rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-			h.UpdateVehicleTirePressure(rec, req)
+			h.UpdateTirePressure(rec, req)
 			if rec.Code != http.StatusBadRequest {
 				t.Errorf("expected 400 for negative tire pressure, got %d", rec.Code)
 			}
@@ -185,12 +184,12 @@ func TestVehiclesCRUD(t *testing.T) {
 			rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-			h.UpdateVehicleTirePressure(rec, req)
+			h.UpdateTirePressure(rec, req)
 			if rec.Code != http.StatusOK {
 				t.Errorf("expected 200 for tire pressure update, got %d: %s", rec.Code, rec.Body.String())
 			}
 
-			var out vehicleDTO
+			var out DTO
 			_ = json.NewDecoder(rec.Body).Decode(&out)
 			if out.FrontTirePressureSolo == nil || *out.FrontTirePressureSolo != 29.0 {
 				t.Errorf("expected front solo tire pressure 29.0, got %v", out.FrontTirePressureSolo)
@@ -206,7 +205,7 @@ func TestVehiclesCRUD(t *testing.T) {
 			}
 		}
 
-		// 5.5c Verify GetVehicle returns solo and pillion tire pressures
+		// 5.5c Verify Show returns solo and pillion tire pressures
 		{
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/vehicles/{id}", nil)
@@ -214,12 +213,12 @@ func TestVehiclesCRUD(t *testing.T) {
 			rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-			h.GetVehicle(rec, req)
+			h.Show(rec, req)
 			if rec.Code != http.StatusOK {
 				t.Errorf("expected 200, got %d", rec.Code)
 			}
 
-			var out vehicleDTO
+			var out DTO
 			_ = json.NewDecoder(rec.Body).Decode(&out)
 			if out.FrontTirePressureSolo == nil || *out.FrontTirePressureSolo != 29.0 {
 				t.Errorf("expected front solo tire pressure 29.0, got %v", out.FrontTirePressureSolo)
@@ -244,7 +243,7 @@ func TestVehiclesCRUD(t *testing.T) {
 		rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		h.DeleteVehicle(rec, req)
+		h.Delete(rec, req)
 
 		if rec.Code != http.StatusNoContent {
 			t.Errorf("expected 204, got %d", rec.Code)
@@ -265,7 +264,7 @@ func TestFuelFillupsAndEconomy(t *testing.T) {
 	pool := newTestPool(t, dsn)
 	defer pool.Close()
 
-	h := NewHandler(pool, NewService(query.New(pool)), testSessionLookup(db))
+	h := NewHandler(pool, NewService(NewRepository(pool)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	// Seed vehicle
@@ -346,7 +345,7 @@ func TestFuelFillupsAndEconomy(t *testing.T) {
 		rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		h.VehicleHistory(rec, req)
+		h.History(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", rec.Code)
@@ -366,7 +365,7 @@ func TestAirFillsAndReminders(t *testing.T) {
 	pool := newTestPool(t, dsn)
 	defer pool.Close()
 
-	h := NewHandler(pool, NewService(query.New(pool)), testSessionLookup(db))
+	h := NewHandler(pool, NewService(NewRepository(pool)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	// Seed vehicle
@@ -385,13 +384,13 @@ func TestAirFillsAndReminders(t *testing.T) {
 		rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		h.CreateVehicleAirFill(rec, req)
+		h.CreateAirFill(rec, req)
 
 		if rec.Code != http.StatusCreated {
 			t.Errorf("expected 201, got %d", rec.Code)
 		}
 
-		var out vehicleAirFillDTO
+		var out airFillDTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if out.VehicleID != vehicleID {
 			t.Errorf("expected vehicle ID %d, got %d", vehicleID, out.VehicleID)
@@ -404,13 +403,13 @@ func TestAirFillsAndReminders(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/vehicle-air-fills/latest", nil)
 		req.AddCookie(cookie)
 
-		h.ListLatestVehicleAirFills(rec, req)
+		h.ListLatestAirFills(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", rec.Code)
 		}
 
-		var out []vehicleAirFillDTO
+		var out []airFillDTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if len(out) != 1 || out[0].VehicleID != vehicleID {
 			t.Errorf("unexpected latest air fills: %+v", out)
@@ -443,13 +442,13 @@ func TestAirFillsAndReminders(t *testing.T) {
 	}
 }
 
-func TestVehicleHistoryAndDeleteLogs(t *testing.T) {
+func TestHistoryAndDeleteLogs(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 	pool := newTestPool(t, dsn)
 	defer pool.Close()
 
-	h := NewHandler(pool, NewService(query.New(pool)), testSessionLookup(db))
+	h := NewHandler(pool, NewService(NewRepository(pool)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	// Seed vehicle
@@ -483,7 +482,7 @@ func TestVehicleHistoryAndDeleteLogs(t *testing.T) {
 		rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		h.VehicleHistory(rec, req)
+		h.History(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", rec.Code)
@@ -515,7 +514,7 @@ func TestVehicleHistoryAndDeleteLogs(t *testing.T) {
 		rctx.URLParams.Add("airFillID", strconv.FormatInt(airFillID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
-		h.DeleteVehicleAirFill(rec, req)
+		h.DeleteAirFill(rec, req)
 
 		if rec.Code != http.StatusNoContent {
 			t.Errorf("expected 204 No Content, got %d", rec.Code)
@@ -559,7 +558,7 @@ func TestMaintenanceRecords(t *testing.T) {
 	defer shutdown()
 	pool := newTestPool(t, dsn)
 	defer pool.Close()
-	h := NewHandler(pool, NewService(query.New(pool)), testSessionLookup(db))
+	h := NewHandler(pool, NewService(NewRepository(pool)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	var vehicleID int64
@@ -606,7 +605,7 @@ func TestMaintenanceRecords(t *testing.T) {
 	}
 
 	rec, req = request(http.MethodGet, "/vehicles/{id}/history", nil, 0)
-	h.VehicleHistory(rec, req)
+	h.History(rec, req)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected history to load, got %d", rec.Code)
 	}
@@ -628,7 +627,7 @@ func floatPtr(value float64) *float64 { return &value }
 
 func testSessionLookup(db *sql.DB) SessionLookup {
 	return func(r *http.Request) (auth.SessionUser, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return auth.SessionUser{ID: user.ID, Username: user.Username}, err
 	}
 }

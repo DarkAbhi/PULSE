@@ -37,7 +37,7 @@ func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 	}
 }
 
-func TestListNotifications(t *testing.T) {
+func TestList(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
@@ -47,7 +47,7 @@ func TestListNotifications(t *testing.T) {
 	}
 	defer pool.Close()
 	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return user.ID, err
 	})
 	cookie := loginUser(t, db)
@@ -75,13 +75,13 @@ func TestListNotifications(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/notifications", nil)
 		req.AddCookie(cookie)
-		h.ListNotifications(rec, req)
+		h.List(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200 OK, got %d", rec.Code)
 		}
 
-		var out []notificationDTO
+		var out []itemDTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if len(out) != 2 {
 			t.Errorf("expected 2 active notifications, got %d", len(out))
@@ -98,13 +98,13 @@ func TestListNotifications(t *testing.T) {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/notifications?limit=1", nil)
 		req.AddCookie(cookie)
-		h.ListNotifications(rec, req)
+		h.List(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200 OK, got %d", rec.Code)
 		}
 
-		var out []notificationDTO
+		var out []itemDTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
 		if len(out) != 1 {
 			t.Errorf("expected 1 notification with limit=1, got %d", len(out))
@@ -112,7 +112,7 @@ func TestListNotifications(t *testing.T) {
 	}
 }
 
-func TestDismissNotification(t *testing.T) {
+func TestDismiss(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
@@ -122,7 +122,7 @@ func TestDismissNotification(t *testing.T) {
 	}
 	defer pool.Close()
 	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return user.ID, err
 	})
 	cookie := loginUser(t, db)
@@ -150,7 +150,7 @@ func TestDismissNotification(t *testing.T) {
 
 	// Direct parsing of id in parseID uses chi.URLParam(r, "id")
 	// Let's call the handler
-	h.DismissNotification(rec, req)
+	h.Dismiss(rec, req)
 
 	if rec.Code != http.StatusNoContent {
 		t.Errorf("expected 204 No Content, got %d", rec.Code)
@@ -167,7 +167,7 @@ func TestDismissNotification(t *testing.T) {
 	}
 }
 
-func TestClearNotifications(t *testing.T) {
+func TestClear(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
@@ -177,7 +177,7 @@ func TestClearNotifications(t *testing.T) {
 	}
 	defer pool.Close()
 	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) {
-		user, err := testhelper.GetSessionUser(db, r)
+		user, err := testhelper.LookupSessionUser(db, r)
 		return user.ID, err
 	})
 	cookie := loginUser(t, db)
@@ -196,7 +196,7 @@ func TestClearNotifications(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodDelete, "/notifications", nil)
 	req.AddCookie(cookie)
-	h.ClearNotifications(rec, req)
+	h.Clear(rec, req)
 
 	if rec.Code != http.StatusNoContent {
 		t.Errorf("expected 204 No Content, got %d", rec.Code)

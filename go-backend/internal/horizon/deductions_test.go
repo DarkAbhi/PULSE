@@ -60,8 +60,8 @@ func TestUpdateAndDeleteDeduction(t *testing.T) {
 	}
 
 	{
-		active := false
-		body, _ := json.Marshal(DeductionInput{Name: "Fiber Internet", Category: "bill", Amount: 2500.0, IsActive: &active})
+		isActive := false
+		body, _ := json.Marshal(DeductionInput{Name: "Fiber Internet", Category: "bill", Amount: 2500.0, IsActive: &isActive})
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPut, "/api/horizon/deductions/{id}", bytes.NewReader(body))
 		req.AddCookie(cookie)

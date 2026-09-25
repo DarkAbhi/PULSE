@@ -109,13 +109,13 @@ func TestLoginAndSession(t *testing.T) {
 		}
 	}
 
-	// 6. Test GetSessionUser directly (with cookie)
+	// 6. Test LookupSessionUser directly (with cookie)
 	{
 		req := httptest.NewRequest(http.MethodGet, "/auth/session", nil)
 		req.AddCookie(sessionCookie)
-		user, err := testhelper.GetSessionUser(db, req)
+		user, err := testhelper.LookupSessionUser(db, req)
 		if err != nil {
-			t.Fatalf("expected GetSessionUser to succeed with cookie, got %v", err)
+			t.Fatalf("expected LookupSessionUser to succeed with cookie, got %v", err)
 		}
 		if user.Username != "admin" {
 			t.Errorf("expected username admin, got %q", user.Username)
@@ -125,13 +125,13 @@ func TestLoginAndSession(t *testing.T) {
 		}
 	}
 
-	// 7. Test GetSessionUser directly (with Authorization: Bearer header)
+	// 7. Test LookupSessionUser directly (with Authorization: Bearer header)
 	{
 		req := httptest.NewRequest(http.MethodGet, "/auth/session", nil)
 		req.Header.Set("Authorization", "Bearer "+sessionCookie.Value)
-		user, err := testhelper.GetSessionUser(db, req)
+		user, err := testhelper.LookupSessionUser(db, req)
 		if err != nil {
-			t.Fatalf("expected GetSessionUser to succeed with Bearer header, got %v", err)
+			t.Fatalf("expected LookupSessionUser to succeed with Bearer header, got %v", err)
 		}
 		if user.Username != "admin" {
 			t.Errorf("expected username admin, got %q", user.Username)
@@ -139,7 +139,7 @@ func TestLoginAndSession(t *testing.T) {
 	}
 }
 
-func TestGetSessionUserExpired(t *testing.T) {
+func TestSessionUserExpired(t *testing.T) {
 	db, _, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
@@ -163,8 +163,8 @@ func TestGetSessionUserExpired(t *testing.T) {
 		Value: token,
 	})
 
-	_, err = testhelper.GetSessionUser(db, req)
+	_, err = testhelper.LookupSessionUser(db, req)
 	if err == nil {
-		t.Fatal("expected GetSessionUser to fail for expired token, but got nil error")
+		t.Fatal("expected LookupSessionUser to fail for expired token, but got nil error")
 	}
 }

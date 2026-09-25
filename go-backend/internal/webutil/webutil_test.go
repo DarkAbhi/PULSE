@@ -82,13 +82,13 @@ func TestServerError(t *testing.T) {
 
 func TestParseID(t *testing.T) {
 	tests := []struct {
-		name       string
-		paramValue string
-		wantID     int64
-		wantOk     bool
-		wantCode   int
+		name         string
+		paramValue   string
+		expectedID   int64
+		expectedOK   bool
+		expectedCode int
 	}{
-		{"valid positive ID", "123", 123, true, http.StatusOK},
+		{"valid positive id", "123", 123, true, http.StatusOK},
 		{"invalid string", "abc", 0, false, http.StatusBadRequest},
 		{"negative number", "-1", 0, false, http.StatusBadRequest},
 		{"zero number", "0", 0, false, http.StatusBadRequest},
@@ -105,14 +105,14 @@ func TestParseID(t *testing.T) {
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 			id, ok := ParseID(rec, req)
-			if ok != tt.wantOk {
-				t.Errorf("ParseID() ok = %v, wantOk = %v", ok, tt.wantOk)
+			if ok != tt.expectedOK {
+				t.Errorf("ParseID() ok = %v, wantOk = %v", ok, tt.expectedOK)
 			}
-			if id != tt.wantID {
-				t.Errorf("ParseID() id = %v, wantID = %v", id, tt.wantID)
+			if id != tt.expectedID {
+				t.Errorf("ParseID() id = %v, wantID = %v", id, tt.expectedID)
 			}
-			if !tt.wantOk && rec.Code != tt.wantCode {
-				t.Errorf("expected status code %d, got %d", tt.wantCode, rec.Code)
+			if !tt.expectedOK && rec.Code != tt.expectedCode {
+				t.Errorf("expected status code %d, got %d", tt.expectedCode, rec.Code)
 			}
 		})
 	}

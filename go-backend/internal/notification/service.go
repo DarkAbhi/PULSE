@@ -7,21 +7,21 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-type notificationStore interface {
-	List(context.Context, int64, int) ([]Notification, error)
+type store interface {
+	List(context.Context, int64, int) ([]Item, error)
 	Dismiss(context.Context, int64, int64) (bool, error)
 	Clear(context.Context, int64) error
 	CreateGymReminder(context.Context, pgx.Tx, int64, string) (int64, error)
-	GymReminderExists(context.Context, pgx.Tx, int64, int64) (bool, error)
+	HasGymReminder(context.Context, pgx.Tx, int64, int64) (bool, error)
 	DismissGymReminder(context.Context, pgx.Tx, int64) error
 	CreateAirFillReminder(context.Context, pgx.Tx, int64, int64, string) (int64, error)
 }
 
-type Service struct{ store notificationStore }
+type Service struct{ store store }
 
-func NewService(store notificationStore) *Service { return &Service{store: store} }
+func NewService(store store) *Service { return &Service{store: store} }
 
-func (s *Service) List(ctx context.Context, userID int64, limit int) ([]Notification, error) {
+func (s *Service) List(ctx context.Context, userID int64, limit int) ([]Item, error) {
 	items, err := s.store.List(ctx, userID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("list notifications: %w", err)
@@ -48,8 +48,8 @@ func (s *Service) CreateGymReminder(ctx context.Context, tx pgx.Tx, userID int64
 	}
 	return id, nil
 }
-func (s *Service) GymReminderExists(ctx context.Context, tx pgx.Tx, userID, id int64) (bool, error) {
-	ok, err := s.store.GymReminderExists(ctx, tx, userID, id)
+func (s *Service) HasGymReminder(ctx context.Context, tx pgx.Tx, userID, id int64) (bool, error) {
+	ok, err := s.store.HasGymReminder(ctx, tx, userID, id)
 	if err != nil {
 		return false, fmt.Errorf("check gym reminder: %w", err)
 	}

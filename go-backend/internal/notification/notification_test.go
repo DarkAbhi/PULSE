@@ -12,7 +12,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
 )
@@ -37,10 +39,15 @@ func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 }
 
 func TestListNotifications(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, poolErr := pgxpool.New(context.Background(), dsn)
+	if poolErr != nil {
+		t.Fatal(poolErr)
+	}
+	defer pool.Close()
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
 	cookie := loginUser(t, db)
 
 	// Seed notifications
@@ -104,10 +111,15 @@ func TestListNotifications(t *testing.T) {
 }
 
 func TestDismissNotification(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, poolErr := pgxpool.New(context.Background(), dsn)
+	if poolErr != nil {
+		t.Fatal(poolErr)
+	}
+	defer pool.Close()
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
 	cookie := loginUser(t, db)
 
 	// Seed notification
@@ -151,10 +163,15 @@ func TestDismissNotification(t *testing.T) {
 }
 
 func TestClearNotifications(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, poolErr := pgxpool.New(context.Background(), dsn)
+	if poolErr != nil {
+		t.Fatal(poolErr)
+	}
+	defer pool.Close()
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
 	cookie := loginUser(t, db)
 
 	// Seed notifications
@@ -191,4 +208,3 @@ func TestClearNotifications(t *testing.T) {
 func strconvFormat(i int64) string {
 	return strconv.FormatInt(i, 10)
 }
-

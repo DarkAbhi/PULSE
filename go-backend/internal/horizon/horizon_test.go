@@ -37,7 +37,7 @@ func TestGetHorizonDefault(t *testing.T) {
 	db, shutdown := testhelper.StartPostgres(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	h := NewHandler(db, NewService(db), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	rec := httptest.NewRecorder()
@@ -66,7 +66,7 @@ func TestUpdateConfigAndCalculations(t *testing.T) {
 	db, shutdown := testhelper.StartPostgres(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	h := NewHandler(db, NewService(db), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	// 1. Update Config with base_amount = 100000

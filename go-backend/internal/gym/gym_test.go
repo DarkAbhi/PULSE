@@ -13,7 +13,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/notification"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
 	"github.com/DarkAbhi/life-backend/internal/timeutil"
@@ -39,10 +42,10 @@ func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 }
 
 func TestGymVisitedToday(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	h := newTestGymHandler(t, db, dsn)
 
 	// 1. Check visited when not visited
 	{
@@ -90,10 +93,10 @@ func TestGymVisitedToday(t *testing.T) {
 }
 
 func TestListGymVisitsAndDelete(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	h := newTestGymHandler(t, db, dsn)
 
 	// Seed gym visits
 	_, err := db.Exec(`
@@ -154,10 +157,10 @@ func TestListGymVisitsAndDelete(t *testing.T) {
 }
 
 func TestExercisesManagement(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	h := newTestGymHandler(t, db, dsn)
 
 	// Seed visit
 	var visitID int64
@@ -233,10 +236,10 @@ func TestExercisesManagement(t *testing.T) {
 }
 
 func TestMarkGymReminderVisited(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	h := newTestGymHandler(t, db, dsn)
 	cookie := loginUser(t, db)
 
 	// Seed gym reminder notification
@@ -280,7 +283,7 @@ func TestMarkGymReminderVisited(t *testing.T) {
 }
 
 func TestCreateDueGymReminders(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
 	// Use Wednesday at 4:00 PM for the test run time (a weekday past 3:30 PM)
@@ -288,7 +291,9 @@ func TestCreateDueGymReminders(t *testing.T) {
 	testTime := time.Date(2026, 7, 15, 16, 0, 0, 0, loc).UTC()
 
 	// 1. Run reminder creation
-	createDueGymReminders(db, testTime)
+	if err := newTestGymService(t, dsn).CreateDueReminders(context.Background(), testTime); err != nil {
+		t.Fatal(err)
+	}
 
 	// Verify notification created for user 1
 	var notifCount int
@@ -317,9 +322,27 @@ func TestCreateDueGymReminders(t *testing.T) {
 	}
 
 	// 2. Running a second time on the same day should not create duplicates
-	createDueGymReminders(db, testTime.Add(5*time.Minute))
+	if err := newTestGymService(t, dsn).CreateDueReminders(context.Background(), testTime.Add(5*time.Minute)); err != nil {
+		t.Fatal(err)
+	}
 	_ = db.QueryRow(`SELECT COUNT(*) FROM notifications WHERE user_id = 1 AND source = 'Gym reminder'`).Scan(&notifCount)
 	if notifCount != 1 {
 		t.Errorf("expected still 1 notification, got %d", notifCount)
 	}
+}
+
+func newTestGymService(t *testing.T, dsn string) *Service {
+	t.Helper()
+	pool, err := pgxpool.New(context.Background(), dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+	notifications := notification.NewService(notification.NewRepository(pool))
+	return NewService(NewRepository(pool), notifications, auth.NewService(auth.NewRepository(pool)))
+}
+
+func newTestGymHandler(t *testing.T, db *sql.DB, dsn string) *Handler {
+	service := newTestGymService(t, dsn)
+	return NewHandler(service, func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
 }

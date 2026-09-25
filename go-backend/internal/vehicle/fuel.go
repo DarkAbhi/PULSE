@@ -12,8 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/DarkAbhi/life-backend/internal/auth"
-	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
+	"github.com/DarkAbhi/life-backend/internal/vehicle/query"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -35,7 +34,7 @@ type fuelFillupInput struct {
 
 // CreateFuelFillup logs a new fuel fill-up event.
 func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.GetSessionUser(h.DB, r)
+	user, err := h.sessionUser(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
 		return
@@ -73,7 +72,7 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer tx.Rollback()
-	q := sqlc.New(tx)
+	q := query.New(tx)
 	previousOdometer, err := q.GetMaxFuelOdometer(r.Context(), vehicleID)
 	if err != nil {
 		webutil.ServerError(w, err)
@@ -83,13 +82,13 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 		webutil.BadRequest(w, "odometer cannot be lower than a previous fuel entry")
 		return
 	}
-	fillupID, err := q.CreateFuelFillup(r.Context(), sqlc.CreateFuelFillupParams{VehicleID: vehicleID, UserID: user.ID, OdometerKm: in.OdometerKM, FilledAt: filledAt, StationName: nullableString(in.StationName), Notes: nullableString(in.Notes)})
+	fillupID, err := q.CreateFuelFillup(r.Context(), query.CreateFuelFillupParams{VehicleID: vehicleID, UserID: user.ID, OdometerKm: in.OdometerKM, FilledAt: filledAt, StationName: nullableString(in.StationName), Notes: nullableString(in.Notes)})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 	for _, item := range in.Items {
-		if err := q.CreateFuelItem(r.Context(), sqlc.CreateFuelItemParams{FillupID: fillupID, FuelType: item.FuelType, FillType: item.FillType, Quantity: *item.Quantity, UnitPrice: *item.UnitPrice, TotalCost: *item.TotalCost}); err != nil {
+		if err := q.CreateFuelItem(r.Context(), query.CreateFuelItemParams{FillupID: fillupID, FuelType: item.FuelType, FillType: item.FillType, Quantity: *item.Quantity, UnitPrice: *item.UnitPrice, TotalCost: *item.TotalCost}); err != nil {
 			webutil.ServerError(w, err)
 			return
 		}
@@ -107,7 +106,7 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 
 // UpdateFuelFillup updates an existing fuel fillup record.
 func (h *Handler) UpdateFuelFillup(w http.ResponseWriter, r *http.Request) {
-	user, err := auth.GetSessionUser(h.DB, r)
+	user, err := h.sessionUser(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
 		return
@@ -150,15 +149,15 @@ func (h *Handler) UpdateFuelFillup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer tx.Rollback()
-	q := sqlc.New(tx)
-	if _, err := q.LockFuelFillup(r.Context(), sqlc.LockFuelFillupParams{ID: fillupID, VehicleID: vehicleID, UserID: user.ID}); errors.Is(err, sql.ErrNoRows) {
+	q := query.New(tx)
+	if _, err := q.LockFuelFillup(r.Context(), query.LockFuelFillupParams{ID: fillupID, VehicleID: vehicleID, UserID: user.ID}); errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
 	} else if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	if err := q.UpdateFuelFillup(r.Context(), sqlc.UpdateFuelFillupParams{OdometerKm: in.OdometerKM, FilledAt: filledAt, StationName: nullableString(in.StationName), Notes: nullableString(in.Notes), ID: fillupID}); err != nil {
+	if err := q.UpdateFuelFillup(r.Context(), query.UpdateFuelFillupParams{OdometerKm: in.OdometerKM, FilledAt: filledAt, StationName: nullableString(in.StationName), Notes: nullableString(in.Notes), ID: fillupID}); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
@@ -167,7 +166,7 @@ func (h *Handler) UpdateFuelFillup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, item := range in.Items {
-		if err := q.CreateFuelItem(r.Context(), sqlc.CreateFuelItemParams{FillupID: fillupID, FuelType: item.FuelType, FillType: item.FillType, Quantity: *item.Quantity, UnitPrice: *item.UnitPrice, TotalCost: *item.TotalCost}); err != nil {
+		if err := q.CreateFuelItem(r.Context(), query.CreateFuelItemParams{FillupID: fillupID, FuelType: item.FuelType, FillType: item.FillType, Quantity: *item.Quantity, UnitPrice: *item.UnitPrice, TotalCost: *item.TotalCost}); err != nil {
 			webutil.ServerError(w, err)
 			return
 		}
@@ -218,7 +217,7 @@ func normalizeFuelItem(item *fuelItemInput) error {
 }
 
 func (h *Handler) latestFuelEconomy(vehicleID int64, fuelType string) *float64 {
-	rows, err := sqlc.New(h.DB).ListFuelEconomyEntries(context.Background(), sqlc.ListFuelEconomyEntriesParams{VehicleID: vehicleID, FuelType: fuelType})
+	rows, err := query.New(h.DB).ListFuelEconomyEntries(context.Background(), query.ListFuelEconomyEntriesParams{VehicleID: vehicleID, FuelType: fuelType})
 	if err != nil {
 		return nil
 	}
@@ -304,7 +303,7 @@ func calculateAverageFuelEconomies(entries []fuelMileageEntry) map[string]float6
 }
 
 func (h *Handler) averageFuelEconomies(vehicleID, userID int64) map[string]float64 {
-	rows, err := sqlc.New(h.DB).ListAverageFuelEconomyEntries(context.Background(), sqlc.ListAverageFuelEconomyEntriesParams{VehicleID: vehicleID, UserID: userID})
+	rows, err := query.New(h.DB).ListAverageFuelEconomyEntries(context.Background(), query.ListAverageFuelEconomyEntriesParams{VehicleID: vehicleID, UserID: userID})
 	if err != nil {
 		return map[string]float64{}
 	}

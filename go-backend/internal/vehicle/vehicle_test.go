@@ -14,8 +14,12 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/DarkAbhi/life-backend/internal/auth"
+	"github.com/DarkAbhi/life-backend/internal/notification"
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
+	"github.com/DarkAbhi/life-backend/internal/vehicle/query"
 )
 
 func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
@@ -41,7 +45,7 @@ func TestVehiclesCRUD(t *testing.T) {
 	db, shutdown := testhelper.StartPostgres(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	h := NewHandler(db, NewService(query.New(db)), testSessionLookup(db))
 
 	// 1. Create vehicle - missing name
 	{
@@ -257,7 +261,7 @@ func TestFuelFillupsAndEconomy(t *testing.T) {
 	db, shutdown := testhelper.StartPostgres(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	h := NewHandler(db, NewService(query.New(db)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	// Seed vehicle
@@ -353,10 +357,10 @@ func TestFuelFillupsAndEconomy(t *testing.T) {
 }
 
 func TestAirFillsAndReminders(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	h := NewHandler(db, NewService(query.New(db)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	// Seed vehicle
@@ -414,7 +418,15 @@ func TestAirFillsAndReminders(t *testing.T) {
 		t.Fatalf("failed to update filled_at: %v", err)
 	}
 
-	createDueAirFillReminders(db)
+	pool, err := pgxpool.New(context.Background(), dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	reminders := NewReminderService(pool, notification.NewService(notification.NewRepository(pool)))
+	if err := reminders.CreateDue(context.Background()); err != nil {
+		t.Fatal(err)
+	}
 
 	// Verify notification generated
 	var notifCount int
@@ -434,7 +446,7 @@ func TestVehicleHistoryAndDeleteLogs(t *testing.T) {
 	db, shutdown := testhelper.StartPostgres(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	h := NewHandler(db, NewService(query.New(db)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	// Seed vehicle
@@ -542,7 +554,7 @@ func TestVehicleHistoryAndDeleteLogs(t *testing.T) {
 func TestMaintenanceRecords(t *testing.T) {
 	db, shutdown := testhelper.StartPostgres(t)
 	defer shutdown()
-	h := NewHandler(db)
+	h := NewHandler(db, NewService(query.New(db)), testSessionLookup(db))
 	cookie := loginUser(t, db)
 
 	var vehicleID int64
@@ -608,3 +620,7 @@ func TestMaintenanceRecords(t *testing.T) {
 }
 
 func floatPtr(value float64) *float64 { return &value }
+
+func testSessionLookup(db *sql.DB) SessionLookup {
+	return func(r *http.Request) (auth.SessionUser, error) { return auth.GetSessionUser(db, r) }
+}

@@ -13,7 +13,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
 	"github.com/DarkAbhi/life-backend/internal/timeutil"
@@ -39,10 +41,15 @@ func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 }
 
 func TestNextMonthPurchases(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, poolErr := pgxpool.New(context.Background(), dsn)
+	if poolErr != nil {
+		t.Fatal(poolErr)
+	}
+	defer pool.Close()
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
 	cookie := loginUser(t, db)
 
 	// Seed purchases
@@ -78,10 +85,15 @@ func TestNextMonthPurchases(t *testing.T) {
 }
 
 func TestCreateNextMonthPurchase(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, poolErr := pgxpool.New(context.Background(), dsn)
+	if poolErr != nil {
+		t.Fatal(poolErr)
+	}
+	defer pool.Close()
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
 	cookie := loginUser(t, db)
 
 	// 1. Create - Invalid JSON
@@ -141,10 +153,15 @@ func TestCreateNextMonthPurchase(t *testing.T) {
 }
 
 func TestDeleteNextMonthPurchase(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, poolErr := pgxpool.New(context.Background(), dsn)
+	if poolErr != nil {
+		t.Fatal(poolErr)
+	}
+	defer pool.Close()
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
 	cookie := loginUser(t, db)
 
 	// Seed one purchase
@@ -182,10 +199,15 @@ func TestDeleteNextMonthPurchase(t *testing.T) {
 }
 
 func TestClearNextMonthPurchases(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, poolErr := pgxpool.New(context.Background(), dsn)
+	if poolErr != nil {
+		t.Fatal(poolErr)
+	}
+	defer pool.Close()
+	h := NewHandler(NewService(NewRepository(pool)), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
 	cookie := loginUser(t, db)
 
 	// Seed purchases

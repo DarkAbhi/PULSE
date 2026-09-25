@@ -1,7 +1,6 @@
 package db
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,16 +9,6 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
-
-func buildDSN() string {
-	host := getenv("DB_HOSTNAME", "localhost")
-	port := getenv("DB_PORT", "5432")
-	user := getenv("DB_USERNAME", "user")
-	pass := getenv("DB_PASSWORD", "pass")
-	name := getenv("DB_NAME", "life")
-	ssl := getenv("DB_SSLMODE", "disable")
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s&timezone=UTC", user, pass, host, port, name, ssl)
-}
 
 func migrationsPath() (string, error) {
 	// Expecting ./migrations at repo root (adjust if yours differs)
@@ -35,12 +24,11 @@ func migrationsPath() (string, error) {
 	return "file://" + p, nil
 }
 
-func RunMigrations() error {
+func RunMigrations(dsn string) error {
 	src, err := migrationsPath()
 	if err != nil {
 		return err
 	}
-	dsn := buildDSN()
 	m, err := migrate.New(src, dsn)
 	if err != nil {
 		return err
@@ -53,12 +41,11 @@ func RunMigrations() error {
 	return nil
 }
 
-func RollbackMigration() error {
+func RollbackMigration(dsn string) error {
 	src, err := migrationsPath()
 	if err != nil {
 		return err
 	}
-	dsn := buildDSN()
 	m, err := migrate.New(src, dsn)
 	if err != nil {
 		return err
@@ -71,12 +58,11 @@ func RollbackMigration() error {
 	return nil
 }
 
-func ShowMigrationVersion() error {
+func ShowMigrationVersion(dsn string) error {
 	src, err := migrationsPath()
 	if err != nil {
 		return err
 	}
-	dsn := buildDSN()
 	m, err := migrate.New(src, dsn)
 	if err != nil {
 		return err
@@ -94,12 +80,11 @@ func ShowMigrationVersion() error {
 	return nil
 }
 
-func RunMigrationSteps(n int) error {
+func RunMigrationSteps(dsn string, n int) error {
 	src, err := migrationsPath()
 	if err != nil {
 		return err
 	}
-	dsn := buildDSN()
 	m, err := migrate.New(src, dsn)
 	if err != nil {
 		return err
@@ -110,13 +95,6 @@ func RunMigrationSteps(n int) error {
 	}
 	log.Printf("🔂 applied steps: %d\n", n)
 	return nil
-}
-
-func getenv(k, def string) string {
-	if v := os.Getenv(k); v != "" {
-		return v
-	}
-	return def
 }
 
 func closeSilently(m *migrate.Migrate) {

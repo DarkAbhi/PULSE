@@ -2,11 +2,27 @@ version: "2"
 sql:
   - engine: postgresql
     schema: migrations
-    queries: queries
+    queries: internal/horizon/query
     gen:
       go:
-        package: sqlc
-        out: internal/db/sqlc
+        package: query
+        out: internal/horizon/query
+        sql_package: database/sql
+        overrides:
+          - db_type: pg_catalog.numeric
+            go_type: float64
+          - db_type: pg_catalog.numeric
+            nullable: true
+            go_type:
+              type: float64
+              pointer: true
+  - engine: postgresql
+    schema: migrations
+    queries: internal/vehicle/query
+    gen:
+      go:
+        package: query
+        out: internal/vehicle/query
         sql_package: database/sql
         overrides:
           - db_type: pg_catalog.numeric

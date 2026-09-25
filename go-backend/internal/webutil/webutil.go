@@ -2,6 +2,7 @@ package webutil
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -23,7 +24,8 @@ func Unauthorized(w http.ResponseWriter, msg string) {
 }
 
 func ServerError(w http.ResponseWriter, err error) {
-	WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	slog.Error("request failed", "error", err)
+	WriteJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 }
 
 func ParseID(w http.ResponseWriter, r *http.Request) (int64, bool) {

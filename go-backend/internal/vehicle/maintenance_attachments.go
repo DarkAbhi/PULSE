@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -19,7 +18,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
+	"github.com/DarkAbhi/life-backend/internal/vehicle/query"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -38,12 +37,19 @@ type attachmentStorage struct {
 	client *s3.Client
 }
 
-func newAttachmentStorage(ctx context.Context) (*attachmentStorage, error) {
-	bucket := strings.TrimSpace(os.Getenv("S3_BUCKET"))
+type AttachmentConfig struct {
+	Bucket         string
+	Region         string
+	Endpoint       string
+	ForcePathStyle bool
+}
+
+func newAttachmentStorage(ctx context.Context, settings AttachmentConfig) (*attachmentStorage, error) {
+	bucket := strings.TrimSpace(settings.Bucket)
 	if bucket == "" {
 		return nil, nil
 	}
-	region := strings.TrimSpace(os.Getenv("AWS_REGION"))
+	region := strings.TrimSpace(settings.Region)
 	if region == "" {
 		return nil, errors.New("AWS_REGION must be set when S3_BUCKET is configured")
 	}
@@ -52,28 +58,29 @@ func newAttachmentStorage(ctx context.Context) (*attachmentStorage, error) {
 		return nil, err
 	}
 	options := []func(*s3.Options){}
-	if endpoint := strings.TrimSpace(os.Getenv("S3_ENDPOINT")); endpoint != "" {
+	if endpoint := strings.TrimSpace(settings.Endpoint); endpoint != "" {
 		options = append(options, func(o *s3.Options) { o.BaseEndpoint = aws.String(endpoint) })
 	}
-	if os.Getenv("S3_FORCE_PATH_STYLE") == "true" {
+	if settings.ForcePathStyle {
 		options = append(options, func(o *s3.Options) { o.UsePathStyle = true })
 	}
 	return &attachmentStorage{bucket: bucket, client: s3.NewFromConfig(config, options...)}, nil
 }
 
-func (h *Handler) attachmentStore(ctx context.Context) (*attachmentStorage, error) {
-	if h.attachments != nil {
-		return h.attachments, nil
-	}
-	store, err := newAttachmentStorage(ctx)
+func (h *Handler) ConfigureAttachments(ctx context.Context, settings AttachmentConfig) error {
+	store, err := newAttachmentStorage(ctx, settings)
 	if err != nil {
-		return nil, err
-	}
-	if store == nil {
-		return nil, errors.New("S3 uploads are not configured")
+		return err
 	}
 	h.attachments = store
-	return store, nil
+	return nil
+}
+
+func (h *Handler) attachmentStore() (*attachmentStorage, error) {
+	if h.attachments == nil {
+		return nil, errors.New("S3 uploads are not configured")
+	}
+	return h.attachments, nil
 }
 
 func (h *Handler) CreateMaintenanceAttachment(w http.ResponseWriter, r *http.Request) {
@@ -121,7 +128,7 @@ func (h *Handler) CreateMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
-	store, err := h.attachmentStore(r.Context())
+	store, err := h.attachmentStore()
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -139,7 +146,7 @@ func (h *Handler) CreateMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 		webutil.ServerError(w, err)
 		return
 	}
-	row, err := sqlc.New(h.DB).CreateMaintenanceAttachment(r.Context(), sqlc.CreateMaintenanceAttachmentParams{MaintenanceRecordID: recordID, UserID: user.ID, StorageKey: key, FileName: fileName, ContentType: contentType, SizeBytes: header.Size})
+	row, err := query.New(h.DB).CreateMaintenanceAttachment(r.Context(), query.CreateMaintenanceAttachmentParams{MaintenanceRecordID: recordID, UserID: user.ID, StorageKey: key, FileName: fileName, ContentType: contentType, SizeBytes: header.Size})
 	if err != nil {
 		_, _ = store.client.DeleteObject(r.Context(), &s3.DeleteObjectInput{Bucket: aws.String(store.bucket), Key: aws.String(key)})
 		webutil.ServerError(w, err)
@@ -168,7 +175,7 @@ func (h *Handler) DownloadMaintenanceAttachment(w http.ResponseWriter, r *http.R
 		webutil.BadRequest(w, "invalid attachment id")
 		return
 	}
-	key, err := sqlc.New(h.DB).GetMaintenanceAttachmentKey(r.Context(), sqlc.GetMaintenanceAttachmentKeyParams{ID: attachmentID, MaintenanceRecordID: recordID, VehicleID: vehicleID, UserID: user.ID})
+	key, err := query.New(h.DB).GetMaintenanceAttachmentKey(r.Context(), query.GetMaintenanceAttachmentKeyParams{ID: attachmentID, MaintenanceRecordID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
@@ -177,7 +184,7 @@ func (h *Handler) DownloadMaintenanceAttachment(w http.ResponseWriter, r *http.R
 		webutil.ServerError(w, err)
 		return
 	}
-	store, err := h.attachmentStore(r.Context())
+	store, err := h.attachmentStore()
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -210,7 +217,7 @@ func (h *Handler) DeleteMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 		webutil.BadRequest(w, "invalid attachment id")
 		return
 	}
-	key, err := sqlc.New(h.DB).GetMaintenanceAttachmentKey(r.Context(), sqlc.GetMaintenanceAttachmentKeyParams{ID: attachmentID, MaintenanceRecordID: recordID, VehicleID: vehicleID, UserID: user.ID})
+	key, err := query.New(h.DB).GetMaintenanceAttachmentKey(r.Context(), query.GetMaintenanceAttachmentKeyParams{ID: attachmentID, MaintenanceRecordID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
@@ -219,7 +226,7 @@ func (h *Handler) DeleteMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 		webutil.ServerError(w, err)
 		return
 	}
-	store, err := h.attachmentStore(r.Context())
+	store, err := h.attachmentStore()
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -228,7 +235,7 @@ func (h *Handler) DeleteMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 		webutil.ServerError(w, err)
 		return
 	}
-	if err := sqlc.New(h.DB).DeleteMaintenanceAttachment(r.Context(), sqlc.DeleteMaintenanceAttachmentParams{ID: attachmentID, UserID: user.ID}); err != nil {
+	if err := query.New(h.DB).DeleteMaintenanceAttachment(r.Context(), query.DeleteMaintenanceAttachmentParams{ID: attachmentID, UserID: user.ID}); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
@@ -236,7 +243,7 @@ func (h *Handler) DeleteMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 }
 
 func (h *Handler) deleteMaintenanceAttachmentObjects(ctx context.Context, recordID, userID int64) error {
-	rows, err := sqlc.New(h.DB).ListMaintenanceAttachmentKeys(ctx, sqlc.ListMaintenanceAttachmentKeysParams{MaintenanceRecordID: recordID, UserID: userID})
+	rows, err := query.New(h.DB).ListMaintenanceAttachmentKeys(ctx, query.ListMaintenanceAttachmentKeysParams{MaintenanceRecordID: recordID, UserID: userID})
 	if err != nil {
 		return err
 	}
@@ -244,7 +251,7 @@ func (h *Handler) deleteMaintenanceAttachmentObjects(ctx context.Context, record
 	if len(keys) == 0 {
 		return nil
 	}
-	store, err := h.attachmentStore(ctx)
+	store, err := h.attachmentStore()
 	if err != nil {
 		return err
 	}
@@ -257,7 +264,7 @@ func (h *Handler) deleteMaintenanceAttachmentObjects(ctx context.Context, record
 }
 
 func (h *Handler) ownsMaintenanceRecord(ctx context.Context, recordID, vehicleID, userID int64) bool {
-	found, err := sqlc.New(h.DB).OwnsMaintenanceRecord(ctx, sqlc.OwnsMaintenanceRecordParams{ID: recordID, VehicleID: vehicleID, UserID: userID})
+	found, err := query.New(h.DB).OwnsMaintenanceRecord(ctx, query.OwnsMaintenanceRecordParams{ID: recordID, VehicleID: vehicleID, UserID: userID})
 	if err != nil {
 		return false
 	}

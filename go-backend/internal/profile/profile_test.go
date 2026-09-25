@@ -2,6 +2,7 @@ package profile
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
@@ -13,7 +14,9 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
@@ -36,10 +39,15 @@ func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 }
 
 func TestGetProfile(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, poolErr := pgxpool.New(context.Background(), dsn)
+	if poolErr != nil {
+		t.Fatal(poolErr)
+	}
+	defer pool.Close()
+	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
 	cookie := loginUser(t, db)
 
 	// 1. GetProfile when user doesn't have a profile yet
@@ -89,10 +97,15 @@ func TestGetProfile(t *testing.T) {
 }
 
 func TestSaveProfile(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, poolErr := pgxpool.New(context.Background(), dsn)
+	if poolErr != nil {
+		t.Fatal(poolErr)
+	}
+	defer pool.Close()
+	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
 	cookie := loginUser(t, db)
 
 	// 1. Save profile - invalid JSON
@@ -170,10 +183,15 @@ func TestSaveProfile(t *testing.T) {
 }
 
 func TestChangePassword(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, poolErr := pgxpool.New(context.Background(), dsn)
+	if poolErr != nil {
+		t.Fatal(poolErr)
+	}
+	defer pool.Close()
+	h := NewHandler(NewService(NewRepository(pool), auth.NewService(auth.NewRepository(pool))), func(r *http.Request) (int64, error) { user, err := auth.GetSessionUser(db, r); return user.ID, err })
 	cookie := loginUser(t, db)
 
 	// Seed user in database
@@ -248,4 +266,3 @@ func TestChangePassword(t *testing.T) {
 		}
 	}
 }
-

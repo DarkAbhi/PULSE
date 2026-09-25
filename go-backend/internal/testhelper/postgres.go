@@ -20,6 +20,12 @@ import (
 
 // StartPostgres starts a temporary postgres container, runs migrations, and returns the DB connection and a cleanup function.
 func StartPostgres(t *testing.T) (*sql.DB, func()) {
+	db, _, stop := StartPostgresWithDSN(t)
+	return db, stop
+}
+
+// StartPostgresWithDSN also returns the connection string for pgxpool-backed slices.
+func StartPostgresWithDSN(t *testing.T) (*sql.DB, string, func()) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -89,7 +95,7 @@ func StartPostgres(t *testing.T) (*sql.DB, func()) {
 		t.Fatalf("migrate up: %v", err)
 	}
 
-	return db, func() {
+	return db, dsn, func() {
 		_ = db.Close()
 		_ = container.Terminate(ctx)
 	}

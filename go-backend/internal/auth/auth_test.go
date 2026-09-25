@@ -12,7 +12,9 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"context"
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func TestBootstrapPasswordHash(t *testing.T) {
@@ -23,10 +25,15 @@ func TestBootstrapPasswordHash(t *testing.T) {
 }
 
 func TestLoginAndSession(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
-	h := NewHandler(db)
+	pool, poolErr := pgxpool.New(context.Background(), dsn)
+	if poolErr != nil {
+		t.Fatal(poolErr)
+	}
+	defer pool.Close()
+	h := NewHandler(NewService(NewRepository(pool)), false)
 
 	// 1. Test Login - Missing fields
 	{
@@ -133,7 +140,7 @@ func TestLoginAndSession(t *testing.T) {
 }
 
 func TestGetSessionUserExpired(t *testing.T) {
-	db, shutdown := testhelper.StartPostgres(t)
+	db, _, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 
 	// Insert an expired session manually

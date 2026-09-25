@@ -75,8 +75,8 @@ func TestServerError(t *testing.T) {
 
 	var out map[string]string
 	_ = json.NewDecoder(rec.Body).Decode(&out)
-	if out["error"] != "db failure" {
-		t.Errorf("expected error field to match, got %v", out)
+	if out["error"] != "internal server error" {
+		t.Errorf("expected generic error, got %v", out)
 	}
 }
 

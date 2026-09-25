@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"github.com/DarkAbhi/life-backend/internal/auth"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,8 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/DarkAbhi/life-backend/internal/auth"
-	"github.com/DarkAbhi/life-backend/internal/db/sqlc"
+	"github.com/DarkAbhi/life-backend/internal/vehicle/query"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
@@ -117,7 +117,7 @@ func (h *Handler) CreateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 	if p.OccurredAt != nil {
 		occurredAt = *p.OccurredAt
 	}
-	row, err := sqlc.New(h.DB).CreateMaintenanceRecord(r.Context(), sqlc.CreateMaintenanceRecordParams{VehicleID: vehicleID, UserID: user.ID, Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: occurredAt, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableString(p.Notes)})
+	row, err := query.New(h.DB).CreateMaintenanceRecord(r.Context(), query.CreateMaintenanceRecordParams{VehicleID: vehicleID, UserID: user.ID, Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: occurredAt, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableString(p.Notes)})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -153,7 +153,7 @@ func (h *Handler) UpdateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 	if p.OccurredAt != nil {
 		occurredAt = *p.OccurredAt
 	}
-	row, err := sqlc.New(h.DB).UpdateMaintenanceRecord(r.Context(), sqlc.UpdateMaintenanceRecordParams{Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: occurredAt, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableString(p.Notes), ID: recordID, VehicleID: vehicleID, UserID: user.ID})
+	row, err := query.New(h.DB).UpdateMaintenanceRecord(r.Context(), query.UpdateMaintenanceRecordParams{Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: occurredAt, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableString(p.Notes), ID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
@@ -184,7 +184,7 @@ func (h *Handler) DeleteMaintenanceRecord(w http.ResponseWriter, r *http.Request
 		webutil.ServerError(w, err)
 		return
 	}
-	count, err := sqlc.New(h.DB).DeleteMaintenanceRecord(r.Context(), sqlc.DeleteMaintenanceRecordParams{ID: recordID, VehicleID: vehicleID, UserID: user.ID})
+	count, err := query.New(h.DB).DeleteMaintenanceRecord(r.Context(), query.DeleteMaintenanceRecordParams{ID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -197,7 +197,7 @@ func (h *Handler) DeleteMaintenanceRecord(w http.ResponseWriter, r *http.Request
 }
 
 func (h *Handler) maintenanceUser(w http.ResponseWriter, r *http.Request) (auth.SessionUser, bool) {
-	user, err := auth.GetSessionUser(h.DB, r)
+	user, err := h.sessionUser(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
 		return auth.SessionUser{}, false

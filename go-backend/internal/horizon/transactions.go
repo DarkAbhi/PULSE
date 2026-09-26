@@ -211,7 +211,7 @@ func (h *TransactionsHandler) ListTransactions(w http.ResponseWriter, r *http.Re
 	}
 	offset := (page - 1) * pageSize
 
-	transactions, err := h.fetchTransactionsPage(user.ID, pageSize, offset, txType, search)
+	transactions, err := h.fetchTransactionsPage(r.Context(), user.ID, pageSize, offset, txType, search)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -226,14 +226,14 @@ func (h *TransactionsHandler) ListTransactions(w http.ResponseWriter, r *http.Re
 	})
 }
 
-func (h *TransactionsHandler) fetchTransactionsPage(userID int64, limit, offset int, txType, search string) ([]TransactionDTO, error) {
+func (h *TransactionsHandler) fetchTransactionsPage(ctx context.Context, userID int64, limit, offset int, txType, search string) ([]TransactionDTO, error) {
 	searchPattern := ""
 	if search != "" {
 		searchPattern = "%" + strings.ToLower(search) + "%"
 	}
-	rows, err := query.New(h.DB).ListFilteredTransactions(context.Background(), query.ListFilteredTransactionsParams{UserID: userID, Column2: txType, Column3: searchPattern, Limit: int32(limit), Offset: int32(offset)})
+	rows, err := query.New(h.DB).ListFilteredTransactions(ctx, query.ListFilteredTransactionsParams{UserID: userID, Column2: txType, Column3: searchPattern, Limit: int32(limit), Offset: int32(offset)})
 	if err != nil {
-		legacy, legacyErr := query.New(h.DB).ListFilteredTransactionsLegacy(context.Background(), query.ListFilteredTransactionsLegacyParams{UserID: userID, Column2: txType, Column3: searchPattern, Limit: int32(limit), Offset: int32(offset)})
+		legacy, legacyErr := query.New(h.DB).ListFilteredTransactionsLegacy(ctx, query.ListFilteredTransactionsLegacyParams{UserID: userID, Column2: txType, Column3: searchPattern, Limit: int32(limit), Offset: int32(offset)})
 		if legacyErr != nil {
 			return nil, err
 		}

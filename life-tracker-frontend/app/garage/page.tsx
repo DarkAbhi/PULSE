@@ -29,47 +29,53 @@ export default async function GaragePage() {
   const cookieHeader = cookieStore.toString();
 
   // Validate session on the server
-  const sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
-  if (!sessionResponse.ok) {
+  let sessionResponse: Response | null = null;
+  let error = "";
+  try {
+    sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
+      headers: { Cookie: cookieHeader }, signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    error = "We couldn't reach the server. Please try again.";
+  }
+  if (sessionResponse && !sessionResponse.ok) {
     redirect("/");
   }
 
   let vehicles: Vehicle[] = [];
   let latestAirFills: Record<number, string> = {};
-  let error = "";
+  if (!error) {
+    try {
+      const vehiclesResponse = await fetch(`${apiBaseURL}/api/vehicles`, {
+        headers: {
+          Cookie: cookieHeader,
+        },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!vehiclesResponse.ok) {
+        error = "We couldn't load your vehicles. Please try again.";
+      } else {
+        vehicles = (await vehiclesResponse.json()) as Vehicle[];
 
-  try {
-    const vehiclesResponse = await fetch(`${apiBaseURL}/api/vehicles`, {
-      headers: {
-        Cookie: cookieHeader,
-      },
-    });
-    if (!vehiclesResponse.ok) {
-      error = "We couldn't load your vehicles. Please try again.";
-    } else {
-      vehicles = (await vehiclesResponse.json()) as Vehicle[];
-
-      const airFillsResponse = await fetch(
-        `${apiBaseURL}/api/vehicle-air-fills/latest`,
-        {
-          headers: {
-            Cookie: cookieHeader,
-          },
-        }
-      );
-      if (airFillsResponse.ok) {
-        const airFills = (await airFillsResponse.json()) as AirFill[];
-        latestAirFills = Object.fromEntries(
-          airFills.map((fill) => [fill.vehicle_id, fill.filled_at])
+        const airFillsResponse = await fetch(
+          `${apiBaseURL}/api/vehicle-air-fills/latest`,
+          {
+            headers: {
+              Cookie: cookieHeader,
+            },
+            signal: AbortSignal.timeout(10_000),
+          }
         );
+        if (airFillsResponse.ok) {
+          const airFills = (await airFillsResponse.json()) as AirFill[];
+          latestAirFills = Object.fromEntries(
+            airFills.map((fill) => [fill.vehicle_id, fill.filled_at])
+          );
+        }
       }
+    } catch {
+      error = "We couldn't reach the server. Please try again.";
     }
-  } catch {
-    error = "We couldn't reach the server. Please try again.";
   }
 
   return (

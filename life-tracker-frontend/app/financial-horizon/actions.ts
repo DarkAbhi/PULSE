@@ -35,7 +35,7 @@ export async function getTransactionsPageAction(
 
     const response = await fetch(
       `${apiBaseURL}/api/horizon/transactions?${params.toString()}`,
-      { headers: { Cookie: cookieHeader } }
+      { headers: { Cookie: cookieHeader }, signal: AbortSignal.timeout(10_000) }
     );
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -644,6 +644,26 @@ export async function deleteSubscriptionAction(id: number) {
     return { ok: true };
   } catch {
     return { ok: false, error: "Unable to reach the server. Please try again." };
+  }
+}
+
+export async function linkSubscriptionTransactionAction(subscriptionId: number, transactionId: number) {
+  const cookieStore = await cookies();
+  try {
+    const response = await fetch(`${apiBaseURL}/api/horizon/subscriptions/${subscriptionId}/transactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: cookieStore.toString() },
+      body: JSON.stringify({ transaction_id: transactionId }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { ok: false as const, error: body.error ?? "Failed to link transaction." };
+    }
+    revalidatePath("/dashboard");
+    revalidatePath("/financial-horizon");
+    return { ok: true as const, transaction: body };
+  } catch {
+    return { ok: false as const, error: "Unable to reach the server. Please try again." };
   }
 }
 

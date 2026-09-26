@@ -37,6 +37,61 @@ func subscriptionsLoginUser(t *testing.T, db *sql.DB) *http.Cookie {
 	}
 }
 
+func TestLinkSubscriptionTransaction(t *testing.T) {
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
+	defer shutdown()
+	pool := testPool(t, dsn)
+	defer pool.Close()
+	h := NewSubscriptionsHandler(pool, testSessionLookup(db))
+	cookie := subscriptionsLoginUser(t, db)
+
+	var subID, txID, creditID int64
+	if err := db.QueryRow(`INSERT INTO financial_horizon_subscriptions (user_id, name, amount, billing_cycle, status) VALUES (1, 'Netflix', 649, 'monthly', 'active') RETURNING id`).Scan(&subID); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`INSERT INTO financial_horizon_transactions (user_id, name, amount, type, transaction_date, category_name) VALUES (1, 'Imported payment', 649, 'debit', NOW(), 'Other') RETURNING id`).Scan(&txID); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`INSERT INTO financial_horizon_transactions (user_id, name, amount, type, transaction_date, category_name) VALUES (1, 'Refund', 649, 'credit', NOW(), 'Other') RETURNING id`).Scan(&creditID); err != nil {
+		t.Fatal(err)
+	}
+
+	link := func(transactionID int64) *httptest.ResponseRecorder {
+		t.Helper()
+		body, _ := json.Marshal(map[string]int64{"transaction_id": transactionID})
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, "/api/horizon/subscriptions/{id}/transactions", bytes.NewReader(body))
+		req.AddCookie(cookie)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", strconv.FormatInt(subID, 10))
+		h.LinkSubscriptionTransaction(rec, req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx)))
+		return rec
+	}
+
+	if rec := link(txID); rec.Code != http.StatusOK {
+		t.Fatalf("link failed: %d %s", rec.Code, rec.Body.String())
+	}
+	if rec := link(txID); rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected duplicate link rejection, got %d", rec.Code)
+	}
+	if rec := link(creditID); rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected credit rejection, got %d", rec.Code)
+	}
+	var count int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM financial_horizon_transactions WHERE user_id = 1`).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Fatalf("link created a transaction: count=%d", count)
+	}
+	var linkedID sql.NullInt64
+	var name, txType string
+	var amount float64
+	if err := db.QueryRow(`SELECT subscription_id, name, amount, type FROM financial_horizon_transactions WHERE id = $1`, txID).Scan(&linkedID, &name, &amount, &txType); err != nil || !linkedID.Valid || linkedID.Int64 != subID || name != "Imported payment" || amount != 649 || txType != "debit" {
+		t.Fatalf("transaction not linked: id=%v err=%v", linkedID, err)
+	}
+}
+
 func TestCalculateMonthlyEquivalent(t *testing.T) {
 	tests := []struct {
 		amount   float64

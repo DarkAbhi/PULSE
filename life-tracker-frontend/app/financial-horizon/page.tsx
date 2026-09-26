@@ -19,28 +19,49 @@ export default async function FinancialHorizonPage() {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
+  const unavailable = (
+    <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10">
+      <div className="mx-auto max-w-4xl">
+        <Link className="text-sm font-semibold text-primary" href="/dashboard">← Back to Dashboard</Link>
+        <h1 className="mt-6 text-3xl font-bold">Financial Horizon</h1>
+        <p className="mt-8 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
+          We couldn&apos;t reach your financial data. Please try again.
+        </p>
+      </div>
+    </main>
+  );
+
   // Validate session on server
-  const sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
+  let sessionResponse: Response;
+  try {
+    sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
+      headers: { Cookie: cookieHeader },
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    return unavailable;
+  }
   if (!sessionResponse.ok) {
     redirect("/");
   }
 
   // Fetch financial horizon details and next month purchases in parallel
-  const [horizonRes, purchasesRes, transactionsRes] = await Promise.all([
-    fetch(`${apiBaseURL}/api/horizon`, {
-      headers: { Cookie: cookieHeader },
-    }),
-    fetch(`${apiBaseURL}/api/next-month-purchases`, {
-      headers: { Cookie: cookieHeader },
-    }),
-    fetch(`${apiBaseURL}/api/horizon/transactions?page=1&page_size=10`, {
-      headers: { Cookie: cookieHeader },
-    }),
-  ]);
+  let horizonRes: Response, purchasesRes: Response, transactionsRes: Response;
+  try {
+    [horizonRes, purchasesRes, transactionsRes] = await Promise.all([
+      fetch(`${apiBaseURL}/api/horizon`, {
+        headers: { Cookie: cookieHeader }, signal: AbortSignal.timeout(10_000),
+      }),
+      fetch(`${apiBaseURL}/api/next-month-purchases`, {
+        headers: { Cookie: cookieHeader }, signal: AbortSignal.timeout(10_000),
+      }),
+      fetch(`${apiBaseURL}/api/horizon/transactions?page=1&page_size=10`, {
+        headers: { Cookie: cookieHeader }, signal: AbortSignal.timeout(10_000),
+      }),
+    ]);
+  } catch {
+    return unavailable;
+  }
 
   if (!horizonRes.ok) {
     return (

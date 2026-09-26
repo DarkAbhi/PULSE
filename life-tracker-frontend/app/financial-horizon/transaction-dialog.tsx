@@ -22,6 +22,7 @@ export interface TransactionDialogProps {
     notes?: string | null;
   }) => Promise<void> | void;
   editingTransaction?: TransactionItem | null;
+  paymentSubscription?: SubscriptionItem | null;
   categories: CategoryItem[];
   budgets: BudgetItem[];
   subscriptions?: SubscriptionItem[];
@@ -34,6 +35,7 @@ export default function TransactionDialog({
   onClose,
   onSave,
   editingTransaction,
+  paymentSubscription,
   categories,
   budgets,
   subscriptions = [],
@@ -69,18 +71,18 @@ export default function TransactionDialog({
       setTxSubscriptionId(editingTransaction.subscription_id ?? null);
       setTxNotes(editingTransaction.notes ?? "");
     } else {
-      setTxName("");
-      setTxAmount("");
+      setTxName(paymentSubscription ? `${paymentSubscription.name} Payment` : "");
+      setTxAmount(paymentSubscription ? String(paymentSubscription.amount) : "");
       setTxType("debit");
       const now = new Date();
       const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       setTxDate(localIso);
-      setTxCategoryId(categories.length > 0 ? categories[0].id : null);
-      setTxBudgetId(null);
-      setTxSubscriptionId(null);
-      setTxNotes("");
+      setTxCategoryId(paymentSubscription?.category_id ?? (categories.length > 0 ? categories[0].id : null));
+      setTxBudgetId(paymentSubscription?.budget_id ?? null);
+      setTxSubscriptionId(paymentSubscription?.id ?? null);
+      setTxNotes(paymentSubscription ? `Recurring payment for ${paymentSubscription.name}` : "");
     }
-  }, [isOpen, editingTransaction, categories]);
+  }, [isOpen, editingTransaction, paymentSubscription, categories]);
 
   // Escape key listener to close modal
   useEffect(() => {

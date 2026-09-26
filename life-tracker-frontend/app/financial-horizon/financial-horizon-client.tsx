@@ -9,6 +9,7 @@ import { ArrowLeft, Compass, X } from "lucide-react";
 import ConfirmationDialog from "../components/design-system/confirmation-dialog";
 import Dialog, { DialogAction } from "../components/design-system/dialog";
 import TransactionDialog from "./transaction-dialog";
+import LinkSubscriptionPaymentDialog from "./link-subscription-payment-dialog";
 import CategoryDialog from "./category-dialog";
 import BudgetDialog from "./budget-dialog";
 import SubscriptionDialog from "./subscription-dialog";
@@ -46,6 +47,7 @@ import {
   deleteSubscriptionAction,
   getSubscriptionTransactionsAction,
   getTransactionsPageAction,
+  linkSubscriptionTransactionAction,
 } from "./actions";
 import type { TransactionPage } from "./actions";
 
@@ -171,6 +173,8 @@ export default function FinancialHorizonClient({
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
   const [isStatementUploadOpen, setIsStatementUploadOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionItem | null>(null);
+  const [paymentSubscription, setPaymentSubscription] = useState<SubscriptionItem | null>(null);
+  const [linkingPaymentSubscription, setLinkingPaymentSubscription] = useState<SubscriptionItem | null>(null);
   const [txToDelete, setTxToDelete] = useState<TransactionItem | null>(null);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
 
@@ -577,11 +581,13 @@ export default function FinancialHorizonClient({
   // Transaction & Category Handlers
   const handleOpenAddTransaction = () => {
     setEditingTransaction(null);
+    setPaymentSubscription(null);
     setIsTransactionDialogOpen(true);
   };
 
   const handleOpenEditTransaction = (tx: TransactionItem) => {
     setEditingTransaction(tx);
+    setPaymentSubscription(null);
     setIsTransactionDialogOpen(true);
   };
 
@@ -635,8 +641,16 @@ export default function FinancialHorizonClient({
           recalculateSummary({
             transactionsUpdater: (prev) => [res.transaction, ...prev],
           });
+          if (data.subscriptionId) {
+            updateSubscriptionsState((prev) => prev.map((sub) => sub.id === data.subscriptionId ? {
+              ...sub,
+              linked_transaction_count: sub.linked_transaction_count + 1,
+              total_spent: sub.total_spent + res.transaction.amount,
+            } : sub));
+          }
           setTotalTransactionsCount((prev) => prev + 1);
           setIsTransactionDialogOpen(false);
+          setPaymentSubscription(null);
         } else {
           setErrorMsg(res.error ?? "Failed to add transaction.");
         }
@@ -773,22 +787,22 @@ export default function FinancialHorizonClient({
   };
 
   const handleLogSubscriptionPayment = (sub: SubscriptionItem) => {
-    setEditingTransaction({
-      id: 0,
-      name: `${sub.name} Payment`,
-      amount: sub.amount,
-      type: "debit",
-      transaction_date: new Date().toISOString(),
-      category_id: sub.category_id,
-      category_name: sub.category_name || "Subscriptions",
-      budget_id: sub.budget_id,
-      budget_name: sub.budget_name,
-      subscription_id: sub.id,
-      subscription_name: sub.name,
-      notes: `Recurring payment for ${sub.name}`,
-      created_at: new Date().toISOString(),
-    });
-    setIsTransactionDialogOpen(true);
+    setLinkingPaymentSubscription(sub);
+  };
+
+  const handleLinkSubscriptionPayment = async (transaction: TransactionItem) => {
+    if (!linkingPaymentSubscription) return;
+    const subscription = linkingPaymentSubscription;
+    const res = await linkSubscriptionTransactionAction(subscription.id, transaction.id);
+    if (!res.ok) throw new Error(res.error);
+    const linked = res.transaction as TransactionItem;
+    setTransactions((prev) => prev.map((item) => item.id === linked.id ? linked : item));
+    updateSubscriptionsState((prev) => prev.map((item) => item.id === subscription.id ? {
+      ...item,
+      linked_transaction_count: item.linked_transaction_count + 1,
+      total_spent: item.total_spent + linked.amount,
+    } : item));
+    setLinkingPaymentSubscription(null);
   };
 
   const handleViewSubscriptionTransactions = async (sub: SubscriptionItem) => {
@@ -1142,15 +1156,31 @@ export default function FinancialHorizonClient({
         </Dialog>
       )}
 
+      {linkingPaymentSubscription && <LinkSubscriptionPaymentDialog
+        subscription={linkingPaymentSubscription}
+        currency={summary.currency}
+        transactionCount={totalTransactionsCount}
+        onClose={() => setLinkingPaymentSubscription(null)}
+        onCreateNew={() => {
+          setPaymentSubscription(linkingPaymentSubscription);
+          setEditingTransaction(null);
+          setLinkingPaymentSubscription(null);
+          setIsTransactionDialogOpen(true);
+        }}
+        onLink={handleLinkSubscriptionPayment}
+      />}
+
       {/* Transaction Entry Dialog */}
       <TransactionDialog
         isOpen={isTransactionDialogOpen}
         onClose={() => {
           setIsTransactionDialogOpen(false);
           setEditingTransaction(null);
+          setPaymentSubscription(null);
         }}
         onSave={handleSaveTransaction}
         editingTransaction={editingTransaction}
+        paymentSubscription={paymentSubscription}
         categories={categories}
         budgets={summary.budgets ?? []}
         subscriptions={subscriptions}

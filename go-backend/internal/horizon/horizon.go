@@ -147,3 +147,7 @@ func (h *Handler) DeleteSubscription(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ListSubscriptionTransactions(w http.ResponseWriter, r *http.Request) {
 	h.Subscriptions.ListSubscriptionTransactions(w, r)
 }
+
+func (h *Handler) LinkSubscriptionTransaction(w http.ResponseWriter, r *http.Request) {
+	h.Subscriptions.LinkSubscriptionTransaction(w, r)
+}

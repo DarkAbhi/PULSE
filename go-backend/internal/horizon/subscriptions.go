@@ -611,3 +611,44 @@ func (h *SubscriptionsHandler) ListSubscriptionTransactions(w http.ResponseWrite
 
 	webutil.WriteJSON(w, http.StatusOK, transactions)
 }
+
+func (h *SubscriptionsHandler) LinkSubscriptionTransaction(w http.ResponseWriter, r *http.Request) {
+	user, err := h.sessionUser(r)
+	if errors.Is(err, sql.ErrNoRows) {
+		webutil.Unauthorized(w, "session is invalid or expired")
+		return
+	}
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+
+	subID, ok := webutil.ParseID(w, r)
+	if !ok {
+		return
+	}
+	var in struct {
+		TransactionID int64 `json:"transaction_id"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil || in.TransactionID <= 0 {
+		webutil.BadRequest(w, "a valid transaction_id is required")
+		return
+	}
+
+	q := query.New(h.DB)
+	row, err := q.LinkSubscriptionTransaction(r.Context(), query.LinkSubscriptionTransactionParams{
+		SubscriptionID: subID, ID: in.TransactionID, UserID: user.ID,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		webutil.BadRequest(w, "transaction is unavailable for this subscription")
+		return
+	}
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+
+	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time)
+	enrichTransactionNames(r.Context(), q, user.ID, &item)
+	webutil.WriteJSON(w, http.StatusOK, item)
+}

@@ -45,6 +45,16 @@ func TestTransactionsCRUDAndBulk(t *testing.T) {
 
 	h := NewTransactionsHandler(pool, testSessionLookup(db))
 	cookie := transactionsLoginUser(t, db)
+	{
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/api/horizon/transactions?type=debit&page_size=20", nil)
+		req.AddCookie(cookie)
+		h.ListTransactions(rec, req)
+		var page PaginatedTransactionsDTO
+		if err := json.NewDecoder(rec.Body).Decode(&page); err != nil || rec.Code != http.StatusOK || page.Total != 0 || len(page.Transactions) != 0 {
+			t.Fatalf("unexpected empty transaction response: status=%d page=%+v err=%v", rec.Code, page, err)
+		}
+	}
 
 	var transactionID int64
 

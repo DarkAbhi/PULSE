@@ -23,4 +23,5 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Put("/horizon/subscriptions/{id}", h.UpdateSubscription)
 	r.Delete("/horizon/subscriptions/{id}", h.DeleteSubscription)
 	r.Get("/horizon/subscriptions/{id}/transactions", h.ListSubscriptionTransactions)
+	r.Post("/horizon/subscriptions/{id}/transactions", h.LinkSubscriptionTransaction)
 }

@@ -69,6 +69,7 @@ services:
     container_name: life-bot-dev
     environment:
       BOT_API_KEY: ${BOT_API_KEY}
+      TELEGRAM_ALLOWED_USER_ID: ${TELEGRAM_ALLOWED_USER_ID:?Set your numeric Telegram user ID}
       BACKEND_BASE_URL: http://backend-dev:8080
     volumes:
       - ./telegram-bot:/app

@@ -12,6 +12,8 @@ Copy `.env.example` to `.env`, then fill in the values:
 - `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOSTNAME`, `DB_PORT`, and
   `DB_SSLMODE`: PostgreSQL database connection details.
 - `BOT_API_KEY`: Telegram bot token obtained from BotFather.
+- `TELEGRAM_ALLOWED_USER_ID`: your numeric Telegram user ID. The bot ignores
+  messages from other accounts and refuses to start when this is missing.
 - `NEXT_PUBLIC_GEMINI_API_KEY`: Gemini key used in the browser for statement
   extraction. It is included in the public frontend bundle, so restrict it by
   allowed origins and APIs.

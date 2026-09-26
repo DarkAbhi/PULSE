@@ -4,14 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/DarkAbhi/life-backend/internal/activity"
+	"github.com/DarkAbhi/life-backend/internal/gym"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -114,5 +117,38 @@ func TestHealthEndpoints(t *testing.T) {
 	router.ServeHTTP(rec2, req2)
 	if rec2.Code != http.StatusOK {
 		t.Fatalf("readyz code=%d body=%s", rec2.Code, rec2.Body.String())
+	}
+}
+
+func TestTelegramEndpoints(t *testing.T) {
+	env := startPostgres(t)
+	defer env.Shutdown()
+	api := &API{
+		DB:       env.Pool,
+		Activity: activity.NewHandler(activity.NewService(activity.NewRepository(env.Pool))),
+		Gym:      gym.NewHandler(gym.NewService(gym.NewRepository(env.Pool), nil, nil), nil),
+	}
+	router := api.Router()
+	for _, tc := range []struct {
+		path, body string
+		status     int
+	}{
+		{"/api/workout/today", "", http.StatusCreated},
+		{"/api/meditation/today", "", http.StatusCreated},
+		{"/api/meditation/today", "", http.StatusBadRequest},
+		{"/api/sport/today", `{"sport":"badminton"}`, http.StatusCreated},
+		{"/api/sport/today", `{"sport":"tennis"}`, http.StatusBadRequest},
+	} {
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, tc.path, strings.NewReader(tc.body)))
+		if rec.Code != tc.status {
+			t.Fatalf("POST %s: got %d, want %d: %s", tc.path, rec.Code, tc.status, rec.Body.String())
+		}
+	}
+	for _, table := range []string{"gym_visits", "meditations", "sports"} {
+		var count int
+		if err := env.DB.QueryRow("SELECT COUNT(*) FROM " + table).Scan(&count); err != nil || count != 1 {
+			t.Fatalf("%s count = %d, err = %v", table, count, err)
+		}
 	}
 }

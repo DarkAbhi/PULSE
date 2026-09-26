@@ -92,6 +92,7 @@ services:
         condition: service_healthy
     environment:
       BOT_API_KEY: ${BOT_API_KEY}
+      TELEGRAM_ALLOWED_USER_ID: ${TELEGRAM_ALLOWED_USER_ID:?Set your numeric Telegram user ID}
       BACKEND_BASE_URL: http://backend:8080
     restart: unless-stopped
 
@@ -139,4 +140,3 @@ services:
       - "4318:4318"
     environment:
       - COLLECTOR_OTLP_ENABLED=true
-

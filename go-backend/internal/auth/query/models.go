@@ -183,16 +183,6 @@ type Sport struct {
 	UpdatedAt pgtype.Timestamptz
 }
 
-type Trip struct {
-	ID          int64
-	Name        string
-	StartDate   pgtype.Date
-	EndDate     pgtype.Date
-	Description string
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-}
-
 type User struct {
 	ID           int64
 	Username     string

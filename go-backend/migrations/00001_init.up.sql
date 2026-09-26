@@ -59,16 +59,6 @@ CREATE TABLE gym_exercise_sets (
     UNIQUE (gym_visit_exercise_id, set_number)
 );
 
-CREATE TABLE trips (
-    id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(64) NOT NULL,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
-    description TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE credit_cards (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(64) NOT NULL,

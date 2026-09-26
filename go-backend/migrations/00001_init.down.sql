@@ -7,7 +7,6 @@ DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS vehicles;
 DROP TABLE IF EXISTS sports;
 DROP TABLE IF EXISTS credit_cards;
-DROP TABLE IF EXISTS trips;
 DROP TABLE IF EXISTS gym_exercise_sets;
 DROP TABLE IF EXISTS gym_visit_exercises;
 DROP TABLE IF EXISTS gym_visits;

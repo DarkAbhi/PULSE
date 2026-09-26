@@ -73,7 +73,13 @@ DELETE FROM financial_horizon_transactions WHERE id = $1 AND user_id = $2;
 
 -- name: LinkSubscriptionTransaction :one
 UPDATE financial_horizon_transactions
-SET subscription_id = $1, updated_at = CURRENT_TIMESTAMP
-WHERE id = $2 AND user_id = $3 AND type = 'debit' AND subscription_id IS NULL
-  AND EXISTS (SELECT 1 FROM financial_horizon_subscriptions WHERE id = $1 AND user_id = $3)
+SET subscription_id = sqlc.arg(subscription_id)::bigint, updated_at = CURRENT_TIMESTAMP
+WHERE financial_horizon_transactions.id = sqlc.arg(id)
+  AND financial_horizon_transactions.user_id = sqlc.arg(user_id)
+  AND financial_horizon_transactions.type = 'debit'
+  AND financial_horizon_transactions.subscription_id IS NULL
+  AND EXISTS (
+    SELECT 1 FROM financial_horizon_subscriptions s
+    WHERE s.id = sqlc.arg(subscription_id) AND s.user_id = sqlc.arg(user_id)
+  )
 RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at;

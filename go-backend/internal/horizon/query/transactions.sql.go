@@ -12,41 +12,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const linkSubscriptionTransaction = `-- name: LinkSubscriptionTransaction :one
-UPDATE financial_horizon_transactions
-SET subscription_id = $1, updated_at = CURRENT_TIMESTAMP
-WHERE id = $2 AND user_id = $3 AND type = 'debit' AND subscription_id IS NULL
-  AND EXISTS (SELECT 1 FROM financial_horizon_subscriptions WHERE id = $1 AND user_id = $3)
-RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at
-`
-
-type LinkSubscriptionTransactionParams struct {
-	SubscriptionID int64
-	ID             int64
-	UserID         int64
-}
-
-type LinkSubscriptionTransactionRow struct {
-	ID              int64
-	Name            string
-	Amount          float64
-	Type            string
-	TransactionDate pgtype.Timestamptz
-	CategoryID      sql.NullInt64
-	CategoryName    string
-	BudgetID        sql.NullInt64
-	SubscriptionID  sql.NullInt64
-	Notes           pgtype.Text
-	CreatedAt       pgtype.Timestamptz
-}
-
-func (q *Queries) LinkSubscriptionTransaction(ctx context.Context, arg LinkSubscriptionTransactionParams) (LinkSubscriptionTransactionRow, error) {
-	row := q.db.QueryRow(ctx, linkSubscriptionTransaction, arg.SubscriptionID, arg.ID, arg.UserID)
-	var i LinkSubscriptionTransactionRow
-	err := row.Scan(&i.ID, &i.Name, &i.Amount, &i.Type, &i.TransactionDate, &i.CategoryID, &i.CategoryName, &i.BudgetID, &i.SubscriptionID, &i.Notes, &i.CreatedAt)
-	return i, err
-}
-
 const countFilteredTransactions = `-- name: CountFilteredTransactions :one
 SELECT COUNT(*) FROM financial_horizon_transactions t
 WHERE t.user_id = $1
@@ -177,6 +142,59 @@ func (q *Queries) GetUserCategoryName(ctx context.Context, arg GetUserCategoryNa
 	var name string
 	err := row.Scan(&name)
 	return name, err
+}
+
+const linkSubscriptionTransaction = `-- name: LinkSubscriptionTransaction :one
+UPDATE financial_horizon_transactions
+SET subscription_id = $1::bigint, updated_at = CURRENT_TIMESTAMP
+WHERE financial_horizon_transactions.id = $2
+  AND financial_horizon_transactions.user_id = $3
+  AND financial_horizon_transactions.type = 'debit'
+  AND financial_horizon_transactions.subscription_id IS NULL
+  AND EXISTS (
+    SELECT 1 FROM financial_horizon_subscriptions s
+    WHERE s.id = $1 AND s.user_id = $3
+  )
+RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at
+`
+
+type LinkSubscriptionTransactionParams struct {
+	SubscriptionID int64
+	ID             int64
+	UserID         int64
+}
+
+type LinkSubscriptionTransactionRow struct {
+	ID              int64
+	Name            string
+	Amount          float64
+	Type            string
+	TransactionDate pgtype.Timestamptz
+	CategoryID      sql.NullInt64
+	CategoryName    string
+	BudgetID        sql.NullInt64
+	SubscriptionID  sql.NullInt64
+	Notes           pgtype.Text
+	CreatedAt       pgtype.Timestamptz
+}
+
+func (q *Queries) LinkSubscriptionTransaction(ctx context.Context, arg LinkSubscriptionTransactionParams) (LinkSubscriptionTransactionRow, error) {
+	row := q.db.QueryRow(ctx, linkSubscriptionTransaction, arg.SubscriptionID, arg.ID, arg.UserID)
+	var i LinkSubscriptionTransactionRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Amount,
+		&i.Type,
+		&i.TransactionDate,
+		&i.CategoryID,
+		&i.CategoryName,
+		&i.BudgetID,
+		&i.SubscriptionID,
+		&i.Notes,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const listFilteredTransactions = `-- name: ListFilteredTransactions :many

@@ -37,7 +37,8 @@ make deploy
 
 Open `http://<server-LAN-or-Tailscale-IP>:3000`. Browser API requests use
 `/api` on that same host, and Next.js forwards them to the backend inside
-Docker. No browser URL or CORS origin needs to be built into the image.
+Docker. No browser URL or CORS origin needs to be built into the image. See
+[Service URLs](#service-urls) for the other local endpoints.
 
 The Compose stacks expect PostgreSQL outside this repository. Use separate
 development and production databases. Run `make dev-migrate-up` before
@@ -47,12 +48,31 @@ also run `make docker-migrate-up` explicitly. The first migration creates
 
 Plain HTTP on a LAN does not encrypt your password or session cookie in
 transit. Tailscale traffic is encrypted; restrict access to trusted clients
-and do not forward port 3000 from your internet router.
-The backend is reachable only inside Docker; Prometheus, Grafana, and Jaeger
-listen only on the server's loopback interface. Set `GRAFANA_ADMIN_PASSWORD`
-in `.env` before starting production. To view Grafana from another computer,
-forward its port with `ssh -L 3001:127.0.0.1:3001 <server>` and open
-`http://localhost:3001` in your browser.
+and do not forward port 3000 from your internet router. Prometheus, Grafana,
+and Jaeger listen only on the server's loopback interface. Set
+`GRAFANA_ADMIN_PASSWORD` in `.env` before starting production. To view Grafana
+from another computer, forward its port with
+`ssh -L 3001:127.0.0.1:3001 <server>` and open `http://localhost:3001` in your
+browser.
+
+## Service URLs
+
+Use `localhost` when running Docker on your computer. When running the
+production stack on another host, replace `localhost` with the server's LAN or
+Tailscale IP where the service is exposed. Monitoring ports are bound to
+loopback and therefore require SSH port forwarding when accessed remotely.
+
+| Service         | Development              | Production                                 | Browser access                                                              |
+| --------------- | ------------------------ | ------------------------------------------ | --------------------------------------------------------------------------- |
+| Next.js web app | `http://localhost:3000`  | `http://<server-LAN-or-Tailscale-IP>:3000` | Open this URL.                                                              |
+| Go API          | `http://localhost:8080`  | Internal Docker URL: `http://backend:8080` | Development only; production API requests go through the web app at `/api`. |
+| Prometheus      | `http://localhost:9090`  | `http://localhost:9090` on the server      | Open locally, or use SSH port forwarding.                                   |
+| Grafana         | `http://localhost:3001`  | `http://localhost:3001` on the server      | Open locally, or use `ssh -L 3001:127.0.0.1:3001 <server>`.                 |
+| Jaeger UI       | `http://localhost:16686` | `http://localhost:16686` on the server     | Open locally, or use SSH port forwarding.                                   |
+| Telegram bot    | No browser URL           | No browser URL                             | Use Telegram; the bot calls the backend over the Docker network.            |
+
+The migration services are one-shot command-line services and do not expose a
+browser URL.
 
 ## Make commands
 
@@ -62,19 +82,19 @@ Run these commands from the repository root. The production commands use the
 
 ### Production
 
-| Command             | Description                                                                                   |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| `make build`        | Build the production Docker images.                                                           |
-| `make up`           | Build, start, and run the production services in the background. Removes orphaned containers. |
-| `make down`         | Stop and remove the production containers, including orphaned containers.                     |
-| `make restart`      | Stop the production stack and start it again with rebuilt images.                             |
-| `make deploy`       | Build the production images and start the production stack.                                   |
-| `make ps`           | Show the status of production containers.                                                     |
-| `make logs`         | Follow the last 200 log lines from all production services.                                   |
-| `make backend-logs` | Follow the last 200 log lines from the backend service.                                       |
-| `make web-logs`     | Follow the last 200 log lines from the frontend web service.                                  |
-| `make bot-logs`     | Follow the last 200 log lines from the Telegram bot service.                                  |
-| `make monitoring-logs` | Follow production Prometheus, Grafana, and Jaeger logs.                                    |
+| Command                | Description                                                                                   |
+| ---------------------- | --------------------------------------------------------------------------------------------- |
+| `make build`           | Build the production Docker images.                                                           |
+| `make up`              | Build, start, and run the production services in the background. Removes orphaned containers. |
+| `make down`            | Stop and remove the production containers, including orphaned containers.                     |
+| `make restart`         | Stop the production stack and start it again with rebuilt images.                             |
+| `make deploy`          | Build the production images and start the production stack.                                   |
+| `make ps`              | Show the status of production containers.                                                     |
+| `make logs`            | Follow the last 200 log lines from all production services.                                   |
+| `make backend-logs`    | Follow the last 200 log lines from the backend service.                                       |
+| `make web-logs`        | Follow the last 200 log lines from the frontend web service.                                  |
+| `make bot-logs`        | Follow the last 200 log lines from the Telegram bot service.                                  |
+| `make monitoring-logs` | Follow production Prometheus, Grafana, and Jaeger logs.                                       |
 
 ### Production migrations
 
@@ -89,12 +109,12 @@ These commands run the migration service using the production Docker image.
 
 ### Development
 
-| Command         | Description                                                                                          |
-| --------------- | ---------------------------------------------------------------------------------------------------- |
-| `make dev`      | Start the development backend, web, and bot services in the background. Removes orphaned containers. |
-| `make dev-down` | Stop and remove the development services, including orphaned containers.                             |
-| `make dev-logs` | Follow the last 200 log lines from the development backend, web, and bot services.                   |
-| `make dev-monitoring-logs` | Follow development Prometheus, Grafana, and Jaeger logs.                          |
+| Command                    | Description                                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `make dev`                 | Start the development backend, web, and bot services in the background. Removes orphaned containers. |
+| `make dev-down`            | Stop and remove the development services, including orphaned containers.                             |
+| `make dev-logs`            | Follow the last 200 log lines from the development backend, web, and bot services.                   |
+| `make dev-monitoring-logs` | Follow development Prometheus, Grafana, and Jaeger logs.                                             |
 
 ### Development migrations
 
@@ -109,9 +129,13 @@ These commands run the `migrate-dev` service using `.env.dev` and the
 | `make dev-steps n=N`  | Apply or roll back `N` migration steps. Use a positive value to apply migrations and a negative value to roll them back, for example `make dev-steps n=-2`. |
 | `make dev-version`    | Display the current database migration version.                                                                                                             |
 
-The Makefile currently lists `go-test`, `go-test-integration`, and `go-cover`
-in `.PHONY`, but does not define targets for them. They are therefore not
-available commands until corresponding recipes are added.
+### Monitoring and service status
+
+| Command                    | Description                                              |
+| -------------------------- | -------------------------------------------------------- |
+| `make ps`                  | Show the status of the production containers.            |
+| `make monitoring-logs`     | Follow production Prometheus, Grafana, and Jaeger logs.  |
+| `make dev-monitoring-logs` | Follow development Prometheus, Grafana, and Jaeger logs. |
 
 ### Backend SQL queries
 

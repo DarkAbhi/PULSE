@@ -35,7 +35,7 @@ Run the production version using
 make deploy
 ```
 
-Open `http://<server-LAN-or-Tailscale-IP>:3000`. Browser API requests use
+Open `http://<server-LAN-or-Tailscale-IP>:3100`. Browser API requests use
 `/api` on that same host, and Next.js forwards them to the backend inside
 Docker. No browser URL or CORS origin needs to be built into the image. See
 [Service URLs](#service-urls) for the other local endpoints.
@@ -48,11 +48,11 @@ also run `make docker-migrate-up` explicitly. The first migration creates
 
 Plain HTTP on a LAN does not encrypt your password or session cookie in
 transit. Tailscale traffic is encrypted; restrict access to trusted clients
-and do not forward port 3000 from your internet router. Prometheus, Grafana,
+and do not forward port 3100 from your internet router. Prometheus, Grafana,
 and Jaeger listen only on the server's loopback interface. Set
 `GRAFANA_ADMIN_PASSWORD` in `.env` before starting production. To view Grafana
 from another computer, forward its port with
-`ssh -L 3001:127.0.0.1:3001 <server>` and open `http://localhost:3001` in your
+`ssh -L 3101:127.0.0.1:3101 <server>` and open `http://localhost:3101` in your
 browser.
 
 ## Service URLs
@@ -62,13 +62,13 @@ production stack on another host, replace `localhost` with the server's LAN or
 Tailscale IP where the service is exposed. Monitoring ports are bound to
 loopback and therefore require SSH port forwarding when accessed remotely.
 
-| Service         | Development              | Production                                 | Browser access                                                              |
-| --------------- | ------------------------ | ------------------------------------------ | --------------------------------------------------------------------------- |
-| Next.js web app | `http://localhost:3000`  | `http://<server-LAN-or-Tailscale-IP>:3000` | Open this URL.                                                              |
-| Go API          | `http://localhost:8080`  | Internal Docker URL: `http://backend:8080` | Development only; production API requests go through the web app at `/api`. |
-| Prometheus      | `http://localhost:9090`  | `http://localhost:9090` on the server      | Open locally, or use SSH port forwarding.                                   |
-| Grafana         | `http://localhost:3001`  | `http://localhost:3001` on the server      | Open locally, or use `ssh -L 3001:127.0.0.1:3001 <server>`.                 |
-| Jaeger UI       | `http://localhost:16686` | `http://localhost:16686` on the server     | Open locally, or use SSH port forwarding.                                   |
+| Service         | Development               | Production                                  | Browser access                                                            |
+| --------------- | ------------------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
+| Next.js web app | `http://localhost:3102`   | `http://<server-LAN-or-Tailscale-IP>:3100`  | Open this URL.                                                            |
+| Go API          | `http://localhost:18081`  | `http://localhost:18080` on the server      | Loopback only; browser API requests use the web app at `/api`.             |
+| Prometheus      | `http://localhost:19090`  | `http://localhost:9090` on the server       | Open locally, or use SSH port forwarding.                                 |
+| Grafana         | `http://localhost:3103`   | `http://localhost:3101` on the server       | Open locally, or use SSH port forwarding.                                 |
+| Jaeger UI       | `http://localhost:16687`  | `http://localhost:16686` on the server      | Open locally, or use SSH port forwarding.                                 |
 | Telegram bot    | No browser URL           | No browser URL                             | Use Telegram; the bot calls the backend over the Docker network.            |
 
 The migration services are one-shot command-line services and do not expose a

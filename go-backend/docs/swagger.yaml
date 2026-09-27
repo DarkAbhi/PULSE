@@ -1,11 +1,3492 @@
 basePath: /
+definitions:
+  apidoc.AirFill:
+    properties:
+      filled_at:
+        type: string
+      vehicle_id:
+        type: integer
+    type: object
+  apidoc.AirFillHistory:
+    properties:
+      filled_at:
+        type: string
+      id:
+        type: integer
+    type: object
+  apidoc.Attachment:
+    properties:
+      content_type:
+        type: string
+      created_at:
+        type: string
+      file_name:
+        type: string
+      id:
+        type: integer
+      size_bytes:
+        type: integer
+    type: object
+  apidoc.ChangePasswordInput:
+    properties:
+      current_password:
+        type: string
+      new_password:
+        type: string
+    type: object
+  apidoc.CreatedID:
+    properties:
+      id:
+        type: integer
+      message:
+        type: string
+    type: object
+  apidoc.Error:
+    properties:
+      error:
+        type: string
+    type: object
+  apidoc.Exercise:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      sets:
+        items:
+          $ref: '#/definitions/apidoc.ExerciseSet'
+        type: array
+    type: object
+  apidoc.ExerciseInput:
+    properties:
+      name:
+        type: string
+      sets:
+        items:
+          $ref: '#/definitions/apidoc.ExerciseSetInput'
+        type: array
+    type: object
+  apidoc.ExerciseSet:
+    properties:
+      id:
+        type: integer
+      reps:
+        type: integer
+      set_number:
+        type: integer
+      weight:
+        type: number
+    type: object
+  apidoc.ExerciseSetInput:
+    properties:
+      reps:
+        type: integer
+      weight:
+        type: number
+    type: object
+  apidoc.FuelFillup:
+    properties:
+      filled_at:
+        type: string
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/apidoc.FuelItem'
+        type: array
+      notes:
+        type: string
+      odometer_km:
+        type: number
+      station_name:
+        type: string
+    type: object
+  apidoc.FuelFillupCreated:
+    properties:
+      economy_km_per_litre:
+        additionalProperties:
+          type: number
+        type: object
+      id:
+        type: integer
+    type: object
+  apidoc.FuelFillupInput:
+    properties:
+      filled_at:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/apidoc.FuelItemInput'
+        type: array
+      notes:
+        type: string
+      odometer_km:
+        type: number
+      station_name:
+        type: string
+    type: object
+  apidoc.FuelItem:
+    properties:
+      fill_type:
+        type: string
+      fuel_type:
+        type: string
+      quantity:
+        type: number
+      total_cost:
+        type: number
+      unit_price:
+        type: number
+    type: object
+  apidoc.FuelItemInput:
+    properties:
+      fill_type:
+        enum:
+        - full
+        - partial
+        - missed
+        type: string
+      fuel_type:
+        enum:
+        - petrol
+        - diesel
+        - lpg
+        - cng
+        - electric
+        type: string
+      quantity:
+        type: number
+      total_cost:
+        type: number
+      unit_price:
+        type: number
+    type: object
+  apidoc.GymVisit:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+    type: object
+  apidoc.ID:
+    properties:
+      id:
+        type: integer
+    type: object
+  apidoc.LinkTransactionInput:
+    properties:
+      transaction_id:
+        type: integer
+    type: object
+  apidoc.LoginInput:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  apidoc.MaintenanceInput:
+    properties:
+      amount:
+        type: number
+      category:
+        enum:
+        - service
+        - repair
+        - insurance
+        - washing
+        - tyres
+        type: string
+      notes:
+        type: string
+      occurred_at:
+        type: string
+      odometer_km:
+        type: number
+      provider_name:
+        type: string
+      title:
+        type: string
+    type: object
+  apidoc.MaintenanceRecord:
+    properties:
+      amount:
+        type: number
+      attachments:
+        items:
+          $ref: '#/definitions/apidoc.Attachment'
+        type: array
+      category:
+        type: string
+      id:
+        type: integer
+      notes:
+        type: string
+      occurred_at:
+        type: string
+      odometer_km:
+        type: number
+      provider_name:
+        type: string
+      title:
+        type: string
+    type: object
+  apidoc.Message:
+    properties:
+      message:
+        type: string
+    type: object
+  apidoc.Name:
+    properties:
+      name:
+        type: string
+    type: object
+  apidoc.Notification:
+    properties:
+      body:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      priority:
+        type: integer
+      source:
+        type: string
+      target_path:
+        type: string
+      title:
+        type: string
+    type: object
+  apidoc.Profile:
+    properties:
+      has_profile:
+        type: boolean
+      name:
+        type: string
+    type: object
+  apidoc.PurchaseInput:
+    properties:
+      name:
+        type: string
+      price:
+        type: number
+      url:
+        type: string
+    type: object
+  apidoc.PurchaseItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      url:
+        type: string
+    type: object
+  apidoc.PurchaseList:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/apidoc.PurchaseItem'
+        type: array
+      total:
+        type: number
+    type: object
+  apidoc.SportInput:
+    properties:
+      sport:
+        type: string
+    type: object
+  apidoc.TirePressureInput:
+    properties:
+      front_tire_pressure:
+        type: number
+      front_tire_pressure_pillion:
+        type: number
+      front_tire_pressure_solo:
+        type: number
+      rear_tire_pressure:
+        type: number
+      rear_tire_pressure_pillion:
+        type: number
+      rear_tire_pressure_solo:
+        type: number
+    type: object
+  apidoc.Username:
+    properties:
+      username:
+        type: string
+    type: object
+  apidoc.VehicleHistory:
+    properties:
+      air_fills:
+        items:
+          $ref: '#/definitions/apidoc.AirFillHistory'
+        type: array
+      average_mileage_km_per_litre:
+        additionalProperties:
+          type: number
+        type: object
+      front_tire_pressure:
+        type: number
+      front_tire_pressure_pillion:
+        type: number
+      front_tire_pressure_solo:
+        type: number
+      fuel_fillups:
+        items:
+          $ref: '#/definitions/apidoc.FuelFillup'
+        type: array
+      maintenance_records:
+        items:
+          $ref: '#/definitions/apidoc.MaintenanceRecord'
+        type: array
+      rear_tire_pressure:
+        type: number
+      rear_tire_pressure_pillion:
+        type: number
+      rear_tire_pressure_solo:
+        type: number
+      vehicle_name:
+        type: string
+    type: object
+  apidoc.VehicleInput:
+    properties:
+      front_tire_pressure:
+        type: number
+      front_tire_pressure_pillion:
+        type: number
+      front_tire_pressure_solo:
+        type: number
+      is_active:
+        type: boolean
+      name:
+        type: string
+      rear_tire_pressure:
+        type: number
+      rear_tire_pressure_pillion:
+        type: number
+      rear_tire_pressure_solo:
+        type: number
+    type: object
+  apidoc.VehicleName:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  apidoc.Visited:
+    properties:
+      id:
+        type: integer
+      visited:
+        type: boolean
+    type: object
+  horizon.BudgetDTO:
+    properties:
+      allocated_amount:
+        type: number
+      available_amount:
+        type: number
+      id:
+        type: integer
+      name:
+        type: string
+      usage_percentage:
+        type: number
+      used_amount:
+        type: number
+    type: object
+  horizon.BudgetInput:
+    properties:
+      allocated_amount:
+        type: number
+      name:
+        type: string
+    type: object
+  horizon.BulkTransactionsInput:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/horizon.TransactionInput'
+        type: array
+    type: object
+  horizon.CategoryDTO:
+    properties:
+      color:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      is_default:
+        type: boolean
+      name:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  horizon.CategoryInput:
+    properties:
+      color:
+        type: string
+      icon:
+        type: string
+      name:
+        type: string
+    type: object
+  horizon.ConfigInput:
+    properties:
+      base_amount:
+        type: number
+      currency:
+        type: string
+    type: object
+  horizon.DeductionDTO:
+    properties:
+      amount:
+        type: number
+      budget_id:
+        type: integer
+      category:
+        type: string
+      due_day:
+        type: integer
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+    type: object
+  horizon.DeductionInput:
+    properties:
+      amount:
+        type: number
+      budget_id:
+        type: integer
+      category:
+        type: string
+      due_day:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+    type: object
+  horizon.PaginatedTransactionsDTO:
+    properties:
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+      transactions:
+        items:
+          $ref: '#/definitions/horizon.TransactionDTO'
+        type: array
+    type: object
+  horizon.ProjectionDTO:
+    properties:
+      cumulative_uncommitted:
+        type: number
+      label:
+        type: string
+      months:
+        type: integer
+    type: object
+  horizon.SubscriptionDTO:
+    properties:
+      amount:
+        type: number
+      billing_cycle:
+        type: string
+      billing_day:
+        type: integer
+      budget_id:
+        type: integer
+      budget_name:
+        type: string
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      created_at:
+        type: string
+      deduction_id:
+        type: integer
+      id:
+        type: integer
+      linked_transaction_count:
+        type: integer
+      monthly_equivalent_amount:
+        type: number
+      name:
+        type: string
+      next_renewal_date:
+        type: string
+      notes:
+        type: string
+      renewal_date:
+        type: string
+      status:
+        type: string
+      total_spent:
+        type: number
+      updated_at:
+        type: string
+    type: object
+  horizon.SubscriptionInput:
+    properties:
+      amount:
+        type: number
+      billing_cycle:
+        description: '''monthly'', ''yearly'''
+        type: string
+      billing_day:
+        description: 1 to 31 (for monthly)
+        type: integer
+      budget_id:
+        type: integer
+      category_id:
+        type: integer
+      deduction_id:
+        type: integer
+      name:
+        type: string
+      notes:
+        type: string
+      renewal_date:
+        description: ISO date string (for yearly)
+        type: string
+      status:
+        description: '''active'', ''paused'', ''cancelled'''
+        type: string
+    type: object
+  horizon.SubscriptionSummaryDTO:
+    properties:
+      active_subscriptions_count:
+        type: integer
+      subscriptions:
+        items:
+          $ref: '#/definitions/horizon.SubscriptionDTO'
+        type: array
+      total_monthly_burn:
+        type: number
+      total_yearly_outlay:
+        type: number
+    type: object
+  horizon.SummaryDTO:
+    properties:
+      base_amount:
+        type: number
+      budgets:
+        items:
+          $ref: '#/definitions/horizon.BudgetDTO'
+        type: array
+      categories:
+        items:
+          $ref: '#/definitions/horizon.CategoryDTO'
+        type: array
+      committed_ratio:
+        type: number
+      currency:
+        type: string
+      deductions:
+        items:
+          $ref: '#/definitions/horizon.DeductionDTO'
+        type: array
+      projections:
+        items:
+          $ref: '#/definitions/horizon.ProjectionDTO'
+        type: array
+      remaining_amount:
+        type: number
+      subscriptions:
+        items:
+          $ref: '#/definitions/horizon.SubscriptionDTO'
+        type: array
+      total_budgets_allocated:
+        type: number
+      total_deductions:
+        type: number
+      total_subscription_burn:
+        type: number
+      total_transactions:
+        type: number
+      transactions:
+        items:
+          $ref: '#/definitions/horizon.TransactionDTO'
+        type: array
+    type: object
+  horizon.TransactionDTO:
+    properties:
+      amount:
+        type: number
+      budget_id:
+        type: integer
+      budget_name:
+        type: string
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      notes:
+        type: string
+      subscription_id:
+        type: integer
+      subscription_name:
+        type: string
+      transaction_date:
+        type: string
+      type:
+        type: string
+    type: object
+  horizon.TransactionInput:
+    properties:
+      amount:
+        type: number
+      budget_id:
+        type: integer
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      name:
+        type: string
+      notes:
+        type: string
+      subscription_id:
+        type: integer
+      transaction_date:
+        type: string
+      type:
+        type: string
+    type: object
+  mealplan.CreatePlanInput:
+    properties:
+      date:
+        type: string
+      is_consumed:
+        type: boolean
+      meal_time_id:
+        type: integer
+      name:
+        type: string
+    type: object
+  mealplan.CreateTimeInput:
+    properties:
+      end_time:
+        description: accepts "HH:MM" or "HH:MM:SS"
+        type: string
+      name:
+        type: string
+      start_time:
+        description: accepts "HH:MM" or "HH:MM:SS"
+        type: string
+    type: object
+  mealplan.PlanDTO:
+    properties:
+      created_at:
+        type: string
+      date:
+        type: string
+      end_time:
+        type: string
+      id:
+        type: integer
+      is_consumed:
+        type: boolean
+      meal_time_id:
+        type: integer
+      meal_time_name:
+        type: string
+      name:
+        type: string
+      start_time:
+        type: string
+    type: object
+  mealplan.TimeDTO:
+    properties:
+      end_time:
+        description: '"HH:MM"'
+        type: string
+      id:
+        type: integer
+      is_default:
+        type: boolean
+      name:
+        type: string
+      start_time:
+        description: '"HH:MM"'
+        type: string
+      user_id:
+        type: integer
+    type: object
+  mealplan.UpdatePlanConsumedInput:
+    properties:
+      is_consumed:
+        type: boolean
+    type: object
+  mealplan.UpdatePlanInput:
+    properties:
+      date:
+        type: string
+      is_consumed:
+        type: boolean
+      meal_time_id:
+        type: integer
+      name:
+        type: string
+    type: object
+  vehicle.DTO:
+    properties:
+      front_tire_pressure:
+        type: number
+      front_tire_pressure_pillion:
+        type: number
+      front_tire_pressure_solo:
+        type: number
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      rear_tire_pressure:
+        type: number
+      rear_tire_pressure_pillion:
+        type: number
+      rear_tire_pressure_solo:
+        type: number
+    type: object
 host: localhost:8080
 info:
   contact: {}
-  description: REST API for the Life Backend application.
+  description: REST API for the Life Backend application. Session endpoints accept
+    a Bearer token in Authorization, X-Session-Token, or the life_session cookie;
+    login sets the cookie. Some older vehicle, gym, and activity routes do not enforce
+    a session.
   title: Life Backend API
   version: "1.0"
 paths:
+  /api/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Sets the life_session HTTP-only cookie.
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.Username'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Log in
+      tags:
+      - auth
+  /api/auth/logout:
+    post:
+      description: Clears the session cookie and invalidates a supplied session token.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.Message'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Log out
+      tags:
+      - auth
+  /api/auth/session:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.Username'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Get current session
+      tags:
+      - auth
+  /api/gym-visits:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apidoc.GymVisit'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: List gym visits
+      tags:
+      - gym
+  /api/gym-visits/{id}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Delete gym visit
+      tags:
+      - gym
+  /api/gym-visits/{id}/exercises:
+    get:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apidoc.Exercise'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: List visit exercises
+      tags:
+      - gym
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.ExerciseInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apidoc.Exercise'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Add visit exercise
+      tags:
+      - gym
+  /api/horizon:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/horizon.SummaryDTO'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Get financial summary
+      tags:
+      - horizon
+  /api/horizon/budgets:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/horizon.BudgetInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/horizon.BudgetDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Create budget
+      tags:
+      - horizon
+  /api/horizon/budgets/{id}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete budget
+      tags:
+      - horizon
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/horizon.BudgetInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/horizon.BudgetDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update budget
+      tags:
+      - horizon
+  /api/horizon/categories:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/horizon.CategoryDTO'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List categories
+      tags:
+      - horizon
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/horizon.CategoryInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/horizon.CategoryDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Create category
+      tags:
+      - horizon
+  /api/horizon/config:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/horizon.ConfigInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/horizon.SummaryDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update financial config
+      tags:
+      - horizon
+  /api/horizon/deductions:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/horizon.DeductionInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/horizon.DeductionDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Create deduction
+      tags:
+      - horizon
+  /api/horizon/deductions/{id}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete deduction
+      tags:
+      - horizon
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/horizon.DeductionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/horizon.DeductionDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update deduction
+      tags:
+      - horizon
+  /api/horizon/subscriptions:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/horizon.SubscriptionSummaryDTO'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List subscriptions
+      tags:
+      - horizon
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/horizon.SubscriptionInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/horizon.SubscriptionDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Create subscription
+      tags:
+      - horizon
+  /api/horizon/subscriptions/{id}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete subscription
+      tags:
+      - horizon
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/horizon.SubscriptionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/horizon.SubscriptionDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update subscription
+      tags:
+      - horizon
+  /api/horizon/subscriptions/{id}/transactions:
+    get:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/horizon.TransactionDTO'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List subscription transactions
+      tags:
+      - horizon
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.LinkTransactionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/horizon.TransactionDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Link subscription transaction
+      tags:
+      - horizon
+  /api/horizon/transactions:
+    get:
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page, capped at 100
+        in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        type: integer
+      - description: Transaction type
+        enum:
+        - debit
+        - credit
+        in: query
+        name: type
+        type: string
+      - description: Case-insensitive search text
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/horizon.PaginatedTransactionsDTO'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List transactions
+      tags:
+      - horizon
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/horizon.TransactionInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/horizon.TransactionDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Create transaction
+      tags:
+      - horizon
+  /api/horizon/transactions/{id}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete transaction
+      tags:
+      - horizon
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/horizon.TransactionInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/horizon.TransactionDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update transaction
+      tags:
+      - horizon
+  /api/horizon/transactions/bulk:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/horizon.BulkTransactionsInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/horizon.TransactionDTO'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Create transactions in bulk
+      tags:
+      - horizon
+  /api/meal-plans:
+    get:
+      parameters:
+      - description: Single date YYYY-MM-DD
+        in: query
+        name: date
+        type: string
+      - description: Range start YYYY-MM-DD
+        in: query
+        name: start_date
+        type: string
+      - description: Range end YYYY-MM-DD
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/mealplan.PlanDTO'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List meal plans
+      tags:
+      - meal plans
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/mealplan.CreatePlanInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/mealplan.PlanDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Create meal plan
+      tags:
+      - meal plans
+  /api/meal-plans/{id}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete meal plan
+      tags:
+      - meal plans
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/mealplan.UpdatePlanInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/mealplan.PlanDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update meal plan
+      tags:
+      - meal plans
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/mealplan.UpdatePlanInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/mealplan.PlanDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update meal plan
+      tags:
+      - meal plans
+  /api/meal-plans/{id}/consumed:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/mealplan.UpdatePlanConsumedInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/mealplan.PlanDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Set meal consumption
+      tags:
+      - meal plans
+  /api/meal-times:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/mealplan.TimeDTO'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List meal times
+      tags:
+      - meal plans
+    post:
+      consumes:
+      - application/json
+      description: Times accept HH:MM or HH:MM:SS.
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/mealplan.CreateTimeInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/mealplan.TimeDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Create meal time
+      tags:
+      - meal plans
+  /api/meal-times/{id}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete custom meal time
+      tags:
+      - meal plans
+  /api/meditation/today:
+    post:
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apidoc.Message'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Record today's meditation
+      tags:
+      - activity
+  /api/next-month-purchases:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Clear next-month purchases
+      tags:
+      - purchases
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.PurchaseList'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List next-month purchases
+      tags:
+      - purchases
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.PurchaseInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apidoc.PurchaseItem'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Create next-month purchase
+      tags:
+      - purchases
+  /api/next-month-purchases/{id}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete next-month purchase
+      tags:
+      - purchases
+  /api/notifications:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Clear notifications
+      tags:
+      - notifications
+    get:
+      parameters:
+      - default: 100
+        description: Maximum notifications, 1 to 100 (default 100)
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apidoc.Notification'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List notifications
+      tags:
+      - notifications
+  /api/notifications/{id}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Dismiss notification
+      tags:
+      - notifications
+  /api/notifications/{id}/gym-visit:
+    post:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apidoc.ID'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Mark gym reminder visited
+      tags:
+      - gym
+  /api/profile:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.Profile'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Get profile
+      tags:
+      - profile
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.Name'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.Name'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Save profile
+      tags:
+      - profile
+  /api/profile/password:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.ChangePasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.Message'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Change password
+      tags:
+      - profile
+  /api/sport/today:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.SportInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apidoc.Message'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Record today's sport
+      tags:
+      - activity
+  /api/vehicle-air-fills/latest:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apidoc.AirFill'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List latest air fills
+      tags:
+      - vehicles
+  /api/vehicles:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apidoc.VehicleName'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: List vehicles
+      tags:
+      - vehicles
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.VehicleInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/vehicle.DTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Create vehicle
+      tags:
+      - vehicles
+  /api/vehicles/{id}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Delete vehicle
+      tags:
+      - vehicles
+    get:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/vehicle.DTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Get vehicle
+      tags:
+      - vehicles
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.VehicleInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/vehicle.DTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Update vehicle
+      tags:
+      - vehicles
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.VehicleInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/vehicle.DTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Update vehicle
+      tags:
+      - vehicles
+  /api/vehicles/{id}/air-fills:
+    post:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apidoc.AirFill'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Record air fill
+      tags:
+      - vehicles
+  /api/vehicles/{id}/air-fills/{airFillID}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Positive airFillID
+        in: path
+        minimum: 1
+        name: airFillID
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete air fill
+      tags:
+      - vehicles
+  /api/vehicles/{id}/fuel-fillups:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.FuelFillupInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apidoc.FuelFillupCreated'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Record fuel fill-up
+      tags:
+      - vehicles
+  /api/vehicles/{id}/fuel-fillups/{fillupID}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Positive fillupID
+        in: path
+        minimum: 1
+        name: fillupID
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete fuel fill-up
+      tags:
+      - vehicles
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Positive fillupID
+        in: path
+        minimum: 1
+        name: fillupID
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.FuelFillupInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.ID'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update fuel fill-up
+      tags:
+      - vehicles
+  /api/vehicles/{id}/history:
+    get:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.VehicleHistory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Get vehicle history
+      tags:
+      - vehicles
+  /api/vehicles/{id}/maintenance-records:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.MaintenanceInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apidoc.MaintenanceRecord'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Create maintenance record
+      tags:
+      - vehicles
+  /api/vehicles/{id}/maintenance-records/{recordID}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Positive recordID
+        in: path
+        minimum: 1
+        name: recordID
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete maintenance record
+      tags:
+      - vehicles
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Positive recordID
+        in: path
+        minimum: 1
+        name: recordID
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.MaintenanceInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.MaintenanceRecord'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update maintenance record
+      tags:
+      - vehicles
+  /api/vehicles/{id}/maintenance-records/{recordID}/attachments:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Multipart upload; file must be 1 byte to 10 MB.
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Positive recordID
+        in: path
+        minimum: 1
+        name: recordID
+        required: true
+        type: integer
+      - description: Attachment file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apidoc.Attachment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Upload maintenance attachment
+      tags:
+      - vehicles
+  /api/vehicles/{id}/maintenance-records/{recordID}/attachments/{attachmentID}:
+    delete:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Positive recordID
+        in: path
+        minimum: 1
+        name: recordID
+        required: true
+        type: integer
+      - description: Positive attachmentID
+        in: path
+        minimum: 1
+        name: attachmentID
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete maintenance attachment
+      tags:
+      - vehicles
+    get:
+      description: Redirects to a short-lived download URL.
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Positive recordID
+        in: path
+        minimum: 1
+        name: recordID
+        required: true
+        type: integer
+      - description: Positive attachmentID
+        in: path
+        minimum: 1
+        name: attachmentID
+        required: true
+        type: integer
+      responses:
+        "302":
+          description: Redirect
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Download maintenance attachment
+      tags:
+      - vehicles
+  /api/vehicles/{id}/tire-pressure:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.TirePressureInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/vehicle.DTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update tire pressure
+      tags:
+      - vehicles
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.TirePressureInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/vehicle.DTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update tire pressure
+      tags:
+      - vehicles
+  /api/workout/today:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.Visited'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Get today's workout visit
+      tags:
+      - gym
+    post:
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apidoc.CreatedID'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Record today's workout visit
+      tags:
+      - gym
+  /debug/pprof/:
+    get:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Profiler index
+      tags:
+      - operations
+  /debug/pprof/allocs:
+    get:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Allocations profile
+      tags:
+      - operations
+  /debug/pprof/block:
+    get:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Block profile
+      tags:
+      - operations
+  /debug/pprof/cmdline:
+    get:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Process command line
+      tags:
+      - operations
+  /debug/pprof/goroutine:
+    get:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Goroutine profile
+      tags:
+      - operations
+  /debug/pprof/heap:
+    get:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Heap profile
+      tags:
+      - operations
+  /debug/pprof/mutex:
+    get:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Mutex profile
+      tags:
+      - operations
+  /debug/pprof/profile:
+    get:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      parameters:
+      - description: Duration in seconds
+        in: query
+        minimum: 1
+        name: seconds
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: CPU profile
+      tags:
+      - operations
+  /debug/pprof/symbol:
+    get:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Symbol lookup
+      tags:
+      - operations
+    post:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Symbol lookup
+      tags:
+      - operations
+  /debug/pprof/threadcreate:
+    get:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Thread creation profile
+      tags:
+      - operations
+  /debug/pprof/trace:
+    get:
+      description: Available only when pprof is enabled. HTTP Basic Auth is required
+        when profiler credentials are configured.
+      parameters:
+      - description: Duration in seconds
+        in: query
+        minimum: 1
+        name: seconds
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Execution trace
+      tags:
+      - operations
   /healthz:
     get:
       description: Returns OK when the API process is running.
@@ -21,6 +3502,23 @@ paths:
       summary: Check liveness
       tags:
       - health
+  /metrics:
+    get:
+      description: Prometheus text exposition format.
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Get Prometheus metrics
+      tags:
+      - operations
   /readyz:
     get:
       description: Returns OK when the API can reach its database.
@@ -42,7 +3540,41 @@ paths:
       summary: Check readiness
       tags:
       - health
+  /swagger/doc.json:
+    get:
+      description: Generated Swagger 2.0 document.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get Swagger document
+      tags:
+      - operations
+  /swagger/index.html:
+    get:
+      description: Interactive API documentation.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Open Swagger UI
+      tags:
+      - operations
 schemes:
 - http
 - https
+securityDefinitions:
+  SessionBearer:
+    description: Bearer session token. X-Session-Token and life_session cookie also
+      work.
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

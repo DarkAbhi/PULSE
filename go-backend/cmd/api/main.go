@@ -37,10 +37,14 @@ import (
 
 // @title Life Backend API
 // @version 1.0
-// @description REST API for the Life Backend application.
+// @description REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie. Some older vehicle, gym, and activity routes do not enforce a session.
 // @host localhost:8080
 // @BasePath /
 // @schemes http https
+// @securityDefinitions.apikey SessionBearer
+// @in header
+// @name Authorization
+// @description Bearer session token. X-Session-Token and life_session cookie also work.
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

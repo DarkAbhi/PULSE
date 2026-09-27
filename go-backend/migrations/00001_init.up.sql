@@ -165,6 +165,6 @@ CREATE TABLE gym_reminder_deliveries (
 
 CREATE INDEX gym_reminder_deliveries_date_idx ON gym_reminder_deliveries (reminder_date);
 
--- Development-only bootstrap account: username "admin", password "password".
+-- First-run bootstrap account: username "admin", password "password". Change it after login.
 INSERT INTO users (username, password_hash)
 VALUES ('admin', '$2y$12$bB7WwVq7nGJ4cfNTCX6kQODcNRLQvMjRhIFuH4Qv2.GAxlqNac4/S');

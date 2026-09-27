@@ -5,7 +5,7 @@ import Button from "./components/design-system/button";
 import { SubmitEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+const apiBaseURL = "";
 
 export default function Home() {
   const router = useRouter();

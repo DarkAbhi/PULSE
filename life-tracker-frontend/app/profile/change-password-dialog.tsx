@@ -11,7 +11,7 @@ interface ChangePasswordDialogProps {
   onClose: () => void;
 }
 
-const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+const apiBaseURL = "";
 
 export default function ChangePasswordDialog({
   isOpen,

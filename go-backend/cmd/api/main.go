@@ -127,6 +127,7 @@ func run(ctx context.Context) error {
 	vehicleRepository := vehicle.NewRepository(pool)
 	vehicleService := vehicle.NewService(vehicleRepository)
 	horizonService := horizon.NewService(pool)
+	secureCookies := os.Getenv("APP_ENV") == "production" && os.Getenv("SESSION_COOKIE_SECURE") != "false"
 	if err := mealService.EnsureDefaults(ctx); err != nil {
 		slog.Warn("ensure default meal times failed", "error", err)
 	}
@@ -150,7 +151,7 @@ func run(ctx context.Context) error {
 		MealPlan:       mealplan.NewHandler(mealService, sessionID),
 		Notification:   notification.NewHandler(notificationService, sessionID),
 		Gym:            gym.NewHandler(gymService, sessionID),
-		Auth:           auth.NewHandler(authService, os.Getenv("APP_ENV") == "production"),
+		Auth:           auth.NewHandler(authService, secureCookies),
 		Vehicle:        vehicleHandler,
 		Horizon:        horizon.NewHandler(pool, horizonService, sessionLookup),
 		Profile:        profile.NewHandler(profileService, sessionID),

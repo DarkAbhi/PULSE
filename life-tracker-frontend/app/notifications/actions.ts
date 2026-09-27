@@ -4,8 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
 const apiBaseURL =
-  process.env.NEXT_PUBLIC_INTERNAL_API_BASE_URL ??
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  process.env.INTERNAL_API_BASE_URL ??
   "http://localhost:8080";
 
 async function getAuthHeader() {

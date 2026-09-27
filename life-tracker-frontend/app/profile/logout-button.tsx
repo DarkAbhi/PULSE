@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import ConfirmationDialog from "../components/design-system/confirmation-dialog";
 
-const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+const apiBaseURL = "";
 
 export default function LogoutButton() {
   const router = useRouter();

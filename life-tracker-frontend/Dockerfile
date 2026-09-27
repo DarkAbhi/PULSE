@@ -11,9 +11,9 @@ RUN \
 FROM node:20-alpine AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
-# Next.js inlines NEXT_PUBLIC_ variables into client bundles during `npm run build`.
-ARG NEXT_PUBLIC_GEMINI_API_KEY
-ENV NEXT_PUBLIC_GEMINI_API_KEY=$NEXT_PUBLIC_GEMINI_API_KEY
+# Next.js resolves rewrites while building.
+ARG INTERNAL_API_BASE_URL=http://backend:8080
+ENV INTERNAL_API_BASE_URL=$INTERNAL_API_BASE_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build

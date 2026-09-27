@@ -1,10 +1,24 @@
 services:
+  migrate-dev:
+    profiles: ["dev"]
+    build:
+      context: ./go-backend
+      dockerfile: Dockerfile
+    environment:
+      DB_HOSTNAME: ${DB_HOSTNAME}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_SSLMODE: ${DB_SSLMODE:-require}
+    command: ["--migrate-up"]
+    restart: "no"
+
   backend-dev:
     image: golang:1.25.1-bookworm
     user: "0:0"
     entrypoint: []
     working_dir: /app
-    container_name: life-api-dev
     command: >
       sh -lc '
         /usr/local/go/bin/go version &&
@@ -44,7 +58,6 @@ services:
   web-dev:
     image: node:24-bookworm-slim
     working_dir: /app
-    container_name: life-web-dev
     command: sh -lc "npm ci || npm i && npm run dev"
     volumes:
       - ./life-tracker-frontend:/app
@@ -52,9 +65,8 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
-      NEXT_PUBLIC_INTERNAL_API_BASE_URL: http://backend-dev:8080
-      NEXT_PUBLIC_GEMINI_API_KEY: ${NEXT_PUBLIC_GEMINI_API_KEY}
+      INTERNAL_API_BASE_URL: http://backend-dev:8080
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
     ports:
@@ -66,7 +78,6 @@ services:
     build:
       context: ./telegram-bot
       dockerfile: Dockerfile
-    container_name: life-bot-dev
     environment:
       BOT_API_KEY: ${BOT_API_KEY}
       TELEGRAM_ALLOWED_USER_ID: ${TELEGRAM_ALLOWED_USER_ID:?Set your numeric Telegram user ID}

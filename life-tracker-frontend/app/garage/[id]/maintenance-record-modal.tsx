@@ -10,7 +10,7 @@ import Dialog, { DialogAction, DialogActions } from "../../components/design-sys
 
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
 type Category = (typeof categories)[number];
-const apiBaseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+const apiBaseURL = "";
 
 const localDate = (value?: string) =>
   value ? new Date(value).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);

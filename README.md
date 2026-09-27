@@ -6,17 +6,23 @@ development, configuration, architecture, migrations, tests, and API docs.
 
 ### Setup to run
 
-Copy `.env.example` to `.env`, then fill in the values:
+On the production host, copy `.env.example` to `.env` and fill in the values.
+For development, copy `.env.dev.example` to `.env.dev` and use a different
+database and Telegram bot token. The Makefile loads the matching file explicitly
+and uses separate Compose project names (`life-prod` and `life-dev`).
+Keep both files private (`chmod 600 .env` or `chmod 600 .env.dev`).
 
-- `APP_ENV`: application environment (`production` or `development`).
+- `APP_ENV`: `production` in `.env` and `development` in `.env.dev`.
+- `SESSION_COOKIE_SECURE`: set to `false` for direct HTTP access by LAN or
+  Tailscale IP. Set to `true` if you later add HTTPS.
 - `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOSTNAME`, `DB_PORT`, and
   `DB_SSLMODE`: PostgreSQL database connection details.
 - `BOT_API_KEY`: Telegram bot token obtained from BotFather.
 - `TELEGRAM_ALLOWED_USER_ID`: your numeric Telegram user ID. The bot ignores
   messages from other accounts and refuses to start when this is missing.
-- `NEXT_PUBLIC_GEMINI_API_KEY`: Gemini key used in the browser for statement
-  extraction. It is included in the public frontend bundle, so restrict it by
-  allowed origins and APIs.
+- `GEMINI_API_KEY`: Gemini key used only by the Next.js server action. PDF
+  statements are uploaded to the server for extraction; the key is never put in
+  the browser bundle.
 - Optional Garage receipt storage: set `S3_BUCKET` and `AWS_REGION`, plus
   standard AWS credentials (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) or
   run the backend with an IAM role. `S3_ENDPOINT` and `S3_FORCE_PATH_STYLE=true`
@@ -29,15 +35,30 @@ Run the production version using
 make deploy
 ```
 
-The Compose stack expects PostgreSQL to exist outside this repository. Make
-sure the configured database is reachable from Docker and run migrations before
-starting development with `make dev-migrate-up` followed by `make dev`.
+Open `http://<server-LAN-or-Tailscale-IP>:3000`. Browser API requests use
+`/api` on that same host, and Next.js forwards them to the backend inside
+Docker. No browser URL or CORS origin needs to be built into the image.
+
+The Compose stacks expect PostgreSQL outside this repository. Use separate
+development and production databases. Run `make dev-migrate-up` before
+`make dev`. Production runs pending migrations when `make up` starts; you can
+also run `make docker-migrate-up` explicitly. The first migration creates
+`admin` / `password`; change that password after the first login.
+
+Plain HTTP on a LAN does not encrypt your password or session cookie in
+transit. Tailscale traffic is encrypted; restrict access to trusted clients
+and do not forward port 3000 from your internet router.
+The backend is reachable only inside Docker; Prometheus, Grafana, and Jaeger
+listen only on the server's loopback interface. Set `GRAFANA_ADMIN_PASSWORD`
+in `.env` before starting production. To view Grafana from another computer,
+forward its port with `ssh -L 3001:127.0.0.1:3001 <server>` and open
+`http://localhost:3001` in your browser.
 
 ## Make commands
 
 Run these commands from the repository root. The production commands use the
-`prod` Docker Compose profile. The development commands combine
-`docker-compose.yml` with `docker-compose.dev.yml`.
+`prod` Docker Compose profile with `.env`. Development commands combine
+`docker-compose.yml` and `docker-compose.dev.yml` with `.env.dev`.
 
 ### Production
 
@@ -53,6 +74,7 @@ Run these commands from the repository root. The production commands use the
 | `make backend-logs` | Follow the last 200 log lines from the backend service.                                       |
 | `make web-logs`     | Follow the last 200 log lines from the frontend web service.                                  |
 | `make bot-logs`     | Follow the last 200 log lines from the Telegram bot service.                                  |
+| `make monitoring-logs` | Follow production Prometheus, Grafana, and Jaeger logs.                                    |
 
 ### Production migrations
 
@@ -72,10 +94,13 @@ These commands run the migration service using the production Docker image.
 | `make dev`      | Start the development backend, web, and bot services in the background. Removes orphaned containers. |
 | `make dev-down` | Stop and remove the development services, including orphaned containers.                             |
 | `make dev-logs` | Follow the last 200 log lines from the development backend, web, and bot services.                   |
+| `make dev-monitoring-logs` | Follow development Prometheus, Grafana, and Jaeger logs.                          |
 
 ### Development migrations
 
-These commands run migrations against the development Compose environment.
+These commands run the `migrate-dev` service using `.env.dev` and the
+`life-dev` Compose project. Production migration commands use `.env` and
+`life-prod`.
 
 | Command               | Description                                                                                                                                                 |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -1,3 +1,4 @@
+import "server-only";
 import { GoogleGenAI, Type } from "@google/genai";
 
 export interface StatementTransaction {
@@ -25,7 +26,6 @@ export interface StatementExtractionResponse {
 }
 
 export interface ExtractOptions {
-  apiKey?: string;
   model?: string;
   availableCategories?: string[];
 }
@@ -111,47 +111,22 @@ export const standardizedStatementSchema = {
 };
 
 /**
- * Converts a browser File or Blob object to a base64 encoded string.
- */
-async function fileToBase64(file: File | Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      // Strip Data-URL header (e.g. "data:application/pdf;base64,")
-      const base64 = result.includes(",") ? result.split(",")[1] : result;
-      resolve(base64);
-    };
-    reader.onerror = (error) => reject(error);
-    reader.readAsDataURL(file);
-  });
-}
-
-/**
- * Service to extract transactions and account summary from any financial statement PDF file 
- * (credit card, debit card, or bank account statement) using Google Gemini Gen AI.
- * 
- * @param file - The browser File or Blob object uploaded by the user.
- * @param options - Optional configuration including custom API key or Gemini model.
- * @returns Object containing parsed StatementResult and pure raw JSON string.
+ * Extracts transactions from a financial statement on the server.
  */
 export async function extractStatementData(
   file: File | Blob,
   options?: ExtractOptions
 ): Promise<StatementExtractionResponse> {
-  const apiKey = options?.apiKey || process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    throw new Error(
-      "Gemini API Key is required. Please set NEXT_PUBLIC_GEMINI_API_KEY environment variable or pass an apiKey in options."
-    );
+    throw new Error("GEMINI_API_KEY is not configured on the server.");
   }
 
   const ai = new GoogleGenAI({ apiKey });
 
-  // 1. Convert browser File/Blob to base64 inlineData format for Gemini API
-  const mimeType = file.type || "application/pdf";
-  const base64Data = await fileToBase64(file);
+  const mimeType = "application/pdf";
+  const base64Data = Buffer.from(await file.arrayBuffer()).toString("base64");
 
   const pdfPart = {
     inlineData: {
@@ -187,7 +162,7 @@ export async function extractStatementData(
     "Return pure valid JSON adhering strictly to the JSON schema provided.";
 
   // 3. Request structured content generation from Gemini model with responseSchema
-  const modelName = options?.model || "gemini-3.6-flash";
+  const modelName = options?.model || "gemini-3.8-flash";
   const response = await ai.models.generateContent({
     model: modelName,
     contents: [pdfPart, prompt],
@@ -209,14 +184,4 @@ export async function extractStatementData(
     data: parsedData,
     rawJson: rawJson,
   };
-}
-
-// Backward compatibility alias for credit card extractor
-export type CreditCardStatementResult = StatementResult;
-export async function extractCreditCardStatementData(
-  file: File | Blob,
-  options?: ExtractOptions
-): Promise<CreditCardStatementResult> {
-  const result = await extractStatementData(file, options);
-  return result.data;
 }

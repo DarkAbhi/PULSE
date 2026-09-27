@@ -16,13 +16,12 @@ import {
   List,
   Plus,
   Loader2,
-  Key,
 } from "lucide-react";
-import {
-  extractStatementData,
+import type {
   StatementExtractionResponse,
   StatementTransaction,
 } from "../../../services/credit-card-statement-extractor";
+import { extractStatementAction } from "../extract-statement";
 import { CategoryItem } from "../../dashboard/financial-horizon-card";
 import Dialog from "../../components/design-system/dialog";
 
@@ -87,8 +86,6 @@ export default function StatementUploadDialog({
   const [extractionResult, setExtractionResult] = useState<StatementExtractionResponse | null>(null);
   const [activeView, setActiveView] = useState<"json" | "preview">("json");
   const [copied, setCopied] = useState(false);
-  const [customApiKey, setCustomApiKey] = useState("");
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
   const [selectedTxIndexes, setSelectedTxIndexes] = useState<number[]>([]);
   const [selectedCategoryMap, setSelectedCategoryMap] = useState<Record<number, number | null>>({});
   const [isImporting, setIsImporting] = useState(false);
@@ -132,10 +129,9 @@ export default function StatementUploadDialog({
 
     try {
       const categoryNames = categories.map((c) => c.name);
-      const res = await extractStatementData(selectedFile, {
-        apiKey: customApiKey.trim() || undefined,
-        availableCategories: categoryNames,
-      });
+      const formData = new FormData();
+      formData.set("statement", selectedFile);
+      const res = await extractStatementAction(formData, categoryNames);
 
       setExtractionResult(res);
       // Pre-select all extracted transactions for preview import
@@ -163,7 +159,7 @@ export default function StatementUploadDialog({
         setSelectedCategoryMap(initialCategoryMap);
       }
     } catch (err: any) {
-      setError(err?.message || "Failed to extract statement data. Please check your Gemini API key or file.");
+      setError(err?.message || "Failed to extract statement data. Please try another PDF.");
     } finally {
       setIsLoading(false);
     }
@@ -246,30 +242,6 @@ export default function StatementUploadDialog({
 
         {/* Content Body */}
         <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto scrollbar-thin">
-          {/* API Key Toggle/Input */}
-          <div className="rounded-xl border border-border/80 bg-background/60 p-3 text-xs space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
-                <Key className="h-3.5 w-3.5 text-primary" /> Gemini API Key Config
-              </span>
-              <Button variant="tertiary" size="md"
-                type="button"
-                onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-              >
-                {showApiKeyInput ? "Hide Custom Key" : "Set Custom API Key"}
-              </Button>
-            </div>
-            {showApiKeyInput && (
-              <input
-                type="password"
-                placeholder="Enter custom GEMINI_API_KEY (leave blank to use environment variable)"
-                value={customApiKey}
-                onChange={(e) => setCustomApiKey(e.target.value)}
-                className="w-full rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-            )}
-          </div>
-
           {/* File Upload Zone */}
           {!extractionResult && (
             <div

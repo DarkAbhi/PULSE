@@ -1,8 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
+  experimental: {
+    serverActions: { bodySizeLimit: "12mb" },
+  },
+  async rewrites() {
+    return [{
+      source: "/api/:path*",
+      destination: `${process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080"}/api/:path*`,
+    }];
   },
 };
 

@@ -1,33 +1,28 @@
 # Life Tracker MCP server
 
-This standalone stdio MCP server exposes only two read-only tools: `get_workout_today` and `get_vehicles`. Any MCP client can use it. Hermes uses its own Telegram bot token; the existing button bot remains separate.
+The production Compose stack runs this read-only MCP server beside the Go backend. It exposes only `get_workout_today` and `get_vehicles`. Hermes has its own Telegram bot; the existing button bot remains separate.
 
 ## Ubuntu setup
 
-At the current Hermes installer screen, choose **Walk through all configurations**. Set up Telegram there, then leave unrelated integrations off. If it offers MCP server setup now, skip adding a server until this checkout is on Ubuntu; the config below adds it afterwards. Use a new BotFather token for Hermes and allowlist only your Telegram user ID. Hermes's Docker terminal backend does not run this MCP process; Hermes starts it on the host.
+Deploy the updated repository with `make deploy`. Compose connects the MCP service to `http://backend:8080` internally and publishes its HTTP endpoint only on the host's loopback interface at `http://127.0.0.1:18082/mcp`. Hermes itself stays on the host; its Docker terminal backend is unrelated to this connection.
 
-Deploy Life Tracker first. The production Compose file publishes the Go API only on `127.0.0.1:8080`. Verify it from Ubuntu with `curl -fsS http://127.0.0.1:8080/healthz`.
-
-From the Life Tracker repository on Ubuntu, install the MCP Python SDK in its own environment:
+Verify the backend from Ubuntu:
 
 ```sh
-python3 -m venv hermes-mcp/.venv
-hermes-mcp/.venv/bin/python -m pip install -r hermes-mcp/requirements.txt
+curl -fsS http://127.0.0.1:18080/api/workout/today
+curl -fsS http://127.0.0.1:18080/api/vehicles
 ```
 
-Add this server under `mcp_servers` in `~/.hermes/config.yaml`, replacing `/absolute/path/to/life-backend` with the real checkout path:
+Add this entry to `~/.hermes/config.yaml`. If `mcp_servers:` already exists, add only the `life_tracker:` entry beneath it:
 
 ```yaml
 mcp_servers:
   life_tracker:
-    command: /absolute/path/to/life-backend/hermes-mcp/.venv/bin/python
-    args: [/absolute/path/to/life-backend/hermes-mcp/server.py]
+    url: http://127.0.0.1:18082/mcp
     tools:
       include: [get_workout_today, get_vehicles]
       prompts: false
       resources: false
 ```
 
-Test with `hermes mcp test life_tracker`, then start or restart the gateway. Ask the Hermes bot “Did I work out today?” and “What vehicles are in my garage?” If the backend uses a different host-side address, set `LIFE_BACKEND_BASE_URL` under this server's `env` mapping. Hermes does not pass arbitrary host environment variables to MCP subprocesses.
-
-For an always-on Ubuntu bot, use `hermes gateway install`, `hermes gateway start`, and `hermes gateway status`; `sudo loginctl enable-linger "$USER"` keeps the user service running after logout. Production and development Compose both use host port 8080, so run one stack at a time.
+Run `hermes mcp test life_tracker`, then `hermes gateway restart`. Ask the Hermes Telegram bot “Did I work out today?” and “What vehicles are in my garage?” The test checks protocol discovery; the Telegram questions also check that the tools can reach the backend. If discovery fails, inspect `docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod logs mcp`.

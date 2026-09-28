@@ -41,8 +41,8 @@ class LifeTrackerMCPTest(unittest.TestCase):
             self.assertEqual(json.loads(server.get_vehicles())[0]["name"], "Scooter")
 
         self.assertEqual(paths, [
-            ("http://127.0.0.1:8080/api/workout/today", 10),
-            ("http://127.0.0.1:8080/api/vehicles", 10),
+            ("http://127.0.0.1:18080/api/workout/today", 10),
+            ("http://127.0.0.1:18080/api/vehicles", 10),
         ])
 
 

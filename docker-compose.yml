@@ -93,6 +93,18 @@ services:
       BACKEND_BASE_URL: http://backend:8080
     restart: unless-stopped
 
+  mcp:
+    profiles: ["prod"]
+    build: ./hermes-mcp
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      LIFE_BACKEND_BASE_URL: http://backend:8080
+    ports:
+      - "127.0.0.1:18082:8000"
+    restart: unless-stopped
+
   prometheus:
     profiles: ["prod", "dev"]
     image: prom/prometheus:latest

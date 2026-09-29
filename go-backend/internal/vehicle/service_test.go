@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/DarkAbhi/life-backend/internal/vehicle/query"
 )
 
@@ -17,7 +18,7 @@ type stubVehicleStore struct {
 	deleteErr    error
 }
 
-func (s *stubVehicleStore) List(context.Context) ([]query.ListVehiclesRow, error) {
+func (s *stubVehicleStore) List(context.Context, int64) ([]query.ListVehiclesRow, error) {
 	return nil, nil
 }
 
@@ -25,11 +26,11 @@ func (s *stubVehicleStore) Create(context.Context, query.CreateVehicleParams) (q
 	return query.CreateVehicleRow{}, nil
 }
 
-func (s *stubVehicleStore) Fetch(context.Context, int64) (query.GetVehicleRow, error) {
+func (s *stubVehicleStore) Fetch(context.Context, int64, int64) (query.GetVehicleRow, error) {
 	return query.GetVehicleRow{}, nil
 }
 
-func (s *stubVehicleStore) FetchForUpdate(context.Context, int64) (query.GetVehicleForUpdateRow, error) {
+func (s *stubVehicleStore) FetchForUpdate(context.Context, int64, int64) (query.GetVehicleForUpdateRow, error) {
 	return query.GetVehicleForUpdateRow{}, nil
 }
 
@@ -41,7 +42,7 @@ func (s *stubVehicleStore) UpdateTirePressure(context.Context, query.UpdateVehic
 	return query.UpdateVehicleTirePressureRow{}, nil
 }
 
-func (s *stubVehicleStore) Delete(context.Context, int64) (int64, error) {
+func (s *stubVehicleStore) Delete(context.Context, int64, int64) (int64, error) {
 	if s.deleteErr != nil {
 		return 0, s.deleteErr
 	}
@@ -80,7 +81,7 @@ func TestService_Delete(t *testing.T) {
 			}
 			service := NewService(store)
 
-			err := service.Delete(context.Background(), 42)
+			err := service.Delete(context.Background(), 42, 1)
 			if tt.expectedErr == nil {
 				if err != nil {
 					t.Fatalf("expected nil error, got %v", err)
@@ -103,7 +104,7 @@ func TestService_Delete(t *testing.T) {
 func TestDeleteVehicleRouteRegistration(t *testing.T) {
 	store := &stubVehicleStore{deletedCount: 1}
 	service := NewService(store)
-	handler := NewHandler(nil, service, nil)
+	handler := NewHandler(nil, service, func(*http.Request) (auth.SessionUser, error) { return auth.SessionUser{ID: 1}, nil })
 
 	r := chi.NewRouter()
 	handler.RegisterRoutes(r)

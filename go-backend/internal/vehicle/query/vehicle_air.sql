@@ -1,12 +1,14 @@
 -- name: VehicleExists :one
-SELECT EXISTS(SELECT 1 FROM vehicles WHERE id = $1);
+SELECT EXISTS(SELECT 1 FROM vehicles WHERE id = $1 AND user_id = $2);
 
 -- name: CreateVehicleAirFill :one
-INSERT INTO vehicle_air_fills (vehicle_id, user_id) VALUES ($1, $2) RETURNING filled_at;
+INSERT INTO vehicle_air_fills (vehicle_id, user_id)
+SELECT v.id, v.user_id FROM vehicles v WHERE v.id=sqlc.arg(vehicle_id)::bigint AND v.user_id=sqlc.arg(user_id)::bigint RETURNING filled_at;
 
 -- name: ListLatestVehicleAirFills :many
-SELECT DISTINCT ON (vehicle_id) vehicle_id, filled_at FROM vehicle_air_fills
-WHERE user_id = $1 ORDER BY vehicle_id, filled_at DESC, id DESC;
+SELECT DISTINCT ON (f.vehicle_id) f.vehicle_id, f.filled_at FROM vehicle_air_fills f
+JOIN vehicles v ON v.id=f.vehicle_id AND v.user_id=f.user_id
+WHERE f.user_id = $1 ORDER BY f.vehicle_id, f.filled_at DESC, f.id DESC;
 -- name: ListDueAirFills :many
 SELECT id FROM vehicle_air_fills
 WHERE reminder_notification_id IS NULL AND filled_at <= NOW() - INTERVAL '30 days'

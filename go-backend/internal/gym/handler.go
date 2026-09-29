@@ -17,6 +17,19 @@ type Handler struct {
 	userID  func(*http.Request) (int64, error)
 }
 
+func (h *Handler) sessionUserID(w http.ResponseWriter, r *http.Request) (int64, bool) {
+	id, err := h.userID(r)
+	if errors.Is(err, sql.ErrNoRows) {
+		webutil.Unauthorized(w, "session is invalid or expired")
+		return 0, false
+	}
+	if err != nil {
+		webutil.ServerError(w, err)
+		return 0, false
+	}
+	return id, true
+}
+
 func NewHandler(service *Service, userID func(*http.Request) (int64, error)) *Handler {
 	return &Handler{service: service, userID: userID}
 }
@@ -43,7 +56,11 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	}
 }
 func (h *Handler) VisitedToday(w http.ResponseWriter, r *http.Request) {
-	id, visited, err := h.service.VisitedToday(r.Context(), time.Now())
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
+	id, visited, err := h.service.VisitedToday(r.Context(), userID, time.Now())
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -55,7 +72,11 @@ func (h *Handler) VisitedToday(w http.ResponseWriter, r *http.Request) {
 	webutil.WriteJSON(w, http.StatusOK, map[string]any{"visited": true, "id": id})
 }
 func (h *Handler) AddWorkoutForDay(w http.ResponseWriter, r *http.Request) {
-	id, err := h.service.AddVisit(r.Context())
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
+	id, err := h.service.AddVisit(r.Context(), userID)
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -63,7 +84,11 @@ func (h *Handler) AddWorkoutForDay(w http.ResponseWriter, r *http.Request) {
 	webutil.WriteJSON(w, http.StatusCreated, map[string]any{"message": "success", "id": id})
 }
 func (h *Handler) ListVisits(w http.ResponseWriter, r *http.Request) {
-	items, err := h.service.ListVisits(r.Context())
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
+	items, err := h.service.ListVisits(r.Context(), userID)
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -71,22 +96,30 @@ func (h *Handler) ListVisits(w http.ResponseWriter, r *http.Request) {
 	webutil.WriteJSON(w, http.StatusOK, items)
 }
 func (h *Handler) DeleteVisit(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
 	id, ok := webutil.ParseID(w, r)
 	if !ok {
 		return
 	}
-	if err := h.service.DeleteVisit(r.Context(), id); err != nil {
+	if err := h.service.DeleteVisit(r.Context(), userID, id); err != nil {
 		writeError(w, r, err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
 func (h *Handler) ListVisitExercises(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
 	id, ok := webutil.ParseID(w, r)
 	if !ok {
 		return
 	}
-	items, err := h.service.ListExercises(r.Context(), id)
+	items, err := h.service.ListExercises(r.Context(), userID, id)
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -94,6 +127,10 @@ func (h *Handler) ListVisitExercises(w http.ResponseWriter, r *http.Request) {
 	webutil.WriteJSON(w, http.StatusOK, items)
 }
 func (h *Handler) CreateVisitExercise(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
 	id, ok := webutil.ParseID(w, r)
 	if !ok {
 		return
@@ -105,7 +142,7 @@ func (h *Handler) CreateVisitExercise(w http.ResponseWriter, r *http.Request) {
 		webutil.BadRequest(w, "invalid json")
 		return
 	}
-	item, err := h.service.CreateExercise(r.Context(), id, body)
+	item, err := h.service.CreateExercise(r.Context(), userID, id, body)
 	if err != nil {
 		writeError(w, r, err)
 		return
@@ -113,13 +150,8 @@ func (h *Handler) CreateVisitExercise(w http.ResponseWriter, r *http.Request) {
 	webutil.WriteJSON(w, http.StatusCreated, item)
 }
 func (h *Handler) MarkReminderVisited(w http.ResponseWriter, r *http.Request) {
-	userID, err := h.userID(r)
-	if errors.Is(err, sql.ErrNoRows) {
-		webutil.Unauthorized(w, "session is invalid or expired")
-		return
-	}
-	if err != nil {
-		writeError(w, r, err)
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
 		return
 	}
 	id, ok := webutil.ParseID(w, r)

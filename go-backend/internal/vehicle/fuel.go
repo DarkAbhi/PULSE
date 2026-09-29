@@ -74,7 +74,7 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback(r.Context())
 	q := query.New(tx)
-	previousOdometer, err := q.GetMaxFuelOdometer(r.Context(), vehicleID)
+	previousOdometer, err := q.GetMaxFuelOdometer(r.Context(), query.GetMaxFuelOdometerParams{VehicleID: vehicleID, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -84,6 +84,10 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fillupID, err := q.CreateFuelFillup(r.Context(), query.CreateFuelFillupParams{VehicleID: vehicleID, UserID: user.ID, OdometerKm: in.OdometerKM, FilledAt: pgtype.Timestamptz{Time: filledAt, Valid: true}, StationName: nullableString(in.StationName), Notes: nullableText(in.Notes)})
+	if errors.Is(err, sql.ErrNoRows) {
+		http.NotFound(w, r)
+		return
+	}
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -100,7 +104,7 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 	}
 	economies := map[string]*float64{}
 	for _, item := range in.Items {
-		economies[item.FuelType] = h.latestFuelEconomy(vehicleID, item.FuelType)
+		economies[item.FuelType] = h.latestFuelEconomy(vehicleID, user.ID, item.FuelType)
 	}
 	webutil.WriteJSON(w, http.StatusCreated, map[string]any{"id": fillupID, "economy_km_per_litre": economies})
 }
@@ -217,8 +221,8 @@ func normalizeFuelItem(item *fuelItemInput) error {
 	return nil
 }
 
-func (h *Handler) latestFuelEconomy(vehicleID int64, fuelType string) *float64 {
-	rows, err := query.New(h.DB).ListFuelEconomyEntries(context.Background(), query.ListFuelEconomyEntriesParams{VehicleID: vehicleID, FuelType: fuelType})
+func (h *Handler) latestFuelEconomy(vehicleID, userID int64, fuelType string) *float64 {
+	rows, err := query.New(h.DB).ListFuelEconomyEntries(context.Background(), query.ListFuelEconomyEntriesParams{VehicleID: vehicleID, FuelType: fuelType, UserID: userID})
 	if err != nil {
 		return nil
 	}

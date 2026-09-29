@@ -485,7 +485,9 @@ func operation24() {}
 // @Summary Get today's workout visit
 // @Tags gym
 // @Produce json
+// @Security SessionBearer
 // @Success 200 {object} Visited
+// @Failure 401 {object} Error
 // @Failure 500 {object} Error
 // @Router /api/workout/today [get]
 func operation25() {}
@@ -494,8 +496,10 @@ func operation25() {}
 // @Summary Record today's workout visit
 // @Tags gym
 // @Produce json
+// @Security SessionBearer
 // @Success 201 {object} CreatedID
 // @Failure 400 {object} Error
+// @Failure 401 {object} Error
 // @Failure 500 {object} Error
 // @Router /api/workout/today [post]
 func operation26() {}
@@ -504,7 +508,9 @@ func operation26() {}
 // @Summary List gym visits
 // @Tags gym
 // @Produce json
+// @Security SessionBearer
 // @Success 200 {array} GymVisit
+// @Failure 401 {object} Error
 // @Failure 500 {object} Error
 // @Router /api/gym-visits [get]
 func operation27() {}
@@ -513,8 +519,10 @@ func operation27() {}
 // @Summary Delete gym visit
 // @Tags gym
 // @Param id path integer true "Positive id" minimum(1)
+// @Security SessionBearer
 // @Success 204 "No Content"
 // @Failure 400 {object} Error
+// @Failure 401 {object} Error
 // @Failure 404 {string} string
 // @Failure 500 {object} Error
 // @Router /api/gym-visits/{id} [delete]
@@ -525,8 +533,10 @@ func operation28() {}
 // @Tags gym
 // @Produce json
 // @Param id path integer true "Positive id" minimum(1)
+// @Security SessionBearer
 // @Success 200 {array} Exercise
 // @Failure 400 {object} Error
+// @Failure 401 {object} Error
 // @Failure 404 {string} string
 // @Failure 500 {object} Error
 // @Router /api/gym-visits/{id}/exercises [get]
@@ -539,8 +549,10 @@ func operation29() {}
 // @Produce json
 // @Param id path integer true "Positive id" minimum(1)
 // @Param body body ExerciseInput true "Request body"
+// @Security SessionBearer
 // @Success 201 {object} Exercise
 // @Failure 400 {object} Error
+// @Failure 401 {object} Error
 // @Failure 404 {string} string
 // @Failure 500 {object} Error
 // @Router /api/gym-visits/{id}/exercises [post]
@@ -855,7 +867,9 @@ func operation52() {}
 // @Summary List vehicles
 // @Tags vehicles
 // @Produce json
+// @Security SessionBearer
 // @Success 200 {array} VehicleName
+// @Failure 401 {object} Error
 // @Failure 500 {object} Error
 // @Router /api/vehicles [get]
 func operation53() {}
@@ -866,8 +880,10 @@ func operation53() {}
 // @Accept json
 // @Produce json
 // @Param body body VehicleInput true "Request body"
+// @Security SessionBearer
 // @Success 201 {object} vehicle.DTO
 // @Failure 400 {object} Error
+// @Failure 401 {object} Error
 // @Failure 500 {object} Error
 // @Router /api/vehicles [post]
 func operation54() {}
@@ -888,8 +904,10 @@ func operation55() {}
 // @Tags vehicles
 // @Produce json
 // @Param id path integer true "Positive id" minimum(1)
+// @Security SessionBearer
 // @Success 200 {object} vehicle.DTO
 // @Failure 400 {object} Error
+// @Failure 401 {object} Error
 // @Failure 404 {string} string
 // @Failure 500 {object} Error
 // @Router /api/vehicles/{id} [get]
@@ -902,8 +920,10 @@ func operation56() {}
 // @Produce json
 // @Param id path integer true "Positive id" minimum(1)
 // @Param body body VehicleInput true "Request body"
+// @Security SessionBearer
 // @Success 200 {object} vehicle.DTO
 // @Failure 400 {object} Error
+// @Failure 401 {object} Error
 // @Failure 404 {string} string
 // @Failure 500 {object} Error
 // @Router /api/vehicles/{id} [put]
@@ -916,8 +936,10 @@ func operation57() {}
 // @Produce json
 // @Param id path integer true "Positive id" minimum(1)
 // @Param body body VehicleInput true "Request body"
+// @Security SessionBearer
 // @Success 200 {object} vehicle.DTO
 // @Failure 400 {object} Error
+// @Failure 401 {object} Error
 // @Failure 404 {string} string
 // @Failure 500 {object} Error
 // @Router /api/vehicles/{id} [patch]
@@ -959,8 +981,10 @@ func operation60() {}
 // @Summary Delete vehicle
 // @Tags vehicles
 // @Param id path integer true "Positive id" minimum(1)
+// @Security SessionBearer
 // @Success 204 "No Content"
 // @Failure 400 {object} Error
+// @Failure 401 {object} Error
 // @Failure 404 {string} string
 // @Failure 500 {object} Error
 // @Router /api/vehicles/{id} [delete]

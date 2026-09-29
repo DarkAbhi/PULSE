@@ -14,26 +14,29 @@ import (
 
 const createFuelFillup = `-- name: CreateFuelFillup :one
 INSERT INTO vehicle_fuel_fillups (vehicle_id,user_id,odometer_km,filled_at,station_name,notes)
-VALUES ($1,$2,$3,$4,$5,$6) RETURNING id
+SELECT v.id,v.user_id,
+       $1::numeric, $2::timestamptz,
+       $3::varchar, $4::text
+FROM vehicles v WHERE v.id=$5::bigint AND v.user_id=$6::bigint RETURNING id
 `
 
 type CreateFuelFillupParams struct {
-	VehicleID   int64
-	UserID      int64
 	OdometerKm  float64
 	FilledAt    pgtype.Timestamptz
 	StationName sql.NullString
 	Notes       pgtype.Text
+	VehicleID   int64
+	UserID      int64
 }
 
 func (q *Queries) CreateFuelFillup(ctx context.Context, arg CreateFuelFillupParams) (int64, error) {
 	row := q.db.QueryRow(ctx, createFuelFillup,
-		arg.VehicleID,
-		arg.UserID,
 		arg.OdometerKm,
 		arg.FilledAt,
 		arg.StationName,
 		arg.Notes,
+		arg.VehicleID,
+		arg.UserID,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -76,11 +79,16 @@ func (q *Queries) DeleteFuelItems(ctx context.Context, fillupID int64) error {
 }
 
 const getMaxFuelOdometer = `-- name: GetMaxFuelOdometer :one
-SELECT COALESCE(MAX(odometer_km), -1)::double precision FROM vehicle_fuel_fillups WHERE vehicle_id=$1
+SELECT COALESCE(MAX(odometer_km), -1)::double precision FROM vehicle_fuel_fillups WHERE vehicle_id=$1 AND user_id=$2
 `
 
-func (q *Queries) GetMaxFuelOdometer(ctx context.Context, vehicleID int64) (float64, error) {
-	row := q.db.QueryRow(ctx, getMaxFuelOdometer, vehicleID)
+type GetMaxFuelOdometerParams struct {
+	VehicleID int64
+	UserID    int64
+}
+
+func (q *Queries) GetMaxFuelOdometer(ctx context.Context, arg GetMaxFuelOdometerParams) (float64, error) {
+	row := q.db.QueryRow(ctx, getMaxFuelOdometer, arg.VehicleID, arg.UserID)
 	var column_1 float64
 	err := row.Scan(&column_1)
 	return column_1, err
@@ -132,12 +140,13 @@ func (q *Queries) ListAverageFuelEconomyEntries(ctx context.Context, arg ListAve
 const listFuelEconomyEntries = `-- name: ListFuelEconomyEntries :many
 SELECT f.odometer_km, i.fill_type, i.quantity FROM vehicle_fuel_fillups f
 JOIN vehicle_fuel_items i ON i.fillup_id=f.id
-WHERE f.vehicle_id=$1 AND i.fuel_type=$2 ORDER BY f.filled_at, f.id
+WHERE f.vehicle_id=$1 AND i.fuel_type=$2 AND f.user_id=$3 ORDER BY f.filled_at, f.id
 `
 
 type ListFuelEconomyEntriesParams struct {
 	VehicleID int64
 	FuelType  string
+	UserID    int64
 }
 
 type ListFuelEconomyEntriesRow struct {
@@ -147,7 +156,7 @@ type ListFuelEconomyEntriesRow struct {
 }
 
 func (q *Queries) ListFuelEconomyEntries(ctx context.Context, arg ListFuelEconomyEntriesParams) ([]ListFuelEconomyEntriesRow, error) {
-	rows, err := q.db.Query(ctx, listFuelEconomyEntries, arg.VehicleID, arg.FuelType)
+	rows, err := q.db.Query(ctx, listFuelEconomyEntries, arg.VehicleID, arg.FuelType, arg.UserID)
 	if err != nil {
 		return nil, err
 	}

@@ -36,26 +36,26 @@ type ValidationError struct{ Message string }
 func (e ValidationError) Error() string { return e.Message }
 
 type store interface {
-	List(context.Context) ([]query.ListVehiclesRow, error)
+	List(context.Context, int64) ([]query.ListVehiclesRow, error)
 	Create(context.Context, query.CreateVehicleParams) (query.CreateVehicleRow, error)
-	Fetch(context.Context, int64) (query.GetVehicleRow, error)
-	FetchForUpdate(context.Context, int64) (query.GetVehicleForUpdateRow, error)
+	Fetch(context.Context, int64, int64) (query.GetVehicleRow, error)
+	FetchForUpdate(context.Context, int64, int64) (query.GetVehicleForUpdateRow, error)
 	Update(context.Context, query.UpdateVehicleParams) (query.UpdateVehicleRow, error)
 	UpdateTirePressure(context.Context, query.UpdateVehicleTirePressureParams) (query.UpdateVehicleTirePressureRow, error)
-	Delete(context.Context, int64) (int64, error)
+	Delete(context.Context, int64, int64) (int64, error)
 }
 type Service struct{ store store }
 
 func NewService(store store) *Service { return &Service{store: store} }
 
-func (s *Service) List(ctx context.Context) ([]query.ListVehiclesRow, error) {
-	rows, err := s.store.List(ctx)
+func (s *Service) List(ctx context.Context, userID int64) ([]query.ListVehiclesRow, error) {
+	rows, err := s.store.List(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("list vehicles: %w", err)
 	}
 	return rows, nil
 }
-func (s *Service) Create(ctx context.Context, p Changes) (query.CreateVehicleRow, error) {
+func (s *Service) Create(ctx context.Context, userID int64, p Changes) (query.CreateVehicleRow, error) {
 	if p.Name == nil || *p.Name == "" {
 		return query.CreateVehicleRow{}, ValidationError{"name is required"}
 	}
@@ -67,14 +67,14 @@ func (s *Service) Create(ctx context.Context, p Changes) (query.CreateVehicleRow
 	if err := validatePressures(frontSolo, rearSolo, p.FrontTirePressurePillion, p.RearTirePressurePillion); err != nil {
 		return query.CreateVehicleRow{}, err
 	}
-	row, err := s.store.Create(ctx, query.CreateVehicleParams{Name: *p.Name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion})
+	row, err := s.store.Create(ctx, query.CreateVehicleParams{Name: *p.Name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion, UserID: userID})
 	if err != nil {
 		return query.CreateVehicleRow{}, fmt.Errorf("create vehicle: %w", err)
 	}
 	return row, nil
 }
-func (s *Service) Fetch(ctx context.Context, id int64) (query.GetVehicleRow, error) {
-	row, err := s.store.Fetch(ctx, id)
+func (s *Service) Fetch(ctx context.Context, id, userID int64) (query.GetVehicleRow, error) {
+	row, err := s.store.Fetch(ctx, id, userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return query.GetVehicleRow{}, ErrNotFound
 	}
@@ -83,8 +83,8 @@ func (s *Service) Fetch(ctx context.Context, id int64) (query.GetVehicleRow, err
 	}
 	return row, nil
 }
-func (s *Service) Update(ctx context.Context, id int64, p Changes) (query.UpdateVehicleRow, error) {
-	current, err := s.store.FetchForUpdate(ctx, id)
+func (s *Service) Update(ctx context.Context, id, userID int64, p Changes) (query.UpdateVehicleRow, error) {
+	current, err := s.store.FetchForUpdate(ctx, id, userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return query.UpdateVehicleRow{}, ErrNotFound
 	}
@@ -115,18 +115,21 @@ func (s *Service) Update(ctx context.Context, id int64, p Changes) (query.Update
 	if err := validatePressures(frontSolo, rearSolo, frontPillion, rearPillion); err != nil {
 		return query.UpdateVehicleRow{}, err
 	}
-	row, err := s.store.Update(ctx, query.UpdateVehicleParams{Name: name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, ID: id})
+	row, err := s.store.Update(ctx, query.UpdateVehicleParams{Name: name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, ID: id, UserID: userID})
+	if errors.Is(err, sql.ErrNoRows) {
+		return query.UpdateVehicleRow{}, ErrNotFound
+	}
 	if err != nil {
 		return query.UpdateVehicleRow{}, fmt.Errorf("update vehicle: %w", err)
 	}
 	return row, nil
 }
-func (s *Service) UpdatePressure(ctx context.Context, id int64, p PressureChanges) (query.UpdateVehicleTirePressureRow, error) {
+func (s *Service) UpdatePressure(ctx context.Context, id, userID int64, p PressureChanges) (query.UpdateVehicleTirePressureRow, error) {
 	frontSolo, rearSolo := legacyPressures(p.FrontTirePressureSolo, p.FrontTirePressure), legacyPressures(p.RearTirePressureSolo, p.RearTirePressure)
 	if err := validatePressures(frontSolo, rearSolo, p.FrontTirePressurePillion, p.RearTirePressurePillion); err != nil {
 		return query.UpdateVehicleTirePressureRow{}, err
 	}
-	row, err := s.store.UpdateTirePressure(ctx, query.UpdateVehicleTirePressureParams{FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion, ID: id})
+	row, err := s.store.UpdateTirePressure(ctx, query.UpdateVehicleTirePressureParams{FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion, ID: id, UserID: userID})
 	if errors.Is(err, sql.ErrNoRows) {
 		return query.UpdateVehicleTirePressureRow{}, ErrNotFound
 	}
@@ -135,8 +138,8 @@ func (s *Service) UpdatePressure(ctx context.Context, id int64, p PressureChange
 	}
 	return row, nil
 }
-func (s *Service) Delete(ctx context.Context, id int64) error {
-	n, err := s.store.Delete(ctx, id)
+func (s *Service) Delete(ctx context.Context, id, userID int64) error {
+	n, err := s.store.Delete(ctx, id, userID)
 	if err != nil {
 		return fmt.Errorf("delete vehicle: %w", err)
 	}

@@ -46,11 +46,13 @@ func TestVisitedToday(t *testing.T) {
 	defer shutdown()
 
 	h := newTestHandler(t, db, dsn)
+	cookie := loginUser(t, db)
 
 	// 1. Check visited when not visited
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/workout/today", nil)
+		req.AddCookie(cookie)
 		h.VisitedToday(rec, req)
 
 		if rec.Code != http.StatusOK {
@@ -68,6 +70,7 @@ func TestVisitedToday(t *testing.T) {
 	{
 		recAdd := httptest.NewRecorder()
 		reqAdd := httptest.NewRequest(http.MethodPost, "/workout/today", nil)
+		reqAdd.AddCookie(cookie)
 		h.AddWorkoutForDay(recAdd, reqAdd)
 		if recAdd.Code != http.StatusCreated {
 			t.Fatalf("failed to add workout: %d", recAdd.Code)
@@ -75,6 +78,7 @@ func TestVisitedToday(t *testing.T) {
 
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/workout/today", nil)
+		req.AddCookie(cookie)
 		h.VisitedToday(rec, req)
 
 		if rec.Code != http.StatusOK {
@@ -97,12 +101,13 @@ func TestListVisitsAndDelete(t *testing.T) {
 	defer shutdown()
 
 	h := newTestHandler(t, db, dsn)
+	cookie := loginUser(t, db)
 
 	// Seed gym visits
 	_, err := db.Exec(`
-		INSERT INTO gym_visits (created_at) VALUES 
-		(NOW() - INTERVAL '1 day'),
-		(NOW())
+		INSERT INTO gym_visits (user_id, created_at) VALUES
+		(1, NOW() - INTERVAL '1 day'),
+		(1, NOW())
 	`)
 	if err != nil {
 		t.Fatalf("failed to seed: %v", err)
@@ -119,6 +124,7 @@ func TestListVisitsAndDelete(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/gym-visits", nil)
+		req.AddCookie(cookie)
 		h.ListVisits(rec, req)
 
 		if rec.Code != http.StatusOK {
@@ -136,6 +142,7 @@ func TestListVisitsAndDelete(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodDelete, "/gym-visits/{id}", nil)
+		req.AddCookie(cookie)
 
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("id", strconv.FormatInt(latestID, 10))
@@ -161,10 +168,11 @@ func TestExercisesManagement(t *testing.T) {
 	defer shutdown()
 
 	h := newTestHandler(t, db, dsn)
+	cookie := loginUser(t, db)
 
 	// Seed visit
 	var visitID int64
-	err := db.QueryRow(`INSERT INTO gym_visits DEFAULT VALUES RETURNING id`).Scan(&visitID)
+	err := db.QueryRow(`INSERT INTO gym_visits (user_id) VALUES (1) RETURNING id`).Scan(&visitID)
 	if err != nil {
 		t.Fatalf("failed to seed visit: %v", err)
 	}
@@ -173,6 +181,7 @@ func TestExercisesManagement(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/gym-visits/{id}/exercises", nil)
+		req.AddCookie(cookie)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("id", strconv.FormatInt(visitID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -198,6 +207,7 @@ func TestExercisesManagement(t *testing.T) {
 			Sets: []exerciseSetInput{{Reps: 0, Weight: nil}},
 		})
 		req := httptest.NewRequest(http.MethodPost, "/gym-visits/{id}/exercises", bytes.NewReader(body))
+		req.AddCookie(cookie)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("id", strconv.FormatInt(visitID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -217,6 +227,7 @@ func TestExercisesManagement(t *testing.T) {
 			Sets: []exerciseSetInput{{Reps: 10, Weight: &weightVal}},
 		})
 		req := httptest.NewRequest(http.MethodPost, "/gym-visits/{id}/exercises", bytes.NewReader(body))
+		req.AddCookie(cookie)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("id", strconv.FormatInt(visitID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -232,6 +243,53 @@ func TestExercisesManagement(t *testing.T) {
 		if out.Name != "Bench Press" || len(out.Sets) != 1 || *out.Sets[0].Weight != weightVal || out.Sets[0].Reps != 10 {
 			t.Errorf("unexpected saved exercise details: %+v", out)
 		}
+	}
+}
+
+func TestVisitsAreSessionOwned(t *testing.T) {
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
+	defer shutdown()
+	h := newTestHandler(t, db, dsn)
+	cookie := loginUser(t, db)
+	var otherUserID, visitID int64
+	if err := db.QueryRow(`INSERT INTO users (username, password_hash) VALUES ('other-gym-user', 'test') RETURNING id`).Scan(&otherUserID); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`INSERT INTO gym_visits (user_id) VALUES ($1) RETURNING id`, otherUserID).Scan(&visitID); err != nil {
+		t.Fatal(err)
+	}
+	unauthorized := httptest.NewRecorder()
+	h.ListVisits(unauthorized, httptest.NewRequest(http.MethodGet, "/gym-visits", nil))
+	if unauthorized.Code != http.StatusUnauthorized {
+		t.Errorf("visit list without session: status %d, want 401", unauthorized.Code)
+	}
+
+	for _, tc := range []struct {
+		method, path string
+		handler      http.HandlerFunc
+		want         int
+	}{
+		{http.MethodGet, "/gym-visits", h.ListVisits, http.StatusOK},
+		{http.MethodDelete, "/gym-visits/{id}", h.DeleteVisit, http.StatusNotFound},
+		{http.MethodGet, "/gym-visits/{id}/exercises", h.ListVisitExercises, http.StatusNotFound},
+	} {
+		req := httptest.NewRequest(tc.method, tc.path, nil)
+		req.AddCookie(cookie)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", strconv.FormatInt(visitID, 10))
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		rec := httptest.NewRecorder()
+		tc.handler(rec, req)
+		if rec.Code != tc.want {
+			t.Errorf("%s %s: status %d, want %d", tc.method, tc.path, rec.Code, tc.want)
+		}
+		if tc.path == "/gym-visits" && rec.Body.String() != "[]\n" {
+			t.Errorf("other user's visit appeared in list: %s", rec.Body.String())
+		}
+	}
+	var count int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM gym_visits WHERE id=$1`, visitID).Scan(&count); err != nil || count != 1 {
+		t.Fatalf("other user's visit was deleted: count=%d err=%v", count, err)
 	}
 }
 
@@ -269,7 +327,7 @@ func TestMarkReminderVisited(t *testing.T) {
 
 	// Verify visit created
 	var count int
-	_ = db.QueryRow(`SELECT COUNT(*) FROM gym_visits`).Scan(&count)
+	_ = db.QueryRow(`SELECT COUNT(*) FROM gym_visits WHERE user_id=1`).Scan(&count)
 	if count != 1 {
 		t.Errorf("expected 1 gym visit, got %d", count)
 	}

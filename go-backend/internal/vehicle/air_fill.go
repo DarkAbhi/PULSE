@@ -32,7 +32,7 @@ func (h *Handler) CreateAirFill(w http.ResponseWriter, r *http.Request) {
 	}
 
 	q := query.New(h.DB)
-	hasVehicle, err := q.VehicleExists(r.Context(), vehicleID)
+	hasVehicle, err := q.VehicleExists(r.Context(), query.VehicleExistsParams{ID: vehicleID, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -43,6 +43,10 @@ func (h *Handler) CreateAirFill(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filledAt, err := q.CreateVehicleAirFill(r.Context(), query.CreateVehicleAirFillParams{VehicleID: vehicleID, UserID: user.ID})
+	if errors.Is(err, sql.ErrNoRows) {
+		http.NotFound(w, r)
+		return
+	}
 	if err != nil {
 		webutil.ServerError(w, err)
 		return

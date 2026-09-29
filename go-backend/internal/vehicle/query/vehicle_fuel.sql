@@ -1,9 +1,12 @@
 -- name: GetMaxFuelOdometer :one
-SELECT COALESCE(MAX(odometer_km), -1)::double precision FROM vehicle_fuel_fillups WHERE vehicle_id=$1;
+SELECT COALESCE(MAX(odometer_km), -1)::double precision FROM vehicle_fuel_fillups WHERE vehicle_id=$1 AND user_id=$2;
 
 -- name: CreateFuelFillup :one
 INSERT INTO vehicle_fuel_fillups (vehicle_id,user_id,odometer_km,filled_at,station_name,notes)
-VALUES ($1,$2,$3,$4,$5,$6) RETURNING id;
+SELECT v.id,v.user_id,
+       sqlc.arg(odometer_km)::numeric, sqlc.arg(filled_at)::timestamptz,
+       sqlc.narg(station_name)::varchar, sqlc.narg(notes)::text
+FROM vehicles v WHERE v.id=sqlc.arg(vehicle_id)::bigint AND v.user_id=sqlc.arg(user_id)::bigint RETURNING id;
 
 -- name: CreateFuelItem :exec
 INSERT INTO vehicle_fuel_items (fillup_id,fuel_type,fill_type,quantity,unit_price,total_cost)
@@ -21,7 +24,7 @@ DELETE FROM vehicle_fuel_items WHERE fillup_id=$1;
 -- name: ListFuelEconomyEntries :many
 SELECT f.odometer_km, i.fill_type, i.quantity FROM vehicle_fuel_fillups f
 JOIN vehicle_fuel_items i ON i.fillup_id=f.id
-WHERE f.vehicle_id=$1 AND i.fuel_type=$2 ORDER BY f.filled_at, f.id;
+WHERE f.vehicle_id=$1 AND i.fuel_type=$2 AND f.user_id=$3 ORDER BY f.filled_at, f.id;
 
 -- name: ListAverageFuelEconomyEntries :many
 SELECT i.fuel_type, f.odometer_km, i.fill_type, i.quantity FROM vehicle_fuel_fillups f

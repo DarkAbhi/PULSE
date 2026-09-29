@@ -131,6 +131,11 @@ const docTemplate = `{
         },
         "/api/gym-visits": {
             "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -148,6 +153,12 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -159,6 +170,11 @@ const docTemplate = `{
         },
         "/api/gym-visits/{id}": {
             "delete": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "tags": [
                     "gym"
                 ],
@@ -183,6 +199,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -200,6 +222,11 @@ const docTemplate = `{
         },
         "/api/gym-visits/{id}/exercises": {
             "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -233,6 +260,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -248,6 +281,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -286,6 +324,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/apidoc.Error"
                         }
@@ -2553,6 +2597,11 @@ const docTemplate = `{
         },
         "/api/vehicles": {
             "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2570,6 +2619,12 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2579,6 +2634,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -2613,6 +2673,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2624,6 +2690,11 @@ const docTemplate = `{
         },
         "/api/vehicles/{id}": {
             "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2654,6 +2725,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -2669,6 +2746,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -2711,6 +2793,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -2726,6 +2814,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "tags": [
                     "vehicles"
                 ],
@@ -2750,6 +2843,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -2765,6 +2864,11 @@ const docTemplate = `{
                 }
             },
             "patch": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -2803,6 +2907,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/apidoc.Error"
                         }
@@ -3750,6 +3860,11 @@ const docTemplate = `{
         },
         "/api/workout/today": {
             "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -3764,6 +3879,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/apidoc.Visited"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -3773,6 +3894,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -3789,6 +3915,12 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/apidoc.Error"
                         }
@@ -4417,7 +4549,8 @@ const docTemplate = `{
                 "economy_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number"
+                        "type": "number",
+                        "format": "float64"
                     }
                 },
                 "id": {
@@ -4747,7 +4880,8 @@ const docTemplate = `{
                 "average_mileage_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number"
+                        "type": "number",
+                        "format": "float64"
                     }
                 },
                 "front_tire_pressure": {
@@ -5442,7 +5576,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{"http", "https"},
 	Title:            "Life Backend API",
-	Description:      "REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie. Some older vehicle and gym routes do not enforce a session.",
+	Description:      "REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

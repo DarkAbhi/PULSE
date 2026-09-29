@@ -20,15 +20,15 @@ type ValidationError struct{ Message string }
 func (e ValidationError) Error() string { return e.Message }
 
 type store interface {
-	VisitToday(context.Context, time.Time, time.Time) (int64, error)
-	AddVisit(context.Context) (int64, error)
-	ListVisits(context.Context) ([]visitListItem, error)
-	DeleteVisit(context.Context, int64) (bool, error)
-	HasVisit(context.Context, int64) (bool, error)
+	VisitToday(context.Context, int64, time.Time, time.Time) (int64, error)
+	AddVisit(context.Context, int64) (int64, error)
+	ListVisits(context.Context, int64) ([]visitListItem, error)
+	DeleteVisit(context.Context, int64, int64) (bool, error)
+	HasVisit(context.Context, int64, int64) (bool, error)
 	ListExercises(context.Context, int64) ([]exerciseDTO, error)
 	CreateExercise(context.Context, int64, string, []exerciseSetInput) (exerciseDTO, error)
 	Begin(context.Context) (pgx.Tx, error)
-	AddVisitTx(context.Context, pgx.Tx) (int64, error)
+	AddVisitTx(context.Context, pgx.Tx, int64) (int64, error)
 	HasDelivery(context.Context, pgx.Tx, int64, string) (bool, error)
 	RecordDelivery(context.Context, pgx.Tx, int64, string, int64) error
 }
@@ -51,9 +51,9 @@ func NewService(store store, reminders reminderStore, users userLister) *Service
 	return &Service{store: store, reminders: reminders, users: users}
 }
 
-func (s *Service) VisitedToday(ctx context.Context, now time.Time) (int64, bool, error) {
+func (s *Service) VisitedToday(ctx context.Context, userID int64, now time.Time) (int64, bool, error) {
 	start, end := timeutil.DayBoundsIndia(now.UTC())
-	id, err := s.store.VisitToday(ctx, start, end)
+	id, err := s.store.VisitToday(ctx, userID, start, end)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, false, nil
 	}
@@ -62,22 +62,22 @@ func (s *Service) VisitedToday(ctx context.Context, now time.Time) (int64, bool,
 	}
 	return id, true, nil
 }
-func (s *Service) AddVisit(ctx context.Context) (int64, error) {
-	id, err := s.store.AddVisit(ctx)
+func (s *Service) AddVisit(ctx context.Context, userID int64) (int64, error) {
+	id, err := s.store.AddVisit(ctx, userID)
 	if err != nil {
 		return 0, fmt.Errorf("add gym visit: %w", err)
 	}
 	return id, nil
 }
-func (s *Service) ListVisits(ctx context.Context) ([]visitListItem, error) {
-	items, err := s.store.ListVisits(ctx)
+func (s *Service) ListVisits(ctx context.Context, userID int64) ([]visitListItem, error) {
+	items, err := s.store.ListVisits(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("list gym visits: %w", err)
 	}
 	return items, nil
 }
-func (s *Service) DeleteVisit(ctx context.Context, id int64) error {
-	ok, err := s.store.DeleteVisit(ctx, id)
+func (s *Service) DeleteVisit(ctx context.Context, userID, id int64) error {
+	ok, err := s.store.DeleteVisit(ctx, userID, id)
 	if err != nil {
 		return fmt.Errorf("delete gym visit: %w", err)
 	}
@@ -86,8 +86,8 @@ func (s *Service) DeleteVisit(ctx context.Context, id int64) error {
 	}
 	return nil
 }
-func (s *Service) ListExercises(ctx context.Context, visitID int64) ([]exerciseDTO, error) {
-	hasVisit, err := s.store.HasVisit(ctx, visitID)
+func (s *Service) ListExercises(ctx context.Context, userID, visitID int64) ([]exerciseDTO, error) {
+	hasVisit, err := s.store.HasVisit(ctx, userID, visitID)
 	if err != nil {
 		return nil, fmt.Errorf("check gym visit: %w", err)
 	}
@@ -100,8 +100,8 @@ func (s *Service) ListExercises(ctx context.Context, visitID int64) ([]exerciseD
 	}
 	return items, nil
 }
-func (s *Service) CreateExercise(ctx context.Context, visitID int64, body createExerciseBody) (exerciseDTO, error) {
-	hasVisit, err := s.store.HasVisit(ctx, visitID)
+func (s *Service) CreateExercise(ctx context.Context, userID, visitID int64, body createExerciseBody) (exerciseDTO, error) {
+	hasVisit, err := s.store.HasVisit(ctx, userID, visitID)
 	if err != nil {
 		return exerciseDTO{}, fmt.Errorf("check gym visit: %w", err)
 	}
@@ -139,7 +139,7 @@ func (s *Service) MarkReminderVisited(ctx context.Context, userID, notificationI
 	if !hasReminder {
 		return 0, ErrReminderNotFound
 	}
-	visitID, err := s.store.AddVisitTx(ctx, tx)
+	visitID, err := s.store.AddVisitTx(ctx, tx, userID)
 	if err != nil {
 		return 0, fmt.Errorf("add reminder visit: %w", err)
 	}

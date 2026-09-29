@@ -34,6 +34,61 @@ func TestMaintenanceOwnershipReturnsDatabaseError(t *testing.T) {
 	}
 }
 
+func TestVehicleRoutesRequireOwnership(t *testing.T) {
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
+	defer shutdown()
+	pool := newTestPool(t, dsn)
+	defer pool.Close()
+
+	var otherUserID, vehicleID int64
+	if err := db.QueryRow(`INSERT INTO users (username,password_hash) VALUES ('other-vehicle-user','test') RETURNING id`).Scan(&otherUserID); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`INSERT INTO vehicles (name,user_id) VALUES ('mine',1) RETURNING id`).Scan(&vehicleID); err != nil {
+		t.Fatal(err)
+	}
+	h := NewHandler(pool, NewService(NewRepository(pool)), func(r *http.Request) (auth.SessionUser, error) {
+		switch r.Header.Get("X-Test-User") {
+		case "owner":
+			return auth.SessionUser{ID: 1}, nil
+		case "other":
+			return auth.SessionUser{ID: otherUserID}, nil
+		default:
+			return auth.SessionUser{}, sql.ErrNoRows
+		}
+	})
+	router := chi.NewRouter()
+	h.RegisterRoutes(router)
+
+	request := func(method, path, user string, body []byte, want int) *httptest.ResponseRecorder {
+		t.Helper()
+		req := httptest.NewRequest(method, path, bytes.NewReader(body))
+		req.Header.Set("X-Test-User", user)
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		if rec.Code != want {
+			t.Fatalf("%s %s as %q: got %d, want %d: %s", method, path, user, rec.Code, want, rec.Body.String())
+		}
+		return rec
+	}
+
+	path := "/vehicles/" + strconv.FormatInt(vehicleID, 10)
+	request(http.MethodGet, "/vehicles", "", nil, http.StatusUnauthorized)
+	request(http.MethodPost, "/vehicles", "", []byte(`{"name":"stranger"}`), http.StatusUnauthorized)
+	request(http.MethodGet, path, "other", nil, http.StatusNotFound)
+	request(http.MethodDelete, path, "other", nil, http.StatusNotFound)
+	request(http.MethodPost, path+"/air-fills", "other", nil, http.StatusNotFound)
+	request(http.MethodGet, path, "owner", nil, http.StatusOK)
+	if body := request(http.MethodGet, "/vehicles", "other", nil, http.StatusOK).Body.String(); body != "[]\n" {
+		t.Fatalf("other user saw vehicles: %s", body)
+	}
+	request(http.MethodPost, "/vehicles", "other", []byte(`{"name":"theirs"}`), http.StatusCreated)
+	var count int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM vehicles WHERE name='theirs' AND user_id=$1`, otherUserID).Scan(&count); err != nil || count != 1 {
+		t.Fatalf("new vehicle owner: count=%d err=%v", count, err)
+	}
+}
+
 func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 	t.Helper()
 	token := "vehicletesttoken"
@@ -60,12 +115,14 @@ func TestCRUD(t *testing.T) {
 	defer pool.Close()
 
 	h := NewHandler(pool, NewService(NewRepository(pool)), testSessionLookup(db))
+	cookie := loginUser(t, db)
 
 	// 1. Create vehicle - missing name
 	{
 		rec := httptest.NewRecorder()
 		body, _ := json.Marshal(payload{Name: nil})
 		req := httptest.NewRequest(http.MethodPost, "/vehicles", bytes.NewReader(body))
+		req.AddCookie(cookie)
 		h.Create(rec, req)
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("expected 400 Bad Request, got %d", rec.Code)
@@ -79,6 +136,7 @@ func TestCRUD(t *testing.T) {
 		name := "Tesla Model 3"
 		body, _ := json.Marshal(payload{Name: &name})
 		req := httptest.NewRequest(http.MethodPost, "/vehicles", bytes.NewReader(body))
+		req.AddCookie(cookie)
 		h.Create(rec, req)
 
 		if rec.Code != http.StatusCreated {
@@ -97,6 +155,7 @@ func TestCRUD(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/vehicles", nil)
+		req.AddCookie(cookie)
 		h.List(rec, req)
 
 		if rec.Code != http.StatusOK {
@@ -117,6 +176,7 @@ func TestCRUD(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/vehicles/{id}", nil)
+		req.AddCookie(cookie)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -141,6 +201,7 @@ func TestCRUD(t *testing.T) {
 		isActive := false
 		body, _ := json.Marshal(payload{Name: &name, IsActive: &isActive})
 		req := httptest.NewRequest(http.MethodPut, "/vehicles/{id}", bytes.NewReader(body))
+		req.AddCookie(cookie)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -160,7 +221,6 @@ func TestCRUD(t *testing.T) {
 
 	// 5.5 Update vehicle tire pressure
 	{
-		cookie := loginUser(t, db)
 		// 5.5a Negative pressure validation
 		{
 			negVal := -5.0
@@ -222,6 +282,7 @@ func TestCRUD(t *testing.T) {
 		{
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/vehicles/{id}", nil)
+			req.AddCookie(cookie)
 			rctx := chi.NewRouteContext()
 			rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -252,6 +313,7 @@ func TestCRUD(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodDelete, "/vehicles/{id}", nil)
+		req.AddCookie(cookie)
 		rctx := chi.NewRouteContext()
 		rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
@@ -282,7 +344,7 @@ func TestFuelFillupsAndEconomy(t *testing.T) {
 
 	// Seed vehicle
 	var vehicleID int64
-	err := db.QueryRow(`INSERT INTO vehicles (name) VALUES ('Tesla') RETURNING id`).Scan(&vehicleID)
+	err := db.QueryRow(`INSERT INTO vehicles (name, user_id) VALUES ('Tesla', 1) RETURNING id`).Scan(&vehicleID)
 	if err != nil {
 		t.Fatalf("failed to seed: %v", err)
 	}
@@ -383,7 +445,7 @@ func TestAirFillsAndReminders(t *testing.T) {
 
 	// Seed vehicle
 	var vehicleID int64
-	err := db.QueryRow(`INSERT INTO vehicles (name) VALUES ('Honda City') RETURNING id`).Scan(&vehicleID)
+	err := db.QueryRow(`INSERT INTO vehicles (name, user_id) VALUES ('Honda City', 1) RETURNING id`).Scan(&vehicleID)
 	if err != nil {
 		t.Fatalf("failed to seed: %v", err)
 	}
@@ -466,7 +528,7 @@ func TestHistoryAndDeleteLogs(t *testing.T) {
 
 	// Seed vehicle
 	var vehicleID int64
-	err := db.QueryRow(`INSERT INTO vehicles (name) VALUES ('Honda City') RETURNING id`).Scan(&vehicleID)
+	err := db.QueryRow(`INSERT INTO vehicles (name, user_id) VALUES ('Honda City', 1) RETURNING id`).Scan(&vehicleID)
 	if err != nil {
 		t.Fatalf("failed to seed: %v", err)
 	}
@@ -575,7 +637,7 @@ func TestMaintenanceRecords(t *testing.T) {
 	cookie := loginUser(t, db)
 
 	var vehicleID int64
-	if err := db.QueryRow(`INSERT INTO vehicles (name) VALUES ('Honda City') RETURNING id`).Scan(&vehicleID); err != nil {
+	if err := db.QueryRow(`INSERT INTO vehicles (name, user_id) VALUES ('Honda City', 1) RETURNING id`).Scan(&vehicleID); err != nil {
 		t.Fatalf("failed to seed vehicle: %v", err)
 	}
 

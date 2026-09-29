@@ -105,6 +105,7 @@ definitions:
     properties:
       economy_km_per_litre:
         additionalProperties:
+          format: float64
           type: number
         type: object
       id:
@@ -322,6 +323,7 @@ definitions:
         type: array
       average_mileage_km_per_litre:
         additionalProperties:
+          format: float64
           type: number
         type: object
       front_tire_pressure:
@@ -772,7 +774,7 @@ info:
   contact: {}
   description: REST API for the Life Backend application. Session endpoints accept
     a Bearer token in Authorization, X-Session-Token, or the life_session cookie;
-    login sets the cookie. Some older vehicle and gym routes do not enforce a session.
+    login sets the cookie.
   title: Life Backend API
   version: "1.0"
 paths:
@@ -860,10 +862,16 @@ paths:
             items:
               $ref: '#/definitions/apidoc.GymVisit'
             type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: List gym visits
       tags:
       - gym
@@ -883,6 +891,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "404":
           description: Not Found
           schema:
@@ -891,6 +903,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: Delete gym visit
       tags:
       - gym
@@ -916,6 +930,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "404":
           description: Not Found
           schema:
@@ -924,6 +942,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: List visit exercises
       tags:
       - gym
@@ -954,6 +974,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "404":
           description: Not Found
           schema:
@@ -962,6 +986,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: Add visit exercise
       tags:
       - gym
@@ -2399,10 +2425,16 @@ paths:
             items:
               $ref: '#/definitions/apidoc.VehicleName'
             type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: List vehicles
       tags:
       - vehicles
@@ -2427,10 +2459,16 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: Create vehicle
       tags:
       - vehicles
@@ -2450,6 +2488,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "404":
           description: Not Found
           schema:
@@ -2458,6 +2500,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: Delete vehicle
       tags:
       - vehicles
@@ -2480,6 +2524,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "404":
           description: Not Found
           schema:
@@ -2488,6 +2536,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: Get vehicle
       tags:
       - vehicles
@@ -2518,6 +2568,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "404":
           description: Not Found
           schema:
@@ -2526,6 +2580,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: Update vehicle
       tags:
       - vehicles
@@ -2556,6 +2612,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "404":
           description: Not Found
           schema:
@@ -2564,6 +2624,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: Update vehicle
       tags:
       - vehicles
@@ -3179,10 +3241,16 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/apidoc.Visited'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: Get today's workout visit
       tags:
       - gym
@@ -3198,10 +3266,16 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
       summary: Record today's workout visit
       tags:
       - gym

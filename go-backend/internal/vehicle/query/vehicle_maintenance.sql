@@ -1,6 +1,10 @@
 -- name: CreateMaintenanceRecord :one
 INSERT INTO vehicle_maintenance_records (vehicle_id,user_id,category,title,amount,occurred_at,odometer_km,provider_name,notes)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+SELECT v.id,v.user_id,
+       sqlc.arg(category)::varchar, sqlc.arg(title)::varchar, sqlc.arg(amount)::numeric,
+       sqlc.arg(occurred_at)::timestamptz, sqlc.narg(odometer_km)::numeric,
+       sqlc.narg(provider_name)::varchar, sqlc.narg(notes)::text
+FROM vehicles v WHERE v.id=sqlc.arg(vehicle_id)::bigint AND v.user_id=sqlc.arg(user_id)::bigint
 RETURNING id,category,title,amount,occurred_at,odometer_km,provider_name,notes;
 
 -- name: UpdateMaintenanceRecord :one

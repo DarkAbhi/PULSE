@@ -259,7 +259,7 @@ Attachment support is optional at startup: if no bucket is configured, the uploa
 
 ## 4. Critical Implementation Notes
 
-- **Authentication boundary:** the frontend validates the session on both garage pages and forwards the browser cookie to the backend. Record-specific handlers perform explicit session checks. The vehicle list/create service itself is not visibly user-scoped in the current schema: `vehicles` has no `user_id`, and `ListVehicles` queries all rows. This is important if the application will support multiple users with private vehicle inventories.
+- **Authentication boundary:** the frontend forwards the browser session to the backend. All garage routes require a session; vehicle records have a `user_id`, and reads and writes are scoped to that user. Existing vehicles were assigned to the sole user by migration 00020.
 - **Product/API parity:** the backend supports vehicle update and deletion, but the current frontend does not provide controls for those operations. The documented product flow should therefore be understood as the currently shipped UI, while the route table describes the broader API capability.
 - **Transactional integrity:** fuel parent and child rows are written in one transaction, and reminder creation plus reminder marking are also atomic. This prevents partially saved fuel records and duplicate reminder processing under normal concurrent execution.
 - **Calculation correctness:** mileage is intentionally based on complete full-to-full intervals and is reset by missed fills. The result is more conservative than a simple average of displayed fill-ups and is appropriate for mixed partial/full records.
@@ -284,5 +284,6 @@ Attachment support is optional at startup: if no bucket is configured, the uploa
 - [Vehicle SQL queries](../go-backend/internal/vehicle/query/vehicles.sql)
 - [Fuel SQL queries](../go-backend/internal/vehicle/query/vehicle_fuel.sql)
 - [Initial vehicle schema](../go-backend/migrations/00001_init.up.sql)
+- [Vehicle ownership migration](../go-backend/migrations/00020_vehicle_gym_ownership.up.sql)
 - [Maintenance schema](../go-backend/migrations/00010_vehicle_maintenance_records.up.sql)
 - [Attachment schema](../go-backend/migrations/00011_vehicle_maintenance_attachments.up.sql)

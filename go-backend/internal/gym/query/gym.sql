@@ -1,17 +1,17 @@
 -- name: VisitToday :one
-SELECT id FROM gym_visits WHERE created_at >= $1 AND created_at < $2 ORDER BY created_at DESC LIMIT 1;
+SELECT id FROM gym_visits WHERE user_id=$1 AND created_at >= $2 AND created_at < $3 ORDER BY created_at DESC LIMIT 1;
 
 -- name: AddVisit :one
-INSERT INTO gym_visits DEFAULT VALUES RETURNING id;
+INSERT INTO gym_visits (user_id) VALUES ($1) RETURNING id;
 
 -- name: ListVisits :many
-SELECT id,created_at FROM gym_visits ORDER BY created_at DESC,id DESC;
+SELECT id,created_at FROM gym_visits WHERE user_id=$1 ORDER BY created_at DESC,id DESC;
 
 -- name: DeleteVisit :execrows
-DELETE FROM gym_visits WHERE id=$1;
+DELETE FROM gym_visits WHERE id=$1 AND user_id=$2;
 
 -- name: VisitExists :one
-SELECT EXISTS(SELECT 1 FROM gym_visits WHERE id=$1);
+SELECT EXISTS(SELECT 1 FROM gym_visits WHERE id=$1 AND user_id=$2);
 
 -- name: ListExercises :many
 SELECT id,name FROM gym_visit_exercises WHERE gym_visit_id=$1 ORDER BY id ASC;

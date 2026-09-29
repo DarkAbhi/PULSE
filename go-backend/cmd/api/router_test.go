@@ -123,14 +123,14 @@ func TestWorkoutAndRemovedActivityEndpoints(t *testing.T) {
 	defer env.Shutdown()
 	api := &API{
 		DB:  env.Pool,
-		Gym: gym.NewHandler(gym.NewService(gym.NewRepository(env.Pool), nil, nil), nil),
+		Gym: gym.NewHandler(gym.NewService(gym.NewRepository(env.Pool), nil, nil), func(*http.Request) (int64, error) { return 0, sql.ErrNoRows }),
 	}
 	router := api.Router()
 	for _, tc := range []struct {
 		path   string
 		status int
 	}{
-		{"/api/workout/today", http.StatusCreated},
+		{"/api/workout/today", http.StatusUnauthorized},
 		{"/api/meditation/today", http.StatusNotFound},
 		{"/api/sport/today", http.StatusNotFound},
 	} {
@@ -141,7 +141,7 @@ func TestWorkoutAndRemovedActivityEndpoints(t *testing.T) {
 		}
 	}
 	var count int
-	if err := env.DB.QueryRow("SELECT COUNT(*) FROM gym_visits").Scan(&count); err != nil || count != 1 {
+	if err := env.DB.QueryRow("SELECT COUNT(*) FROM gym_visits").Scan(&count); err != nil || count != 0 {
 		t.Fatalf("gym_visits count = %d, err = %v", count, err)
 	}
 }

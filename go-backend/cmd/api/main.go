@@ -36,7 +36,7 @@ import (
 
 // @title Life Backend API
 // @version 1.0
-// @description REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie. Some older vehicle and gym routes do not enforce a session.
+// @description REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie.
 // @host localhost:8080
 // @BasePath /
 // @schemes http https

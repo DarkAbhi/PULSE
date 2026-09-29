@@ -119,6 +119,10 @@ func (h *Handler) CreateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 		occurredAt = *p.OccurredAt
 	}
 	row, err := query.New(h.DB).CreateMaintenanceRecord(r.Context(), query.CreateMaintenanceRecordParams{VehicleID: vehicleID, UserID: user.ID, Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: pgtype.Timestamptz{Time: occurredAt, Valid: true}, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableText(p.Notes)})
+	if errors.Is(err, sql.ErrNoRows) {
+		http.NotFound(w, r)
+		return
+	}
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -179,6 +183,15 @@ func (h *Handler) DeleteMaintenanceRecord(w http.ResponseWriter, r *http.Request
 	recordID, err := strconv.ParseInt(chi.URLParam(r, "recordID"), 10, 64)
 	if err != nil || recordID <= 0 {
 		webutil.BadRequest(w, "invalid maintenance record id")
+		return
+	}
+	owned, err := h.ownsMaintenanceRecord(r.Context(), recordID, vehicleID, user.ID)
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	if !owned {
+		http.NotFound(w, r)
 		return
 	}
 	if err := h.deleteMaintenanceAttachmentObjects(r.Context(), recordID, user.ID); err != nil {

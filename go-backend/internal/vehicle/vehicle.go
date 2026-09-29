@@ -2,6 +2,7 @@
 package vehicle
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -84,7 +85,31 @@ func NewHandler(db *pgxpool.Pool, service *Service, sessions SessionLookup) *Han
 
 type SessionLookup func(*http.Request) (auth.SessionUser, error)
 
-func (h *Handler) sessionUser(r *http.Request) (auth.SessionUser, error) { return h.sessions(r) }
+type sessionUserKey struct{}
+
+func (h *Handler) sessionUser(r *http.Request) (auth.SessionUser, error) {
+	if user, ok := r.Context().Value(sessionUserKey{}).(auth.SessionUser); ok {
+		return user, nil
+	}
+	return h.sessions(r)
+}
+
+func (h *Handler) requireOwnedVehicle(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, ok := h.maintenanceUser(w, r)
+		if !ok {
+			return
+		}
+		id, ok := webutil.ParseID(w, r)
+		if !ok {
+			return
+		}
+		if _, err := h.service.Fetch(r.Context(), id, user.ID); h.writeError(w, r, err) {
+			return
+		}
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), sessionUserKey{}, user)))
+	})
+}
 
 func dtoFromFields(id int64, name string, isActive bool, frontSolo, rearSolo, frontPillion, rearPillion *float64) DTO {
 	return DTO{ID: id, Name: name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, FrontTirePressure: frontSolo, RearTirePressure: rearSolo}
@@ -92,7 +117,11 @@ func dtoFromFields(id int64, name string, isActive bool, frontSolo, rearSolo, fr
 
 // List lists all vehicles.
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.service.List(r.Context())
+	user, ok := h.maintenanceUser(w, r)
+	if !ok {
+		return
+	}
+	rows, err := h.service.List(r.Context(), user.ID)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -112,12 +141,16 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 
 // Create creates a new vehicle.
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.maintenanceUser(w, r)
+	if !ok {
+		return
+	}
 	var p payload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 		webutil.BadRequest(w, "invalid json")
 		return
 	}
-	row, err := h.service.Create(r.Context(), Changes(p))
+	row, err := h.service.Create(r.Context(), user.ID, Changes(p))
 	if h.writeError(w, r, err) {
 		return
 	}
@@ -126,11 +159,15 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 // Show gets a vehicle by ID.
 func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.maintenanceUser(w, r)
+	if !ok {
+		return
+	}
 	id, ok := webutil.ParseID(w, r)
 	if !ok {
 		return
 	}
-	row, err := h.service.Fetch(r.Context(), id)
+	row, err := h.service.Fetch(r.Context(), id, user.ID)
 	if h.writeError(w, r, err) {
 		return
 	}
@@ -139,6 +176,10 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 
 // Update updates a vehicle's properties.
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.maintenanceUser(w, r)
+	if !ok {
+		return
+	}
 	id, ok := webutil.ParseID(w, r)
 	if !ok {
 		return
@@ -148,7 +189,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		webutil.BadRequest(w, "invalid json")
 		return
 	}
-	row, err := h.service.Update(r.Context(), id, Changes(p))
+	row, err := h.service.Update(r.Context(), id, user.ID, Changes(p))
 	if h.writeError(w, r, err) {
 		return
 	}
@@ -157,7 +198,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 // UpdateTirePressure updates the solo and pillion tire pressures for a vehicle.
 func (h *Handler) UpdateTirePressure(w http.ResponseWriter, r *http.Request) {
-	_, err := h.sessionUser(r)
+	user, err := h.sessionUser(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
 		return
@@ -175,7 +216,7 @@ func (h *Handler) UpdateTirePressure(w http.ResponseWriter, r *http.Request) {
 		webutil.BadRequest(w, "invalid json")
 		return
 	}
-	row, err := h.service.UpdatePressure(r.Context(), id, PressureChanges(p))
+	row, err := h.service.UpdatePressure(r.Context(), id, user.ID, PressureChanges(p))
 	if h.writeError(w, r, err) {
 		return
 	}
@@ -184,11 +225,15 @@ func (h *Handler) UpdateTirePressure(w http.ResponseWriter, r *http.Request) {
 
 // Delete deletes a vehicle by ID.
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	user, ok := h.maintenanceUser(w, r)
+	if !ok {
+		return
+	}
 	id, ok := webutil.ParseID(w, r)
 	if !ok {
 		return
 	}
-	if h.writeError(w, r, h.service.Delete(r.Context(), id)) {
+	if h.writeError(w, r, h.service.Delete(r.Context(), id, user.ID)) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -226,7 +271,7 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	q := query.New(h.DB)
-	header, err := q.GetVehicleHistoryHeader(r.Context(), vehicleID)
+	header, err := q.GetVehicleHistoryHeader(r.Context(), query.GetVehicleHistoryHeaderParams{ID: vehicleID, UserID: user.ID})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.NotFound(w, r)

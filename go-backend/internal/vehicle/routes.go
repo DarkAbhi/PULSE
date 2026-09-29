@@ -7,6 +7,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/vehicles", h.Create)
 	r.Get("/vehicle-air-fills/latest", h.ListLatestAirFills)
 	r.Route("/vehicles/{id}", func(v chi.Router) {
+		v.Use(h.requireOwnedVehicle)
 		v.Get("/", h.Show)
 		v.Put("/", h.Update)
 		v.Patch("/", h.Update)

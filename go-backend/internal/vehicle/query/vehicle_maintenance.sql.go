@@ -14,13 +14,15 @@ import (
 
 const createMaintenanceRecord = `-- name: CreateMaintenanceRecord :one
 INSERT INTO vehicle_maintenance_records (vehicle_id,user_id,category,title,amount,occurred_at,odometer_km,provider_name,notes)
-VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+SELECT v.id,v.user_id,
+       $1::varchar, $2::varchar, $3::numeric,
+       $4::timestamptz, $5::numeric,
+       $6::varchar, $7::text
+FROM vehicles v WHERE v.id=$8::bigint AND v.user_id=$9::bigint
 RETURNING id,category,title,amount,occurred_at,odometer_km,provider_name,notes
 `
 
 type CreateMaintenanceRecordParams struct {
-	VehicleID    int64
-	UserID       int64
 	Category     string
 	Title        string
 	Amount       float64
@@ -28,6 +30,8 @@ type CreateMaintenanceRecordParams struct {
 	OdometerKm   *float64
 	ProviderName sql.NullString
 	Notes        pgtype.Text
+	VehicleID    int64
+	UserID       int64
 }
 
 type CreateMaintenanceRecordRow struct {
@@ -43,8 +47,6 @@ type CreateMaintenanceRecordRow struct {
 
 func (q *Queries) CreateMaintenanceRecord(ctx context.Context, arg CreateMaintenanceRecordParams) (CreateMaintenanceRecordRow, error) {
 	row := q.db.QueryRow(ctx, createMaintenanceRecord,
-		arg.VehicleID,
-		arg.UserID,
 		arg.Category,
 		arg.Title,
 		arg.Amount,
@@ -52,6 +54,8 @@ func (q *Queries) CreateMaintenanceRecord(ctx context.Context, arg CreateMainten
 		arg.OdometerKm,
 		arg.ProviderName,
 		arg.Notes,
+		arg.VehicleID,
+		arg.UserID,
 	)
 	var i CreateMaintenanceRecordRow
 	err := row.Scan(

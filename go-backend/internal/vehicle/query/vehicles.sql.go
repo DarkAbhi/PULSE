@@ -13,8 +13,8 @@ import (
 )
 
 const createVehicle = `-- name: CreateVehicle :one
-INSERT INTO vehicles (name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO vehicles (name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion, user_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion
 `
 
@@ -25,6 +25,7 @@ type CreateVehicleParams struct {
 	RearTirePressureSolo     *float64
 	FrontTirePressurePillion *float64
 	RearTirePressurePillion  *float64
+	UserID                   int64
 }
 
 type CreateVehicleRow struct {
@@ -45,6 +46,7 @@ func (q *Queries) CreateVehicle(ctx context.Context, arg CreateVehicleParams) (C
 		arg.RearTirePressureSolo,
 		arg.FrontTirePressurePillion,
 		arg.RearTirePressurePillion,
+		arg.UserID,
 	)
 	var i CreateVehicleRow
 	err := row.Scan(
@@ -60,11 +62,16 @@ func (q *Queries) CreateVehicle(ctx context.Context, arg CreateVehicleParams) (C
 }
 
 const deleteVehicle = `-- name: DeleteVehicle :execrows
-DELETE FROM vehicles WHERE id=$1
+DELETE FROM vehicles WHERE id=$1 AND user_id=$2
 `
 
-func (q *Queries) DeleteVehicle(ctx context.Context, id int64) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteVehicle, id)
+type DeleteVehicleParams struct {
+	ID     int64
+	UserID int64
+}
+
+func (q *Queries) DeleteVehicle(ctx context.Context, arg DeleteVehicleParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteVehicle, arg.ID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
@@ -109,8 +116,13 @@ func (q *Queries) DeleteVehicleFuelFillup(ctx context.Context, arg DeleteVehicle
 
 const getVehicle = `-- name: GetVehicle :one
 SELECT id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
-front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1
+front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1 AND user_id=$2
 `
+
+type GetVehicleParams struct {
+	ID     int64
+	UserID int64
+}
 
 type GetVehicleRow struct {
 	ID                       int64
@@ -122,8 +134,8 @@ type GetVehicleRow struct {
 	RearTirePressurePillion  *float64
 }
 
-func (q *Queries) GetVehicle(ctx context.Context, id int64) (GetVehicleRow, error) {
-	row := q.db.QueryRow(ctx, getVehicle, id)
+func (q *Queries) GetVehicle(ctx context.Context, arg GetVehicleParams) (GetVehicleRow, error) {
+	row := q.db.QueryRow(ctx, getVehicle, arg.ID, arg.UserID)
 	var i GetVehicleRow
 	err := row.Scan(
 		&i.ID,
@@ -139,8 +151,13 @@ func (q *Queries) GetVehicle(ctx context.Context, id int64) (GetVehicleRow, erro
 
 const getVehicleForUpdate = `-- name: GetVehicleForUpdate :one
 SELECT name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
-front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1
+front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1 AND user_id=$2
 `
+
+type GetVehicleForUpdateParams struct {
+	ID     int64
+	UserID int64
+}
 
 type GetVehicleForUpdateRow struct {
 	Name                     string
@@ -151,8 +168,8 @@ type GetVehicleForUpdateRow struct {
 	RearTirePressurePillion  *float64
 }
 
-func (q *Queries) GetVehicleForUpdate(ctx context.Context, id int64) (GetVehicleForUpdateRow, error) {
-	row := q.db.QueryRow(ctx, getVehicleForUpdate, id)
+func (q *Queries) GetVehicleForUpdate(ctx context.Context, arg GetVehicleForUpdateParams) (GetVehicleForUpdateRow, error) {
+	row := q.db.QueryRow(ctx, getVehicleForUpdate, arg.ID, arg.UserID)
 	var i GetVehicleForUpdateRow
 	err := row.Scan(
 		&i.Name,
@@ -167,8 +184,13 @@ func (q *Queries) GetVehicleForUpdate(ctx context.Context, id int64) (GetVehicle
 
 const getVehicleHistoryHeader = `-- name: GetVehicleHistoryHeader :one
 SELECT name, front_tire_pressure_solo, rear_tire_pressure_solo,
-front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1
+front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1 AND user_id=$2
 `
+
+type GetVehicleHistoryHeaderParams struct {
+	ID     int64
+	UserID int64
+}
 
 type GetVehicleHistoryHeaderRow struct {
 	Name                     string
@@ -178,8 +200,8 @@ type GetVehicleHistoryHeaderRow struct {
 	RearTirePressurePillion  *float64
 }
 
-func (q *Queries) GetVehicleHistoryHeader(ctx context.Context, id int64) (GetVehicleHistoryHeaderRow, error) {
-	row := q.db.QueryRow(ctx, getVehicleHistoryHeader, id)
+func (q *Queries) GetVehicleHistoryHeader(ctx context.Context, arg GetVehicleHistoryHeaderParams) (GetVehicleHistoryHeaderRow, error) {
+	row := q.db.QueryRow(ctx, getVehicleHistoryHeader, arg.ID, arg.UserID)
 	var i GetVehicleHistoryHeaderRow
 	err := row.Scan(
 		&i.Name,
@@ -402,7 +424,7 @@ func (q *Queries) ListVehicleMaintenanceRecords(ctx context.Context, arg ListVeh
 }
 
 const listVehicles = `-- name: ListVehicles :many
-SELECT id, name FROM vehicles ORDER BY id ASC
+SELECT id, name FROM vehicles WHERE user_id=$1 ORDER BY id ASC
 `
 
 type ListVehiclesRow struct {
@@ -410,8 +432,8 @@ type ListVehiclesRow struct {
 	Name string
 }
 
-func (q *Queries) ListVehicles(ctx context.Context) ([]ListVehiclesRow, error) {
-	rows, err := q.db.Query(ctx, listVehicles)
+func (q *Queries) ListVehicles(ctx context.Context, userID int64) ([]ListVehiclesRow, error) {
+	rows, err := q.db.Query(ctx, listVehicles, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +455,7 @@ func (q *Queries) ListVehicles(ctx context.Context) ([]ListVehiclesRow, error) {
 const updateVehicle = `-- name: UpdateVehicle :one
 UPDATE vehicles SET name=$1, is_active=$2, front_tire_pressure_solo=$3, rear_tire_pressure_solo=$4,
 front_tire_pressure_pillion=$5, rear_tire_pressure_pillion=$6, updated_at=now()
-WHERE id=$7 RETURNING id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
+WHERE id=$7 AND user_id=$8 RETURNING id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion
 `
 
@@ -445,6 +467,7 @@ type UpdateVehicleParams struct {
 	FrontTirePressurePillion *float64
 	RearTirePressurePillion  *float64
 	ID                       int64
+	UserID                   int64
 }
 
 type UpdateVehicleRow struct {
@@ -466,6 +489,7 @@ func (q *Queries) UpdateVehicle(ctx context.Context, arg UpdateVehicleParams) (U
 		arg.FrontTirePressurePillion,
 		arg.RearTirePressurePillion,
 		arg.ID,
+		arg.UserID,
 	)
 	var i UpdateVehicleRow
 	err := row.Scan(
@@ -483,7 +507,7 @@ func (q *Queries) UpdateVehicle(ctx context.Context, arg UpdateVehicleParams) (U
 const updateVehicleTirePressure = `-- name: UpdateVehicleTirePressure :one
 UPDATE vehicles SET front_tire_pressure_solo=$1, rear_tire_pressure_solo=$2,
 front_tire_pressure_pillion=$3, rear_tire_pressure_pillion=$4, updated_at=now()
-WHERE id=$5 RETURNING id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
+WHERE id=$5 AND user_id=$6 RETURNING id, name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion
 `
 
@@ -493,6 +517,7 @@ type UpdateVehicleTirePressureParams struct {
 	FrontTirePressurePillion *float64
 	RearTirePressurePillion  *float64
 	ID                       int64
+	UserID                   int64
 }
 
 type UpdateVehicleTirePressureRow struct {
@@ -512,6 +537,7 @@ func (q *Queries) UpdateVehicleTirePressure(ctx context.Context, arg UpdateVehic
 		arg.FrontTirePressurePillion,
 		arg.RearTirePressurePillion,
 		arg.ID,
+		arg.UserID,
 	)
 	var i UpdateVehicleTirePressureRow
 	err := row.Scan(

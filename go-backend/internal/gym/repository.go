@@ -20,15 +20,18 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db, queries: query.New(db)}
 }
 
-func (r *Repository) VisitToday(ctx context.Context, start, end time.Time) (int64, error) {
+func (r *Repository) VisitToday(ctx context.Context, userID int64, start, end time.Time) (int64, error) {
 	return r.queries.VisitToday(ctx, query.VisitTodayParams{
+		UserID:      userID,
 		CreatedAt:   pgtype.Timestamptz{Time: start, Valid: true},
 		CreatedAt_2: pgtype.Timestamptz{Time: end, Valid: true},
 	})
 }
-func (r *Repository) AddVisit(ctx context.Context) (int64, error) { return r.queries.AddVisit(ctx) }
-func (r *Repository) ListVisits(ctx context.Context) ([]visitListItem, error) {
-	rows, err := r.queries.ListVisits(ctx)
+func (r *Repository) AddVisit(ctx context.Context, userID int64) (int64, error) {
+	return r.queries.AddVisit(ctx, userID)
+}
+func (r *Repository) ListVisits(ctx context.Context, userID int64) ([]visitListItem, error) {
+	rows, err := r.queries.ListVisits(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -38,12 +41,12 @@ func (r *Repository) ListVisits(ctx context.Context) ([]visitListItem, error) {
 	}
 	return items, nil
 }
-func (r *Repository) DeleteVisit(ctx context.Context, id int64) (bool, error) {
-	count, err := r.queries.DeleteVisit(ctx, id)
+func (r *Repository) DeleteVisit(ctx context.Context, userID, id int64) (bool, error) {
+	count, err := r.queries.DeleteVisit(ctx, query.DeleteVisitParams{ID: id, UserID: userID})
 	return count > 0, err
 }
-func (r *Repository) HasVisit(ctx context.Context, id int64) (bool, error) {
-	return r.queries.VisitExists(ctx, id)
+func (r *Repository) HasVisit(ctx context.Context, userID, id int64) (bool, error) {
+	return r.queries.VisitExists(ctx, query.VisitExistsParams{ID: id, UserID: userID})
 }
 func (r *Repository) ListExercises(ctx context.Context, visitID int64) ([]exerciseDTO, error) {
 	rows, err := r.queries.ListExercises(ctx, visitID)
@@ -95,8 +98,8 @@ func (r *Repository) CreateExercise(ctx context.Context, visitID int64, name str
 	return item, nil
 }
 func (r *Repository) Begin(ctx context.Context) (pgx.Tx, error) { return r.db.Begin(ctx) }
-func (r *Repository) AddVisitTx(ctx context.Context, tx pgx.Tx) (int64, error) {
-	return r.queries.WithTx(tx).AddVisit(ctx)
+func (r *Repository) AddVisitTx(ctx context.Context, tx pgx.Tx, userID int64) (int64, error) {
+	return r.queries.WithTx(tx).AddVisit(ctx, userID)
 }
 func (r *Repository) HasDelivery(ctx context.Context, tx pgx.Tx, userID int64, date string) (bool, error) {
 	return r.queries.WithTx(tx).DeliveryExists(ctx, query.DeliveryExistsParams{UserID: userID, Column2: date})

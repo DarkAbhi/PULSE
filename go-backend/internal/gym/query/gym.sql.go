@@ -12,11 +12,11 @@ import (
 )
 
 const addVisit = `-- name: AddVisit :one
-INSERT INTO gym_visits DEFAULT VALUES RETURNING id
+INSERT INTO gym_visits (user_id) VALUES ($1) RETURNING id
 `
 
-func (q *Queries) AddVisit(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, addVisit)
+func (q *Queries) AddVisit(ctx context.Context, userID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, addVisit, userID)
 	var id int64
 	err := row.Scan(&id)
 	return id, err
@@ -80,11 +80,16 @@ func (q *Queries) CreateSet(ctx context.Context, arg CreateSetParams) (CreateSet
 }
 
 const deleteVisit = `-- name: DeleteVisit :execrows
-DELETE FROM gym_visits WHERE id=$1
+DELETE FROM gym_visits WHERE id=$1 AND user_id=$2
 `
 
-func (q *Queries) DeleteVisit(ctx context.Context, id int64) (int64, error) {
-	result, err := q.db.Exec(ctx, deleteVisit, id)
+type DeleteVisitParams struct {
+	ID     int64
+	UserID int64
+}
+
+func (q *Queries) DeleteVisit(ctx context.Context, arg DeleteVisitParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteVisit, arg.ID, arg.UserID)
 	if err != nil {
 		return 0, err
 	}
@@ -173,7 +178,7 @@ func (q *Queries) ListSets(ctx context.Context, gymVisitExerciseID int64) ([]Lis
 }
 
 const listVisits = `-- name: ListVisits :many
-SELECT id,created_at FROM gym_visits ORDER BY created_at DESC,id DESC
+SELECT id,created_at FROM gym_visits WHERE user_id=$1 ORDER BY created_at DESC,id DESC
 `
 
 type ListVisitsRow struct {
@@ -181,8 +186,8 @@ type ListVisitsRow struct {
 	CreatedAt pgtype.Timestamptz
 }
 
-func (q *Queries) ListVisits(ctx context.Context) ([]ListVisitsRow, error) {
-	rows, err := q.db.Query(ctx, listVisits)
+func (q *Queries) ListVisits(ctx context.Context, userID int64) ([]ListVisitsRow, error) {
+	rows, err := q.db.Query(ctx, listVisits, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -218,27 +223,33 @@ func (q *Queries) RecordDelivery(ctx context.Context, arg RecordDeliveryParams) 
 }
 
 const visitExists = `-- name: VisitExists :one
-SELECT EXISTS(SELECT 1 FROM gym_visits WHERE id=$1)
+SELECT EXISTS(SELECT 1 FROM gym_visits WHERE id=$1 AND user_id=$2)
 `
 
-func (q *Queries) VisitExists(ctx context.Context, id int64) (bool, error) {
-	row := q.db.QueryRow(ctx, visitExists, id)
+type VisitExistsParams struct {
+	ID     int64
+	UserID int64
+}
+
+func (q *Queries) VisitExists(ctx context.Context, arg VisitExistsParams) (bool, error) {
+	row := q.db.QueryRow(ctx, visitExists, arg.ID, arg.UserID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
 }
 
 const visitToday = `-- name: VisitToday :one
-SELECT id FROM gym_visits WHERE created_at >= $1 AND created_at < $2 ORDER BY created_at DESC LIMIT 1
+SELECT id FROM gym_visits WHERE user_id=$1 AND created_at >= $2 AND created_at < $3 ORDER BY created_at DESC LIMIT 1
 `
 
 type VisitTodayParams struct {
+	UserID      int64
 	CreatedAt   pgtype.Timestamptz
 	CreatedAt_2 pgtype.Timestamptz
 }
 
 func (q *Queries) VisitToday(ctx context.Context, arg VisitTodayParams) (int64, error) {
-	row := q.db.QueryRow(ctx, visitToday, arg.CreatedAt, arg.CreatedAt_2)
+	row := q.db.QueryRow(ctx, visitToday, arg.UserID, arg.CreatedAt, arg.CreatedAt_2)
 	var id int64
 	err := row.Scan(&id)
 	return id, err

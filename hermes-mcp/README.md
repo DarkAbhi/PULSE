@@ -25,4 +25,4 @@ mcp_servers:
       resources: false
 ```
 
-Run `hermes mcp test life_tracker`, then `hermes gateway restart`. Ask Hermes “Did I work out today?” and “What vehicles are in my garage?” The test checks protocol discovery; the questions also check that the tools can reach the backend. If discovery fails, inspect `docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod logs mcp`.
+Run `hermes mcp test life_tracker`, then `hermes gateway restart`. In the existing Telegram chat, send `/reload-mcp` to refresh that session's tools, then ask “Did I work out today?” and “What vehicles are in my garage?” The CLI test checks protocol discovery; the Telegram questions also check that the tools can reach the backend. If discovery fails, inspect `docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod logs mcp`.

@@ -151,6 +151,7 @@ type GymVisit struct {
 	ID        int64
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
+	UserID    int64
 }
 
 type GymVisitExercise struct {
@@ -256,6 +257,7 @@ type Vehicle struct {
 	RearTirePressureSolo     *float64
 	FrontTirePressurePillion *float64
 	RearTirePressurePillion  *float64
+	UserID                   int64
 }
 
 type VehicleAirFill struct {

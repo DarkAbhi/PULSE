@@ -5,7 +5,7 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie. Some older vehicle and gym routes do not enforce a session.",
+        "description": "REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie.",
         "title": "Life Backend API",
         "contact": {},
         "version": "1.0"
@@ -129,6 +129,11 @@
         },
         "/api/gym-visits": {
             "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -146,6 +151,12 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -157,6 +168,11 @@
         },
         "/api/gym-visits/{id}": {
             "delete": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "tags": [
                     "gym"
                 ],
@@ -181,6 +197,12 @@
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -198,6 +220,11 @@
         },
         "/api/gym-visits/{id}/exercises": {
             "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -231,6 +258,12 @@
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -246,6 +279,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -284,6 +322,12 @@
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/apidoc.Error"
                         }
@@ -2551,6 +2595,11 @@
         },
         "/api/vehicles": {
             "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2568,6 +2617,12 @@
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2577,6 +2632,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -2611,6 +2671,12 @@
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -2622,6 +2688,11 @@
         },
         "/api/vehicles/{id}": {
             "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2652,6 +2723,12 @@
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -2667,6 +2744,11 @@
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -2709,6 +2791,12 @@
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -2724,6 +2812,11 @@
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "tags": [
                     "vehicles"
                 ],
@@ -2748,6 +2841,12 @@
                             "$ref": "#/definitions/apidoc.Error"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -2763,6 +2862,11 @@
                 }
             },
             "patch": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -2801,6 +2905,12 @@
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/apidoc.Error"
                         }
@@ -3748,6 +3858,11 @@
         },
         "/api/workout/today": {
             "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -3762,6 +3877,12 @@
                             "$ref": "#/definitions/apidoc.Visited"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -3771,6 +3892,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -3787,6 +3913,12 @@
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/apidoc.Error"
                         }
@@ -4415,7 +4547,8 @@
                 "economy_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number"
+                        "type": "number",
+                        "format": "float64"
                     }
                 },
                 "id": {
@@ -4745,7 +4878,8 @@
                 "average_mileage_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number"
+                        "type": "number",
+                        "format": "float64"
                     }
                 },
                 "front_tire_pressure": {

@@ -13,7 +13,8 @@ import (
 )
 
 const createVehicleAirFill = `-- name: CreateVehicleAirFill :one
-INSERT INTO vehicle_air_fills (vehicle_id, user_id) VALUES ($1, $2) RETURNING filled_at
+INSERT INTO vehicle_air_fills (vehicle_id, user_id)
+SELECT v.id, v.user_id FROM vehicles v WHERE v.id=$1::bigint AND v.user_id=$2::bigint RETURNING filled_at
 `
 
 type CreateVehicleAirFillParams struct {
@@ -55,8 +56,9 @@ func (q *Queries) ListDueAirFills(ctx context.Context) ([]int64, error) {
 }
 
 const listLatestVehicleAirFills = `-- name: ListLatestVehicleAirFills :many
-SELECT DISTINCT ON (vehicle_id) vehicle_id, filled_at FROM vehicle_air_fills
-WHERE user_id = $1 ORDER BY vehicle_id, filled_at DESC, id DESC
+SELECT DISTINCT ON (f.vehicle_id) f.vehicle_id, f.filled_at FROM vehicle_air_fills f
+JOIN vehicles v ON v.id=f.vehicle_id AND v.user_id=f.user_id
+WHERE f.user_id = $1 ORDER BY f.vehicle_id, f.filled_at DESC, f.id DESC
 `
 
 type ListLatestVehicleAirFillsRow struct {
@@ -120,11 +122,16 @@ func (q *Queries) MarkAirFillReminderSent(ctx context.Context, arg MarkAirFillRe
 }
 
 const vehicleExists = `-- name: VehicleExists :one
-SELECT EXISTS(SELECT 1 FROM vehicles WHERE id = $1)
+SELECT EXISTS(SELECT 1 FROM vehicles WHERE id = $1 AND user_id = $2)
 `
 
-func (q *Queries) VehicleExists(ctx context.Context, id int64) (bool, error) {
-	row := q.db.QueryRow(ctx, vehicleExists, id)
+type VehicleExistsParams struct {
+	ID     int64
+	UserID int64
+}
+
+func (q *Queries) VehicleExists(ctx context.Context, arg VehicleExistsParams) (bool, error) {
+	row := q.db.QueryRow(ctx, vehicleExists, arg.ID, arg.UserID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err

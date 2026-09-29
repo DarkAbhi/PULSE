@@ -1,4 +1,4 @@
-use axum::{Json, body::Bytes, extract::State, http::StatusCode};
+use axum::{Extension, Json, body::Bytes, extract::State, http::StatusCode};
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
 use serde_json::{Value, json};
@@ -6,7 +6,7 @@ use sqlx::PgPool;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use crate::state::AppState;
+use crate::{auth::ApiKeyUser, state::AppState};
 
 type Reply = (StatusCode, Json<Value>);
 
@@ -214,7 +214,11 @@ fn validate(payload: &Value) -> Result<(), String> {
     validate_body(payload)
 }
 
-pub async fn create(State(state): State<AppState>, body: Bytes) -> Reply {
+pub async fn create(
+    State(state): State<AppState>,
+    Extension(user): Extension<ApiKeyUser>,
+    body: Bytes,
+) -> Reply {
     let Ok(payload) = serde_json::from_slice::<Value>(&body) else {
         return reply(
             StatusCode::BAD_REQUEST,
@@ -326,16 +330,17 @@ pub async fn create(State(state): State<AppState>, body: Bytes) -> Reply {
             .cloned()
             .unwrap_or_else(|| json!({}));
         let saved = sqlx::query_as::<_, SavedWorkout>(
-            "INSERT INTO fitness_workouts (uuid, activity_type_id, start_time, end_time, \
+            "INSERT INTO fitness_workouts (user_id, uuid, activity_type_id, start_time, end_time, \
              duration_seconds, calories_burned, distance_meters, metadata, updated_at) \
-             VALUES ($1, $2, $3, $4, $5::double precision::numeric, $6::double precision::numeric, \
-             $7::double precision::numeric, $8, NOW()) \
-             ON CONFLICT (uuid) DO UPDATE SET activity_type_id = EXCLUDED.activity_type_id, \
+             VALUES ($1, $2, $3, $4, $5, $6::double precision::numeric, $7::double precision::numeric, \
+             $8::double precision::numeric, $9, NOW()) \
+             ON CONFLICT (user_id, uuid) DO UPDATE SET activity_type_id = EXCLUDED.activity_type_id, \
              start_time = EXCLUDED.start_time, end_time = EXCLUDED.end_time, \
              duration_seconds = EXCLUDED.duration_seconds, calories_burned = EXCLUDED.calories_burned, \
              distance_meters = EXCLUDED.distance_meters, metadata = EXCLUDED.metadata, \
              updated_at = EXCLUDED.updated_at RETURNING id, uuid"
         )
+        .bind(user.0)
         .bind(Uuid::parse_str(workout["uuid"].as_str().unwrap()).unwrap())
         .bind(activity_type_id)
         .bind(date_time(workout.get("start_date")).unwrap())
@@ -363,7 +368,7 @@ pub async fn create(State(state): State<AppState>, body: Bytes) -> Reply {
             json!({"error": "Unable to save workouts."}),
         );
     }
-    match save_rings(&state.pool, &payload).await {
+    match save_rings(&state.pool, user.0, &payload).await {
         Ok(rings) => reply(
             StatusCode::CREATED,
             json!({"rings": rings, "workouts": saved_workouts, "saved": true}),
@@ -378,16 +383,20 @@ pub async fn create(State(state): State<AppState>, body: Bytes) -> Reply {
     }
 }
 
-async fn save_rings(pool: &PgPool, payload: &Value) -> Result<SavedRings, sqlx::Error> {
+async fn save_rings(
+    pool: &PgPool,
+    user_id: i64,
+    payload: &Value,
+) -> Result<SavedRings, sqlx::Error> {
     let (move_value, move_goal) = metric(payload.get("move"), "kcal", false).unwrap();
     let (exercise, exercise_goal) = metric(payload.get("exercise"), "min", true).unwrap();
     let (stand, stand_goal) = metric(payload.get("stand"), "hr", true).unwrap();
     sqlx::query_as::<_, SavedRings>(
-        "INSERT INTO fitness_activity_rings (summary_date, move_calories, move_calories_goal, \
+        "INSERT INTO fitness_activity_rings (user_id, summary_date, move_calories, move_calories_goal, \
          exercise_minutes, exercise_minutes_goal, stand_hours, stand_hours_goal, steps_count, updated_at) \
-         VALUES ($1, $2::double precision::numeric, $3::double precision::numeric, \
-         $4::bigint, $5::bigint, $6::bigint, $7::bigint, $8::bigint, NOW()) \
-         ON CONFLICT (summary_date) DO UPDATE SET move_calories = EXCLUDED.move_calories, \
+         VALUES ($1, $2, $3::double precision::numeric, $4::double precision::numeric, \
+         $5::bigint, $6::bigint, $7::bigint, $8::bigint, $9::bigint, NOW()) \
+         ON CONFLICT (user_id, summary_date) DO UPDATE SET move_calories = EXCLUDED.move_calories, \
          move_calories_goal = EXCLUDED.move_calories_goal, exercise_minutes = EXCLUDED.exercise_minutes, \
          exercise_minutes_goal = EXCLUDED.exercise_minutes_goal, stand_hours = EXCLUDED.stand_hours, \
          stand_hours_goal = EXCLUDED.stand_hours_goal, steps_count = EXCLUDED.steps_count, \
@@ -396,6 +405,7 @@ async fn save_rings(pool: &PgPool, payload: &Value) -> Result<SavedRings, sqlx::
          move_calories_goal::double precision AS move_calories_goal, exercise_minutes, \
          exercise_minutes_goal, stand_hours, stand_hours_goal, steps_count, created_at, updated_at"
     )
+    .bind(user_id)
     .bind(NaiveDate::parse_from_str(payload["summary_date"].as_str().unwrap(), "%Y-%m-%d").unwrap())
     .bind(move_value).bind(move_goal)
     .bind(exercise as i64).bind(exercise_goal as i64)
@@ -455,10 +465,10 @@ mod tests {
             .unwrap();
         sqlx::raw_sql(
             "CREATE TEMP TABLE workout_activity_types (id int GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, raw_value int UNIQUE NOT NULL, name varchar(100) NOT NULL); \
-             CREATE TEMP TABLE fitness_workouts (id bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, uuid uuid UNIQUE NOT NULL, activity_type_id int NOT NULL, \
+             CREATE TEMP TABLE fitness_workouts (id bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, user_id bigint NOT NULL, uuid uuid NOT NULL, UNIQUE (user_id, uuid), activity_type_id int NOT NULL, \
              start_time timestamptz NOT NULL, end_time timestamptz NOT NULL, duration_seconds numeric(10,3) NOT NULL, \
              calories_burned numeric(8,2), distance_meters numeric(10,2), metadata jsonb, updated_at timestamptz DEFAULT NOW()); \
-             CREATE TEMP TABLE fitness_activity_rings (id bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, summary_date date UNIQUE NOT NULL, \
+             CREATE TEMP TABLE fitness_activity_rings (id bigint GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, user_id bigint NOT NULL, summary_date date NOT NULL, UNIQUE (user_id, summary_date), \
              move_calories numeric(8,2) NOT NULL, move_calories_goal numeric(8,2) NOT NULL, exercise_minutes int NOT NULL, \
              exercise_minutes_goal int NOT NULL, stand_hours int NOT NULL, stand_hours_goal int NOT NULL, steps_count int NOT NULL, \
              created_at timestamptz DEFAULT NOW(), updated_at timestamptz DEFAULT NOW())"
@@ -473,7 +483,8 @@ mod tests {
             },
         };
         let body = Bytes::from(serde_json::to_vec(&example()).unwrap());
-        let (status, Json(first)) = create(State(state.clone()), body.clone()).await;
+        let (status, Json(first)) =
+            create(State(state.clone()), Extension(ApiKeyUser(1)), body.clone()).await;
         assert_eq!(status, StatusCode::CREATED, "{first}");
         assert_eq!(first["saved"], true);
         assert_eq!(first["rings"]["summary_date"], "2026-07-26");
@@ -482,9 +493,14 @@ mod tests {
             first["workouts"][0]["uuid"],
             "6b29fc40-ca47-1000-8000-00805f9b34fb"
         );
-        let (status, Json(second)) = create(State(state), body).await;
+        let (status, Json(second)) =
+            create(State(state.clone()), Extension(ApiKeyUser(1)), body.clone()).await;
         assert_eq!(status, StatusCode::CREATED, "{second}");
         assert_eq!(first["rings"]["id"], second["rings"]["id"]);
         assert_eq!(first["workouts"][0]["id"], second["workouts"][0]["id"]);
+        let (status, Json(other)) = create(State(state), Extension(ApiKeyUser(2)), body).await;
+        assert_eq!(status, StatusCode::CREATED, "{other}");
+        assert_ne!(first["rings"]["id"], other["rings"]["id"]);
+        assert_ne!(first["workouts"][0]["id"], other["workouts"][0]["id"]);
     }
 }

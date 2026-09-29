@@ -29,21 +29,26 @@ struct FitnessData {
 
 pub fn router(state: AppState) -> Router {
     // Register future protected routes on this router.
-    let protected = Router::<AppState>::new();
-    let protected = protected.layer(middleware::from_fn_with_state(
+    let protected = Router::<AppState>::new().layer(middleware::from_fn_with_state(
         state.config.clone(),
         auth::require_auth,
     ));
-
-    Router::<AppState>::new()
-        .route("/healthz", get(liveness))
-        .route("/readyz", get(readyz))
-        .route("/api/fitness-summary", get(fitness_summary))
+    let fitness_writes = Router::<AppState>::new()
         .route("/api/shortcut/fitness-rings", post(fitness_rings::create))
         .route(
             "/api/fitness-activity-rings",
             post(fitness_activity_rings::create),
         )
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth::require_api_key,
+        ));
+
+    Router::<AppState>::new()
+        .route("/healthz", get(liveness))
+        .route("/readyz", get(readyz))
+        .route("/api/fitness-summary", get(fitness_summary))
+        .merge(fitness_writes)
         .merge(protected)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())

@@ -4,30 +4,59 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+use sha2::{Digest, Sha256};
+use sqlx::PgPool;
 use subtle::ConstantTimeEq;
 
-use crate::{config::Config, error::AppError};
+use crate::{config::Config, error::AppError, state::AppState};
 
 #[derive(Clone)]
 pub struct AuthContext;
+
+#[derive(Clone)]
+pub struct ApiKeyUser(pub i64);
+
+pub async fn require_api_key(
+    State(state): State<AppState>,
+    mut request: Request<axum::body::Body>,
+    next: Next,
+) -> Result<Response, AppError> {
+    let token = bearer_token(&request)?;
+    let user_id = api_key_user(&state.pool, token)
+        .await?
+        .ok_or(AppError::Unauthorized)?;
+    request.extensions_mut().insert(ApiKeyUser(user_id));
+    Ok(next.run(request).await)
+}
+
+async fn api_key_user(pool: &PgPool, token: &str) -> Result<Option<i64>, sqlx::Error> {
+    let hash = format!("{:x}", Sha256::digest(token.as_bytes()));
+    sqlx::query_scalar("SELECT user_id FROM api_keys WHERE token_hash = $1 AND revoked_at IS NULL")
+        .bind(hash)
+        .fetch_optional(pool)
+        .await
+}
 
 pub async fn require_auth(
     State(config): State<Config>,
     mut request: Request<axum::body::Body>,
     next: Next,
 ) -> Result<Response, AppError> {
-    let token = request
+    let token = bearer_token(&request)?;
+    let context = verify_token(token, &config)?;
+    request.extensions_mut().insert(context);
+    Ok(next.run(request).await)
+}
+
+fn bearer_token(request: &Request<axum::body::Body>) -> Result<&str, AppError> {
+    request
         .headers()
         .get(header::AUTHORIZATION)
         .and_then(|value| value.to_str().ok())
         .and_then(|value| value.split_once(' '))
         .filter(|(scheme, token)| scheme.eq_ignore_ascii_case("Bearer") && !token.is_empty())
         .map(|(_, token)| token)
-        .ok_or(AppError::Unauthorized)?;
-
-    let context = verify_token(token, &config)?;
-    request.extensions_mut().insert(context);
-    Ok(next.run(request).await)
+        .ok_or(AppError::Unauthorized)
 }
 
 fn verify_token(token: &str, config: &Config) -> Result<AuthContext, AppError> {
@@ -41,12 +70,13 @@ fn verify_token(token: &str, config: &Config) -> Result<AuthContext, AppError> {
 #[cfg(test)]
 mod tests {
     use axum::{Extension, Router, http::StatusCode, middleware, routing::get};
+    use sha2::Digest;
     use tokio::{
         io::{AsyncReadExt, AsyncWriteExt},
         net::{TcpListener, TcpStream},
     };
 
-    use super::{AuthContext, require_auth};
+    use super::{AuthContext, api_key_user, require_auth};
     use crate::config::Config;
 
     #[tokio::test]
@@ -101,5 +131,36 @@ mod tests {
         }
 
         server.abort();
+    }
+
+    #[tokio::test]
+    async fn api_key_maps_to_its_owner_and_revocation_takes_effect() {
+        let Ok(url) = std::env::var("TEST_DATABASE_URL") else {
+            return;
+        };
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .max_connections(1)
+            .connect(&url)
+            .await
+            .unwrap();
+        sqlx::query("CREATE TEMP TABLE api_keys (user_id bigint, token_hash char(64), revoked_at timestamptz)")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let token = "lt_test_key";
+        let hash = format!("{:x}", sha2::Sha256::digest(token.as_bytes()));
+        sqlx::query("INSERT INTO api_keys (user_id, token_hash) VALUES ($1, $2)")
+            .bind(42_i64)
+            .bind(hash)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert_eq!(api_key_user(&pool, token).await.unwrap(), Some(42));
+        assert_eq!(api_key_user(&pool, "wrong").await.unwrap(), None);
+        sqlx::query("UPDATE api_keys SET revoked_at = NOW()")
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert_eq!(api_key_user(&pool, token).await.unwrap(), None);
     }
 }

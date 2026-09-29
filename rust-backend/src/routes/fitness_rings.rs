@@ -1,15 +1,20 @@
-use axum::{Json, body::Bytes, extract::State, http::StatusCode};
+use axum::{Extension, Json, body::Bytes, extract::State, http::StatusCode};
 use chrono::NaiveDate;
 use serde_json::{Map, Value, json};
 
 use crate::{
+    auth::ApiKeyUser,
     db::activity_rings::{self, Rings},
     state::AppState,
 };
 
 type Reply = (StatusCode, Json<Value>);
 
-pub async fn create(State(state): State<AppState>, body: Bytes) -> Reply {
+pub async fn create(
+    State(state): State<AppState>,
+    Extension(user): Extension<ApiKeyUser>,
+    body: Bytes,
+) -> Reply {
     let Ok(payload) = serde_json::from_slice::<Value>(&body) else {
         return reply(
             StatusCode::BAD_REQUEST,
@@ -50,7 +55,7 @@ pub async fn create(State(state): State<AppState>, body: Bytes) -> Reply {
         }
     }
 
-    match activity_rings::upsert(&state.pool, &rings).await {
+    match activity_rings::upsert(&state.pool, user.0, &rings).await {
         Ok(()) => reply(StatusCode::CREATED, json!({"saved": true})),
         Err(error) => {
             tracing::error!(%error, "unable to save fitness activity rings");
@@ -187,6 +192,7 @@ mod tests {
             .unwrap();
         let (status, Json(body)) = create(
             State(AppState { pool, config }),
+            Extension(ApiKeyUser(1)),
             Bytes::from_static(b"not json"),
         )
         .await;

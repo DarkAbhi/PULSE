@@ -38,18 +38,19 @@ pub async fn latest(pool: &PgPool) -> Result<Option<FitnessSnapshot>, sqlx::Erro
     .await
 }
 
-pub async fn upsert(pool: &PgPool, rings: &Rings) -> Result<(), sqlx::Error> {
+pub async fn upsert(pool: &PgPool, user_id: i64, rings: &Rings) -> Result<(), sqlx::Error> {
     sqlx::query(
-        "INSERT INTO fitness_activity_rings (summary_date, move_calories, move_calories_goal, \
+        "INSERT INTO fitness_activity_rings (user_id, summary_date, move_calories, move_calories_goal, \
          exercise_minutes, exercise_minutes_goal, stand_hours, stand_hours_goal, steps_count, updated_at) \
-         VALUES ($1, $2::double precision::numeric, $3::double precision::numeric, \
-         $4, $5, $6, $7, $8, NOW()) \
-         ON CONFLICT (summary_date) DO UPDATE SET \
+         VALUES ($1, $2, $3::double precision::numeric, $4::double precision::numeric, \
+         $5, $6, $7, $8, $9, NOW()) \
+         ON CONFLICT (user_id, summary_date) DO UPDATE SET \
          move_calories = EXCLUDED.move_calories, move_calories_goal = EXCLUDED.move_calories_goal, \
          exercise_minutes = EXCLUDED.exercise_minutes, exercise_minutes_goal = EXCLUDED.exercise_minutes_goal, \
          stand_hours = EXCLUDED.stand_hours, stand_hours_goal = EXCLUDED.stand_hours_goal, \
          steps_count = EXCLUDED.steps_count, updated_at = EXCLUDED.updated_at",
     )
+    .bind(user_id)
     .bind(rings.summary_date)
     .bind(rings.move_calories)
     .bind(rings.move_calories_goal)

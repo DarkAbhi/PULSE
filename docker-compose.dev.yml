@@ -68,6 +68,14 @@ services:
       - "127.0.0.1:18084:${RUST_PORT:-8083}"
     restart: unless-stopped
 
+  cloudflared-dev:
+    profiles: ["dev"]
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --url http://rust-backend-dev:${RUST_PORT:-8083}
+    depends_on:
+      - rust-backend-dev
+    restart: unless-stopped
+
   web-dev:
     image: node:24-bookworm-slim
     working_dir: /app

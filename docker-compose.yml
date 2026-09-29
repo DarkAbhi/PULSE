@@ -63,8 +63,12 @@ services:
       API_TOKEN: ${API_TOKEN:?Set API_TOKEN for the Rust backend}
       PORT: ${RUST_PORT:-8083}
       RUST_LOG: ${RUST_LOG:-info}
-    ports:
-      - "127.0.0.1:18083:${RUST_PORT:-8083}"
+    restart: unless-stopped
+
+  cloudflared:
+    profiles: ["prod"]
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:-}
     restart: unless-stopped
 
   web:

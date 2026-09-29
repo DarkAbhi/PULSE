@@ -68,7 +68,7 @@ loopback and therefore require SSH port forwarding when accessed remotely.
 | --------------- | ------------------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
 | Next.js web app | `http://localhost:3102`   | `http://<server-LAN-or-Tailscale-IP>:3100`  | Open this URL.                                                            |
 | Go API          | `http://localhost:18081`  | `http://localhost:18080` on the server      | Loopback only; browser API requests use the web app at `/api`.             |
-| Rust API scaffold | `http://localhost:18084` | `http://localhost:18083` on the server     | Loopback only; `/healthz` and `/readyz` are available.                      |
+| Rust API scaffold | `http://localhost:18084` | Cloudflare Rust hostname                  | Tunnel targets `http://rust-backend:8083` by default.                       |
 | Prometheus      | `http://localhost:19090`  | `http://localhost:9090` on the server       | Open locally, or use SSH port forwarding.                                 |
 | Grafana         | `http://localhost:3103`   | `http://localhost:3101` on the server       | Open locally, or use SSH port forwarding.                                 |
 | Jaeger UI       | `http://localhost:16687`  | `http://localhost:16686` on the server      | Open locally, or use SSH port forwarding.                                 |
@@ -76,6 +76,11 @@ loopback and therefore require SSH port forwarding when accessed remotely.
 
 The migration services are one-shot command-line services and do not expose a
 browser URL.
+
+Development also starts a temporary Cloudflare tunnel for the Rust API. Run
+`make dev-tunnel-url` after `make dev` to see its generated HTTPS URL. It can
+change when the development tunnel restarts; production uses the hostname
+configured on its named Cloudflare tunnel.
 
 ## Make commands
 

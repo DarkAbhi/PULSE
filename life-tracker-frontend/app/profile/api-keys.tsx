@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Copy, KeyRound, Plus, Trash2, X } from "lucide-react";
 import Button from "../components/design-system/button";
 import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
 import ConfirmationDialog from "../components/design-system/confirmation-dialog";
+import { copyApiKey } from "./copy-api-key";
 
 type APIKey = {
   id: number;
@@ -22,6 +23,7 @@ export default function APIKeys() {
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState(false);
   const [revokeKey, setRevokeKey] = useState<APIKey | null>(null);
+  const tokenInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -85,6 +87,12 @@ export default function APIKeys() {
     }
   }
 
+  async function copyKey() {
+    if (!tokenInput.current) return;
+    if (await copyApiKey(token, tokenInput.current)) setError("");
+    else setError("Could not copy the key. Select and copy it from the field.");
+  }
+
   return (
     <section className="mt-6 w-full rounded-2xl border border-border bg-card p-6 text-left shadow-sm sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -124,8 +132,8 @@ export default function APIKeys() {
             <div className="mt-6">
               <label htmlFor="created-api-key" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your API key</label>
               <div className="flex gap-2">
-                <input id="created-api-key" readOnly value={token} onFocus={(event) => event.target.select()} className="min-w-0 flex-1 rounded-xl border border-border bg-background px-3 py-2 font-mono text-xs text-foreground" />
-                <Button variant="secondary" size="sm" aria-label="Copy API key" onClick={() => navigator.clipboard.writeText(token).catch(() => setError("Could not copy the key. Select and copy it from the field."))}><Copy className="h-4 w-4" /></Button>
+                <input ref={tokenInput} id="created-api-key" readOnly value={token} onFocus={(event) => event.target.select()} className="min-w-0 flex-1 rounded-xl border border-border bg-background px-3 py-2 font-mono text-xs text-foreground" />
+                <Button type="button" variant="secondary" size="sm" aria-label="Copy API key" onClick={copyKey}><Copy className="h-4 w-4" /></Button>
               </div>
               <DialogActions><DialogAction type="button" onClick={closeDialog}>Done</DialogAction></DialogActions>
             </div>

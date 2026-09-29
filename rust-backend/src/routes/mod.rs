@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+mod fitness_activity_rings;
 mod fitness_rings;
 
 use axum::{
@@ -39,6 +40,10 @@ pub fn router(state: AppState) -> Router {
         .route("/readyz", get(readyz))
         .route("/api/fitness-summary", get(fitness_summary))
         .route("/api/shortcut/fitness-rings", post(fitness_rings::create))
+        .route(
+            "/api/fitness-activity-rings",
+            post(fitness_activity_rings::create),
+        )
         .merge(protected)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())

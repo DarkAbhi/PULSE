@@ -14,4 +14,6 @@ The Rust container listens on `RUST_PORT` (default `8083`); Compose publishes it
 
 `POST /api/shortcut/fitness-rings` accepts the flat fitness rings payload used by the portfolio shortcut, including trimmed keys, numeric strings, and the exercise, stand, and step aliases. It upserts by `summary_date` and returns HTTP 201 with `{"saved":true}`. This route currently has no authorization check.
 
+`POST /api/fitness-activity-rings` accepts the portfolio's nested activity rings payload, including optional workouts. It upserts workout activity types by `raw_value`, workouts by `uuid`, and rings by `summary_date`. On success it returns HTTP 201 with `{"rings": {...}, "workouts": [{"id": ..., "uuid": ...}], "saved": true}`. It currently requires no authorization.
+
 To add an endpoint, add a raw SQL function in `src/db/`, a handler that calls it, and register the route in `src/routes/mod.rs`. The models use `sqlx::FromRow` with `query_as`, so compilation does not need a live database.

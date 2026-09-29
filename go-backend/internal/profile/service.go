@@ -16,6 +16,9 @@ var ErrNewPasswordTooShort = errors.New("profile: new password must be at least 
 type store interface {
 	Name(context.Context, int64) (string, error)
 	Save(context.Context, int64, string) error
+	CreateAPIKey(context.Context, int64, string, string, string) (APIKey, error)
+	ListAPIKeys(context.Context, int64) ([]APIKey, error)
+	RevokeAPIKey(context.Context, int64, int64) (bool, error)
 }
 type passwordChanger interface {
 	ChangePassword(context.Context, int64, string, string) error

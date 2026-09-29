@@ -8,10 +8,13 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/profile/query"
 )
 
-type Repository struct{ queries *query.Queries }
+type Repository struct {
+	queries *query.Queries
+	db      *pgxpool.Pool
+}
 
 func NewRepository(db *pgxpool.Pool) *Repository {
-	return &Repository{queries: query.New(db)}
+	return &Repository{queries: query.New(db), db: db}
 }
 
 func (r *Repository) Name(ctx context.Context, userID int64) (string, error) {

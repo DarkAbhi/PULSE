@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import ThemeSettings from "./theme-settings";
 import LogoutButton from "./logout-button";
 import ChangePasswordButton from "./change-password-button";
+import APIKeys from "./api-keys";
 
 export const metadata = {
   title: "Profile | Life Tracker",
@@ -96,6 +97,8 @@ export default async function ProfilePage() {
           </div>
 
           <ThemeSettings />
+
+          <APIKeys />
 
           <LogoutButton />
         </section>

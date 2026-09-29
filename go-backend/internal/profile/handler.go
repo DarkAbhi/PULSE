@@ -24,6 +24,9 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/profile", h.Show)
 	r.Put("/profile", h.Save)
 	r.Put("/profile/password", h.ChangePassword)
+	r.Get("/profile/api-keys", h.ListAPIKeys)
+	r.Post("/profile/api-keys", h.CreateAPIKey)
+	r.Delete("/profile/api-keys/{id}", h.RevokeAPIKey)
 }
 func (h *Handler) authenticatedUser(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	id, err := h.userID(r)

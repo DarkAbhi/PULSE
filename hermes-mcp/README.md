@@ -1,6 +1,6 @@
 # Life Tracker MCP server
 
-The production Compose stack runs this read-only MCP server beside the Go backend. It exposes only `get_workout_today` and `get_vehicles`. Hermes has its own Telegram bot; the existing button bot remains separate.
+The production Compose stack runs this read-only MCP server beside the Go backend. It exposes only `get_workout_today` and `get_vehicles`.
 
 ## Ubuntu setup
 
@@ -25,4 +25,4 @@ mcp_servers:
       resources: false
 ```
 
-Run `hermes mcp test life_tracker`, then `hermes gateway restart`. Ask the Hermes Telegram bot “Did I work out today?” and “What vehicles are in my garage?” The test checks protocol discovery; the Telegram questions also check that the tools can reach the backend. If discovery fails, inspect `docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod logs mcp`.
+Run `hermes mcp test life_tracker`, then `hermes gateway restart`. Ask Hermes “Did I work out today?” and “What vehicles are in my garage?” The test checks protocol discovery; the questions also check that the tools can reach the backend. If discovery fails, inspect `docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod logs mcp`.

@@ -120,7 +120,7 @@ func TestHealthEndpoints(t *testing.T) {
 	}
 }
 
-func TestTelegramEndpoints(t *testing.T) {
+func TestActivityEndpoints(t *testing.T) {
 	env := startPostgres(t)
 	defer env.Shutdown()
 	api := &API{

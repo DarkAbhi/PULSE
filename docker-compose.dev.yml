@@ -94,22 +94,6 @@ services:
     depends_on:
       - backend-dev
 
-  bot-dev:
-    build:
-      context: ./telegram-bot
-      dockerfile: Dockerfile
-    environment:
-      BOT_API_KEY: ${BOT_API_KEY}
-      TELEGRAM_ALLOWED_USER_ID: ${TELEGRAM_ALLOWED_USER_ID:?Set your numeric Telegram user ID}
-      BACKEND_BASE_URL: http://backend-dev:8080
-    volumes:
-      - ./telegram-bot:/app
-      - bot_venv:/usr/local/lib/python3.12
-    command: sh -lc "python -m pip install --no-cache-dir -r requirements.txt watchfiles && python -m watchfiles --filter python 'python -u main.py' /app"
-    depends_on:
-      - backend-dev
-    restart: unless-stopped
-
   prometheus:
     ports: !override
       - "127.0.0.1:19090:9090"
@@ -125,5 +109,4 @@ services:
 volumes:
   go_build_cache:
   web_node_modules:
-  bot_venv:
   go_tools:

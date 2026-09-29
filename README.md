@@ -1,14 +1,14 @@
 # Life tracker
 
-Life Tracker is a personal-data application with a Go API, a Next.js web app,
-and a Telegram bot. See the [backend guide](go-backend/README.md) for local Go
+Life Tracker is a personal-data application with a Go API and a Next.js web app.
+See the [backend guide](go-backend/README.md) for local Go
 development, configuration, architecture, migrations, tests, and API docs.
 
 ### Setup to run
 
 On the production host, copy `.env.example` to `.env` and fill in the values.
 For development, copy `.env.dev.example` to `.env.dev` and use a different
-database and Telegram bot token. The Makefile loads the matching file explicitly
+database. The Makefile loads the matching file explicitly
 and uses separate Compose project names (`life-prod` and `life-dev`).
 Keep both files private (`chmod 600 .env` or `chmod 600 .env.dev`).
 
@@ -18,9 +18,6 @@ Keep both files private (`chmod 600 .env` or `chmod 600 .env.dev`).
 - `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOSTNAME`, `DB_PORT`, and
   `DB_SSLMODE`: PostgreSQL database connection details.
 - `RUST_DB_SSLMODE`: database TLS setting for the Rust backend.
-- `BOT_API_KEY`: Telegram bot token obtained from BotFather.
-- `TELEGRAM_ALLOWED_USER_ID`: your numeric Telegram user ID. The bot ignores
-  messages from other accounts and refuses to start when this is missing.
 - `GEMINI_API_KEY`: Gemini key used only by the Next.js server action. PDF
   statements are uploaded to the server for extraction; the key is never put in
   the browser bundle.
@@ -71,7 +68,6 @@ loopback and therefore require SSH port forwarding when accessed remotely.
 | Prometheus      | `http://localhost:19090`  | `http://localhost:9090` on the server       | Open locally, or use SSH port forwarding.                                 |
 | Grafana         | `http://localhost:3103`   | `http://localhost:3101` on the server       | Open locally, or use SSH port forwarding.                                 |
 | Jaeger UI       | `http://localhost:16687`  | `http://localhost:16686` on the server      | Open locally, or use SSH port forwarding.                                 |
-| Telegram bot    | No browser URL           | No browser URL                             | Use Telegram; the bot calls the backend over the Docker network.            |
 
 The migration services are one-shot command-line services and do not expose a
 browser URL.
@@ -100,7 +96,6 @@ Run these commands from the repository root. The production commands use the
 | `make logs`            | Follow the last 200 log lines from all production services.                                   |
 | `make backend-logs`    | Follow the last 200 log lines from the backend service.                                       |
 | `make web-logs`        | Follow the last 200 log lines from the frontend web service.                                  |
-| `make bot-logs`        | Follow the last 200 log lines from the Telegram bot service.                                  |
 | `make monitoring-logs` | Follow production Prometheus, Grafana, and Jaeger logs.                                       |
 
 ### Production migrations
@@ -118,9 +113,9 @@ These commands run the migration service using the production Docker image.
 
 | Command                    | Description                                                                                          |
 | -------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `make dev`                 | Start the development backend, web, and bot services in the background. Removes orphaned containers. |
+| `make dev`                 | Start the development backend and web services in the background. Removes orphaned containers. |
 | `make dev-down`            | Stop and remove the development services, including orphaned containers.                             |
-| `make dev-logs`            | Follow the last 200 log lines from the development backend, web, and bot services.                   |
+| `make dev-logs`            | Follow the last 200 log lines from the development backend and web services.                   |
 | `make dev-monitoring-logs` | Follow development Prometheus, Grafana, and Jaeger logs.                                             |
 
 ### Development migrations
@@ -223,11 +218,4 @@ life-backend/
 │   ├── services/
 │   ├── tsconfig.json
 │   └── tsconfig.tsbuildinfo
-├── telegram-bot/
-│   ├── Dockerfile
-│   ├── api_constants.py
-│   ├── constants.py
-│   ├── main.py
-│   ├── requirements.txt
-│   └── utils.py
 ```

@@ -1,7 +1,7 @@
 # PULSE API
 
 Go service for the PULSE application. It exposes the REST API used by
-the web app and Telegram bot, persists data in PostgreSQL, runs reminder jobs,
+the web app, persists data in PostgreSQL, runs reminder jobs,
 and publishes health, metrics, tracing, and optional profiling endpoints.
 
 ## Getting started

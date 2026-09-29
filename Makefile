@@ -1,4 +1,4 @@
-.PHONY: build up down logs restart deploy ps docker-migrate-up docker-rollback docker-steps docker-version backend-logs web-logs bot-logs dev dev-down dev-logs dev-tunnel-url go-test go-test-integration go-cover monitoring-logs dev-monitoring-logs
+.PHONY: build up down logs restart deploy ps docker-migrate-up docker-rollback docker-steps docker-version backend-logs web-logs dev dev-down dev-logs dev-tunnel-url go-test go-test-integration go-cover monitoring-logs dev-monitoring-logs
 
 PROD_COMPOSE = docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod
 DEV_COMPOSE = docker compose --env-file .env.dev --project-name life-dev -f docker-compose.yml -f docker-compose.dev.yml --profile dev
@@ -21,9 +21,6 @@ backend-logs:
 
 web-logs:
 	$(PROD_COMPOSE) logs -f --tail=200 web
-
-bot-logs:
-	$(PROD_COMPOSE) logs -f --tail=200 bot
 
 ps:
 	$(PROD_COMPOSE) ps
@@ -55,13 +52,13 @@ docker-version:
 
 # ----- DEV -----
 dev:
-	$(DEV_COMPOSE) up -d --build --remove-orphans backend-dev rust-backend-dev cloudflared-dev web-dev bot-dev prometheus grafana jaeger
+	$(DEV_COMPOSE) up -d --build --remove-orphans backend-dev rust-backend-dev cloudflared-dev web-dev prometheus grafana jaeger
 
 dev-down:
 	$(DEV_COMPOSE) down --remove-orphans
 
 dev-logs:
-	$(DEV_COMPOSE) logs -f --tail=200 backend-dev rust-backend-dev web-dev bot-dev
+	$(DEV_COMPOSE) logs -f --tail=200 backend-dev rust-backend-dev web-dev
 
 dev-tunnel-url:
 	@$(DEV_COMPOSE) logs --no-log-prefix cloudflared-dev | grep -Eo 'https://[a-z0-9-]+[.]trycloudflare[.]com' | tail -1

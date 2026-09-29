@@ -98,20 +98,6 @@ services:
       start_period: 15s
       retries: 15
 
-  bot:
-    profiles: ["prod"]
-    build:
-      context: ./telegram-bot
-      dockerfile: Dockerfile
-    depends_on:
-      backend:
-        condition: service_healthy
-    environment:
-      BOT_API_KEY: ${BOT_API_KEY}
-      TELEGRAM_ALLOWED_USER_ID: ${TELEGRAM_ALLOWED_USER_ID:?Set your numeric Telegram user ID}
-      BACKEND_BASE_URL: http://backend:8080
-    restart: unless-stopped
-
   mcp:
     profiles: ["prod"]
     build: ./hermes-mcp

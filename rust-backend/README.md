@@ -1,0 +1,11 @@
+# Rust backend scaffold
+
+This crate is a small starting point for a second backend using the existing PostgreSQL tables. It has no application API routes or migrations.
+
+Use `make dev` from the repository root to run the development backend through Docker Compose. For an optional direct `cargo run`, copy `rust-backend/.env.example` to `rust-backend/.env` and fill in `DATABASE_URL` and `API_TOKEN`. Docker Compose ignores that file and reads the repository root `.env.dev` instead. The process checks the database with `SELECT 1` before listening on `PORT` (default `8083`). `RUST_LOG` defaults to `info`.
+
+The Rust container listens on `RUST_PORT` (default `8083`); Compose publishes it on `127.0.0.1:18084` for dev or `127.0.0.1:18083` on the production host. The root `.env.dev` and `.env` files supply separate `API_TOKEN` values. Compose builds `DATABASE_URL` from the existing `DB_*` fields and uses `RUST_DB_SSLMODE` for Rust's TLS setting. If database credentials later contain URL-reserved characters, provide a percent-encoded URL for the Rust service instead.
+
+`GET /healthz` reports process liveness with `{"status":"ok"}`. `GET /readyz` checks PostgreSQL within two seconds and returns `{"status":"ready"}` or HTTP 503 with `{"status":"db not ready"}`. Neither route requires a bearer token.
+
+To add an endpoint, add a raw SQL function in `src/db/`, a handler that calls it, and register the route on the protected router in `src/routes/mod.rs`. The models use `sqlx::FromRow` with `query_as`, so compilation does not need a live database.

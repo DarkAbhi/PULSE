@@ -1,6 +1,6 @@
 # Rust backend scaffold
 
-This crate is a small starting point for a second backend using the existing PostgreSQL tables. It has no application API routes or migrations.
+This crate is a small backend using the existing PostgreSQL tables. It has no migrations.
 
 Use `make dev` from the repository root to run the development backend through Docker Compose. For an optional direct `cargo run`, copy `rust-backend/.env.example` to `rust-backend/.env` and fill in `DATABASE_URL` and `API_TOKEN`. Docker Compose ignores that file and reads the repository root `.env.dev` instead. The process checks the database with `SELECT 1` before listening on `PORT` (default `8083`). `RUST_LOG` defaults to `info`.
 
@@ -10,4 +10,6 @@ The Rust container listens on `RUST_PORT` (default `8083`); Compose publishes it
 
 `GET /healthz` reports process liveness with `{"status":"ok"}`. `GET /readyz` checks PostgreSQL within two seconds and returns `{"status":"ready"}` or HTTP 503 with `{"status":"db not ready"}`. Neither route requires a bearer token.
 
-To add an endpoint, add a raw SQL function in `src/db/`, a handler that calls it, and register the route on the protected router in `src/routes/mod.rs`. The models use `sqlx::FromRow` with `query_as`, so compilation does not need a live database.
+`GET /api/fitness-summary` requires no bearer token. It returns `{"snapshot": null | {...}, "workouts": [...]}` with the latest daily rings and up to three workouts: the latest traditional or functional strength workout first, then the latest run with distance and latest cycling workout with distance. Set `TEST_DATABASE_URL` to a disposable PostgreSQL database when running the database-backed test.
+
+To add an endpoint, add a raw SQL function in `src/db/`, a handler that calls it, and register the route in `src/routes/mod.rs`. The models use `sqlx::FromRow` with `query_as`, so compilation does not need a live database.

@@ -17,6 +17,8 @@ Keep both files private (`chmod 600 .env` or `chmod 600 .env.dev`).
   Tailscale IP. Set to `true` if you later add HTTPS.
 - `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOSTNAME`, `DB_PORT`, and
   `DB_SSLMODE`: PostgreSQL database connection details.
+- `API_TOKEN`: bearer token for the Rust backend; use separate values in dev
+  and production. `RUST_DB_SSLMODE` controls Rust's database TLS setting.
 - `BOT_API_KEY`: Telegram bot token obtained from BotFather.
 - `TELEGRAM_ALLOWED_USER_ID`: your numeric Telegram user ID. The bot ignores
   messages from other accounts and refuses to start when this is missing.
@@ -66,6 +68,7 @@ loopback and therefore require SSH port forwarding when accessed remotely.
 | --------------- | ------------------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
 | Next.js web app | `http://localhost:3102`   | `http://<server-LAN-or-Tailscale-IP>:3100`  | Open this URL.                                                            |
 | Go API          | `http://localhost:18081`  | `http://localhost:18080` on the server      | Loopback only; browser API requests use the web app at `/api`.             |
+| Rust API scaffold | `http://localhost:18084` | `http://localhost:18083` on the server     | Loopback only; `/healthz` and `/readyz` are available.                      |
 | Prometheus      | `http://localhost:19090`  | `http://localhost:9090` on the server       | Open locally, or use SSH port forwarding.                                 |
 | Grafana         | `http://localhost:3103`   | `http://localhost:3101` on the server       | Open locally, or use SSH port forwarding.                                 |
 | Jaeger UI       | `http://localhost:16687`  | `http://localhost:16686` on the server      | Open locally, or use SSH port forwarding.                                 |

@@ -54,6 +54,19 @@ services:
       timeout: 3s
       retries: 15
 
+  rust-backend:
+    profiles: ["prod"]
+    build:
+      context: ./rust-backend
+    environment:
+      DATABASE_URL: postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOSTNAME}:${DB_PORT:-5432}/${DB_NAME}?sslmode=${RUST_DB_SSLMODE:-disable}
+      API_TOKEN: ${API_TOKEN:?Set API_TOKEN for the Rust backend}
+      PORT: ${RUST_PORT:-8083}
+      RUST_LOG: ${RUST_LOG:-info}
+    ports:
+      - "127.0.0.1:18083:${RUST_PORT:-8083}"
+    restart: unless-stopped
+
   web:
     profiles: ["prod"]
     build:

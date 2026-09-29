@@ -55,13 +55,13 @@ docker-version:
 
 # ----- DEV -----
 dev:
-	$(DEV_COMPOSE) up -d --remove-orphans backend-dev web-dev bot-dev prometheus grafana jaeger
+	$(DEV_COMPOSE) up -d --build --remove-orphans backend-dev rust-backend-dev web-dev bot-dev prometheus grafana jaeger
 
 dev-down:
 	$(DEV_COMPOSE) down --remove-orphans
 
 dev-logs:
-	$(DEV_COMPOSE) logs -f --tail=200 backend-dev web-dev bot-dev
+	$(DEV_COMPOSE) logs -f --tail=200 backend-dev rust-backend-dev web-dev bot-dev
 
 # ----- DEV migrations -----
 dev-migrate-up:

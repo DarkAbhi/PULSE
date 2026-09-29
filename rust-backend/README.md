@@ -12,4 +12,6 @@ The Rust container listens on `RUST_PORT` (default `8083`); Compose publishes it
 
 `GET /api/fitness-summary` requires no bearer token. It returns `{"snapshot": null | {...}, "workouts": [...]}` with the latest daily rings and up to three workouts: the latest traditional or functional strength workout first, then the latest run with distance and latest cycling workout with distance. Set `TEST_DATABASE_URL` to a disposable PostgreSQL database when running the database-backed test.
 
+`POST /api/shortcut/fitness-rings` accepts the flat fitness rings payload used by the portfolio shortcut, including trimmed keys, numeric strings, and the exercise, stand, and step aliases. It upserts by `summary_date` and returns HTTP 201 with `{"saved":true}`. This route currently has no authorization check.
+
 To add an endpoint, add a raw SQL function in `src/db/`, a handler that calls it, and register the route in `src/routes/mod.rs`. The models use `sqlx::FromRow` with `query_as`, so compilation does not need a live database.

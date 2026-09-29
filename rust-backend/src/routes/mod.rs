@@ -1,6 +1,14 @@
 use std::time::Duration;
 
-use axum::{Json, Router, extract::State, http::StatusCode, middleware, routing::get};
+mod fitness_rings;
+
+use axum::{
+    Json, Router,
+    extract::State,
+    http::StatusCode,
+    middleware,
+    routing::{get, post},
+};
 use serde::Serialize;
 use serde_json::{Value, json};
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
@@ -30,6 +38,7 @@ pub fn router(state: AppState) -> Router {
         .route("/healthz", get(liveness))
         .route("/readyz", get(readyz))
         .route("/api/fitness-summary", get(fitness_summary))
+        .route("/api/shortcut/fitness-rings", post(fitness_rings::create))
         .merge(protected)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())

@@ -58,6 +58,9 @@ services:
     profiles: ["prod"]
     build:
       context: ./rust-backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOSTNAME}:${DB_PORT:-5432}/${DB_NAME}?sslmode=${RUST_DB_SSLMODE:-disable}
       API_TOKEN: ${API_TOKEN:?Set API_TOKEN for the Rust backend}

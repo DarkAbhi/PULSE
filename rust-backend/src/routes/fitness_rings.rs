@@ -139,7 +139,7 @@ fn non_negative_number(value: &Value) -> Option<f64> {
 
 fn non_negative_integer(value: &Value) -> Option<i64> {
     let number = non_negative_number(value)?;
-    (number.fract() == 0.0 && number <= i64::MAX as f64).then(|| number as i64)
+    (number.fract() == 0.0 && number <= i64::MAX as f64).then_some(number as i64)
 }
 
 #[cfg(test)]
@@ -181,17 +181,11 @@ mod tests {
 
     #[tokio::test]
     async fn malformed_body_has_original_error_response() {
-        let config = crate::config::Config {
-            database_url: "postgres://127.0.0.1:1/test".to_owned(),
-            api_token: String::new(),
-            port: 0,
-            rust_log: String::new(),
-        };
         let pool = sqlx::postgres::PgPoolOptions::new()
-            .connect_lazy(&config.database_url)
+            .connect_lazy("postgres://127.0.0.1:1/test")
             .unwrap();
         let (status, Json(body)) = create(
-            State(AppState { pool, config }),
+            State(AppState { pool }),
             Extension(ApiKeyUser(1)),
             Bytes::from_static(b"not json"),
         )

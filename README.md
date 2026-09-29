@@ -17,8 +17,7 @@ Keep both files private (`chmod 600 .env` or `chmod 600 .env.dev`).
   Tailscale IP. Set to `true` if you later add HTTPS.
 - `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOSTNAME`, `DB_PORT`, and
   `DB_SSLMODE`: PostgreSQL database connection details.
-- `API_TOKEN`: bearer token for the Rust backend; use separate values in dev
-  and production. `RUST_DB_SSLMODE` controls Rust's database TLS setting.
+- `RUST_DB_SSLMODE`: database TLS setting for the Rust backend.
 - `BOT_API_KEY`: Telegram bot token obtained from BotFather.
 - `TELEGRAM_ALLOWED_USER_ID`: your numeric Telegram user ID. The bot ignores
   messages from other accounts and refuses to start when this is missing.

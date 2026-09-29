@@ -2,7 +2,7 @@ use axum::{Extension, Json, body::Bytes, extract::State, http::StatusCode};
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
 use serde_json::{Value, json};
-use sqlx::PgPool;
+use sqlx::Postgres;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -159,10 +159,10 @@ fn validate_header(payload: &Value) -> Result<(), String> {
     {
         return Err("summary_date must be a valid YYYY-MM-DD date.".into());
     }
-    if let Some(zone) = payload.get("time_zone") {
-        if !zone.is_string() {
-            return Err("time_zone must be a valid IANA time zone.".into());
-        }
+    if let Some(zone) = payload.get("time_zone")
+        && !zone.is_string()
+    {
+        return Err("time_zone must be a valid IANA time zone.".into());
     }
     Ok(())
 }
@@ -259,7 +259,7 @@ pub async fn create(
         );
     }
     let mut activity_type_ids = HashMap::new();
-    let mut type_tx = match state.pool.begin().await {
+    let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
         Err(error) => {
             tracing::error!(%error, "unable to save workout activity types");
@@ -276,7 +276,7 @@ pub async fn create(
         )
         .bind(raw)
         .bind(name)
-        .fetch_one(&mut *type_tx)
+        .fetch_one(&mut *tx)
         .await;
         match saved {
             Ok(id) => {
@@ -291,24 +291,7 @@ pub async fn create(
             }
         }
     }
-    if let Err(error) = type_tx.commit().await {
-        tracing::error!(%error, "unable to save workout activity types");
-        return reply(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            json!({"error": "Unable to save workout activity types."}),
-        );
-    }
     let mut saved_workouts = Vec::new();
-    let mut workout_tx = match state.pool.begin().await {
-        Ok(tx) => tx,
-        Err(error) => {
-            tracing::error!(%error, "unable to save workouts");
-            return reply(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                json!({"error": "Unable to save workouts."}),
-            );
-        }
-    };
     let mut workout_uuids = std::collections::HashSet::new();
     for workout in workouts.into_iter().flatten() {
         if !workout_uuids.insert(workout["uuid"].as_str().unwrap().to_ascii_lowercase()) {
@@ -349,7 +332,7 @@ pub async fn create(
         .bind(number(workout.get("calories_burned_kcal")))
         .bind(number(workout.get("distance_meters")))
         .bind(sqlx::types::Json(metadata))
-        .fetch_one(&mut *workout_tx).await;
+        .fetch_one(&mut *tx).await;
         match saved {
             Ok(row) => saved_workouts.push(row),
             Err(error) => {
@@ -361,18 +344,20 @@ pub async fn create(
             }
         }
     }
-    if let Err(error) = workout_tx.commit().await {
-        tracing::error!(%error, "unable to save workouts");
-        return reply(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            json!({"error": "Unable to save workouts."}),
-        );
-    }
-    match save_rings(&state.pool, user.0, &payload).await {
-        Ok(rings) => reply(
-            StatusCode::CREATED,
-            json!({"rings": rings, "workouts": saved_workouts, "saved": true}),
-        ),
+    match save_rings(&mut tx, user.0, &payload).await {
+        Ok(rings) => {
+            if let Err(error) = tx.commit().await {
+                tracing::error!(%error, "unable to commit fitness activity rings");
+                return reply(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    json!({"error": "Unable to save activity rings."}),
+                );
+            }
+            reply(
+                StatusCode::CREATED,
+                json!({"rings": rings, "workouts": saved_workouts, "saved": true}),
+            )
+        }
         Err(error) => {
             tracing::error!(%error, "unable to save fitness activity rings");
             reply(
@@ -384,7 +369,7 @@ pub async fn create(
 }
 
 async fn save_rings(
-    pool: &PgPool,
+    tx: &mut sqlx::Transaction<'_, Postgres>,
     user_id: i64,
     payload: &Value,
 ) -> Result<SavedRings, sqlx::Error> {
@@ -411,7 +396,7 @@ async fn save_rings(
     .bind(exercise as i64).bind(exercise_goal as i64)
     .bind(stand as i64).bind(stand_goal as i64)
     .bind(integer(payload.get("step_count")).unwrap())
-    .fetch_one(pool).await
+    .fetch_one(&mut **tx).await
 }
 
 #[cfg(test)]
@@ -473,15 +458,7 @@ mod tests {
              exercise_minutes_goal int NOT NULL, stand_hours int NOT NULL, stand_hours_goal int NOT NULL, steps_count int NOT NULL, \
              created_at timestamptz DEFAULT NOW(), updated_at timestamptz DEFAULT NOW())"
         ).execute(&pool).await.unwrap();
-        let state = AppState {
-            pool: pool.clone(),
-            config: crate::config::Config {
-                database_url: url,
-                api_token: String::new(),
-                port: 0,
-                rust_log: String::new(),
-            },
-        };
+        let state = AppState { pool: pool.clone() };
         let body = Bytes::from(serde_json::to_vec(&example()).unwrap());
         let (status, Json(first)) =
             create(State(state.clone()), Extension(ApiKeyUser(1)), body.clone()).await;
@@ -502,5 +479,31 @@ mod tests {
         assert_eq!(status, StatusCode::CREATED, "{other}");
         assert_ne!(first["rings"]["id"], other["rings"]["id"]);
         assert_ne!(first["workouts"][0]["id"], other["workouts"][0]["id"]);
+
+        let mut invalid = example();
+        invalid["move"]["value"] = json!(100_000_000);
+        invalid["workouts"][0]["uuid"] = json!("1b29fc40-ca47-1000-8000-00805f9b34fb");
+        invalid["workouts"][0]["activity_type_raw"] = json!(21);
+        let state = AppState { pool: pool.clone() };
+        let (status, _) = create(
+            State(state),
+            Extension(ApiKeyUser(1)),
+            Bytes::from(serde_json::to_vec(&invalid).unwrap()),
+        )
+        .await;
+        assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+        let activity_type_exists: bool = sqlx::query_scalar(
+            "SELECT EXISTS (SELECT 1 FROM workout_activity_types WHERE raw_value = 21)",
+        )
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        let workout_exists: bool =
+            sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM fitness_workouts WHERE uuid = $1)")
+                .bind(Uuid::parse_str("1b29fc40-ca47-1000-8000-00805f9b34fb").unwrap())
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert!(!activity_type_exists && !workout_exists);
     }
 }

@@ -2,9 +2,9 @@
 
 This crate is a small backend using the existing PostgreSQL tables. It has no migrations.
 
-Use `make dev` from the repository root to run the development backend through Docker Compose. For an optional direct `cargo run`, copy `rust-backend/.env.example` to `rust-backend/.env` and fill in `DATABASE_URL` and `API_TOKEN`. Docker Compose ignores that file and reads the repository root `.env.dev` instead. The process checks the database with `SELECT 1` before listening on `PORT` (default `8083`). `RUST_LOG` defaults to `info`.
+Use `make dev` from the repository root to run the development backend through Docker Compose. For an optional direct `cargo run`, copy `rust-backend/.env.example` to `rust-backend/.env` and fill in `DATABASE_URL`. Docker Compose ignores that file and reads the repository root `.env.dev` instead. The process checks the database with `SELECT 1` before listening on `PORT` (default `8083`). `RUST_LOG` defaults to `info`.
 
-The Rust container listens on `RUST_PORT` (default `8083`); Compose publishes it on `127.0.0.1:18084` for dev. Production does not publish a Rust host port. Set `CLOUDFLARE_TUNNEL_TOKEN` in the root `.env` and route only the Rust hostname to `http://rust-backend:8083` in Cloudflare (or to the configured `RUST_PORT`). The root `.env.dev` and `.env` files supply separate `API_TOKEN` values. Compose builds `DATABASE_URL` from the existing `DB_*` fields and uses `RUST_DB_SSLMODE` for Rust's TLS setting. If database credentials later contain URL-reserved characters, provide a percent-encoded URL for the Rust service instead.
+The Rust container listens on `RUST_PORT` (default `8083`); Compose publishes it on `127.0.0.1:18084` for dev. Production does not publish a Rust host port. Set `CLOUDFLARE_TUNNEL_TOKEN` in the root `.env` and route only the Rust hostname to `http://rust-backend:8083` in Cloudflare (or to the configured `RUST_PORT`). Compose builds `DATABASE_URL` from the existing `DB_*` fields and uses `RUST_DB_SSLMODE` for Rust's TLS setting. If database credentials later contain URL-reserved characters, provide a percent-encoded URL for the Rust service instead.
 
 `make dev` starts a temporary Cloudflare tunnel for Rust. Run `make dev-tunnel-url` to print its current random HTTPS URL. It needs no tunnel token and can change after a restart.
 

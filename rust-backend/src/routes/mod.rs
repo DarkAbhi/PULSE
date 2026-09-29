@@ -28,11 +28,6 @@ struct FitnessData {
 }
 
 pub fn router(state: AppState) -> Router {
-    // Register future protected routes on this router.
-    let protected = Router::<AppState>::new().layer(middleware::from_fn_with_state(
-        state.config.clone(),
-        auth::require_auth,
-    ));
     let fitness_writes = Router::<AppState>::new()
         .route("/api/shortcut/fitness-rings", post(fitness_rings::create))
         .route(
@@ -49,7 +44,6 @@ pub fn router(state: AppState) -> Router {
         .route("/readyz", get(readyz))
         .route("/api/fitness-summary", get(fitness_summary))
         .merge(fitness_writes)
-        .merge(protected)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .with_state(state)
@@ -90,24 +84,18 @@ mod tests {
     };
 
     use super::router;
-    use crate::{config::Config, state::AppState};
+    use crate::state::AppState;
 
     #[tokio::test]
     async fn health_routes_work_without_a_database() {
-        let config = Config {
-            database_url: "postgres://127.0.0.1:1/test".to_owned(),
-            api_token: "secret".to_owned(),
-            port: 0,
-            rust_log: String::new(),
-        };
         let pool = sqlx::postgres::PgPoolOptions::new()
             .acquire_timeout(std::time::Duration::from_millis(100))
-            .connect_lazy(&config.database_url)
+            .connect_lazy("postgres://127.0.0.1:1/test")
             .unwrap();
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
         let server = tokio::spawn(async move {
-            axum::serve(listener, router(AppState { pool, config }))
+            axum::serve(listener, router(AppState { pool }))
                 .await
                 .unwrap()
         });

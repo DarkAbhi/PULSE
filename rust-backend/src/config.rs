@@ -1,9 +1,7 @@
 use std::{env, io};
 
-#[derive(Clone)]
 pub struct Config {
     pub database_url: String,
-    pub api_token: String,
     pub port: u16,
     pub rust_log: String,
 }
@@ -11,7 +9,6 @@ pub struct Config {
 impl Config {
     pub fn from_env() -> Result<Self, io::Error> {
         let database_url = required("DATABASE_URL")?;
-        let api_token = required("API_TOKEN")?;
         let port = env::var("PORT")
             .unwrap_or_else(|_| "8083".to_owned())
             .parse()
@@ -20,7 +17,6 @@ impl Config {
 
         Ok(Self {
             database_url,
-            api_token,
             port,
             rust_log,
         })

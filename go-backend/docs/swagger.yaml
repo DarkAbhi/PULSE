@@ -294,11 +294,6 @@ definitions:
       total:
         type: number
     type: object
-  apidoc.SportInput:
-    properties:
-      sport:
-        type: string
-    type: object
   apidoc.TirePressureInput:
     properties:
       front_tire_pressure:
@@ -777,8 +772,7 @@ info:
   contact: {}
   description: REST API for the Life Backend application. Session endpoints accept
     a Bearer token in Authorization, X-Session-Token, or the life_session cookie;
-    login sets the cookie. Some older vehicle, gym, and activity routes do not enforce
-    a session.
+    login sets the cookie. Some older vehicle and gym routes do not enforce a session.
   title: Life Backend API
   version: "1.0"
 paths:
@@ -2050,26 +2044,6 @@ paths:
       summary: Delete custom meal time
       tags:
       - meal plans
-  /api/meditation/today:
-    post:
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/apidoc.Message'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-      summary: Record today's meditation
-      tags:
-      - activity
   /api/next-month-purchases:
     delete:
       responses:
@@ -2390,35 +2364,6 @@ paths:
       summary: Change password
       tags:
       - profile
-  /api/sport/today:
-    post:
-      consumes:
-      - application/json
-      parameters:
-      - description: Request body
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/apidoc.SportInput'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/apidoc.Message'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-      summary: Record today's sport
-      tags:
-      - activity
   /api/vehicle-air-fills/latest:
     get:
       produces:

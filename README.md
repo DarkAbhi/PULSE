@@ -170,18 +170,15 @@ life-backend/
 │   ├── go.mod
 │   ├── go.sum
 │   ├── internal/
-│   │   ├── activity/
 │   │   ├── auth/
 │   │   ├── db/
 │   │   ├── gym/
 │   │   ├── health/
 │   │   ├── horizon/
 │   │   ├── mealplan/
-│   │   ├── meditation/
 │   │   ├── notification/
 │   │   ├── profile/
 │   │   ├── purchase/
-│   │   ├── sport/
 │   │   ├── testhelper/
 │   │   ├── timeutil/
 │   │   ├── vehicle/

@@ -2002,37 +2002,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/meditation/today": {
-            "post": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "activity"
-                ],
-                "summary": "Record today's meditation",
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Message"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Error"
-                        }
-                    }
-                }
-            }
-        },
         "/api/next-month-purchases": {
             "get": {
                 "security": [
@@ -2530,51 +2499,6 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/sport/today": {
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "activity"
-                ],
-                "summary": "Record today's sport",
-                "parameters": [
-                    {
-                        "description": "Request body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.SportInput"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Message"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/apidoc.Error"
                         }
@@ -4780,14 +4704,6 @@ const docTemplate = `{
                 }
             }
         },
-        "apidoc.SportInput": {
-            "type": "object",
-            "properties": {
-                "sport": {
-                    "type": "string"
-                }
-            }
-        },
         "apidoc.TirePressureInput": {
             "type": "object",
             "properties": {
@@ -5526,7 +5442,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{"http", "https"},
 	Title:            "Life Backend API",
-	Description:      "REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie. Some older vehicle, gym, and activity routes do not enforce a session.",
+	Description:      "REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie. Some older vehicle and gym routes do not enforce a session.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

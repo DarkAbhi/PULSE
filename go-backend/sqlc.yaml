@@ -2,14 +2,6 @@ version: "2"
 sql:
   - engine: postgresql
     schema: migrations
-    queries: internal/activity/query
-    gen:
-      go:
-        package: query
-        out: internal/activity/query
-        sql_package: pgx/v5
-  - engine: postgresql
-    schema: migrations
     queries: internal/profile/query
     gen:
       go:

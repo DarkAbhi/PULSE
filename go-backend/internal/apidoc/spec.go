@@ -28,9 +28,6 @@ type ChangePasswordInput struct {
 	CurrentPassword string `json:"current_password"`
 	NewPassword     string `json:"new_password"`
 }
-type SportInput struct {
-	Sport string `json:"sport"`
-}
 type PurchaseInput struct {
 	Name  string  `json:"name"`
 	Price float64 `json:"price"`
@@ -270,28 +267,6 @@ func operation05() {}
 // @Failure 500 {object} Error
 // @Router /api/profile/password [put]
 func operation06() {}
-
-// operation07 documents POST /api/meditation/today.
-// @Summary Record today's meditation
-// @Tags activity
-// @Produce json
-// @Success 201 {object} Message
-// @Failure 400 {object} Error
-// @Failure 500 {object} Error
-// @Router /api/meditation/today [post]
-func operation07() {}
-
-// operation08 documents POST /api/sport/today.
-// @Summary Record today's sport
-// @Tags activity
-// @Accept json
-// @Produce json
-// @Param body body SportInput true "Request body"
-// @Success 201 {object} Message
-// @Failure 400 {object} Error
-// @Failure 500 {object} Error
-// @Router /api/sport/today [post]
-func operation08() {}
 
 // operation09 documents GET /api/next-month-purchases.
 // @Summary List next-month purchases

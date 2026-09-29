@@ -22,7 +22,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
-	"github.com/DarkAbhi/life-backend/internal/activity"
 	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/DarkAbhi/life-backend/internal/db"
 	"github.com/DarkAbhi/life-backend/internal/gym"
@@ -37,7 +36,7 @@ import (
 
 // @title Life Backend API
 // @version 1.0
-// @description REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie. Some older vehicle, gym, and activity routes do not enforce a session.
+// @description REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie. Some older vehicle and gym routes do not enforce a session.
 // @host localhost:8080
 // @BasePath /
 // @schemes http https
@@ -116,8 +115,6 @@ func run(ctx context.Context) error {
 		user, err := sessionLookup(r)
 		return user.ID, err
 	}
-	activityRepository := activity.NewRepository(pool)
-	activityService := activity.NewService(activityRepository)
 	purchaseRepository := purchase.NewRepository(pool)
 	purchaseService := purchase.NewService(purchaseRepository)
 	mealRepository := mealplan.NewRepository(pool)
@@ -150,7 +147,6 @@ func run(ctx context.Context) error {
 	api := &API{
 		DB:             pool,
 		AllowedOrigins: allowedOrigins,
-		Activity:       activity.NewHandler(activityService),
 		Purchase:       purchase.NewHandler(purchaseService, sessionID),
 		MealPlan:       mealplan.NewHandler(mealService, sessionID),
 		Notification:   notification.NewHandler(notificationService, sessionID),

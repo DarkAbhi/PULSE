@@ -10,6 +10,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ApiKey struct {
+	ID          int64
+	UserID      int64
+	Name        string
+	TokenHash   string
+	TokenPrefix string
+	CreatedAt   pgtype.Timestamptz
+	RevokedAt   pgtype.Timestamptz
+}
+
 type CreditCard struct {
 	ID        int64
 	Name      string
@@ -90,6 +100,36 @@ type FinancialHorizonTransaction struct {
 	UpdatedAt       pgtype.Timestamptz
 	Type            string
 	SubscriptionID  sql.NullInt64
+}
+
+type FitnessActivityRing struct {
+	ID                  int64
+	SummaryDate         pgtype.Date
+	MoveCalories        float64
+	MoveCaloriesGoal    float64
+	ExerciseMinutes     int32
+	ExerciseMinutesGoal int32
+	StandHours          int32
+	StandHoursGoal      int32
+	StepsCount          int32
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
+	UserID              int64
+}
+
+type FitnessWorkout struct {
+	ID              int64
+	Uuid            pgtype.UUID
+	ActivityTypeID  int32
+	StartTime       pgtype.Timestamptz
+	EndTime         pgtype.Timestamptz
+	DurationSeconds float64
+	CaloriesBurned  *float64
+	DistanceMeters  *float64
+	Metadata        []byte
+	CreatedAt       pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+	UserID          int64
 }
 
 type GymExerciseSet struct {
@@ -275,4 +315,11 @@ type VehicleMaintenanceRecord struct {
 	Notes        pgtype.Text
 	CreatedAt    pgtype.Timestamptz
 	UpdatedAt    pgtype.Timestamptz
+}
+
+type WorkoutActivityType struct {
+	ID        int32
+	RawValue  int32
+	Name      string
+	CreatedAt pgtype.Timestamptz
 }

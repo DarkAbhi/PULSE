@@ -8,11 +8,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/DarkAbhi/life-backend/internal/activity"
 	"github.com/DarkAbhi/life-backend/internal/gym"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -120,35 +118,30 @@ func TestHealthEndpoints(t *testing.T) {
 	}
 }
 
-func TestActivityEndpoints(t *testing.T) {
+func TestWorkoutAndRemovedActivityEndpoints(t *testing.T) {
 	env := startPostgres(t)
 	defer env.Shutdown()
 	api := &API{
-		DB:       env.Pool,
-		Activity: activity.NewHandler(activity.NewService(activity.NewRepository(env.Pool))),
-		Gym:      gym.NewHandler(gym.NewService(gym.NewRepository(env.Pool), nil, nil), nil),
+		DB:  env.Pool,
+		Gym: gym.NewHandler(gym.NewService(gym.NewRepository(env.Pool), nil, nil), nil),
 	}
 	router := api.Router()
 	for _, tc := range []struct {
-		path, body string
-		status     int
+		path   string
+		status int
 	}{
-		{"/api/workout/today", "", http.StatusCreated},
-		{"/api/meditation/today", "", http.StatusCreated},
-		{"/api/meditation/today", "", http.StatusBadRequest},
-		{"/api/sport/today", `{"sport":"badminton"}`, http.StatusCreated},
-		{"/api/sport/today", `{"sport":"tennis"}`, http.StatusBadRequest},
+		{"/api/workout/today", http.StatusCreated},
+		{"/api/meditation/today", http.StatusNotFound},
+		{"/api/sport/today", http.StatusNotFound},
 	} {
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, tc.path, strings.NewReader(tc.body)))
+		router.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, tc.path, nil))
 		if rec.Code != tc.status {
 			t.Fatalf("POST %s: got %d, want %d: %s", tc.path, rec.Code, tc.status, rec.Body.String())
 		}
 	}
-	for _, table := range []string{"gym_visits", "meditations", "sports"} {
-		var count int
-		if err := env.DB.QueryRow("SELECT COUNT(*) FROM " + table).Scan(&count); err != nil || count != 1 {
-			t.Fatalf("%s count = %d, err = %v", table, count, err)
-		}
+	var count int
+	if err := env.DB.QueryRow("SELECT COUNT(*) FROM gym_visits").Scan(&count); err != nil || count != 1 {
+		t.Fatalf("gym_visits count = %d, err = %v", count, err)
 	}
 }

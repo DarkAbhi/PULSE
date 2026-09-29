@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/swaggo/http-swagger/v2"
 
-	"github.com/DarkAbhi/life-backend/internal/activity"
 	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/DarkAbhi/life-backend/internal/gym"
 	"github.com/DarkAbhi/life-backend/internal/health"
@@ -27,7 +26,6 @@ import (
 type API struct {
 	DB             *pgxpool.Pool
 	AllowedOrigins []string
-	Activity       *activity.Handler
 	Purchase       *purchase.Handler
 	MealPlan       *mealplan.Handler
 	Notification   *notification.Handler
@@ -93,9 +91,6 @@ func (a *API) Router() http.Handler {
 		// Daily logs
 		if a.Gym != nil {
 			a.Gym.RegisterRoutes(api)
-		}
-		if a.Activity != nil {
-			a.Activity.RegisterRoutes(api)
 		}
 
 		// Meal plans & meal times

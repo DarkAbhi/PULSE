@@ -10,7 +10,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/life-api ./cmd/api
 # runtime stage
 FROM alpine:3.20
 WORKDIR /app
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl tzdata
 COPY --from=builder /out/life-api /app/life-api
 COPY --from=builder /app/migrations /app/migrations
 EXPOSE 8080

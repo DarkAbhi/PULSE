@@ -8,7 +8,6 @@ import { Car } from "lucide-react";
 import { FuelForm, FuelFormItem } from "../components/fuel-form";
 import ConfirmationDialog from "../components/design-system/confirmation-dialog";
 import Dialog from "../components/design-system/dialog";
-import LocalDate from "../components/local-date";
 import { markAirFillAction, saveFuelAction } from "./actions";
 
 type Vehicle = {
@@ -31,25 +30,12 @@ const localDateTime = () =>
     .toISOString()
     .slice(0, 16);
 
-const airFillDateOptions: Intl.DateTimeFormatOptions = {
-  day: "numeric",
-  month: "short",
-  hour: "numeric",
-  minute: "2-digit",
-};
-
 interface VehiclesListProps {
   vehicles: Vehicle[];
-  latestAirFills: Record<number, string>;
 }
 
-export default function VehiclesList({
-  vehicles,
-  latestAirFills: initialAirFills,
-}: VehiclesListProps) {
+export default function VehiclesList({ vehicles }: VehiclesListProps) {
   const router = useRouter();
-  const [latestAirFills, setLatestAirFills] =
-    useState<Record<number, string>>(initialAirFills);
   const [pendingAirFillVehicle, setPendingAirFillVehicle] =
     useState<Vehicle | null>(null);
   const [isMarkingAirFill, startMarkingAirFill] = useTransition();
@@ -75,10 +61,6 @@ export default function VehiclesList({
           res.error ?? "We couldn't record the air fill. Please try again.",
         );
       } else {
-        setLatestAirFills((current) => ({
-          ...current,
-          [pendingAirFillVehicle.id]: res.filled_at!,
-        }));
         setPendingAirFillVehicle(null);
       }
     });
@@ -142,19 +124,6 @@ export default function VehiclesList({
             <h2 className="mt-4 text-lg font-semibold text-foreground">
               {vehicle.name}
             </h2>
-            <p className="mt-4 text-sm text-muted-foreground">
-              {latestAirFills[vehicle.id] ? (
-                <>
-                  Air last filled{" "}
-                  <LocalDate
-                    dateString={latestAirFills[vehicle.id]}
-                    options={airFillDateOptions}
-                  />
-                </>
-              ) : (
-                "No air fill recorded yet."
-              )}
-            </p>
             <Button variant="secondary" size="lg"
               onClick={(event) => {
                 event.stopPropagation();

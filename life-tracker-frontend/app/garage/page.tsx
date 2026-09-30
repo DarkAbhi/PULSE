@@ -18,11 +18,6 @@ type Vehicle = {
   name: string;
 };
 
-type AirFill = {
-  id: number;
-  filled_at: string;
-};
-
 export default async function GaragePage() {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
@@ -42,7 +37,6 @@ export default async function GaragePage() {
   }
 
   let vehicles: Vehicle[] = [];
-  let latestAirFills: Record<number, string> = {};
   if (!error) {
     try {
       const vehiclesResponse = await fetch(`${apiBaseURL}/api/vehicles`, {
@@ -55,17 +49,6 @@ export default async function GaragePage() {
         error = "We couldn't load your vehicles. Please try again.";
       } else {
         vehicles = (await vehiclesResponse.json()) as Vehicle[];
-
-        const fills = await Promise.all(vehicles.map(async (vehicle) => {
-          const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicle.id}/air-fills`, {
-            headers: { Cookie: cookieHeader },
-            signal: AbortSignal.timeout(10_000),
-          });
-          if (!response.ok) return null;
-          const airFills = (await response.json()) as AirFill[];
-          return airFills[0] ? [vehicle.id, airFills[0].filled_at] as const : null;
-        }));
-        latestAirFills = Object.fromEntries(fills.filter((fill) => fill !== null));
       }
     } catch {
       error = "We couldn't reach the server. Please try again.";
@@ -113,7 +96,7 @@ export default async function GaragePage() {
             </p>
           </section>
         ) : (
-          <VehiclesList vehicles={vehicles} latestAirFills={latestAirFills} />
+          <VehiclesList vehicles={vehicles} />
         )}
       </div>
     </main>

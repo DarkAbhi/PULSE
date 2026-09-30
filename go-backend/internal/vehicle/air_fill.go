@@ -53,32 +53,3 @@ func (h *Handler) CreateAirFill(w http.ResponseWriter, r *http.Request) {
 	}
 	webutil.WriteJSON(w, http.StatusCreated, airFillDTO{VehicleID: vehicleID, FilledAt: filledAt.Time.UTC()})
 }
-
-// ListAirFills lists a vehicle's air fills, newest first.
-func (h *Handler) ListAirFills(w http.ResponseWriter, r *http.Request) {
-	user, err := h.sessionUser(r)
-	if errors.Is(err, sql.ErrNoRows) {
-		webutil.Unauthorized(w, "session is invalid or expired")
-		return
-	}
-	if err != nil {
-		webutil.ServerError(w, err)
-		return
-	}
-
-	vehicleID, ok := webutil.ParseID(w, r)
-	if !ok {
-		return
-	}
-	rows, err := query.New(h.DB).ListVehicleAirFills(r.Context(), query.ListVehicleAirFillsParams{VehicleID: vehicleID, UserID: user.ID})
-	if err != nil {
-		webutil.ServerError(w, err)
-		return
-	}
-
-	fills := make([]airFillHistory, 0, len(rows))
-	for _, row := range rows {
-		fills = append(fills, airFillHistory{ID: row.ID, FilledAt: row.FilledAt.Time.UTC()})
-	}
-	webutil.WriteJSON(w, http.StatusOK, fills)
-}

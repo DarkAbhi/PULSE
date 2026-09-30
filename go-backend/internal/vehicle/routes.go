@@ -14,7 +14,6 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		v.Patch("/tire-pressure", h.UpdateTirePressure)
 		v.Delete("/", h.Delete)
 		v.Post("/air-fills", h.CreateAirFill)
-		v.Get("/air-fills", h.ListAirFills)
 		v.Post("/fuel-fillups", h.CreateFuelFillup)
 		v.Put("/fuel-fillups/{fillupID}", h.UpdateFuelFillup)
 		v.Post("/maintenance-records", h.CreateMaintenanceRecord)

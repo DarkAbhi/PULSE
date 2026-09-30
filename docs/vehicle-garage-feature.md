@@ -21,7 +21,6 @@ A signed-in user can:
 - See all registered vehicles as individual vehicle cards.
 - Add a vehicle through a modal using a required name.
 - Open a vehicle to view its history.
-- See the latest recorded air-fill time for each vehicle.
 - Mark that air was filled immediately.
 - Add a fuel entry without leaving the vehicle list.
 - See a useful empty state when no vehicles exist.
@@ -133,7 +132,7 @@ Attachments are private, have a maximum size of 10 MB, and are presented by file
 
 The frontend is a Next.js App Router implementation under `life-tracker-frontend/app/garage`.
 
-- `app/garage/page.tsx` is a server-rendered page. It validates the incoming session by forwarding the request cookies to `/api/auth/session`, then loads vehicles and their latest air-fill timestamps.
+- `app/garage/page.tsx` is a server-rendered page. It validates the incoming session by forwarding the request cookies to `/api/auth/session`, then loads vehicles.
 - `app/garage/vehicles-list.tsx` is a client component for card interactions, confirmation dialogs, fuel entry state, pending states, and local optimistic display of the newly recorded air-fill timestamp.
 - `app/garage/[id]/page.tsx` is a server-rendered detail page. It loads `/api/vehicles/{id}/history`, derives the selected edit state from URL search parameters, and renders the history sections.
 - Small client components own focused interactions such as tire-pressure editing, fuel editing, maintenance editing, attachment uploads, and record deletion.
@@ -161,7 +160,7 @@ The backend implementation is grouped under `go-backend/internal/vehicle`:
 - `vehicle.go` handles vehicle CRUD, history assembly, DTO conversion, tire-pressure payloads, and air/fuel record deletion.
 - `service.go` contains vehicle validation and the service/store boundary for vehicle CRUD and pressure updates.
 - `fuel.go` handles fuel input normalization, transactional writes, validation, editing, and mileage calculations.
-- `air_fill.go` handles air-fill creation and latest-air-fill listing.
+- `air_fill.go` handles air-fill creation.
 - `maintenance.go` handles maintenance record validation and CRUD.
 - `maintenance_attachments.go` handles multipart upload, private object storage, download redirects, and cleanup.
 - `reminder.go` runs the periodic air-fill reminder job.
@@ -178,7 +177,6 @@ The vehicle routes are registered below the API router and include:
 | -------------- | -------------------------------------------------------------------------- | ---------------------------------------- |
 | `GET`          | `/vehicles`                                                                | List vehicle IDs and names               |
 | `POST`         | `/vehicles`                                                                | Create a vehicle                         |
-| `GET`          | `/vehicles/{id}/air-fills`                                                 | List a vehicle's air fills               |
 | `GET`          | `/vehicles/{id}/`                                                          | Get a vehicle                            |
 | `PUT`, `PATCH` | `/vehicles/{id}/`                                                          | Update vehicle properties                |
 | `DELETE`       | `/vehicles/{id}/`                                                          | Delete a vehicle                         |

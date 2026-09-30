@@ -72,7 +72,7 @@ export async function markAirFillAction(vehicleID: number) {
     );
 
     const body = await response.json().catch(() => ({}));
-    if (!response.ok || !body.filled_at) {
+    if (!response.ok) {
       return {
         ok: false,
         error: body.error ?? "We couldn't record the air fill. Please try again.",
@@ -80,7 +80,7 @@ export async function markAirFillAction(vehicleID: number) {
     }
 
     revalidatePath("/garage");
-    return { ok: true, filled_at: body.filled_at };
+    return { ok: true };
   } catch {
     return { ok: false, error: "We couldn't reach the server. Please try again." };
   }

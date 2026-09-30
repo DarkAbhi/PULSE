@@ -8,6 +8,7 @@ sql:
         package: query
         out: internal/profile/query
         sql_package: pgx/v5
+        omit_unused_structs: true
   - engine: postgresql
     schema: migrations
     queries: internal/auth/query
@@ -16,6 +17,7 @@ sql:
         package: query
         out: internal/auth/query
         sql_package: pgx/v5
+        omit_unused_structs: true
   - engine: postgresql
     schema: migrations
     queries: internal/purchase/query
@@ -24,6 +26,7 @@ sql:
         package: query
         out: internal/purchase/query
         sql_package: pgx/v5
+        omit_unused_structs: true
         emit_pointers_for_null_types: true
         overrides:
           - db_type: pg_catalog.numeric
@@ -36,6 +39,7 @@ sql:
         package: query
         out: internal/notification/query
         sql_package: pgx/v5
+        omit_unused_structs: true
         emit_pointers_for_null_types: true
   - engine: postgresql
     schema: migrations
@@ -45,6 +49,7 @@ sql:
         package: query
         out: internal/gym/query
         sql_package: pgx/v5
+        omit_unused_structs: true
         emit_pointers_for_null_types: true
         overrides:
           - db_type: pg_catalog.numeric
@@ -60,6 +65,7 @@ sql:
         package: query
         out: internal/mealplan/query
         sql_package: pgx/v5
+        omit_unused_structs: true
         overrides:
           - db_type: pg_catalog.int8
             nullable: true
@@ -83,6 +89,7 @@ sql:
         package: query
         out: internal/horizon/query
         sql_package: pgx/v5
+        omit_unused_structs: true
         overrides:
           - db_type: pg_catalog.numeric
             go_type: float64
@@ -129,6 +136,7 @@ sql:
         package: query
         out: internal/vehicle/query
         sql_package: pgx/v5
+        omit_unused_structs: true
         overrides:
           - db_type: pg_catalog.numeric
             go_type: float64

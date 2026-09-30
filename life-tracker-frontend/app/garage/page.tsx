@@ -19,7 +19,7 @@ type Vehicle = {
 };
 
 type AirFill = {
-  vehicle_id: number;
+  id: number;
   filled_at: string;
 };
 
@@ -56,21 +56,16 @@ export default async function GaragePage() {
       } else {
         vehicles = (await vehiclesResponse.json()) as Vehicle[];
 
-        const airFillsResponse = await fetch(
-          `${apiBaseURL}/api/vehicle-air-fills/latest`,
-          {
-            headers: {
-              Cookie: cookieHeader,
-            },
+        const fills = await Promise.all(vehicles.map(async (vehicle) => {
+          const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicle.id}/air-fills`, {
+            headers: { Cookie: cookieHeader },
             signal: AbortSignal.timeout(10_000),
-          }
-        );
-        if (airFillsResponse.ok) {
-          const airFills = (await airFillsResponse.json()) as AirFill[];
-          latestAirFills = Object.fromEntries(
-            airFills.map((fill) => [fill.vehicle_id, fill.filled_at])
-          );
-        }
+          });
+          if (!response.ok) return null;
+          const airFills = (await response.json()) as AirFill[];
+          return airFills[0] ? [vehicle.id, airFills[0].filled_at] as const : null;
+        }));
+        latestAirFills = Object.fromEntries(fills.filter((fill) => fill !== null));
       }
     } catch {
       error = "We couldn't reach the server. Please try again.";

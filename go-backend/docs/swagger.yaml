@@ -2351,30 +2351,6 @@ paths:
       summary: Change password
       tags:
       - profile
-  /api/vehicle-air-fills/latest:
-    get:
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/apidoc.AirFill'
-            type: array
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-      security:
-      - SessionBearer: []
-      summary: List latest air fills
-      tags:
-      - vehicles
   /api/vehicles:
     get:
       produces:
@@ -2591,6 +2567,44 @@ paths:
       tags:
       - vehicles
   /api/vehicles/{id}/air-fills:
+    get:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apidoc.AirFillHistory'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List a vehicle's air fills
+      tags:
+      - vehicles
     post:
       parameters:
       - description: Positive id

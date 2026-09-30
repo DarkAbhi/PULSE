@@ -178,7 +178,7 @@ The vehicle routes are registered below the API router and include:
 | -------------- | -------------------------------------------------------------------------- | ---------------------------------------- |
 | `GET`          | `/vehicles`                                                                | List vehicle IDs and names               |
 | `POST`         | `/vehicles`                                                                | Create a vehicle                         |
-| `GET`          | `/vehicle-air-fills/latest`                                                | Get the latest air fill for each vehicle |
+| `GET`          | `/vehicles/{id}/air-fills`                                                 | List a vehicle's air fills               |
 | `GET`          | `/vehicles/{id}/`                                                          | Get a vehicle                            |
 | `PUT`, `PATCH` | `/vehicles/{id}/`                                                          | Update vehicle properties                |
 | `DELETE`       | `/vehicles/{id}/`                                                          | Delete a vehicle                         |

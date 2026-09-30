@@ -54,8 +54,8 @@ func (h *Handler) CreateAirFill(w http.ResponseWriter, r *http.Request) {
 	webutil.WriteJSON(w, http.StatusCreated, airFillDTO{VehicleID: vehicleID, FilledAt: filledAt.Time.UTC()})
 }
 
-// ListLatestAirFills lists the latest air fills across vehicles.
-func (h *Handler) ListLatestAirFills(w http.ResponseWriter, r *http.Request) {
+// ListAirFills lists a vehicle's air fills, newest first.
+func (h *Handler) ListAirFills(w http.ResponseWriter, r *http.Request) {
 	user, err := h.sessionUser(r)
 	if errors.Is(err, sql.ErrNoRows) {
 		webutil.Unauthorized(w, "session is invalid or expired")
@@ -66,17 +66,19 @@ func (h *Handler) ListLatestAirFills(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rows, err := query.New(h.DB).ListLatestVehicleAirFills(r.Context(), user.ID)
+	vehicleID, ok := webutil.ParseID(w, r)
+	if !ok {
+		return
+	}
+	rows, err := query.New(h.DB).ListVehicleAirFills(r.Context(), query.ListVehicleAirFillsParams{VehicleID: vehicleID, UserID: user.ID})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 
-	fills := make([]airFillDTO, 0)
+	fills := make([]airFillHistory, 0, len(rows))
 	for _, row := range rows {
-		fill := airFillDTO{VehicleID: row.VehicleID, FilledAt: row.FilledAt.Time}
-		fill.FilledAt = fill.FilledAt.UTC()
-		fills = append(fills, fill)
+		fills = append(fills, airFillHistory{ID: row.ID, FilledAt: row.FilledAt.Time.UTC()})
 	}
 	webutil.WriteJSON(w, http.StatusOK, fills)
 }

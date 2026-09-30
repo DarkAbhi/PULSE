@@ -55,37 +55,6 @@ func (q *Queries) ListDueAirFills(ctx context.Context) ([]int64, error) {
 	return items, nil
 }
 
-const listLatestVehicleAirFills = `-- name: ListLatestVehicleAirFills :many
-SELECT DISTINCT ON (f.vehicle_id) f.vehicle_id, f.filled_at FROM vehicle_air_fills f
-JOIN vehicles v ON v.id=f.vehicle_id AND v.user_id=f.user_id
-WHERE f.user_id = $1 ORDER BY f.vehicle_id, f.filled_at DESC, f.id DESC
-`
-
-type ListLatestVehicleAirFillsRow struct {
-	VehicleID int64
-	FilledAt  pgtype.Timestamptz
-}
-
-func (q *Queries) ListLatestVehicleAirFills(ctx context.Context, userID int64) ([]ListLatestVehicleAirFillsRow, error) {
-	rows, err := q.db.Query(ctx, listLatestVehicleAirFills, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListLatestVehicleAirFillsRow
-	for rows.Next() {
-		var i ListLatestVehicleAirFillsRow
-		if err := rows.Scan(&i.VehicleID, &i.FilledAt); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const lockDueAirFill = `-- name: LockDueAirFill :one
 SELECT vehicle_air_fills.user_id,vehicle_air_fills.vehicle_id,vehicles.name
 FROM vehicle_air_fills JOIN vehicles ON vehicles.id=vehicle_air_fills.vehicle_id

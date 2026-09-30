@@ -874,15 +874,18 @@ func operation53() {}
 // @Router /api/vehicles [post]
 func operation54() {}
 
-// operation55 documents GET /api/vehicle-air-fills/latest.
-// @Summary List latest air fills
+// operation55 documents GET /api/vehicles/{id}/air-fills.
+// @Summary List a vehicle's air fills
 // @Tags vehicles
 // @Produce json
+// @Param id path integer true "Positive id" minimum(1)
 // @Security SessionBearer
-// @Success 200 {array} AirFill
+// @Success 200 {array} AirFillHistory
+// @Failure 400 {object} Error
 // @Failure 401 {object} Error
+// @Failure 404 {string} string
 // @Failure 500 {object} Error
-// @Router /api/vehicle-air-fills/latest [get]
+// @Router /api/vehicles/{id}/air-fills [get]
 func operation55() {}
 
 // operation56 documents GET /api/vehicles/{id}.

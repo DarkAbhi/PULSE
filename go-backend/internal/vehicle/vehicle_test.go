@@ -78,6 +78,23 @@ func TestVehicleRoutesRequireOwnership(t *testing.T) {
 	request(http.MethodGet, path, "other", nil, http.StatusNotFound)
 	request(http.MethodDelete, path, "other", nil, http.StatusNotFound)
 	request(http.MethodPost, path+"/air-fills", "other", nil, http.StatusNotFound)
+	request(http.MethodGet, path+"/air-fills", "other", nil, http.StatusNotFound)
+	request(http.MethodGet, path+"/air-fills", "", nil, http.StatusUnauthorized)
+	request(http.MethodGet, path+"/air-fills", "owner", nil, http.StatusOK)
+	var firstFillID, secondFillID int64
+	if err := db.QueryRow(`INSERT INTO vehicle_air_fills (vehicle_id,user_id) VALUES ($1,1) RETURNING id`, vehicleID).Scan(&firstFillID); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`INSERT INTO vehicle_air_fills (vehicle_id,user_id) VALUES ($1,1) RETURNING id`, vehicleID).Scan(&secondFillID); err != nil {
+		t.Fatal(err)
+	}
+	var fills []airFillHistory
+	if err := json.Unmarshal(request(http.MethodGet, path+"/air-fills", "owner", nil, http.StatusOK).Body.Bytes(), &fills); err != nil {
+		t.Fatal(err)
+	}
+	if len(fills) != 2 || fills[0].ID != secondFillID || fills[1].ID != firstFillID {
+		t.Fatalf("unexpected air fills: %+v", fills)
+	}
 	request(http.MethodGet, path, "owner", nil, http.StatusOK)
 	if body := request(http.MethodGet, "/vehicles", "other", nil, http.StatusOK).Body.String(); body != "[]\n" {
 		t.Fatalf("other user saw vehicles: %s", body)
@@ -472,22 +489,23 @@ func TestAirFillsAndReminders(t *testing.T) {
 		}
 	}
 
-	// 2. List latest air fills
+	// 2. List this vehicle's air fills
 	{
 		rec := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/vehicle-air-fills/latest", nil)
+		req := httptest.NewRequest(http.MethodGet, "/vehicles/"+strconv.FormatInt(vehicleID, 10)+"/air-fills", nil)
 		req.AddCookie(cookie)
-
-		h.ListLatestAirFills(rec, req)
+		router := chi.NewRouter()
+		h.RegisterRoutes(router)
+		router.ServeHTTP(rec, req)
 
 		if rec.Code != http.StatusOK {
 			t.Errorf("expected 200, got %d", rec.Code)
 		}
 
-		var out []airFillDTO
+		var out []airFillHistory
 		_ = json.NewDecoder(rec.Body).Decode(&out)
-		if len(out) != 1 || out[0].VehicleID != vehicleID {
-			t.Errorf("unexpected latest air fills: %+v", out)
+		if len(out) != 1 || out[0].ID == 0 {
+			t.Errorf("unexpected vehicle air fills: %+v", out)
 		}
 	}
 

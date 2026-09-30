@@ -8,10 +8,7 @@ import { Bell, ArrowRight, X } from "lucide-react";
 import {
   AppNotification,
 } from "../components/notification-list";
-import {
-  dismissNotificationAction,
-  markGymReminderVisitedAction,
-} from "./actions";
+import { dismissNotificationAction } from "./actions";
 import LocalDate from "../components/local-date";
 
 interface NotificationDropdownProps {
@@ -25,7 +22,6 @@ export default function NotificationDropdown({
   const [notifications, setNotifications] =
     useState<AppNotification[]>(initialNotifications);
   const [dismissingIds, setDismissingIds] = useState<Set<number>>(new Set());
-  const [gymVisitIds, setGymVisitIds] = useState<Set<number>>(new Set());
   const [error, setError] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -68,22 +64,6 @@ export default function NotificationDropdown({
       setNotifications(prev);
     }
     setDismissingIds((s) => {
-      const next = new Set(s);
-      next.delete(id);
-      return next;
-    });
-  }
-
-  async function handleMarkGymVisited(id: number) {
-    setError("");
-    setGymVisitIds((s) => new Set(s).add(id));
-    const res = await markGymReminderVisitedAction(id);
-    if (!res.ok) {
-      setError(res.error ?? "Couldn't save that gym visit.");
-    } else {
-      setNotifications((cur) => cur.filter((n) => n.id !== id));
-    }
-    setGymVisitIds((s) => {
       const next = new Set(s);
       next.delete(id);
       return next;
@@ -160,8 +140,7 @@ export default function NotificationDropdown({
             ) : (
               <ul className="space-y-2">
                 {notifications.map((n) => {
-                  const isGym = n.source === "Gym reminder";
-                  const isBusy = dismissingIds.has(n.id) || gymVisitIds.has(n.id);
+                  const isBusy = dismissingIds.has(n.id);
                   return (
                     <li
                       key={n.id}
@@ -203,16 +182,6 @@ export default function NotificationDropdown({
                         </Button>
                       </div>
 
-                      {isGym && (
-                        <Button variant="primary" size="sm"
-                          type="button"
-                          disabled={isBusy}
-                          onClick={() => void handleMarkGymVisited(n.id)}
-                          className="mt-3 w-full"
-                        >
-                          {gymVisitIds.has(n.id) ? "Saving…" : "I visited the gym"}
-                        </Button>
-                      )}
                     </li>
                   );
                 })}

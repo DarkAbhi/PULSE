@@ -25,10 +25,3 @@ INSERT INTO gym_visit_exercises (gym_visit_id,name) VALUES ($1,$2) RETURNING id,
 -- name: CreateSet :one
 INSERT INTO gym_exercise_sets (gym_visit_exercise_id,set_number,reps,weight)
 VALUES ($1,$2,$3,$4) RETURNING id,set_number,reps,weight;
-
--- name: DeliveryExists :one
-SELECT EXISTS(SELECT 1 FROM gym_reminder_deliveries WHERE user_id=$1 AND reminder_date=($2::text)::date);
-
--- name: RecordDelivery :exec
-INSERT INTO gym_reminder_deliveries (user_id,reminder_date,notification_id)
-VALUES ($1,($2::text)::date,$3);

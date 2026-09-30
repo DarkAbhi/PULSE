@@ -123,7 +123,7 @@ func TestWorkoutAndRemovedActivityEndpoints(t *testing.T) {
 	defer env.Shutdown()
 	api := &API{
 		DB:  env.Pool,
-		Gym: gym.NewHandler(gym.NewService(gym.NewRepository(env.Pool), nil, nil), func(*http.Request) (int64, error) { return 0, sql.ErrNoRows }),
+		Gym: gym.NewHandler(gym.NewService(gym.NewRepository(env.Pool)), func(*http.Request) (int64, error) { return 0, sql.ErrNoRows }),
 	}
 	router := api.Router()
 	for _, tc := range []struct {

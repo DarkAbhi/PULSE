@@ -105,7 +105,6 @@ definitions:
     properties:
       economy_km_per_litre:
         additionalProperties:
-          format: float64
           type: number
         type: object
       id:
@@ -323,7 +322,6 @@ definitions:
         type: array
       average_mileage_km_per_litre:
         additionalProperties:
-          format: float64
           type: number
         type: object
       front_tire_pressure:
@@ -2262,43 +2260,6 @@ paths:
       summary: Dismiss notification
       tags:
       - notifications
-  /api/notifications/{id}/gym-visit:
-    post:
-      parameters:
-      - description: Positive id
-        in: path
-        minimum: 1
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/apidoc.ID'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-        "404":
-          description: Not Found
-          schema:
-            type: string
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-      security:
-      - SessionBearer: []
-      summary: Mark gym reminder visited
-      tags:
-      - gym
   /api/profile:
     get:
       produces:

@@ -41,7 +41,6 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Delete("/gym-visits/{id}", h.DeleteVisit)
 	r.Get("/gym-visits/{id}/exercises", h.ListVisitExercises)
 	r.Post("/gym-visits/{id}/exercises", h.CreateVisitExercise)
-	r.Post("/notifications/{id}/gym-visit", h.MarkReminderVisited)
 }
 
 func writeError(w http.ResponseWriter, r *http.Request, err error) {
@@ -49,7 +48,7 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.As(err, &invalid):
 		webutil.BadRequest(w, invalid.Message)
-	case errors.Is(err, ErrVisitNotFound), errors.Is(err, ErrReminderNotFound):
+	case errors.Is(err, ErrVisitNotFound):
 		http.NotFound(w, r)
 	default:
 		webutil.ServerError(w, err)
@@ -148,20 +147,4 @@ func (h *Handler) CreateVisitExercise(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	webutil.WriteJSON(w, http.StatusCreated, item)
-}
-func (h *Handler) MarkReminderVisited(w http.ResponseWriter, r *http.Request) {
-	userID, ok := h.sessionUserID(w, r)
-	if !ok {
-		return
-	}
-	id, ok := webutil.ParseID(w, r)
-	if !ok {
-		return
-	}
-	visitID, err := h.service.MarkReminderVisited(r.Context(), userID, id)
-	if err != nil {
-		writeError(w, r, err)
-		return
-	}
-	webutil.WriteJSON(w, http.StatusCreated, map[string]any{"id": visitID})
 }

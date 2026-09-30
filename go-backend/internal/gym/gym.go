@@ -1,9 +1,7 @@
-// Package gym records gym visits, exercises, sets, and visit reminders.
+// Package gym records gym visits, exercises, and sets.
 package gym
 
 import "time"
-
-const reminderSource = "Gym reminder"
 
 type visitListItem struct {
 	ID        int64     `json:"id"`

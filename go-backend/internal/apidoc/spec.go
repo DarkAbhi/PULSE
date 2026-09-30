@@ -558,20 +558,6 @@ func operation29() {}
 // @Router /api/gym-visits/{id}/exercises [post]
 func operation30() {}
 
-// operation31 documents POST /api/notifications/{id}/gym-visit.
-// @Summary Mark gym reminder visited
-// @Tags gym
-// @Produce json
-// @Param id path integer true "Positive id" minimum(1)
-// @Security SessionBearer
-// @Success 201 {object} ID
-// @Failure 400 {object} Error
-// @Failure 401 {object} Error
-// @Failure 404 {string} string
-// @Failure 500 {object} Error
-// @Router /api/notifications/{id}/gym-visit [post]
-func operation31() {}
-
 // operation32 documents GET /api/horizon.
 // @Summary Get financial summary
 // @Tags horizon

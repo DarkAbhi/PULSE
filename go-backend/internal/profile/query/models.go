@@ -139,14 +139,6 @@ type GymExerciseSet struct {
 	CreatedAt          pgtype.Timestamptz
 }
 
-type GymReminderDelivery struct {
-	ID             int64
-	UserID         int64
-	ReminderDate   pgtype.Date
-	NotificationID int64
-	CreatedAt      pgtype.Timestamptz
-}
-
 type GymVisit struct {
 	ID               int64
 	CreatedAt        pgtype.Timestamptz

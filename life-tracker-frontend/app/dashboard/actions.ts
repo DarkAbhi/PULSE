@@ -88,36 +88,3 @@ export async function dismissNotificationAction(notificationID: number) {
     return { ok: false, error: "We couldn't reach the server. Please try again." };
   }
 }
-
-export async function markGymReminderVisitedAction(notificationID: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
-  try {
-    const response = await fetch(
-      `${apiBaseURL}/api/notifications/${notificationID}/gym-visit`,
-      {
-        method: "POST",
-        headers: {
-          Cookie: cookieHeader,
-        },
-      }
-    );
-
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      return {
-        ok: false,
-        error: "We couldn't save that gym visit. Please try again.",
-      };
-    }
-
-    revalidatePath("/dashboard");
-    revalidatePath("/gym-visits");
-    revalidatePath("/notifications");
-    return { ok: true, id: body.id };
-  } catch {
-    return { ok: false, error: "We couldn't reach the server. Please try again." };
-  }
-}
-

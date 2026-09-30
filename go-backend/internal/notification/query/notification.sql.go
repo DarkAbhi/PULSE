@@ -39,33 +39,6 @@ func (q *Queries) CreateAirFillReminder(ctx context.Context, arg CreateAirFillRe
 	return id, err
 }
 
-const createGymReminder = `-- name: CreateGymReminder :one
-INSERT INTO notifications (user_id,source,title,body,target_path,priority,metadata)
-VALUES ($1,'Gym reminder','Time for the gym','Your 3:30 PM gym reminder. Mark your visit when you are done.','/gym-visits',1,jsonb_build_object('reminder_date',$2::text))
-RETURNING id
-`
-
-type CreateGymReminderParams struct {
-	UserID  int64
-	Column2 string
-}
-
-func (q *Queries) CreateGymReminder(ctx context.Context, arg CreateGymReminderParams) (int64, error) {
-	row := q.db.QueryRow(ctx, createGymReminder, arg.UserID, arg.Column2)
-	var id int64
-	err := row.Scan(&id)
-	return id, err
-}
-
-const dismissGymReminder = `-- name: DismissGymReminder :exec
-UPDATE notifications SET dismissed_at=NOW() WHERE id=$1
-`
-
-func (q *Queries) DismissGymReminder(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, dismissGymReminder, id)
-	return err
-}
-
 const dismissNotification = `-- name: DismissNotification :execrows
 UPDATE notifications SET dismissed_at=NOW() WHERE id=$1 AND user_id=$2 AND dismissed_at IS NULL
 `
@@ -81,22 +54,6 @@ func (q *Queries) DismissNotification(ctx context.Context, arg DismissNotificati
 		return 0, err
 	}
 	return result.RowsAffected(), nil
-}
-
-const gymReminderExists = `-- name: GymReminderExists :one
-SELECT EXISTS(SELECT 1 FROM notifications WHERE id=$1 AND user_id=$2 AND source='Gym reminder' AND dismissed_at IS NULL)
-`
-
-type GymReminderExistsParams struct {
-	ID     int64
-	UserID int64
-}
-
-func (q *Queries) GymReminderExists(ctx context.Context, arg GymReminderExistsParams) (bool, error) {
-	row := q.db.QueryRow(ctx, gymReminderExists, arg.ID, arg.UserID)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
 }
 
 const listNotifications = `-- name: ListNotifications :many

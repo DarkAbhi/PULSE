@@ -5,7 +5,7 @@ import Button from "../components/design-system/button";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { AppNotification, NotificationList } from "../components/notification-list";
-import { dismissNotification, markGymVisited, clearAllNotifications } from "./actions";
+import { dismissNotification, clearAllNotifications } from "./actions";
 import { ArrowLeft, Trash2 } from "lucide-react";
 
 interface NotificationsClientProps {
@@ -23,19 +23,6 @@ export default function NotificationsClient({ notifications }: NotificationsClie
         const res = await dismissNotification(notificationID);
         if (!res.ok) {
           setError(res.error ?? "We couldn't dismiss that notification. Please try again.");
-        }
-        resolve();
-      });
-    });
-  }
-
-  async function handleMarkGymVisited(notificationID: number) {
-    setError("");
-    return new Promise<void>((resolve) => {
-      startTransition(async () => {
-        const res = await markGymVisited(notificationID);
-        if (!res.ok) {
-          setError(res.error ?? "We couldn't save that gym visit. Please try again.");
         }
         resolve();
       });
@@ -89,7 +76,6 @@ export default function NotificationsClient({ notifications }: NotificationsClie
             <NotificationList
               notifications={notifications}
               onDismiss={handleDismiss}
-              onMarkGymVisited={handleMarkGymVisited}
             />
           )}
         </section>

@@ -57,7 +57,7 @@ func TestList(t *testing.T) {
 		INSERT INTO notifications (user_id, source, title, body, target_path, priority)
 		VALUES 
 		(1, 'Garage', 'Air Fill Check', 'Check tires', '/garage', 1),
-		(1, 'Gym reminder', 'Time for workout', 'Go to gym', '/gym-visits', 1),
+		(1, 'System', 'General update', 'Keep informed', '/dashboard', 1),
 		(1, 'System', 'Dismissed reminder', 'Should not show', '/home', 0)
 	`)
 	if err != nil {
@@ -88,8 +88,8 @@ func TestList(t *testing.T) {
 		}
 
 		// Verify order (newest first, which is the last inserted)
-		if out[0].Title != "Time for workout" {
-			t.Errorf("expected newest first ('Time for workout'), got %q", out[0].Title)
+		if out[0].Title != "General update" {
+			t.Errorf("expected newest first ('General update'), got %q", out[0].Title)
 		}
 	}
 

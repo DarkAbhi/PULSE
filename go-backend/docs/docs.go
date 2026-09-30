@@ -2352,64 +2352,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/notifications/{id}/gym-visit": {
-            "post": {
-                "security": [
-                    {
-                        "SessionBearer": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "gym"
-                ],
-                "summary": "Mark gym reminder visited",
-                "parameters": [
-                    {
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Positive id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.ID"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Error"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Error"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Error"
-                        }
-                    }
-                }
-            }
-        },
         "/api/profile": {
             "get": {
                 "security": [
@@ -4549,8 +4491,7 @@ const docTemplate = `{
                 "economy_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number",
-                        "format": "float64"
+                        "type": "number"
                     }
                 },
                 "id": {
@@ -4880,8 +4821,7 @@ const docTemplate = `{
                 "average_mileage_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number",
-                        "format": "float64"
+                        "type": "number"
                     }
                 },
                 "front_tire_pressure": {

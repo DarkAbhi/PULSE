@@ -122,7 +122,7 @@ func run(ctx context.Context) error {
 	notificationRepository := notification.NewRepository(pool)
 	notificationService := notification.NewService(notificationRepository)
 	gymRepository := gym.NewRepository(pool)
-	gymService := gym.NewService(gymRepository, notificationService, authService)
+	gymService := gym.NewService(gymRepository)
 	profileRepository := profile.NewRepository(pool)
 	profileService := profile.NewService(profileRepository, authService)
 	vehicleRepository := vehicle.NewRepository(pool)
@@ -163,7 +163,6 @@ func run(ctx context.Context) error {
 		port = "8080"
 	}
 	server := &http.Server{Addr: ":" + port, Handler: handler, ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 60 * time.Second}
-	go gym.RunReminderJob(ctx, gymService)
 	go vehicle.RunAirFillReminderJob(ctx, vehicle.NewReminderService(pool, notificationService))
 	serveErr := make(chan error, 1)
 	go func() { serveErr <- server.ListenAndServe() }()

@@ -32,24 +32,6 @@ export async function dismissNotification(notificationID: number) {
   }
 }
 
-export async function markGymVisited(notificationID: number) {
-  try {
-    const headers = await getAuthHeader();
-    const response = await fetch(`${apiBaseURL}/api/notifications/${notificationID}/gym-visit`, {
-      method: "POST",
-      headers,
-    });
-    if (!response.ok) {
-      return { ok: false, error: "We couldn't save that gym visit. Please try again." };
-    }
-    revalidatePath("/notifications");
-    revalidatePath("/dashboard");
-    return { ok: true };
-  } catch (err) {
-    return { ok: false, error: "We couldn't reach the server. Please try again." };
-  }
-}
-
 export async function clearAllNotifications() {
   try {
     const headers = await getAuthHeader();

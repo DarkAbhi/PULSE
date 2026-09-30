@@ -11,9 +11,6 @@ type store interface {
 	List(context.Context, int64, int) ([]Item, error)
 	Dismiss(context.Context, int64, int64) (bool, error)
 	Clear(context.Context, int64) error
-	CreateGymReminder(context.Context, pgx.Tx, int64, string) (int64, error)
-	HasGymReminder(context.Context, pgx.Tx, int64, int64) (bool, error)
-	DismissGymReminder(context.Context, pgx.Tx, int64) error
 	CreateAirFillReminder(context.Context, pgx.Tx, int64, int64, string) (int64, error)
 }
 
@@ -38,26 +35,6 @@ func (s *Service) Dismiss(ctx context.Context, userID, id int64) (bool, error) {
 func (s *Service) Clear(ctx context.Context, userID int64) error {
 	if err := s.store.Clear(ctx, userID); err != nil {
 		return fmt.Errorf("clear notifications: %w", err)
-	}
-	return nil
-}
-func (s *Service) CreateGymReminder(ctx context.Context, tx pgx.Tx, userID int64, date string) (int64, error) {
-	id, err := s.store.CreateGymReminder(ctx, tx, userID, date)
-	if err != nil {
-		return 0, fmt.Errorf("create gym reminder: %w", err)
-	}
-	return id, nil
-}
-func (s *Service) HasGymReminder(ctx context.Context, tx pgx.Tx, userID, id int64) (bool, error) {
-	ok, err := s.store.HasGymReminder(ctx, tx, userID, id)
-	if err != nil {
-		return false, fmt.Errorf("check gym reminder: %w", err)
-	}
-	return ok, nil
-}
-func (s *Service) DismissGymReminder(ctx context.Context, tx pgx.Tx, id int64) error {
-	if err := s.store.DismissGymReminder(ctx, tx, id); err != nil {
-		return fmt.Errorf("dismiss gym reminder: %w", err)
 	}
 	return nil
 }

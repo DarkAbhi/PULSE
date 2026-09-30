@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -96,16 +95,4 @@ func (r *Repository) CreateExercise(ctx context.Context, visitID int64, name str
 		return exerciseDTO{}, err
 	}
 	return item, nil
-}
-func (r *Repository) Begin(ctx context.Context) (pgx.Tx, error) { return r.db.Begin(ctx) }
-func (r *Repository) AddVisitTx(ctx context.Context, tx pgx.Tx, userID int64) (int64, error) {
-	return r.queries.WithTx(tx).AddVisit(ctx, userID)
-}
-func (r *Repository) HasDelivery(ctx context.Context, tx pgx.Tx, userID int64, date string) (bool, error) {
-	return r.queries.WithTx(tx).DeliveryExists(ctx, query.DeliveryExistsParams{UserID: userID, Column2: date})
-}
-func (r *Repository) RecordDelivery(ctx context.Context, tx pgx.Tx, userID int64, date string, notificationID int64) error {
-	return r.queries.WithTx(tx).RecordDelivery(ctx, query.RecordDeliveryParams{
-		UserID: userID, Column2: date, NotificationID: notificationID,
-	})
 }

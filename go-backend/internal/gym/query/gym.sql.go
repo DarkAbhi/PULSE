@@ -96,22 +96,6 @@ func (q *Queries) DeleteVisit(ctx context.Context, arg DeleteVisitParams) (int64
 	return result.RowsAffected(), nil
 }
 
-const deliveryExists = `-- name: DeliveryExists :one
-SELECT EXISTS(SELECT 1 FROM gym_reminder_deliveries WHERE user_id=$1 AND reminder_date=($2::text)::date)
-`
-
-type DeliveryExistsParams struct {
-	UserID  int64
-	Column2 string
-}
-
-func (q *Queries) DeliveryExists(ctx context.Context, arg DeliveryExistsParams) (bool, error) {
-	row := q.db.QueryRow(ctx, deliveryExists, arg.UserID, arg.Column2)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
 const listExercises = `-- name: ListExercises :many
 SELECT id,name FROM gym_visit_exercises WHERE gym_visit_id=$1 ORDER BY id ASC
 `
@@ -204,22 +188,6 @@ func (q *Queries) ListVisits(ctx context.Context, userID int64) ([]ListVisitsRow
 		return nil, err
 	}
 	return items, nil
-}
-
-const recordDelivery = `-- name: RecordDelivery :exec
-INSERT INTO gym_reminder_deliveries (user_id,reminder_date,notification_id)
-VALUES ($1,($2::text)::date,$3)
-`
-
-type RecordDeliveryParams struct {
-	UserID         int64
-	Column2        string
-	NotificationID int64
-}
-
-func (q *Queries) RecordDelivery(ctx context.Context, arg RecordDeliveryParams) error {
-	_, err := q.db.Exec(ctx, recordDelivery, arg.UserID, arg.Column2, arg.NotificationID)
-	return err
 }
 
 const visitExists = `-- name: VisitExists :one

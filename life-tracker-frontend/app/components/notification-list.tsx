@@ -18,25 +18,22 @@ export type AppNotification = {
 type NotificationListProps = {
   notifications: AppNotification[];
   onDismiss: (notificationID: number) => Promise<void>;
-  onMarkGymVisited?: (notificationID: number) => Promise<void>;
 };
 
-export function NotificationList({ notifications, onDismiss, onMarkGymVisited }: NotificationListProps) {
+export function NotificationList({ notifications, onDismiss }: NotificationListProps) {
   return (
     <div className="space-y-3">
       {notifications.map((notification) => (
-        <NotificationCard key={notification.id} notification={notification} onDismiss={onDismiss} onMarkGymVisited={onMarkGymVisited} />
+        <NotificationCard key={notification.id} notification={notification} onDismiss={onDismiss} />
       ))}
     </div>
   );
 }
 
-function NotificationCard({ notification, onDismiss, onMarkGymVisited }: { notification: AppNotification; onDismiss: (notificationID: number) => Promise<void>; onMarkGymVisited?: (notificationID: number) => Promise<void> }) {
+function NotificationCard({ notification, onDismiss }: { notification: AppNotification; onDismiss: (notificationID: number) => Promise<void> }) {
   const startX = useRef<number | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDismissing, setIsDismissing] = useState(false);
-  const [isMarkingGymVisited, setIsMarkingGymVisited] = useState(false);
-  const isGymReminder = notification.source === "Gym reminder";
 
   async function dismiss() {
     setIsDismissing(true);
@@ -45,16 +42,6 @@ function NotificationCard({ notification, onDismiss, onMarkGymVisited }: { notif
     } finally {
       setIsDismissing(false);
       setDragOffset(0);
-    }
-  }
-
-  async function markGymVisited() {
-    if (!onMarkGymVisited) return;
-    setIsMarkingGymVisited(true);
-    try {
-      await onMarkGymVisited(notification.id);
-    } finally {
-      setIsMarkingGymVisited(false);
     }
   }
 
@@ -103,20 +90,6 @@ function NotificationCard({ notification, onDismiss, onMarkGymVisited }: { notif
           </Button>
         </div>
         {notification.body && <p className="mt-2 text-sm leading-6 text-muted-foreground">{notification.body}</p>}
-        {isGymReminder && onMarkGymVisited && (
-          <Button variant="primary" size="md"
-            className="mt-4"
-            disabled={isMarkingGymVisited || isDismissing}
-            onClick={(event) => {
-              event.stopPropagation();
-              void markGymVisited();
-            }}
-            onPointerDown={(event) => event.stopPropagation()}
-            type="button"
-          >
-            {isMarkingGymVisited ? "Saving your visit…" : "I visited the gym"}
-          </Button>
-        )}
         <p className="mt-3 text-xs text-muted-foreground/80">
           <LocalDate
             dateString={notification.created_at}

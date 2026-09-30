@@ -13,13 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DarkAbhi/life-backend/internal/auth"
-	"github.com/DarkAbhi/life-backend/internal/notification"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
-	"github.com/DarkAbhi/life-backend/internal/timeutil"
 )
 
 func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
@@ -293,102 +290,6 @@ func TestVisitsAreSessionOwned(t *testing.T) {
 	}
 }
 
-func TestMarkReminderVisited(t *testing.T) {
-	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
-	defer shutdown()
-
-	h := newTestHandler(t, db, dsn)
-	cookie := loginUser(t, db)
-
-	// Seed gym reminder notification
-	var notificationID int64
-	err := db.QueryRow(`
-		INSERT INTO notifications (user_id, source, title, body, target_path, priority, metadata)
-		VALUES (1, 'Gym reminder', 'Time for the gym', 'Gym reminder', '/gym-visits', 1, '{}')
-		RETURNING id
-	`).Scan(&notificationID)
-	if err != nil {
-		t.Fatalf("failed to seed: %v", err)
-	}
-
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/notifications/{id}/gym-visit", nil)
-	req.AddCookie(cookie)
-
-	rctx := chi.NewRouteContext()
-	rctx.URLParams.Add("id", strconv.FormatInt(notificationID, 10))
-	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
-
-	h.MarkReminderVisited(rec, req)
-
-	if rec.Code != http.StatusCreated {
-		t.Errorf("expected 201 Created, got %d", rec.Code)
-	}
-
-	// Verify visit created
-	var count int
-	_ = db.QueryRow(`SELECT COUNT(*) FROM gym_visits WHERE user_id=1`).Scan(&count)
-	if count != 1 {
-		t.Errorf("expected 1 gym visit, got %d", count)
-	}
-
-	// Verify notification dismissed
-	var dismissed sql.NullTime
-	_ = db.QueryRow(`SELECT dismissed_at FROM notifications WHERE id = $1`, notificationID).Scan(&dismissed)
-	if !dismissed.Valid {
-		t.Error("expected notification dismissed_at to be populated")
-	}
-}
-
-func TestCreateDueReminders(t *testing.T) {
-	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
-	defer shutdown()
-
-	// Use Wednesday at 4:00 PM for the test run time (a weekday past 3:30 PM)
-	loc, _ := time.LoadLocation(timeutil.IndiaTimeZone)
-	testTime := time.Date(2026, 7, 15, 16, 0, 0, 0, loc).UTC()
-
-	// 1. Run reminder creation
-	if err := newTestService(t, dsn).CreateDueReminders(context.Background(), testTime); err != nil {
-		t.Fatal(err)
-	}
-
-	// Verify notification created for user 1
-	var notifCount int
-	err := db.QueryRow(`
-		SELECT COUNT(*) FROM notifications 
-		WHERE user_id = 1 AND source = 'Gym reminder'
-	`).Scan(&notifCount)
-	if err != nil {
-		t.Fatalf("failed to query: %v", err)
-	}
-	if notifCount != 1 {
-		t.Errorf("expected 1 notification, got %d", notifCount)
-	}
-
-	// Verify reminder delivery entry exists
-	var deliveryCount int
-	err = db.QueryRow(`
-		SELECT COUNT(*) FROM gym_reminder_deliveries 
-		WHERE user_id = 1 AND reminder_date = '2026-07-15'
-	`).Scan(&deliveryCount)
-	if err != nil {
-		t.Fatalf("failed to query: %v", err)
-	}
-	if deliveryCount != 1 {
-		t.Errorf("expected 1 delivery record, got %d", deliveryCount)
-	}
-
-	// 2. Running a second time on the same day should not create duplicates
-	if err := newTestService(t, dsn).CreateDueReminders(context.Background(), testTime.Add(5*time.Minute)); err != nil {
-		t.Fatal(err)
-	}
-	_ = db.QueryRow(`SELECT COUNT(*) FROM notifications WHERE user_id = 1 AND source = 'Gym reminder'`).Scan(&notifCount)
-	if notifCount != 1 {
-		t.Errorf("expected still 1 notification, got %d", notifCount)
-	}
-}
-
 func newTestService(t *testing.T, dsn string) *Service {
 	t.Helper()
 	pool, err := pgxpool.New(context.Background(), dsn)
@@ -396,8 +297,7 @@ func newTestService(t *testing.T, dsn string) *Service {
 		t.Fatal(err)
 	}
 	t.Cleanup(pool.Close)
-	notifications := notification.NewService(notification.NewRepository(pool))
-	return NewService(NewRepository(pool), notifications, auth.NewService(auth.NewRepository(pool)))
+	return NewService(NewRepository(pool))
 }
 
 func newTestHandler(t *testing.T, db *sql.DB, dsn string) *Handler {

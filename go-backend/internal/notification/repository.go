@@ -39,18 +39,6 @@ func (r *Repository) Clear(ctx context.Context, userID int64) error {
 	return r.queries.ClearNotifications(ctx, userID)
 }
 
-func (r *Repository) CreateGymReminder(ctx context.Context, tx pgx.Tx, userID int64, date string) (int64, error) {
-	return r.queries.WithTx(tx).CreateGymReminder(ctx, query.CreateGymReminderParams{UserID: userID, Column2: date})
-}
-
-func (r *Repository) HasGymReminder(ctx context.Context, tx pgx.Tx, userID, id int64) (bool, error) {
-	return r.queries.WithTx(tx).GymReminderExists(ctx, query.GymReminderExistsParams{ID: id, UserID: userID})
-}
-
-func (r *Repository) DismissGymReminder(ctx context.Context, tx pgx.Tx, id int64) error {
-	return r.queries.WithTx(tx).DismissGymReminder(ctx, id)
-}
-
 func (r *Repository) CreateAirFillReminder(ctx context.Context, tx pgx.Tx, userID, vehicleID int64, name string) (int64, error) {
 	return r.queries.WithTx(tx).CreateAirFillReminder(ctx, query.CreateAirFillReminderParams{
 		UserID: userID, Column2: vehicleID, Column3: &name,

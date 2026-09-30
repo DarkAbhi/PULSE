@@ -5,10 +5,7 @@ import {
   AppNotification,
   NotificationList,
 } from "../components/notification-list";
-import {
-  dismissNotificationAction,
-  markGymReminderVisitedAction,
-} from "./actions";
+import { dismissNotificationAction } from "./actions";
 
 interface NotificationCenterProps {
   initialNotifications: AppNotification[];
@@ -36,19 +33,6 @@ export default function NotificationCenter({
     }
   }
 
-  async function handleMarkGymVisited(notificationID: number) {
-    setError("");
-
-    const res = await markGymReminderVisitedAction(notificationID);
-    if (!res.ok) {
-      setError(res.error ?? "We couldn't save that gym visit. Please try again.");
-    } else {
-      setNotifications((current) =>
-        current.filter((n) => n.id !== notificationID)
-      );
-    }
-  }
-
   if (notifications.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card/70 p-7 text-center">
@@ -70,7 +54,6 @@ export default function NotificationCenter({
       <NotificationList
         notifications={notifications}
         onDismiss={handleDismiss}
-        onMarkGymVisited={handleMarkGymVisited}
       />
     </div>
   );

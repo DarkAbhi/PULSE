@@ -1,8 +1,10 @@
 import io
 import json
+import os
 import sys
 import types
 import unittest
+from urllib.error import HTTPError
 from unittest.mock import patch
 
 
@@ -29,21 +31,42 @@ class LifeTrackerMCPTest(unittest.TestCase):
             spec.loader.exec_module(server)
 
         self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles"])
-        paths = []
+        calls = []
+        login_count = 0
 
-        def get(url, timeout):
-            paths.append((url, timeout))
+        def get(request, timeout):
+            nonlocal login_count
+            url = request.full_url
+            token = request.get_header("Authorization")
+            calls.append((url, request.get_method(), token, timeout))
+            if url.endswith("/auth/login"):
+                self.assertEqual(json.loads(request.data), {"username": "me", "password": "secret"})
+                login_count += 1
+                response = io.BytesIO(b'{"username":"me"}')
+                response.headers = {"Set-Cookie": f"life_session=token{login_count}; HttpOnly"}
+                return response
+            if url.endswith("/vehicles") and token == "Bearer token1":
+                raise HTTPError(url, 401, "expired", {}, None)
             value = {"visited": True, "id": 12} if url.endswith("/workout/today") else [{"id": 7, "name": "Scooter"}]
             return io.BytesIO(json.dumps(value).encode())
 
-        with patch.object(server, "urlopen", side_effect=get):
+        with patch.dict(os.environ, {"MCP_BACKEND_USERNAME": "me", "MCP_BACKEND_PASSWORD": "secret"}), \
+             patch.object(server, "urlopen", side_effect=get):
             self.assertTrue(json.loads(server.get_workout_today())["visited"])
             self.assertEqual(json.loads(server.get_vehicles())[0]["name"], "Scooter")
 
-        self.assertEqual(paths, [
-            ("http://127.0.0.1:18080/api/workout/today", 10),
-            ("http://127.0.0.1:18080/api/vehicles", 10),
+        self.assertEqual(calls, [
+            ("http://127.0.0.1:18080/api/auth/login", "POST", None, 10),
+            ("http://127.0.0.1:18080/api/workout/today", "GET", "Bearer token1", 10),
+            ("http://127.0.0.1:18080/api/vehicles", "GET", "Bearer token1", 10),
+            ("http://127.0.0.1:18080/api/auth/login", "POST", None, 10),
+            ("http://127.0.0.1:18080/api/vehicles", "GET", "Bearer token2", 10),
         ])
+
+        server._session_token = None
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(RuntimeError, "MCP_BACKEND_USERNAME"):
+                server.get_workout_today()
 
 
 if __name__ == "__main__":

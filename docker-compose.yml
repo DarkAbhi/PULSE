@@ -106,6 +106,8 @@ services:
         condition: service_healthy
     environment:
       LIFE_BACKEND_BASE_URL: http://backend:8080
+      MCP_BACKEND_USERNAME: ${MCP_BACKEND_USERNAME:-}
+      MCP_BACKEND_PASSWORD: ${MCP_BACKEND_PASSWORD:-}
     ports:
       - "127.0.0.1:18082:8000"
     restart: unless-stopped

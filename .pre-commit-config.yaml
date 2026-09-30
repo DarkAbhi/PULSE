@@ -1,0 +1,31 @@
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+  - repo: local
+    hooks:
+      - id: go-tests
+        name: Go backend tests
+        entry: make -C go-backend test
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: rust-tests
+        name: Rust backend tests
+        entry: bash -c 'cd rust-backend && cargo test'
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: frontend-tests
+        name: Next.js frontend tests
+        entry: bash -c 'cd life-tracker-frontend && node --test'
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: hermes-tests
+        name: Hermes MCP tests
+        entry: python3 -m unittest discover -s hermes-mcp -p test_*.py
+        language: system
+        pass_filenames: false
+        always_run: true

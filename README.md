@@ -4,6 +4,16 @@ Life Tracker is a personal-data application with a Go API and a Next.js web app.
 See the [backend guide](go-backend/README.md) for local Go
 development, configuration, architecture, migrations, tests, and API docs.
 
+### Pre-commit checks
+
+Install [pre-commit](https://pre-commit.com/#install), Go, Rust, Node.js 24,
+Python 3, and Docker, then run `pre-commit install` from the repository root.
+Each commit scans staged changes with Gitleaks and runs the Go, Rust,
+Next.js, and Hermes MCP test suites. Run `pre-commit run --all-files` to run
+the checks without committing. The Go tests need a running Docker daemon;
+Rust's database tests also need `TEST_DATABASE_URL` set to a disposable
+PostgreSQL database or they skip themselves.
+
 ### Setup to run
 
 On the production host, copy `.env.example` to `.env` and fill in the values.

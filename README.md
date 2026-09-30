@@ -126,6 +126,7 @@ These commands run the migration service using the production Docker image.
 | `make dev`                 | Start the development backend and web services in the background. Removes orphaned containers. |
 | `make dev-down`            | Stop and remove the development services, including orphaned containers.                             |
 | `make dev-logs`            | Follow the last 200 log lines from the development backend and web services.                   |
+| `make dev-tunnel-url`      | Show the active Cloudflare tunnel URL for the development Rust API.                                |
 | `make dev-monitoring-logs` | Follow development Prometheus, Grafana, and Jaeger logs.                                             |
 
 ### Development migrations

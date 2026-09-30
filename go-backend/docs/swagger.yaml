@@ -767,7 +767,6 @@ definitions:
       rear_tire_pressure_solo:
         type: number
     type: object
-host: localhost:8080
 info:
   contact: {}
   description: REST API for the Life Backend application. Session endpoints accept

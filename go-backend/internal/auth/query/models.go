@@ -148,10 +148,11 @@ type GymReminderDelivery struct {
 }
 
 type GymVisit struct {
-	ID        int64
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
-	UserID    int64
+	ID               int64
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+	UserID           int64
+	FitnessWorkoutID pgtype.Int8
 }
 
 type GymVisitExercise struct {

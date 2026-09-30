@@ -1,6 +1,6 @@
 # Life Tracker MCP server
 
-The production Compose stack runs this MCP server beside the Go backend. It exposes `get_workout_today`, `get_vehicles`, and `add_exercises_to_today`.
+The production Compose stack runs this MCP server beside the Go backend. It exposes `get_workout_today`, `get_vehicles`, and `add_exercises_to_workout`.
 
 ## Ubuntu setup
 
@@ -22,11 +22,11 @@ mcp_servers:
   life_tracker:
     url: http://127.0.0.1:18082/mcp
     tools:
-      include: [get_workout_today, get_vehicles, add_exercises_to_today]
+      include: [get_workout_today, get_vehicles, add_exercises_to_workout]
       prompts: false
       resources: false
 ```
 
 Run `hermes mcp test life_tracker`, then `hermes gateway restart`. In the existing Telegram chat, send `/reload-mcp` to refresh that session's tools, then ask “Did I work out today?” and “What vehicles are in my garage?” The CLI test checks protocol discovery; the Telegram questions also check that the tools can reach the backend. If discovery fails, inspect `docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod logs mcp`.
 
-For workout messages, Hermes must extract the exercises into `name` and ordered `sets` with numeric `reps` and `weight` in kilograms. It must show the complete extracted workout and ask for explicit confirmation before calling `add_exercises_to_today` with `confirmed=true`. It must ask about missing or ambiguous numbers instead of guessing. The tool rejects calls without confirmation and requires an existing gym visit today (India time). After an uncertain network failure, check saved exercises before trying again; a repeated write can create duplicates.
+For workout messages, Hermes must extract the exercises into `name` and ordered `sets` with numeric `reps` and `weight` in kilograms. If the user names a workout date, Hermes must pass `workout_date` as `YYYY-MM-DD` (for example, "29th September" means `2026-09-29` when the intended year is 2026). Without a stated date, leave `workout_date` unset so the tool uses today's visit in India time. Hermes must show the target date and complete extracted workout, then ask for explicit confirmation before calling `add_exercises_to_workout` with `confirmed=true`. It must ask about missing or ambiguous dates or numbers instead of guessing. The tool requires an existing visit on the target date and rejects dates with multiple visits. After an uncertain network failure, check saved exercises before trying again; a repeated write can create duplicates.

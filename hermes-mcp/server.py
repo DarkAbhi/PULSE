@@ -2,6 +2,7 @@
 
 import json
 import os
+from datetime import date, datetime, timedelta, timezone
 from typing import TypedDict
 from http.cookies import SimpleCookie
 from urllib.error import HTTPError
@@ -12,6 +13,7 @@ from mcp.server import MCPServer
 
 mcp = MCPServer("life-tracker")
 _session_token = None
+_india_time = timezone(timedelta(hours=5, minutes=30))
 
 
 class ExerciseSet(TypedDict):
@@ -85,8 +87,9 @@ def get_vehicles() -> str:
 
 
 @mcp.tool()
-def add_exercises_to_today(exercises: list[ExerciseInput], confirmed: bool = False) -> str:
-    """Save exercises to today's gym visit. First show the user every exercise and set with exact kg and reps; call only after they explicitly confirm that summary. Never infer missing numbers or retry an uncertain write. Weight is kilograms; use null only when the user explicitly says unweighted."""
+def add_exercises_to_workout(exercises: list[ExerciseInput], confirmed: bool = False,
+                             workout_date: str | None = None) -> str:
+    """Save exercises to a gym visit. If the user gives no date, use today's visit in India time. For a stated date, pass YYYY-MM-DD in workout_date. Show the user the target date and every exercise and set with exact kg and reps; call only after they explicitly confirm that summary. Never infer missing numbers or retry an uncertain write. Weight is kilograms; use null only when the user explicitly says unweighted."""
     if confirmed is not True:
         raise ValueError("Show the extracted exercises and sets to the user and get confirmation before saving")
     if not isinstance(exercises, list) or not 1 <= len(exercises) <= 20:
@@ -103,10 +106,39 @@ def add_exercises_to_today(exercises: list[ExerciseInput], confirmed: bool = Fal
             weight = item.get("weight")
             if "weight" not in item or (weight is not None and (type(weight) not in (int, float) or not 0 <= weight <= 999999.99)):
                 raise ValueError("Each set needs a non-negative weight in kg or explicit null")
-    visit = _get("/api/workout/today")
-    if not isinstance(visit, dict) or visit.get("visited") is not True or type(visit.get("id")) is not int:
-        raise ValueError("No gym visit is recorded for today; record the visit before saving exercises")
-    return json.dumps(_request(f"/api/gym-visits/{visit['id']}/exercises/batch",
+    if workout_date is None:
+        visit = _get("/api/workout/today")
+        if not isinstance(visit, dict) or visit.get("visited") is not True or type(visit.get("id")) is not int:
+            raise ValueError("No gym visit is recorded for today; record the visit before saving exercises")
+        visit_id = visit["id"]
+    else:
+        try:
+            target = date.fromisoformat(workout_date)
+            if target.isoformat() != workout_date:
+                raise ValueError
+        except (TypeError, ValueError):
+            raise ValueError("workout_date must be a valid date in YYYY-MM-DD format") from None
+        visits = _get("/api/gym-visits")
+        if not isinstance(visits, list):
+            raise ValueError("Invalid gym visit list from Life Tracker")
+        matches = []
+        for visit in visits:
+            if not isinstance(visit, dict) or type(visit.get("id")) is not int or not isinstance(visit.get("created_at"), str):
+                raise ValueError("Invalid gym visit list from Life Tracker")
+            try:
+                created_at = datetime.fromisoformat(visit["created_at"].replace("Z", "+00:00"))
+                if created_at.tzinfo is None:
+                    raise ValueError
+            except ValueError:
+                raise ValueError("Invalid gym visit date from Life Tracker") from None
+            if created_at.astimezone(_india_time).date() == target:
+                matches.append(visit["id"])
+        if not matches:
+            raise ValueError(f"No gym visit is recorded for {workout_date}")
+        if len(matches) > 1:
+            raise ValueError(f"Multiple gym visits are recorded for {workout_date}; choose a specific visit")
+        visit_id = matches[0]
+    return json.dumps(_request(f"/api/gym-visits/{visit_id}/exercises/batch",
                                method="POST", body={"exercises": exercises}))
 
 

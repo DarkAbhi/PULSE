@@ -30,7 +30,7 @@ class LifeTrackerMCPTest(unittest.TestCase):
             server = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(server)
 
-        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles", "add_exercises_to_today"])
+        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles", "add_exercises_to_workout"])
         calls = []
         login_count = 0
 
@@ -61,10 +61,10 @@ class LifeTrackerMCPTest(unittest.TestCase):
             self.assertTrue(json.loads(server.get_workout_today())["visited"])
             self.assertEqual(json.loads(server.get_vehicles())[0]["name"], "Scooter")
             with self.assertRaisesRegex(ValueError, "confirmation"):
-                server.add_exercises_to_today(workout)
+                server.add_exercises_to_workout(workout)
             with self.assertRaisesRegex(ValueError, "rep count"):
-                server.add_exercises_to_today([{"name": "Curl", "sets": [{"reps": 0, "weight": 10}]}], True)
-            self.assertEqual(json.loads(server.add_exercises_to_today(workout, True)), workout)
+                server.add_exercises_to_workout([{"name": "Curl", "sets": [{"reps": 0, "weight": 10}]}], True)
+            self.assertEqual(json.loads(server.add_exercises_to_workout(workout, True)), workout)
 
         self.assertEqual(calls, [
             ("http://127.0.0.1:18080/api/auth/login", "POST", None, 10),
@@ -75,6 +75,25 @@ class LifeTrackerMCPTest(unittest.TestCase):
             ("http://127.0.0.1:18080/api/workout/today", "GET", "Bearer token2", 10),
             ("http://127.0.0.1:18080/api/gym-visits/12/exercises/batch", "POST", "Bearer token2", 10),
         ])
+
+        visits = [
+            {"id": 29, "created_at": "2026-09-28T20:00:00Z"},
+            {"id": 30, "created_at": "2026-09-29T20:00:00Z"},
+        ]
+        with patch.object(server, "_get", return_value=visits) as lookup, \
+             patch.object(server, "_request", return_value=workout) as write:
+            self.assertEqual(json.loads(server.add_exercises_to_workout(workout, True, "2026-09-29")), workout)
+            lookup.assert_called_once_with("/api/gym-visits")
+            write.assert_called_once_with("/api/gym-visits/29/exercises/batch",
+                                          method="POST", body={"exercises": workout})
+            with self.assertRaisesRegex(ValueError, "No gym visit"):
+                server.add_exercises_to_workout(workout, True, "2026-09-27")
+            with self.assertRaisesRegex(ValueError, "YYYY-MM-DD"):
+                server.add_exercises_to_workout(workout, True, "2026-09-31")
+            with self.assertRaisesRegex(ValueError, "Multiple gym visits"):
+                lookup.return_value = visits + [{"id": 31, "created_at": "2026-09-29T10:00:00+05:30"}]
+                server.add_exercises_to_workout(workout, True, "2026-09-29")
+            self.assertEqual(write.call_count, 1)
 
         server._session_token = None
         with patch.dict(os.environ, {}, clear=True):

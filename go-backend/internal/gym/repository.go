@@ -69,30 +69,42 @@ func (r *Repository) ListExercises(ctx context.Context, visitID int64) ([]exerci
 	return items, nil
 }
 func (r *Repository) CreateExercise(ctx context.Context, visitID int64, name string, sets []exerciseSetInput) (exerciseDTO, error) {
-	tx, err := r.db.Begin(ctx)
+	items, err := r.CreateExercises(ctx, visitID, []createExerciseBody{{Name: name, Sets: sets}})
 	if err != nil {
 		return exerciseDTO{}, err
+	}
+	return items[0], nil
+}
+
+func (r *Repository) CreateExercises(ctx context.Context, visitID int64, bodies []createExerciseBody) ([]exerciseDTO, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, err
 	}
 	defer tx.Rollback(ctx)
 	q := r.queries.WithTx(tx)
-	row, err := q.CreateExercise(ctx, query.CreateExerciseParams{GymVisitID: visitID, Name: name})
-	if err != nil {
-		return exerciseDTO{}, err
-	}
-	item := exerciseDTO{ID: row.ID, Name: row.Name, Sets: make([]exerciseSetDTO, 0, len(sets))}
-	for i, set := range sets {
-		saved, err := q.CreateSet(ctx, query.CreateSetParams{
-			GymVisitExerciseID: row.ID, SetNumber: int16(i + 1), Reps: int16(set.Reps), Weight: set.Weight,
-		})
+	items := make([]exerciseDTO, 0, len(bodies))
+	for _, body := range bodies {
+		row, err := q.CreateExercise(ctx, query.CreateExerciseParams{GymVisitID: visitID, Name: body.Name})
 		if err != nil {
-			return exerciseDTO{}, err
+			return nil, err
 		}
-		item.Sets = append(item.Sets, exerciseSetDTO{
-			ID: saved.ID, SetNumber: int(saved.SetNumber), Reps: int(saved.Reps), Weight: saved.Weight,
-		})
+		item := exerciseDTO{ID: row.ID, Name: row.Name, Sets: make([]exerciseSetDTO, 0, len(body.Sets))}
+		for i, set := range body.Sets {
+			saved, err := q.CreateSet(ctx, query.CreateSetParams{
+				GymVisitExerciseID: row.ID, SetNumber: int16(i + 1), Reps: int16(set.Reps), Weight: set.Weight,
+			})
+			if err != nil {
+				return nil, err
+			}
+			item.Sets = append(item.Sets, exerciseSetDTO{
+				ID: saved.ID, SetNumber: int(saved.SetNumber), Reps: int(saved.Reps), Weight: saved.Weight,
+			})
+		}
+		items = append(items, item)
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return exerciseDTO{}, err
+		return nil, err
 	}
-	return item, nil
+	return items, nil
 }

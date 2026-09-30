@@ -18,6 +18,10 @@ type createExerciseBody struct {
 	Sets []exerciseSetInput `json:"sets"`
 }
 
+type createExercisesBody struct {
+	Exercises []createExerciseBody `json:"exercises"`
+}
+
 type exerciseSetDTO struct {
 	ID        int64    `json:"id"`
 	SetNumber int      `json:"set_number"`

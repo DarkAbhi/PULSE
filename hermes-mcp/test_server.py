@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 
 class LifeTrackerMCPTest(unittest.TestCase):
-    def test_read_tools_call_only_their_fixed_get_endpoints(self):
+    def test_tools_use_fixed_endpoints_and_require_write_confirmation(self):
         class FakeMCP:
             def __init__(self, _name):
                 self.tools = []
@@ -30,7 +30,7 @@ class LifeTrackerMCPTest(unittest.TestCase):
             server = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(server)
 
-        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles"])
+        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles", "add_exercises_to_today"])
         calls = []
         login_count = 0
 
@@ -47,13 +47,24 @@ class LifeTrackerMCPTest(unittest.TestCase):
                 return response
             if url.endswith("/vehicles") and token == "Bearer token1":
                 raise HTTPError(url, 401, "expired", {}, None)
+            if url.endswith("/exercises/batch"):
+                self.assertEqual(request.get_method(), "POST")
+                self.assertEqual(json.loads(request.data), {"exercises": workout})
+                return io.BytesIO(json.dumps(workout).encode())
             value = {"visited": True, "id": 12} if url.endswith("/workout/today") else [{"id": 7, "name": "Scooter"}]
             return io.BytesIO(json.dumps(value).encode())
 
+        workout = [{"name": "Bicep curls", "sets": [{"reps": 10, "weight": 12.5}]},
+                   {"name": "Barbell squats", "sets": [{"reps": 8, "weight": 50}]}]
         with patch.dict(os.environ, {"MCP_BACKEND_USERNAME": "me", "MCP_BACKEND_PASSWORD": "secret"}), \
              patch.object(server, "urlopen", side_effect=get):
             self.assertTrue(json.loads(server.get_workout_today())["visited"])
             self.assertEqual(json.loads(server.get_vehicles())[0]["name"], "Scooter")
+            with self.assertRaisesRegex(ValueError, "confirmation"):
+                server.add_exercises_to_today(workout)
+            with self.assertRaisesRegex(ValueError, "rep count"):
+                server.add_exercises_to_today([{"name": "Curl", "sets": [{"reps": 0, "weight": 10}]}], True)
+            self.assertEqual(json.loads(server.add_exercises_to_today(workout, True)), workout)
 
         self.assertEqual(calls, [
             ("http://127.0.0.1:18080/api/auth/login", "POST", None, 10),
@@ -61,6 +72,8 @@ class LifeTrackerMCPTest(unittest.TestCase):
             ("http://127.0.0.1:18080/api/vehicles", "GET", "Bearer token1", 10),
             ("http://127.0.0.1:18080/api/auth/login", "POST", None, 10),
             ("http://127.0.0.1:18080/api/vehicles", "GET", "Bearer token2", 10),
+            ("http://127.0.0.1:18080/api/workout/today", "GET", "Bearer token2", 10),
+            ("http://127.0.0.1:18080/api/gym-visits/12/exercises/batch", "POST", "Bearer token2", 10),
         ])
 
         server._session_token = None

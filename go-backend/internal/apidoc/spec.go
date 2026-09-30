@@ -75,6 +75,9 @@ type ExerciseInput struct {
 	Name string             `json:"name"`
 	Sets []ExerciseSetInput `json:"sets"`
 }
+type ExerciseBatchInput struct {
+	Exercises []ExerciseInput `json:"exercises"`
+}
 type ExerciseSet struct {
 	ID        int64    `json:"id"`
 	SetNumber int      `json:"set_number"`
@@ -557,6 +560,22 @@ func operation29() {}
 // @Failure 500 {object} Error
 // @Router /api/gym-visits/{id}/exercises [post]
 func operation30() {}
+
+// operation31 documents POST /api/gym-visits/{id}/exercises/batch.
+// @Summary Add multiple visit exercises
+// @Tags gym
+// @Accept json
+// @Produce json
+// @Param id path integer true "Positive id" minimum(1)
+// @Param body body ExerciseBatchInput true "Request body"
+// @Security SessionBearer
+// @Success 201 {array} Exercise
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 404 {string} string
+// @Failure 500 {object} Error
+// @Router /api/gym-visits/{id}/exercises/batch [post]
+func operation31() {}
 
 // operation32 documents GET /api/horizon.
 // @Summary Get financial summary

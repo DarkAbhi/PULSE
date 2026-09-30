@@ -243,6 +243,78 @@ func TestExercisesManagement(t *testing.T) {
 	}
 }
 
+func TestCreateVisitExercisesBatch(t *testing.T) {
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
+	defer shutdown()
+	h := newTestHandler(t, db, dsn)
+	cookie := loginUser(t, db)
+	var visitID int64
+	if err := db.QueryRow(`INSERT INTO gym_visits (user_id) VALUES (1) RETURNING id`).Scan(&visitID); err != nil {
+		t.Fatal(err)
+	}
+	post := func(exercises []createExerciseBody) *httptest.ResponseRecorder {
+		t.Helper()
+		body, err := json.Marshal(createExercisesBody{Exercises: exercises})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req := httptest.NewRequest(http.MethodPost, "/gym-visits/{id}/exercises/batch", bytes.NewReader(body))
+		req.AddCookie(cookie)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", strconv.FormatInt(visitID, 10))
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+		rec := httptest.NewRecorder()
+		h.CreateVisitExercises(rec, req)
+		return rec
+	}
+	weight := 12.5
+	exercises := []createExerciseBody{
+		{Name: "Bicep curls", Sets: []exerciseSetInput{{Reps: 10, Weight: &weight}, {Reps: 8, Weight: &weight}}},
+		{Name: "Barbell squats", Sets: []exerciseSetInput{{Reps: 8, Weight: &weight}}},
+	}
+	invalid := append([]createExerciseBody(nil), exercises...)
+	invalid[1].Sets = []exerciseSetInput{{Reps: 0, Weight: &weight}}
+	if rec := post(invalid); rec.Code != http.StatusBadRequest {
+		t.Fatalf("invalid batch: status %d, body %s", rec.Code, rec.Body.String())
+	}
+	var count int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM gym_visit_exercises WHERE gym_visit_id=$1`, visitID).Scan(&count); err != nil || count != 0 {
+		t.Fatalf("invalid batch saved exercises: count=%d err=%v", count, err)
+	}
+	tooLarge := 1000000.0
+	exercises[1].Sets[0].Weight = &tooLarge
+	if rec := post(exercises); rec.Code != http.StatusInternalServerError {
+		t.Fatalf("failed insert: status %d, body %s", rec.Code, rec.Body.String())
+	}
+	if err := db.QueryRow(`SELECT COUNT(*) FROM gym_visit_exercises WHERE gym_visit_id=$1`, visitID).Scan(&count); err != nil || count != 0 {
+		t.Fatalf("failed batch left partial exercises: count=%d err=%v", count, err)
+	}
+	exercises[1].Sets[0].Weight = &weight
+	rec := post(exercises)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("valid batch: status %d, body %s", rec.Code, rec.Body.String())
+	}
+	var saved []exerciseDTO
+	if err := json.NewDecoder(rec.Body).Decode(&saved); err != nil {
+		t.Fatal(err)
+	}
+	if len(saved) != 2 || saved[0].Name != "Bicep curls" || saved[1].Name != "Barbell squats" ||
+		len(saved[0].Sets) != 2 || saved[0].Sets[0].SetNumber != 1 || saved[0].Sets[1].SetNumber != 2 ||
+		*saved[0].Sets[0].Weight != weight || saved[1].Sets[0].Reps != 8 {
+		t.Fatalf("unexpected saved batch: %+v", saved)
+	}
+	var otherUserID int64
+	if err := db.QueryRow(`INSERT INTO users (username, password_hash) VALUES ('other-batch-user', 'test') RETURNING id`).Scan(&otherUserID); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`INSERT INTO gym_visits (user_id) VALUES ($1) RETURNING id`, otherUserID).Scan(&visitID); err != nil {
+		t.Fatal(err)
+	}
+	if rec := post(exercises); rec.Code != http.StatusNotFound {
+		t.Fatalf("other user's visit: status %d, body %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestVisitsAreSessionOwned(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()

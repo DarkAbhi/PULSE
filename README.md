@@ -70,14 +70,14 @@ production stack on another host, replace `localhost` with the server's LAN or
 Tailscale IP where the service is exposed. Monitoring ports are bound to
 loopback and therefore require SSH port forwarding when accessed remotely.
 
-| Service         | Development               | Production                                  | Browser access                                                            |
-| --------------- | ------------------------- | ------------------------------------------- | ------------------------------------------------------------------------- |
-| Next.js web app | `http://localhost:3102`   | `http://<server-LAN-or-Tailscale-IP>:3100`  | Open this URL.                                                            |
-| Go API          | `http://localhost:18081`  | `http://localhost:18080` on the server      | Loopback only; browser API requests use the web app at `/api`.             |
-| Rust API scaffold | `http://localhost:18084` | Cloudflare Rust hostname                  | Tunnel targets `http://rust-backend:8083` by default.                       |
-| Prometheus      | `http://localhost:19090`  | `http://localhost:9090` on the server       | Open locally, or use SSH port forwarding.                                 |
-| Grafana         | `http://localhost:3103`   | `http://localhost:3101` on the server       | Open locally, or use SSH port forwarding.                                 |
-| Jaeger UI       | `http://localhost:16687`  | `http://localhost:16686` on the server      | Open locally, or use SSH port forwarding.                                 |
+| Service           | Development              | Production                                 | Browser access                                                 |
+| ----------------- | ------------------------ | ------------------------------------------ | -------------------------------------------------------------- |
+| Next.js web app   | `http://localhost:3102`  | `http://<server-LAN-or-Tailscale-IP>:3100` | Open this URL.                                                 |
+| Go API            | `http://localhost:18081` | `http://localhost:18080` on the server     | Loopback only; browser API requests use the web app at `/api`. |
+| Rust API scaffold | `http://localhost:18084` | Cloudflare Rust hostname                   | Tunnel targets `http://rust-backend:8083` by default.          |
+| Prometheus        | `http://localhost:19090` | `http://localhost:9090` on the server      | Open locally, or use SSH port forwarding.                      |
+| Grafana           | `http://localhost:3103`  | `http://localhost:3101` on the server      | Open locally, or use SSH port forwarding.                      |
+| Jaeger UI         | `http://localhost:16687` | `http://localhost:16686` on the server     | Open locally, or use SSH port forwarding.                      |
 
 The migration services are one-shot command-line services and do not expose a
 browser URL.
@@ -121,13 +121,13 @@ These commands run the migration service using the production Docker image.
 
 ### Development
 
-| Command                    | Description                                                                                          |
-| -------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Command                    | Description                                                                                    |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
 | `make dev`                 | Start the development backend and web services in the background. Removes orphaned containers. |
-| `make dev-down`            | Stop and remove the development services, including orphaned containers.                             |
+| `make dev-down`            | Stop and remove the development services, including orphaned containers.                       |
 | `make dev-logs`            | Follow the last 200 log lines from the development backend and web services.                   |
-| `make dev-tunnel-url`      | Show the active Cloudflare tunnel URL for the development Rust API.                                |
-| `make dev-monitoring-logs` | Follow development Prometheus, Grafana, and Jaeger logs.                                             |
+| `make dev-tunnel-url`      | Show the active Cloudflare tunnel URL for the development Rust API.                            |
+| `make dev-monitoring-logs` | Follow development Prometheus, Grafana, and Jaeger logs.                                       |
 
 ### Development migrations
 

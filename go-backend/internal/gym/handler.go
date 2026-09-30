@@ -41,6 +41,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Delete("/gym-visits/{id}", h.DeleteVisit)
 	r.Get("/gym-visits/{id}/exercises", h.ListVisitExercises)
 	r.Post("/gym-visits/{id}/exercises", h.CreateVisitExercise)
+	r.Post("/gym-visits/{id}/exercises/batch", h.CreateVisitExercises)
 }
 
 func writeError(w http.ResponseWriter, r *http.Request, err error) {
@@ -147,4 +148,28 @@ func (h *Handler) CreateVisitExercise(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	webutil.WriteJSON(w, http.StatusCreated, item)
+}
+
+func (h *Handler) CreateVisitExercises(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
+	id, ok := webutil.ParseID(w, r)
+	if !ok {
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	defer r.Body.Close()
+	var body createExercisesBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		webutil.BadRequest(w, "invalid json")
+		return
+	}
+	items, err := h.service.CreateExercises(r.Context(), userID, id, body.Exercises)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	webutil.WriteJSON(w, http.StatusCreated, items)
 }

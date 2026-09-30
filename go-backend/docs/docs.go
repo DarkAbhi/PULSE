@@ -349,6 +349,79 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/gym-visits/{id}/exercises/batch": {
+            "post": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gym"
+                ],
+                "summary": "Add multiple visit exercises",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Positive id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.ExerciseBatchInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/apidoc.Exercise"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/horizon": {
             "get": {
                 "security": [
@@ -4374,6 +4447,17 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/apidoc.ExerciseSet"
+                    }
+                }
+            }
+        },
+        "apidoc.ExerciseBatchInput": {
+            "type": "object",
+            "properties": {
+                "exercises": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apidoc.ExerciseInput"
                     }
                 }
             }

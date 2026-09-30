@@ -57,6 +57,13 @@ definitions:
           $ref: '#/definitions/apidoc.ExerciseSet'
         type: array
     type: object
+  apidoc.ExerciseBatchInput:
+    properties:
+      exercises:
+        items:
+          $ref: '#/definitions/apidoc.ExerciseInput'
+        type: array
+    type: object
   apidoc.ExerciseInput:
     properties:
       name:
@@ -986,6 +993,53 @@ paths:
       security:
       - SessionBearer: []
       summary: Add visit exercise
+      tags:
+      - gym
+  /api/gym-visits/{id}/exercises/batch:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.ExerciseBatchInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/apidoc.Exercise'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Add multiple visit exercises
       tags:
       - gym
   /api/horizon:

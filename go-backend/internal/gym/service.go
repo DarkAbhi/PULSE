@@ -26,6 +26,7 @@ type store interface {
 	HasVisit(context.Context, int64, int64) (bool, error)
 	ListExercises(context.Context, int64) ([]exerciseDTO, error)
 	CreateExercise(context.Context, int64, string, []exerciseSetInput) (exerciseDTO, error)
+	CreateExercises(context.Context, int64, []createExerciseBody) ([]exerciseDTO, error)
 }
 
 type Service struct {
@@ -93,21 +94,52 @@ func (s *Service) CreateExercise(ctx context.Context, userID, visitID int64, bod
 	if !hasVisit {
 		return exerciseDTO{}, ErrVisitNotFound
 	}
-	name := strings.TrimSpace(body.Name)
-	if name == "" || len([]rune(name)) > 100 {
-		return exerciseDTO{}, ValidationError{"exercise name must be between 1 and 100 characters"}
+	if err := validateExercise(&body); err != nil {
+		return exerciseDTO{}, err
 	}
-	if len(body.Sets) == 0 || len(body.Sets) > 20 {
-		return exerciseDTO{}, ValidationError{"provide between 1 and 20 sets"}
-	}
-	for _, set := range body.Sets {
-		if set.Reps <= 0 || set.Reps > 1000 || (set.Weight != nil && *set.Weight < 0) {
-			return exerciseDTO{}, ValidationError{"each set needs positive reps and a non-negative weight"}
-		}
-	}
-	item, err := s.store.CreateExercise(ctx, visitID, name, body.Sets)
+	item, err := s.store.CreateExercise(ctx, visitID, body.Name, body.Sets)
 	if err != nil {
 		return exerciseDTO{}, fmt.Errorf("create gym exercise: %w", err)
 	}
 	return item, nil
+}
+
+func validateExercise(body *createExerciseBody) error {
+	name := strings.TrimSpace(body.Name)
+	if name == "" || len([]rune(name)) > 100 {
+		return ValidationError{"exercise name must be between 1 and 100 characters"}
+	}
+	if len(body.Sets) == 0 || len(body.Sets) > 20 {
+		return ValidationError{"provide between 1 and 20 sets"}
+	}
+	for _, set := range body.Sets {
+		if set.Reps <= 0 || set.Reps > 1000 || (set.Weight != nil && *set.Weight < 0) {
+			return ValidationError{"each set needs positive reps and a non-negative weight"}
+		}
+	}
+	body.Name = name
+	return nil
+}
+
+func (s *Service) CreateExercises(ctx context.Context, userID, visitID int64, bodies []createExerciseBody) ([]exerciseDTO, error) {
+	hasVisit, err := s.store.HasVisit(ctx, userID, visitID)
+	if err != nil {
+		return nil, fmt.Errorf("check gym visit: %w", err)
+	}
+	if !hasVisit {
+		return nil, ErrVisitNotFound
+	}
+	if len(bodies) == 0 || len(bodies) > 20 {
+		return nil, ValidationError{"provide between 1 and 20 exercises"}
+	}
+	for i := range bodies {
+		if err := validateExercise(&bodies[i]); err != nil {
+			return nil, err
+		}
+	}
+	items, err := s.store.CreateExercises(ctx, visitID, bodies)
+	if err != nil {
+		return nil, fmt.Errorf("create gym exercises: %w", err)
+	}
+	return items, nil
 }

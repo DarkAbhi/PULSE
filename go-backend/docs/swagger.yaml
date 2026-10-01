@@ -175,6 +175,27 @@ definitions:
       id:
         type: integer
     type: object
+  apidoc.GymVisitDateInput:
+    properties:
+      date:
+        example: "2026-10-01"
+        type: string
+    type: object
+  apidoc.GymVisitDetail:
+    properties:
+      calories_burned:
+        type: number
+      created_at:
+        type: string
+      duration_seconds:
+        type: number
+      end_time:
+        type: string
+      id:
+        type: integer
+      start_time:
+        type: string
+    type: object
   apidoc.ID:
     properties:
       id:
@@ -879,6 +900,40 @@ paths:
       summary: List gym visits
       tags:
       - gym
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Workout date
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.GymVisitDateInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/apidoc.CreatedID'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Record a workout visit on an India calendar date
+      tags:
+      - gym
   /api/gym-visits/{id}:
     delete:
       parameters:
@@ -910,6 +965,42 @@ paths:
       security:
       - SessionBearer: []
       summary: Delete gym visit
+      tags:
+      - gym
+    get:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.GymVisitDetail'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Get workout visit details with linked fitness metrics
       tags:
       - gym
   /api/gym-visits/{id}/exercises:

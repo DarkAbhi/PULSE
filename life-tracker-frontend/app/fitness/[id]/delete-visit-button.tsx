@@ -37,16 +37,16 @@ export default function DeleteVisitButton({ visitID }: DeleteVisitButtonProps) {
         onClick={() => setIsConfirmingDelete(true)}
         type="button"
       >
-        <Trash2 className="h-4 w-4" /> Delete visit
+        <Trash2 className="h-4 w-4" /> Delete Workout
       </Button>
 
       <ConfirmationDialog
         isOpen={isConfirmingDelete}
         onClose={() => setIsConfirmingDelete(false)}
         onConfirm={handleDelete}
-        title="Delete this gym visit?"
-        description="This permanently removes the visit and every exercise and set saved with it."
-        confirmText="Delete visit"
+        title="Delete this workout?"
+        description="This permanently removes the workout and every exercise and set saved with it."
+        confirmText="Delete Workout"
         confirmLoadingText="Deleting…"
         isLoading={isPending}
         error={error}

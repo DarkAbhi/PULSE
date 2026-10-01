@@ -35,16 +35,18 @@ export async function saveNameAction(name: string) {
   }
 }
 
-export async function markGymVisitAction() {
+export async function markGymVisitAction(date?: string) {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
   try {
-    const response = await fetch(`${apiBaseURL}/api/workout/today`, {
+    const response = await fetch(`${apiBaseURL}/api/${date ? "gym-visits" : "workout/today"}`, {
       method: "POST",
       headers: {
         Cookie: cookieHeader,
+        ...(date ? { "Content-Type": "application/json" } : {}),
       },
+      ...(date ? { body: JSON.stringify({ date }) } : {}),
     });
 
     const body = await response.json().catch(() => ({}));

@@ -8,6 +8,14 @@ type visitListItem struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type visitDetail struct {
+	visitListItem
+	StartTime       *time.Time `json:"start_time"`
+	EndTime         *time.Time `json:"end_time"`
+	DurationSeconds *float64   `json:"duration_seconds"`
+	CaloriesBurned  *float64   `json:"calories_burned"`
+}
+
 type exerciseSetInput struct {
 	Reps   int      `json:"reps"`
 	Weight *float64 `json:"weight"`

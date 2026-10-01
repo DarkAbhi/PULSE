@@ -21,7 +21,9 @@ func (e ValidationError) Error() string { return e.Message }
 type store interface {
 	VisitToday(context.Context, int64, time.Time, time.Time) (int64, error)
 	AddVisit(context.Context, int64) (int64, error)
+	AddVisitOnDate(context.Context, int64, time.Time) (int64, error)
 	ListVisits(context.Context, int64) ([]visitListItem, error)
+	GetVisit(context.Context, int64, int64) (visitDetail, error)
 	DeleteVisit(context.Context, int64, int64) (bool, error)
 	HasVisit(context.Context, int64, int64) (bool, error)
 	ListExercises(context.Context, int64) ([]exerciseDTO, error)
@@ -55,6 +57,26 @@ func (s *Service) AddVisit(ctx context.Context, userID int64) (int64, error) {
 	}
 	return id, nil
 }
+func (s *Service) AddVisitOnDate(ctx context.Context, userID int64, date string) (int64, error) {
+	location, err := time.LoadLocation(timeutil.IndiaTimeZone)
+	if err != nil {
+		return 0, fmt.Errorf("load workout timezone: %w", err)
+	}
+	createdAt, err := time.ParseInLocation("2006-01-02", date, location)
+	if err != nil {
+		return 0, ValidationError{"date must be a valid date in YYYY-MM-DD format"}
+	}
+	now := time.Now().In(location)
+	if date == now.Format("2006-01-02") {
+		createdAt = now
+	}
+	id, err := s.store.AddVisitOnDate(ctx, userID, createdAt.UTC())
+	if err != nil {
+		return 0, fmt.Errorf("add gym visit on date: %w", err)
+	}
+	return id, nil
+}
+
 func (s *Service) ListVisits(ctx context.Context, userID int64) ([]visitListItem, error) {
 	items, err := s.store.ListVisits(ctx, userID)
 	if err != nil {
@@ -62,6 +84,17 @@ func (s *Service) ListVisits(ctx context.Context, userID int64) ([]visitListItem
 	}
 	return items, nil
 }
+func (s *Service) GetVisit(ctx context.Context, userID, id int64) (visitDetail, error) {
+	item, err := s.store.GetVisit(ctx, userID, id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return visitDetail{}, ErrVisitNotFound
+	}
+	if err != nil {
+		return visitDetail{}, fmt.Errorf("get gym visit: %w", err)
+	}
+	return item, nil
+}
+
 func (s *Service) DeleteVisit(ctx context.Context, userID, id int64) error {
 	ok, err := s.store.DeleteVisit(ctx, userID, id)
 	if err != nil {

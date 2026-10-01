@@ -38,6 +38,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/workout/today", h.VisitedToday)
 	r.Post("/workout/today", h.AddWorkoutForDay)
 	r.Get("/gym-visits", h.ListVisits)
+	r.Post("/gym-visits", h.AddVisitOnDate)
+	r.Get("/gym-visits/{id}", h.GetVisit)
 	r.Delete("/gym-visits/{id}", h.DeleteVisit)
 	r.Get("/gym-visits/{id}/exercises", h.ListVisitExercises)
 	r.Post("/gym-visits/{id}/exercises", h.CreateVisitExercise)
@@ -83,6 +85,28 @@ func (h *Handler) AddWorkoutForDay(w http.ResponseWriter, r *http.Request) {
 	}
 	webutil.WriteJSON(w, http.StatusCreated, map[string]any{"message": "success", "id": id})
 }
+func (h *Handler) AddVisitOnDate(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	defer r.Body.Close()
+	var body struct {
+		Date string `json:"date"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		webutil.BadRequest(w, "invalid json")
+		return
+	}
+	id, err := h.service.AddVisitOnDate(r.Context(), userID, body.Date)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	webutil.WriteJSON(w, http.StatusCreated, map[string]any{"message": "success", "id": id})
+}
+
 func (h *Handler) ListVisits(w http.ResponseWriter, r *http.Request) {
 	userID, ok := h.sessionUserID(w, r)
 	if !ok {
@@ -95,6 +119,23 @@ func (h *Handler) ListVisits(w http.ResponseWriter, r *http.Request) {
 	}
 	webutil.WriteJSON(w, http.StatusOK, items)
 }
+func (h *Handler) GetVisit(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
+	id, ok := webutil.ParseID(w, r)
+	if !ok {
+		return
+	}
+	item, err := h.service.GetVisit(r.Context(), userID, id)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	webutil.WriteJSON(w, http.StatusOK, item)
+}
+
 func (h *Handler) DeleteVisit(w http.ResponseWriter, r *http.Request) {
 	userID, ok := h.sessionUserID(w, r)
 	if !ok {

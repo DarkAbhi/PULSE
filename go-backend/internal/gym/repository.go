@@ -29,6 +29,12 @@ func (r *Repository) VisitToday(ctx context.Context, userID int64, start, end ti
 func (r *Repository) AddVisit(ctx context.Context, userID int64) (int64, error) {
 	return r.queries.AddVisit(ctx, userID)
 }
+func (r *Repository) AddVisitOnDate(ctx context.Context, userID int64, date time.Time) (int64, error) {
+	return r.queries.AddVisitOnDate(ctx, query.AddVisitOnDateParams{
+		UserID:    userID,
+		CreatedAt: pgtype.Timestamptz{Time: date, Valid: true},
+	})
+}
 func (r *Repository) ListVisits(ctx context.Context, userID int64) ([]visitListItem, error) {
 	rows, err := r.queries.ListVisits(ctx, userID)
 	if err != nil {
@@ -40,6 +46,27 @@ func (r *Repository) ListVisits(ctx context.Context, userID int64) ([]visitListI
 	}
 	return items, nil
 }
+func (r *Repository) GetVisit(ctx context.Context, userID, id int64) (visitDetail, error) {
+	row, err := r.queries.GetVisit(ctx, query.GetVisitParams{ID: id, UserID: userID})
+	if err != nil {
+		return visitDetail{}, err
+	}
+	item := visitDetail{
+		visitListItem:   visitListItem{ID: row.ID, CreatedAt: row.CreatedAt.Time.UTC()},
+		DurationSeconds: row.DurationSeconds,
+		CaloriesBurned:  row.CaloriesBurned,
+	}
+	if row.StartTime.Valid {
+		start := row.StartTime.Time.UTC()
+		item.StartTime = &start
+	}
+	if row.EndTime.Valid {
+		end := row.EndTime.Time.UTC()
+		item.EndTime = &end
+	}
+	return item, nil
+}
+
 func (r *Repository) DeleteVisit(ctx context.Context, userID, id int64) (bool, error) {
 	count, err := r.queries.DeleteVisit(ctx, query.DeleteVisitParams{ID: id, UserID: userID})
 	return count > 0, err

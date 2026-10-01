@@ -4,9 +4,10 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import DeleteVisitButton from "./delete-visit-button";
 import AddExerciseForm from "./add-exercise-form";
+import { formatDuration } from "./format-duration.mjs";
 
 export const metadata = {
-  title: "Gym Visit Detail | Life Tracker",
+  title: "Fitness Workout | Life Tracker",
 };
 
 const apiBaseURL =
@@ -27,6 +28,10 @@ type SavedExercise = {
 type GymVisit = {
   id: number;
   created_at: string;
+  start_time: string | null;
+  end_time: string | null;
+  duration_seconds: number | null;
+  calories_burned: number | null;
 };
 
 const indiaTimeZone = "Asia/Kolkata";
@@ -35,6 +40,12 @@ const visitDateFormatter = new Intl.DateTimeFormat("en-IN", {
   dateStyle: "full",
   timeZone: indiaTimeZone,
 });
+
+const workoutTimeFormatter = new Intl.DateTimeFormat("en-IN", {
+  timeStyle: "short",
+  timeZone: indiaTimeZone,
+});
+const workoutNumberFormatter = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 3 });
 
 const visitDateKeyFormatter = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
@@ -70,43 +81,45 @@ export default async function GymVisitPage({ params }: PageProps) {
   let exercises: SavedExercise[] = [];
   let error = "";
   let workoutTitle = "Workout";
+  let visit: GymVisit | null = null;
+  let detailsError = "";
+  let visitNotFound = false;
 
   try {
-    const [exercisesResponse, visitsResponse] = await Promise.all([
+    const [exercisesResponse, visitResponse] = await Promise.all([
       fetch(`${apiBaseURL}/api/gym-visits/${visitID}/exercises`, {
         headers: {
           Cookie: cookieHeader,
         },
       }),
-      fetch(`${apiBaseURL}/api/gym-visits`, {
+      fetch(`${apiBaseURL}/api/gym-visits/${visitID}`, {
         headers: {
           Cookie: cookieHeader,
         },
       }),
     ]);
-    if (exercisesResponse.status === 404) {
-      redirect("/dashboard");
-    }
+    visitNotFound = exercisesResponse.status === 404 || visitResponse.status === 404;
     if (!exercisesResponse.ok) {
-      error = "We couldn't load this gym visit. Please try again.";
+      error = "We couldn't load this workout's exercises. Please try again.";
     } else {
       exercises = (await exercisesResponse.json()) as SavedExercise[];
     }
 
-    if (visitsResponse.ok) {
-      const visit = ((await visitsResponse.json()) as GymVisit[]).find(
-        ({ id }) => id === Number(visitID)
-      );
-      if (visit) {
-        const visitDate = new Date(visit.created_at);
-        workoutTitle = isToday(visitDate)
-          ? "Today's workout"
-          : visitDateFormatter.format(visitDate);
-      }
+    if (visitResponse.ok) {
+      visit = (await visitResponse.json()) as GymVisit;
+      const visitDate = new Date(visit.start_time ?? visit.created_at);
+      workoutTitle = isToday(visitDate)
+        ? "Today's workout"
+        : visitDateFormatter.format(visitDate);
+    } else {
+      detailsError = "We couldn't load this workout's details. Please try again.";
     }
   } catch {
     error = "We couldn't reach the server. Please try again.";
+    detailsError = error;
   }
+
+  if (visitNotFound) redirect("/fitness");
 
   return (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
@@ -115,14 +128,14 @@ export default async function GymVisitPage({ params }: PageProps) {
           <div className="flex items-start justify-between gap-4">
             <Link
               className="flex items-center gap-1 text-sm font-semibold text-primary transition hover:opacity-80 w-fit"
-              href="/dashboard"
+              href="/fitness"
             >
-              <ArrowLeft className="h-4 w-4" /> Dashboard
+              <ArrowLeft className="h-4 w-4" /> Fitness
             </Link>
             <DeleteVisitButton visitID={visitID} />
           </div>
           <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-primary uppercase">
-            Gym Visit
+            Fitness Workout
           </p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             {workoutTitle}
@@ -130,6 +143,33 @@ export default async function GymVisitPage({ params }: PageProps) {
           <p className="mt-3 text-base text-muted-foreground">
             Capture what you did, one exercise and set at a time.
           </p>
+
+          <section aria-labelledby="workout-details-heading" className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h2 id="workout-details-heading" className="text-xl font-semibold">Workout details</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Times shown in India time (IST).</p>
+            {detailsError ? (
+              <p className="mt-4 text-sm text-destructive" role="alert">{detailsError}</p>
+            ) : visit && (
+              <>
+                <dl className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  {[
+                    ["Start time", visit.start_time == null ? "Not available" : workoutTimeFormatter.format(new Date(visit.start_time))],
+                    ["End time", visit.end_time == null ? "Not available" : workoutTimeFormatter.format(new Date(visit.end_time))],
+                    ["Duration", formatDuration(visit.duration_seconds)],
+                    ["Calories burned", visit.calories_burned == null ? "Not available" : `${workoutNumberFormatter.format(visit.calories_burned)} kcal`],
+                  ].map(([label, value]) => (
+                    <div key={label}>
+                      <dt className="text-sm text-muted-foreground">{label}</dt>
+                      <dd className="mt-1 font-semibold text-foreground">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {visit.start_time == null && (
+                  <p className="mt-5 text-sm text-muted-foreground">No timing or calorie data is linked to this workout yet.</p>
+                )}
+              </>
+            )}
+          </section>
 
           <div className="mt-8 space-y-4">
             {error ? (

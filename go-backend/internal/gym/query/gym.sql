@@ -4,8 +4,18 @@ SELECT id FROM gym_visits WHERE user_id=$1 AND created_at >= $2 AND created_at <
 -- name: AddVisit :one
 INSERT INTO gym_visits (user_id) VALUES ($1) RETURNING id;
 
+-- name: AddVisitOnDate :one
+INSERT INTO gym_visits (user_id, created_at) VALUES ($1, $2) RETURNING id;
+
 -- name: ListVisits :many
 SELECT id,created_at FROM gym_visits WHERE user_id=$1 ORDER BY created_at DESC,id DESC;
+
+-- name: GetVisit :one
+SELECT g.id, g.created_at, w.start_time, w.end_time,
+    w.duration_seconds, w.calories_burned
+FROM gym_visits AS g
+LEFT JOIN fitness_workouts AS w ON w.id = g.fitness_workout_id AND w.user_id = g.user_id
+WHERE g.id = $1 AND g.user_id = $2;
 
 -- name: DeleteVisit :execrows
 DELETE FROM gym_visits WHERE id=$1 AND user_id=$2;

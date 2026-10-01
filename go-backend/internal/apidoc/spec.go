@@ -67,6 +67,18 @@ type GymVisit struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 }
+type GymVisitDetail struct {
+	GymVisit
+	StartTime       *time.Time `json:"start_time"`
+	EndTime         *time.Time `json:"end_time"`
+	DurationSeconds *float64   `json:"duration_seconds"`
+	CaloriesBurned  *float64   `json:"calories_burned"`
+}
+
+type GymVisitDateInput struct {
+	Date string `json:"date" example:"2026-10-01"`
+}
+
 type ExerciseSetInput struct {
 	Reps   int      `json:"reps"`
 	Weight *float64 `json:"weight"`
@@ -517,6 +529,34 @@ func operation26() {}
 // @Failure 500 {object} Error
 // @Router /api/gym-visits [get]
 func operation27() {}
+
+// gymVisitOnDate documents POST /api/gym-visits.
+// @Summary Record a workout visit on an India calendar date
+// @Tags gym
+// @Accept json
+// @Produce json
+// @Param body body GymVisitDateInput true "Workout date"
+// @Security SessionBearer
+// @Success 201 {object} CreatedID
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 500 {object} Error
+// @Router /api/gym-visits [post]
+func gymVisitOnDate() {}
+
+// gymVisitDetail documents GET /api/gym-visits/{id}.
+// @Summary Get workout visit details with linked fitness metrics
+// @Tags gym
+// @Produce json
+// @Param id path integer true "Positive id" minimum(1)
+// @Security SessionBearer
+// @Success 200 {object} GymVisitDetail
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 404 {string} string
+// @Failure 500 {object} Error
+// @Router /api/gym-visits/{id} [get]
+func gymVisitDetail() {}
 
 // operation28 documents DELETE /api/gym-visits/{id}.
 // @Summary Delete gym visit

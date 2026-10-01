@@ -22,6 +22,22 @@ func (q *Queries) AddVisit(ctx context.Context, userID int64) (int64, error) {
 	return id, err
 }
 
+const addVisitOnDate = `-- name: AddVisitOnDate :one
+INSERT INTO gym_visits (user_id, created_at) VALUES ($1, $2) RETURNING id
+`
+
+type AddVisitOnDateParams struct {
+	UserID    int64
+	CreatedAt pgtype.Timestamptz
+}
+
+func (q *Queries) AddVisitOnDate(ctx context.Context, arg AddVisitOnDateParams) (int64, error) {
+	row := q.db.QueryRow(ctx, addVisitOnDate, arg.UserID, arg.CreatedAt)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const createExercise = `-- name: CreateExercise :one
 INSERT INTO gym_visit_exercises (gym_visit_id,name) VALUES ($1,$2) RETURNING id,name
 `
@@ -94,6 +110,42 @@ func (q *Queries) DeleteVisit(ctx context.Context, arg DeleteVisitParams) (int64
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const getVisit = `-- name: GetVisit :one
+SELECT g.id, g.created_at, w.start_time, w.end_time,
+    w.duration_seconds, w.calories_burned
+FROM gym_visits AS g
+LEFT JOIN fitness_workouts AS w ON w.id = g.fitness_workout_id AND w.user_id = g.user_id
+WHERE g.id = $1 AND g.user_id = $2
+`
+
+type GetVisitParams struct {
+	ID     int64
+	UserID int64
+}
+
+type GetVisitRow struct {
+	ID              int64
+	CreatedAt       pgtype.Timestamptz
+	StartTime       pgtype.Timestamptz
+	EndTime         pgtype.Timestamptz
+	DurationSeconds *float64
+	CaloriesBurned  *float64
+}
+
+func (q *Queries) GetVisit(ctx context.Context, arg GetVisitParams) (GetVisitRow, error) {
+	row := q.db.QueryRow(ctx, getVisit, arg.ID, arg.UserID)
+	var i GetVisitRow
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.StartTime,
+		&i.EndTime,
+		&i.DurationSeconds,
+		&i.CaloriesBurned,
+	)
+	return i, err
 }
 
 const listExercises = `-- name: ListExercises :many

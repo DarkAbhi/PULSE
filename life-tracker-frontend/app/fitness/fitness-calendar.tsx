@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "../components/design-system/button";
 import GymVisitsList, { type GymVisit } from "./gym-visits-list";
 import { calendarDays, indiaDateKey, shiftMonth } from "./calendar-utils.mjs";
+import { markGymVisitAction } from "../dashboard/actions";
 
 const monthFormatter = new Intl.DateTimeFormat("en-IN", {
   month: "long", year: "numeric", timeZone: "UTC",
@@ -16,6 +18,9 @@ const dayFormatter = new Intl.DateTimeFormat("en-IN", {
 export default function FitnessCalendar({ visits, today }: { visits: GymVisit[]; today: string }) {
   const [month, setMonth] = useState(today.slice(0, 7));
   const [selectedDate, setSelectedDate] = useState(today);
+  const [isMarking, startMarking] = useTransition();
+  const [markError, setMarkError] = useState("");
+  const router = useRouter();
   const visitsByDate = new Map<string, GymVisit[]>();
   for (const visit of visits) {
     const key = indiaDateKey(new Date(visit.created_at));
@@ -26,6 +31,7 @@ export default function FitnessCalendar({ visits, today }: { visits: GymVisit[];
   const selectedVisits = visitsByDate.get(selectedDate) ?? [];
 
   function selectDate(date: string) {
+    setMarkError("");
     setSelectedDate(date);
     setMonth(date.slice(0, 7));
   }
@@ -90,6 +96,26 @@ export default function FitnessCalendar({ visits, today }: { visits: GymVisit[];
               <div className="rounded-2xl border border-dashed border-border bg-card p-6">
                 <p className="text-sm font-semibold">{dayFormatter.format(new Date(`${selectedDate}T00:00:00Z`))}</p>
                 <p className="mt-2 text-sm text-muted-foreground">No workouts recorded for this day.</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="mt-4"
+                  disabled={isMarking}
+                  onClick={() => {
+                    setMarkError("");
+                    startMarking(async () => {
+                      const result = await markGymVisitAction(selectedDate);
+                      if (!result.ok) {
+                        setMarkError(result.error ?? "We couldn't save your workout.");
+                        return;
+                      }
+                      router.refresh();
+                    });
+                  }}
+                >
+                  {isMarking ? "Marking…" : "Mark workout"}
+                </Button>
+                {markError && <p className="mt-3 text-sm text-destructive" role="alert">{markError}</p>}
               </div>
             )}
           </div>
@@ -100,7 +126,7 @@ export default function FitnessCalendar({ visits, today }: { visits: GymVisit[];
         {visits.length ? <GymVisitsList visits={visits.slice(0, 3)} /> : (
           <div className="rounded-2xl border border-dashed border-border bg-card p-6">
             <p className="font-semibold">No workouts yet.</p>
-            <p className="mt-2 text-sm text-muted-foreground">Mark a workout completed from the dashboard when you&apos;re ready.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Mark a workout completed when you&apos;re ready.</p>
           </div>
         )}
       </section>

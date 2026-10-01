@@ -48,7 +48,7 @@ export async function markGymVisitAction() {
 
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
-      return { ok: false, error: body.error ?? "We couldn't save your gym visit." };
+      return { ok: false, error: body.error ?? "We couldn't save your workout." };
     }
 
     revalidatePath("/dashboard");

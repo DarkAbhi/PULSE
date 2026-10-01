@@ -35,7 +35,7 @@ export default function GymVisitCard({
       startTransition(async () => {
         const res = await markGymVisitAction();
         if (!res.ok) {
-          setGymError(res.error ?? "We couldn't save your gym visit.");
+          setGymError(res.error ?? "We couldn't save your workout.");
           success = false;
         } else {
           setGymVisited(true);
@@ -73,9 +73,9 @@ export default function GymVisitCard({
               )}
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-foreground">Gym visit</h3>
+              <h3 className="font-semibold text-foreground">Fitness</h3>
               <p className="truncate text-xs text-muted-foreground">
-                {gymVisited ? "Completed today" : "Not logged today"}
+                {gymVisited ? "You worked out today." : "You haven't worked out today."}
               </p>
             </div>
           </div>
@@ -103,7 +103,7 @@ export default function GymVisitCard({
             }}
             type="button"
           >
-            {isMarkingGym ? "Marking…" : gymVisited ? "Add visit" : "Mark visited"}
+            {isMarkingGym ? "Marking…" : gymVisited ? "Add workout" : "Mark workout completed"}
           </Button>
           {gymVisited && gymVisitID && (
             <Link
@@ -125,9 +125,9 @@ export default function GymVisitCard({
             setIsConfirmingAnotherVisit(false);
           }
         }}
-        title="Mark another gym visit?"
-        description="This will create a separate visit for today, with its own exercise log."
-        confirmText="Yes, mark visit"
+        title="Mark another workout completed?"
+        description="This will create a separate workout for today, with its own exercise log."
+        confirmText="Yes, mark workout completed"
         confirmLoadingText="Marking…"
         isLoading={isMarkingGym}
         variant="positive"

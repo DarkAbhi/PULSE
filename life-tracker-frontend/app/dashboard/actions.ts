@@ -3,9 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-const apiBaseURL =
-  process.env.INTERNAL_API_BASE_URL ??
-  "http://localhost:8080";
+const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
 
 export async function saveNameAction(name: string) {
   const cookieStore = await cookies();
@@ -30,7 +28,10 @@ export async function saveNameAction(name: string) {
     revalidatePath("/profile");
     return { ok: true, name: body.name };
   } catch {
-    return { ok: false, error: "Unable to reach the server. Please try again." };
+    return {
+      ok: false,
+      error: "Unable to reach the server. Please try again.",
+    };
   }
 }
 
@@ -48,14 +49,20 @@ export async function markGymVisitAction() {
 
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
-      return { ok: false, error: body.error ?? "We couldn't save your workout." };
+      return {
+        ok: false,
+        error: body.error ?? "We couldn't save your workout.",
+      };
     }
 
     revalidatePath("/dashboard");
-    revalidatePath("/gym-visits");
+    revalidatePath("/fitness");
     return { ok: true, id: body.id };
   } catch {
-    return { ok: false, error: "We couldn't reach the server. Please try again." };
+    return {
+      ok: false,
+      error: "We couldn't reach the server. Please try again.",
+    };
   }
 }
 
@@ -71,7 +78,7 @@ export async function dismissNotificationAction(notificationID: number) {
         headers: {
           Cookie: cookieHeader,
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -85,6 +92,9 @@ export async function dismissNotificationAction(notificationID: number) {
     revalidatePath("/notifications");
     return { ok: true };
   } catch {
-    return { ok: false, error: "We couldn't reach the server. Please try again." };
+    return {
+      ok: false,
+      error: "We couldn't reach the server. Please try again.",
+    };
   }
 }

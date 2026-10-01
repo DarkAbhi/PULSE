@@ -23,9 +23,7 @@ export default function DeleteVisitButton({ visitID }: DeleteVisitButtonProps) {
     startTransition(async () => {
       const res = await deleteVisit(visitID);
       if (!res.ok) {
-        setError(
-          res.error ?? "We couldn't delete this gym visit. Please try again.",
-        );
+        setError(res.error ?? "We couldn't delete this gym visit. Please try again.");
       } else {
         setIsConfirmingDelete(false);
         router.replace("/fitness");
@@ -35,9 +33,7 @@ export default function DeleteVisitButton({ visitID }: DeleteVisitButtonProps) {
 
   return (
     <>
-      <Button
-        variant="destructiveOutline"
-        size="md"
+      <Button variant="destructiveOutline" size="md"
         onClick={() => setIsConfirmingDelete(true)}
         type="button"
       >

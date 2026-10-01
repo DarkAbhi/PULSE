@@ -54,7 +54,9 @@ export default function GymVisitsList({ visits }: GymVisitsListProps) {
                     <Dumbbell className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">Workout</h3>
+                    <h3 className="font-semibold text-foreground">
+                      Workout
+                    </h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {timeFormatter.format(new Date(visit.created_at))}
                     </p>

@@ -58,7 +58,7 @@ export default function GymVisitCard({
     <>
       <article
         className="cursor-pointer rounded-xl border border-border bg-card px-4 py-3 shadow-sm"
-        onClick={() => router.push("/gym-visits")}
+        onClick={() => router.push("/fitness")}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -75,7 +75,9 @@ export default function GymVisitCard({
             <div className="min-w-0">
               <h3 className="font-semibold text-foreground">Fitness</h3>
               <p className="truncate text-xs text-muted-foreground">
-                {gymVisited ? "You worked out today." : "You haven't worked out today."}
+                {gymVisited
+                  ? "You worked out today."
+                  : "You haven't worked out today."}
               </p>
             </div>
           </div>
@@ -91,7 +93,9 @@ export default function GymVisitCard({
           </p>
         )}
         <div className="mt-3 flex items-center gap-3">
-          <Button variant="primary" size="sm"
+          <Button
+            variant="primary"
+            size="sm"
             disabled={isMarkingGym}
             onClick={(event) => {
               event.stopPropagation();
@@ -103,12 +107,16 @@ export default function GymVisitCard({
             }}
             type="button"
           >
-            {isMarkingGym ? "Marking…" : gymVisited ? "Add workout" : "Mark workout completed"}
+            {isMarkingGym
+              ? "Marking…"
+              : gymVisited
+                ? "Add workout"
+                : "Mark workout completed"}
           </Button>
           {gymVisited && gymVisitID && (
             <Link
               className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:opacity-80"
-              href={`/gym-visits/${gymVisitID}`}
+              href={`/fitness/${gymVisitID}`}
               onClick={(event) => event.stopPropagation()}
             >
               Log exercises <ArrowRight className="h-4 w-4" />

@@ -2,10 +2,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import GymVisitsList, { GymVisit } from "./gym-visits-list";
+import { type GymVisit } from "./gym-visits-list";
+import FitnessCalendar from "./fitness-calendar";
+import { indiaDateKey } from "./calendar-utils.mjs";
 
 export const metadata = {
-  title: "Gym History | Life Tracker",
+  title: "Fitness | Life Tracker",
 };
 
 const apiBaseURL =
@@ -36,7 +38,7 @@ export default async function GymVisitsPage() {
       },
     });
     if (!response.ok) {
-      error = "We couldn't load your gym visits. Please try again.";
+      error = "We couldn't load your workouts. Please try again.";
     } else {
       visits = (await response.json()) as GymVisit[];
     }
@@ -53,14 +55,11 @@ export default async function GymVisitsPage() {
         >
           <ArrowLeft className="h-4 w-4" /> Dashboard
         </Link>
-        <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-primary uppercase">
-          Gym Visits
-        </p>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Your gym history
+        <h1 className="mt-5 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          Fitness
         </h1>
         <p className="mt-3 text-base text-muted-foreground">
-          Every visit, ready whenever you want to revisit or complete its workout log.
+          Track your workouts and revisit each session whenever you want.
         </p>
 
         <div className="mt-10">
@@ -68,15 +67,8 @@ export default async function GymVisitsPage() {
             <p className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
               {error}
             </p>
-          ) : visits.length === 0 ? (
-            <section className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-              <p className="text-lg font-semibold text-foreground">No gym visits yet.</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Mark a gym visit from the dashboard when you&apos;re ready.
-              </p>
-            </section>
           ) : (
-            <GymVisitsList visits={visits} />
+            <FitnessCalendar visits={visits} today={indiaDateKey(new Date())} />
           )}
         </div>
       </div>

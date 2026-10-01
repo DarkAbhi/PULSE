@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Dumbbell, ArrowRight } from "lucide-react";
 
 export type GymVisit = {
@@ -15,35 +14,33 @@ interface GymVisitsListProps {
 
 const dateFormatter = new Intl.DateTimeFormat("en-IN", {
   dateStyle: "full",
+  timeZone: "Asia/Kolkata",
 });
 
 const timeFormatter = new Intl.DateTimeFormat("en-IN", {
   hour: "numeric",
   minute: "2-digit",
+  timeZone: "Asia/Kolkata",
 });
 
 export default function GymVisitsList({ visits }: GymVisitsListProps) {
-  const [visitsByDate, setVisitsByDate] = useState<[string, GymVisit[]][]>([]);
-
-  useEffect(() => {
-    const grouped = new Map<string, GymVisit[]>();
-    for (const visit of visits) {
-      const date = new Date(visit.created_at);
-      const dateLabel = dateFormatter.format(date);
-      grouped.set(dateLabel, [...(grouped.get(dateLabel) ?? []), visit]);
-    }
-    setVisitsByDate([...grouped.entries()]);
-  }, [visits]);
+  const visitsByDate = new Map<string, GymVisit[]>();
+  for (const visit of visits) {
+    const dateLabel = dateFormatter.format(new Date(visit.created_at));
+    const dateVisits = visitsByDate.get(dateLabel) ?? [];
+    dateVisits.push(visit);
+    visitsByDate.set(dateLabel, dateVisits);
+  }
 
   return (
     <div className="space-y-9">
-      {visitsByDate.map(([date, dateVisits]) => (
+      {[...visitsByDate].map(([date, dateVisits]) => (
         <section key={date}>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-primary">
             {date}
           </h2>
           <div className="space-y-3">
-            {dateVisits.map((visit, index) => (
+            {dateVisits.map((visit) => (
               <Link
                 className="flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-sm"
                 href={`/gym-visits/${visit.id}`}
@@ -58,10 +55,7 @@ export default function GymVisitsList({ visits }: GymVisitsListProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground">
-                      Gym visit{" "}
-                      {dateVisits.length > 1
-                        ? `#${dateVisits.length - index}`
-                        : ""}
+                      Workout
                     </h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {timeFormatter.format(new Date(visit.created_at))}

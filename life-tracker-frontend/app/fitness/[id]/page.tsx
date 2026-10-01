@@ -92,7 +92,7 @@ export default async function GymVisitPage({ params }: PageProps) {
           Cookie: cookieHeader,
         },
       }),
-      fetch(`${apiBaseURL}/api/gym-visits/${visitID}`, {
+      fetch(`${apiBaseURL}/api/fitness-workouts/${visitID}`, {
         headers: {
           Cookie: cookieHeader,
         },

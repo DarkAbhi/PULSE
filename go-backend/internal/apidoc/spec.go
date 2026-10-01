@@ -67,7 +67,7 @@ type GymVisit struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 }
-type GymVisitDetail struct {
+type FitnessWorkoutDetail struct {
 	GymVisit
 	StartTime       *time.Time `json:"start_time"`
 	EndTime         *time.Time `json:"end_time"`
@@ -544,19 +544,19 @@ func operation27() {}
 // @Router /api/gym-visits [post]
 func gymVisitOnDate() {}
 
-// gymVisitDetail documents GET /api/gym-visits/{id}.
-// @Summary Get workout visit details with linked fitness metrics
-// @Tags gym
+// fitnessWorkoutDetail documents GET /api/fitness-workouts/{id}.
+// @Summary Get workout details with linked fitness metrics
+// @Tags fitness
 // @Produce json
 // @Param id path integer true "Positive id" minimum(1)
 // @Security SessionBearer
-// @Success 200 {object} GymVisitDetail
+// @Success 200 {object} FitnessWorkoutDetail
 // @Failure 400 {object} Error
 // @Failure 401 {object} Error
 // @Failure 404 {string} string
 // @Failure 500 {object} Error
-// @Router /api/gym-visits/{id} [get]
-func gymVisitDetail() {}
+// @Router /api/fitness-workouts/{id} [get]
+func fitnessWorkoutDetail() {}
 
 // operation28 documents DELETE /api/gym-visits/{id}.
 // @Summary Delete gym visit

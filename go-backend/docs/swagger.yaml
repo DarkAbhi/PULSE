@@ -91,6 +91,21 @@ definitions:
       weight:
         type: number
     type: object
+  apidoc.FitnessWorkoutDetail:
+    properties:
+      calories_burned:
+        type: number
+      created_at:
+        type: string
+      duration_seconds:
+        type: number
+      end_time:
+        type: string
+      id:
+        type: integer
+      start_time:
+        type: string
+    type: object
   apidoc.FuelFillup:
     properties:
       filled_at:
@@ -179,21 +194,6 @@ definitions:
     properties:
       date:
         example: "2026-10-01"
-        type: string
-    type: object
-  apidoc.GymVisitDetail:
-    properties:
-      calories_burned:
-        type: number
-      created_at:
-        type: string
-      duration_seconds:
-        type: number
-      end_time:
-        type: string
-      id:
-        type: integer
-      start_time:
         type: string
     type: object
   apidoc.ID:
@@ -876,6 +876,43 @@ paths:
       summary: Get current session
       tags:
       - auth
+  /api/fitness-workouts/{id}:
+    get:
+      parameters:
+      - description: Positive id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.FitnessWorkoutDetail'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Get workout details with linked fitness metrics
+      tags:
+      - fitness
   /api/gym-visits:
     get:
       produces:
@@ -965,42 +1002,6 @@ paths:
       security:
       - SessionBearer: []
       summary: Delete gym visit
-      tags:
-      - gym
-    get:
-      parameters:
-      - description: Positive id
-        in: path
-        minimum: 1
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/apidoc.GymVisitDetail'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-        "404":
-          description: Not Found
-          schema:
-            type: string
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/apidoc.Error'
-      security:
-      - SessionBearer: []
-      summary: Get workout visit details with linked fitness metrics
       tags:
       - gym
   /api/gym-visits/{id}/exercises:

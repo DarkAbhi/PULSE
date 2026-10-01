@@ -39,7 +39,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/workout/today", h.AddWorkoutForDay)
 	r.Get("/gym-visits", h.ListVisits)
 	r.Post("/gym-visits", h.AddVisitOnDate)
-	r.Get("/gym-visits/{id}", h.GetVisit)
+	r.Get("/fitness-workouts/{id}", h.GetWorkout)
 	r.Delete("/gym-visits/{id}", h.DeleteVisit)
 	r.Get("/gym-visits/{id}/exercises", h.ListVisitExercises)
 	r.Post("/gym-visits/{id}/exercises", h.CreateVisitExercise)
@@ -119,7 +119,7 @@ func (h *Handler) ListVisits(w http.ResponseWriter, r *http.Request) {
 	}
 	webutil.WriteJSON(w, http.StatusOK, items)
 }
-func (h *Handler) GetVisit(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetWorkout(w http.ResponseWriter, r *http.Request) {
 	userID, ok := h.sessionUserID(w, r)
 	if !ok {
 		return

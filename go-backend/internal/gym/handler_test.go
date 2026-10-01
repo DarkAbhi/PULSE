@@ -15,7 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func TestGetVisitDetails(t *testing.T) {
+func TestGetWorkoutDetails(t *testing.T) {
 	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
 	defer shutdown()
 	userID := int64(1)
@@ -46,7 +46,7 @@ func TestGetVisitDetails(t *testing.T) {
 	}
 	get := func(id string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/gym-visits/"+id, nil))
+		router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/fitness-workouts/"+id, nil))
 		return rec
 	}
 	decode := func(id int64) visitDetail {

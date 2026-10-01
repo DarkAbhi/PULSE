@@ -129,6 +129,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/fitness-workouts/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fitness"
+                ],
+                "summary": "Get workout details with linked fitness metrics",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Positive id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.FitnessWorkoutDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/gym-visits": {
             "get": {
                 "security": [
@@ -223,62 +281,6 @@ const docTemplate = `{
             }
         },
         "/api/gym-visits/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "SessionBearer": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "gym"
-                ],
-                "summary": "Get workout visit details with linked fitness metrics",
-                "parameters": [
-                    {
-                        "minimum": 1,
-                        "type": "integer",
-                        "description": "Positive id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.GymVisitDetail"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Error"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Error"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/apidoc.Error"
-                        }
-                    }
-                }
-            },
             "delete": {
                 "security": [
                     {
@@ -4614,6 +4616,29 @@ const docTemplate = `{
                 }
             }
         },
+        "apidoc.FitnessWorkoutDetail": {
+            "type": "object",
+            "properties": {
+                "calories_burned": {
+                    "type": "number"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "duration_seconds": {
+                    "type": "number"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "start_time": {
+                    "type": "string"
+                }
+            }
+        },
         "apidoc.FuelFillup": {
             "type": "object",
             "properties": {
@@ -4746,29 +4771,6 @@ const docTemplate = `{
                 "date": {
                     "type": "string",
                     "example": "2026-10-01"
-                }
-            }
-        },
-        "apidoc.GymVisitDetail": {
-            "type": "object",
-            "properties": {
-                "calories_burned": {
-                    "type": "number"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "duration_seconds": {
-                    "type": "number"
-                },
-                "end_time": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "start_time": {
-                    "type": "string"
                 }
             }
         },

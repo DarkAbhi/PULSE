@@ -35,6 +35,7 @@ func NewHandler(service *Service, userID func(*http.Request) (int64, error)) *Ha
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
+	r.Get("/fitness/overview", h.Overview)
 	r.Get("/workout/today", h.VisitedToday)
 	r.Post("/workout/today", h.AddWorkoutForDay)
 	r.Get("/gym-visits", h.ListVisits)
@@ -44,6 +45,20 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/gym-visits/{id}/exercises", h.ListVisitExercises)
 	r.Post("/gym-visits/{id}/exercises", h.CreateVisitExercise)
 	r.Post("/gym-visits/{id}/exercises/batch", h.CreateVisitExercises)
+}
+
+func (h *Handler) Overview(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
+	result, err := h.service.Overview(r.Context(), userID, time.Now())
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	webutil.WriteJSON(w, http.StatusOK, result)
 }
 
 func writeError(w http.ResponseWriter, r *http.Request, err error) {

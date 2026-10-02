@@ -242,6 +242,102 @@ func (q *Queries) ListVisits(ctx context.Context, userID int64) ([]ListVisitsRow
 	return items, nil
 }
 
+const overviewSessions = `-- name: OverviewSessions :many
+SELECT w.start_time, w.duration_seconds::double precision AS duration_seconds
+FROM fitness_workouts w
+JOIN workout_activity_types a ON a.id = w.activity_type_id
+WHERE w.user_id = $1 AND a.raw_value = 50
+    AND w.start_time >= $2 AND w.start_time <= $3
+    AND EXISTS (
+        SELECT 1 FROM gym_visits g WHERE g.user_id = w.user_id AND g.created_at <= $3
+        AND (g.created_at AT TIME ZONE 'Asia/Kolkata')::date =
+            (w.start_time AT TIME ZONE 'Asia/Kolkata')::date
+    )
+`
+
+type OverviewSessionsParams struct {
+	UserID      int64
+	StartTime   pgtype.Timestamptz
+	StartTime_2 pgtype.Timestamptz
+}
+
+type OverviewSessionsRow struct {
+	StartTime       pgtype.Timestamptz
+	DurationSeconds float64
+}
+
+func (q *Queries) OverviewSessions(ctx context.Context, arg OverviewSessionsParams) ([]OverviewSessionsRow, error) {
+	rows, err := q.db.Query(ctx, overviewSessions, arg.UserID, arg.StartTime, arg.StartTime_2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []OverviewSessionsRow
+	for rows.Next() {
+		var i OverviewSessionsRow
+		if err := rows.Scan(&i.StartTime, &i.DurationSeconds); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const overviewVisits = `-- name: OverviewVisits :many
+SELECT g.id, g.created_at,
+    COUNT(s.id)::bigint AS sets,
+    COALESCE(SUM(s.reps * s.weight), 0)::double precision AS volume,
+    COUNT(s.id) FILTER (WHERE s.weight IS NULL)::bigint AS unweighted_sets
+FROM gym_visits g
+LEFT JOIN gym_visit_exercises e ON e.gym_visit_id = g.id
+LEFT JOIN gym_exercise_sets s ON s.gym_visit_exercise_id = e.id
+WHERE g.user_id = $1 AND g.created_at <= $2
+GROUP BY g.id
+ORDER BY g.created_at DESC, g.id DESC
+`
+
+type OverviewVisitsParams struct {
+	UserID    int64
+	CreatedAt pgtype.Timestamptz
+}
+
+type OverviewVisitsRow struct {
+	ID             int64
+	CreatedAt      pgtype.Timestamptz
+	Sets           int64
+	Volume         float64
+	UnweightedSets int64
+}
+
+func (q *Queries) OverviewVisits(ctx context.Context, arg OverviewVisitsParams) ([]OverviewVisitsRow, error) {
+	rows, err := q.db.Query(ctx, overviewVisits, arg.UserID, arg.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []OverviewVisitsRow
+	for rows.Next() {
+		var i OverviewVisitsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.Sets,
+			&i.Volume,
+			&i.UnweightedSets,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const visitExists = `-- name: VisitExists :one
 SELECT EXISTS(SELECT 1 FROM gym_visits WHERE id=$1 AND user_id=$2)
 `

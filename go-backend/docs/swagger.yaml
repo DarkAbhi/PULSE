@@ -91,6 +91,43 @@ definitions:
       weight:
         type: number
     type: object
+  apidoc.FitnessOverview:
+    properties:
+      calendar_workouts:
+        additionalProperties:
+          $ref: '#/definitions/apidoc.FitnessWorkoutGroup'
+        type: object
+      cards:
+        items:
+          $ref: '#/definitions/apidoc.FitnessStatCard'
+        type: array
+      recent_workouts:
+        items:
+          $ref: '#/definitions/apidoc.FitnessWorkoutGroup'
+        type: array
+      today:
+        type: string
+    type: object
+  apidoc.FitnessOverviewWorkout:
+    properties:
+      id:
+        type: integer
+      time_label:
+        type: string
+    type: object
+  apidoc.FitnessStatCard:
+    properties:
+      id:
+        type: string
+      label:
+        type: string
+      subtitle:
+        type: string
+      tooltip:
+        type: string
+      value:
+        type: string
+    type: object
   apidoc.FitnessWorkoutDetail:
     properties:
       calories_burned:
@@ -105,6 +142,17 @@ definitions:
         type: integer
       start_time:
         type: string
+    type: object
+  apidoc.FitnessWorkoutGroup:
+    properties:
+      date:
+        type: string
+      date_label:
+        type: string
+      workouts:
+        items:
+          $ref: '#/definitions/apidoc.FitnessOverviewWorkout'
+        type: array
     type: object
   apidoc.FuelFillup:
     properties:
@@ -911,6 +959,33 @@ paths:
       security:
       - SessionBearer: []
       summary: Get workout details with linked fitness metrics
+      tags:
+      - fitness
+  /api/fitness/overview:
+    get:
+      description: Uses Asia/Kolkata dates and year-to-date totals; excludes future
+        entries. Weekly streaks use Monday-Sunday weeks. Timing and time preference
+        use imported traditional strength sessions on recorded gym days. Cards disclose
+        missing timing and weights.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.FitnessOverview'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Get render-ready gym statistics, calendar visits, and three recent
+        workouts
       tags:
       - fitness
   /api/gym-visits:

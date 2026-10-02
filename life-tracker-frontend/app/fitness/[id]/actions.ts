@@ -34,6 +34,7 @@ export async function addExercise(
     }
 
     revalidatePath(`/fitness/${visitID}`);
+    revalidatePath("/fitness");
     return { ok: true };
   } catch {
     return { ok: false, error: "We couldn't reach the server. Please try again." };

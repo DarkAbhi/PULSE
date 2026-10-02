@@ -3,44 +3,26 @@
 import Link from "next/link";
 import { Dumbbell, ArrowRight } from "lucide-react";
 
-export type GymVisit = {
-  id: number;
-  created_at: string;
+export type WorkoutGroup = {
+  date: string;
+  date_label: string;
+  workouts: { id: number; time_label: string }[];
 };
 
 interface GymVisitsListProps {
-  visits: GymVisit[];
+  groups: WorkoutGroup[];
 }
 
-const dateFormatter = new Intl.DateTimeFormat("en-IN", {
-  dateStyle: "full",
-  timeZone: "Asia/Kolkata",
-});
-
-const timeFormatter = new Intl.DateTimeFormat("en-IN", {
-  hour: "numeric",
-  minute: "2-digit",
-  timeZone: "Asia/Kolkata",
-});
-
-export default function GymVisitsList({ visits }: GymVisitsListProps) {
-  const visitsByDate = new Map<string, GymVisit[]>();
-  for (const visit of visits) {
-    const dateLabel = dateFormatter.format(new Date(visit.created_at));
-    const dateVisits = visitsByDate.get(dateLabel) ?? [];
-    dateVisits.push(visit);
-    visitsByDate.set(dateLabel, dateVisits);
-  }
-
+export default function GymVisitsList({ groups }: GymVisitsListProps) {
   return (
     <div className="space-y-9">
-      {[...visitsByDate].map(([date, dateVisits]) => (
-        <section key={date}>
+      {groups.map((group) => (
+        <section key={group.date}>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-primary">
-            {date}
+            {group.date_label}
           </h2>
           <div className="space-y-3">
-            {dateVisits.map((visit) => (
+            {group.workouts.map((visit) => (
               <Link
                 className="flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-sm"
                 href={`/fitness/${visit.id}`}
@@ -58,7 +40,7 @@ export default function GymVisitsList({ visits }: GymVisitsListProps) {
                       Workout
                     </h3>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {timeFormatter.format(new Date(visit.created_at))}
+                      {visit.time_label}
                     </p>
                   </div>
                 </div>

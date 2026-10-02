@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Info } from "lucide-react";
 import Button from "../components/design-system/button";
-import GymVisitsList, { type GymVisit } from "./gym-visits-list";
-import { calendarDays, indiaDateKey, shiftMonth } from "./calendar-utils.mjs";
+import GymVisitsList, { type WorkoutGroup } from "./gym-visits-list";
+import { calendarDays, shiftMonth } from "./calendar-utils.mjs";
 import { markGymVisitAction } from "../dashboard/actions";
 
 const monthFormatter = new Intl.DateTimeFormat("en-IN", {
@@ -15,20 +15,21 @@ const dayFormatter = new Intl.DateTimeFormat("en-IN", {
   dateStyle: "full", timeZone: "UTC",
 });
 
-export default function FitnessCalendar({ visits, today }: { visits: GymVisit[]; today: string }) {
+export type FitnessOverview = {
+  today: string;
+  cards: { id: string; label: string; value: string; subtitle: string; tooltip?: string }[];
+  calendar_workouts: Record<string, WorkoutGroup>;
+  recent_workouts: WorkoutGroup[];
+};
+
+export default function FitnessCalendar({ overview }: { overview: FitnessOverview }) {
+  const { today, cards, calendar_workouts: workoutsByDate, recent_workouts: recentWorkouts } = overview;
   const [month, setMonth] = useState(today.slice(0, 7));
   const [selectedDate, setSelectedDate] = useState(today);
   const [isMarking, startMarking] = useTransition();
   const [markError, setMarkError] = useState("");
   const router = useRouter();
-  const visitsByDate = new Map<string, GymVisit[]>();
-  for (const visit of visits) {
-    const key = indiaDateKey(new Date(visit.created_at));
-    const dayVisits = visitsByDate.get(key) ?? [];
-    dayVisits.push(visit);
-    visitsByDate.set(key, dayVisits);
-  }
-  const selectedVisits = visitsByDate.get(selectedDate) ?? [];
+  const selectedGroup = workoutsByDate[selectedDate];
 
   function selectDate(date: string) {
     setMarkError("");
@@ -63,7 +64,7 @@ export default function FitnessCalendar({ visits, today }: { visits: GymVisit[];
           </div>
           <div className="mt-3 grid grid-cols-7 gap-y-3 sm:gap-y-5">
             {calendarDays(month).map((date) => {
-              const count = visitsByDate.get(date)?.length ?? 0;
+              const count = workoutsByDate[date]?.workouts.length ?? 0;
               const selected = date === selectedDate;
               return (
                 <div key={date} className="flex justify-center py-1">
@@ -92,7 +93,7 @@ export default function FitnessCalendar({ visits, today }: { visits: GymVisit[];
         <section aria-label="Selected day's workouts" className="space-y-4">
           <h2 className="text-xl font-semibold">Workouts for this day</h2>
           <div aria-live="polite">
-            {selectedVisits.length ? <GymVisitsList visits={selectedVisits} /> : (
+            {selectedGroup ? <GymVisitsList groups={[selectedGroup]} /> : (
               <div className="rounded-2xl border border-dashed border-border bg-card p-6">
                 <p className="text-sm font-semibold">{dayFormatter.format(new Date(`${selectedDate}T00:00:00Z`))}</p>
                 <p className="mt-2 text-sm text-muted-foreground">No workouts recorded for this day.</p>
@@ -121,15 +122,41 @@ export default function FitnessCalendar({ visits, today }: { visits: GymVisit[];
           </div>
         </section>
       </div>
-      <section aria-labelledby="recent-workouts-heading" className="space-y-4">
-        <h2 id="recent-workouts-heading" className="text-xl font-semibold">Recent workouts</h2>
-        {visits.length ? <GymVisitsList visits={visits.slice(0, 3)} /> : (
-          <div className="rounded-2xl border border-dashed border-border bg-card p-6">
-            <p className="font-semibold">No workouts yet.</p>
-            <p className="mt-2 text-sm text-muted-foreground">Mark a workout completed when you&apos;re ready.</p>
+      <div className="grid items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
+        <section aria-labelledby="fitness-stats-heading" className="space-y-4">
+          <h2 id="fitness-stats-heading" className="text-xl font-semibold">Your fitness stats</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {cards.map((card) => (
+              <div key={card.id} className="flex min-h-44 flex-col items-center justify-center rounded-2xl border border-border bg-card px-4 py-6 text-center shadow-sm">
+                <h3 className="text-base font-medium">{card.label}</h3>
+                <p className="my-3 max-w-full break-words text-3xl font-bold tracking-tight sm:text-4xl">{card.value}</p>
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <span>{card.subtitle}</span>
+                  {card.tooltip && (
+                    <span className="group relative inline-flex">
+                      <button type="button" aria-label={`${card.label} information`} aria-describedby={`stat-tooltip-${card.id}`} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                        <Info className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                      <span id={`stat-tooltip-${card.id}`} role="tooltip" className="pointer-events-none invisible absolute bottom-full left-1/2 z-10 mb-2 w-52 -translate-x-1/2 rounded-lg border border-border bg-popover px-3 py-2 text-center text-xs text-popover-foreground shadow-md group-hover:visible group-focus-within:visible">
+                        {card.tooltip}
+                      </span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-      </section>
+        </section>
+        <section aria-labelledby="recent-workouts-heading" className="space-y-4">
+          <h2 id="recent-workouts-heading" className="text-xl font-semibold">Recent workouts</h2>
+          {recentWorkouts.length ? <GymVisitsList groups={recentWorkouts} /> : (
+            <div className="rounded-2xl border border-dashed border-border bg-card p-6">
+              <p className="font-semibold">No workouts yet.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Mark a workout completed when you&apos;re ready.</p>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

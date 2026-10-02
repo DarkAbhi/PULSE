@@ -2,9 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { type GymVisit } from "./gym-visits-list";
-import FitnessCalendar from "./fitness-calendar";
-import { indiaDateKey } from "./calendar-utils.mjs";
+import FitnessCalendar, { type FitnessOverview } from "./fitness-calendar";
 
 export const metadata = {
   title: "Fitness | Life Tracker",
@@ -28,11 +26,12 @@ export default async function GymVisitsPage() {
     redirect("/");
   }
 
-  let visits: GymVisit[] = [];
+  let overview: FitnessOverview | null = null;
   let error = "";
 
   try {
-    const response = await fetch(`${apiBaseURL}/api/gym-visits`, {
+    const response = await fetch(`${apiBaseURL}/api/fitness/overview`, {
+      cache: "no-store",
       headers: {
         Cookie: cookieHeader,
       },
@@ -40,7 +39,7 @@ export default async function GymVisitsPage() {
     if (!response.ok) {
       error = "We couldn't load your workouts. Please try again.";
     } else {
-      visits = (await response.json()) as GymVisit[];
+      overview = (await response.json()) as FitnessOverview;
     }
   } catch {
     error = "We couldn't reach the server. Please try again.";
@@ -68,7 +67,7 @@ export default async function GymVisitsPage() {
               {error}
             </p>
           ) : (
-            <FitnessCalendar visits={visits} today={indiaDateKey(new Date())} />
+            overview && <FitnessCalendar overview={overview} />
           )}
         </div>
       </div>

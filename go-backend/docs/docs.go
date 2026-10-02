@@ -187,6 +187,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/fitness/overview": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Uses Asia/Kolkata dates and year-to-date totals; excludes future entries. Weekly streaks use Monday-Sunday weeks. Timing and time preference use imported traditional strength sessions on recorded gym days. Cards disclose missing timing and weights.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fitness"
+                ],
+                "summary": "Get render-ready gym statistics, calendar visits, and three recent workouts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.FitnessOverview"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/gym-visits": {
             "get": {
                 "security": [
@@ -4616,6 +4653,63 @@ const docTemplate = `{
                 }
             }
         },
+        "apidoc.FitnessOverview": {
+            "type": "object",
+            "properties": {
+                "calendar_workouts": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/apidoc.FitnessWorkoutGroup"
+                    }
+                },
+                "cards": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apidoc.FitnessStatCard"
+                    }
+                },
+                "recent_workouts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apidoc.FitnessWorkoutGroup"
+                    }
+                },
+                "today": {
+                    "type": "string"
+                }
+            }
+        },
+        "apidoc.FitnessOverviewWorkout": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "time_label": {
+                    "type": "string"
+                }
+            }
+        },
+        "apidoc.FitnessStatCard": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "subtitle": {
+                    "type": "string"
+                },
+                "tooltip": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
         "apidoc.FitnessWorkoutDetail": {
             "type": "object",
             "properties": {
@@ -4636,6 +4730,23 @@ const docTemplate = `{
                 },
                 "start_time": {
                     "type": "string"
+                }
+            }
+        },
+        "apidoc.FitnessWorkoutGroup": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "date_label": {
+                    "type": "string"
+                },
+                "workouts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apidoc.FitnessOverviewWorkout"
+                    }
                 }
             }
         },

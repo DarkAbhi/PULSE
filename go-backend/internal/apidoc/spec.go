@@ -75,6 +75,29 @@ type FitnessWorkoutDetail struct {
 	CaloriesBurned  *float64   `json:"calories_burned"`
 }
 
+type FitnessStatCard struct {
+	ID       string `json:"id"`
+	Label    string `json:"label"`
+	Value    string `json:"value"`
+	Subtitle string `json:"subtitle"`
+	Tooltip  string `json:"tooltip,omitempty"`
+}
+type FitnessOverviewWorkout struct {
+	ID        int64  `json:"id"`
+	TimeLabel string `json:"time_label"`
+}
+type FitnessWorkoutGroup struct {
+	Date      string                   `json:"date"`
+	DateLabel string                   `json:"date_label"`
+	Workouts  []FitnessOverviewWorkout `json:"workouts"`
+}
+type FitnessOverview struct {
+	Today            string                         `json:"today"`
+	Cards            []FitnessStatCard              `json:"cards"`
+	CalendarWorkouts map[string]FitnessWorkoutGroup `json:"calendar_workouts"`
+	RecentWorkouts   []FitnessWorkoutGroup          `json:"recent_workouts"`
+}
+
 type GymVisitDateInput struct {
 	Date string `json:"date" example:"2026-10-01"`
 }
@@ -557,6 +580,18 @@ func gymVisitOnDate() {}
 // @Failure 500 {object} Error
 // @Router /api/fitness-workouts/{id} [get]
 func fitnessWorkoutDetail() {}
+
+// fitnessOverview documents GET /api/fitness/overview.
+// @Summary Get render-ready gym statistics, calendar visits, and three recent workouts
+// @Description Uses Asia/Kolkata dates and year-to-date totals; excludes future entries. Weekly streaks use Monday-Sunday weeks. Timing and time preference use imported traditional strength sessions on recorded gym days. Cards disclose missing timing and weights.
+// @Tags fitness
+// @Produce json
+// @Security SessionBearer
+// @Success 200 {object} FitnessOverview
+// @Failure 401 {object} Error
+// @Failure 500 {object} Error
+// @Router /api/fitness/overview [get]
+func fitnessOverview() {}
 
 // operation28 documents DELETE /api/gym-visits/{id}.
 // @Summary Delete gym visit

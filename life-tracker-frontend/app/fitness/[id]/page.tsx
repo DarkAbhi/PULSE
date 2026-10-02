@@ -121,6 +121,13 @@ export default async function GymVisitPage({ params }: PageProps) {
 
   if (visitNotFound) redirect("/fitness");
 
+  const hasWorkoutDetails = visit && [
+    visit.start_time,
+    visit.end_time,
+    visit.duration_seconds,
+    visit.calories_burned,
+  ].some((value) => value != null);
+
   return (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
       <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.15fr_0.85fr]">
@@ -144,7 +151,7 @@ export default async function GymVisitPage({ params }: PageProps) {
             Capture what you did, one exercise and set at a time.
           </p>
 
-          <section aria-labelledby="workout-details-heading" className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
+          {hasWorkoutDetails && <section aria-labelledby="workout-details-heading" className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
             <h2 id="workout-details-heading" className="text-xl font-semibold">Workout details</h2>
             <p className="mt-1 text-xs text-muted-foreground">Times shown in India time (IST).</p>
             {detailsError ? (
@@ -169,7 +176,7 @@ export default async function GymVisitPage({ params }: PageProps) {
                 )}
               </>
             )}
-          </section>
+          </section>}
 
           <div className="mt-8 space-y-4">
             {error ? (

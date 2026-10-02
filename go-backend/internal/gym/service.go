@@ -19,6 +19,7 @@ type ValidationError struct{ Message string }
 func (e ValidationError) Error() string { return e.Message }
 
 type store interface {
+	OverviewData(context.Context, int64, time.Time, time.Time) (overviewData, error)
 	VisitToday(context.Context, int64, time.Time, time.Time) (int64, error)
 	AddVisit(context.Context, int64) (int64, error)
 	AddVisitOnDate(context.Context, int64, time.Time) (int64, error)

@@ -10,6 +10,30 @@ INSERT INTO gym_visits (user_id, created_at) VALUES ($1, $2) RETURNING id;
 -- name: ListVisits :many
 SELECT id,created_at FROM gym_visits WHERE user_id=$1 ORDER BY created_at DESC,id DESC;
 
+-- name: OverviewVisits :many
+SELECT g.id, g.created_at,
+    COUNT(s.id)::bigint AS sets,
+    COALESCE(SUM(s.reps * s.weight), 0)::double precision AS volume,
+    COUNT(s.id) FILTER (WHERE s.weight IS NULL)::bigint AS unweighted_sets
+FROM gym_visits g
+LEFT JOIN gym_visit_exercises e ON e.gym_visit_id = g.id
+LEFT JOIN gym_exercise_sets s ON s.gym_visit_exercise_id = e.id
+WHERE g.user_id = $1 AND g.created_at <= $2
+GROUP BY g.id
+ORDER BY g.created_at DESC, g.id DESC;
+
+-- name: OverviewSessions :many
+SELECT w.start_time, w.duration_seconds::double precision AS duration_seconds
+FROM fitness_workouts w
+JOIN workout_activity_types a ON a.id = w.activity_type_id
+WHERE w.user_id = $1 AND a.raw_value = 50
+    AND w.start_time >= $2 AND w.start_time <= $3
+    AND EXISTS (
+        SELECT 1 FROM gym_visits g WHERE g.user_id = w.user_id AND g.created_at <= $3
+        AND (g.created_at AT TIME ZONE 'Asia/Kolkata')::date =
+            (w.start_time AT TIME ZONE 'Asia/Kolkata')::date
+    );
+
 -- name: GetVisit :one
 SELECT g.id, g.created_at, w.start_time, w.end_time,
     w.duration_seconds, w.calories_burned

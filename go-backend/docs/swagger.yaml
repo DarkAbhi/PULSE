@@ -27,6 +27,45 @@ definitions:
       size_bytes:
         type: integer
     type: object
+  apidoc.CatalogCandidate:
+    properties:
+      data:
+        additionalProperties: {}
+        type: object
+      equipment:
+        type: string
+      id:
+        type: string
+      match_type:
+        type: string
+      name:
+        type: string
+    type: object
+  apidoc.CatalogExercise:
+    properties:
+      data:
+        additionalProperties: {}
+        type: object
+      equipment:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  apidoc.CatalogSearch:
+    properties:
+      candidates:
+        items:
+          $ref: '#/definitions/apidoc.CatalogCandidate'
+        type: array
+      exercise_catalog_id:
+        type: string
+      match_type:
+        type: string
+      query:
+        type: string
+    type: object
   apidoc.ChangePasswordInput:
     properties:
       current_password:
@@ -48,6 +87,10 @@ definitions:
     type: object
   apidoc.Exercise:
     properties:
+      catalog_exercise:
+        $ref: '#/definitions/apidoc.CatalogExercise'
+      exercise_catalog_id:
+        type: string
       id:
         type: integer
       name:
@@ -66,8 +109,12 @@ definitions:
     type: object
   apidoc.ExerciseInput:
     properties:
+      exercise_catalog_id:
+        type: string
       name:
         type: string
+      remember_alias:
+        type: boolean
       sets:
         items:
           $ref: '#/definitions/apidoc.ExerciseSetInput'
@@ -175,6 +222,7 @@ definitions:
     properties:
       economy_km_per_litre:
         additionalProperties:
+          format: float64
           type: number
         type: object
       id:
@@ -398,6 +446,7 @@ definitions:
         type: array
       average_mileage_km_per_litre:
         additionalProperties:
+          format: float64
           type: number
         type: object
       front_tire_pressure:
@@ -924,6 +973,40 @@ paths:
       summary: Get current session
       tags:
       - auth
+  /api/exercise-catalog:
+    get:
+      description: Only unique exact names and confirmed personal aliases resolve
+        automatically. Other candidates require selection.
+      parameters:
+      - description: Exercise name (1–100 characters)
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.CatalogSearch'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Search exercise catalogue and personal aliases
+      tags:
+      - Gym
   /api/fitness-workouts/{id}:
     get:
       parameters:
@@ -1160,6 +1243,45 @@ paths:
       security:
       - SessionBearer: []
       summary: Add visit exercise
+      tags:
+      - gym
+  /api/gym-visits/{id}/exercises/{exerciseID}:
+    delete:
+      parameters:
+      - description: Workout id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Saved exercise id
+        in: path
+        minimum: 1
+        name: exerciseID
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Delete a saved exercise and its sets from a workout
       tags:
       - gym
   /api/gym-visits/{id}/exercises/batch:

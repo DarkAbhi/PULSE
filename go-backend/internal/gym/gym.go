@@ -1,7 +1,10 @@
 // Package gym records gym visits, exercises, and sets.
 package gym
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type visitListItem struct {
 	ID        int64     `json:"id"`
@@ -22,8 +25,10 @@ type exerciseSetInput struct {
 }
 
 type createExerciseBody struct {
-	Name string             `json:"name"`
-	Sets []exerciseSetInput `json:"sets"`
+	Name              string             `json:"name"`
+	ExerciseCatalogID *string            `json:"exercise_catalog_id"`
+	RememberAlias     bool               `json:"remember_alias"`
+	Sets              []exerciseSetInput `json:"sets"`
 }
 
 type createExercisesBody struct {
@@ -38,7 +43,28 @@ type exerciseSetDTO struct {
 }
 
 type exerciseDTO struct {
-	ID   int64            `json:"id"`
-	Name string           `json:"name"`
-	Sets []exerciseSetDTO `json:"sets"`
+	ID                int64            `json:"id"`
+	Name              string           `json:"name"`
+	ExerciseCatalogID *string          `json:"exercise_catalog_id"`
+	CatalogExercise   *catalogExercise `json:"catalog_exercise"`
+	Sets              []exerciseSetDTO `json:"sets"`
+}
+
+type catalogExercise struct {
+	ID        string          `json:"id"`
+	Name      string          `json:"name"`
+	Equipment *string         `json:"equipment"`
+	Data      json.RawMessage `json:"data"`
+}
+
+type catalogCandidate struct {
+	catalogExercise
+	MatchType string `json:"match_type"`
+}
+
+type catalogSearch struct {
+	Query             string             `json:"query"`
+	MatchType         string             `json:"match_type"`
+	ExerciseCatalogID *string            `json:"exercise_catalog_id"`
+	Candidates        []catalogCandidate `json:"candidates"`
 }

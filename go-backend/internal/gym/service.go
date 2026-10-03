@@ -13,6 +13,7 @@ import (
 )
 
 var ErrVisitNotFound = errors.New("gym: visit not found")
+var ErrExerciseNotFound = errors.New("gym: exercise not found")
 
 type ValidationError struct{ Message string }
 
@@ -26,10 +27,12 @@ type store interface {
 	ListVisits(context.Context, int64) ([]visitListItem, error)
 	GetVisit(context.Context, int64, int64) (visitDetail, error)
 	DeleteVisit(context.Context, int64, int64) (bool, error)
+	DeleteExercise(context.Context, int64, int64, int64) (bool, error)
 	HasVisit(context.Context, int64, int64) (bool, error)
 	ListExercises(context.Context, int64) ([]exerciseDTO, error)
-	CreateExercise(context.Context, int64, string, []exerciseSetInput) (exerciseDTO, error)
-	CreateExercises(context.Context, int64, []createExerciseBody) ([]exerciseDTO, error)
+	CreateExercises(context.Context, int64, int64, []createExerciseBody) ([]exerciseDTO, error)
+	SearchCatalog(context.Context, int64, string) ([]catalogCandidate, error)
+	GetCatalogExercise(context.Context, string) (catalogExercise, error)
 }
 
 type Service struct {
@@ -106,6 +109,17 @@ func (s *Service) DeleteVisit(ctx context.Context, userID, id int64) error {
 	}
 	return nil
 }
+func (s *Service) DeleteExercise(ctx context.Context, userID, visitID, exerciseID int64) error {
+	ok, err := s.store.DeleteExercise(ctx, userID, visitID, exerciseID)
+	if err != nil {
+		return fmt.Errorf("delete gym exercise: %w", err)
+	}
+	if !ok {
+		return ErrExerciseNotFound
+	}
+	return nil
+}
+
 func (s *Service) ListExercises(ctx context.Context, userID, visitID int64) ([]exerciseDTO, error) {
 	hasVisit, err := s.store.HasVisit(ctx, userID, visitID)
 	if err != nil {
@@ -120,22 +134,14 @@ func (s *Service) ListExercises(ctx context.Context, userID, visitID int64) ([]e
 	}
 	return items, nil
 }
-func (s *Service) CreateExercise(ctx context.Context, userID, visitID int64, body createExerciseBody) (exerciseDTO, error) {
-	hasVisit, err := s.store.HasVisit(ctx, userID, visitID)
+func (s *Service) CreateExercise(
+	ctx context.Context, userID, visitID int64, body createExerciseBody,
+) (exerciseDTO, error) {
+	items, err := s.CreateExercises(ctx, userID, visitID, []createExerciseBody{body})
 	if err != nil {
-		return exerciseDTO{}, fmt.Errorf("check gym visit: %w", err)
-	}
-	if !hasVisit {
-		return exerciseDTO{}, ErrVisitNotFound
-	}
-	if err := validateExercise(&body); err != nil {
 		return exerciseDTO{}, err
 	}
-	item, err := s.store.CreateExercise(ctx, visitID, body.Name, body.Sets)
-	if err != nil {
-		return exerciseDTO{}, fmt.Errorf("create gym exercise: %w", err)
-	}
-	return item, nil
+	return items[0], nil
 }
 
 func validateExercise(body *createExerciseBody) error {
@@ -152,10 +158,21 @@ func validateExercise(body *createExerciseBody) error {
 		}
 	}
 	body.Name = name
+	if body.ExerciseCatalogID != nil {
+		id := *body.ExerciseCatalogID
+		if strings.TrimSpace(id) == "" || len(id) > 200 {
+			return ValidationError{"exercise_catalog_id must be a non-empty catalogue ID"}
+		}
+	}
+	if body.RememberAlias && body.ExerciseCatalogID == nil {
+		return ValidationError{"choose a catalogue exercise before remembering its alias"}
+	}
 	return nil
 }
 
-func (s *Service) CreateExercises(ctx context.Context, userID, visitID int64, bodies []createExerciseBody) ([]exerciseDTO, error) {
+func (s *Service) CreateExercises(
+	ctx context.Context, userID, visitID int64, bodies []createExerciseBody,
+) ([]exerciseDTO, error) {
 	hasVisit, err := s.store.HasVisit(ctx, userID, visitID)
 	if err != nil {
 		return nil, fmt.Errorf("check gym visit: %w", err)
@@ -170,10 +187,83 @@ func (s *Service) CreateExercises(ctx context.Context, userID, visitID int64, bo
 		if err := validateExercise(&bodies[i]); err != nil {
 			return nil, err
 		}
+		if err := s.resolveExercise(ctx, userID, &bodies[i]); err != nil {
+			return nil, err
+		}
 	}
-	items, err := s.store.CreateExercises(ctx, visitID, bodies)
+	items, err := s.store.CreateExercises(ctx, userID, visitID, bodies)
 	if err != nil {
 		return nil, fmt.Errorf("create gym exercises: %w", err)
 	}
 	return items, nil
+}
+
+func normalizeExerciseName(name string) string {
+	return strings.ToLower(strings.Join(strings.Fields(name), " "))
+}
+
+func (s *Service) SearchCatalog(ctx context.Context, userID int64, name string) (catalogSearch, error) {
+	name = strings.TrimSpace(name)
+	if name == "" || len([]rune(name)) > 100 {
+		return catalogSearch{}, ValidationError{"search must be between 1 and 100 characters"}
+	}
+	candidates, err := s.store.SearchCatalog(ctx, userID, normalizeExerciseName(name))
+	if err != nil {
+		return catalogSearch{}, fmt.Errorf("search exercise catalogue: %w", err)
+	}
+	return catalogSearchResult(name, candidates), nil
+}
+
+func catalogSearchResult(name string, candidates []catalogCandidate) catalogSearch {
+	result := catalogSearch{Query: name, MatchType: "none", Candidates: candidates}
+	if len(candidates) == 0 {
+		return result
+	}
+	result.MatchType = "suggested"
+	for _, matchType := range []string{"exact", "alias"} {
+		matches := []string{}
+		for _, candidate := range candidates {
+			if candidate.MatchType == matchType {
+				matches = append(matches, candidate.ID)
+			}
+		}
+		if len(matches) > 1 {
+			result.MatchType = "ambiguous"
+			return result
+		}
+		if len(matches) == 1 {
+			result.MatchType = matchType
+			result.ExerciseCatalogID = &matches[0]
+			return result
+		}
+	}
+	return result
+}
+
+func (s *Service) resolveExercise(ctx context.Context, userID int64, body *createExerciseBody) error {
+	if body.ExerciseCatalogID != nil {
+		_, err := s.store.GetCatalogExercise(ctx, *body.ExerciseCatalogID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ValidationError{"exercise_catalog_id was not found in the catalogue"}
+		}
+		if err != nil {
+			return fmt.Errorf("check exercise catalogue ID: %w", err)
+		}
+		if !body.RememberAlias {
+			return nil
+		}
+	}
+	result, err := s.SearchCatalog(ctx, userID, body.Name)
+	if err != nil {
+		return err
+	}
+	if body.RememberAlias {
+		if result.MatchType == "exact" && *result.ExerciseCatalogID != *body.ExerciseCatalogID {
+			return ValidationError{"this alias is already an exact name for another catalogue exercise"}
+		}
+		return nil
+	}
+	// Suggested matches require an explicit choice; never infer an ID from similarity.
+	body.ExerciseCatalogID = result.ExerciseCatalogID
+	return nil
 }

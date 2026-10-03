@@ -129,6 +129,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/exercise-catalog": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Only unique exact names and confirmed personal aliases resolve automatically. Other candidates require selection.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Gym"
+                ],
+                "summary": "Search exercise catalogue and personal aliases",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Exercise name (1–100 characters)",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.CatalogSearch"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/fitness-workouts/{id}": {
             "get": {
                 "security": [
@@ -543,6 +595,66 @@ const docTemplate = `{
                                 "$ref": "#/definitions/apidoc.Exercise"
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/gym-visits/{id}/exercises/{exerciseID}": {
+            "delete": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "tags": [
+                    "gym"
+                ],
+                "summary": "Delete a saved exercise and its sets from a workout",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Workout id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Saved exercise id",
+                        "name": "exerciseID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     },
                     "400": {
                         "description": "Bad Request",
@@ -4553,6 +4665,65 @@ const docTemplate = `{
                 }
             }
         },
+        "apidoc.CatalogCandidate": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "equipment": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "match_type": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "apidoc.CatalogExercise": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "equipment": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "apidoc.CatalogSearch": {
+            "type": "object",
+            "properties": {
+                "candidates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apidoc.CatalogCandidate"
+                    }
+                },
+                "exercise_catalog_id": {
+                    "type": "string"
+                },
+                "match_type": {
+                    "type": "string"
+                },
+                "query": {
+                    "type": "string"
+                }
+            }
+        },
         "apidoc.ChangePasswordInput": {
             "type": "object",
             "properties": {
@@ -4586,6 +4757,12 @@ const docTemplate = `{
         "apidoc.Exercise": {
             "type": "object",
             "properties": {
+                "catalog_exercise": {
+                    "$ref": "#/definitions/apidoc.CatalogExercise"
+                },
+                "exercise_catalog_id": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -4614,8 +4791,14 @@ const docTemplate = `{
         "apidoc.ExerciseInput": {
             "type": "object",
             "properties": {
+                "exercise_catalog_id": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
+                },
+                "remember_alias": {
+                    "type": "boolean"
                 },
                 "sets": {
                     "type": "array",
@@ -4782,7 +4965,8 @@ const docTemplate = `{
                 "economy_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number"
+                        "type": "number",
+                        "format": "float64"
                     }
                 },
                 "id": {
@@ -5121,7 +5305,8 @@ const docTemplate = `{
                 "average_mileage_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number"
+                        "type": "number",
+                        "format": "float64"
                     }
                 },
                 "front_tire_pressure": {

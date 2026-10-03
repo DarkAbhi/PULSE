@@ -7,6 +7,7 @@ from typing import TypedDict
 from http.cookies import SimpleCookie
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+from urllib.parse import urlencode
 
 from mcp.server import MCPServer
 
@@ -21,9 +22,14 @@ class ExerciseSet(TypedDict):
     weight: float | None
 
 
-class ExerciseInput(TypedDict):
+class ExerciseDetails(TypedDict):
     name: str
+    exercise_catalog_id: str | None
     sets: list[ExerciseSet]
+
+
+class ExerciseInput(ExerciseDetails, total=False):
+    remember_alias: bool
 
 
 def _login(base):
@@ -87,9 +93,25 @@ def get_vehicles() -> str:
 
 
 @mcp.tool()
+def search_exercises(names: list[str]) -> str:
+    """Look up exercise names before saving a workout. Returns exact/remembered matches or up to eight candidates with IDs, equipment and instructions. Use only returned IDs. Suggested matches need the user's choice; ask about equipment or seated/standing variants when ambiguous. After clarification, search again with the equipment and alternate exercise names if needed (e.g. machine rear delt fly is also called reverse machine flyes). Never infer equipment from weights. A name with no suitable match can be saved with exercise_catalog_id=null."""
+    if not isinstance(names, list) or not 1 <= len(names) <= 20:
+        raise ValueError("Provide between 1 and 20 exercise names")
+    if any(not isinstance(name, str) or not 1 <= len(name.strip()) <= 100 for name in names):
+        raise ValueError("Each exercise name must be between 1 and 100 characters")
+    results = []
+    for name in names:
+        result = _get("/api/exercise-catalog?" + urlencode({"q": name.strip()}))
+        if not isinstance(result, dict) or not isinstance(result.get("candidates"), list):
+            raise ValueError("Invalid exercise catalogue response from Life Tracker")
+        results.append(result)
+    return json.dumps(results)
+
+
+@mcp.tool()
 def add_exercises_to_workout(exercises: list[ExerciseInput], confirmed: bool = False,
                              workout_date: str | None = None) -> str:
-    """Save exercises to a gym visit. If the user gives no date, use today's visit in India time. For a stated date, pass YYYY-MM-DD in workout_date. Show the user the target date and every exercise and set with exact kg and reps; call only after they explicitly confirm that summary. Never infer missing numbers or retry an uncertain write. Weight is kilograms; use null only when the user explicitly says unweighted."""
+    """Save exercises to a gym visit after search_exercises and explicit user confirmation. Preserve their original name; pass the selected exercise_catalog_id from search, or null if unmatched. Set remember_alias=true only if the user asks to remember this wording for future workouts. Show the target date, selected catalogue variants, and every kg/reps set before confirmation. Ask about ambiguous variants; never infer equipment from weights or multiply dumbbell weights. If no date is given, use today's visit in India time; otherwise pass YYYY-MM-DD in workout_date. Never infer missing numbers or retry an uncertain write. Weight is kilograms; use null only for explicitly unweighted sets."""
     if confirmed is not True:
         raise ValueError("Show the extracted exercises and sets to the user and get confirmation before saving")
     if not isinstance(exercises, list) or not 1 <= len(exercises) <= 20:
@@ -97,6 +119,14 @@ def add_exercises_to_workout(exercises: list[ExerciseInput], confirmed: bool = F
     for exercise in exercises:
         if not isinstance(exercise, dict) or not isinstance(exercise.get("name"), str) or not exercise["name"].strip():
             raise ValueError("Each exercise needs a name")
+        if "exercise_catalog_id" not in exercise:
+            raise ValueError("Search exercises first and provide exercise_catalog_id or explicit null")
+        catalog_id = exercise["exercise_catalog_id"]
+        if catalog_id is not None and (not isinstance(catalog_id, str) or not 1 <= len(catalog_id.strip()) <= 200):
+            raise ValueError("exercise_catalog_id must be a catalogue ID or null")
+        remember = exercise.get("remember_alias", False)
+        if type(remember) is not bool or (remember and catalog_id is None):
+            raise ValueError("Remembering an alias requires a selected catalogue exercise")
         sets = exercise.get("sets")
         if not isinstance(sets, list) or not 1 <= len(sets) <= 20:
             raise ValueError("Each exercise needs between 1 and 20 sets")

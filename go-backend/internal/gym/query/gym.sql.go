@@ -39,23 +39,26 @@ func (q *Queries) AddVisitOnDate(ctx context.Context, arg AddVisitOnDateParams) 
 }
 
 const createExercise = `-- name: CreateExercise :one
-INSERT INTO gym_visit_exercises (gym_visit_id,name) VALUES ($1,$2) RETURNING id,name
+INSERT INTO gym_visit_exercises (gym_visit_id,name,exercise_catalog_id)
+VALUES ($1,$2,$3) RETURNING id,name,exercise_catalog_id
 `
 
 type CreateExerciseParams struct {
-	GymVisitID int64
-	Name       string
+	GymVisitID        int64
+	Name              string
+	ExerciseCatalogID *string
 }
 
 type CreateExerciseRow struct {
-	ID   int64
-	Name string
+	ID                int64
+	Name              string
+	ExerciseCatalogID *string
 }
 
 func (q *Queries) CreateExercise(ctx context.Context, arg CreateExerciseParams) (CreateExerciseRow, error) {
-	row := q.db.QueryRow(ctx, createExercise, arg.GymVisitID, arg.Name)
+	row := q.db.QueryRow(ctx, createExercise, arg.GymVisitID, arg.Name, arg.ExerciseCatalogID)
 	var i CreateExerciseRow
-	err := row.Scan(&i.ID, &i.Name)
+	err := row.Scan(&i.ID, &i.Name, &i.ExerciseCatalogID)
 	return i, err
 }
 
@@ -95,6 +98,29 @@ func (q *Queries) CreateSet(ctx context.Context, arg CreateSetParams) (CreateSet
 	return i, err
 }
 
+const deleteExercise = `-- name: DeleteExercise :execrows
+DELETE FROM gym_visit_exercises AS e
+USING gym_visits AS v
+WHERE e.id = $1
+  AND e.gym_visit_id = $2
+  AND v.id = e.gym_visit_id
+  AND v.user_id = $3
+`
+
+type DeleteExerciseParams struct {
+	ExerciseID int64
+	VisitID    int64
+	UserID     int64
+}
+
+func (q *Queries) DeleteExercise(ctx context.Context, arg DeleteExerciseParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteExercise, arg.ExerciseID, arg.VisitID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deleteVisit = `-- name: DeleteVisit :execrows
 DELETE FROM gym_visits WHERE id=$1 AND user_id=$2
 `
@@ -110,6 +136,29 @@ func (q *Queries) DeleteVisit(ctx context.Context, arg DeleteVisitParams) (int64
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const getCatalogExercise = `-- name: GetCatalogExercise :one
+SELECT id, name, equipment, data FROM exercise_catalog WHERE id=$1
+`
+
+type GetCatalogExerciseRow struct {
+	ID        string
+	Name      string
+	Equipment *string
+	Data      []byte
+}
+
+func (q *Queries) GetCatalogExercise(ctx context.Context, id string) (GetCatalogExerciseRow, error) {
+	row := q.db.QueryRow(ctx, getCatalogExercise, id)
+	var i GetCatalogExerciseRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Equipment,
+		&i.Data,
+	)
+	return i, err
 }
 
 const getVisit = `-- name: GetVisit :one
@@ -149,12 +198,19 @@ func (q *Queries) GetVisit(ctx context.Context, arg GetVisitParams) (GetVisitRow
 }
 
 const listExercises = `-- name: ListExercises :many
-SELECT id,name FROM gym_visit_exercises WHERE gym_visit_id=$1 ORDER BY id ASC
+SELECT e.id, e.name, e.exercise_catalog_id, c.name AS catalog_name, c.equipment, c.data
+FROM gym_visit_exercises e
+LEFT JOIN exercise_catalog c ON c.id = e.exercise_catalog_id
+WHERE e.gym_visit_id=$1 ORDER BY e.id ASC
 `
 
 type ListExercisesRow struct {
-	ID   int64
-	Name string
+	ID                int64
+	Name              string
+	ExerciseCatalogID *string
+	CatalogName       *string
+	Equipment         *string
+	Data              []byte
 }
 
 func (q *Queries) ListExercises(ctx context.Context, gymVisitID int64) ([]ListExercisesRow, error) {
@@ -166,7 +222,14 @@ func (q *Queries) ListExercises(ctx context.Context, gymVisitID int64) ([]ListEx
 	var items []ListExercisesRow
 	for rows.Next() {
 		var i ListExercisesRow
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.ExerciseCatalogID,
+			&i.CatalogName,
+			&i.Equipment,
+			&i.Data,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -327,6 +390,81 @@ func (q *Queries) OverviewVisits(ctx context.Context, arg OverviewVisitsParams) 
 			&i.Sets,
 			&i.Volume,
 			&i.UnweightedSets,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const rememberExerciseAlias = `-- name: RememberExerciseAlias :exec
+INSERT INTO exercise_aliases (user_id, normalized_alias, exercise_catalog_id)
+VALUES ($1,$2,$3)
+ON CONFLICT (user_id, normalized_alias)
+DO UPDATE SET exercise_catalog_id = EXCLUDED.exercise_catalog_id
+`
+
+type RememberExerciseAliasParams struct {
+	UserID            int64
+	NormalizedAlias   string
+	ExerciseCatalogID string
+}
+
+func (q *Queries) RememberExerciseAlias(ctx context.Context, arg RememberExerciseAliasParams) error {
+	_, err := q.db.Exec(ctx, rememberExerciseAlias, arg.UserID, arg.NormalizedAlias, arg.ExerciseCatalogID)
+	return err
+}
+
+const searchExerciseCatalog = `-- name: SearchExerciseCatalog :many
+SELECT c.id, c.name, c.equipment, c.data,
+    CASE WHEN c.normalized_name = $1::text THEN 'exact'
+         WHEN a.exercise_catalog_id IS NOT NULL THEN 'alias'
+         ELSE 'suggested' END::text AS match_type
+FROM exercise_catalog c
+LEFT JOIN exercise_aliases a ON a.exercise_catalog_id = c.id
+    AND a.user_id = $2 AND a.normalized_alias = $1::text
+WHERE c.normalized_name = $1::text
+   OR a.exercise_catalog_id IS NOT NULL
+   OR c.normalized_name % $1::text
+   OR strpos(c.normalized_name, $1::text) > 0
+ORDER BY CASE WHEN c.normalized_name = $1::text THEN 0
+              WHEN a.exercise_catalog_id IS NOT NULL THEN 1 ELSE 2 END,
+    similarity(c.normalized_name, $1::text) DESC, c.name, c.id
+LIMIT 8
+`
+
+type SearchExerciseCatalogParams struct {
+	Search string
+	UserID int64
+}
+
+type SearchExerciseCatalogRow struct {
+	ID        string
+	Name      string
+	Equipment *string
+	Data      []byte
+	MatchType string
+}
+
+func (q *Queries) SearchExerciseCatalog(ctx context.Context, arg SearchExerciseCatalogParams) ([]SearchExerciseCatalogRow, error) {
+	rows, err := q.db.Query(ctx, searchExerciseCatalog, arg.Search, arg.UserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SearchExerciseCatalogRow
+	for rows.Next() {
+		var i SearchExerciseCatalogRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Equipment,
+			&i.Data,
+			&i.MatchType,
 		); err != nil {
 			return nil, err
 		}

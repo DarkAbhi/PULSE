@@ -71,6 +71,13 @@ func (r *Repository) DeleteVisit(ctx context.Context, userID, id int64) (bool, e
 	count, err := r.queries.DeleteVisit(ctx, query.DeleteVisitParams{ID: id, UserID: userID})
 	return count > 0, err
 }
+func (r *Repository) DeleteExercise(ctx context.Context, userID, visitID, exerciseID int64) (bool, error) {
+	count, err := r.queries.DeleteExercise(ctx, query.DeleteExerciseParams{
+		ExerciseID: exerciseID, VisitID: visitID, UserID: userID,
+	})
+	return count > 0, err
+}
+
 func (r *Repository) HasVisit(ctx context.Context, userID, id int64) (bool, error) {
 	return r.queries.VisitExists(ctx, query.VisitExistsParams{ID: id, UserID: userID})
 }
@@ -85,7 +92,15 @@ func (r *Repository) ListExercises(ctx context.Context, visitID int64) ([]exerci
 		if err != nil {
 			return nil, err
 		}
-		item := exerciseDTO{ID: row.ID, Name: row.Name, Sets: make([]exerciseSetDTO, 0, len(sets))}
+		item := exerciseDTO{
+			ID: row.ID, Name: row.Name, ExerciseCatalogID: row.ExerciseCatalogID,
+			Sets: make([]exerciseSetDTO, 0, len(sets)),
+		}
+		if row.ExerciseCatalogID != nil && row.CatalogName != nil {
+			item.CatalogExercise = &catalogExercise{
+				ID: *row.ExerciseCatalogID, Name: *row.CatalogName, Equipment: row.Equipment, Data: row.Data,
+			}
+		}
 		for _, set := range sets {
 			item.Sets = append(item.Sets, exerciseSetDTO{
 				ID: set.ID, SetNumber: int(set.SetNumber), Reps: int(set.Reps), Weight: set.Weight,
@@ -95,15 +110,9 @@ func (r *Repository) ListExercises(ctx context.Context, visitID int64) ([]exerci
 	}
 	return items, nil
 }
-func (r *Repository) CreateExercise(ctx context.Context, visitID int64, name string, sets []exerciseSetInput) (exerciseDTO, error) {
-	items, err := r.CreateExercises(ctx, visitID, []createExerciseBody{{Name: name, Sets: sets}})
-	if err != nil {
-		return exerciseDTO{}, err
-	}
-	return items[0], nil
-}
-
-func (r *Repository) CreateExercises(ctx context.Context, visitID int64, bodies []createExerciseBody) ([]exerciseDTO, error) {
+func (r *Repository) CreateExercises(
+	ctx context.Context, userID, visitID int64, bodies []createExerciseBody,
+) ([]exerciseDTO, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return nil, err
@@ -112,11 +121,32 @@ func (r *Repository) CreateExercises(ctx context.Context, visitID int64, bodies 
 	q := r.queries.WithTx(tx)
 	items := make([]exerciseDTO, 0, len(bodies))
 	for _, body := range bodies {
-		row, err := q.CreateExercise(ctx, query.CreateExerciseParams{GymVisitID: visitID, Name: body.Name})
+		row, err := q.CreateExercise(ctx, query.CreateExerciseParams{
+			GymVisitID: visitID, Name: body.Name, ExerciseCatalogID: body.ExerciseCatalogID,
+		})
 		if err != nil {
 			return nil, err
 		}
-		item := exerciseDTO{ID: row.ID, Name: row.Name, Sets: make([]exerciseSetDTO, 0, len(body.Sets))}
+		item := exerciseDTO{
+			ID: row.ID, Name: row.Name, ExerciseCatalogID: row.ExerciseCatalogID,
+			Sets: make([]exerciseSetDTO, 0, len(body.Sets)),
+		}
+		if row.ExerciseCatalogID != nil {
+			catalog, err := q.GetCatalogExercise(ctx, *row.ExerciseCatalogID)
+			if err != nil {
+				return nil, err
+			}
+			item.CatalogExercise = &catalogExercise{
+				ID: catalog.ID, Name: catalog.Name, Equipment: catalog.Equipment, Data: catalog.Data,
+			}
+		}
+		if body.RememberAlias {
+			if err := q.RememberExerciseAlias(ctx, query.RememberExerciseAliasParams{
+				UserID: userID, NormalizedAlias: normalizeExerciseName(body.Name), ExerciseCatalogID: *body.ExerciseCatalogID,
+			}); err != nil {
+				return nil, err
+			}
+		}
 		for i, set := range body.Sets {
 			saved, err := q.CreateSet(ctx, query.CreateSetParams{
 				GymVisitExerciseID: row.ID, SetNumber: int16(i + 1), Reps: int16(set.Reps), Weight: set.Weight,
@@ -134,4 +164,27 @@ func (r *Repository) CreateExercises(ctx context.Context, visitID int64, bodies 
 		return nil, err
 	}
 	return items, nil
+}
+
+func (r *Repository) SearchCatalog(ctx context.Context, userID int64, name string) ([]catalogCandidate, error) {
+	rows, err := r.queries.SearchExerciseCatalog(ctx, query.SearchExerciseCatalogParams{UserID: userID, Search: name})
+	if err != nil {
+		return nil, err
+	}
+	items := make([]catalogCandidate, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, catalogCandidate{
+			catalogExercise: catalogExercise{ID: row.ID, Name: row.Name, Equipment: row.Equipment, Data: row.Data},
+			MatchType:       row.MatchType,
+		})
+	}
+	return items, nil
+}
+
+func (r *Repository) GetCatalogExercise(ctx context.Context, id string) (catalogExercise, error) {
+	row, err := r.queries.GetCatalogExercise(ctx, id)
+	if err != nil {
+		return catalogExercise{}, err
+	}
+	return catalogExercise{ID: row.ID, Name: row.Name, Equipment: row.Equipment, Data: row.Data}, nil
 }

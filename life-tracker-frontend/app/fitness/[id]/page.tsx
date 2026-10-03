@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import DeleteVisitButton from "./delete-visit-button";
+import DeleteExerciseButton from "./delete-exercise-button";
 import AddExerciseForm from "./add-exercise-form";
 import { formatDuration } from "./format-duration.mjs";
+import type { CatalogExercise } from "./actions";
 
 export const metadata = {
   title: "Fitness Workout | Life Tracker",
@@ -17,6 +19,8 @@ const apiBaseURL =
 type SavedExercise = {
   id: number;
   name: string;
+  exercise_catalog_id: string | null;
+  catalog_exercise: CatalogExercise | null;
   sets: Array<{
     id: number;
     set_number: number;
@@ -198,9 +202,22 @@ export default async function GymVisitPage({ params }: PageProps) {
                   className="rounded-2xl border border-border bg-card p-6 shadow-sm"
                   key={exercise.id}
                 >
-                  <h2 className="text-xl font-semibold text-foreground">
-                    {exercise.name}
-                  </h2>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <h2 className="min-w-0 break-words text-xl font-semibold text-foreground">
+                      {exercise.name}
+                    </h2>
+                    <DeleteExerciseButton visitID={visitID} exerciseID={exercise.id} exerciseName={exercise.name} />
+                  </div>
+                  {exercise.catalog_exercise && <div className="mt-2 text-sm text-muted-foreground">
+                    <p>{exercise.catalog_exercise.name} · {exercise.catalog_exercise.equipment ?? "Equipment unspecified"}</p>
+                    <p className="mt-1">{exercise.catalog_exercise.data.primaryMuscles.join(", ")}</p>
+                    <details className="mt-3">
+                      <summary className="cursor-pointer">Exercise instructions</summary>
+                      <ol className="mt-2 list-decimal space-y-2 pl-5">
+                        {exercise.catalog_exercise.data.instructions.map((instruction, index) => <li key={index}>{instruction}</li>)}
+                      </ol>
+                    </details>
+                  </div>}
                   <div className="mt-4 overflow-hidden rounded-lg border border-border">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-muted text-muted-foreground">

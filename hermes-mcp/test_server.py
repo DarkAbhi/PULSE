@@ -30,7 +30,7 @@ class LifeTrackerMCPTest(unittest.TestCase):
             server = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(server)
 
-        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles", "add_exercises_to_workout"])
+        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles", "search_exercises", "add_exercises_to_workout"])
         calls = []
         login_count = 0
 
@@ -54,8 +54,8 @@ class LifeTrackerMCPTest(unittest.TestCase):
             value = {"visited": True, "id": 12} if url.endswith("/workout/today") else [{"id": 7, "name": "Scooter"}]
             return io.BytesIO(json.dumps(value).encode())
 
-        workout = [{"name": "Bicep curls", "sets": [{"reps": 10, "weight": 12.5}]},
-                   {"name": "Barbell squats", "sets": [{"reps": 8, "weight": 50}]}]
+        workout = [{"name": "Bicep curls", "exercise_catalog_id": None, "sets": [{"reps": 10, "weight": 12.5}]},
+                   {"name": "Barbell squats", "exercise_catalog_id": "Barbell_Full_Squat", "sets": [{"reps": 8, "weight": 50}]}]
         with patch.dict(os.environ, {"MCP_BACKEND_USERNAME": "me", "MCP_BACKEND_PASSWORD": "secret"}), \
              patch.object(server, "urlopen", side_effect=get):
             self.assertTrue(json.loads(server.get_workout_today())["visited"])
@@ -63,7 +63,7 @@ class LifeTrackerMCPTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "confirmation"):
                 server.add_exercises_to_workout(workout)
             with self.assertRaisesRegex(ValueError, "rep count"):
-                server.add_exercises_to_workout([{"name": "Curl", "sets": [{"reps": 0, "weight": 10}]}], True)
+                server.add_exercises_to_workout([{"name": "Curl", "exercise_catalog_id": None, "sets": [{"reps": 0, "weight": 10}]}], True)
             self.assertEqual(json.loads(server.add_exercises_to_workout(workout, True)), workout)
 
         self.assertEqual(calls, [
@@ -75,6 +75,23 @@ class LifeTrackerMCPTest(unittest.TestCase):
             ("http://127.0.0.1:18080/api/workout/today", "GET", "Bearer token2", 10),
             ("http://127.0.0.1:18080/api/gym-visits/12/exercises/batch", "POST", "Bearer token2", 10),
         ])
+
+        result = {"query": "weight plate front raises", "match_type": "suggested",
+                  "exercise_catalog_id": None,
+                  "candidates": [{"id": "Front_Plate_Raise", "name": "Front Plate Raise"}]}
+        with patch.object(server, "_get", return_value=result) as lookup:
+            self.assertEqual(json.loads(server.search_exercises(["weight plate front raises"])), [result])
+            lookup.assert_called_once_with("/api/exercise-catalog?q=weight+plate+front+raises")
+            with self.assertRaisesRegex(ValueError, "exercise names"):
+                server.search_exercises([])
+            with self.assertRaisesRegex(ValueError, "100 characters"):
+                server.search_exercises([" "])
+        with patch.object(server, "_request") as write:
+            with self.assertRaisesRegex(ValueError, "Search exercises first"):
+                server.add_exercises_to_workout([{"name": "Curl", "sets": [{"reps": 10, "weight": 5}]}], True)
+            with self.assertRaisesRegex(ValueError, "Remembering an alias"):
+                server.add_exercises_to_workout([dict(workout[0], remember_alias=True)], True)
+            write.assert_not_called()
 
         visits = [
             {"id": 29, "created_at": "2026-09-28T20:00:00Z"},

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -35,6 +36,7 @@ func NewHandler(service *Service, userID func(*http.Request) (int64, error)) *Ha
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
+	r.Get("/exercise-catalog", h.SearchExerciseCatalog)
 	r.Get("/fitness/overview", h.Overview)
 	r.Get("/workout/today", h.VisitedToday)
 	r.Post("/workout/today", h.AddWorkoutForDay)
@@ -45,6 +47,21 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/gym-visits/{id}/exercises", h.ListVisitExercises)
 	r.Post("/gym-visits/{id}/exercises", h.CreateVisitExercise)
 	r.Post("/gym-visits/{id}/exercises/batch", h.CreateVisitExercises)
+	r.Delete("/gym-visits/{id}/exercises/{exerciseID}", h.DeleteVisitExercise)
+}
+
+func (h *Handler) SearchExerciseCatalog(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
+	result, err := h.service.SearchCatalog(r.Context(), userID, r.URL.Query().Get("q"))
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	webutil.WriteJSON(w, http.StatusOK, result)
 }
 
 func (h *Handler) Overview(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +83,7 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.As(err, &invalid):
 		webutil.BadRequest(w, invalid.Message)
-	case errors.Is(err, ErrVisitNotFound):
+	case errors.Is(err, ErrVisitNotFound), errors.Is(err, ErrExerciseNotFound):
 		http.NotFound(w, r)
 	default:
 		webutil.ServerError(w, err)
@@ -166,6 +183,27 @@ func (h *Handler) DeleteVisit(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+func (h *Handler) DeleteVisitExercise(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
+	visitID, ok := webutil.ParseID(w, r)
+	if !ok {
+		return
+	}
+	exerciseID, err := strconv.ParseInt(chi.URLParam(r, "exerciseID"), 10, 64)
+	if err != nil || exerciseID <= 0 {
+		webutil.BadRequest(w, "invalid exercise id")
+		return
+	}
+	if err := h.service.DeleteExercise(r.Context(), userID, visitID, exerciseID); err != nil {
+		writeError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *Handler) ListVisitExercises(w http.ResponseWriter, r *http.Request) {
 	userID, ok := h.sessionUserID(w, r)
 	if !ok {

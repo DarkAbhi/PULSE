@@ -2,6 +2,12 @@
 
 This crate is a small backend using the existing PostgreSQL tables. It has no migrations.
 
+The shared exercise catalogue is installed by Go migration 23. Gym exercise
+search and saves remain in the Go API; Rust's Apple workout importer preserves
+existing visits, catalogue links, names, and sets during repeated imports. Its
+database-backed import test covers that compatibility. See
+[exercise catalogue setup](../go-backend/data/exercise-catalog.md).
+
 Use `make dev` from the repository root to run the development backend through Docker Compose. For an optional direct `cargo run`, copy `rust-backend/.env.example` to `rust-backend/.env` and fill in `DATABASE_URL`. Docker Compose ignores that file and reads the repository root `.env.dev` instead. The process checks the database with `SELECT 1` before listening on `PORT` (default `8083`). `RUST_LOG` defaults to `info`.
 
 The Rust container listens on `RUST_PORT` (default `8083`); Compose publishes it on `127.0.0.1:18084` for dev. Production does not publish a Rust host port. Set `CLOUDFLARE_TUNNEL_TOKEN` in the root `.env` and route only the Rust hostname to `http://rust-backend:8083` in Cloudflare (or to the configured `RUST_PORT`). Compose builds `DATABASE_URL` from the existing `DB_*` fields and uses `RUST_DB_SSLMODE` for Rust's TLS setting. If database credentials later contain URL-reserved characters, provide a percent-encoded URL for the Rust service instead.

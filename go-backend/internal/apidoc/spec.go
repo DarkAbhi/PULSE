@@ -107,8 +107,10 @@ type ExerciseSetInput struct {
 	Weight *float64 `json:"weight"`
 }
 type ExerciseInput struct {
-	Name string             `json:"name"`
-	Sets []ExerciseSetInput `json:"sets"`
+	Name              string             `json:"name"`
+	ExerciseCatalogID *string            `json:"exercise_catalog_id"`
+	RememberAlias     bool               `json:"remember_alias"`
+	Sets              []ExerciseSetInput `json:"sets"`
 }
 type ExerciseBatchInput struct {
 	Exercises []ExerciseInput `json:"exercises"`
@@ -120,10 +122,46 @@ type ExerciseSet struct {
 	Weight    *float64 `json:"weight"`
 }
 type Exercise struct {
-	ID   int64         `json:"id"`
-	Name string        `json:"name"`
-	Sets []ExerciseSet `json:"sets"`
+	ID                int64            `json:"id"`
+	Name              string           `json:"name"`
+	ExerciseCatalogID *string          `json:"exercise_catalog_id"`
+	CatalogExercise   *CatalogExercise `json:"catalog_exercise"`
+	Sets              []ExerciseSet    `json:"sets"`
 }
+
+type CatalogExercise struct {
+	ID        string         `json:"id"`
+	Name      string         `json:"name"`
+	Equipment *string        `json:"equipment"`
+	Data      map[string]any `json:"data"`
+}
+
+type CatalogCandidate struct {
+	CatalogExercise
+	MatchType string `json:"match_type"`
+}
+
+type CatalogSearch struct {
+	Query             string             `json:"query"`
+	MatchType         string             `json:"match_type"`
+	ExerciseCatalogID *string            `json:"exercise_catalog_id"`
+	Candidates        []CatalogCandidate `json:"candidates"`
+}
+
+// searchExerciseCatalog documents GET /api/exercise-catalog.
+// @Summary Search exercise catalogue and personal aliases
+// @Description Only unique exact names and confirmed personal aliases resolve automatically. Other candidates require selection.
+// @Tags Gym
+// @Produce json
+// @Param q query string true "Exercise name (1–100 characters)"
+// @Success 200 {object} CatalogSearch
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 500 {object} Error
+// @Security SessionBearer
+// @Router /api/exercise-catalog [get]
+func searchExerciseCatalog() {}
+
 type LinkTransactionInput struct {
 	TransactionID int64 `json:"transaction_id"`
 }
@@ -605,6 +643,20 @@ func fitnessOverview() {}
 // @Failure 500 {object} Error
 // @Router /api/gym-visits/{id} [delete]
 func operation28() {}
+
+// deleteVisitExercise documents DELETE /api/gym-visits/{id}/exercises/{exerciseID}.
+// @Summary Delete a saved exercise and its sets from a workout
+// @Tags gym
+// @Param id path integer true "Workout id" minimum(1)
+// @Param exerciseID path integer true "Saved exercise id" minimum(1)
+// @Security SessionBearer
+// @Success 204 "No Content"
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 404 {string} string
+// @Failure 500 {object} Error
+// @Router /api/gym-visits/{id}/exercises/{exerciseID} [delete]
+func deleteVisitExercise() {}
 
 // operation29 documents GET /api/gym-visits/{id}/exercises.
 // @Summary List visit exercises

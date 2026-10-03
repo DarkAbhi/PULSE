@@ -34,7 +34,7 @@ The vehicle history page brings all important records for one vehicle together:
 
 - Vehicle name and navigation back to the Garage.
 - Fuel fill-up history, ordered newest first.
-- Average mileage in km/L by fuel type.
+- Fuel efficiency above maintenance expenses: total refuelling cost, total volume, and average, maximum, minimum, and latest efficiency by fuel type.
 - Air-fill history, ordered newest first.
 - Target tire pressures for solo riding and riding with a pillion.
 - Maintenance and expense history, ordered newest first.
@@ -60,7 +60,7 @@ Existing fuel records can be edited or deleted from the vehicle history page. Th
 
 ### 2.4 Mileage insight
 
-The history page displays average mileage per fuel type when enough reliable data exists. The product intentionally avoids presenting a misleading number when there are not two comparable full-tank readings.
+The history page displays six fuel-efficiency cards per fuel type above Maintenance & expenses. Total refuelling cost (INR) and volume (L) include all recorded fills. Average efficiency is total distance divided by total fuel across reliable intervals; maximum, minimum, and last efficiency use individual complete intervals. Efficiency values are shown to three decimal places, or as a dash until enough reliable data exists. The product intentionally avoids presenting a misleading number when there are not two comparable full-tank readings.
 
 The calculation model is:
 

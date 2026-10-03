@@ -336,6 +336,23 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 		}
 		maintenance = append(maintenance, record)
 	}
+	// History is newest first; calculate intervals in the reverse order.
+	entries := []fuelMileageEntry{}
+	for i := len(fuels) - 1; i >= 0; i-- {
+		for _, item := range fuels[i].Items {
+			entries = append(entries, fuelMileageEntry{
+				FuelType: item.FuelType, FillType: item.FillType,
+				OdometerKM: fuels[i].OdometerKM, Quantity: item.Quantity, TotalCost: item.TotalCost,
+			})
+		}
+	}
+	stats := calculateFuelEfficiency(entries)
+	averages := map[string]float64{}
+	for fuelType, stat := range stats {
+		if stat.AverageKMPerLitre != nil {
+			averages[fuelType] = *stat.AverageKMPerLitre
+		}
+	}
 	webutil.WriteJSON(w, http.StatusOK, map[string]any{
 		"vehicle_name":                 header.Name,
 		"front_tire_pressure_solo":     header.FrontTirePressureSolo,
@@ -347,7 +364,8 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 		"air_fills":                    air,
 		"fuel_fillups":                 fuels,
 		"maintenance_records":          maintenance,
-		"average_mileage_km_per_litre": h.averageFuelEconomies(vehicleID, user.ID),
+		"average_mileage_km_per_litre": averages,
+		"fuel_efficiency":              stats,
 	})
 }
 

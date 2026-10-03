@@ -226,31 +226,14 @@ func (h *Handler) latestFuelEconomy(vehicleID, userID int64, fuelType string) *f
 	if err != nil {
 		return nil
 	}
-	var previousFull *float64
-	accumulated := 0.0
-	var latest *float64
+	entries := make([]fuelMileageEntry, 0, len(rows))
 	for _, row := range rows {
-		odometer, quantity, fillType := row.OdometerKm, row.Quantity, row.FillType
-		if fillType == "missed" {
-			previousFull = nil
-			accumulated = 0
-			continue
-		}
-		if fillType == "partial" {
-			if previousFull != nil {
-				accumulated += quantity
-			}
-			continue
-		}
-		if previousFull != nil && odometer > *previousFull {
-			value := (odometer - *previousFull) / (accumulated + quantity)
-			latest = &value
-		}
-		value := odometer
-		previousFull = &value
-		accumulated = 0
+		entries = append(entries, fuelMileageEntry{
+			FuelType: fuelType, FillType: row.FillType,
+			OdometerKM: row.OdometerKm, Quantity: row.Quantity,
+		})
 	}
-	return latest
+	return calculateFuelEfficiency(entries)[fuelType].LastKMPerLitre
 }
 
 type fuelMileageEntry struct {
@@ -258,65 +241,66 @@ type fuelMileageEntry struct {
 	FillType   string
 	OdometerKM float64
 	Quantity   float64
+	TotalCost  float64
 }
 
-// calculateAverageFuelEconomies returns the weighted average fuel economy for
-// each fuel type. Entries must be supplied in chronological order. It only uses
-// complete full-tank-to-full-tank intervals; partial fills between those two
-// readings are included, while missed fills reset the calculation because their
-// fuel use is unknown.
-func calculateAverageFuelEconomies(entries []fuelMileageEntry) map[string]float64 {
-	type totals struct {
-		distance float64
-		quantity float64
-	}
+type fuelEfficiencyStats struct {
+	TotalCost         float64  `json:"total_cost"`
+	TotalVolume       float64  `json:"total_volume"`
+	AverageKMPerLitre *float64 `json:"average_km_per_litre"`
+	MaxKMPerLitre     *float64 `json:"max_km_per_litre"`
+	MinKMPerLitre     *float64 `json:"min_km_per_litre"`
+	LastKMPerLitre    *float64 `json:"last_km_per_litre"`
+}
 
-	previousFull := map[string]*float64{}
-	accumulated := map[string]float64{}
-	totalsByFuel := map[string]totals{}
+// calculateFuelEfficiency uses chronological entries and complete full-to-full
+// intervals. Partial fills contribute to the next interval; missed fills reset
+// the baseline. Spending and volume include every recorded fill.
+func calculateFuelEfficiency(entries []fuelMileageEntry) map[string]fuelEfficiencyStats {
+	type intervalState struct {
+		previousFull *float64
+		accumulated  float64
+		distance     float64
+		quantity     float64
+	}
+	states := map[string]intervalState{}
+	stats := map[string]fuelEfficiencyStats{}
 	for _, entry := range entries {
-		if entry.FillType == "missed" {
-			previousFull[entry.FuelType] = nil
-			accumulated[entry.FuelType] = 0
-			continue
-		}
-		if entry.FillType == "partial" {
-			if previousFull[entry.FuelType] != nil {
-				accumulated[entry.FuelType] += entry.Quantity
+		stat := stats[entry.FuelType]
+		stat.TotalCost += entry.TotalCost
+		stat.TotalVolume += entry.Quantity
+		state := states[entry.FuelType]
+		switch entry.FillType {
+		case "missed":
+			state.previousFull = nil
+			state.accumulated = 0
+		case "partial":
+			if state.previousFull != nil {
+				state.accumulated += entry.Quantity
 			}
-			continue
+		case "full":
+			quantity := state.accumulated + entry.Quantity
+			if state.previousFull != nil && entry.OdometerKM > *state.previousFull && quantity > 0 {
+				distance := entry.OdometerKM - *state.previousFull
+				economy := distance / quantity
+				state.distance += distance
+				state.quantity += quantity
+				average := state.distance / state.quantity
+				stat.AverageKMPerLitre = &average
+				stat.LastKMPerLitre = &economy
+				if stat.MaxKMPerLitre == nil || economy > *stat.MaxKMPerLitre {
+					stat.MaxKMPerLitre = &economy
+				}
+				if stat.MinKMPerLitre == nil || economy < *stat.MinKMPerLitre {
+					stat.MinKMPerLitre = &economy
+				}
+			}
+			odometer := entry.OdometerKM
+			state.previousFull = &odometer
+			state.accumulated = 0
 		}
-
-		if previous := previousFull[entry.FuelType]; previous != nil && entry.OdometerKM > *previous {
-			total := totalsByFuel[entry.FuelType]
-			total.distance += entry.OdometerKM - *previous
-			total.quantity += accumulated[entry.FuelType] + entry.Quantity
-			totalsByFuel[entry.FuelType] = total
-		}
-		value := entry.OdometerKM
-		previousFull[entry.FuelType] = &value
-		accumulated[entry.FuelType] = 0
+		states[entry.FuelType] = state
+		stats[entry.FuelType] = stat
 	}
-
-	averages := map[string]float64{}
-	for fuelType, total := range totalsByFuel {
-		if total.quantity > 0 {
-			averages[fuelType] = total.distance / total.quantity
-		}
-	}
-	return averages
-}
-
-func (h *Handler) averageFuelEconomies(vehicleID, userID int64) map[string]float64 {
-	rows, err := query.New(h.DB).ListAverageFuelEconomyEntries(context.Background(), query.ListAverageFuelEconomyEntriesParams{VehicleID: vehicleID, UserID: userID})
-	if err != nil {
-		return map[string]float64{}
-	}
-
-	entries := []fuelMileageEntry{}
-	for _, row := range rows {
-		entry := fuelMileageEntry{FuelType: row.FuelType, OdometerKM: row.OdometerKm, FillType: row.FillType, Quantity: row.Quantity}
-		entries = append(entries, entry)
-	}
-	return calculateAverageFuelEconomies(entries)
+	return stats
 }

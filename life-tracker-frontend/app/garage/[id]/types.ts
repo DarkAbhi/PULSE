@@ -35,6 +35,15 @@ export type MaintenanceAttachment = {
   created_at: string;
 };
 
+export type FuelEfficiencyStats = {
+  total_cost: number;
+  total_volume: number;
+  average_km_per_litre: number | null;
+  max_km_per_litre: number | null;
+  min_km_per_litre: number | null;
+  last_km_per_litre: number | null;
+};
+
 export type VehicleHistoryData = {
   vehicle_name: string;
   front_tire_pressure_solo: number | null;
@@ -46,7 +55,7 @@ export type VehicleHistoryData = {
   air_fills: AirFill[];
   fuel_fillups: FuelFill[];
   maintenance_records: MaintenanceRecord[];
-  average_mileage_km_per_litre: Record<string, number>;
+  fuel_efficiency: Record<string, FuelEfficiencyStats>;
 };
 
 export type SaveTirePressurePayload = {

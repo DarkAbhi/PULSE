@@ -428,6 +428,16 @@ func TestFuelFillupsAndEconomy(t *testing.T) {
 		}
 		var out map[string]any
 		_ = json.NewDecoder(rec.Body).Decode(&out)
+		stats := out["fuel_efficiency"].(map[string]any)["petrol"].(map[string]any)
+		for field, want := range map[string]float64{
+			"total_cost": 200, "total_volume": 50,
+			"average_km_per_litre": 15, "max_km_per_litre": 15,
+			"min_km_per_litre": 15, "last_km_per_litre": 15,
+		} {
+			if stats[field] != want {
+				t.Errorf("%s: got %v, want %v", field, stats[field], want)
+			}
+		}
 		averages := out["average_mileage_km_per_litre"].(map[string]any)
 		if averages["petrol"].(float64) != 15.0 {
 			t.Errorf("expected average mileage to be 15.0, got %v", averages["petrol"])
@@ -555,6 +565,10 @@ func TestHistoryAndDeleteLogs(t *testing.T) {
 		}
 		if len(out["fuel_fillups"].([]any)) != 1 {
 			t.Errorf("expected 1 fuel fillup, got %v", out["fuel_fillups"])
+		}
+		stats := out["fuel_efficiency"].(map[string]any)["petrol"].(map[string]any)
+		if stats["total_cost"] != float64(100) || stats["total_volume"] != float64(10) || stats["average_km_per_litre"] != nil || stats["last_km_per_litre"] != nil {
+			t.Errorf("unexpected single-fill stats: %v", stats)
 		}
 		if len(out["average_mileage_km_per_litre"].(map[string]any)) != 0 {
 			t.Errorf("expected no mileage with one fill-up, got %v", out["average_mileage_km_per_litre"])

@@ -52,9 +52,10 @@ func (r *Repository) GetVisit(ctx context.Context, userID, id int64) (visitDetai
 		return visitDetail{}, err
 	}
 	item := visitDetail{
-		visitListItem:   visitListItem{ID: row.ID, CreatedAt: row.CreatedAt.Time.UTC()},
-		DurationSeconds: row.DurationSeconds,
-		CaloriesBurned:  row.CaloriesBurned,
+		visitListItem:        visitListItem{ID: row.ID, CreatedAt: row.CreatedAt.Time.UTC()},
+		DurationSeconds:      row.DurationSeconds,
+		CaloriesBurned:       row.CaloriesBurned,
+		SyncedFromAppleWatch: row.SyncedFromAppleWatch,
 	}
 	if row.StartTime.Valid {
 		start := row.StartTime.Time.UTC()

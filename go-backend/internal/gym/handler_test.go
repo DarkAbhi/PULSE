@@ -65,13 +65,15 @@ func TestGetWorkoutDetails(t *testing.T) {
 		detail := decode(linkedVisitID)
 		if detail.ID != linkedVisitID || detail.StartTime == nil || !detail.StartTime.Equal(start) ||
 			detail.EndTime == nil || !detail.EndTime.Equal(end) || detail.DurationSeconds == nil ||
-			*detail.DurationSeconds != 3600.125 || detail.CaloriesBurned == nil || *detail.CaloriesBurned != 0 {
+			*detail.DurationSeconds != 3600.125 || detail.CaloriesBurned == nil || *detail.CaloriesBurned != 0 ||
+			!detail.SyncedFromAppleWatch {
 			t.Fatalf("unexpected detail: %+v", detail)
 		}
 	})
 	t.Run("manual visit has no metrics", func(t *testing.T) {
 		detail := decode(manualVisitID)
-		if detail.ID != manualVisitID || detail.StartTime != nil || detail.EndTime != nil || detail.DurationSeconds != nil || detail.CaloriesBurned != nil {
+		if detail.ID != manualVisitID || detail.StartTime != nil || detail.EndTime != nil ||
+			detail.DurationSeconds != nil || detail.CaloriesBurned != nil || detail.SyncedFromAppleWatch {
 			t.Fatalf("unexpected manual detail: %+v", detail)
 		}
 	})
@@ -88,7 +90,7 @@ func TestGetWorkoutDetails(t *testing.T) {
 			t.Fatal(err)
 		}
 		detail := decode(linkedVisitID)
-		if detail.StartTime != nil || detail.EndTime != nil || detail.DurationSeconds != nil || detail.CaloriesBurned != nil {
+		if detail.StartTime != nil || detail.EndTime != nil || detail.DurationSeconds != nil || detail.CaloriesBurned != nil || detail.SyncedFromAppleWatch {
 			t.Fatalf("other user's metrics exposed: %+v", detail)
 		}
 	})

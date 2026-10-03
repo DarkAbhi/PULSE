@@ -4913,6 +4913,9 @@ const docTemplate = `{
                 },
                 "start_time": {
                     "type": "string"
+                },
+                "synced_from_apple_watch": {
+                    "type": "boolean"
                 }
             }
         },

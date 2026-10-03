@@ -69,10 +69,11 @@ type GymVisit struct {
 }
 type FitnessWorkoutDetail struct {
 	GymVisit
-	StartTime       *time.Time `json:"start_time"`
-	EndTime         *time.Time `json:"end_time"`
-	DurationSeconds *float64   `json:"duration_seconds"`
-	CaloriesBurned  *float64   `json:"calories_burned"`
+	StartTime            *time.Time `json:"start_time"`
+	EndTime              *time.Time `json:"end_time"`
+	DurationSeconds      *float64   `json:"duration_seconds"`
+	CaloriesBurned       *float64   `json:"calories_burned"`
+	SyncedFromAppleWatch bool       `json:"synced_from_apple_watch"`
 }
 
 type FitnessStatCard struct {

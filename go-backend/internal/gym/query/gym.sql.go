@@ -163,7 +163,8 @@ func (q *Queries) GetCatalogExercise(ctx context.Context, id string) (GetCatalog
 
 const getVisit = `-- name: GetVisit :one
 SELECT g.id, g.created_at, w.start_time, w.end_time,
-    w.duration_seconds, w.calories_burned
+    w.duration_seconds, w.calories_burned,
+    CASE WHEN w.id IS NULL THEN FALSE ELSE TRUE END AS synced_from_apple_watch
 FROM gym_visits AS g
 LEFT JOIN fitness_workouts AS w ON w.id = g.fitness_workout_id AND w.user_id = g.user_id
 WHERE g.id = $1 AND g.user_id = $2
@@ -175,12 +176,13 @@ type GetVisitParams struct {
 }
 
 type GetVisitRow struct {
-	ID              int64
-	CreatedAt       pgtype.Timestamptz
-	StartTime       pgtype.Timestamptz
-	EndTime         pgtype.Timestamptz
-	DurationSeconds *float64
-	CaloriesBurned  *float64
+	ID                   int64
+	CreatedAt            pgtype.Timestamptz
+	StartTime            pgtype.Timestamptz
+	EndTime              pgtype.Timestamptz
+	DurationSeconds      *float64
+	CaloriesBurned       *float64
+	SyncedFromAppleWatch bool
 }
 
 func (q *Queries) GetVisit(ctx context.Context, arg GetVisitParams) (GetVisitRow, error) {
@@ -193,6 +195,7 @@ func (q *Queries) GetVisit(ctx context.Context, arg GetVisitParams) (GetVisitRow
 		&i.EndTime,
 		&i.DurationSeconds,
 		&i.CaloriesBurned,
+		&i.SyncedFromAppleWatch,
 	)
 	return i, err
 }

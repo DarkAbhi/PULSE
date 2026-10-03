@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Watch } from "lucide-react";
 import DeleteVisitButton from "./delete-visit-button";
 import DeleteExerciseButton from "./delete-exercise-button";
 import AddExerciseForm from "./add-exercise-form";
@@ -36,6 +36,7 @@ type GymVisit = {
   end_time: string | null;
   duration_seconds: number | null;
   calories_burned: number | null;
+  synced_from_apple_watch: boolean;
 };
 
 const indiaTimeZone = "Asia/Kolkata";
@@ -151,6 +152,12 @@ export default async function GymVisitPage({ params }: PageProps) {
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             {workoutTitle}
           </h1>
+          {visit?.synced_from_apple_watch && (
+            <p className="mt-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Watch aria-hidden="true" className="h-4 w-4" />
+              Synced from Apple Watch
+            </p>
+          )}
           <p className="mt-3 text-base text-muted-foreground">
             Capture what you did, one exercise and set at a time.
           </p>

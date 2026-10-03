@@ -28,6 +28,38 @@ export type CatalogSearch = {
   candidates: (CatalogExercise & { match_type: string })[];
 };
 
+export type SavedExercise = {
+  id: number;
+  name: string;
+  exercise_catalog_id: string | null;
+  catalog_exercise: CatalogExercise | null;
+  sets: { id: number; set_number: number; reps: number; weight: number | null }[];
+};
+
+export async function updateExercise(
+  visitID: string, exerciseID: number, name: string,
+  sets: { reps: number; weight: number | null }[],
+  exerciseCatalogID: string | null, rememberAlias: boolean
+) {
+  const cookieStore = await cookies();
+  try {
+    const response = await fetch(`${apiBaseURL}/api/gym-visits/${visitID}/exercises/${exerciseID}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Cookie: cookieStore.toString() },
+      body: JSON.stringify({ name, sets, exercise_catalog_id: exerciseCatalogID, remember_alias: rememberAlias }),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      return { ok: false, error: body.error ?? "We couldn't update this exercise. Please try again." };
+    }
+    revalidatePath(`/fitness/${visitID}`);
+    revalidatePath("/fitness");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "We couldn't reach the server. Please try again." };
+  }
+}
+
 export async function searchExercises(name: string): Promise<{
   result?: CatalogSearch;
   error?: string;

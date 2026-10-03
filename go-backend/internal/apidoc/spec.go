@@ -659,6 +659,23 @@ func operation28() {}
 // @Router /api/gym-visits/{id}/exercises/{exerciseID} [delete]
 func deleteVisitExercise() {}
 
+// updateVisitExercise documents PUT /api/gym-visits/{id}/exercises/{exerciseID}.
+// @Summary Edit a saved exercise, catalogue match, and sets
+// @Description Replaces the exercise name, sets, and catalogue link. A null exercise_catalog_id clears the match. The saved exercise ID is preserved.
+// @Tags gym
+// @Accept json
+// @Param id path integer true "Workout id" minimum(1)
+// @Param exerciseID path integer true "Saved exercise id" minimum(1)
+// @Param body body ExerciseInput true "Replacement exercise"
+// @Security SessionBearer
+// @Success 204 "No Content"
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 404 {string} string
+// @Failure 500 {object} Error
+// @Router /api/gym-visits/{id}/exercises/{exerciseID} [put]
+func updateVisitExercise() {}
+
 // operation29 documents GET /api/gym-visits/{id}/exercises.
 // @Summary List visit exercises
 // @Tags gym

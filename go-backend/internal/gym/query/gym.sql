@@ -56,6 +56,17 @@ WHERE e.id = sqlc.arg(exercise_id)
 -- name: VisitExists :one
 SELECT EXISTS(SELECT 1 FROM gym_visits WHERE id=$1 AND user_id=$2);
 
+-- name: UpdateExercise :one
+UPDATE gym_visit_exercises AS e
+SET name = sqlc.arg(name), exercise_catalog_id = sqlc.narg(exercise_catalog_id), updated_at = NOW()
+FROM gym_visits AS v
+WHERE e.id = sqlc.arg(exercise_id) AND e.gym_visit_id = sqlc.arg(visit_id)
+  AND v.id = e.gym_visit_id AND v.user_id = sqlc.arg(user_id)
+RETURNING e.id;
+
+-- name: DeleteExerciseSets :exec
+DELETE FROM gym_exercise_sets WHERE gym_visit_exercise_id=$1;
+
 -- name: ListExercises :many
 SELECT e.id, e.name, e.exercise_catalog_id, c.name AS catalog_name, c.equipment, c.data
 FROM gym_visit_exercises e

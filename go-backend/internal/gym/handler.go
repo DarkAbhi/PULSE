@@ -48,6 +48,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/gym-visits/{id}/exercises", h.CreateVisitExercise)
 	r.Post("/gym-visits/{id}/exercises/batch", h.CreateVisitExercises)
 	r.Delete("/gym-visits/{id}/exercises/{exerciseID}", h.DeleteVisitExercise)
+	r.Put("/gym-visits/{id}/exercises/{exerciseID}", h.UpdateVisitExercise)
 }
 
 func (h *Handler) SearchExerciseCatalog(w http.ResponseWriter, r *http.Request) {
@@ -198,6 +199,34 @@ func (h *Handler) DeleteVisitExercise(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.service.DeleteExercise(r.Context(), userID, visitID, exerciseID); err != nil {
+		writeError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) UpdateVisitExercise(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
+	visitID, ok := webutil.ParseID(w, r)
+	if !ok {
+		return
+	}
+	exerciseID, err := strconv.ParseInt(chi.URLParam(r, "exerciseID"), 10, 64)
+	if err != nil || exerciseID <= 0 {
+		webutil.BadRequest(w, "invalid exercise id")
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	defer r.Body.Close()
+	var body createExerciseBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		webutil.BadRequest(w, "invalid json")
+		return
+	}
+	if err := h.service.UpdateExercise(r.Context(), userID, visitID, exerciseID, body); err != nil {
 		writeError(w, r, err)
 		return
 	}

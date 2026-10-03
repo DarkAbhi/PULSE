@@ -2,9 +2,9 @@
 
 import Button from "../../components/design-system/button";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useId, useState, useTransition } from "react";
 import { Plus } from "lucide-react";
-import { addExercise, searchExercises, type CatalogSearch } from "./actions";
+import { addExercise, updateExercise, searchExercises, type CatalogSearch, type SavedExercise } from "./actions";
 
 type ExerciseSet = {
   reps: string;
@@ -17,18 +17,27 @@ function newSet(): ExerciseSet {
 
 interface AddExerciseFormProps {
   visitID: string;
+  exercise?: SavedExercise;
+  onSaved?: () => void;
+  onCancel?: () => void;
 }
 
-export default function AddExerciseForm({ visitID }: AddExerciseFormProps) {
-  const [exerciseName, setExerciseName] = useState("");
-  const [searchName, setSearchName] = useState("");
-  const [sets, setSets] = useState<ExerciseSet[]>([newSet()]);
+export default function AddExerciseForm({ visitID, exercise, onSaved, onCancel }: AddExerciseFormProps) {
+  const fieldID = useId();
+  const [exerciseName, setExerciseName] = useState(exercise?.name ?? "");
+  const [searchName, setSearchName] = useState(exercise?.exercise_catalog_id ? "" : exercise?.name ?? "");
+  const [sets, setSets] = useState<ExerciseSet[]>(exercise?.sets.map((set) => ({
+    reps: String(set.reps), weight: set.weight === null ? "" : String(set.weight),
+  })) ?? [newSet()]);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
-  const [catalog, setCatalog] = useState<CatalogSearch | null>(null);
-  const [catalogID, setCatalogID] = useState<string | null>(null);
+  const [catalog, setCatalog] = useState<CatalogSearch | null>(exercise?.catalog_exercise ? {
+    query: exercise.name, match_type: "exact", exercise_catalog_id: exercise.exercise_catalog_id,
+    candidates: [{ ...exercise.catalog_exercise, match_type: "exact" }],
+  } : null);
+  const [catalogID, setCatalogID] = useState<string | null>(exercise?.exercise_catalog_id ?? null);
   const [rememberAlias, setRememberAlias] = useState(false);
-  const [searching, setSearching] = useState(false);
+  const [searching, setSearching] = useState(Boolean(exercise?.name && !exercise.exercise_catalog_id));
   const [searchError, setSearchError] = useState("");
 
   useEffect(() => {
@@ -84,10 +93,13 @@ export default function AddExerciseForm({ visitID }: AddExerciseFormProps) {
     }));
 
     startTransition(async () => {
-      const res = await addExercise(visitID, exerciseName, payloadSets, catalogID, rememberAlias);
+      const res = exercise
+        ? await updateExercise(visitID, exercise.id, exerciseName, payloadSets, catalogID, rememberAlias)
+        : await addExercise(visitID, exerciseName, payloadSets, catalogID, rememberAlias);
       if (!res.ok) {
         setError(res.error ?? "We couldn't save that exercise.");
       } else {
+        if (exercise) { onSaved?.(); return; }
         changeName("", true);
         setSets([newSet()]);
       }
@@ -96,18 +108,18 @@ export default function AddExerciseForm({ visitID }: AddExerciseFormProps) {
 
   return (
     <aside className="h-fit rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-      <h2 className="text-xl font-semibold text-foreground">Add an exercise</h2>
+      <h2 className="text-xl font-semibold text-foreground">{exercise ? "Edit exercise" : "Add an exercise"}</h2>
       <form className="mt-6 space-y-5" onSubmit={handleSave}>
         <div>
           <label
             className="mb-2 block text-sm font-medium text-muted-foreground"
-            htmlFor="exercise-name"
+            htmlFor={fieldID}
           >
             Exercise name
           </label>
           <input
             className="w-full rounded-lg border border-border bg-background text-foreground px-4 py-3 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15"
-            id="exercise-name"
+            id={fieldID}
             maxLength={100}
             onChange={(event) => changeName(event.target.value)}
             placeholder="e.g. Barbell squat"
@@ -128,7 +140,7 @@ export default function AddExerciseForm({ visitID }: AddExerciseFormProps) {
                 : "Choose the right equipment and variation, or keep your own name."}
             </p>
             {catalog.candidates.map((exercise) => <label key={exercise.id} className="flex cursor-pointer items-start gap-2 rounded-lg border border-border p-3">
-              <input type="radio" name="catalog-exercise" checked={catalogID === exercise.id}
+              <input type="radio" name={`catalog-${fieldID}`} checked={catalogID === exercise.id}
                 disabled={isPending} onChange={() => selectMatch(exercise.id, exercise.name)}
                 onClick={() => selectMatch(exercise.id, exercise.name)} />
               <span>{exercise.name}<span className="block text-xs text-muted-foreground">
@@ -136,11 +148,13 @@ export default function AddExerciseForm({ visitID }: AddExerciseFormProps) {
               </span></span>
             </label>)}
             <label className="flex items-center gap-2">
-              <input type="radio" name="catalog-exercise" checked={catalogID === null}
+              <input type="radio" name={`catalog-${fieldID}`} checked={catalogID === null}
                 disabled={isPending} onChange={() => { setCatalogID(null); setRememberAlias(false); }} />
               Keep my own name
             </label>
             <p className="text-xs text-muted-foreground">Selecting a match fills its name. You can edit the name afterward.</p>
+            {catalogID && <Button type="button" variant="tertiary" size="sm" disabled={isPending}
+              onClick={() => changeName(exerciseName, true)}>Search for another match</Button>}
           </fieldset>}
           {selected && <>
             <details className="rounded-lg bg-muted p-3">
@@ -176,6 +190,7 @@ export default function AddExerciseForm({ visitID }: AddExerciseFormProps) {
                     updateSet(index, "reps", event.target.value)
                   }
                   required
+                  disabled={isPending}
                   type="number"
                   value={set.reps}
                 />
@@ -185,6 +200,7 @@ export default function AddExerciseForm({ visitID }: AddExerciseFormProps) {
                 <input
                   className="mt-1 w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                   min="0"
+                  disabled={isPending}
                   onChange={(event) =>
                     updateSet(index, "weight", event.target.value)
                   }
@@ -194,12 +210,18 @@ export default function AddExerciseForm({ visitID }: AddExerciseFormProps) {
                   value={set.weight}
                 />
               </label>
+              {exercise && sets.length > 1 && <Button type="button" variant="tertiary" size="sm"
+                disabled={isPending} className="col-span-3 justify-self-end"
+                onClick={() => setSets((current) => current.filter((_, i) => i !== index))}>
+                Remove set {index + 1}
+              </Button>}
             </div>
           ))}
           <Button variant="tertiary" size="md"
             icon={<Plus className="h-4 w-4" />}
             onClick={() => setSets((currentSets) => [...currentSets, newSet()])}
             type="button"
+            disabled={isPending || sets.length >= 20}
           >
             Add another set
           </Button>
@@ -215,8 +237,10 @@ export default function AddExerciseForm({ visitID }: AddExerciseFormProps) {
           disabled={isPending || searching}
           type="submit"
         >
-          {isPending ? "Saving exercise…" : "Save exercise"}
+          {isPending ? "Saving exercise…" : exercise ? "Save changes" : "Save exercise"}
         </Button>
+        {onCancel && <Button type="button" variant="secondary" size="lg" className="w-full"
+          disabled={isPending} onClick={onCancel}>Cancel</Button>}
       </form>
     </aside>
   );

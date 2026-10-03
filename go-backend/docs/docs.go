@@ -624,6 +624,77 @@ const docTemplate = `{
             }
         },
         "/api/gym-visits/{id}/exercises/{exerciseID}": {
+            "put": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Replaces the exercise name, sets, and catalogue link. A null exercise_catalog_id clears the match. The saved exercise ID is preserved.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "gym"
+                ],
+                "summary": "Edit a saved exercise, catalogue match, and sets",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Workout id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Saved exercise id",
+                        "name": "exerciseID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Replacement exercise",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.ExerciseInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "security": [
                     {

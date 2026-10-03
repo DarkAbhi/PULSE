@@ -82,6 +82,41 @@ func (r *Repository) DeleteExercise(ctx context.Context, userID, visitID, exerci
 func (r *Repository) HasVisit(ctx context.Context, userID, id int64) (bool, error) {
 	return r.queries.VisitExists(ctx, query.VisitExistsParams{ID: id, UserID: userID})
 }
+
+func (r *Repository) UpdateExercise(
+	ctx context.Context, userID, visitID, exerciseID int64, body createExerciseBody,
+) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	q := r.queries.WithTx(tx)
+	if _, err := q.UpdateExercise(ctx, query.UpdateExerciseParams{
+		ExerciseID: exerciseID, VisitID: visitID, UserID: userID,
+		Name: body.Name, ExerciseCatalogID: body.ExerciseCatalogID,
+	}); err != nil {
+		return err
+	}
+	if err := q.DeleteExerciseSets(ctx, exerciseID); err != nil {
+		return err
+	}
+	for i, set := range body.Sets {
+		if _, err := q.CreateSet(ctx, query.CreateSetParams{
+			GymVisitExerciseID: exerciseID, SetNumber: int16(i + 1), Reps: int16(set.Reps), Weight: set.Weight,
+		}); err != nil {
+			return err
+		}
+	}
+	if body.RememberAlias {
+		if err := q.RememberExerciseAlias(ctx, query.RememberExerciseAliasParams{
+			UserID: userID, NormalizedAlias: normalizeExerciseName(body.Name), ExerciseCatalogID: *body.ExerciseCatalogID,
+		}); err != nil {
+			return err
+		}
+	}
+	return tx.Commit(ctx)
+}
 func (r *Repository) ListExercises(ctx context.Context, visitID int64) ([]exerciseDTO, error) {
 	rows, err := r.queries.ListExercises(ctx, visitID)
 	if err != nil {

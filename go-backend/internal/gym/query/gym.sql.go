@@ -121,6 +121,15 @@ func (q *Queries) DeleteExercise(ctx context.Context, arg DeleteExerciseParams) 
 	return result.RowsAffected(), nil
 }
 
+const deleteExerciseSets = `-- name: DeleteExerciseSets :exec
+DELETE FROM gym_exercise_sets WHERE gym_visit_exercise_id=$1
+`
+
+func (q *Queries) DeleteExerciseSets(ctx context.Context, gymVisitExerciseID int64) error {
+	_, err := q.db.Exec(ctx, deleteExerciseSets, gymVisitExerciseID)
+	return err
+}
+
 const deleteVisit = `-- name: DeleteVisit :execrows
 DELETE FROM gym_visits WHERE id=$1 AND user_id=$2
 `
@@ -477,6 +486,36 @@ func (q *Queries) SearchExerciseCatalog(ctx context.Context, arg SearchExerciseC
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateExercise = `-- name: UpdateExercise :one
+UPDATE gym_visit_exercises AS e
+SET name = $1, exercise_catalog_id = $2, updated_at = NOW()
+FROM gym_visits AS v
+WHERE e.id = $3 AND e.gym_visit_id = $4
+  AND v.id = e.gym_visit_id AND v.user_id = $5
+RETURNING e.id
+`
+
+type UpdateExerciseParams struct {
+	Name              string
+	ExerciseCatalogID *string
+	ExerciseID        int64
+	VisitID           int64
+	UserID            int64
+}
+
+func (q *Queries) UpdateExercise(ctx context.Context, arg UpdateExerciseParams) (int64, error) {
+	row := q.db.QueryRow(ctx, updateExercise,
+		arg.Name,
+		arg.ExerciseCatalogID,
+		arg.ExerciseID,
+		arg.VisitID,
+		arg.UserID,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const visitExists = `-- name: VisitExists :one

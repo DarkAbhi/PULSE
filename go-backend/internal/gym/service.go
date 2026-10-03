@@ -28,6 +28,7 @@ type store interface {
 	GetVisit(context.Context, int64, int64) (visitDetail, error)
 	DeleteVisit(context.Context, int64, int64) (bool, error)
 	DeleteExercise(context.Context, int64, int64, int64) (bool, error)
+	UpdateExercise(context.Context, int64, int64, int64, createExerciseBody) error
 	HasVisit(context.Context, int64, int64) (bool, error)
 	ListExercises(context.Context, int64) ([]exerciseDTO, error)
 	CreateExercises(context.Context, int64, int64, []createExerciseBody) ([]exerciseDTO, error)
@@ -116,6 +117,25 @@ func (s *Service) DeleteExercise(ctx context.Context, userID, visitID, exerciseI
 	}
 	if !ok {
 		return ErrExerciseNotFound
+	}
+	return nil
+}
+
+func (s *Service) UpdateExercise(ctx context.Context, userID, visitID, exerciseID int64, body createExerciseBody) error {
+	if err := validateExercise(&body); err != nil {
+		return err
+	}
+	// An explicit null clears the saved match; updates never infer a replacement.
+	if body.ExerciseCatalogID != nil {
+		if err := s.resolveExercise(ctx, userID, &body); err != nil {
+			return err
+		}
+	}
+	if err := s.store.UpdateExercise(ctx, userID, visitID, exerciseID, body); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrExerciseNotFound
+		}
+		return fmt.Errorf("update gym exercise: %w", err)
 	}
 	return nil
 }

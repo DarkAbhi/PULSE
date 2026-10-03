@@ -1286,6 +1286,54 @@ paths:
       summary: Delete a saved exercise and its sets from a workout
       tags:
       - gym
+    put:
+      consumes:
+      - application/json
+      description: Replaces the exercise name, sets, and catalogue link. A null exercise_catalog_id
+        clears the match. The saved exercise ID is preserved.
+      parameters:
+      - description: Workout id
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Saved exercise id
+        in: path
+        minimum: 1
+        name: exerciseID
+        required: true
+        type: integer
+      - description: Replacement exercise
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.ExerciseInput'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Edit a saved exercise, catalogue match, and sets
+      tags:
+      - gym
   /api/gym-visits/{id}/exercises/batch:
     post:
       consumes:

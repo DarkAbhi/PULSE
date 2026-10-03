@@ -4,9 +4,10 @@ import Link from "next/link";
 import { ArrowLeft, Watch } from "lucide-react";
 import DeleteVisitButton from "./delete-visit-button";
 import DeleteExerciseButton from "./delete-exercise-button";
+import EditExerciseButton from "./edit-exercise-button";
 import AddExerciseForm from "./add-exercise-form";
 import { formatDuration } from "./format-duration.mjs";
-import type { CatalogExercise } from "./actions";
+import type { SavedExercise } from "./actions";
 
 export const metadata = {
   title: "Fitness Workout | Life Tracker",
@@ -15,19 +16,6 @@ export const metadata = {
 const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
   "http://localhost:8080";
-
-type SavedExercise = {
-  id: number;
-  name: string;
-  exercise_catalog_id: string | null;
-  catalog_exercise: CatalogExercise | null;
-  sets: Array<{
-    id: number;
-    set_number: number;
-    reps: number;
-    weight: number | null;
-  }>;
-};
 
 type GymVisit = {
   id: number;
@@ -215,6 +203,7 @@ export default async function GymVisitPage({ params }: PageProps) {
                     </h2>
                     <DeleteExerciseButton visitID={visitID} exerciseID={exercise.id} exerciseName={exercise.name} />
                   </div>
+                  <EditExerciseButton visitID={visitID} exercise={exercise} />
                   {exercise.catalog_exercise && <div className="mt-2 text-sm text-muted-foreground">
                     <p>{exercise.catalog_exercise.name} · {exercise.catalog_exercise.equipment ?? "Equipment unspecified"}</p>
                     <p className="mt-1">{exercise.catalog_exercise.data.primaryMuscles.join(", ")}</p>

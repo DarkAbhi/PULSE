@@ -11,6 +11,11 @@ import Dialog, { DialogAction, DialogActions } from "../../components/design-sys
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
 type Category = (typeof categories)[number];
 const apiBaseURL = "";
+const attachmentDateFormatter = new Intl.DateTimeFormat("en-IN", {
+  timeZone: "Asia/Kolkata",
+  dateStyle: "medium",
+  timeStyle: "medium",
+});
 
 const localDate = (value?: string) =>
   value ? new Date(value).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
@@ -34,6 +39,10 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
   async function uploadAttachment(file: File) {
     if (!record) return;
     setError("");
+    if (file.size === 0 || file.size > 10 * 1024 * 1024) {
+      setError("Choose a file between 1 byte and 10 MB.");
+      return;
+    }
     setIsUploading(true);
     const formData = new FormData();
     formData.append("file", file);
@@ -91,8 +100,14 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
             {isUploading ? "Uploading…" : "Upload file"}
             <input className="sr-only" disabled={isUploading} type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAttachment(file); event.currentTarget.value = ""; }} />
           </label>
-          <p className="mt-2 text-xs text-muted-foreground">Files are stored privately in your configured S3 bucket. Maximum 10 MB per file.</p>
-          {attachments.length > 0 && <ul className="mt-3 space-y-2">{attachments.map((attachment) => <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm" key={attachment.id}><a className="font-medium text-primary hover:underline" href={`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments/${attachment.id}`}>{attachment.file_name}</a><Button variant="destructiveOutline" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</Button></li>)}</ul>}
+          <p className="mt-2 text-xs text-muted-foreground">Each upload is saved privately with a unique filename. Your original filename is kept for display and downloads. Maximum 10 MB per file.</p>
+          {attachments.length > 0 && <ul className="mt-3 space-y-2">{attachments.map((attachment) => <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm" key={attachment.id}>
+            <div className="min-w-0">
+              <a className="break-all font-medium text-primary hover:underline" href={`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments/${attachment.id}`}>{attachment.file_name}</a>
+              <p className="mt-1 text-xs text-muted-foreground">Uploaded <time dateTime={attachment.created_at}>{attachmentDateFormatter.format(new Date(attachment.created_at))} IST</time> · {Math.max(1, Math.round(attachment.size_bytes / 1024))} KB</p>
+            </div>
+            <Button variant="destructiveOutline" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</Button>
+          </li>)}</ul>}
         </>}
       </section>
       {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}

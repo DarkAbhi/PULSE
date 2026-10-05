@@ -138,14 +138,21 @@ func (h *Handler) CreateMaintenanceAttachment(w http.ResponseWriter, r *http.Req
 		webutil.ServerError(w, err)
 		return
 	}
-	key := fmt.Sprintf("garage/user-%d/vehicle-%d/maintenance-%d/%s-%s", user.ID, vehicleID, recordID, uuid.NewString(), fileName)
+	storageFileName := maintenanceAttachmentFileName(fileName, time.Now())
+	key := fmt.Sprintf(
+		"garage/user-%d/vehicle-%d/maintenance-%d/%s",
+		user.ID,
+		vehicleID,
+		recordID,
+		storageFileName,
+	)
 	_, err = store.client.PutObject(r.Context(), &s3.PutObjectInput{
 		Bucket:             aws.String(store.bucket),
 		Key:                aws.String(key),
 		Body:               file,
 		ContentLength:      aws.Int64(header.Size),
 		ContentType:        aws.String(contentType),
-		ContentDisposition: aws.String("attachment; filename=\"" + fileName + "\""),
+		ContentDisposition: aws.String(mime.FormatMediaType("attachment", map[string]string{"filename": fileName})),
 	})
 	if err != nil {
 		webutil.ServerError(w, err)
@@ -279,6 +286,18 @@ func (h *Handler) ownsMaintenanceRecord(ctx context.Context, recordID, vehicleID
 		return false, fmt.Errorf("check maintenance record ownership: %w", err)
 	}
 	return isOwned, nil
+}
+
+// maintenanceAttachmentFileName uses UTC upload time and a UUID, retaining only the original extension.
+func maintenanceAttachmentFileName(originalName string, uploadedAt time.Time) string {
+	uploadedAt = uploadedAt.UTC()
+	return fmt.Sprintf(
+		"%s_%03d_%s%s",
+		uploadedAt.Format("20060102_150405"),
+		uploadedAt.Nanosecond()/int(time.Millisecond),
+		uuid.NewString(),
+		filepath.Ext(originalName),
+	)
 }
 
 func parseMaintenanceRouteID(r *http.Request, key string) (int64, error) {

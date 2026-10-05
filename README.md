@@ -8,6 +8,35 @@ It pairs a Go API with a Next.js web app for fitness, meals, finances, vehicle c
 See the [backend guide](go-backend/README.md) for local Go
 development, configuration, architecture, migrations, tests, and API docs.
 
+### Platform version
+
+[`release.json`](release.json) is the source of truth for the **Pulse platform
+release**. Its `version` uses semantic versioning (for example `0.1.0`), and
+`releasedAt` is an optional ISO 8601 release timestamp. Leave the date `null`
+for an unreleased version; the Profile → About Pulse card always displays the
+frontend build timestamp in India time.
+
+Change this file once per release, then rebuild and deploy **all four services
+from the same checkout** with `make deploy`. Images carry their own copy, so an
+old deployment continues to report its actual version. Rebuilding only one
+service can leave versions different; a common manifest does not make separate
+deployments atomic.
+
+- Frontend: Profile → About Pulse, with the existing brand logo.
+- Go and Rust: `GET /api/version` returns the same release manifest.
+- MCP: discovery reports the platform version as server metadata.
+
+For local development, run Go and Next.js from their component directories;
+they read the parent manifest. Go also accepts `PULSE_RELEASE_FILE` for binaries
+started elsewhere. Rust includes the manifest at compilation; rebuild it after
+changing the version. Restart Next.js and MCP after changing the manifest.
+The development Compose stack mounts the manifest for Go and Next.js.
+
+Docker builds now use the repository root as context, e.g.
+`docker build -f rust-backend/Dockerfile .`. The `package.json` and `Cargo.toml`
+versions remain package-manager metadata; application version displays and APIs
+use only `release.json`.
+
 ### Pre-commit checks
 
 Install [pre-commit](https://pre-commit.com/#install), Go, Rust, Node.js 24,

@@ -2,6 +2,7 @@
 
 import json
 import os
+from pathlib import Path
 from datetime import date, datetime, timedelta, timezone
 from typing import TypedDict
 from http.cookies import SimpleCookie
@@ -12,7 +13,11 @@ from urllib.parse import urlencode
 from mcp.server import MCPServer
 
 
-mcp = MCPServer("pulse")
+_release_path = Path("/release.json")
+if not _release_path.exists():
+    _release_path = Path(__file__).resolve().parent.parent / "release.json"
+_release = json.loads(_release_path.read_text())
+mcp = MCPServer("pulse", version=_release["version"])
 _session_token = None
 _india_time = timezone(timedelta(hours=5, minutes=30))
 

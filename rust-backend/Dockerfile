@@ -1,8 +1,9 @@
 FROM rust:1.98.1-bookworm AS build
 ENV RUSTUP_TOOLCHAIN=1.98.1
 WORKDIR /app
-COPY Cargo.toml Cargo.lock rust-toolchain.toml ./
-COPY src ./src
+COPY rust-backend/Cargo.toml rust-backend/Cargo.lock rust-backend/rust-toolchain.toml ./
+COPY release.json /release.json
+COPY rust-backend/src ./src
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/target \
     cargo build --release --locked && \

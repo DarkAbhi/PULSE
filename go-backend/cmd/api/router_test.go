@@ -145,3 +145,35 @@ func TestWorkoutAndRemovedActivityEndpoints(t *testing.T) {
 		t.Fatalf("gym_visits count = %d, err = %v", count, err)
 	}
 }
+
+func TestPulseVersion(t *testing.T) {
+	manifest, err := filepath.Abs("../../../release.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected, err := os.ReadFile(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pool, err := pgxpool.New(context.Background(), "postgres://localhost/pulse")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	t.Setenv("PULSE_RELEASE_FILE", manifest)
+	router := (&API{DB: pool}).Router()
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/version", nil))
+	if rec.Code != http.StatusOK || rec.Body.String() != string(expected) {
+		t.Fatalf("version code=%d body=%s", rec.Code, rec.Body.String())
+	}
+	if rec.Header().Get("Content-Type") != "application/json" {
+		t.Fatal("version must return JSON")
+	}
+	t.Setenv("PULSE_RELEASE_FILE", filepath.Join(t.TempDir(), "missing.json"))
+	rec = httptest.NewRecorder()
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/version", nil))
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("missing manifest code=%d", rec.Code)
+	}
+}

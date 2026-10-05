@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -71,6 +73,7 @@ func (a *API) Router() http.Handler {
 
 	// All application APIs under /api
 	r.Route("/api", func(api chi.Router) {
+		api.Get("/version", pulseVersion)
 		if a.Auth != nil {
 			a.Auth.RegisterRoutes(api)
 		}
@@ -134,4 +137,23 @@ func cors(allowedOrigins []string) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// pulseVersion reports the platform release shipped with this service.
+func pulseVersion(w http.ResponseWriter, r *http.Request) {
+	path := os.Getenv("PULSE_RELEASE_FILE")
+	if path == "" {
+		path = "/release.json"
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			path = "../release.json"
+		}
+	}
+	data, err := os.ReadFile(path)
+	if err != nil || !json.Valid(data) {
+		http.Error(w, "release metadata unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Write(data)
 }

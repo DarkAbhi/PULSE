@@ -41,12 +41,20 @@ pub fn router(state: AppState) -> Router {
 
     Router::<AppState>::new()
         .route("/healthz", get(liveness))
+        .route("/api/version", get(pulse_version))
         .route("/readyz", get(readyz))
         .route("/api/fitness-summary", get(fitness_summary))
         .merge(fitness_writes)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .with_state(state)
+}
+
+async fn pulse_version() -> Json<Value> {
+    Json(
+        serde_json::from_str(include_str!("../../../release.json"))
+            .expect("release.json must contain valid JSON"),
+    )
 }
 
 async fn liveness() -> Json<Value> {
@@ -100,7 +108,11 @@ mod tests {
                 .unwrap()
         });
 
+        let release: serde_json::Value =
+            serde_json::from_str(include_str!("../../../release.json")).unwrap();
+        let release_body = release.to_string();
         for (path, status, body) in [
+            ("/api/version", "200 OK", release_body.as_str()),
             ("/healthz", "200 OK", "{\"status\":\"ok\"}"),
             (
                 "/readyz",

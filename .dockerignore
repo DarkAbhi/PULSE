@@ -4,3 +4,13 @@
 .venv
 .git
 .gitignore
+# Root build context: omit local dependencies, outputs, and secrets.
+**/node_modules
+**/.next
+**/target
+**/.env*
+**/__pycache__
+**/tsconfig.tsbuildinfo
+.agents
+.idea
+.DS_Store

@@ -6,6 +6,7 @@ import ThemeSettings from "./theme-settings";
 import LogoutButton from "./logout-button";
 import ChangePasswordButton from "./change-password-button";
 import APIKeys from "./api-keys";
+import AboutPulse from "./about-pulse";
 
 export const metadata = {
   title: "Profile | PULSE",
@@ -99,6 +100,8 @@ export default async function ProfilePage() {
           <ThemeSettings />
 
           <APIKeys />
+
+          <AboutPulse />
 
           <LogoutButton />
         </section>

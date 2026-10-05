@@ -11,7 +11,8 @@ from unittest.mock import patch
 class LifeTrackerMCPTest(unittest.TestCase):
     def test_tools_use_fixed_endpoints_and_require_write_confirmation(self):
         class FakeMCP:
-            def __init__(self, _name):
+            def __init__(self, _name, *, version):
+                self.version = version
                 self.tools = []
 
             def tool(self):
@@ -31,6 +32,9 @@ class LifeTrackerMCPTest(unittest.TestCase):
             spec.loader.exec_module(server)
 
         self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles", "search_exercises", "add_exercises_to_workout"])
+        self.assertEqual(server.mcp.version,
+                         json.loads(Path(__file__).resolve().parent.parent.joinpath("release.json").read_text())["version"])
+
         calls = []
         login_count = 0
 

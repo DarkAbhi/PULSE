@@ -2,8 +2,8 @@ services:
   migrate-dev:
     profiles: ["dev"]
     build:
-      context: ./go-backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: go-backend/Dockerfile
     environment:
       DB_HOSTNAME: ${DB_HOSTNAME}
       DB_PORT: ${DB_PORT:-5432}
@@ -27,6 +27,7 @@ services:
       '
     volumes:
       - ./go-backend:/app
+      - ./release.json:/release.json:ro
       - go_build_cache:/go/pkg/mod
       - go_tools:/go/bin
     environment:
@@ -58,7 +59,8 @@ services:
   rust-backend-dev:
     profiles: ["dev"]
     build:
-      context: ./rust-backend
+      context: .
+      dockerfile: rust-backend/Dockerfile
     environment:
       DATABASE_URL: postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOSTNAME}:${DB_PORT:-5432}/${DB_NAME}?sslmode=${RUST_DB_SSLMODE:-disable}
       PORT: ${RUST_PORT:-8083}
@@ -81,6 +83,7 @@ services:
     command: sh -lc "npm ci || npm i && npm run dev"
     volumes:
       - ./life-tracker-frontend:/app
+      - ./release.json:/release.json:ro
       - web_node_modules:/app/node_modules
     environment:
       NODE_ENV: development

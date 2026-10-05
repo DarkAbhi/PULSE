@@ -25,7 +25,7 @@ export default function ThemeSettings() {
     <div className="mt-6 w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8 text-left">
       <h2 className="text-lg font-semibold text-foreground mb-1">Theme Settings</h2>
       <p className="text-xs text-muted-foreground mb-6">
-        Choose how Life Tracker looks on your device.
+        Choose how PULSE looks on your device.
       </p>
       <div className="grid grid-cols-3 gap-3">
         {options.map(({ value, label, Icon }) => (

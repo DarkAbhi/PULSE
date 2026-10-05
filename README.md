@@ -1,6 +1,10 @@
-# Life tracker
+# PULSE
 
-Life Tracker is a personal-data application with a Go API and a Next.js web app.
+<img src="docs/logo.png" alt="PULSE logo" width="96" />
+
+PULSE is a private personal-data hub for keeping the moving parts of everyday life in one place.
+It pairs a Go API with a Next.js web app for fitness, meals, finances, vehicle care, and more.
+
 See the [backend guide](go-backend/README.md) for local Go
 development, configuration, architecture, migrations, tests, and API docs.
 

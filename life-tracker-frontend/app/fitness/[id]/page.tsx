@@ -10,7 +10,7 @@ import { formatDuration } from "./format-duration.mjs";
 import type { SavedExercise } from "./actions";
 
 export const metadata = {
-  title: "Fitness Workout | Life Tracker",
+  title: "Fitness Workout | PULSE",
 };
 
 const apiBaseURL =

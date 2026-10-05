@@ -2,7 +2,7 @@
 
 ## 1. Feature Overview
 
-The Vehicle Garage is a personal vehicle-management area inside Life Tracker. It gives a user one place to register vehicles, record recurring vehicle-care events, and review the operating and financial history of each vehicle.
+The Vehicle Garage is a personal vehicle-management area inside PULSE. It gives a user one place to register vehicles, record recurring vehicle-care events, and review the operating and financial history of each vehicle.
 
 The feature is organized around two screens:
 

@@ -12,7 +12,7 @@ from urllib.parse import urlencode
 from mcp.server import MCPServer
 
 
-mcp = MCPServer("life-tracker")
+mcp = MCPServer("pulse")
 _session_token = None
 _india_time = timezone(timedelta(hours=5, minutes=30))
 
@@ -43,7 +43,7 @@ def _login(base):
     with urlopen(request, timeout=10) as response:
         cookies = SimpleCookie(response.headers.get("Set-Cookie", ""))
     if "life_session" not in cookies:
-        raise ValueError("Life Tracker login did not return a session cookie")
+        raise ValueError("PULSE login did not return a session cookie")
     return cookies["life_session"].value
 
 
@@ -77,7 +77,7 @@ def get_workout_today() -> str:
     """Check if I worked out today (India time). Read-only; returns visited and optional visit ID."""
     result = _get("/api/workout/today")
     if not isinstance(result, dict) or not isinstance(result.get("visited"), bool):
-        raise ValueError("Invalid workout response from Life Tracker")
+        raise ValueError("Invalid workout response from PULSE")
     return json.dumps(result)
 
 
@@ -88,7 +88,7 @@ def get_vehicles() -> str:
     if not isinstance(result, list) or not all(
         isinstance(item, dict) and isinstance(item.get("name"), str) for item in result
     ):
-        raise ValueError("Invalid vehicle response from Life Tracker")
+        raise ValueError("Invalid vehicle response from PULSE")
     return json.dumps(result)
 
 
@@ -103,7 +103,7 @@ def search_exercises(names: list[str]) -> str:
     for name in names:
         result = _get("/api/exercise-catalog?" + urlencode({"q": name.strip()}))
         if not isinstance(result, dict) or not isinstance(result.get("candidates"), list):
-            raise ValueError("Invalid exercise catalogue response from Life Tracker")
+            raise ValueError("Invalid exercise catalogue response from PULSE")
         results.append(result)
     return json.dumps(results)
 
@@ -150,17 +150,17 @@ def add_exercises_to_workout(exercises: list[ExerciseInput], confirmed: bool = F
             raise ValueError("workout_date must be a valid date in YYYY-MM-DD format") from None
         visits = _get("/api/gym-visits")
         if not isinstance(visits, list):
-            raise ValueError("Invalid gym visit list from Life Tracker")
+            raise ValueError("Invalid gym visit list from PULSE")
         matches = []
         for visit in visits:
             if not isinstance(visit, dict) or type(visit.get("id")) is not int or not isinstance(visit.get("created_at"), str):
-                raise ValueError("Invalid gym visit list from Life Tracker")
+                raise ValueError("Invalid gym visit list from PULSE")
             try:
                 created_at = datetime.fromisoformat(visit["created_at"].replace("Z", "+00:00"))
                 if created_at.tzinfo is None:
                     raise ValueError
             except ValueError:
-                raise ValueError("Invalid gym visit date from Life Tracker") from None
+                raise ValueError("Invalid gym visit date from PULSE") from None
             if created_at.astimezone(_india_time).date() == target:
                 matches.append(visit["id"])
         if not matches:

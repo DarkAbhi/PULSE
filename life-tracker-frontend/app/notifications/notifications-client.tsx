@@ -49,7 +49,7 @@ export default function NotificationsClient({ notifications }: NotificationsClie
           <div>
             <p className="text-sm font-semibold tracking-[0.18em] text-primary">NOTIFICATIONS</p>
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Notification center</h1>
-            <p className="mt-3 text-base text-muted-foreground">Stay in the loop across every part of your life tracker.</p>
+            <p className="mt-3 text-base text-muted-foreground">Stay in the loop across every part of PULSE.</p>
           </div>
           <Button variant="destructiveOutline" size="lg"
             className="shrink-0"

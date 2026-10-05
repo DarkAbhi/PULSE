@@ -6,7 +6,7 @@ import AddVehicleButton from "./add-vehicle-button";
 import VehiclesList from "./vehicles-list";
 
 export const metadata = {
-  title: "Garage | Life Tracker",
+  title: "Garage | PULSE",
 };
 
 const apiBaseURL =
@@ -67,7 +67,7 @@ export default async function GaragePage() {
               <ArrowLeft className="h-4 w-4" /> Dashboard
             </Link>
             <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-primary uppercase">
-              Life Tracker
+              PULSE
             </p>
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Garage

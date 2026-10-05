@@ -8,7 +8,7 @@ import ChangePasswordButton from "./change-password-button";
 import APIKeys from "./api-keys";
 
 export const metadata = {
-  title: "Profile | Life Tracker",
+  title: "Profile | PULSE",
 };
 
 const apiBaseURL =

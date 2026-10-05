@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import FitnessCalendar, { type FitnessOverview } from "./fitness-calendar";
 
 export const metadata = {
-  title: "Fitness | Life Tracker",
+  title: "Fitness | PULSE",
 };
 
 const apiBaseURL =

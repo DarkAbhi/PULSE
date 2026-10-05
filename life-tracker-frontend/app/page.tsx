@@ -74,7 +74,7 @@ export default function Home() {
       <section className="w-full max-w-md rounded-2xl bg-card border border-border p-8 shadow-xl sm:p-10">
         <div className="mb-8">
           <p className="mb-2 text-sm font-semibold tracking-wide text-primary">
-            LIFE TRACKER
+            PULSE
           </p>
           <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">

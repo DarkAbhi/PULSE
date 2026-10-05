@@ -7,7 +7,7 @@ import { HorizonSummary } from "../dashboard/financial-horizon-card";
 import type { TransactionPage } from "./actions";
 
 export const metadata = {
-  title: "Financial Horizon | Life Tracker",
+  title: "Financial Horizon | PULSE",
 };
 
 const apiBaseURL =

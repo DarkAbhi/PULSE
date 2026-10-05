@@ -4,7 +4,7 @@ import MealPlanClient from "./meal-plan-client";
 import { MealPlan, MealTime } from "./actions";
 
 export const metadata = {
-  title: "Meal Plan | Life Tracker",
+  title: "Meal Plan | PULSE",
 };
 
 const apiBaseURL =

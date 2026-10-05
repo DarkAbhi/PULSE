@@ -33,7 +33,7 @@ export default function GreetingHeader({
   return (
     <div>
       <p className="text-sm font-semibold tracking-[0.18em] text-primary">
-        LIFE TRACKER
+        PULSE
       </p>
       <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
         {greeting}, {displayName || username}.

@@ -2,7 +2,7 @@
 
 ## 1. Feature Overview
 
-The Meal Plan is a personal daily and weekly planning tool inside Life Tracker. It lets a user organize meals by date and time of day, mark meals as consumed, and customize the meal-time ranges that appear in the planner.
+The Meal Plan is a personal daily and weekly planning tool inside PULSE. It lets a user organize meals by date and time of day, mark meals as consumed, and customize the meal-time ranges that appear in the planner.
 
 The feature is presented as one weekly planner at `/meal-plan`. The page combines:
 

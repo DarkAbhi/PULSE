@@ -10,7 +10,7 @@ import FinancialHorizonCard, { HorizonSummary } from "./financial-horizon-card";
 import { AppNotification } from "../components/notification-list";
 
 export const metadata = {
-  title: "Dashboard | Life Tracker",
+  title: "Dashboard | PULSE",
 };
 
 const apiBaseURL =

@@ -132,7 +132,7 @@ export default async function DashboardPage() {
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-semibold text-foreground">Garage</h3>
-                    <p className="truncate text-xs text-muted-foreground">Vehicles & upkeep</p>
+                    <p className="truncate text-xs text-muted-foreground">Vehicles, fuel & maintenance</p>
                   </div>
                 </div>
                 <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />

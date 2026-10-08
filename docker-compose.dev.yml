@@ -121,6 +121,10 @@ services:
     depends_on:
       - backend-dev
 
+  alloy:
+    environment:
+      LOG_ENVIRONMENT: development
+
   prometheus:
     ports: !override
       - "127.0.0.1:19090:9090"

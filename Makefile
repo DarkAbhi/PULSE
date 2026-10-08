@@ -60,7 +60,7 @@ docker-version:
 
 # ----- DEV -----
 dev:
-	$(DEV_COMPOSE) up -d --build --remove-orphans backend-dev rust-backend-dev cloudflared-dev web-dev prometheus grafana jaeger
+	$(DEV_COMPOSE) up -d --build --remove-orphans backend-dev rust-backend-dev cloudflared-dev web-dev prometheus grafana jaeger loki alloy
 
 dev-down:
 	$(DEV_COMPOSE) down --remove-orphans
@@ -92,10 +92,10 @@ dev-version:
 
 # ----- Observability & Monitoring -----
 monitoring-logs:
-	@$(PROD_COMPOSE) logs -f --tail=100 prometheus grafana jaeger
+	@$(PROD_COMPOSE) logs -f --tail=100 prometheus grafana jaeger loki alloy
 
 dev-monitoring-logs:
-	@$(DEV_COMPOSE) logs -f --tail=100 prometheus grafana jaeger
+	@$(DEV_COMPOSE) logs -f --tail=100 prometheus grafana jaeger loki alloy
 
 # ----- Module tests -----
 .PHONY: test test-report go-test rust-test frontend-test mcp-test seed-test

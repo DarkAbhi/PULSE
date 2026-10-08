@@ -111,6 +111,7 @@ services:
       LIFE_BACKEND_BASE_URL: http://backend:8080
       MCP_BACKEND_USERNAME: ${MCP_BACKEND_USERNAME:-}
       MCP_BACKEND_PASSWORD: ${MCP_BACKEND_PASSWORD:-}
+      PYTHONUNBUFFERED: "1"
     ports:
       - "127.0.0.1:18082:8000"
     restart: unless-stopped
@@ -145,6 +146,32 @@ services:
       - ./monitoring/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
+      - loki
+
+  loki:
+    profiles: ["prod", "dev"]
+    image: grafana/loki:3.7.8
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/config.yml"]
+    volumes:
+      - ./monitoring/loki/config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+
+  alloy:
+    profiles: ["prod", "dev"]
+    image: grafana/alloy:v1.20.1
+    restart: unless-stopped
+    user: "0:0"
+    command: ["run", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
+    environment:
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME}
+      LOG_ENVIRONMENT: production
+    volumes:
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy_data:/var/lib/alloy/data
+    depends_on:
+      - loki
 
   jaeger:
     profiles: ["prod", "dev"]
@@ -154,3 +181,7 @@ services:
       - "127.0.0.1:16686:16686"
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+
+volumes:
+  loki_data:
+  alloy_data:

@@ -15,7 +15,7 @@ The root modules and shared files are:
 | [`rust-backend/`](rust-backend/README.md) | Rust API for Apple fitness rings and workout imports, using the shared PostgreSQL database. |
 | [`life-tracker-frontend/`](life-tracker-frontend/README.md) | Next.js web app and server-side forwarding of browser API requests to the Go backend. |
 | [`hermes-mcp/`](hermes-mcp/README.md) | MCP server that connects Hermes to gym and garage data and workout tools through the Go API. |
-| [`monitoring/`](monitoring/) | Prometheus metrics and alerts, Grafana dashboards, and provisioning configuration. |
+| [`monitoring/`](monitoring/) | Prometheus metrics and alerts, Loki log storage, Alloy collection, Grafana dashboards, and provisioning. |
 | [`maestro/`](maestro/) | UI test flows for login, profile, and garage screens. |
 | [`docs/`](docs/) | Shared feature documentation and branding assets. |
 | [`Makefile`](Makefile) | Commands to build, deploy, inspect, and migrate the Docker Compose stacks. |
@@ -136,6 +136,58 @@ ports, use SSH port forwarding.
 | Grafana | `http://localhost:3103` | `http://localhost:3101` |
 | Jaeger UI | `http://localhost:16687` | `http://localhost:16686` |
 
+## Browser logs
+
+Run `make dev` locally or `make up` on the production host. Open the matching
+Grafana URL above and sign in as `admin` with that environment's
+`GRAFANA_ADMIN_PASSWORD`. Under **Dashboards → Life Backend → Service Logs**,
+select one or more services, enter optional search text, and choose a time
+range. The dashboard refreshes every five seconds.
+
+When adding logging to an already-running stack, restart Grafana once after
+starting the stack so it loads the new data source: use the matching Compose
+command from the Makefile followed by `restart grafana`.
+
+For live streaming, open **Explore**, select **Loki**, use the query builder
+to select a `service` (or open the logs panel's menu and select **Explore**),
+then click **Live**. Pause and resume without leaving the browser. Explore
+also lets you download query results as TXT, JSON, or CSV; exports are limited
+to the returned query results.
+
+Alloy collects Docker stdout/stderr, including Go, Rust, production Hermes, Next.js
+`npm run dev` output, production Next.js output, and monitoring/tunnel logs.
+It does not collect browser console logs or application files outside Docker's
+log stream. Hermes runs only in production. Development tunnel logs come from
+`cloudflared-dev`, which creates the temporary random URL; production tunnel
+logs come from `cloudflared`.
+
+Development (`life-dev`) and production (`life-prod`) have separate Loki and
+Alloy containers, networks, and project-scoped named volumes. Each collector
+filters by its Compose project, so logs stay separate even on the same Docker
+host. The upstream Loki/Alloy images are pinned and shared; their running
+instances and data are separate. Keep using the Make commands (or their exact
+`--project-name` equivalents) to preserve this separation.
+
+Loki keeps collected logs for seven days, with background deletion after
+expiry. Named volumes preserve history across container replacement and
+`make down`/`make dev-down`; `docker compose down -v` deletes that history.
+Old logs already removed by Docker cannot be recovered. Filesystem storage
+is intended for this single-host setup; monitor disk space as log volume grows.
+Loki retention does not change Docker's own log rotation settings.
+
+Loki and Alloy publish no host ports. Grafana stays bound to localhost and
+uses its existing login. On a laptop, access production through
+`ssh -N -L 3101:127.0.0.1:3101 <homelab-host>`, then open
+`http://localhost:3101`. No public tunnel is required. If exposing Grafana
+through Cloudflare later, protect it with Cloudflare Access and keep Grafana
+authentication enabled.
+
+Docker Desktop on macOS and Windows must use Linux containers; Alloy reads
+the Docker API socket inside its Linux VM, rather than host log-file paths.
+The socket mount is marked read-only, but this does **not** restrict Docker
+API permissions: treat Alloy as a trusted privileged collector. Logs may
+contain sensitive data, so restrict Grafana access and avoid logging secrets.
+
 ## Make commands
 
 Run these commands from the repository root. Production commands use the
@@ -155,7 +207,7 @@ files with `.env.dev`.
 | `make logs` | Follow the last 200 log lines from all production services. |
 | `make backend-logs` | Follow the last 200 log lines from the Go backend. |
 | `make web-logs` | Follow the last 200 log lines from the web app. |
-| `make monitoring-logs` | Follow the last 100 log lines from production Prometheus, Grafana, and Jaeger. |
+| `make monitoring-logs` | Follow the last 100 log lines from production Prometheus, Grafana, Jaeger, Loki, and Alloy. |
 
 ### Production migrations
 
@@ -177,7 +229,7 @@ and database configuration.
 | `make dev-down` | Stop and remove development containers, including orphaned containers. |
 | `make dev-logs` | Follow the last 200 log lines from the development Go and Rust APIs and web app. |
 | `make dev-tunnel-url` | Show the active Cloudflare tunnel URL for the development Rust API. |
-| `make dev-monitoring-logs` | Follow the last 100 log lines from development Prometheus, Grafana, and Jaeger. |
+| `make dev-monitoring-logs` | Follow the last 100 log lines from development Prometheus, Grafana, Jaeger, Loki, and Alloy. |
 
 ### Development migrations
 

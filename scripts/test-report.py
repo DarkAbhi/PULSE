@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parent.parent
 REPORT = ROOT / "test-results"
 MODULES = {
-    "go": ("Go backend", "go-backend", ["go", "test", "-json", "-count=1", "-tags=integration", "./..."]),
+    "go": ("Go backend", "go-backend", ["go", "test", "-json", "-race", "-count=1", "-shuffle=on", "-tags=integration", "-timeout=20m", "./..."]),
     "rust": ("Rust backend", "rust-backend", ["cargo", "test", "--locked", "--workspace", "--all-features", "--", "--test-threads=1"]),
     "frontend": ("Frontend", "life-tracker-frontend", ["node", "--test", "--test-reporter=junit"]),
     "mcp": ("Hermes MCP", ".", [sys.executable, __file__, "--python", "hermes-mcp", "test_*.py", "mcp"]),

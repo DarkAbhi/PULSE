@@ -239,7 +239,8 @@ Open that file in a browser after the command finishes. The report shows:
 
 The report is generated even if a suite fails or a runner cannot start, and the
 command returns a nonzero exit code on failure. Expected error logs do not mark
-a passing test as failed. Go tests are uncached and include parent tests and
+a passing test as failed. Go tests use the CI race detector, shuffled order,
+and 20-minute timeout. They are uncached and include parent tests and
 subtests, both of which count as results. Python subtest failures appear under
 their parent test. Rust uses stable Rust and runs cases serially within its
 module to measure elapsed time from live test output; modules still run in

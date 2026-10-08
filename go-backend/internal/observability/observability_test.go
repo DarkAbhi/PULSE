@@ -156,6 +156,8 @@ func TestPprofBasicAuth(t *testing.T) {
 }
 
 func TestMetricsEndpoint(t *testing.T) {
+	// Counter vectors expose no series until label values are initialized.
+	HTTPRequestsTotal.WithLabelValues(http.MethodGet, "/metrics-test", "200")
 	handler := MetricsHandler()
 	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	rec := httptest.NewRecorder()

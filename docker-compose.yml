@@ -136,7 +136,7 @@ services:
     image: grafana/grafana:latest
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3101:3000"
+      - "${GRAFANA_BIND_ADDRESS:-127.0.0.1}:3101:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?Set a Grafana admin password}

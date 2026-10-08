@@ -117,14 +117,44 @@ prints the generated HTTPS URL, which can change when the tunnel restarts.
 
 Plain HTTP does not encrypt passwords or session cookies. Restrict access to
 trusted clients and use HTTPS for public access. Monitoring, the Go API, and
-MCP host ports bind to loopback. To view production Grafana remotely, forward
+MCP host ports bind to loopback by default. To view production Grafana remotely, forward
 its port with `ssh -L 3101:127.0.0.1:3101 <server>` and open
-`http://localhost:3101` locally.
+`http://localhost:3101` locally, or configure Tailscale access below.
+
+### Grafana over Tailscale
+
+Grafana binds to `127.0.0.1` by default, so it cannot be reached through the
+Docker host's Tailscale IP. Pulse's web port binds to all interfaces, which is
+why the web app can be reached through Tailscale without additional settings.
+
+On the production Docker host, set `GRAFANA_BIND_ADDRESS` in `.env` to that
+host's Tailscale IPv4 address (from `tailscale ip -4`). For example:
+
+```dotenv
+GRAFANA_BIND_ADDRESS=100.115.134.90
+```
+
+Recreate just Grafana to apply the port binding; a container restart alone
+does not apply changed port mappings:
+
+```sh
+docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod up -d --no-deps grafana
+```
+
+Open `http://100.115.134.90:3101/` from a device on the same tailnet and sign
+in with the existing Grafana account. This binds Grafana only to the specified
+Tailscale IP; the localhost URL and SSH forwarding above apply when using the
+default binding. Tailscale must be running with that IP before Grafana starts,
+and tailnet access rules must allow TCP port 3101.
+
+Development keeps its existing localhost binding on port 3103;
+`GRAFANA_BIND_ADDRESS` applies only to production.
 
 ## Service URLs
 
 These URLs are for access on the Docker host. For remote access to loopback
-ports, use SSH port forwarding.
+ports, use SSH port forwarding. If `GRAFANA_BIND_ADDRESS` is set, use that
+address instead of `localhost` for production Grafana.
 
 | Service | Development | Production |
 | --- | --- | --- |
@@ -175,10 +205,11 @@ Old logs already removed by Docker cannot be recovered. Filesystem storage
 is intended for this single-host setup; monitor disk space as log volume grows.
 Loki retention does not change Docker's own log rotation settings.
 
-Loki and Alloy publish no host ports. Grafana stays bound to localhost and
+Loki and Alloy publish no host ports. Grafana defaults to localhost and
 uses its existing login. On a laptop, access production through
 `ssh -N -L 3101:127.0.0.1:3101 <homelab-host>`, then open
-`http://localhost:3101`. No public tunnel is required. If exposing Grafana
+`http://localhost:3101`, or use the Tailscale binding described above.
+No public tunnel is required. If exposing Grafana
 through Cloudflare later, protect it with Cloudflare Access and keep Grafana
 authentication enabled.
 

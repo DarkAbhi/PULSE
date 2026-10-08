@@ -1,4 +1,4 @@
-// Package main runs the Life Backend HTTP API and database migration commands.
+// Package main runs the PULSE Backend HTTP API and database migration commands.
 package main
 
 import (
@@ -34,9 +34,9 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/vehicle"
 )
 
-// @title Life Backend API
+// @title PULSE Backend API
 // @version 1.0
-// @description REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie.
+// @description REST API for the PULSE Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie.
 // @BasePath /
 // @schemes http https
 // @securityDefinitions.apikey SessionBearer

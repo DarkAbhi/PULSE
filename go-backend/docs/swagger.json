@@ -5,8 +5,8 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "REST API for the Life Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie.",
-        "title": "Life Backend API",
+        "description": "REST API for the PULSE Backend application. Session endpoints accept a Bearer token in Authorization, X-Session-Token, or the life_session cookie; login sets the cookie.",
+        "title": "PULSE Backend API",
         "contact": {},
         "version": "1.0"
     },

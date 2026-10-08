@@ -896,10 +896,10 @@ definitions:
     type: object
 info:
   contact: {}
-  description: REST API for the Life Backend application. Session endpoints accept
+  description: REST API for the PULSE Backend application. Session endpoints accept
     a Bearer token in Authorization, X-Session-Token, or the life_session cookie;
     login sets the cookie.
-  title: Life Backend API
+  title: PULSE Backend API
   version: "1.0"
 paths:
   /api/auth/login:

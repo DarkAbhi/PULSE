@@ -222,10 +222,38 @@ make test
 ```
 
 This runs the Go (including integration-tagged tests), Rust, frontend, Hermes
-MCP, and seed exporter suites in parallel. Every suite finishes even if another
+MCP, and seed/test tooling suites in parallel. Every suite finishes even if another
 fails, and the command exits unsuccessfully if any suite fails. Tests run on
 the host; Go and Rust start their own disposable database containers through
 Docker. The development/production Compose stacks do not need to be running.
+
+### HTML test report
+
+`make test` (or `make test-report`) writes **`test-results/index.html`**.
+Open that file in a browser after the command finishes. The report shows:
+
+- Overall and per-module passed, failed, errored, and skipped counts.
+- Individual test names and durations, searchable by name and filterable by status.
+- Expandable failure messages, assertions, tracebacks/backtraces, and captured output.
+- Full runner logs for each module and `test-results/results.json` for structured results.
+
+The report is generated even if a suite fails or a runner cannot start, and the
+command returns a nonzero exit code on failure. Expected error logs do not mark
+a passing test as failed. Go tests are uncached and include parent tests and
+subtests, both of which count as results. Python subtest failures appear under
+their parent test. Rust uses stable Rust and runs cases serially within its
+module to measure elapsed time from live test output; modules still run in
+parallel. Its failure details include the runner's panic output with backtraces
+enabled. Timings include test setup and cleanup; module times also include builds
+and discovery. No test-reporting packages need to be installed.
+
+The scripts suite includes seed exporter and report checks, plus seed restore
+tests. Seed restore tests are reported as skipped unless `TEST_SEED_DATABASE_URL`
+is set to a disposable PostgreSQL server and `psql` is installed. Browser flows
+and production builds are separate. Report files are ignored by Git and
+replaced by the next run. Individual module commands below retain their normal
+console output; use `make test` for the combined HTML report.
+
 
 Run a module independently from the repository root:
 
@@ -235,7 +263,7 @@ Run a module independently from the repository root:
 | `make rust-test` | Rust backend, including database tests. |
 | `make frontend-test` | Frontend Node tests. |
 | `make mcp-test` | Hermes MCP tests. |
-| `make seed-test` | Seed exporter tests. |
+| `make seed-test` | Seed exporter, seed restore, and report tests; restore tests skip without their test database URL. |
 
 Equivalent direct module commands:
 
@@ -262,8 +290,8 @@ For a frontend test file, run `cd life-tracker-frontend && npm test -- app/profi
 Also run `cd life-tracker-frontend && npm run build` for TypeScript checking and
 the production build.
 
-`make test` covers the module suites above; browser flows, seed restore checks,
-and production builds run separately because they need additional setup.
+`make test` covers the module suites above; browser flows and production builds
+run separately because they need additional setup.
 Maestro browser flows require Maestro, the running Go API and frontend, and a
 separate migrated database with the demo account/data. The flows target
 `http://localhost:3000`; start the frontend on that port and point

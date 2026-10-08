@@ -248,3 +248,5 @@ Cargo.lock
 *.pdb
 
 # End of https://www.toptal.com/developers/gitignore/api/nextjs,rust,go,python
+# Local combined test reports and runner logs
+/test-results/

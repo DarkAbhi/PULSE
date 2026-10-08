@@ -98,10 +98,12 @@ dev-monitoring-logs:
 	@$(DEV_COMPOSE) logs -f --tail=100 prometheus grafana jaeger
 
 # ----- Module tests -----
-.PHONY: test go-test rust-test frontend-test mcp-test seed-test
+.PHONY: test test-report go-test rust-test frontend-test mcp-test seed-test
 
-test:
-	$(MAKE) -j5 -k go-test rust-test frontend-test mcp-test seed-test
+test: test-report
+
+test-report:
+	python3 scripts/test-report.py
 
 go-test:
 	$(MAKE) -C go-backend test-integration
@@ -116,4 +118,4 @@ mcp-test:
 	python3 -m unittest discover -v -s hermes-mcp -p 'test_*.py'
 
 seed-test:
-	python3 -m unittest discover -v -s scripts -p 'test_export_dev_seed.py'
+	python3 -m unittest discover -v -s scripts -p 'test_*.py'

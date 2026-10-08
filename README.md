@@ -5,258 +5,228 @@
 PULSE is a private personal-data hub for keeping the moving parts of everyday life in one place.
 It pairs a Go API with a Next.js web app for fitness, meals, finances, vehicle care, and more.
 
-See the [backend guide](go-backend/README.md) for local Go
-development, configuration, architecture, migrations, tests, and API docs.
+## Project structure
 
-### Platform version
+The root modules and shared files are:
 
-[`release.json`](release.json) is the source of truth for the **Pulse platform
-release**. Its `version` uses semantic versioning (for example `0.1.0`), and
-`releasedAt` is an optional ISO 8601 release timestamp. Leave the date `null`
-for an unreleased version; the Profile → About Pulse card always displays the
-frontend build timestamp in India time.
+| Module or file | Purpose |
+| --- | --- |
+| [`go-backend/`](go-backend/README.md) | Main REST API, authentication, domain services, PostgreSQL migrations, and background reminders. |
+| [`rust-backend/`](rust-backend/README.md) | Rust API for Apple fitness rings and workout imports, using the shared PostgreSQL database. |
+| [`life-tracker-frontend/`](life-tracker-frontend/README.md) | Next.js web app and server-side forwarding of browser API requests to the Go backend. |
+| [`hermes-mcp/`](hermes-mcp/README.md) | MCP server that connects Hermes to gym and garage data and workout tools through the Go API. |
+| [`monitoring/`](monitoring/) | Prometheus metrics and alerts, Grafana dashboards, and provisioning configuration. |
+| [`maestro/`](maestro/) | UI test flows for login, profile, and garage screens. |
+| [`docs/`](docs/) | Shared feature documentation and branding assets. |
+| [`Makefile`](Makefile) | Commands to build, deploy, inspect, and migrate the Docker Compose stacks. |
+| [`docker-compose.yml`](docker-compose.yml), [`docker-compose.dev.yml`](docker-compose.dev.yml) | Production services and development overrides, including Jaeger tracing. |
+| [`.env.example`](.env.example), [`.env.dev.example`](.env.dev.example) | Configuration templates for production and development. |
+| [`release.json`](release.json) | Shared platform version and optional release timestamp used by the frontend, Go and Rust version endpoints, and MCP metadata; update it once per release and rebuild the services together. |
+| [`.pre-commit-config.yaml`](.pre-commit-config.yaml) | Secret scanning and component test checks before commits. |
 
-Change this file once per release, then rebuild and deploy **all four services
-from the same checkout** with `make deploy`. Images carry their own copy, so an
-old deployment continues to report its actual version. Rebuilding only one
-service can leave versions different; a common manifest does not make separate
-deployments atomic.
+## Setup to run
 
-- Frontend: Profile → About Pulse, with the existing brand logo.
-- Go and Rust: `GET /api/version` returns the same release manifest.
-- MCP: discovery reports the platform version as server metadata.
+Install Docker with Docker Compose and Make. Start the Docker daemon and provide
+an external PostgreSQL instance reachable from the containers; these stacks do
+not start PostgreSQL. Use separate databases for development and production.
+Run the following commands from the repository root.
 
-For local development, run Go and Next.js from their component directories;
-they read the parent manifest. Go also accepts `PULSE_RELEASE_FILE` for binaries
-started elsewhere. Rust includes the manifest at compilation; rebuild it after
-changing the version. Restart Next.js and MCP after changing the manifest.
-The development Compose stack mounts the manifest for Go and Next.js.
+### 1. Deploy on development
 
-Docker builds now use the repository root as context, e.g.
-`docker build -f rust-backend/Dockerfile .`. The `package.json` and `Cargo.toml`
-versions remain package-manager metadata; application version displays and APIs
-use only `release.json`.
+1. Create a private development configuration file:
 
-### Pre-commit checks
+   ```sh
+   cp .env.dev.example .env.dev
+   chmod 600 .env.dev
+   ```
 
-Install [pre-commit](https://pre-commit.com/#install), Go, Rust, Node.js 24,
-Python 3, and Docker, then run `pre-commit install` from the repository root.
-Each commit scans staged changes with Gitleaks and runs the Go, Rust,
-Next.js, and Hermes MCP test suites. Run `pre-commit run --all-files` to run
-the checks without committing. The Go tests need a running Docker daemon;
-Rust's database tests also need `TEST_DATABASE_URL` set to a disposable
-PostgreSQL database or they skip themselves.
+2. Edit `.env.dev`. Keep `APP_ENV=development`, fill in the `DB_*` values for
+   your development database, and set `RUST_DB_SSLMODE` for its TLS configuration.
+   Set `GRAFANA_ADMIN_PASSWORD`; add `GEMINI_API_KEY` if you need statement
+   extraction and the optional storage values described below if you need receipts.
+   When PostgreSQL runs on the Docker host, use a hostname reachable from
+   containers rather than `localhost`.
 
-### Setup to run
+3. Apply pending migrations, then start the development services:
 
-On the production host, copy `.env.example` to `.env` and fill in the values.
-For development, copy `.env.dev.example` to `.env.dev` and use a different
-database. The Makefile loads the matching file explicitly
-and uses separate Compose project names (`life-prod` and `life-dev`).
-Keep both files private (`chmod 600 .env` or `chmod 600 .env.dev`).
+   ```sh
+   make dev-migrate-up
+   make dev
+   ```
 
-- `APP_ENV`: `production` in `.env` and `development` in `.env.dev`.
-- `SESSION_COOKIE_SECURE`: set to `false` for direct HTTP access by LAN or
-  Tailscale IP. Set to `true` if you later add HTTPS.
+4. Open `http://localhost:3102`. Go and Next.js reload as their source files
+   change. Use `make dev-logs` to inspect application logs and `make dev-down`
+   to stop the stack. The first migration creates `admin` / `password`; change
+   that password after the first login.
+
+Development uses `.env.dev` and the `life-dev` Compose project. It also starts
+monitoring and a temporary Cloudflare tunnel for Rust; `make dev-tunnel-url`
+prints the generated HTTPS URL, which can change when the tunnel restarts.
+
+### 2. Deploy on production
+
+1. On the production host, create a private configuration file:
+
+   ```sh
+   cp .env.example .env
+   chmod 600 .env
+   ```
+
+2. Edit `.env`. Set `APP_ENV=production`, fill in the production `DB_*` values
+   and `RUST_DB_SSLMODE`, and set `GRAFANA_ADMIN_PASSWORD`. Set
+   `MCP_BACKEND_USERNAME` and `MCP_BACKEND_PASSWORD` to the PULSE account Hermes
+   should use. Set `CLOUDFLARE_TUNNEL_TOKEN` for the named Rust tunnel and route
+   its hostname to `http://rust-backend:8083` (or your configured `RUST_PORT`).
+   Add the optional Gemini and storage settings below as needed.
+
+3. Build and start the production stack:
+
+   ```sh
+   make deploy
+   ```
+
+   Pending Go migrations run before the APIs start. Production uses `.env`
+   and the `life-prod` Compose project.
+
+4. Check the containers and open the web app on the host:
+
+   ```sh
+   make ps
+   ```
+
+   Open `http://localhost:3100`. Browser API requests use `/api` on the same
+   host; Next.js forwards them to the Go backend inside Docker. Use `make logs`
+   to inspect startup failures. On a new database, log in with `admin` /
+   `password` and change the password immediately. See the
+   [MCP guide](hermes-mcp/README.md) to connect Hermes.
+
+### Shared configuration and access
+
+- `SESSION_COOKIE_SECURE`: use `false` for direct HTTP access and `true` when
+  serving the app over HTTPS.
 - `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOSTNAME`, `DB_PORT`, and
-  `DB_SSLMODE`: PostgreSQL database connection details.
-- `RUST_DB_SSLMODE`: database TLS setting for the Rust backend.
-- `GEMINI_API_KEY`: Gemini key used only by the Next.js server action. PDF
-  statements are uploaded to the server for extraction; the key is never put in
-  the browser bundle.
+  `DB_SSLMODE`: PostgreSQL connection settings for Go. `RUST_DB_SSLMODE` sets
+  database TLS behavior for Rust.
+- `GEMINI_API_KEY`: used by the Next.js server action for PDF statement
+  extraction; the key stays out of the browser bundle.
 - Optional Garage receipt storage: set `S3_BUCKET` and `AWS_REGION`, plus
-  standard AWS credentials (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) or
-  run the backend with an IAM role. `S3_ENDPOINT` and `S3_FORCE_PATH_STYLE=true`
-  support S3-compatible storage such as MinIO. These values are backend-only;
-  do not use `NEXT_PUBLIC_` names for credentials.
+  standard AWS credentials or run the backend with an IAM role.
+  `S3_ENDPOINT` and `S3_FORCE_PATH_STYLE=true` support compatible storage such
+  as MinIO. These settings are backend-only; do not use `NEXT_PUBLIC_` names
+  for credentials.
 
-Run the production version using
-
-```
-make deploy
-```
-
-Open `http://<server-LAN-or-Tailscale-IP>:3100`. Browser API requests use
-`/api` on that same host, and Next.js forwards them to the backend inside
-Docker. No browser URL or CORS origin needs to be built into the image. See
-[Service URLs](#service-urls) for the other local endpoints.
-
-The Compose stacks expect PostgreSQL outside this repository. Use separate
-development and production databases. Run `make dev-migrate-up` before
-`make dev`. Production runs pending migrations when `make up` starts; you can
-also run `make docker-migrate-up` explicitly. The first migration creates
-`admin` / `password`; change that password after the first login.
-
-Plain HTTP on a LAN does not encrypt your password or session cookie in
-transit. Tailscale traffic is encrypted; restrict access to trusted clients
-and do not forward port 3100 from your internet router. Prometheus, Grafana,
-and Jaeger listen only on the server's loopback interface. Set
-`GRAFANA_ADMIN_PASSWORD` in `.env` before starting production. To view Grafana
-from another computer, forward its port with
-`ssh -L 3101:127.0.0.1:3101 <server>` and open `http://localhost:3101` in your
-browser.
+Plain HTTP does not encrypt passwords or session cookies. Restrict access to
+trusted clients and use HTTPS for public access. Monitoring, the Go API, and
+MCP host ports bind to loopback. To view production Grafana remotely, forward
+its port with `ssh -L 3101:127.0.0.1:3101 <server>` and open
+`http://localhost:3101` locally.
 
 ## Service URLs
 
-Use `localhost` when running Docker on your computer. When running the
-production stack on another host, replace `localhost` with the server's LAN or
-Tailscale IP where the service is exposed. Monitoring ports are bound to
-loopback and therefore require SSH port forwarding when accessed remotely.
+These URLs are for access on the Docker host. For remote access to loopback
+ports, use SSH port forwarding.
 
-| Service           | Development              | Production                                 | Browser access                                                 |
-| ----------------- | ------------------------ | ------------------------------------------ | -------------------------------------------------------------- |
-| Next.js web app   | `http://localhost:3102`  | `http://<server-LAN-or-Tailscale-IP>:3100` | Open this URL.                                                 |
-| Go API            | `http://localhost:18081` | `http://localhost:18080` on the server     | Loopback only; browser API requests use the web app at `/api`. |
-| Rust API scaffold | `http://localhost:18084` | Cloudflare Rust hostname                   | Tunnel targets `http://rust-backend:8083` by default.          |
-| Prometheus        | `http://localhost:19090` | `http://localhost:9090` on the server      | Open locally, or use SSH port forwarding.                      |
-| Grafana           | `http://localhost:3103`  | `http://localhost:3101` on the server      | Open locally, or use SSH port forwarding.                      |
-| Jaeger UI         | `http://localhost:16687` | `http://localhost:16686` on the server     | Open locally, or use SSH port forwarding.                      |
-
-The migration services are one-shot command-line services and do not expose a
-browser URL.
-
-Development also starts a temporary Cloudflare tunnel for the Rust API. Run
-`make dev-tunnel-url` after `make dev` to see its generated HTTPS URL. It can
-change when the development tunnel restarts; production uses the hostname
-configured on its named Cloudflare tunnel.
+| Service | Development | Production |
+| --- | --- | --- |
+| Next.js web app | `http://localhost:3102` | `http://localhost:3100` |
+| Go API | `http://localhost:18081` | `http://localhost:18080` |
+| Rust API | `http://localhost:18084` | No localhost port; accessed through the configured Cloudflare tunnel. |
+| Hermes MCP | Not started by `make dev`. | `http://localhost:18082/mcp` |
+| Prometheus | `http://localhost:19090` | `http://localhost:9090` |
+| Grafana | `http://localhost:3103` | `http://localhost:3101` |
+| Jaeger UI | `http://localhost:16687` | `http://localhost:16686` |
 
 ## Make commands
 
-Run these commands from the repository root. The production commands use the
-`prod` Docker Compose profile with `.env`. Development commands combine
-`docker-compose.yml` and `docker-compose.dev.yml` with `.env.dev`.
+Run these commands from the repository root. Production commands use the
+`prod` Compose profile with `.env`; development commands combine both Compose
+files with `.env.dev`.
 
 ### Production
 
-| Command                | Description                                                                                   |
-| ---------------------- | --------------------------------------------------------------------------------------------- |
-| `make build`           | Build the production Docker images.                                                           |
-| `make up`              | Build, start, and run the production services in the background. Removes orphaned containers. |
-| `make down`            | Stop and remove the production containers, including orphaned containers.                     |
-| `make restart`         | Stop the production stack and start it again with rebuilt images.                             |
-| `make deploy`          | Build the production images and start the production stack.                                   |
-| `make ps`              | Show the status of production containers.                                                     |
-| `make logs`            | Follow the last 200 log lines from all production services.                                   |
-| `make backend-logs`    | Follow the last 200 log lines from the backend service.                                       |
-| `make web-logs`        | Follow the last 200 log lines from the frontend web service.                                  |
-| `make monitoring-logs` | Follow production Prometheus, Grafana, and Jaeger logs.                                       |
+| Command | Description |
+| --- | --- |
+| `make build` | Build the production Docker images. |
+| `make up` | Build and start production services in the background, applying pending migrations and removing orphaned containers. |
+| `make down` | Stop and remove production containers, including orphaned containers. |
+| `make restart` | Stop the production stack and start it again with rebuilt images. |
+| `make deploy` | Build the production images and start the production stack. |
+| `make ps` | Show the status of production containers. |
+| `make logs` | Follow the last 200 log lines from all production services. |
+| `make backend-logs` | Follow the last 200 log lines from the Go backend. |
+| `make web-logs` | Follow the last 200 log lines from the web app. |
+| `make monitoring-logs` | Follow the last 100 log lines from production Prometheus, Grafana, and Jaeger. |
 
 ### Production migrations
 
-These commands run the migration service using the production Docker image.
+These commands run the one-shot migration service using the production Go image
+and database configuration.
 
-| Command                  | Description                                                                                                                                                    |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `make docker-migrate-up` | Apply all pending database migrations.                                                                                                                         |
-| `make docker-rollback`   | Roll back the most recent database migration.                                                                                                                  |
-| `make docker-steps n=N`  | Apply or roll back `N` migration steps. Use a positive value to apply migrations and a negative value to roll them back, for example `make docker-steps n=-2`. |
-| `make docker-version`    | Display the current database migration version.                                                                                                                |
+| Command | Description |
+| --- | --- |
+| `make docker-migrate-up` | Apply all pending database migrations. |
+| `make docker-rollback` | Roll back the most recent database migration. |
+| `make docker-steps n=N` | Apply `N` migration steps, or roll back with a negative value, such as `make docker-steps n=-2`. |
+| `make docker-version` | Display the current database migration version and dirty state. |
 
 ### Development
 
-| Command                    | Description                                                                                    |
-| -------------------------- | ---------------------------------------------------------------------------------------------- |
-| `make dev`                 | Start the development backend and web services in the background. Removes orphaned containers. |
-| `make dev-down`            | Stop and remove the development services, including orphaned containers.                       |
-| `make dev-logs`            | Follow the last 200 log lines from the development backend and web services.                   |
-| `make dev-tunnel-url`      | Show the active Cloudflare tunnel URL for the development Rust API.                            |
-| `make dev-monitoring-logs` | Follow development Prometheus, Grafana, and Jaeger logs.                                       |
+| Command | Description |
+| --- | --- |
+| `make dev` | Build and start the Go and Rust APIs, web app, Rust tunnel, and monitoring in the background; remove orphaned containers. |
+| `make dev-down` | Stop and remove development containers, including orphaned containers. |
+| `make dev-logs` | Follow the last 200 log lines from the development Go and Rust APIs and web app. |
+| `make dev-tunnel-url` | Show the active Cloudflare tunnel URL for the development Rust API. |
+| `make dev-monitoring-logs` | Follow the last 100 log lines from development Prometheus, Grafana, and Jaeger. |
 
 ### Development migrations
 
-These commands run the `migrate-dev` service using `.env.dev` and the
-`life-dev` Compose project. Production migration commands use `.env` and
-`life-prod`.
+These commands run the one-shot `migrate-dev` service with `.env.dev` and the
+`life-dev` Compose project.
 
-| Command               | Description                                                                                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `make dev-migrate-up` | Apply all pending database migrations.                                                                                                                      |
-| `make dev-rollback`   | Roll back the most recent database migration.                                                                                                               |
-| `make dev-steps n=N`  | Apply or roll back `N` migration steps. Use a positive value to apply migrations and a negative value to roll them back, for example `make dev-steps n=-2`. |
-| `make dev-version`    | Display the current database migration version.                                                                                                             |
+| Command | Description |
+| --- | --- |
+| `make dev-migrate-up` | Apply all pending database migrations. |
+| `make dev-rollback` | Roll back the most recent database migration. |
+| `make dev-steps n=N` | Apply `N` migration steps, or roll back with a negative value, such as `make dev-steps n=-2`. |
+| `make dev-version` | Display the current database migration version and dirty state. |
 
-### Monitoring and service status
+### Go backend
 
-| Command                    | Description                                              |
-| -------------------------- | -------------------------------------------------------- |
-| `make ps`                  | Show the status of the production containers.            |
-| `make monitoring-logs`     | Follow production Prometheus, Grafana, and Jaeger logs.  |
-| `make dev-monitoring-logs` | Follow development Prometheus, Grafana, and Jaeger logs. |
+These commands invoke the [Go backend Makefile](go-backend/Makefile) from the
+repository root. For local Go setup and configuration, see the
+[backend guide](go-backend/README.md).
 
-### Backend SQL queries
+| Command | Description |
+| --- | --- |
+| `make -C go-backend test` | Run the Go test suite. |
+| `make -C go-backend test-integration` | Run tests verbosely with the `integration` build tag. |
+| `make -C go-backend cover` | Run tests and print function coverage. |
+| `make -C go-backend sqlc-generate` | Regenerate SQL query code from migrations and feature SQL files. |
+| `make -C go-backend swagger` | Regenerate Swagger documentation from handler annotations. |
 
-Backend queries and generated sqlc code live together under
-`go-backend/internal/<feature>/query/`. After editing a query or migration, run
-`cd go-backend && make sqlc-generate` and commit the generated files. Generation
-uses the migration files as the schema and does not change the database. Apply
-migrations separately before running the backend.
+Go database tests require a running Docker daemon. Add `VERBOSE=1` to show
+commands for the test and coverage targets. After editing SQL under
+`go-backend/internal/<feature>/query/` or migrations, regenerate and commit
+the sqlc files. Generation does not change the database; apply migrations
+separately before running the backend.
 
-## Project structure
+## Pre-commit checks
 
+Install [pre-commit](https://pre-commit.com/#install), Go, Rust, Node.js 24,
+Python 3, and Docker, then install the hooks from the repository root:
+
+```sh
+pre-commit install
 ```
-life-backend/
-├── .dockerignore
-├── .env.example
-├── .gitignore
-├── LICENSE
-├── Makefile
-├── README.md
-├── docker-compose.dev.yml
-├── docker-compose.yml
-├── go-backend/
-│   ├── .air.toml
-│   ├── Dockerfile
-│   ├── Makefile
-│   ├── cmd/
-│   │   └── api/
-│   │       └── main.go
-│   ├── coverage.out
-│   ├── go.mod
-│   ├── go.sum
-│   ├── internal/
-│   │   ├── auth/
-│   │   ├── db/
-│   │   ├── gym/
-│   │   ├── health/
-│   │   ├── horizon/
-│   │   ├── mealplan/
-│   │   ├── notification/
-│   │   ├── profile/
-│   │   ├── purchase/
-│   │   ├── testhelper/
-│   │   ├── timeutil/
-│   │   ├── vehicle/
-│   │   └── webutil/
-│   ├── migrations/
-│   ├── sqlc.yaml
-├── life-tracker-frontend/
-│   ├── .DS_Store
-│   ├── .gitignore
-│   ├── .next/
-│   ├── Dockerfile
-│   ├── README.md
-│   ├── app/
-│   │   ├── components/
-│   │   ├── dashboard/
-│   │   ├── dialog-preview/
-│   │   ├── favicon.ico
-│   │   ├── financial-horizon/
-│   │   ├── garage/
-│   │   ├── globals.css
-│   │   ├── gym-visits/
-│   │   ├── layout.tsx
-│   │   ├── meal-plan/
-│   │   ├── notifications/
-│   │   ├── page.tsx
-│   │   └── profile/
-│   ├── next-env.d.ts
-│   ├── next.config.ts
-│   ├── node_modules/
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── postcss.config.mjs
-│   ├── public/
-│   ├── services/
-│   ├── tsconfig.json
-│   └── tsconfig.tsbuildinfo
+
+Each commit scans staged changes with Gitleaks and runs the Go, Rust, Next.js,
+and Hermes MCP test suites. To run the checks without committing:
+
+```sh
+pre-commit run --all-files
 ```
+
+Go tests need a running Docker daemon. Rust's database tests need
+`TEST_DATABASE_URL` set to a disposable PostgreSQL database or they skip
+themselves.

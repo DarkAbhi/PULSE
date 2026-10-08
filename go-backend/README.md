@@ -67,9 +67,10 @@ environment. Explicit environment variables take precedence over `.env`.
 Standard AWS credential variables and IAM roles are supported when S3 storage
 is enabled. Never expose those credentials through `NEXT_PUBLIC_*` variables.
 
-## Development commands
+## Make commands
 
-Run these commands from `go-backend/`:
+All targets in this directory's Makefile are listed below. Run them from
+`go-backend/`, or use `make -C go-backend <target>` from the repository root:
 
 | Command | Purpose |
 | --- | --- |
@@ -78,6 +79,11 @@ Run these commands from `go-backend/`:
 | `make cover` | Run tests and print function coverage. |
 | `make sqlc-generate` | Regenerate query code from migrations and feature SQL files. |
 | `make swagger` | Regenerate `docs/` from handler annotations. |
+
+Add `VERBOSE=1` to the test or coverage commands to show the underlying
+commands, for example `make test VERBOSE=1`. The `swagger` and `sqlc-generate`
+targets run their pinned generators through `go run`; no separate generator
+installation is needed.
 
 Database-backed tests require a running Docker daemon. The current tests are
 not separated by build tags, so both test commands require Docker. Generated

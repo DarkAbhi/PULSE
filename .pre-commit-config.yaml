@@ -29,3 +29,9 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: seed-export-tests
+        name: Development seed exporter tests
+        entry: python3 -m unittest discover -s scripts -p test_export_dev_seed.py
+        language: system
+        pass_filenames: false
+        always_run: true

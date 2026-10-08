@@ -3,6 +3,14 @@
 PROD_COMPOSE = docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod
 DEV_COMPOSE = docker compose --env-file .env.dev --project-name life-dev -f docker-compose.yml -f docker-compose.dev.yml --profile dev
 
+.PHONY: dev-seed dev-seed-export
+
+dev-seed:
+	$(DEV_COMPOSE) run --rm seed-dev
+
+dev-seed-export:
+	python3 scripts/export-dev-seed.py
+
 # ----- PROD -----
 build:
 	$(PROD_COMPOSE) build

@@ -14,7 +14,28 @@ services:
     command: ["--migrate-up"]
     restart: "no"
 
+  seed-dev:
+    profiles: ["dev"]
+    image: postgres:17.6
+    depends_on:
+      migrate-dev:
+        condition: service_completed_successfully
+    environment:
+      PGHOST: ${DB_HOSTNAME}
+      PGPORT: ${DB_PORT:-5432}
+      PGUSER: ${DB_USERNAME}
+      PGPASSWORD: ${DB_PASSWORD}
+      PGDATABASE: ${DB_NAME}
+      PGSSLMODE: ${DB_SSLMODE:-require}
+    volumes:
+      - ./go-backend/data/dev-seed.sql:/seed.sql:ro
+    command: ["psql", "-X", "-v", "seed_environment=development", "-f", "/seed.sql"]
+    restart: "no"
+
   backend-dev:
+    depends_on:
+      seed-dev:
+        condition: service_completed_successfully
     image: golang:1.25.1-bookworm
     user: "0:0"
     entrypoint: []
@@ -58,6 +79,9 @@ services:
 
   rust-backend-dev:
     profiles: ["dev"]
+    depends_on:
+      seed-dev:
+        condition: service_completed_successfully
     build:
       context: .
       dockerfile: rust-backend/Dockerfile

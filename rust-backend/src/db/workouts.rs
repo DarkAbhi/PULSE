@@ -70,21 +70,13 @@ pub async fn latest_relevant(pool: &PgPool) -> Result<Vec<FitnessWorkout>, sqlx:
 
 #[cfg(test)]
 mod tests {
-    use sqlx::postgres::PgPoolOptions;
-
     use super::latest_relevant;
     use crate::db::activity_rings;
 
     #[tokio::test]
     async fn summary_selects_latest_strength_run_and_ride() {
-        let Ok(url) = std::env::var("TEST_DATABASE_URL") else {
-            return;
-        };
-        let pool = PgPoolOptions::new()
-            .max_connections(1)
-            .connect(&url)
-            .await
-            .unwrap();
+        let database = crate::testhelper::TestDatabase::start().await;
+        let pool = database.pool.clone();
 
         sqlx::query(
             "CREATE TEMP TABLE fitness_activity_rings (summary_date date, updated_at timestamptz, \

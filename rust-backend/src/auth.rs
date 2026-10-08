@@ -71,14 +71,8 @@ mod tests {
 
     #[tokio::test]
     async fn api_key_maps_to_its_owner_and_revocation_takes_effect() {
-        let Ok(url) = std::env::var("TEST_DATABASE_URL") else {
-            return;
-        };
-        let pool = sqlx::postgres::PgPoolOptions::new()
-            .max_connections(1)
-            .connect(&url)
-            .await
-            .unwrap();
+        let database = crate::testhelper::TestDatabase::start().await;
+        let pool = database.pool.clone();
         sqlx::query("CREATE TEMP TABLE api_keys (user_id bigint, token_hash char(64), revoked_at timestamptz)")
             .execute(&pool)
             .await

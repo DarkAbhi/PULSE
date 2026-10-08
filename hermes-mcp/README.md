@@ -56,3 +56,16 @@ Example after the user confirms the plate-raise match and asks to remember it:
 ```
 
 Existing installations must add `search_exercises` to their tool allowlist above, restart the gateway, and send `/reload-mcp` in Telegram after deploying. Apply database migration 23 before using the new tools. See [catalogue setup](../go-backend/data/exercise-catalog.md).
+
+## Tests
+
+With Python 3.12 installed, run from the repository root:
+
+```sh
+python3 -m unittest discover -v -s hermes-mcp -p 'test_*.py'
+```
+
+Or, from this directory, run `python3 -m unittest -v test_server`.
+Tests mock MCP registration and backend HTTP requests, so they need no installed
+MCP package, database, credentials, or running services. For a live deployment
+check, use the `hermes mcp test pulse` command described above.

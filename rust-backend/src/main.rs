@@ -6,6 +6,9 @@ mod state;
 
 mod db;
 
+#[cfg(test)]
+mod testhelper;
+
 use std::{error::Error, io, net::SocketAddr};
 
 use sqlx::PgPool;

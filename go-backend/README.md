@@ -90,6 +90,18 @@ not separated by build tags, so both test commands require Docker. Generated
 SQL code and Swagger files are committed; regenerate and commit them with their
 source changes.
 
+## Tests
+
+From the repository root, run `make -C go-backend test`, or run `go test ./...`
+from this directory. To test one module, use `go test ./internal/gym` (replace
+`gym` with the package name). For the CI checks, run
+`go test -race -count=1 -shuffle=on -tags=integration -timeout=20m ./...`.
+
+Start Docker first. Tests create disposable PostgreSQL 17.6 containers, apply
+all migrations, and insert their own fixtures; no database URL, running API,
+or manual demo seed is required. Cleanup closes connections and removes the
+containers when tests finish. Docker may pull the image on the first run.
+
 ## Database migrations
 
 The API binary also manages migrations:

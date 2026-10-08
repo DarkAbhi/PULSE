@@ -211,6 +211,68 @@ commands for the test and coverage targets. After editing SQL under
 the sqlc files. Generation does not change the database; apply migrations
 separately before running the backend.
 
+## Running tests locally
+
+Install Go 1.25+, stable Rust, Node.js 24/npm, Python 3.12, and Make, and start
+Docker. Install frontend dependencies once with
+`cd life-tracker-frontend && npm ci`, then run from the repository root:
+
+```sh
+make test
+```
+
+This runs the Go (including integration-tagged tests), Rust, frontend, Hermes
+MCP, and seed exporter suites in parallel. Every suite finishes even if another
+fails, and the command exits unsuccessfully if any suite fails. Tests run on
+the host; Go and Rust start their own disposable database containers through
+Docker. The development/production Compose stacks do not need to be running.
+
+Run a module independently from the repository root:
+
+| Command | Suite |
+| --- | --- |
+| `make go-test` | Go backend, including integration-tagged tests. |
+| `make rust-test` | Rust backend, including database tests. |
+| `make frontend-test` | Frontend Node tests. |
+| `make mcp-test` | Hermes MCP tests. |
+| `make seed-test` | Seed exporter tests. |
+
+Equivalent direct module commands:
+
+| Module | Command | Requirements |
+| --- | --- | --- |
+| Go backend | `make -C go-backend test-integration` | Go 1.25+ and a running Docker daemon. |
+| Rust backend | `cd rust-backend && cargo test --locked --workspace --all-features` | Rust (the crate's stable toolchain) and a running Docker daemon. |
+| Next.js frontend | `cd life-tracker-frontend && npm ci && npm test` | Node.js 24 and npm; no database or running backend. |
+| Hermes MCP (`hermes-mcp/`) | `python3 -m unittest discover -v -s hermes-mcp -p 'test_*.py'` | Python 3.12; tests mock MCP and backend requests, so no credentials or running services are needed. |
+| Seed exporter | `python3 -m unittest discover -v -s scripts -p 'test_export_dev_seed.py'` | Python 3.10+; no database. |
+
+Go tests start temporary PostgreSQL 17.6 containers, apply migrations, and insert
+fixtures as needed. Rust database tests also start temporary PostgreSQL 17.6
+containers automatically for every database test. Each Rust database
+test uses one connection with temporary tables and its own small fixtures;
+containers are removed when the test finishes, including assertion failures.
+Docker may pull the image on the first run. Database setup failures fail the
+suite instead of silently skipping tests. No development database or shared
+demo seed is needed for either backend suite.
+
+For a single Go package, run `cd go-backend && go test ./internal/gym`.
+For a single Rust test, run `cd rust-backend && cargo test summary_selects_latest_strength_run_and_ride`.
+For a frontend test file, run `cd life-tracker-frontend && npm test -- app/profile/copy-api-key.test.mjs`.
+Also run `cd life-tracker-frontend && npm run build` for TypeScript checking and
+the production build.
+
+`make test` covers the module suites above; browser flows, seed restore checks,
+and production builds run separately because they need additional setup.
+Maestro browser flows require Maestro, the running Go API and frontend, and a
+separate migrated database with the demo account/data. The flows target
+`http://localhost:3000`; start the frontend on that port and point
+`INTERNAL_API_BASE_URL` at the Go API. Run `maestro test --headless maestro/`
+from the root. These flows write data: use a disposable database. See the
+[CI browser job](.github/workflows/tests.yml) for the full migration, demo seed,
+and server startup sequence. Seed restore checks separately require `psql`
+and `TEST_SEED_DATABASE_URL`; see [Development seed data](#development-seed-data).
+
 ## Continuous integration
 
 [Tests](.github/workflows/tests.yml) runs on every push and pull request, and
@@ -219,9 +281,8 @@ can also be started manually from GitHub Actions. Its independent jobs run:
 - Every Go package, including `integration`-tagged tests, with race detection
   and uncached, shuffled test runs. The existing test helpers start temporary
   PostgreSQL 17.6 containers and apply all migrations using Docker.
-- All Rust workspace tests with all features enabled. A healthy PostgreSQL
-  17.6 service supplies `TEST_DATABASE_URL`, so database tests execute instead
-  of silently returning. These tests create their own temporary tables.
+- All Rust workspace tests with all features enabled. Database tests start
+  disposable PostgreSQL 17.6 containers and create their own temporary tables.
 - All frontend Node tests through `npm test`, plus TypeScript checks and the
   Next.js production build.
 - All Hermes MCP Python tests and seed exporter tests.
@@ -305,6 +366,5 @@ Hermes MCP, and seed exporter test suites. To run the checks without committing:
 pre-commit run --all-files
 ```
 
-Go tests need a running Docker daemon. Rust's database tests need
-`TEST_DATABASE_URL` set to a disposable PostgreSQL database or they skip
-themselves.
+Go and Rust database tests need a running Docker daemon. Rust always starts
+disposable PostgreSQL containers for its database tests. See [Running tests locally](#running-tests-locally).

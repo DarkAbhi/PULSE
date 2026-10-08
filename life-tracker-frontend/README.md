@@ -34,3 +34,20 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Tests
+
+From this directory, with Node.js 24 and npm installed:
+
+```sh
+npm ci
+npm test
+# Run one test file:
+npm test -- app/profile/copy-api-key.test.mjs
+# Type-check and build:
+npm run build
+```
+
+The Node tests cover frontend utility behavior and need no database or running
+backend. Browser flows are separate; see [Running tests locally](../README.md#running-tests-locally)
+for Maestro setup and commands.

@@ -168,8 +168,8 @@ address instead of `localhost` for production Grafana.
 
 ## Backend and resource metrics
 
-Under **Dashboards → Life Backend → PULSE Backend - Observability & Golden Signals**,
-select Go (`life-backend`), Rust (`rust-backend`), or both. Request rate, error
+Under **Dashboards → PULSE → PULSE Backends — Go & Rust**,
+select **Go backend**, **Rust backend**, or both. Request rate, error
 rate, latency, in-flight requests, and PostgreSQL pool connections are shown
 separately for each backend. Go runtime and pool acquisition wait panels remain
 Go-specific: Rust has no Go runtime, and SQLx does not expose the equivalent
@@ -182,8 +182,8 @@ public API and Cloudflare tunnel. This port has no host publication. Prometheus
 uses the `rust-backend-api` network alias in both development and production,
 independent of `RUST_PORT`.
 
-The same dashboard shows CPU cores used, working-set memory, disk read/write
-throughput, and network traffic for all containers in the matching Compose
+The separate **PULSE System Resources** dashboard shows CPU cores used,
+working-set memory, disk read/write throughput, and network traffic for all containers in the matching Compose
 project, including Go, Rust, Next.js, Hermes (production), tunnels, and monitoring.
 These totals include all processes inside a container. Host panels show overall
 CPU, memory, filesystem capacity, and disk throughput, including activity outside
@@ -206,20 +206,60 @@ unrelated services:
 
 ```sh
 # Development
-docker compose --env-file .env.dev --project-name life-dev -f docker-compose.yml -f docker-compose.dev.yml --profile dev up -d --build --no-deps rust-backend-dev prometheus alloy grafana
+docker compose --env-file .env.dev --project-name life-dev -f docker-compose.yml -f docker-compose.dev.yml --profile dev up -d --build --force-recreate --no-deps rust-backend-dev prometheus alloy grafana
 # Production, on the production host
-docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod up -d --build --no-deps rust-backend prometheus alloy grafana
+docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod up -d --build --force-recreate --no-deps rust-backend prometheus alloy grafana
 ```
 
-Allow a few minutes of traffic for rate and percentile panels to fill. Resource
-exporter and backend scrape-health panels help distinguish idle services from
-failed collection.
+Grafana provisions both dashboards in the **PULSE** folder. Recreate Grafana to
+load the updated provisioning folder. The backend dashboard retains its existing
+UID so saved dashboard links continue to work. The provider identity, Compose
+project names (`life-dev`/`life-prod`), network aliases, and `life_*` metric names
+remain stable to avoid replacing stored data or breaking application routing.
+Prometheus now labels new samples as **Go backend** (`job="go-backend"`) and
+**Rust backend** (`job="rust-backend"`). Older samples keep their original labels;
+the renamed backend selector shows samples collected after this update.
+
+Allow a few minutes of traffic for rate and percentile panels to fill. Host
+resources cover the entire Ubuntu host; container resources identify which PULSE
+service consumes them. An idle container still exports memory metrics, so **No
+data** for container memory is a collection failure, not zero usage. The System
+Resources dashboard shows the reporting container count and raises an alert
+when it stays at zero even though the cAdvisor scrape succeeds.
+
+If host graphs work but all container graphs are empty, inspect these on the
+Ubuntu host from the project folder:
+
+```sh
+docker version --format '{{.Server.Version}}'
+docker info --format 'Storage driver: {{.Driver}}; Docker root: {{.DockerRootDir}}'
+docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod logs --tail=100 alloy
+```
+
+On Ubuntu with Docker 29's containerd image store, cAdvisor's Docker factory
+also needs access to containerd. The exporter uses
+`/rootfs/run/containerd/containerd.sock` through the existing read-only host
+filesystem mount. The generic containerd namespace stays at its default so
+Docker discovery retains the Compose labels. This fixes the observed factory
+registration failure when Alloy's own `/run/containerd/containerd.sock` is
+missing. Recreate Alloy after changing its bind-mounted config; do not rely on
+a container restart to pick up a replaced file.
+
+If container metrics remain missing, look for cAdvisor Docker API errors,
+failed container creation or layer lookup, or missing Compose labels. Collection
+and filtering depend on cAdvisor finding Docker metadata: metrics without the
+matching project label are deliberately excluded. A successful scrape alone
+does not prove that container metrics exist. [Alloy issue #6308](https://github.com/grafana/alloy/issues/6308)
+documents further compatibility issues with Docker 29's containerd image store.
+For a Docker installation using a different containerd socket, adjust
+`containerd_host` to that socket under `/rootfs`. Do not disable project filtering
+or change Docker storage drivers to make panels appear.
 
 ## Browser logs
 
 Run `make dev` locally or `make up` on the production host. Open the matching
 Grafana URL above and sign in as `admin` with that environment's
-`GRAFANA_ADMIN_PASSWORD`. Under **Dashboards → Life Backend → Service Logs**,
+`GRAFANA_ADMIN_PASSWORD`. Under **Dashboards → PULSE → PULSE Service Logs**,
 select one or more services, enter optional search text, and choose a time
 range. The dashboard refreshes every five seconds.
 

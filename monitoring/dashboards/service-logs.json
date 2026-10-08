@@ -1,7 +1,7 @@
 {
   "uid": "service-logs",
   "_comment": "ponytail: Grafana doublequote escapes quotes but not backslashes; use a Loki-aware formatter if literal path searches are needed.",
-  "title": "Service Logs",
+  "title": "PULSE Service Logs",
   "description": "Container stdout/stderr for this Compose project. Select services and search text; open the panel in Explore and click Live for streaming.",
   "schemaVersion": 39,
   "version": 1,

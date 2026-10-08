@@ -1,8 +1,8 @@
 groups:
-  - name: life-backend-alerts
+  - name: pulse-alerts
     rules:
       - alert: ServiceDown
-        expr: up{job=~"life-backend|rust-backend"} == 0
+        expr: up{job=~"go-backend|rust-backend"} == 0
         for: 3m
         labels:
           severity: critical
@@ -47,7 +47,7 @@ groups:
           description: "Queries are waiting for available database pool connections over the last 5 minutes."
 
       - alert: HighGoroutineCount
-        expr: go_goroutines{job="life-backend"} > 500
+        expr: go_goroutines{job="go-backend"} > 500
         for: 10m
         labels:
           severity: warning
@@ -56,7 +56,7 @@ groups:
           description: "Instance {{ $labels.instance }} has more than 500 goroutines for 10 minutes, potential goroutine leak."
 
       - alert: HighMemoryUsage
-        expr: go_memstats_alloc_bytes{job="life-backend"} > 500 * 1024 * 1024
+        expr: go_memstats_alloc_bytes{job="go-backend"} > 500 * 1024 * 1024
         for: 10m
         labels:
           severity: warning
@@ -95,3 +95,12 @@ groups:
           severity: warning
         annotations:
           summary: "Resource exporter {{ $labels.job }} is unavailable"
+
+      - alert: ContainerMetricsMissing
+        expr: absent(container_memory_working_set_bytes{job="pulse-containers",service!=""}) and on () up{job="pulse-containers"} == 1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PULSE container metrics are missing despite a successful exporter scrape"
+          description: "Check Alloy cAdvisor errors, Docker storage/runtime compatibility, and Compose project/service labels. Host metrics can remain healthy while container collection fails."

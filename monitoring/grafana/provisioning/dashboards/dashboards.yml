@@ -1,9 +1,10 @@
 apiVersion: 1
 
 providers:
+  # Keep the provider identity so existing provisioned dashboards remain managed.
   - name: "life-backend"
     orgId: 1
-    folder: "Life Backend"
+    folder: "PULSE"
     type: file
     disableDeletion: false
     updateIntervalSeconds: 10

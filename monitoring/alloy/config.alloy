@@ -47,6 +47,8 @@ loki.write "local" {
 }
 
 prometheus.exporter.cadvisor "containers" {
+  // Docker 29's image store needs the host containerd socket, not Alloy's /run.
+  containerd_host = "/rootfs/run/containerd/containerd.sock"
   docker_only = true
   store_container_labels = false
   allowlisted_container_labels = ["com.docker.compose.project", "com.docker.compose.service"]
@@ -81,6 +83,18 @@ prometheus.relabel "containers" {
   rule {
     source_labels = ["container_label_com_docker_compose_service"]
     target_label = "service"
+  }
+  rule {
+    source_labels = ["service"]
+    regex = "backend(-dev)?"
+    target_label = "service"
+    replacement = "Go backend"
+  }
+  rule {
+    source_labels = ["service"]
+    regex = "rust-backend(-dev)?"
+    target_label = "service"
+    replacement = "Rust backend"
   }
   rule {
     target_label = "job"

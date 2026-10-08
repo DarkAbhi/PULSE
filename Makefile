@@ -37,7 +37,7 @@ restart:
 	$(PROD_COMPOSE) down --remove-orphans && \
 	$(PROD_COMPOSE) up -d --build
 
-deploy: build up
+deploy: up
 	@echo "✅ Deployed"
 
 # ----- Migrations (prod image) -----

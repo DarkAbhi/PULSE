@@ -11,6 +11,8 @@
 **/.env*
 **/__pycache__
 **/tsconfig.tsbuildinfo
+go-backend/tmp
+go-backend/coverage.out
 .agents
 .idea
 .DS_Store

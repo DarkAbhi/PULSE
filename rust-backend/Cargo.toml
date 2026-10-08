@@ -3,6 +3,9 @@ name = "pulse-rust-backend"
 version = "0.1.0"
 edition = "2024"
 
+[profile.release]
+strip = true
+
 [dependencies]
 axum = "0.8.9"
 chrono = { version = "0.4.45", features = ["serde"] }

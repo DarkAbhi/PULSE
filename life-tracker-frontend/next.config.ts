@@ -11,6 +11,7 @@ if (typeof release.version !== "string" || !release.version) {
 }
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   env: {
     NEXT_PUBLIC_PULSE_VERSION: release.version,
     NEXT_PUBLIC_PULSE_RELEASE_DATE: release.releasedAt ?? "",

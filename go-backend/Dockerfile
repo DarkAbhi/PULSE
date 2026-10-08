@@ -5,7 +5,8 @@ RUN apk add --no-cache git
 COPY go-backend/go.mod go-backend/go.sum ./
 RUN go mod download
 COPY go-backend/ .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /out/life-api ./cmd/api
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o /out/life-api ./cmd/api
 
 # runtime stage
 FROM alpine:3.20

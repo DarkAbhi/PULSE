@@ -166,6 +166,55 @@ address instead of `localhost` for production Grafana.
 | Grafana | `http://localhost:3103` | `http://localhost:3101` |
 | Jaeger UI | `http://localhost:16687` | `http://localhost:16686` |
 
+## Backend and resource metrics
+
+Under **Dashboards → Life Backend → PULSE Backend - Observability & Golden Signals**,
+select Go (`life-backend`), Rust (`rust-backend`), or both. Request rate, error
+rate, latency, in-flight requests, and PostgreSQL pool connections are shown
+separately for each backend. Go runtime and pool acquisition wait panels remain
+Go-specific: Rust has no Go runtime, and SQLx does not expose the equivalent
+cumulative pool wait counters. Rust HTTP latency measures handler completion;
+streaming body transfer time is not included. Health checks are excluded from
+Rust HTTP metrics.
+
+Rust exports Prometheus metrics on container port `9091`, separate from its
+public API and Cloudflare tunnel. This port has no host publication. Prometheus
+uses the `rust-backend-api` network alias in both development and production,
+independent of `RUST_PORT`.
+
+The same dashboard shows CPU cores used, working-set memory, disk read/write
+throughput, and network traffic for all containers in the matching Compose
+project, including Go, Rust, Next.js, Hermes (production), tunnels, and monitoring.
+These totals include all processes inside a container. Host panels show overall
+CPU, memory, filesystem capacity, and disk throughput, including activity outside
+PULSE. Disk throughput is distinct from filesystem space; Docker logs, images,
+and named volumes consume host disk space too. Docker Desktop host measurements
+cover its Linux VM, not the full macOS or Windows host; filesystem visibility
+can differ from a native Linux deployment.
+
+Alloy uses its built-in cAdvisor and Unix exporters, sending metrics to the
+local Prometheus remote-write receiver every 15 seconds. Container series are
+filtered by Compose project. Alloy now runs privileged with host PID/cgroup
+access and read-only host filesystem mounts so it can inspect resources; treat
+it as a trusted host-level collector. No additional collector ports are published.
+The alerts include each backend independently and sustained high host CPU/memory,
+low filesystem space, and resource exporter scrape failures. Alerts are visible
+in Prometheus; external alert delivery is not configured.
+
+To apply changes to an existing stack without running migrations or rebuilding
+unrelated services:
+
+```sh
+# Development
+docker compose --env-file .env.dev --project-name life-dev -f docker-compose.yml -f docker-compose.dev.yml --profile dev up -d --build --no-deps rust-backend-dev prometheus alloy grafana
+# Production, on the production host
+docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod up -d --build --no-deps rust-backend prometheus alloy grafana
+```
+
+Allow a few minutes of traffic for rate and percentile panels to fill. Resource
+exporter and backend scrape-health panels help distinguish idle services from
+failed collection.
+
 ## Browser logs
 
 Run `make dev` locally or `make up` on the production host. Open the matching

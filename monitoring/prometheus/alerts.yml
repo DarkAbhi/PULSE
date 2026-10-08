@@ -2,16 +2,16 @@ groups:
   - name: life-backend-alerts
     rules:
       - alert: ServiceDown
-        expr: up{job="life-backend"} == 0
+        expr: up{job=~"life-backend|rust-backend"} == 0
         for: 3m
         labels:
           severity: critical
         annotations:
-          summary: "Life backend instance is down"
+          summary: "{{ $labels.service }} instance is down"
           description: "Instance {{ $labels.instance }} has been unreachable for more than 3 minutes."
 
       - alert: HighHTTPErrorRate
-        expr: sum(rate(life_http_requests_total{status=~"5.."}[5m])) / sum(rate(life_http_requests_total[5m])) * 100 > 5
+        expr: sum by (service) (rate(life_http_requests_total{status=~"5.."}[5m])) / sum by (service) (rate(life_http_requests_total[5m])) * 100 > 5
         for: 2m
         labels:
           severity: critical
@@ -20,7 +20,7 @@ groups:
           description: "5xx HTTP error rate is above 5% over 5 minutes (currently {{ $value | printf \"%.2f\" }}%)."
 
       - alert: HighHTTPLatencyP99
-        expr: histogram_quantile(0.99, sum(rate(life_http_request_duration_seconds_bucket[5m])) by (le)) > 1.0
+        expr: histogram_quantile(0.99, sum by (service, le) (rate(life_http_request_duration_seconds_bucket[5m]))) > 1.0
         for: 5m
         labels:
           severity: warning
@@ -63,3 +63,35 @@ groups:
         annotations:
           summary: "High Go heap memory usage"
           description: "Instance {{ $labels.instance }} allocated heap exceeds 500MB."
+
+      - alert: HighHostCPUUsage
+        expr: 100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{job="pulse-host",mode="idle"}[5m]))) > 90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Docker host CPU usage above 90%"
+
+      - alert: HighHostMemoryUsage
+        expr: 100 * (1 - node_memory_MemAvailable_bytes{job="pulse-host"} / node_memory_MemTotal_bytes{job="pulse-host"}) > 90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Docker host memory usage above 90%"
+
+      - alert: HostDiskNearlyFull
+        expr: node_filesystem_avail_bytes{job="pulse-host",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{job="pulse-host",fstype!~"tmpfs|overlay"} < 0.1 and on (instance, device, mountpoint) node_filesystem_readonly{job="pulse-host"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Docker host filesystem {{ $labels.mountpoint }} has less than 10% free space"
+
+      - alert: ResourceExporterDown
+        expr: up{job=~"pulse-host|pulse-containers"} == 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Resource exporter {{ $labels.job }} is unavailable"

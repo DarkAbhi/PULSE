@@ -11,134 +11,209 @@
   "panels": [
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
-      "id": 100,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
       "title": "HTTP Golden Signals",
       "type": "row"
     },
     {
       "title": "Request Rate (RPS)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 1 },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
       "targets": [
         {
-          "expr": "sum(rate(life_http_requests_total[1m])) by (status)",
-          "legendFormat": "Status {{status}}"
+          "expr": "sum by (service, status) (rate(life_http_requests_total{service=~\"$backend\"}[$__rate_interval]))",
+          "legendFormat": "{{service}} Status {{status}}"
         }
-      ]
+      ],
+      "id": 2
     },
     {
       "title": "HTTP Error Rate (%)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 1 },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
       "targets": [
         {
-          "expr": "sum(rate(life_http_requests_total{status=~\"5..\"}[5m])) / sum(rate(life_http_requests_total[5m])) * 100",
-          "legendFormat": "5xx Error %"
+          "expr": "sum by (service) (rate(life_http_requests_total{service=~\"$backend\",status=~\"5..\"}[$__rate_interval])) / sum by (service) (rate(life_http_requests_total{service=~\"$backend\"}[$__rate_interval])) * 100",
+          "legendFormat": "{{service}} 5xx Error %"
         },
         {
-          "expr": "sum(rate(life_http_requests_total{status=~\"4..\"}[5m])) / sum(rate(life_http_requests_total[5m])) * 100",
-          "legendFormat": "4xx Client Error %"
+          "expr": "sum by (service) (rate(life_http_requests_total{service=~\"$backend\",status=~\"4..\"}[$__rate_interval])) / sum by (service) (rate(life_http_requests_total{service=~\"$backend\"}[$__rate_interval])) * 100",
+          "legendFormat": "{{service}} 4xx Client Error %"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "id": 3
     },
     {
       "title": "Request Duration Quantiles",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 1 },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
       "targets": [
         {
-          "expr": "histogram_quantile(0.50, sum(rate(life_http_request_duration_seconds_bucket[5m])) by (le))",
-          "legendFormat": "P50 (Median)"
+          "expr": "histogram_quantile(0.50, sum by (service, le) (rate(life_http_request_duration_seconds_bucket{service=~\"$backend\"}[$__rate_interval])))",
+          "legendFormat": "{{service}} P50 (Median)"
         },
         {
-          "expr": "histogram_quantile(0.90, sum(rate(life_http_request_duration_seconds_bucket[5m])) by (le))",
-          "legendFormat": "P90"
+          "expr": "histogram_quantile(0.90, sum by (service, le) (rate(life_http_request_duration_seconds_bucket{service=~\"$backend\"}[$__rate_interval])))",
+          "legendFormat": "{{service}} P90"
         },
         {
-          "expr": "histogram_quantile(0.99, sum(rate(life_http_request_duration_seconds_bucket[5m])) by (le))",
-          "legendFormat": "P99"
+          "expr": "histogram_quantile(0.99, sum by (service, le) (rate(life_http_request_duration_seconds_bucket{service=~\"$backend\"}[$__rate_interval])))",
+          "legendFormat": "{{service}} P99"
         }
-      ]
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "id": 4
     },
     {
       "title": "In-Flight Requests",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 1 },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
       "targets": [
         {
-          "expr": "sum(life_http_requests_in_flight) by (method)",
-          "legendFormat": "{{method}}"
+          "expr": "sum by (service, method) (life_http_requests_in_flight{service=~\"$backend\"})",
+          "legendFormat": "{{service}} {{method}}"
         }
-      ]
+      ],
+      "id": 5
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
-      "id": 101,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 6,
       "title": "PostgreSQL Connection Pool",
       "type": "row"
     },
     {
       "title": "Connections (Acquired vs Idle vs Max)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 10 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
       "targets": [
         {
-          "expr": "life_db_pool_acquired_connections",
-          "legendFormat": "Acquired (In Use)"
+          "expr": "life_db_pool_acquired_connections{service=~\"$backend\"}",
+          "legendFormat": "{{service}} Acquired (In Use)"
         },
         {
-          "expr": "life_db_pool_idle_connections",
-          "legendFormat": "Idle"
+          "expr": "life_db_pool_idle_connections{service=~\"$backend\"}",
+          "legendFormat": "{{service}} Idle"
         },
         {
-          "expr": "life_db_pool_total_connections",
-          "legendFormat": "Total Established"
+          "expr": "life_db_pool_total_connections{service=~\"$backend\"}",
+          "legendFormat": "{{service}} Total Established"
         },
         {
-          "expr": "life_db_pool_max_connections",
-          "legendFormat": "Max Configured"
+          "expr": "life_db_pool_max_connections{service=~\"$backend\"}",
+          "legendFormat": "{{service}} Max Configured"
         }
-      ]
+      ],
+      "id": 7
     },
     {
-      "title": "Connection Wait & Empty Acquires",
+      "title": "Go Pool Wait & Empty Acquires",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 10 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
       "targets": [
         {
-          "expr": "rate(life_db_pool_empty_acquire_total[1m])",
-          "legendFormat": "Empty Acquires / sec"
+          "expr": "rate(life_db_pool_empty_acquire_total[$__rate_interval])",
+          "legendFormat": "{{service}} Empty Acquires / sec"
         },
         {
-          "expr": "rate(life_db_pool_acquire_duration_seconds_total[1m])",
-          "legendFormat": "Acquire Wait Duration (s/s)"
+          "expr": "rate(life_db_pool_acquire_duration_seconds_total[$__rate_interval])",
+          "legendFormat": "{{service}} Acquire Wait Duration (s/s)"
         }
-      ]
+      ],
+      "description": "SQLx does not expose cumulative acquisition wait metrics. Rust pool usage is shown in the connections panel.",
+      "id": 8
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
-      "id": 102,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 9,
       "title": "Go Runtime",
       "type": "row"
     },
     {
       "title": "Goroutines",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 19 },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 19
+      },
       "targets": [
         {
           "expr": "go_goroutines",
           "legendFormat": "Goroutines"
         }
-      ]
+      ],
+      "id": 10
     },
     {
       "title": "Heap Memory Allocation",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 19 },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 19
+      },
       "targets": [
         {
           "expr": "go_memstats_alloc_bytes",
@@ -148,28 +223,339 @@
           "expr": "go_memstats_sys_bytes",
           "legendFormat": "System Reserved Bytes"
         }
-      ]
+      ],
+      "id": 11
     },
     {
       "title": "GC Pause Duration",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 19 },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 19
+      },
       "targets": [
         {
           "expr": "rate(go_gc_duration_seconds_sum[1m]) / rate(go_gc_duration_seconds_count[1m])",
           "legendFormat": "Avg GC Pause"
         }
-      ]
+      ],
+      "id": 12
+    },
+    {
+      "title": "Container Resources \u2014 all PULSE services",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "id": 13
+    },
+    {
+      "title": "Container CPU (cores)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 28
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(container_cpu_usage_seconds_total{job=\"pulse-containers\",service!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "description": "One core equals 100% of one CPU. Includes every process in each service container.",
+      "id": 14
+    },
+    {
+      "title": "Container Memory (working set)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 28
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (container_memory_working_set_bytes{job=\"pulse-containers\",service!=\"\"})",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "id": 15
+    },
+    {
+      "title": "Container Disk I/O",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 28
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(container_fs_reads_bytes_total{job=\"pulse-containers\",service!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{service}} read"
+        },
+        {
+          "expr": "sum by (service) (rate(container_fs_writes_bytes_total{job=\"pulse-containers\",service!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{service}} write"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "id": 16
+    },
+    {
+      "title": "Container Network I/O",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 28
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(container_network_receive_bytes_total{job=\"pulse-containers\",service!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{service}} receive"
+        },
+        {
+          "expr": "sum by (service) (rate(container_network_transmit_bytes_total{job=\"pulse-containers\",service!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{service}} transmit"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "id": 17
+    },
+    {
+      "title": "Docker Host Resources",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 36
+      },
+      "id": 18
+    },
+    {
+      "title": "Host CPU Usage",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 37
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{job=\"pulse-host\",mode=\"idle\"}[$__rate_interval])))",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "description": "Docker host overall usage, including processes outside PULSE. Docker Desktop measures its Linux VM, not macOS/Windows.",
+      "id": 19
+    },
+    {
+      "title": "Host Memory Usage",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 37
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=\"pulse-host\"} / node_memory_MemTotal_bytes{job=\"pulse-host\"})",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "id": 20
+    },
+    {
+      "title": "Host Filesystem Usage",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 37
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - node_filesystem_avail_bytes{job=\"pulse-host\",fstype!~\"tmpfs|overlay\",device!~\"shm\"} / node_filesystem_size_bytes{job=\"pulse-host\",fstype!~\"tmpfs|overlay\",device!~\"shm\"})",
+          "legendFormat": "{{mountpoint}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "id": 21
+    },
+    {
+      "title": "Host Disk I/O",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 37
+      },
+      "targets": [
+        {
+          "expr": "rate(node_disk_read_bytes_total{job=\"pulse-host\"}[$__rate_interval])",
+          "legendFormat": "{{device}} read"
+        },
+        {
+          "expr": "rate(node_disk_written_bytes_total{job=\"pulse-host\"}[$__rate_interval])",
+          "legendFormat": "{{device}} write"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "id": 22
+    },
+    {
+      "title": "Collector Health",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 45
+      },
+      "id": 23
+    },
+    {
+      "title": "Backend Scrape Health",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 46
+      },
+      "targets": [
+        {
+          "expr": "up{job=~\"life-backend|rust-backend\",service=~\"$backend\"}",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "id": 24
+    },
+    {
+      "title": "Resource Exporter Scrape Health",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 46
+      },
+      "targets": [
+        {
+          "expr": "up{job=~\"pulse-host|pulse-containers\"}",
+          "legendFormat": "{{job}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "description": "1 = successful scrape; 0 = failed. Container labels are required for project filtering.",
+      "id": 25
     }
   ],
   "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["life-backend", "observability", "golden-signals"],
+  "tags": [
+    "life-backend",
+    "observability",
+    "golden-signals"
+  ],
   "time": {
     "from": "now-1h",
     "to": "now"
   },
   "title": "PULSE Backend - Observability & Golden Signals",
-  "uid": "life-backend-overview"
+  "uid": "life-backend-overview",
+  "templating": {
+    "list": [
+      {
+        "name": "backend",
+        "label": "Backend",
+        "type": "query",
+        "datasource": "Prometheus",
+        "query": "label_values(up{job=~\"life-backend|rust-backend\"}, service)",
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
+      }
+    ]
+  }
 }

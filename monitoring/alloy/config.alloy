@@ -45,3 +45,76 @@ loki.write "local" {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
+
+prometheus.exporter.cadvisor "containers" {
+  docker_only = true
+  store_container_labels = false
+  allowlisted_container_labels = ["com.docker.compose.project", "com.docker.compose.service"]
+}
+
+prometheus.scrape "containers" {
+  targets = discovery.relabel.container_metrics.output
+  scrape_interval = "15s"
+  forward_to = [prometheus.relabel.containers.receiver]
+}
+
+discovery.relabel "container_metrics" {
+  targets = prometheus.exporter.cadvisor.containers.targets
+  rule {
+    target_label = "job"
+    replacement = "pulse-containers"
+  }
+  rule {
+    target_label = "instance"
+    replacement = sys.env("COMPOSE_PROJECT_NAME") + "-docker-host"
+  }
+}
+
+prometheus.relabel "containers" {
+  forward_to = [prometheus.remote_write.local.receiver]
+
+  rule {
+    source_labels = ["__name__", "container_label_com_docker_compose_project"]
+    regex = "(up|scrape_.+);|.+;" + sys.env("COMPOSE_PROJECT_NAME")
+    action = "keep"
+  }
+  rule {
+    source_labels = ["container_label_com_docker_compose_service"]
+    target_label = "service"
+  }
+  rule {
+    target_label = "job"
+    replacement = "pulse-containers"
+  }
+}
+
+prometheus.exporter.unix "host" {
+  rootfs_path = "/rootfs"
+  procfs_path = "/host/proc"
+  sysfs_path = "/sys"
+  set_collectors = ["cpu", "meminfo", "filesystem", "diskstats", "loadavg", "netdev"]
+}
+
+prometheus.scrape "host" {
+  targets = discovery.relabel.host_metrics.output
+  scrape_interval = "15s"
+  forward_to = [prometheus.remote_write.local.receiver]
+}
+
+discovery.relabel "host_metrics" {
+  targets = prometheus.exporter.unix.host.targets
+  rule {
+    target_label = "job"
+    replacement = "pulse-host"
+  }
+  rule {
+    target_label = "instance"
+    replacement = sys.env("COMPOSE_PROJECT_NAME") + "-docker-host"
+  }
+}
+
+prometheus.remote_write "local" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}

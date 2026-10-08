@@ -16,6 +16,10 @@ The Rust container listens on `RUST_PORT` (default `8083`); Compose publishes it
 
 `GET /healthz` reports process liveness with `{"status":"ok"}`. `GET /readyz` checks PostgreSQL within two seconds and returns `{"status":"ready"}` or HTTP 503 with `{"status":"db not ready"}`. Neither route requires a bearer token.
 
+Prometheus metrics are available internally at `http://rust-backend-api:9091/metrics`
+in Compose. This listener has no published host port and is separate from the
+public API. See [monitoring setup](../README.md#backend-and-resource-metrics).
+
 `GET /api/fitness-summary` requires no bearer token. It returns `{"snapshot": null | {...}, "workouts": [...]}` with the latest daily rings and up to three workouts: the latest traditional or functional strength workout first, then the latest run with distance and latest cycling workout with distance.
 
 `POST /api/shortcut/fitness-rings` requires `Authorization: Bearer <API key>` using a key created in the Go app. It accepts the flat fitness rings payload used by the portfolio shortcut, including trimmed keys, numeric strings, and the exercise, stand, and step aliases. It upserts by the API key's user and `summary_date` and returns HTTP 201 with `{"saved":true}`.

@@ -13,3 +13,10 @@ scrape_configs:
           - "backend-api:8080"
         labels:
           service: "life-backend"
+  - job_name: "rust-backend"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets:
+          - "rust-backend-api:9091"
+        labels:
+          service: "rust-backend"

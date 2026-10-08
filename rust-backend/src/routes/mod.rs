@@ -18,6 +18,7 @@ use crate::{
     auth,
     db::{activity_rings, workouts},
     error::AppError,
+    metrics::{self, Metrics},
     state::AppState,
 };
 
@@ -27,7 +28,7 @@ struct FitnessData {
     workouts: Vec<workouts::FitnessWorkout>,
 }
 
-pub fn router(state: AppState) -> Router {
+pub fn router(state: AppState, metrics: std::sync::Arc<Metrics>) -> Router {
     let fitness_writes = Router::<AppState>::new()
         .route("/api/shortcut/fitness-rings", post(fitness_rings::create))
         .route(
@@ -47,6 +48,7 @@ pub fn router(state: AppState) -> Router {
         .merge(fitness_writes)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
+        .layer(middleware::from_fn_with_state(metrics, metrics::observe))
         .with_state(state)
 }
 
@@ -103,9 +105,12 @@ mod tests {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
         let server = tokio::spawn(async move {
-            axum::serve(listener, router(AppState { pool }))
-                .await
-                .unwrap()
+            axum::serve(
+                listener,
+                router(AppState { pool }, crate::metrics::Metrics::new().unwrap()),
+            )
+            .await
+            .unwrap()
         });
 
         let release: serde_json::Value =

@@ -89,6 +89,10 @@ services:
       DATABASE_URL: postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOSTNAME}:${DB_PORT:-5432}/${DB_NAME}?sslmode=${RUST_DB_SSLMODE:-disable}
       PORT: ${RUST_PORT:-8083}
       RUST_LOG: ${RUST_LOG:-info}
+    networks:
+      default:
+        aliases:
+          - rust-backend-api
     ports:
       - "127.0.0.1:18084:${RUST_PORT:-8083}"
     restart: unless-stopped

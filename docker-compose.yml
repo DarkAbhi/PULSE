@@ -66,6 +66,10 @@ services:
       DATABASE_URL: postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOSTNAME}:${DB_PORT:-5432}/${DB_NAME}?sslmode=${RUST_DB_SSLMODE:-disable}
       PORT: ${RUST_PORT:-8083}
       RUST_LOG: ${RUST_LOG:-info}
+    networks:
+      default:
+        aliases:
+          - rust-backend-api
     restart: unless-stopped
 
   cloudflared:
@@ -130,6 +134,7 @@ services:
       - "--storage.tsdb.path=/prometheus"
       - "--web.enable-lifecycle"
       - "--enable-feature=exemplar-storage"
+      - "--web.enable-remote-write-receiver"
 
   grafana:
     profiles: ["prod", "dev"]
@@ -162,6 +167,10 @@ services:
     image: grafana/alloy:v1.20.1
     restart: unless-stopped
     user: "0:0"
+    # cAdvisor needs host cgroups and devices to measure other containers.
+    privileged: true
+    pid: host
+    cgroup: host
     command: ["run", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
     environment:
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME}
@@ -169,6 +178,10 @@ services:
     volumes:
       - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/rootfs:ro
+      - /proc:/host/proc:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
       - alloy_data:/var/lib/alloy/data
     depends_on:
       - loki

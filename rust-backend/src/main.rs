@@ -1,6 +1,7 @@
 mod auth;
 mod config;
 mod error;
+mod metrics;
 mod routes;
 mod state;
 
@@ -36,12 +37,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
         })?;
 
     let address = SocketAddr::from(([0, 0, 0, 0], config.port));
-    let app = routes::router(AppState { pool });
+    let metrics = metrics::Metrics::new()?;
+    let metrics_app = metrics.clone().router(pool.clone());
+    let app = routes::router(AppState { pool }, metrics);
     let listener = TcpListener::bind(address).await?;
+    // Keep metrics off the API port exposed through Cloudflare.
+    let metrics_listener = TcpListener::bind("0.0.0.0:9091").await?;
     tracing::info!(%address, "listening");
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    tokio::try_join!(
+        async {
+            axum::serve(listener, app)
+                .with_graceful_shutdown(shutdown_signal())
+                .await
+        },
+        async {
+            axum::serve(metrics_listener, metrics_app)
+                .with_graceful_shutdown(shutdown_signal())
+                .await
+        },
+    )?;
     Ok(())
 }
 

@@ -24,3 +24,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Pulse"
 include(":app")
+
+include(":core:domain", ":core:data", ":core:network", ":core:ui", ":feature:auth", ":feature:home")

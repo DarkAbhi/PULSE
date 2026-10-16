@@ -13,3 +13,9 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Android source sets are not Rust build output.
+!**/src/debug/
+!**/src/debug/**
+
+.kotlin/

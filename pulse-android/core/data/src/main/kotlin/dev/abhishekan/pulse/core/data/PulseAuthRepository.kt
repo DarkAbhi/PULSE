@@ -1,15 +1,18 @@
 package dev.abhishekan.pulse.core.data
 
-import dev.abhishekan.pulse.core.domain.*
+import dev.abhishekan.pulse.core.domain.model.Failure
+import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.SessionState
+import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
 import dev.abhishekan.pulse.core.network.PulseApi
 import java.time.Clock
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 class PulseAuthRepository(private val api: PulseApi, private val cookies: PersistentSessionCookies, private val clock: Clock) : AuthRepository {
     private val mutableSession = MutableStateFlow<SessionState>(SessionState.Checking)

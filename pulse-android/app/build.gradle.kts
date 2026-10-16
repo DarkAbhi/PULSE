@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     testImplementation(libs.koin.test)
+    testImplementation(libs.ktor.core)
     testImplementation(libs.coroutines.test)
     androidTestImplementation(libs.ktor.core)
     androidTestImplementation(libs.ktor.mock)

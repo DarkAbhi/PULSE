@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import dev.abhishekan.pulse.core.domain.*
+import dev.abhishekan.pulse.core.domain.model.Horizon
+import dev.abhishekan.pulse.core.domain.model.Notification
+import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 import dev.abhishekan.pulse.core.ui.*
 import dev.abhishekan.pulse.core.ui.components.*
 import java.math.BigDecimal
@@ -26,7 +28,7 @@ internal fun HorizonCard(section: Section<Horizon>, onRetry: () -> Unit) {
                 val data = section.value
                 PulseText("Your room to move", style = PulseTextStyle.Title)
                 PulseText(formatMoney(data.currency, data.remainingAmount), style = PulseTextStyle.Metric)
-                PulseText(if (data.remainingAmount.signum() < 0) "Overcommitted this month" else "Uncommitted this month")
+                PulseText(if (data.isOvercommitted) "Overcommitted this month" else "Uncommitted this month")
                 Spacer(Modifier.height(PulseTokens.small))
                 PulseText("Starting pool", style = PulseTextStyle.Label)
                 PulseText(formatMoney(data.currency, data.baseAmount))

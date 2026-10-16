@@ -1,31 +1,15 @@
 package dev.abhishekan.pulse
 
 import android.app.Application
-import dev.abhishekan.pulse.core.data.dataModule
-import dev.abhishekan.pulse.core.domain.*
-import dev.abhishekan.pulse.core.domain.ObserveTheme
-import dev.abhishekan.pulse.core.domain.SetTheme
+import dev.abhishekan.pulse.core.data.di.dataModule
 import dev.abhishekan.pulse.core.network.NetworkConfig
-import dev.abhishekan.pulse.core.network.networkModule
-import dev.abhishekan.pulse.feature.auth.authModule
-import dev.abhishekan.pulse.feature.home.homeModule
+import dev.abhishekan.pulse.core.network.di.networkModule
+import dev.abhishekan.pulse.di.applicationModule
+import dev.abhishekan.pulse.feature.auth.di.authModule
+import dev.abhishekan.pulse.feature.home.di.homeModule
 import org.koin.android.ext.koin.androidContext
-import org.koin.core.module.dsl.factoryOf
-import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
-
-val applicationModule = module {
-    factoryOf(::ObserveTheme)
-    factoryOf(::SetTheme)
-    viewModelOf(::AppearanceViewModel)
-    factoryOf(::ObserveSession)
-    factoryOf(::RestoreSession)
-    factoryOf(::Logout)
-    factoryOf(::ForgetSession)
-    factoryOf(::CheckSessionExpiry)
-    viewModelOf(::SessionViewModel)
-}
 
 val pulseModules = listOf(applicationModule, dataModule, networkModule, authModule, homeModule)
 

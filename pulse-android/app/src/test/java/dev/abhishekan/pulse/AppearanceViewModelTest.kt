@@ -1,15 +1,20 @@
 package dev.abhishekan.pulse
 
-import dev.abhishekan.pulse.core.domain.*
-import java.io.IOException
+import dev.abhishekan.pulse.core.domain.model.Failure
+import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.ThemePreference
+import dev.abhishekan.pulse.core.domain.repository.PreferencesRepository
+import dev.abhishekan.pulse.core.domain.usecase.ObserveTheme
+import dev.abhishekan.pulse.core.domain.usecase.SetTheme
+import dev.abhishekan.pulse.di.applicationModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.*
-import org.junit.Assert.*
-import org.junit.Test
-import org.junit.Before
 import org.junit.After
+import org.junit.Assert.*
+import org.junit.Before
+import org.junit.Test
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 
@@ -21,7 +26,10 @@ class AppearanceViewModelTest {
     @Test fun graphResolvesAndAppearanceRemainsObservable() = runTest {
         val preferences = object : PreferencesRepository {
             override val theme = MutableStateFlow(ThemePreference.System)
-            override suspend fun setTheme(theme: ThemePreference) { this.theme.value = theme }
+            override suspend fun setTheme(theme: ThemePreference): Outcome<Unit> {
+                this.theme.value = theme
+                return Outcome.Success(Unit)
+            }
         }
         val app = koinApplication { modules(applicationModule, module { single<PreferencesRepository> { preferences } }) }
         try {
@@ -37,7 +45,7 @@ class AppearanceViewModelTest {
     @Test fun persistenceFailureIsSafeAndDoesNotChangeTheme() = runTest {
         val preferences = object : PreferencesRepository {
             override val theme = MutableStateFlow(ThemePreference.System)
-            override suspend fun setTheme(theme: ThemePreference) { throw IOException("sensitive disk path") }
+            override suspend fun setTheme(theme: ThemePreference) = Outcome.Error(Failure.Storage)
         }
         val vm = AppearanceViewModel(ObserveTheme(preferences), SetTheme(preferences))
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }

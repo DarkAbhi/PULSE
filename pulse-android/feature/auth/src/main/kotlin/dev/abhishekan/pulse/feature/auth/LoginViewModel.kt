@@ -3,17 +3,13 @@ package dev.abhishekan.pulse.feature.auth
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.abhishekan.pulse.core.domain.Login
-import dev.abhishekan.pulse.core.domain.Outcome
+import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.usecase.Login
+import dev.abhishekan.pulse.core.ui.message
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-data class LoginUiState(
-    val username: String = "", val password: String = "", val loading: Boolean = false,
-    val usernameError: String? = null, val passwordError: String? = null, val error: String? = null,
-)
 
 class LoginViewModel(private val login: Login, private val savedState: SavedStateHandle) : ViewModel() {
     private val state = MutableStateFlow(LoginUiState(username = savedState["username"] ?: ""))

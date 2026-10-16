@@ -2,13 +2,18 @@ package dev.abhishekan.pulse.feature.auth
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
-import dev.abhishekan.pulse.core.domain.*
+import dev.abhishekan.pulse.core.domain.model.Failure
+import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.SessionState
+import dev.abhishekan.pulse.core.domain.repository.AuthRepository
+import dev.abhishekan.pulse.core.domain.usecase.Login
+import dev.abhishekan.pulse.core.ui.message
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
-import org.junit.Assert.*
 import org.junit.*
+import org.junit.Assert.*
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class LoginViewModelTest {

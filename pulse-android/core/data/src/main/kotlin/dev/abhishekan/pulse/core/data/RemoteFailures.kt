@@ -1,14 +1,14 @@
 package dev.abhishekan.pulse.core.data
 
-import dev.abhishekan.pulse.core.domain.Failure
+import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.network.SessionStorageException
-import io.ktor.client.plugins.ResponseException
-import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.network.sockets.ConnectTimeoutException
+import io.ktor.client.plugins.HttpRequestTimeoutException
+import io.ktor.client.plugins.ResponseException
 import io.ktor.serialization.JsonConvertException
-import java.time.DateTimeException
 import java.io.IOException
 import java.net.SocketTimeoutException
+import java.time.DateTimeException
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
 

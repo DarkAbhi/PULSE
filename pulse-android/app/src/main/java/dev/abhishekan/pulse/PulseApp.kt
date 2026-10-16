@@ -14,15 +14,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
-import dev.abhishekan.pulse.core.domain.*
+import dev.abhishekan.pulse.core.domain.model.Failure
+import dev.abhishekan.pulse.core.domain.model.SessionState
+import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.ui.*
-import dev.abhishekan.pulse.core.ui.components.*
 import dev.abhishekan.pulse.core.ui.R as UiR
+import dev.abhishekan.pulse.core.ui.components.*
 import dev.abhishekan.pulse.feature.auth.LoginRoute
 import dev.abhishekan.pulse.feature.home.*
 import org.koin.androidx.compose.koinViewModel

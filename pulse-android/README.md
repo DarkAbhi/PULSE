@@ -49,13 +49,53 @@ Source of truth: Go auth/profile/gym/notification handlers and Horizon summary D
 | `:core:domain` | Pure models, outcomes, repository contracts and use cases | None; coroutines only |
 | `:core:data` | Repository implementations, mapping, DataStore preferences, Keystore encrypted storage | Domain, network |
 | `:core:network` | One Ktor/OkHttp client, API services/DTOs, cookie policy and storage contract | None |
-| `:core:ui` | Theme/tokens, adaptive helper, individually organized components; debug gallery | None |
+| `:core:ui` | Theme/tokens, adaptive helper, individually organized components, failure messages; debug gallery | Domain |
 | `:feature:auth` | Login screen, immutable state, ViewModel, feature DI | Domain, UI |
 | `:feature:home` | Dashboard/notification presentation, independent section state, ViewModel, feature DI | Domain, UI |
 
 Features never import data/network or one another. Domain has no Android, Koin, Ktor, or persistence dependencies. Boundary tests enforce the module edges and import restrictions. No database/common/testing module, offline sync, or additional architecture framework was introduced.
 
 MVVM uses constructor injection and immutable `StateFlow`; Compose collects lifecycle-aware state. Use cases register with `factoryOf`, owned repositories with `singleOf`, and ViewModels with `viewModelOf`. Infrastructure converts HTTP, timeout, connection, decoding, and storage failures into domain outcomes. Coroutine cancellation propagates. Only confirmed local session cleanup finishes in `NonCancellable`, so disposing an expired navigation flow cannot interrupt revocation.
+
+## Architecture skill review
+
+Reviewed against [android-architecture](../.agents/skills/android-architecture/SKILL.md) after Phase 2. The skill separates responsibilities and dependencies; it does not mandate one declaration per file (its own domain example groups a repository, model, and use case). Pulse now separates these roles for navigation and maintenance:
+
+```text
+core/domain/.../domain/
+  model/       # One model/outcome type per file
+  repository/  # One repository contract per file
+  usecase/     # One application operation per file
+core/data/.../data/di/DataModule.kt
+core/network/.../network/
+  di/NetworkModule.kt
+  dto/PulseDtos.kt
+  NetworkConfig.kt
+  PulseHttpClient.kt
+  PulseApi.kt
+feature/{auth,home}/.../
+  di/{Auth,Home}Module.kt
+  {Login,Home}UiState.kt
+app/.../pulse/di/ApplicationModule.kt
+```
+
+Related transport DTOs and UI state variants can share a focused file. Repository implementations remain in data; use cases remain in pure Kotlin domain and are registered by app/feature DI modules. Shared UI depends only on domain to translate failure codes into user-facing text; domain contains no presentation messages. Preference writes now return domain outcomes instead of exposing disk exceptions to the ViewModel. The financial overcommitment rule lives in the domain model; composables only choose its presentation. Storage formats, preference keys, cookie handling, and session encryption are unchanged.
+
+| Skill requirement | Implementation and verification |
+| --- | --- |
+| Acyclic layer/feature dependencies; pure domain | `ArchitectureTest` checks Gradle edges and forbidden imports |
+| Immutable StateFlow; lifecycle-aware UI | Private mutable flows, read-only state, `collectAsStateWithLifecycle`; ViewModel and device tests |
+| Constructor injection and correct lifetimes | `singleOf` repositories, `factoryOf` use cases, `viewModelOf` ViewModels; DI files contain composition |
+| Explicit complete Koin graph verification | `KoinGraphTest` combines all production modules with a test API address and calls `Module.verify()`; only Android-provided Context/SavedStateHandle and factory-supplied configuration/engine arguments are exempted |
+| One shared client; infrastructure boundaries | Singleton Ktor/OkHttp client; API DTOs in network, mappings/failures in data; device test checks client identity |
+| Structured concurrency and cancellation | ViewModel scopes, disk work on IO, cancellation-preserving failure mapping; boundary and cancellation tests |
+| Observable repository contracts | Session StateFlow and theme Flow; dashboard HTTP reads remain suspend snapshots |
+| Independently testable domain rules | Framework-free `LoginTest` exercises validation, normalization, failure forwarding, and cancellation; `HorizonTest` checks commitment at precise negative/zero/positive boundaries |
+| Lifecycle/process behavior | Navigation/recreation/restoration device tests; only username enters saved state |
+
+The original product requirements take precedence over conflicting skill examples: HTTP exceptions are translated **inside infrastructure**, never imported into ViewModels; credential/body logging stays disabled; coroutines are allowed in domain. The skill's illustrative database/common/testing modules and empty Koin modules for domain/shared UI are unnecessary for current functionality.
+
+This review changes architecture organization and error boundaries only. No later-phase workflows are included. Verification results for this review are recorded at the end of this document.
 
 ## Authentication and navigation
 
@@ -124,3 +164,13 @@ Phase 1 originally passed its build, 17 unit tests and five device tests. Phase 
 - Emulator display, density, font and appearance settings were restored; test captures on the emulator were removed and the task's emulator was shut down.
 
 No personal backend login was performed: API integration is verified against source-derived fixtures through the production stack. Physical-device TalkBack and external-keyboard traversal remain unverified. The real release HTTPS API origin still needs configuration. Phase 3 and later feature workflows have not been started.
+
+## Architecture review results — 17 October 2026
+
+- `./gradlew build`: passed, including debug/release compilation, optimized release packaging, unit tests, and lint.
+- **47 unit tests passed**, zero failures/errors/skips, including complete `Module.verify()` coverage and boundary/domain tests.
+- **10 Android regression tests passed**, zero failures/errors/skips, on the existing Android 15/API 35 emulator.
+- Lint: zero errors; 35 existing app advisories (dependency updates and template resources/labels), zero warnings in the core/feature module reports.
+- Device regression fixtures went through production API/repository/session/navigation code. Temporary fixture screenshots were removed and the emulator started for this review was stopped.
+- No dependency versions, encrypted storage formats, preference keys, backend contracts, or later-phase scope changed. Ktor core was added only to the app's unit-test classpath for graph verification; it was already a production infrastructure dependency.
+- The prior tablet/landscape/large-text matrix, personal/live backend login, and physical-device accessibility were not repeated for this architecture refactor. Configure the release HTTPS API origin before production use.

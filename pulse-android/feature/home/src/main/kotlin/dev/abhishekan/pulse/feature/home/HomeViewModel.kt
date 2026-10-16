@@ -2,25 +2,16 @@ package dev.abhishekan.pulse.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.abhishekan.pulse.core.domain.*
+import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
+import dev.abhishekan.pulse.core.domain.usecase.GetNotifications
+import dev.abhishekan.pulse.core.domain.usecase.GetProfile
+import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-sealed interface Section<out T> {
-    data object Loading : Section<Nothing>
-    data object Empty : Section<Nothing>
-    data class Content<T>(val value: T) : Section<T>
-    data class Error(val failure: Failure) : Section<Nothing>
-}
-data class HomeUiState(
-    val profile: Section<Profile> = Section.Loading,
-    val workout: Section<WorkoutToday> = Section.Loading,
-    val horizon: Section<Horizon> = Section.Loading,
-    val notifications: Section<List<Notification>> = Section.Loading,
-)
 
 class HomeViewModel(
     private val getProfile: GetProfile, private val getWorkout: GetWorkoutToday,

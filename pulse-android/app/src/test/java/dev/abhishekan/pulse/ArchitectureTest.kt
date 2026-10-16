@@ -9,7 +9,7 @@ class ArchitectureTest {
     private val allowed = mapOf(
         "app" to setOf("core:domain", "core:data", "core:network", "core:ui", "feature:auth", "feature:home"),
         "core/domain" to emptySet(), "core/data" to setOf("core:domain", "core:network"),
-        "core/network" to emptySet(), "core/ui" to emptySet(),
+        "core/network" to emptySet(), "core/ui" to setOf("core:domain"),
         "feature/auth" to setOf("core:domain", "core:ui"), "feature/home" to setOf("core:domain", "core:ui"),
     )
 
@@ -36,6 +36,30 @@ class ArchitectureTest {
                     assertFalse("Infrastructure or sibling feature import in $file", file.readText().contains("import dev.abhishekan.pulse.$it") || file.readText().contains("import $it"))
                 }
             }
+        }
+    }
+
+    @Test fun productionConcurrencyAndInjectionKeepTheirBoundaries() {
+        allowed.keys.forEach { module ->
+            root.resolve("$module/src").listFiles().orEmpty()
+                .filter { it.name in setOf("main", "debug", "release") }
+                .flatMap { source -> source.walkTopDown().filter { it.extension == "kt" }.toList() }
+                .forEach { file ->
+                    val source = file.readText()
+                    assertFalse("Unscoped coroutine in $file", source.contains("GlobalScope"))
+                    val implementation = file.name.endsWith("ViewModel.kt") || module == "core/domain" ||
+                        (module == "core/data" && file.parentFile.name != "di")
+                    if (implementation) {
+                        assertFalse("Service locator import in $file", source.contains("import org.koin"))
+                    }
+                    if (file.name.endsWith("ViewModel.kt")) {
+                        listOf("io.ktor", "java.io", "dev.abhishekan.pulse.core.data", "dev.abhishekan.pulse.core.network").forEach {
+                            assertFalse("Infrastructure import in $file", source.contains("import $it"))
+                        }
+                        assertFalse("Public mutable state in $file",
+                            Regex("(?m)^    (?:override )?val \\w+(?:\\s*:[^=\\n]+)?\\s*=\\s*MutableStateFlow").containsMatchIn(source))
+                    }
+                }
         }
     }
 

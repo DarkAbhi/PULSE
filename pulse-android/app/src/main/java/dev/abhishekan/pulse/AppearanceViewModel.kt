@@ -2,10 +2,10 @@ package dev.abhishekan.pulse
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.abhishekan.pulse.core.domain.ObserveTheme
-import dev.abhishekan.pulse.core.domain.SetTheme
-import dev.abhishekan.pulse.core.domain.ThemePreference
-import java.io.IOException
+import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.ThemePreference
+import dev.abhishekan.pulse.core.domain.usecase.ObserveTheme
+import dev.abhishekan.pulse.core.domain.usecase.SetTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -21,11 +21,9 @@ class AppearanceViewModel(observeTheme: ObserveTheme, private val setTheme: SetT
 
     fun selectTheme(theme: ThemePreference) {
         viewModelScope.launch {
-            try {
-                setTheme(theme)
-                error.value = null
-            } catch (_: IOException) {
-                error.value = "Couldn’t save appearance. Please try again."
+            error.value = when (setTheme(theme)) {
+                is Outcome.Success -> null
+                is Outcome.Error -> "Couldn’t save appearance. Please try again."
             }
         }
     }

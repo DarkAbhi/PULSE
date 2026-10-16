@@ -15,6 +15,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:domain"))
     testImplementation(libs.junit)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)

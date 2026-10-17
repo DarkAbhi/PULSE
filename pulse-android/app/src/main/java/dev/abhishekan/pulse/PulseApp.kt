@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse
 
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
@@ -18,6 +19,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import dev.abhishekan.pulse.feature.fitness.FitnessRoute
+import dev.abhishekan.pulse.feature.fitness.WorkoutRoute
 import androidx.navigation.compose.*
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.SessionState
@@ -78,8 +84,19 @@ private fun SessionUnavailable(failure: Failure, busy: Boolean, onRetry: () -> U
 private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme: (ThemePreference) -> Unit,
     operation: SessionOperation, onLogout: () -> Unit, clearError: () -> Unit) {
     val nav = rememberNavController()
+    var hasFitnessDraft by rememberSaveable { mutableStateOf(false) }
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route
+    val inSpaces = entry?.destination?.hierarchy?.any { it.route == "spaces" } == true
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val openFitness = {
+        nav.navigate("spaces") {
+            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+        if (nav.currentDestination?.route == "space-list") nav.navigate("fitness") { launchSingleTop = true }
+    }
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(operation.error) {
         operation.error?.let { snackbar.showSnackbar(it); clearError() }
@@ -87,14 +104,16 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
     Scaffold(
         topBar = {
             if (route != "gallery") PulseTopAppBar(
-                when (route) { "you" -> "You"; "notifications" -> "Notifications"; else -> "Pulse" },
+                when (route) { "you" -> "You"; "notifications" -> "Notifications"; "space-list" -> "Spaces"; "fitness" -> "Fitness"; "workout/{id}" -> "Workout"; else -> "Pulse" },
                 actions = {
                     if (route == "home") PulseIconButton("Notifications", { nav.navigate("notifications") { launchSingleTop = true } }) {
                         Icon(painterResource(UiR.drawable.pulse_bell), contentDescription = null)
                     }
                 },
                 navigationIcon = {
-                    if (route == "notifications") PulseIconButton("Back to Home", { nav.popBackStack() }) {
+                    if (route == "notifications" || route == "fitness" || route == "workout/{id}") PulseIconButton(
+                        when (route) { "notifications" -> "Back to Home"; "fitness" -> "Back to Spaces"; else -> "Back to Fitness" },
+                        { backDispatcher?.onBackPressed() }) {
                         Icon(painterResource(UiR.drawable.pulse_back), contentDescription = null)
                     }
                 },
@@ -103,9 +122,10 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
         bottomBar = {
             if (route != "gallery") PulseBottomNavigationBar(
                 listOf(PulseNavigationItem("Home") { Icon(painterResource(UiR.drawable.pulse_home), null) },
+                    PulseNavigationItem("Spaces") { Icon(painterResource(UiR.drawable.pulse_spaces), null) },
                     PulseNavigationItem("You") { Icon(painterResource(UiR.drawable.pulse_person), null) }),
-                if (route == "you") 1 else 0,
-                { index -> nav.navigate(if (index == 0) "home" else "you") {
+                when { route == "you" -> 2; inSpaces -> 1; else -> 0 },
+                { index -> nav.navigate(listOf("home", "spaces", "you")[index]) {
                     popUpTo(nav.graph.findStartDestination().id) { saveState = true }
                     launchSingleTop = true
                     restoreState = true
@@ -115,9 +135,16 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
         snackbarHost = { SnackbarHost(snackbar) { PulseSnackbar(it) } },
     ) { insets ->
         NavHost(nav, startDestination = "home", modifier = Modifier.padding(insets)) {
-            composable("home") { HomeRoute(username, { nav.navigate("notifications") { launchSingleTop = true } }) }
+            composable("home") { HomeRoute(username, { nav.navigate("notifications") { launchSingleTop = true } }, openFitness) }
+            navigation(startDestination = "space-list", route = "spaces") {
+                composable("space-list") { SpacesScreen { nav.navigate("fitness") { launchSingleTop = true } } }
+                composable("fitness") { FitnessRoute({ id -> nav.navigate("workout/$id") { launchSingleTop = true } }) }
+                composable("workout/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) {
+                    WorkoutRoute(onDeleted = { nav.popBackStack() }, onDraftChanged = { hasFitnessDraft = it })
+                }
+            }
             composable("you") {
-                YouScreen(username, appearance, onTheme, operation.running, onLogout, { nav.navigate("gallery") })
+                YouScreen(username, appearance, onTheme, operation.running, hasFitnessDraft, onLogout, { nav.navigate("gallery") })
             }
             composable("notifications") {
                 val homeEntry = remember(it) { nav.getBackStackEntry("home") }
@@ -138,7 +165,8 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
 
 @Composable
 private fun YouScreen(username: String, appearance: AppearanceUiState, onTheme: (ThemePreference) -> Unit,
-    loggingOut: Boolean, onLogout: () -> Unit, onGallery: () -> Unit) {
+    loggingOut: Boolean, hasFitnessDraft: Boolean, onLogout: () -> Unit, onGallery: () -> Unit) {
+    var confirmLogout by rememberSaveable { mutableStateOf(false) }
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth().verticalScroll(rememberScrollState()).padding(PulseTokens.cardPadding),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
@@ -155,8 +183,26 @@ private fun YouScreen(username: String, appearance: AppearanceUiState, onTheme: 
                 }
                 appearance.error?.let { PulseText(it, color = MaterialTheme.colorScheme.error) }
             }
-            PulseButton("Log out", onLogout, Modifier.fillMaxWidth(), loading = loggingOut)
+            PulseButton("Log out", { if (hasFitnessDraft) confirmLogout = true else onLogout() }, Modifier.fillMaxWidth(), loading = loggingOut)
             DebugGalleryAction(onGallery)
+        }
+    }
+    if (confirmLogout) PulseDialog("Log out and discard edits?",
+        "You have unsaved exercise changes. Logging out will discard this device’s draft. Saved workouts stay in Pulse.",
+        "Log out", { confirmLogout = false; onLogout() }, { confirmLogout = false })
+}
+
+@Composable
+private fun SpacesScreen(onFitness: () -> Unit) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        Column(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth().verticalScroll(rememberScrollState()).padding(PulseTokens.medium),
+            verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
+            PulseText("Make room for your everyday.", style = PulseTextStyle.Display)
+            PulseCard(Modifier.fillMaxWidth()) {
+                PulseText("Fitness", style = PulseTextStyle.Title)
+                PulseText("Find your rhythm. Record workouts, revisit your activity, and keep track of every set.")
+                PulseButton("Open Fitness", onFitness, Modifier.fillMaxWidth())
+            }
         }
     }
 }

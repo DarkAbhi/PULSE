@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.core.network.di
 
+import dev.abhishekan.pulse.core.network.FitnessApi
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
 import dev.abhishekan.pulse.core.network.PulseApi
 import dev.abhishekan.pulse.core.network.pulseHttpClient
@@ -9,6 +10,7 @@ import org.koin.dsl.module
 import org.koin.dsl.onClose
 
 val networkModule = module {
+    singleOf(::FitnessApi)
     single<Clock> { Clock.systemUTC() }
     singleOf(::PersistentSessionCookies)
     singleOf(::PulseApi)

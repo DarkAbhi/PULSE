@@ -1,6 +1,6 @@
 # Pulse Android
 
-Native Kotlin/Compose app for `dev.abhishekan.pulse`. Phase 2 implements username/password authentication through the existing Go API, encrypted cookie restoration, and a real dashboard. Product screens fetch API data; preview and test fixtures are confined to debug/test source sets.
+Native Kotlin/Compose app for `dev.abhishekan.pulse`. Phases 1–3 implement the design system, username/password authentication through the existing Go API, encrypted cookie restoration, the dashboard, and the Fitness space. Product screens fetch API data; preview and test fixtures are confined to debug/test source sets.
 
 ## Setup
 
@@ -45,13 +45,14 @@ Source of truth: Go auth/profile/gym/notification handlers and Horizon summary D
 
 | Module | Owns | Project dependencies |
 | --- | --- | --- |
-| `:app` | Application/Koin startup, session gate, appearance, Compose navigation, environment configuration | All six modules |
+| `:app` | Application/Koin startup, session gate, appearance, Compose navigation, environment configuration | All seven modules |
 | `:core:domain` | Pure models, outcomes, repository contracts and use cases | None; coroutines only |
 | `:core:data` | Repository implementations, mapping, DataStore preferences, Keystore encrypted storage | Domain, network |
 | `:core:network` | One Ktor/OkHttp client, API services/DTOs, cookie policy and storage contract | None |
 | `:core:ui` | Theme/tokens, adaptive helper, individually organized components, failure messages; debug gallery | Domain |
 | `:feature:auth` | Login screen, immutable state, ViewModel, feature DI | Domain, UI |
 | `:feature:home` | Dashboard/notification presentation, independent section state, ViewModel, feature DI | Domain, UI |
+| `:feature:fitness` | Activity calendar, workout details, exercise forms, ViewModels/state and feature DI | Domain, UI |
 
 Features never import data/network or one another. Domain has no Android, Koin, Ktor, or persistence dependencies. Boundary tests enforce the module edges and import restrictions. No database/common/testing module, offline sync, or additional architecture framework was introduced.
 
@@ -73,9 +74,9 @@ core/network/.../network/
   NetworkConfig.kt
   PulseHttpClient.kt
   PulseApi.kt
-feature/{auth,home}/.../
-  di/{Auth,Home}Module.kt
-  {Login,Home}UiState.kt
+feature/{auth,home,fitness}/.../
+  di/{Auth,Home,Fitness}Module.kt
+  # Screens, ViewModels and immutable UI state in separate files
 app/.../pulse/di/ApplicationModule.kt
 ```
 
@@ -103,7 +104,7 @@ Startup stays behind a session gate while encrypted material is read and a saved
 
 Login trims only the username and preserves the exact password. Required fields validate inline; credentials/connection/timeout/server failures use safe messages. Duplicate submissions are blocked. Username is saved in `SavedStateHandle`; passwords stay only in the ViewModel's memory, surviving configuration changes but not process death. The Compose String text-field implementation also keeps its editing value in ordinary `remember`, not saved-state storage. Password visibility, autofill semantics, Next/Done IME actions, and keyboard insets are supported.
 
-One activity hosts Compose navigation. Successful login disposes the Login flow. Signed-in tabs are **Home** and **You**, using Navigation's saved/restored destination state. Notifications open within Home. Logout or confirmed expiry disposes authenticated destinations. Expiry is checked by a lifecycle-bound timer, on foreground resume, and on authenticated 401 responses. A stale request cannot expire a newer session generation.
+One activity hosts Compose navigation. Successful login disposes the Login flow. Signed-in tabs are **Home**, **Spaces**, and **You**, using Navigation's saved/restored destination state. Notifications open within Home. Fitness lives in a nested Spaces navigation flow; Home shortcuts enter or restore that flow. Logout or confirmed expiry disposes authenticated destinations. Expiry is checked by a lifecycle-bound timer, on foreground resume, and on authenticated 401 responses. A stale request cannot expire a newer session generation.
 
 Logout is not retried automatically. A connection failure keeps the active session and reports a Snackbar; a confirmed logout removes access. Storage-cleanup failures are surfaced and cannot silently restore a cookie in memory. The client disables redirects, connection retries, and HTTP logging.
 
@@ -121,7 +122,7 @@ Profile, workout, finance, and notifications load in separate jobs. Each section
 
 Financial numbers are parsed directly from JSON numeric text into `BigDecimal`, never through `Double`. Display pads short fractions to two places and preserves every supplied decimal place; balances and progress are not fabricated or recomputed. All-zero backend values remain actual zero values.
 
-Home uses a warm financial hero, supporting activity/notification cards, and a read-only overview of the four spaces. You provides username, persisted System/Light/Dark appearance, and working logout. Deferred space workflows, profile editing, notification mutations, and onboarding have no clickable placeholders.
+Home uses a warm financial hero, supporting activity/notification cards, and an overview of the four spaces. Fitness shortcuts are actionable; deferred spaces remain informational. You provides username, persisted System/Light/Dark appearance, and working logout. Spaces lists Fitness, the currently implemented space. Deferred space workflows, profile editing, notification mutations, and onboarding have no clickable placeholders.
 
 Shared controls now live in **`core/ui/.../components/`**, one component per file; related models sit with the component that owns them. Themes/tokens and adaptive helpers remain beside that package. There are four type sizes, two weights, tabular/monospace metrics, 4dp spacing increments, 48dp targets, labeled selection semantics, native focus behavior, and tested contrast pairs. Error/retry cards use neutral surfaces so action text remains accessible.
 
@@ -163,7 +164,7 @@ Phase 1 originally passed its build, 17 unit tests and five device tests. Phase 
 - Lint passed with zero errors. Remaining advisories concern dependency update availability and existing template resources/labels; dependency versions were not changed just to silence these notices.
 - Emulator display, density, font and appearance settings were restored; test captures on the emulator were removed and the task's emulator was shut down.
 
-No personal backend login was performed: API integration is verified against source-derived fixtures through the production stack. Physical-device TalkBack and external-keyboard traversal remain unverified. The real release HTTPS API origin still needs configuration. Phase 3 and later feature workflows have not been started.
+No personal backend login was performed: API integration is verified against source-derived fixtures through the production stack. Physical-device TalkBack and external-keyboard traversal remain unverified. The real release HTTPS API origin still needs configuration. At the Phase 2 boundary, later feature workflows had not been started. Phase 3 results follow below.
 
 ## Architecture review results — 17 October 2026
 
@@ -174,3 +175,53 @@ No personal backend login was performed: API integration is verified against sou
 - Device regression fixtures went through production API/repository/session/navigation code. Temporary fixture screenshots were removed and the emulator started for this review was stopped.
 - No dependency versions, encrypted storage formats, preference keys, backend contracts, or later-phase scope changed. Ktor core was added only to the app's unit-test classpath for graph verification; it was already a production infrastructure dependency.
 - The prior tablet/landscape/large-text matrix, personal/live backend login, and physical-device accessibility were not repeated for this architecture refactor. Configure the release HTTPS API origin before production use.
+
+## Phase 3 — Fitness
+
+Fitness adds a month calendar, a selected-day workout list, server-provided metrics, workout details, catalogue search/instructions, exercise creation/editing/deletion, and workout deletion. Each exercise supports 1–20 sets, 1–1,000 repetitions per set, optional non-negative kilogram weights, an optional catalogue match, and the backend’s remembered-name alias setting. Imported start/end times, duration and calories are displayed read-only; gym-visit exercises remain editable because the API supports them.
+
+| API | Use |
+| --- | --- |
+| `GET /fitness/overview` | Authoritative today, summary values and calendar groups |
+| `GET /gym-visits` | Complete visit history, including future dates omitted by overview statistics |
+| `GET /workout/today` | Existing Home status; refreshed after fitness mutations |
+| `POST /workout/today` | Record today, using the backend’s India date boundary |
+| `POST /gym-visits` | Record an explicit calendar date as `YYYY-MM-DD` |
+| `GET /fitness-workouts/{visitId}` | Visit details and supported imported workout information |
+| `GET /exercise-catalog?q=...` | Debounced catalogue search; explicit candidate selection |
+| `GET/POST /gym-visits/{id}/exercises` | Read and create exercises |
+| `PUT/DELETE /gym-visits/{id}/exercises/{exerciseId}` | Replace an exercise’s name/match/sets, or delete it |
+| `DELETE /gym-visits/{id}` | Delete visit and cascade its exercises/sets |
+
+All paths above are relative to the configured `/api/` base. No Go/backend or web contracts were changed. The backend accepts future-dated visits: Android retains them in the calendar through the history endpoint while displaying statistics exactly as returned by overview. Calendar dates and “today” use Asia/Kolkata; Material date-picker UTC milliseconds are converted to calendar dates without applying a device-zone shift. No additional past-only restriction was invented.
+
+Deleting a visit removes its exercises and sets through the database’s cascade. A linked Apple Watch import and catalogue aliases remain. Confirmation dialogs explain those consequences; exercise deletion removes only that exercise and its sets.
+
+Shared repository revisions coordinate updates across screens. Successful and uncertain mutations invalidate Fitness and Home workout reads. Home cancels any older in-flight workout read before fetching current status. No feature imports another feature, and no database, offline mutation queue, background synchronization, or new dependency version was added.
+
+Draft fields live in the workout ViewModel and SavedStateHandle, including set rows, catalogue choice and alias choice. Rotation, resizing and tab changes preserve them. Back/Cancel warns before discarding edits; logout from You also warns when an unsaved Fitness draft exists. Restoration keeps the draft visible even when its server read fails. Password handling is unchanged.
+
+Mutations are never automatically retried. Synchronous submission guards reject duplicate taps. An interrupted or ambiguous write retains the draft, refreshes server state, and disables another mutation until refreshed records are explicitly reviewed. If refresh fails, only refreshing is offered. A persisted pending-operation marker enforces the same rule after process recreation. A confirmed workout deletion, including a missing record after an uncertain deletion, returns to the calendar.
+
+Weight input and JSON mapping use BigDecimal and unquoted numeric serialization, avoiding an Android-side Double conversion. The existing Go API stores exercise weights as float64, so server-side numeric precision remains limited by that existing contract. Imported durations use the web’s whole-minute presentation without floating-point conversion. Financial decimal handling remains unchanged.
+
+The calendar and selected-day pane sit side by side at suitable widths and stack for narrow/large-text windows. Calendar controls keep 48dp targets; narrow windows can scroll dates horizontally. Day semantics identify full dates, today, selection and recorded activity. Exercise number fields stack when their available width/text scale calls for it, and IME Next explicitly moves from repetitions to weight. Dialog body text can scroll. Shared calendar/date controls are included in the debug gallery; fitness previews cover phone/tablet, light/dark, landscape, loading/error and large text.
+
+The picker and tab navigation follow the installed libraries’ documented APIs: [Compose date pickers](https://developer.android.com/develop/ui/compose/components/datepickers), [multiple navigation back stacks](https://developer.android.com/guide/navigation/backstack/multi-back-stacks). Existing versions remain unchanged.
+
+Verification covers domain date/validation boundaries; exact JSON round-tripping; authentication expiry and cancellation; malformed/optional responses; duplicate submissions; uncertain mutations and refreshed-state review; process-state drafts; calendar navigation; exercise CRUD; deletion consequences; Home refresh; saved tab state; keyboard focus; live resizing; and large-text controls. Device tests use source-derived HTTP fixtures through the production Ktor/session/repository/navigation stack, without accessing a personal account.
+
+Fitness history currently uses the backend’s unpaginated visits endpoint. A server range/pagination contract would be needed for substantially larger histories. Physical-device TalkBack/external-keyboard testing and personal/live-backend login remain separate checks. Later feature phases remain outside this delivery.
+
+### Phase 3 verification results — 17 October 2026
+
+- `./gradlew build :app:assembleDebugAndroidTest`: passed, including optimized unsigned release packaging and lint.
+- **77 unit tests passed**, zero failures/errors/skips; module boundaries, pure-domain imports and the complete Koin graph passed.
+- **17 Android tests passed**, zero failures/errors/skips, on Android 15/API 35.
+- All **seven Fitness device scenarios** also passed at 1024×900dp in dark mode, 360×800dp with 200% text in light mode, and 800×360dp landscape. These cover live resizing, keyboard traversal, draft restoration, CRUD, deletion and uncertain-save recovery.
+- Native phone/tablet, dark/light, large-text, landscape, editor and confirmation screenshots were inspected. Captured content comes from test fixtures, not a personal account.
+- After the window-dimension correction, the date-picker integration test also passed again in the landscape and 200% text configurations.
+- Emulator display, density, text and appearance settings were restored; temporary captures were removed and the task’s emulator was stopped.
+- Lint reports zero errors and zero core/feature warnings. The app retains 35 existing dependency-update/template advisories. Toolchain and dependency versions remain unchanged.
+
+Phase 4 has not started. Personal/live-backend login, physical-device TalkBack and external-keyboard traversal remain unverified; configure the release HTTPS API origin before production use.

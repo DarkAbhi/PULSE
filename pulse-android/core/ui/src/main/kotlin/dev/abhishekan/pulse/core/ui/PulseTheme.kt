@@ -12,12 +12,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 object PulseTokens {
+    val focusWidth = 2.dp
     val tiny = 4.dp
     val small = 8.dp
     val medium = 16.dp
     val cardPadding = 24.dp
     val large = 32.dp
     val target = 48.dp
+    val formColumnsWidth = 480.dp
     val readingWidth = 560.dp
     val contentWidth = 1280.dp
     val cardShape = RoundedCornerShape(24.dp)

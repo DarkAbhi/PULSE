@@ -40,7 +40,7 @@ internal fun HorizonCard(section: Section<Horizon>, onRetry: () -> Unit) {
 }
 
 @Composable
-internal fun WorkoutCard(section: Section<WorkoutToday>, onRetry: () -> Unit) {
+internal fun WorkoutCard(section: Section<WorkoutToday>, onRetry: () -> Unit, onFitness: () -> Unit) {
     PulseCard(Modifier.fillMaxWidth()) {
         PulseText("FITNESS · TODAY", style = PulseTextStyle.Label, color = MaterialTheme.colorScheme.primary)
         when (section) {
@@ -52,6 +52,7 @@ internal fun WorkoutCard(section: Section<WorkoutToday>, onRetry: () -> Unit) {
                 PulseText("A little effort, a little momentum. You showed up today.")
             }
         }
+        PulseTextButton("Open Fitness", onFitness)
         PulseText("Today follows India time (Asia/Kolkata).", color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -85,9 +86,10 @@ fun NotificationSection(section: Section<List<Notification>>, onRetry: () -> Uni
 }
 
 @Composable
-internal fun SpacesCard() {
+internal fun SpacesCard(onFitness: () -> Unit) {
     PulseCard(Modifier.fillMaxWidth()) {
         PulseText("Your spaces", style = PulseTextStyle.Title)
+        PulseTextButton("Explore Fitness", onFitness)
         listOf("Fitness" to "Workouts and movement", "Financial Horizon" to "Your monthly room to move",
             "Garage" to "Vehicles, fuel, and maintenance", "Meal Plan" to "Your weekly meals").forEach { (title, description) ->
             Column(Modifier.padding(vertical = PulseTokens.small)) {

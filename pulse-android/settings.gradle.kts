@@ -23,6 +23,6 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Pulse"
-include(":app")
+include(":app", ":feature:fitness")
 
 include(":core:domain", ":core:data", ":core:network", ":core:ui", ":feature:auth", ":feature:home")

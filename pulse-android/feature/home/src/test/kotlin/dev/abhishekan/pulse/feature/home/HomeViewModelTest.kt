@@ -12,6 +12,11 @@ import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
 import dev.abhishekan.pulse.core.domain.usecase.GetNotifications
 import dev.abhishekan.pulse.core.domain.usecase.GetProfile
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
+import dev.abhishekan.pulse.core.domain.model.*
+import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
+import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
+import java.time.LocalDate
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.math.BigDecimal
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -23,22 +28,33 @@ import org.junit.Assert.*
 class HomeViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val models = ViewModelStore()
+    private val fitness = object : FitnessRepository {
+        override val changes = MutableStateFlow(0L)
+        override suspend fun overview(): Outcome<FitnessOverview> = error("Unused")
+        override suspend fun workout(id: Long): Outcome<WorkoutDetail> = error("Unused")
+        override suspend fun search(query: String): Outcome<List<CatalogExercise>> = error("Unused")
+        override suspend fun record(date: LocalDate?): Outcome<Long> = error("Unused")
+        override suspend fun saveExercise(visitId: Long, exerciseId: Long?, input: ExerciseInput): Outcome<Unit> = error("Unused")
+        override suspend fun deleteWorkout(id: Long): Outcome<Unit> = error("Unused")
+        override suspend fun deleteExercise(visitId: Long, exerciseId: Long): Outcome<Unit> = error("Unused")
+    }
+
     @Before fun setup() { Dispatchers.setMain(dispatcher) }
     @After fun cleanup() { models.clear(); dispatcher.scheduler.runCurrent(); Dispatchers.resetMain() }
 
     @Test fun sectionsLoadIndependentlyAndRetryOnlyTheFailedSection() = runTest {
         val profile = CompletableDeferred<Outcome<Profile>>()
-        var profileCalls = 0; var notificationCalls = 0; var horizonFails = true
+        var profileCalls = 0; var workoutCalls = 0; var notificationCalls = 0; var horizonFails = true
         val repository = object : DashboardRepository {
             override suspend fun profile(): Outcome<Profile> { profileCalls++; return profile.await() }
-            override suspend fun workout() = Outcome.Success(WorkoutToday(false))
+            override suspend fun workout(): Outcome<WorkoutToday> { workoutCalls++; return Outcome.Success(WorkoutToday(false)) }
             override suspend fun horizon(): Outcome<Horizon> = if (horizonFails) Outcome.Error(Failure.Server)
                 else Outcome.Success(Horizon("₹", BigDecimal("100.00"), BigDecimal("12.50"), BigDecimal("87.50")))
             override suspend fun notifications(): Outcome<List<Notification>> {
                 notificationCalls++; return Outcome.Success(listOf(Notification(1, "An update", null, null)))
             }
         }
-        val vm = HomeViewModel(GetProfile(repository), GetWorkoutToday(repository), GetHorizon(repository), GetNotifications(repository))
+        val vm = HomeViewModel(GetProfile(repository), GetWorkoutToday(repository), GetHorizon(repository), GetNotifications(repository), ObserveFitnessChanges(fitness))
         models.put("home", vm)
         runCurrent()
         assertEquals(Section.Loading, vm.uiState.value.profile)
@@ -51,6 +67,8 @@ class HomeViewModelTest {
         assertEquals(1, notificationCalls)
         profile.complete(Outcome.Success(Profile(null))); runCurrent()
         assertEquals(Section.Empty, vm.uiState.value.profile)
+        fitness.changes.value++; runCurrent()
+        assertEquals(2, workoutCalls)
     }
 
     @Test fun currencyFormattingDoesNotRoundBackendPrecision() {

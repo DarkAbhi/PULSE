@@ -20,7 +20,7 @@ class DesignSystemTest {
                 c.onSecondary to c.secondary, c.onSecondaryContainer to c.secondaryContainer,
                 c.onTertiary to c.tertiary, c.onTertiaryContainer to c.tertiaryContainer,
                 c.onBackground to c.background, c.onSurface to c.surface,
-                c.onSurfaceVariant to c.surfaceVariant, c.onSurfaceVariant to c.background,
+                c.onSurfaceVariant to c.surfaceVariant, c.onSurfaceVariant to c.surface, c.onSurfaceVariant to c.background,
                 c.primary to c.surface, c.primary to c.background, c.error to c.surface,
                 c.onError to c.error, c.onErrorContainer to c.errorContainer,
                 c.inverseOnSurface to c.inverseSurface, c.inversePrimary to c.inverseSurface,
@@ -28,6 +28,7 @@ class DesignSystemTest {
             ).forEach { (foreground, background) ->
                 assertTrue("Contrast below 4.5: $foreground on $background", contrast(foreground, background) >= 4.5f)
             }
+            assertTrue("Calendar activity indicators must meet 3:1", contrast(c.tertiary, c.surface) >= 3f)
             assertTrue("Field outlines must meet 3:1", contrast(c.outline, c.surface) >= 3f)
         }
     }

@@ -17,7 +17,12 @@ internal fun remoteFailure(error: Exception): Failure {
     if (generateSequence<Throwable>(error) { it.cause }.any { it is SessionStorageException }) return Failure.Storage
     return when (error) {
         is HttpRequestTimeoutException, is ConnectTimeoutException, is SocketTimeoutException -> Failure.Timeout
-        is ResponseException -> if (error.response.status.value == 401) Failure.Unauthorized else Failure.Server
+        is ResponseException -> when (error.response.status.value) {
+            401 -> Failure.Unauthorized
+            404 -> Failure.NotFound
+            400, 422 -> Failure.InvalidInput
+            else -> Failure.Server
+        }
         is JsonConvertException, is SerializationException, is IllegalArgumentException, is DateTimeException -> Failure.Malformed
         is IOException -> Failure.Connection
         else -> Failure.Server

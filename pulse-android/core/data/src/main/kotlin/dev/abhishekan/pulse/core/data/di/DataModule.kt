@@ -1,5 +1,7 @@
 package dev.abhishekan.pulse.core.data.di
 
+import dev.abhishekan.pulse.core.data.PulseFitnessRepository
+import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -18,6 +20,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val dataModule = module {
+    singleOf(::PulseFitnessRepository) bind FitnessRepository::class
     single<DataStore<Preferences>> { get<Context>().preferences }
     singleOf(::PulsePreferences) bind PreferencesRepository::class
     singleOf(::AndroidSessionKey)

@@ -5,22 +5,27 @@ import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
 import dev.abhishekan.pulse.core.domain.usecase.GetNotifications
+import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
 import dev.abhishekan.pulse.core.domain.usecase.GetProfile
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val getProfile: GetProfile, private val getWorkout: GetWorkoutToday,
-    private val getHorizon: GetHorizon, private val getNotifications: GetNotifications,
+    private val getHorizon: GetHorizon, private val getNotifications: GetNotifications, changes: ObserveFitnessChanges,
 ) : ViewModel() {
     private val state = MutableStateFlow(HomeUiState())
     val uiState = state.asStateFlow()
     private val jobs = mutableMapOf<String, Job>()
-    init { retryProfile(); retryWorkout(); retryHorizon(); retryNotifications() }
+    init {
+        retryProfile(); retryWorkout(); retryHorizon(); retryNotifications()
+        viewModelScope.launch { changes().drop(1).collect { jobs["workout"]?.cancel(); retryWorkout() } }
+    }
 
     private fun <T> load(key: String, fetch: suspend () -> Outcome<T>, empty: (T) -> Boolean,
         update: (HomeUiState, Section<T>) -> HomeUiState) {

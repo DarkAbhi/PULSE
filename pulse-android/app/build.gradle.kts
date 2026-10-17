@@ -51,6 +51,7 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":feature:auth"))
     implementation(project(":feature:home"))
+    implementation(project(":feature:fitness"))
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
     implementation(libs.coroutines.android)
@@ -62,6 +63,7 @@ dependencies {
     testImplementation(libs.coroutines.test)
     androidTestImplementation(libs.ktor.core)
     androidTestImplementation(libs.ktor.mock)
+    androidTestImplementation(libs.serialization.json)
     androidTestImplementation(libs.coroutines.test)
 
     implementation(platform(libs.androidx.compose.bom))

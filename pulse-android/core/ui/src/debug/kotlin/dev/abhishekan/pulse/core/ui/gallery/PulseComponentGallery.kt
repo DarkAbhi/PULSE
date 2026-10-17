@@ -76,7 +76,17 @@ private fun Controls(onAction: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var checked by rememberSaveable { mutableStateOf(true) }
     var switched by rememberSaveable { mutableStateOf(false) }
+    var showDate by rememberSaveable { mutableStateOf(false) }
+    var selectedDate by rememberSaveable { mutableStateOf("2026-10-17") }
     PulseCard(Modifier.fillMaxWidth()) {
+        PulseText("Calendar controls", style = PulseTextStyle.Title)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
+            PulseCalendarDay("17", "17 October, today, selected, workout recorded", true, true, true, {})
+            PulseCalendarDay("18", "18 October, workout recorded", false, false, true, {})
+            PulseCalendarDay("19", "19 October, no workouts", false, false, false, {})
+            PulseCalendarDay("20", "20 October, disabled", false, false, false, {}, enabled = false)
+        }
+        PulseTextButton("Choose sample date: $selectedDate", { showDate = true })
         PulseText("The essentials", style = PulseTextStyle.Title)
         PulseText("Forms and actions", color = MaterialTheme.colorScheme.onSurfaceVariant)
         PulseTextField(username, { username = it }, "Sample username", Modifier.fillMaxWidth())
@@ -93,6 +103,7 @@ private fun Controls(onAction: () -> Unit) {
         PulseSwitch(switched, { switched = it }, "Sample switch")
         PulseSwitch(false, {}, "Disabled switch", enabled = false)
     }
+    if (showDate) PulseDatePickerDialog(java.time.LocalDate.parse(selectedDate), { selectedDate = it.toString(); showDate = false }, { showDate = false })
 }
 
 @Composable

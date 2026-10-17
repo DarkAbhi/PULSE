@@ -10,5 +10,6 @@ val Failure.message: String get() = when (this) {
     Failure.Timeout -> "The request took too long. Please try again."
     Failure.Server -> "Pulse is temporarily unavailable. Please try again shortly."
     Failure.Malformed -> "We couldn’t read this update. Please try again."
+    Failure.NotFound -> "This record is no longer available. Refresh to see the latest updates."
     Failure.Storage -> "We couldn’t access secure session storage. Please try again."
 }

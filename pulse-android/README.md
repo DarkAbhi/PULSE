@@ -1,6 +1,6 @@
 # Pulse Android
 
-Native Kotlin/Compose app for `dev.abhishekan.pulse`. Phases 1–4 implement the design system, username/password authentication through the existing Go API, encrypted cookie restoration, the dashboard, Fitness, and Financial Horizon. Product screens fetch API data; preview and test fixtures are confined to debug/test source sets.
+Native Kotlin/Compose app for `dev.abhishekan.pulse`. Phases 1–5 implement the design system, username/password authentication through the existing Go API, encrypted cookie restoration, the dashboard, Fitness, Financial Horizon, and Garage. Product screens fetch API data; preview and test fixtures are confined to debug/test source sets.
 
 ## Setup
 
@@ -45,7 +45,7 @@ Source of truth: Go auth/profile/gym/notification handlers and Horizon summary D
 
 | Module | Owns | Project dependencies |
 | --- | --- | --- |
-| `:app` | Application/Koin startup, session gate, appearance, Compose navigation, environment configuration | All eight modules |
+| `:app` | Application/Koin startup, session gate, appearance, Compose navigation, environment configuration | All nine modules |
 | `:core:domain` | Pure models, outcomes, repository contracts and use cases | None; coroutines only |
 | `:core:data` | Repository implementations, mapping, DataStore preferences, Keystore encrypted storage | Domain, network |
 | `:core:network` | One Ktor/OkHttp client, API services/DTOs, cookie policy and storage contract | None |
@@ -54,6 +54,7 @@ Source of truth: Go auth/profile/gym/notification handlers and Horizon summary D
 | `:feature:home` | Dashboard/notification presentation, independent section state, ViewModel, feature DI | Domain, UI |
 | `:feature:fitness` | Activity calendar, workout details, exercise forms, ViewModels/state and feature DI | Domain, UI |
 | `:feature:horizon` | Financial overview, paged ledger, budgets, obligations, subscriptions, planned purchases, forms and feature DI | Domain, UI |
+| `:feature:garage` | Vehicle collection/detail, fuel, tire pressure/air, maintenance, receipt actions, drafts and feature DI | Domain, UI |
 
 Features never import data/network or one another. Domain has no Android, Koin, Ktor, or persistence dependencies. Boundary tests enforce the module edges and import restrictions. No database/common/testing module, offline sync, or additional architecture framework was introduced.
 
@@ -65,7 +66,7 @@ Reviewed against [android-architecture](../.agents/skills/android-architecture/S
 
 ```text
 core/domain/.../domain/
-  model/       # One model/outcome type per file
+  model/       # Focused models/outcomes; related feature models may share a file
   repository/  # One repository contract per file
   usecase/     # One application operation per file
 core/data/.../data/di/DataModule.kt
@@ -75,8 +76,8 @@ core/network/.../network/
   NetworkConfig.kt
   PulseHttpClient.kt
   PulseApi.kt
-feature/{auth,home,fitness,horizon}/.../
-  di/{Auth,Home,Fitness,Horizon}Module.kt
+feature/{auth,home,fitness,horizon,garage}/.../
+  di/{Auth,Home,Fitness,Horizon,Garage}Module.kt
   # Screens, ViewModels and immutable UI state in separate files
 app/.../pulse/di/ApplicationModule.kt
 ```
@@ -272,4 +273,50 @@ The integration reuses the installed versions and documented [Compose menu APIs]
 
 API workflows were tested through production Ktor, encrypted session persistence, repositories, use cases, Koin and navigation against test-only source-derived HTTP fixtures. No personal/live backend account was accessed. Process-state restoration was checked through SavedStateHandle tests; native tests exercise rotation/resizing/tab restoration rather than killing a live personal session. Physical-device TalkBack, external-keyboard traversal and other Android runtime versions remain unverified. The release HTTPS API origin still needs configuration.
 
-Known server limits remain the existing float64 finance calculations, recent-50 summary transaction/budget usage, and unpaginated linked-payment lists. The main transaction ledger stays paginated. After an uncertain mutation, review waits for successful overview, current ledger page and planned-purchase reads (plus an open payment list), so unresolved read failures intentionally keep writes blocked. Phase 5 has not started.
+Known server limits remain the existing float64 finance calculations, recent-50 summary transaction/budget usage, and unpaginated linked-payment lists. The main transaction ledger stays paginated. After an uncertain mutation, review waits for successful overview, current ledger page and planned-purchase reads (plus an open payment list), so unresolved read failures intentionally keep writes blocked. Phase 4 stopped here; Garage is delivered separately below.
+
+
+## Phase 5 — Garage
+
+Garage is available from Home and Spaces. Its native vehicle collection opens a vehicle overview, fuel history, maintenance history, and tire/air section. Suitable windows show the collection beside vehicle detail; narrow or large-text windows use one scrolling column. Forms stay width-constrained, use Pulse controls, preserve unsaved fields with SavedStateHandle, and warn before discard/logout. Tab navigation preserves destination state. Only Garage was added in this phase; Meal Plan is deferred.
+
+| Workflow | Existing API, relative to `/api/` |
+| --- | --- |
+| Vehicle collection/create/delete | `GET/POST /vehicles`, `DELETE /vehicles/{id}` |
+| Histories and backend efficiency | `GET /vehicles/{id}/history` |
+| Fuel create/edit/delete | `POST /vehicles/{id}/fuel-fillups`, `PUT/DELETE /vehicles/{id}/fuel-fillups/{fillupId}` |
+| Air fill now/delete | `POST /vehicles/{id}/air-fills`, `DELETE /vehicles/{id}/air-fills/{airFillId}` |
+| Target tire pressure | `PUT /vehicles/{id}/tire-pressure` |
+| Maintenance create/edit/delete | `POST /vehicles/{id}/maintenance-records`, `PUT/DELETE /vehicles/{id}/maintenance-records/{recordId}` |
+| Receipt upload | `POST /vehicles/{id}/maintenance-records/{recordId}/attachments`, multipart field `file` |
+| Receipt download/remove | `GET/DELETE /vehicles/{id}/maintenance-records/{recordId}/attachments/{attachmentId}` |
+
+No backend/API or web changes. The vehicle-history endpoint remains unpaginated; Android uses the returned history and backend summaries without introducing a second cache or offline queue. Vehicle creation includes name, active flag and optional solo/pillion target pressures. Tire targets use PSI and explicit nulls clear them. Air fills use server time; the API does not accept backdating. Fuel supports one or two tanks, petrol/diesel/LPG/CNG/electric categories, full/partial/missed flags, timestamp, odometer, station and notes. Enter any two of quantity/unit price/total; absent operands are omitted and calculated by the server. Creation enforces the API’s highest-existing-odometer restriction; editing follows its supported replacement operation. Maintenance includes the five supported categories, amount, date/time, optional odometer/provider/notes. Byte-length title/provider limits match the Go validators. Validation also respects the database’s 48-character vehicle names, 160-character stations, NUMERIC(5,1) pressures, NUMERIC(12,1) odometers, NUMERIC(10,3) quantities, NUMERIC(10,2) unit prices and NUMERIC(12,2) costs, preventing silent fractional rounding or numeric overflow.
+
+Decimal JSON numbers map directly to BigDecimal and serialize as exact unquoted literals. Android does not calculate fuel economy or round-trip money through Double. The server supplies total cost/volume and average/latest/minimum/maximum efficiency; missing intervals show “Not enough history.” Partial/missed intervals retain the backend behavior. The web/API currently label all fuel quantities L and costs ₹, including CNG/electric; Android states that limitation instead of inventing conversions or using Horizon’s unrelated currency setting. The existing Go float64 fields still limit server-side precision.
+
+Receipt actions are available only on saved maintenance records. The system OpenDocument picker grants access to the selected file without broad storage permission. Infrastructure reads on the I/O dispatcher, checks declared and streamed lengths, rejects empty/unreadable/over-10-MiB files, sanitizes names, and uploads multipart with actual transfer progress. Failures keep the maintenance record. Passwords and receipt bytes never enter SavedStateHandle. A process-interrupted write persists a review marker; duplicate taps are blocked and no mutations automatically retry. Successful/uncertain writes refresh server state and invalidate repository revisions. An uncertain result blocks another write until fresh collection/history reads are explicitly reviewed.
+
+Downloads authorize against the Pulse API with the existing session. Redirects remain disabled globally. Garage follows exactly one explicit absolute HTTPS receipt location, rejects embedded credentials/insecure locations/redirect chains, and bounds the downloaded body to 10 MiB. The shared persistent cookie storage only supplies the Pulse session to the configured API origin, never to another storage origin. A storage-server 401 does not expire the Pulse session. Download uses CreateDocument to save where the user chooses; Open uses a private cached file shared through a non-exported FileProvider with a temporary read grant. Its paths expose only the receipts cache subtree. Private previews expire on subsequent receipt opens after a day. No storage keys, cloud credentials or signed-link logging are introduced. See the official [Android document picker guidance](https://developer.android.com/training/data-storage/shared/documents-files), [FileProvider setup](https://developer.android.com/training/secure-file-sharing/setup-sharing), and [Ktor multipart/progress APIs](https://ktor.io/docs/client-requests.html).
+
+Deletion dialogs match existing backend consequences. Fuel deletion removes its tank items and changes server efficiency. Air deletion leaves target pressures intact. Receipt deletion removes its hosted object and metadata. Maintenance deletion cleans hosted objects before deleting the record; failed partial cleanup can leave some files missing while keeping the record. Vehicle deletion cascades database history and receipt metadata **but the current backend does not clean hosted objects**; its confirmation explicitly says those objects may remain. Server-side storage cleanup would require a separate backend change.
+
+Scaffold padding is consumed before feature content handles keyboard insets. When Android resizes the available root below 240dp in height, app bars temporarily yield space to the form; they return when the window grows or the keyboard closes. This is based on available dimensions, without an orientation lock or a change to the bottom-navigation model. The native landscape test checks visible text input and discard with the software keyboard open.
+
+The existing versions/toolchain are unchanged. The only added library dependency is core:data using the already-catalogued AndroidX Core library for FileProvider. A small PulseTransferProgress wrapper joins the component gallery. Debug-only Garage previews cover phone, dark tablet and 200% text; fixture records are confined to debug/test sources.
+
+
+### Phase 5 verification results — 17 October 2026
+
+- `./gradlew build`: passed, including debug/release compilation, optimized unsigned release packaging, unit tests and lint.
+- Lint: zero errors and zero core/feature warnings; the app retains 35 existing dependency-update/template advisories. Dependency versions and the toolchain are unchanged.
+- **120 unit tests passed**, zero failures/errors/skips. Coverage includes exact decimal JSON, database limits, malformed histories, odometer rules, dates/DST, duplicate submissions, failed saves, deletion/selection, saved drafts and pending writes, multipart headers and the exact 10-MiB boundary, bounded downloads, redirect/cookie isolation, cancellation, module boundaries and the complete Koin graph.
+- **31 Android tests passed**, zero failures, on Android 15/API 35 at 1024×900dp in dark mode. This includes prior authentication, Fitness, Financial Horizon, storage and gallery regressions plus six Garage scenarios.
+- All **six Garage scenarios passed** on the normal phone, at 360×800dp with 200% text, and at 800×360dp in landscape. They cover vehicle/fuel/maintenance CRUD, tire pressure, air fills, deletion consequences, Home/Spaces entry, rotation/tab draft retention, keyboard/discard, native date/time pickers, live resizing, uncertain-save review, receipt transfer/removal and failure recovery.
+- Native light/dark, phone/tablet, large-text, landscape, form, keyboard, picker and recovery captures were inspected. All shown records are isolated test fixtures.
+- Device tests invoke AndroidJUnitRunner directly because the Gradle connected-test launcher stalled before test execution in this environment. The APKs were built with Gradle; the complete direct-runner result was `OK (31 tests)` and the final phone result was `OK (6 tests)`.
+- Emulator size/density/text/appearance/autofill settings were restored, task-created emulator screenshots removed, and the task emulator stopped.
+
+Integration tests exercise production Ktor, encrypted cookie/session persistence, repositories, use cases, Koin, navigation and Android content-URI file I/O against source-derived test-only HTTP fixtures. Picker/chooser results are intercepted in instrumentation: real provider selection interfaces, external PDF viewers and live hosted-storage/account behavior remain unverified. SavedStateHandle tests cover process-state reconstruction; native tests cover rotation/resizing rather than killing a live personal session. Physical-device TalkBack, external hardware keyboard and other Android versions remain unverified. Configure the release HTTPS API origin before production use.
+
+Known backend limits remain float64 precision, fixed ₹/L fuel labels, unpaginated history, and hosted receipt objects left behind by vehicle deletion. No backend changes were included. Phase 5 stops here; Phase 6 has not started.

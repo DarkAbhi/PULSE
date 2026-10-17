@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse
 
+import dev.abhishekan.pulse.feature.garage.di.garageModule
 import dev.abhishekan.pulse.feature.fitness.di.fitnessModule
 import dev.abhishekan.pulse.feature.horizon.di.horizonModule
 import android.app.Application
@@ -13,7 +14,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 
-val pulseModules = listOf(applicationModule, dataModule, networkModule, authModule, homeModule, fitnessModule, horizonModule)
+val pulseModules = listOf(applicationModule, dataModule, networkModule, authModule, homeModule, fitnessModule, horizonModule, garageModule)
 
 class PulseApplication : Application() {
     override fun onCreate() {

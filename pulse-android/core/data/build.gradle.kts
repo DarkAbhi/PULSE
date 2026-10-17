@@ -14,6 +14,7 @@ android {
 
 dependencies {
     implementation(libs.koin.core)
+    implementation(libs.androidx.core.ktx)
     implementation(libs.ktor.core)
     implementation(libs.serialization.json)
     testImplementation(libs.ktor.mock)

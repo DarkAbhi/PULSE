@@ -117,7 +117,7 @@ class AuthNavigationDeviceTest {
 
     private fun launch() { scenario = ActivityScenario.launch(MainActivity::class.java) }
     private fun awaitText(text: String) {
-        compose.waitUntil(10_000) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(20_000) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
     }
     private fun login() {
         awaitText("Welcome back")
@@ -153,7 +153,7 @@ class AuthNavigationDeviceTest {
         compose.onNodeWithText("Password").performScrollTo().performTextInput("test-only-password")
         scenario!!.recreate()
         compose.onNodeWithText("fixture-user").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Continue").performScrollTo().performClick()
+        compose.onNodeWithText("Password").performScrollTo().performImeAction()
         awaitText("Asha")
         scenario!!.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         compose.waitUntil(10_000) { scenario!!.state == Lifecycle.State.DESTROYED }

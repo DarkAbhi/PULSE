@@ -16,16 +16,16 @@ import dev.abhishekan.pulse.core.ui.components.*
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun HomeRoute(username: String, onNotifications: () -> Unit, onFitness: () -> Unit, onHorizon: () -> Unit, viewModel: HomeViewModel = koinViewModel()) {
+fun HomeRoute(username: String, onNotifications: () -> Unit, onFitness: () -> Unit, onHorizon: () -> Unit, onGarage: () -> Unit, viewModel: HomeViewModel = koinViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     // The backend computes today in Asia/Kolkata; refresh after returning to the app.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.retryWorkout() }
-    HomeScreen(username, state, viewModel::retryProfile, viewModel::retryWorkout, viewModel::retryHorizon, viewModel::retryNotifications, onNotifications, onFitness, onHorizon)
+    HomeScreen(username, state, viewModel::retryProfile, viewModel::retryWorkout, viewModel::retryHorizon, viewModel::retryNotifications, onNotifications, onFitness, onHorizon, onGarage)
 }
 
 @Composable
 fun HomeScreen(username: String, state: HomeUiState, retryProfile: () -> Unit, retryWorkout: () -> Unit,
-    retryHorizon: () -> Unit, retryNotifications: () -> Unit, onNotifications: () -> Unit, onFitness: () -> Unit, onHorizon: () -> Unit) {
+    retryHorizon: () -> Unit, retryNotifications: () -> Unit, onNotifications: () -> Unit, onFitness: () -> Unit, onHorizon: () -> Unit, onGarage: () -> Unit) {
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         val margin = if (size == PulseWindowSize.Compact) PulseTokens.medium else PulseTokens.large
         Column(Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxWidth().verticalScroll(rememberScrollState()).padding(margin),
@@ -46,7 +46,7 @@ fun HomeScreen(username: String, state: HomeUiState, retryProfile: () -> Unit, r
                 HorizonCard(state.horizon, retryHorizon, onHorizon)
                 WorkoutCard(state.workout, retryWorkout, onFitness)
                 NotificationsCard(state.notifications, retryNotifications, onNotifications)
-                SpacesCard(onFitness, onHorizon)
+                SpacesCard(onFitness, onHorizon, onGarage)
             } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
                     Column(Modifier.weight(if (size == PulseWindowSize.Expanded) 1.3f else 1f), verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
@@ -55,7 +55,7 @@ fun HomeScreen(username: String, state: HomeUiState, retryProfile: () -> Unit, r
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
                         NotificationsCard(state.notifications, retryNotifications, onNotifications)
-                        SpacesCard(onFitness, onHorizon)
+                        SpacesCard(onFitness, onHorizon, onGarage)
                     }
                 }
             }

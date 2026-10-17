@@ -6,13 +6,17 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import dev.abhishekan.pulse.core.ui.PulseTokens
 
 @Composable
 fun PulseSelectionField(label: String, selected: String, options: List<String>, onSelect: (Int) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     var expanded by remember { mutableStateOf(false) }
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     Box(modifier) {
-        OutlinedButton({ expanded = true }, Modifier.fillMaxWidth().heightIn(min = PulseTokens.target), enabled = enabled, shape = PulseTokens.controlShape) {
+        OutlinedButton({ focus.clearFocus(); keyboard?.hide(); expanded = true }, Modifier.fillMaxWidth().heightIn(min = PulseTokens.target), enabled = enabled, shape = PulseTokens.controlShape) {
             PulseText("$label: $selected")
         }
         DropdownMenu(expanded && enabled, { expanded = false }) {

@@ -87,11 +87,12 @@ fun NotificationSection(section: Section<List<Notification>>, onRetry: () -> Uni
 }
 
 @Composable
-internal fun SpacesCard(onFitness: () -> Unit, onHorizon: () -> Unit) {
+internal fun SpacesCard(onFitness: () -> Unit, onHorizon: () -> Unit, onGarage: () -> Unit) {
     PulseCard(Modifier.fillMaxWidth()) {
         PulseText("Your spaces", style = PulseTextStyle.Title)
         PulseTextButton("Explore Fitness", onFitness)
         PulseTextButton("Explore Financial Horizon", onHorizon)
+        PulseTextButton("Explore Garage", onGarage)
         listOf("Fitness" to "Workouts and movement", "Financial Horizon" to "Your monthly room to move",
             "Garage" to "Vehicles, fuel, and maintenance", "Meal Plan" to "Your weekly meals").forEach { (title, description) ->
             Column(Modifier.padding(vertical = PulseTokens.small)) {

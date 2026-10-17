@@ -163,7 +163,12 @@ class HorizonDeviceTest {
     }
     private fun field(label: String, value: String) { compose.onNodeWithText(label).performScrollTo().performTextReplacement(value) }
     private fun confirm(text: String) { compose.onNode(hasText(text) and hasAnyAncestor(isDialog())).performClick() }
-    private fun pick(label: String, current: String, option: String) { tap("$label: $current"); compose.onNodeWithText(option).performScrollTo().performClick() }
+    private fun pick(label: String, current: String, option: String) {
+        tap("$label: $current")
+        try { awaitText(option) }
+        catch (error: Exception) { throw AssertionError("Selection $label: $current → $option did not open", error) }
+        compose.onNodeWithText(option).performScrollTo().performClick()
+    }
     private fun launchHorizon() {
         scenario = ActivityScenario.launch(MainActivity::class.java); awaitText("Welcome back")
         field("Username", "horizon-fixture"); field("Password", "test-only-password"); tap("Continue"); awaitText("Asha")

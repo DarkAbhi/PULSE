@@ -7,9 +7,10 @@ import org.junit.Test
 class ArchitectureTest {
     private val root = File(checkNotNull(System.getProperty("pulse.root")))
     private val allowed = mapOf(
-        "app" to setOf("core:domain", "core:data", "core:network", "core:ui", "feature:auth", "feature:home", "feature:fitness", "feature:horizon"),
+        "app" to setOf("core:domain", "core:data", "core:network", "core:ui", "feature:auth", "feature:home", "feature:fitness", "feature:horizon", "feature:garage"),
         "core/domain" to emptySet(), "core/data" to setOf("core:domain", "core:network"),
         "core/network" to emptySet(), "core/ui" to setOf("core:domain"),
+        "feature/garage" to setOf("core:domain", "core:ui"),
         "feature/horizon" to setOf("core:domain", "core:ui"),
         "feature/fitness" to setOf("core:domain", "core:ui"),
         "feature/auth" to setOf("core:domain", "core:ui"), "feature/home" to setOf("core:domain", "core:ui"),
@@ -32,9 +33,9 @@ class ArchitectureTest {
         listOf("import android.", "import androidx.", "import org.koin", "import io.ktor", "import java.io").forEach {
             assertFalse("Domain imports $it", domain.contains(it))
         }
-        listOf("auth", "home", "fitness", "horizon").forEach { feature ->
+        listOf("auth", "home", "fitness", "horizon", "garage").forEach { feature ->
             root.resolve("feature/$feature/src").walkTopDown().filter { it.extension == "kt" }.forEach { file ->
-                (listOf("core.data", "core.network", "io.ktor") + listOf("auth", "home", "fitness", "horizon").filter { it != feature }.map { "feature.$it" }).forEach {
+                (listOf("core.data", "core.network", "io.ktor") + listOf("auth", "home", "fitness", "horizon", "garage").filter { it != feature }.map { "feature.$it" }).forEach {
                     assertFalse("Infrastructure or sibling feature import in $file", file.readText().contains("import dev.abhishekan.pulse.$it") || file.readText().contains("import $it"))
                 }
             }
@@ -63,6 +64,15 @@ class ArchitectureTest {
                     }
                 }
         }
+    }
+
+    @Test fun receiptSharingStaysInsidePrivateCacheWithoutBroadStoragePermissions() {
+        val manifest = root.resolve("app/src/main/AndroidManifest.xml").readText()
+        assertTrue(manifest.contains("android:exported=\"false\" android:grantUriPermissions=\"true\""))
+        listOf("READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE", "MANAGE_EXTERNAL_STORAGE").forEach { assertFalse(manifest.contains(it)) }
+        val paths = root.resolve("app/src/main/res/xml/receipt_paths.xml").readText()
+        assertTrue(paths.contains("path=\"receipts/\""))
+        assertFalse(paths.contains("root-path")); assertFalse(paths.contains("external-path"))
     }
 
     @Test fun sessionBackupAndNetworkPoliciesStayRestricted() {

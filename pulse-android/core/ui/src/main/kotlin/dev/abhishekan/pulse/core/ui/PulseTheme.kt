@@ -20,6 +20,7 @@ object PulseTokens {
     val large = 32.dp
     val target = 48.dp
     val formColumnsWidth = 480.dp
+    val minimumNavigationHeight = 240.dp
     val readingWidth = 560.dp
     val contentWidth = 1280.dp
     val cardShape = RoundedCornerShape(24.dp)

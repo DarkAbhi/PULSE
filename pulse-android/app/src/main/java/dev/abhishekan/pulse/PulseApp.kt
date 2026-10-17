@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
@@ -22,6 +23,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import dev.abhishekan.pulse.feature.garage.GarageRoute
 import dev.abhishekan.pulse.feature.horizon.HorizonRoute
 import dev.abhishekan.pulse.feature.fitness.FitnessRoute
 import dev.abhishekan.pulse.feature.fitness.WorkoutRoute
@@ -86,6 +88,7 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
     operation: SessionOperation, onLogout: () -> Unit, clearError: () -> Unit) {
     val nav = rememberNavController()
     var hasFitnessDraft by rememberSaveable { mutableStateOf(false) }
+    var hasGarageDraft by rememberSaveable { mutableStateOf(false) }
     var hasHorizonDraft by rememberSaveable { mutableStateOf(false) }
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route
@@ -97,7 +100,7 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
             launchSingleTop = true
             restoreState = true
         }
-        if (nav.currentDestination?.route in listOf("space-list", "horizon")) nav.navigate("fitness") { launchSingleTop = true }
+        if (nav.currentDestination?.route in listOf("space-list", "horizon", "garage")) nav.navigate("fitness") { launchSingleTop = true }
     }
     val openHorizon = {
         nav.navigate("spaces") {
@@ -106,69 +109,82 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
         }
         if (nav.currentDestination?.route != "horizon") nav.navigate("horizon") { launchSingleTop = true }
     }
+    val openGarage = {
+        nav.navigate("spaces") {
+            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true; restoreState = true
+        }
+        if (nav.currentDestination?.route != "garage") nav.navigate("garage") { launchSingleTop = true }
+    }
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(operation.error) {
         operation.error?.let { snackbar.showSnackbar(it); clearError() }
     }
-    Scaffold(
-        topBar = {
-            if (route != "gallery") PulseTopAppBar(
-                when (route) { "you" -> "You"; "notifications" -> "Notifications"; "space-list" -> "Spaces"; "fitness" -> "Fitness"; "workout/{id}" -> "Workout"; "horizon" -> "Financial Horizon"; else -> "Pulse" },
-                actions = {
-                    if (route == "home") PulseIconButton("Notifications", { nav.navigate("notifications") { launchSingleTop = true } }) {
-                        Icon(painterResource(UiR.drawable.pulse_bell), contentDescription = null)
-                    }
-                },
-                navigationIcon = {
-                    if (route == "notifications" || route == "fitness" || route == "horizon" || route == "workout/{id}") PulseIconButton(
-                        when (route) { "notifications" -> "Back to Home"; "fitness", "horizon" -> "Back to Spaces"; else -> "Back to Fitness" },
-                        { backDispatcher?.onBackPressed() }) {
-                        Icon(painterResource(UiR.drawable.pulse_back), contentDescription = null)
-                    }
-                },
-            )
-        },
-        bottomBar = {
-            if (route != "gallery") PulseBottomNavigationBar(
-                listOf(PulseNavigationItem("Home") { Icon(painterResource(UiR.drawable.pulse_home), null) },
-                    PulseNavigationItem("Spaces") { Icon(painterResource(UiR.drawable.pulse_spaces), null) },
-                    PulseNavigationItem("You") { Icon(painterResource(UiR.drawable.pulse_person), null) }),
-                when { route == "you" -> 2; inSpaces -> 1; else -> 0 },
-                { index -> nav.navigate(listOf("home", "spaces", "you")[index]) {
-                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                } },
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbar) { PulseSnackbar(it) } },
-    ) { insets ->
-        NavHost(nav, startDestination = "home", modifier = Modifier.padding(insets)) {
-            composable("home") { HomeRoute(username, { nav.navigate("notifications") { launchSingleTop = true } }, openFitness, openHorizon) }
-            navigation(startDestination = "space-list", route = "spaces") {
-                composable("space-list") { SpacesScreen({ nav.navigate("fitness") { launchSingleTop = true } }, { nav.navigate("horizon") { launchSingleTop = true } }) }
-                composable("horizon") { HorizonRoute(onDraftChanged = { hasHorizonDraft = it }) }
-                composable("fitness") { FitnessRoute({ id -> nav.navigate("workout/$id") { launchSingleTop = true } }) }
-                composable("workout/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) {
-                    WorkoutRoute(onDeleted = { nav.popBackStack() }, onDraftChanged = { hasFitnessDraft = it })
-                }
-            }
-            composable("you") {
-                YouScreen(username, appearance, onTheme, operation.running, hasFitnessDraft || hasHorizonDraft, onLogout, { nav.navigate("gallery") })
-            }
-            composable("notifications") {
-                val homeEntry = remember(it) { nav.getBackStackEntry("home") }
-                val home: HomeViewModel = koinViewModel(viewModelStoreOwner = homeEntry)
-                val state by home.uiState.collectAsStateWithLifecycle()
-                Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(PulseTokens.cardPadding),
-                    verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-                    PulseCard(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()) {
-                        PulseText("Your latest updates", style = PulseTextStyle.Title)
-                        NotificationSection(state.notifications, home::retryNotifications)
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        // Some keyboards resize the root before IME insets arrive; preserve space for the form.
+        val showBars = maxHeight >= PulseTokens.minimumNavigationHeight
+        Scaffold(
+            contentWindowInsets = if (showBars) ScaffoldDefaults.contentWindowInsets else WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
+            topBar = {
+                if (route != "gallery" && showBars) PulseTopAppBar(
+                    when (route) { "you" -> "You"; "notifications" -> "Notifications"; "space-list" -> "Spaces"; "fitness" -> "Fitness"; "workout/{id}" -> "Workout"; "horizon" -> "Financial Horizon"; "garage" -> "Garage"; else -> "Pulse" },
+                    actions = {
+                        if (route == "home") PulseIconButton("Notifications", { nav.navigate("notifications") { launchSingleTop = true } }) {
+                            Icon(painterResource(UiR.drawable.pulse_bell), contentDescription = null)
+                        }
+                    },
+                    navigationIcon = {
+                        if (route == "notifications" || route == "fitness" || route == "horizon" || route == "garage" || route == "workout/{id}") PulseIconButton(
+                            when (route) { "notifications" -> "Back to Home"; "fitness", "horizon", "garage" -> "Back to Spaces"; else -> "Back to Fitness" },
+                            { backDispatcher?.onBackPressed() }) {
+                            Icon(painterResource(UiR.drawable.pulse_back), contentDescription = null)
+                        }
+                    },
+                )
+            },
+            bottomBar = {
+                if (route != "gallery" && showBars) PulseBottomNavigationBar(
+                    listOf(PulseNavigationItem("Home") { Icon(painterResource(UiR.drawable.pulse_home), null) },
+                        PulseNavigationItem("Spaces") { Icon(painterResource(UiR.drawable.pulse_spaces), null) },
+                        PulseNavigationItem("You") { Icon(painterResource(UiR.drawable.pulse_person), null) }),
+                    when { route == "you" -> 2; inSpaces -> 1; else -> 0 },
+                    { index -> nav.navigate(listOf("home", "spaces", "you")[index]) {
+                        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    } },
+                )
+            },
+            snackbarHost = { SnackbarHost(snackbar) { PulseSnackbar(it) } },
+        ) { insets ->
+            NavHost(nav, startDestination = "home", modifier = Modifier.padding(insets).consumeWindowInsets(insets)) {
+                composable("home") { HomeRoute(username, { nav.navigate("notifications") { launchSingleTop = true } }, openFitness, openHorizon, openGarage) }
+                navigation(startDestination = "space-list", route = "spaces") {
+                    composable("space-list") { SpacesScreen({ nav.navigate("fitness") { launchSingleTop = true } }, { nav.navigate("horizon") { launchSingleTop = true } }, { nav.navigate("garage") { launchSingleTop = true } }) }
+                    composable("garage") { GarageRoute(onDraftChanged = { hasGarageDraft = it }) }
+                    composable("horizon") { HorizonRoute(onDraftChanged = { hasHorizonDraft = it }) }
+                    composable("fitness") { FitnessRoute({ id -> nav.navigate("workout/$id") { launchSingleTop = true } }) }
+                    composable("workout/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) {
+                        WorkoutRoute(onDeleted = { nav.popBackStack() }, onDraftChanged = { hasFitnessDraft = it })
                     }
                 }
+                composable("you") {
+                    YouScreen(username, appearance, onTheme, operation.running, hasFitnessDraft || hasHorizonDraft || hasGarageDraft, onLogout, { nav.navigate("gallery") })
+                }
+                composable("notifications") {
+                    val homeEntry = remember(it) { nav.getBackStackEntry("home") }
+                    val home: HomeViewModel = koinViewModel(viewModelStoreOwner = homeEntry)
+                    val state by home.uiState.collectAsStateWithLifecycle()
+                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(PulseTokens.cardPadding),
+                        verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
+                        PulseCard(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()) {
+                            PulseText("Your latest updates", style = PulseTextStyle.Title)
+                            NotificationSection(state.notifications, home::retryNotifications)
+                        }
+                    }
+                }
+                debugGalleryDestination()
             }
-            debugGalleryDestination()
         }
     }
 }
@@ -203,7 +219,7 @@ private fun YouScreen(username: String, appearance: AppearanceUiState, onTheme: 
 }
 
 @Composable
-private fun SpacesScreen(onFitness: () -> Unit, onHorizon: () -> Unit) {
+private fun SpacesScreen(onFitness: () -> Unit, onHorizon: () -> Unit, onGarage: () -> Unit) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth().verticalScroll(rememberScrollState()).padding(PulseTokens.medium),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
@@ -217,6 +233,11 @@ private fun SpacesScreen(onFitness: () -> Unit, onHorizon: () -> Unit) {
                 PulseText("Financial Horizon", style = PulseTextStyle.Title)
                 PulseText("Your room to move. Review commitments, track transactions, and plan what’s next.")
                 PulseButton("Open Financial Horizon", onHorizon, Modifier.fillMaxWidth())
+            }
+            PulseCard(Modifier.fillMaxWidth()) {
+                PulseText("Garage", style = PulseTextStyle.Title)
+                PulseText("Care for every journey. Track fuel, tire pressure, maintenance and receipts.")
+                PulseButton("Open Garage", onGarage, Modifier.fillMaxWidth())
             }
         }
     }

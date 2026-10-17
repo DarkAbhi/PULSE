@@ -139,7 +139,7 @@ private fun Appearance(theme: String, onTheme: (String) -> Unit, error: String?,
 @Composable
 private fun States(size: PulseWindowSize) {
     Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
-        PulseCard(Modifier.fillMaxWidth()) { PulseLoadingState("Loading sample section") }
+        PulseCard(Modifier.fillMaxWidth()) { PulseLoadingState("Loading sample section"); PulseTransferProgress(.45f) }
         if (size == PulseWindowSize.Compact) {
             EmptyCard()
             ErrorCard()

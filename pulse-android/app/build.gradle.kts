@@ -54,6 +54,7 @@ dependencies {
     implementation(project(":feature:fitness"))
     implementation(project(":feature:horizon"))
     implementation(project(":feature:garage"))
+    implementation(project(":feature:mealplan"))
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
     implementation(libs.coroutines.android)

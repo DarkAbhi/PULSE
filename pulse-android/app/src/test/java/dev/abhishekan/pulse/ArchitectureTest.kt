@@ -7,9 +7,10 @@ import org.junit.Test
 class ArchitectureTest {
     private val root = File(checkNotNull(System.getProperty("pulse.root")))
     private val allowed = mapOf(
-        "app" to setOf("core:domain", "core:data", "core:network", "core:ui", "feature:auth", "feature:home", "feature:fitness", "feature:horizon", "feature:garage"),
+        "app" to setOf("core:domain", "core:data", "core:network", "core:ui", "feature:auth", "feature:home", "feature:fitness", "feature:horizon", "feature:garage", "feature:mealplan"),
         "core/domain" to emptySet(), "core/data" to setOf("core:domain", "core:network"),
         "core/network" to emptySet(), "core/ui" to setOf("core:domain"),
+        "feature/mealplan" to setOf("core:domain", "core:ui"),
         "feature/garage" to setOf("core:domain", "core:ui"),
         "feature/horizon" to setOf("core:domain", "core:ui"),
         "feature/fitness" to setOf("core:domain", "core:ui"),
@@ -33,9 +34,9 @@ class ArchitectureTest {
         listOf("import android.", "import androidx.", "import org.koin", "import io.ktor", "import java.io").forEach {
             assertFalse("Domain imports $it", domain.contains(it))
         }
-        listOf("auth", "home", "fitness", "horizon", "garage").forEach { feature ->
+        listOf("auth", "home", "fitness", "horizon", "garage", "mealplan").forEach { feature ->
             root.resolve("feature/$feature/src").walkTopDown().filter { it.extension == "kt" }.forEach { file ->
-                (listOf("core.data", "core.network", "io.ktor") + listOf("auth", "home", "fitness", "horizon", "garage").filter { it != feature }.map { "feature.$it" }).forEach {
+                (listOf("core.data", "core.network", "io.ktor") + listOf("auth", "home", "fitness", "horizon", "garage", "mealplan").filter { it != feature }.map { "feature.$it" }).forEach {
                     assertFalse("Infrastructure or sibling feature import in $file", file.readText().contains("import dev.abhishekan.pulse.$it") || file.readText().contains("import $it"))
                 }
             }

@@ -1,6 +1,6 @@
 # Pulse Android
 
-Native Kotlin/Compose app for `dev.abhishekan.pulse`. Phases 1–5 implement the design system, username/password authentication through the existing Go API, encrypted cookie restoration, the dashboard, Fitness, Financial Horizon, and Garage. Product screens fetch API data; preview and test fixtures are confined to debug/test source sets.
+Native Kotlin/Compose app for `dev.abhishekan.pulse`. Phases 1–6 implement the design system, username/password authentication through the existing Go API, encrypted cookie restoration, the dashboard, Fitness, Financial Horizon, Garage, and Meal Plan. Product screens fetch API data; preview and test fixtures are confined to debug/test source sets.
 
 ## Setup
 
@@ -45,7 +45,7 @@ Source of truth: Go auth/profile/gym/notification handlers and Horizon summary D
 
 | Module | Owns | Project dependencies |
 | --- | --- | --- |
-| `:app` | Application/Koin startup, session gate, appearance, Compose navigation, environment configuration | All nine modules |
+| `:app` | Application/Koin startup, session gate, appearance, Compose navigation, environment configuration | All ten modules |
 | `:core:domain` | Pure models, outcomes, repository contracts and use cases | None; coroutines only |
 | `:core:data` | Repository implementations, mapping, DataStore preferences, Keystore encrypted storage | Domain, network |
 | `:core:network` | One Ktor/OkHttp client, API services/DTOs, cookie policy and storage contract | None |
@@ -55,6 +55,7 @@ Source of truth: Go auth/profile/gym/notification handlers and Horizon summary D
 | `:feature:fitness` | Activity calendar, workout details, exercise forms, ViewModels/state and feature DI | Domain, UI |
 | `:feature:horizon` | Financial overview, paged ledger, budgets, obligations, subscriptions, planned purchases, forms and feature DI | Domain, UI |
 | `:feature:garage` | Vehicle collection/detail, fuel, tire pressure/air, maintenance, receipt actions, drafts and feature DI | Domain, UI |
+| `:feature:mealplan` | Weekly planner, meal/consumption actions, custom meal times, saved drafts and feature DI | Domain, UI |
 
 Features never import data/network or one another. Domain has no Android, Koin, Ktor, or persistence dependencies. Boundary tests enforce the module edges and import restrictions. No database/common/testing module, offline sync, or additional architecture framework was introduced.
 
@@ -319,4 +320,43 @@ The existing versions/toolchain are unchanged. The only added library dependency
 
 Integration tests exercise production Ktor, encrypted cookie/session persistence, repositories, use cases, Koin, navigation and Android content-URI file I/O against source-derived test-only HTTP fixtures. Picker/chooser results are intercepted in instrumentation: real provider selection interfaces, external PDF viewers and live hosted-storage/account behavior remain unverified. SavedStateHandle tests cover process-state reconstruction; native tests cover rotation/resizing rather than killing a live personal session. Physical-device TalkBack, external hardware keyboard and other Android versions remain unverified. Configure the release HTTPS API origin before production use.
 
-Known backend limits remain float64 precision, fixed ₹/L fuel labels, unpaginated history, and hosted receipt objects left behind by vehicle deletion. No backend changes were included. Phase 5 stops here; Phase 6 has not started.
+Known backend limits remain float64 precision, fixed ₹/L fuel labels, unpaginated history, and hosted receipt objects left behind by vehicle deletion. No backend changes were included. Phase 5 stopped here; Meal Plan is delivered separately below.
+
+
+## Phase 6 — Meal Plan
+
+Home and Spaces open the working Meal Plan destination. The native planner provides Monday-based week navigation, a Today action, an automatically visible selected-day chip, and a date/meal-time agenda. Wide windows with enough room for the current text scale show a seven-day board; narrower or enlarged-text windows use the selected-day agenda. Status uses “Planned”/“Consumed” text and a checkbox, with confirmation feedback after the server responds. No nutritional values or meal fixtures are supplied to production UI.
+
+| Workflow | Existing API, relative to `/api/` |
+| --- | --- |
+| Selected week | `GET /meal-plans?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD` |
+| Add/edit/delete meal | `POST /meal-plans`, `PATCH/DELETE /meal-plans/{id}` |
+| Consumption | `PATCH /meal-plans/{id}/consumed` with `is_consumed` |
+| Meal times | `GET/POST /meal-times`, `DELETE /meal-times/{id}` |
+
+No backend, web, toolchain, or dependency-version changes. Dates stay LocalDate values through DTO mapping and ISO date serialization, without conversion through midnight instants. Today follows Asia/Kolkata, matching the web client. Week/month/year/leap-day boundaries use java.time calendar arithmetic. Forms use native Pulse date/time picker wrappers, meaningful labels, constrained widths and keyboard actions.
+
+Meal names allow up to the database's 255 Unicode characters; custom meal-time names allow 100. Blank names, invalid dates/times and invalid IDs are blocked. The API accepts both HH:mm and HH:mm:ss; it imposes no start-before-end rule. Android therefore accepts equal endpoints and overnight ranges, labeling overnight ranges explicitly. Default meal times are protected from deletion in both the UI and domain use case. Meal-time editing is not exposed because no update endpoint exists.
+
+A new meal may omit its time. The current Go update contract cannot clear an assigned time: omitted and JSON-null pointers both mean “keep the existing link.” Existing assigned meals can switch to another supported time; the form explains why removal is unavailable. Meal edits omit consumption, preserving the server's current confirmed value. Deleting a custom time keeps associated meals, clears their time association and retains their stored time range under Other meals. A later meal edit follows the backend's existing behavior, which can clear that detached range. Deleting a meal removes the plan and its consumption status, with confirmation.
+
+Meal and meal-time reads load independently and expose loading/error/retry states. Last confirmed meal values remain visible during refresh and failed toggles. No optimistic consumption change occurs: the response supplies the confirmed value. Failed/uncertain writes refresh server records, retain the draft and block another mutation until successful reads are explicitly reviewed. A meal saved for another week moves review to that target week before submission, persisting the selection so process reconstruction reviews the correct date. No mutation retries automatically; duplicate submissions are blocked synchronously.
+
+SavedStateHandle stores small editor fields, selected date, management mode and an interrupted-write marker. Scroll state uses Compose saved state; dirty drafts require discard confirmation and participate in the app's logout warning. Server records are reloaded rather than saved in a Bundle or database. Debug previews demonstrate phone/large text, a dark weekly board, saving and validation errors. The implementation reuses the installed [Compose saved-state APIs](https://developer.android.com/develop/ui/compose/state-saving) and [Ktor request APIs](https://ktor.io/docs/client-requests.html).
+
+
+### Phase 6 verification results — 17 October 2026
+
+- `./gradlew build :app:assembleDebugAndroidTest`: passed, including debug/release compilation, optimized unsigned release packaging, unit tests and lint.
+- Lint: zero errors, zero core/feature warnings; 35 existing app dependency/template advisories remain. Toolchain and dependency versions are unchanged.
+- **138 unit tests passed**, zero failures/errors/skips. New coverage includes India date boundaries, Monday weeks across months/years/leap days, empty weeks, range-query parameters, optional/detached meal times, validation/database name limits, protected defaults, correct consumption responses, failed toggles, duplicate submission blocking, independent read failures/retries, saved-state reconstruction, interrupted writes and reviewing the target week after an uncertain save.
+- All **six Meal Plan phone scenarios passed** on Android 15/API 35, including meal CRUD, both consumption states, custom time creation/deletion, native pickers, retained meals after time deletion, dirty-draft rotation/tab/logout behavior, uncertain saves, failed toggles and live resizing.
+
+- **37 Android tests passed** in the 1024×900dp dark tablet configuration: all 31 existing regressions and all six Meal Plan scenarios.
+- All **six Meal Plan scenarios also passed** at 360×800dp with 200% text and in 800×360dp landscape. Native resize checks additionally cover the 1280dp weekly board and large-text agenda fallback, as well as restoring the agenda's scroll position after tab navigation.
+- Phone/tablet, light/dark, weekly board, large text, landscape/keyboard, native date/time input, forms, deletion and recovery captures were visually inspected. Device tests ran through AndroidJUnitRunner directly using Gradle-built APKs.
+- Emulator display/density/text/appearance/autofill settings were restored, task-created emulator screenshots removed, and the task emulator stopped.
+
+Tests use production Ktor, encrypted session persistence, repositories, use cases, Koin and navigation against isolated source-derived HTTP fixtures. No personal/live backend account was accessed. Native captures contain test records only. SavedStateHandle tests reconstruct process state; native tests exercise rotation and resizing rather than killing a live personal session. Physical-device TalkBack, external hardware keyboards, other Android versions and live account behavior remain unverified. Configure the release HTTPS API origin before production use.
+
+Phase 6 stops here. Phase 7 remains outside this work.

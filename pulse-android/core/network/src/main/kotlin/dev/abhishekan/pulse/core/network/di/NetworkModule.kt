@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.core.network.di
 
+import dev.abhishekan.pulse.core.network.MealPlanApi
 import dev.abhishekan.pulse.core.network.GarageApi
 import dev.abhishekan.pulse.core.network.HorizonApi
 import dev.abhishekan.pulse.core.network.FitnessApi
@@ -12,6 +13,7 @@ import org.koin.dsl.module
 import org.koin.dsl.onClose
 
 val networkModule = module {
+    singleOf(::MealPlanApi)
     singleOf(::GarageApi)
     singleOf(::HorizonApi)
     singleOf(::FitnessApi)

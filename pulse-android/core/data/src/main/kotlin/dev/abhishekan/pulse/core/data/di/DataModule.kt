@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.core.data.di
 
+import dev.abhishekan.pulse.core.data.PulseMealPlanRepository
 import dev.abhishekan.pulse.core.data.PulseHorizonRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
 import dev.abhishekan.pulse.core.data.PulseFitnessRepository
@@ -24,6 +25,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val dataModule = module {
+    singleOf(::PulseMealPlanRepository) bind dev.abhishekan.pulse.core.domain.repository.MealPlanRepository::class
     singleOf(::AndroidReceiptFiles) bind dev.abhishekan.pulse.core.data.ReceiptFiles::class
     singleOf(::PulseGarageRepository) bind dev.abhishekan.pulse.core.domain.repository.GarageRepository::class
     singleOf(::PulseHorizonRepository) bind HorizonRepository::class

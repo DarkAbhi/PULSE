@@ -23,6 +23,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import dev.abhishekan.pulse.feature.mealplan.MealPlanRoute
 import dev.abhishekan.pulse.feature.garage.GarageRoute
 import dev.abhishekan.pulse.feature.horizon.HorizonRoute
 import dev.abhishekan.pulse.feature.fitness.FitnessRoute
@@ -88,6 +89,7 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
     operation: SessionOperation, onLogout: () -> Unit, clearError: () -> Unit) {
     val nav = rememberNavController()
     var hasFitnessDraft by rememberSaveable { mutableStateOf(false) }
+    var hasMealDraft by rememberSaveable { mutableStateOf(false) }
     var hasGarageDraft by rememberSaveable { mutableStateOf(false) }
     var hasHorizonDraft by rememberSaveable { mutableStateOf(false) }
     val entry by nav.currentBackStackEntryAsState()
@@ -100,7 +102,7 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
             launchSingleTop = true
             restoreState = true
         }
-        if (nav.currentDestination?.route in listOf("space-list", "horizon", "garage")) nav.navigate("fitness") { launchSingleTop = true }
+        if (nav.currentDestination?.route in listOf("space-list", "horizon", "garage", "mealplan")) nav.navigate("fitness") { launchSingleTop = true }
     }
     val openHorizon = {
         nav.navigate("spaces") {
@@ -116,6 +118,13 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
         }
         if (nav.currentDestination?.route != "garage") nav.navigate("garage") { launchSingleTop = true }
     }
+    val openMealPlan = {
+        nav.navigate("spaces") {
+            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true; restoreState = true
+        }
+        if (nav.currentDestination?.route != "mealplan") nav.navigate("mealplan") { launchSingleTop = true }
+    }
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(operation.error) {
         operation.error?.let { snackbar.showSnackbar(it); clearError() }
@@ -127,15 +136,15 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
             contentWindowInsets = if (showBars) ScaffoldDefaults.contentWindowInsets else WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
             topBar = {
                 if (route != "gallery" && showBars) PulseTopAppBar(
-                    when (route) { "you" -> "You"; "notifications" -> "Notifications"; "space-list" -> "Spaces"; "fitness" -> "Fitness"; "workout/{id}" -> "Workout"; "horizon" -> "Financial Horizon"; "garage" -> "Garage"; else -> "Pulse" },
+                    when (route) { "you" -> "You"; "notifications" -> "Notifications"; "space-list" -> "Spaces"; "fitness" -> "Fitness"; "workout/{id}" -> "Workout"; "horizon" -> "Financial Horizon"; "garage" -> "Garage"; "mealplan" -> "Meal Plan"; else -> "Pulse" },
                     actions = {
                         if (route == "home") PulseIconButton("Notifications", { nav.navigate("notifications") { launchSingleTop = true } }) {
                             Icon(painterResource(UiR.drawable.pulse_bell), contentDescription = null)
                         }
                     },
                     navigationIcon = {
-                        if (route == "notifications" || route == "fitness" || route == "horizon" || route == "garage" || route == "workout/{id}") PulseIconButton(
-                            when (route) { "notifications" -> "Back to Home"; "fitness", "horizon", "garage" -> "Back to Spaces"; else -> "Back to Fitness" },
+                        if (route == "notifications" || route == "fitness" || route == "horizon" || route == "garage" || route == "mealplan" || route == "workout/{id}") PulseIconButton(
+                            when (route) { "notifications" -> "Back to Home"; "fitness", "horizon", "garage", "mealplan" -> "Back to Spaces"; else -> "Back to Fitness" },
                             { backDispatcher?.onBackPressed() }) {
                             Icon(painterResource(UiR.drawable.pulse_back), contentDescription = null)
                         }
@@ -158,9 +167,10 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
             snackbarHost = { SnackbarHost(snackbar) { PulseSnackbar(it) } },
         ) { insets ->
             NavHost(nav, startDestination = "home", modifier = Modifier.padding(insets).consumeWindowInsets(insets)) {
-                composable("home") { HomeRoute(username, { nav.navigate("notifications") { launchSingleTop = true } }, openFitness, openHorizon, openGarage) }
+                composable("home") { HomeRoute(username, { nav.navigate("notifications") { launchSingleTop = true } }, openFitness, openHorizon, openGarage, openMealPlan) }
                 navigation(startDestination = "space-list", route = "spaces") {
-                    composable("space-list") { SpacesScreen({ nav.navigate("fitness") { launchSingleTop = true } }, { nav.navigate("horizon") { launchSingleTop = true } }, { nav.navigate("garage") { launchSingleTop = true } }) }
+                    composable("space-list") { SpacesScreen({ nav.navigate("fitness") { launchSingleTop = true } }, { nav.navigate("horizon") { launchSingleTop = true } }, { nav.navigate("garage") { launchSingleTop = true } }, { nav.navigate("mealplan") { launchSingleTop = true } }) }
+                    composable("mealplan") { MealPlanRoute(onDraftChanged = { hasMealDraft = it }) }
                     composable("garage") { GarageRoute(onDraftChanged = { hasGarageDraft = it }) }
                     composable("horizon") { HorizonRoute(onDraftChanged = { hasHorizonDraft = it }) }
                     composable("fitness") { FitnessRoute({ id -> nav.navigate("workout/$id") { launchSingleTop = true } }) }
@@ -169,7 +179,7 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
                     }
                 }
                 composable("you") {
-                    YouScreen(username, appearance, onTheme, operation.running, hasFitnessDraft || hasHorizonDraft || hasGarageDraft, onLogout, { nav.navigate("gallery") })
+                    YouScreen(username, appearance, onTheme, operation.running, hasFitnessDraft || hasHorizonDraft || hasGarageDraft || hasMealDraft, onLogout, { nav.navigate("gallery") })
                 }
                 composable("notifications") {
                     val homeEntry = remember(it) { nav.getBackStackEntry("home") }
@@ -219,7 +229,7 @@ private fun YouScreen(username: String, appearance: AppearanceUiState, onTheme: 
 }
 
 @Composable
-private fun SpacesScreen(onFitness: () -> Unit, onHorizon: () -> Unit, onGarage: () -> Unit) {
+private fun SpacesScreen(onFitness: () -> Unit, onHorizon: () -> Unit, onGarage: () -> Unit, onMealPlan: () -> Unit) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth().verticalScroll(rememberScrollState()).padding(PulseTokens.medium),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
@@ -238,6 +248,11 @@ private fun SpacesScreen(onFitness: () -> Unit, onHorizon: () -> Unit, onGarage:
                 PulseText("Garage", style = PulseTextStyle.Title)
                 PulseText("Care for every journey. Track fuel, tire pressure, maintenance and receipts.")
                 PulseButton("Open Garage", onGarage, Modifier.fillMaxWidth())
+            }
+            PulseCard(Modifier.fillMaxWidth()) {
+                PulseText("Meal Plan", style = PulseTextStyle.Title)
+                PulseText("A little care for your day. Plan the week and keep track of meals enjoyed.")
+                PulseButton("Open Meal Plan", onMealPlan, Modifier.fillMaxWidth())
             }
         }
     }

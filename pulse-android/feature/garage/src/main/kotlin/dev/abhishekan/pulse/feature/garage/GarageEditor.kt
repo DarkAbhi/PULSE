@@ -1,85 +1,336 @@
 package dev.abhishekan.pulse.feature.garage
-
-import androidx.compose.ui.res.stringResource
-import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.feature.garage.R
-
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toString
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.*
-import androidx.compose.ui.semantics.*
-import dev.abhishekan.pulse.core.domain.model.*
-import dev.abhishekan.pulse.core.ui.*
-import dev.abhishekan.pulse.core.ui.components.*
-import java.time.*
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import dev.abhishekan.pulse.core.domain.model.Vehicle
+import dev.abhishekan.pulse.core.domain.model.garageCategories
+import dev.abhishekan.pulse.core.domain.model.garageFillTypes
+import dev.abhishekan.pulse.core.domain.model.garageFuelTypes
+import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
+import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
+import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
+import dev.abhishekan.pulse.core.ui.components.PulseText
+import dev.abhishekan.pulse.core.ui.components.PulseTextButton
+import dev.abhishekan.pulse.core.ui.components.PulseTextField
+import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
+import dev.abhishekan.pulse.core.ui.label
+import dev.abhishekan.pulse.feature.garage.R
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
 
 @Composable
-internal fun GarageEditor(draft: GarageDraft, busy: Boolean, blocked: Boolean, error: UiText?, change: (GarageDraft) -> Unit, save: () -> Unit, cancel: () -> Unit) {
+internal fun GarageEditor(
+    draft: GarageDraft,
+    busy: Boolean,
+    blocked: Boolean,
+    error: UiText?,
+    change: (GarageDraft) -> Unit,
+    save: () -> Unit,
+    cancel: () -> Unit,
+) {
     var datePicker by remember { mutableStateOf(false) }
     var timePicker by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
     val enabled = !busy
-    @Composable fun field(key: String, label: String, numeric: Boolean = false) {
-        PulseTextField(draft[key], { change(draft.set(key, it)) }, label, Modifier.fillMaxWidth(), enabled,
-            keyboardOptions = KeyboardOptions(keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text, imeAction = ImeAction.Next),
-            keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Next) }))
+
+    @Composable fun field(
+        key: String,
+        label: String,
+        numeric: Boolean = false,
+    ) {
+        PulseTextField(
+            draft[key],
+            {
+                change(draft.set(key, it))
+            },
+            label,
+            Modifier.fillMaxWidth(),
+            enabled,
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text,
+                    imeAction = ImeAction.Next,
+                ),
+            keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Next) }),
+        )
     }
-    @Composable fun choice(key: String, label: String, options: List<String>) {
+
+    @Composable fun choice(
+        key: String,
+        label: String,
+        options: List<String>,
+    ) {
         GarageChoice(label, draft[key], options, { change(draft.set(key, it)) }, enabled)
     }
     PulseCard(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()) {
-        PulseText(stringResource(draft.kind.editorLabel(if (draft.id == null && draft.kind != GarageForm.Pressure) EditorAction.Add else EditorAction.Edit)), style = PulseTextStyle.Title)
-        when(draft.kind) {
-            GarageForm.Vehicle -> { field("name", stringResource(R.string.pulse_garage_vehicle_name)); PulseCheckbox(draft["active"] != "false", { change(draft.set("active", it.toString())) }, stringResource(R.string.pulse_garage_active_vehicle), enabled = enabled) }
-            GarageForm.Pressure -> PulseText(stringResource(R.string.pulse_garage_target_tire_pressures_in_psi_leave_a_field_empty))
-            GarageForm.Care -> { choice("category", stringResource(R.string.pulse_garage_maintenance_category), garageCategories); field("title", stringResource(R.string.pulse_garage_title)); field("amount", stringResource(R.string.pulse_garage_amount), true) }
-            GarageForm.Fuel -> { field("odometer", stringResource(R.string.pulse_garage_odometer_km), true) }
+        PulseText(
+            stringResource(
+                draft.kind.editorLabel(
+                    if (draft.id == null &&
+                        draft.kind != GarageForm.Pressure
+                    ) {
+                        EditorAction.Add
+                    } else {
+                        EditorAction.Edit
+                    },
+                ),
+            ),
+            style = PulseTextStyle.Title,
+        )
+        when (draft.kind) {
+            GarageForm.Vehicle -> {
+                field("name", stringResource(R.string.pulse_garage_vehicle_name))
+                PulseCheckbox(
+                    draft["active"] != "false",
+                    {
+                        change(draft.set("active", it.toString()))
+                    },
+                    stringResource(R.string.pulse_garage_active_vehicle),
+                    enabled = enabled,
+                )
+            }
+            GarageForm.Pressure ->
+                PulseText(
+                    stringResource(
+                        R.string.pulse_garage_target_tire_pressures_in_psi_leave_a_field_empty,
+                    ),
+                )
+            GarageForm.Care -> {
+                choice(
+                    "category",
+                    stringResource(R.string.pulse_garage_maintenance_category),
+                    garageCategories,
+                )
+                field("title", stringResource(R.string.pulse_garage_title))
+                field("amount", stringResource(R.string.pulse_garage_amount), true)
+            }
+            GarageForm.Fuel -> {
+                field("odometer", stringResource(R.string.pulse_garage_odometer_km), true)
+            }
         }
         if (draft.kind in listOf(GarageForm.Vehicle, GarageForm.Pressure)) {
-            if (draft.kind == GarageForm.Vehicle) PulseText(stringResource(R.string.pulse_garage_optional_target_tire_pressures_psi))
-            field("frontSolo", stringResource(R.string.pulse_garage_front_solo_psi), true); field("rearSolo", stringResource(R.string.pulse_garage_rear_solo_psi), true)
-            field("frontPillion", stringResource(R.string.pulse_garage_front_pillion_psi), true); field("rearPillion", stringResource(R.string.pulse_garage_rear_pillion_psi), true)
+            if (draft.kind ==
+                GarageForm.Vehicle
+            ) {
+                PulseText(
+                    stringResource(R.string.pulse_garage_optional_target_tire_pressures_psi),
+                )
+            }
+            field("frontSolo", stringResource(R.string.pulse_garage_front_solo_psi), true)
+            field("rearSolo", stringResource(R.string.pulse_garage_rear_solo_psi), true)
+            field("frontPillion", stringResource(R.string.pulse_garage_front_pillion_psi), true)
+            field("rearPillion", stringResource(R.string.pulse_garage_rear_pillion_psi), true)
         }
         if (draft.kind in listOf(GarageForm.Fuel, GarageForm.Care)) {
-            PulseTextButton(stringResource(R.string.pulse_garage_date_1_s , draft["date"]), { datePicker = true }, enabled = enabled)
-            PulseTextButton(stringResource(R.string.pulse_garage_time_1_s , draft["time"]), { timePicker = true }, enabled = enabled)
-            PulseText(stringResource(R.string.pulse_garage_date_and_time_use_1_s , draft["zone"].ifBlank { ZoneId.systemDefault().id }), style = PulseTextStyle.Label)
+            PulseTextButton(stringResource(R.string.pulse_garage_date_1_s, draft["date"]), {
+                datePicker =
+                    true
+            }, enabled = enabled)
+            PulseTextButton(stringResource(R.string.pulse_garage_time_1_s, draft["time"]), {
+                timePicker =
+                    true
+            }, enabled = enabled)
+            PulseText(
+                stringResource(
+                    R.string.pulse_garage_date_and_time_use_1_s,
+                    draft["zone"].ifBlank {
+                        ZoneId.systemDefault().id
+                    },
+                ),
+                style = PulseTextStyle.Label,
+            )
         }
         if (draft.kind == GarageForm.Fuel) {
             field("station", stringResource(R.string.pulse_garage_station_vendor_optional))
             val tanks = draft["tanks"].toIntOrNull() ?: 1
             repeat(tanks) { i ->
-                PulseText(stringResource(R.string.pulse_garage_tank_1_s , i + 1), Modifier.semantics { heading() }, PulseTextStyle.Title)
-                choice("type$i", stringResource(R.string.pulse_garage_fuel_type_tank_1_s , i + 1), garageFuelTypes)
-                choice("fill$i", stringResource(R.string.pulse_garage_fill_type_tank_1_s , i + 1), garageFillTypes)
-                PulseText(stringResource(R.string.pulse_garage_enter_any_two_values_pulse_calculates_the_remaining_value))
-                field("quantity$i", stringResource(R.string.pulse_garage_quantity_l_tank_1_s , i + 1), true)
-                field("price$i", stringResource(R.string.pulse_garage_price_per_litre_tank_1_s , i + 1), true)
-                field("total$i", stringResource(R.string.pulse_garage_total_cost_tank_1_s , i + 1), true)
-                if (draft["type$i"] in listOf("cng", "electric")) PulseText(stringResource(R.string.pulse_garage_the_current_api_records_all_fuel_quantities_in_l), style = PulseTextStyle.Label)
-                if (i == 1) PulseTextButton(stringResource(R.string.pulse_garage_remove_second_tank), { change(draft.set("tanks", "1")) }, enabled = enabled)
+                PulseText(
+                    stringResource(R.string.pulse_garage_tank_1_s, i + 1),
+                    Modifier.semantics {
+                        heading()
+                    },
+                    PulseTextStyle.Title,
+                )
+                choice(
+                    "type$i",
+                    stringResource(R.string.pulse_garage_fuel_type_tank_1_s, i + 1),
+                    garageFuelTypes,
+                )
+                choice(
+                    "fill$i",
+                    stringResource(R.string.pulse_garage_fill_type_tank_1_s, i + 1),
+                    garageFillTypes,
+                )
+                PulseText(
+                    stringResource(
+                        R.string.pulse_garage_enter_any_two_values_pulse_calculates_the_remaining_value,
+                    ),
+                )
+                field(
+                    "quantity$i",
+                    stringResource(R.string.pulse_garage_quantity_l_tank_1_s, i + 1),
+                    true,
+                )
+                field(
+                    "price$i",
+                    stringResource(
+                        R.string.pulse_garage_price_per_litre_tank_1_s,
+                        i + 1,
+                    ),
+                    true,
+                )
+                field(
+                    "total$i",
+                    stringResource(R.string.pulse_garage_total_cost_tank_1_s, i + 1),
+                    true,
+                )
+                if (draft["type$i"] in
+                    listOf("cng", "electric")
+                ) {
+                    PulseText(
+                        stringResource(
+                            R.string.pulse_garage_the_current_api_records_all_fuel_quantities_in_l,
+                        ),
+                        style = PulseTextStyle.Label,
+                    )
+                }
+                if (i ==
+                    1
+                ) {
+                    PulseTextButton(stringResource(R.string.pulse_garage_remove_second_tank), {
+                        change(draft.set("tanks", "1"))
+                    }, enabled = enabled)
+                }
             }
-            if (tanks < 2) PulseTextButton(stringResource(R.string.pulse_garage_add_second_fuel_tank), { change(draft.set("tanks", "2").copy(fields = draft.fields + mapOf("tanks" to "2", "type1" to "petrol", "fill1" to "full"))) }, enabled = enabled)
-            PulseText(stringResource(R.string.pulse_garage_a_missed_fill_resets_the_efficiency_baseline_partial_fills), style = PulseTextStyle.Label)
+            if (tanks <
+                2
+            ) {
+                PulseTextButton(stringResource(R.string.pulse_garage_add_second_fuel_tank), {
+                    change(
+                        draft.set("tanks", "2").copy(
+                            fields =
+                                draft.fields +
+                                    mapOf("tanks" to "2", "type1" to "petrol", "fill1" to "full"),
+                        ),
+                    )
+                }, enabled = enabled)
+            }
+            PulseText(
+                stringResource(
+                    R.string.pulse_garage_a_missed_fill_resets_the_efficiency_baseline_partial_fills,
+                ),
+                style = PulseTextStyle.Label,
+            )
         }
-        if (draft.kind == GarageForm.Care) { field("odometer", stringResource(R.string.pulse_garage_odometer_km_optional), true); field("provider", stringResource(R.string.pulse_garage_provider_optional)); PulseText(stringResource(R.string.pulse_garage_save_this_record_first_then_attach_receipts_from_its)) }
-        if (draft.kind in listOf(GarageForm.Fuel, GarageForm.Care)) field("notes", stringResource(R.string.pulse_garage_notes_optional))
-        error?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = MaterialTheme.colorScheme.error) }
-        PulseButton(stringResource(draft.kind.editorLabel(EditorAction.Save)), { focus.clearFocus(); save() }, Modifier.fillMaxWidth(), enabled = !blocked && enabled, loading = busy)
-        PulseTextButton(stringResource(R.string.pulse_garage_cancel_editing), { focus.clearFocus(); cancel() }, enabled = enabled)
+        if (draft.kind ==
+            GarageForm.Care
+        ) {
+            field("odometer", stringResource(R.string.pulse_garage_odometer_km_optional), true)
+            field("provider", stringResource(R.string.pulse_garage_provider_optional))
+            PulseText(
+                stringResource(
+                    R.string.pulse_garage_save_this_record_first_then_attach_receipts_from_its,
+                ),
+            )
+        }
+        if (draft.kind in
+            listOf(GarageForm.Fuel, GarageForm.Care)
+        ) {
+            field("notes", stringResource(R.string.pulse_garage_notes_optional))
+        }
+        error?.let {
+            PulseText(
+                it,
+                Modifier.semantics {
+                    liveRegion = LiveRegionMode.Polite
+                },
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+        PulseButton(
+            stringResource(draft.kind.editorLabel(EditorAction.Save)),
+            {
+                focus.clearFocus()
+                save()
+            },
+            Modifier.fillMaxWidth(),
+            enabled =
+                !blocked && enabled,
+            loading = busy,
+        )
+        PulseTextButton(stringResource(R.string.pulse_garage_cancel_editing), {
+            focus.clearFocus()
+            cancel()
+        }, enabled = enabled)
     }
-    if (datePicker) PulseDatePickerDialog(runCatching { LocalDate.parse(draft["date"]) }.getOrDefault(LocalDate.now()),
-        { change(draft.set("date", it.toString())); datePicker = false }, { datePicker = false })
-    if (timePicker) PulseTimePickerDialog(runCatching { LocalTime.parse(draft["time"]) }.getOrDefault(LocalTime.MIDNIGHT),
-        { change(draft.set("time", it.toString())); timePicker = false }, { timePicker = false })
+    if (datePicker) {
+        PulseDatePickerDialog(
+            runCatching {
+                LocalDate.parse(draft["date"])
+            }.getOrDefault(LocalDate.now()),
+            {
+                change(draft.set("date", it.toString()))
+                datePicker = false
+            },
+            { datePicker = false },
+        )
+    }
+    if (timePicker) {
+        PulseTimePickerDialog(
+            runCatching {
+                LocalTime.parse(draft["time"])
+            }.getOrDefault(LocalTime.MIDNIGHT),
+            {
+                change(draft.set("time", it.toString()))
+                timePicker = false
+            },
+            { timePicker = false },
+        )
+    }
 }
+
 @Composable
-internal fun GarageChoice(label: String, value: String, options: List<String>, select: (String) -> Unit, enabled: Boolean) {
-    PulseSelectionField(label, garageOption(value), options.map { garageOption(it) }, { select(options[it]) }, Modifier.fillMaxWidth(), enabled)
+internal fun GarageChoice(
+    label: String,
+    value: String,
+    options: List<String>,
+    select: (String) -> Unit,
+    enabled: Boolean,
+) {
+    PulseSelectionField(
+        label,
+        garageOption(value),
+        options.map {
+            garageOption(it)
+        },
+        { select(options[it]) },
+        Modifier.fillMaxWidth(),
+        enabled,
+    )
 }

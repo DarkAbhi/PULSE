@@ -23,15 +23,28 @@ class MainActivity : ComponentActivity() {
         setContent {
             val viewModel: AppearanceViewModel = koinViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
-            val dark = when (state.theme) {
-                ThemePreference.System -> isSystemInDarkTheme()
-                ThemePreference.Light -> false
-                ThemePreference.Dark -> true
-            }
+            val dark =
+                when (state.theme) {
+                    ThemePreference.System -> isSystemInDarkTheme()
+                    ThemePreference.Light -> false
+                    ThemePreference.Dark -> true
+                }
             DisposableEffect(dark) {
                 enableEdgeToEdge(
-                    statusBarStyle = SystemBarStyle.auto(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT) { dark },
-                    navigationBarStyle = SystemBarStyle.auto(PulseLightColors.background.toArgb(), PulseDarkColors.background.toArgb()) { dark },
+                    statusBarStyle =
+                        SystemBarStyle.auto(
+                            android.graphics.Color.TRANSPARENT,
+                            android.graphics.Color.TRANSPARENT,
+                        ) {
+                            dark
+                        },
+                    navigationBarStyle =
+                        SystemBarStyle.auto(
+                            PulseLightColors.background.toArgb(),
+                            PulseDarkColors.background.toArgb(),
+                        ) {
+                            dark
+                        },
                 )
                 onDispose { }
             }

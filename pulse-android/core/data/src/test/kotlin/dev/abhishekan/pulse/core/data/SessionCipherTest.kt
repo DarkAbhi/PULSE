@@ -1,12 +1,20 @@
 package dev.abhishekan.pulse.core.data
-
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
+import org.junit.Test
 import javax.crypto.AEADBadTagException
 import javax.crypto.KeyGenerator
-import org.junit.Assert.*
-import org.junit.Test
 
 class SessionCipherTest {
-    private fun cipher() = SessionCipher(KeyGenerator.getInstance("AES").apply { init(256) }.generateKey())
+    private fun cipher() =
+        SessionCipher(
+            KeyGenerator
+                .getInstance("AES")
+                .apply {
+                    init(256)
+                }.generateKey(),
+        )
 
     @Test fun ciphertextIsRandomizedAndRoundTrips() {
         val cipher = cipher()

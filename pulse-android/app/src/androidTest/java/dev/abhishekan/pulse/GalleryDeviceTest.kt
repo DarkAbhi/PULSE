@@ -1,8 +1,12 @@
 package dev.abhishekan.pulse
-
-import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.junit4.StateRestorationTester
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.gallery.PulseComponentGallery
 import org.junit.Before
@@ -11,10 +15,12 @@ import org.junit.Test
 
 class GalleryDeviceTest {
     private lateinit var restoration: StateRestorationTester
+
     @Before fun setup() {
         restoration = StateRestorationTester(compose)
         restoration.setContent { PulseTheme { PulseComponentGallery() } }
     }
+
     @get:Rule val compose = createComposeRule()
 
     @Test fun galleryActionsAndStateTabWorkAfterRecreation() {
@@ -30,6 +36,12 @@ class GalleryDeviceTest {
     }
 
     @Test fun labeledCheckboxExposesCheckedSemantics() {
-        compose.onNodeWithText("Sample selection").performScrollTo().assertIsOn().performClick().assertIsOff()
+        compose
+            .onNodeWithText(
+                "Sample selection",
+            ).performScrollTo()
+            .assertIsOn()
+            .performClick()
+            .assertIsOff()
     }
 }

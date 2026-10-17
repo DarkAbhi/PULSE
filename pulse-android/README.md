@@ -16,6 +16,15 @@ The original AGP 9.4.1, Gradle 9.6.0, Kotlin/Compose compiler 2.2.10, SDK 37, Co
 
 All versions live in `gradle/libs.versions.toml`. Compatible stable additions remain Koin 4.1.1, Ktor 3.2.3, coroutines 1.10.2, serialization 1.9.0, DataStore 1.1.7, Lifecycle/Navigation 2.9.3, and Activity 1.10.1. Phase 2 uses the existing dependency set; HTTP cookies require no additional Ktor library.
 
+## Kotlin formatting
+
+Ktlint is applied to every module and the root Gradle scripts. It checks production, debug, unit-test and instrumentation-test Kotlin sources using the shared `.editorconfig`, with Compose function naming supported. Module `check` tasks include ktlint validation.
+
+```sh
+./gradlew ktlintFormat # format Kotlin sources and Gradle scripts
+./gradlew ktlintCheck  # verify formatting without changing files
+```
+
 ## API addresses
 
 Debug defaults to **`http://10.0.2.2:18081/api/`**, the emulator-accessible address for this repository's Go development container. Start the backend using the repository's development instructions. Android's localhost is the Android device, not the development computer.

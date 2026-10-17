@@ -70,7 +70,7 @@
     <string name="pulse_garage_no_air_fills_recorded">"No air fills recorded"</string>
     <string name="pulse_garage_record_an_air_fill_after_checking_your_tires">"Record an air fill after checking your tires."</string>
     <string name="pulse_garage_delete_air_fill_1_s">"Delete air fill %1$s"</string>
-    <string name="pulse_garage_permanently_delete_this_air_fill_entry_target_tire_pressures">"Permanently delete this air-fill entry? Target tire pressures stay unchanged."</string>
+    <string name="pulse_garage_delete_air_fill_confirmation">"Permanently delete this air-fill entry? Target tire pressures stay unchanged."</string>
     <string name="pulse_garage_refresh_vehicle_history">"Refresh vehicle history"</string>
     <string name="pulse_garage_working_on_your_garage">"Working on your garage"</string>
     <string name="pulse_garage_discard_unsaved_changes">"Discard unsaved changes?"</string>

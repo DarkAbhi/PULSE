@@ -8,10 +8,18 @@ import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 
 sealed interface Section<out T> {
     data object Loading : Section<Nothing>
+
     data object Empty : Section<Nothing>
-    data class Content<T>(val value: T) : Section<T>
-    data class Error(val failure: Failure) : Section<Nothing>
+
+    data class Content<T>(
+        val value: T,
+    ) : Section<T>
+
+    data class Error(
+        val failure: Failure,
+    ) : Section<Nothing>
 }
+
 data class HomeUiState(
     val profile: Section<Profile> = Section.Loading,
     val workout: Section<WorkoutToday> = Section.Loading,

@@ -7,7 +7,9 @@ import java.time.ZoneId
 
 object FitnessDates {
     val zone: ZoneId = ZoneId.of("Asia/Kolkata")
+
     fun today(clock: Clock): LocalDate = LocalDate.now(clock.withZone(zone))
+
     fun calendar(month: YearMonth): List<LocalDate> {
         val first = month.atDay(1)
         val start = first.minusDays((first.dayOfWeek.value - 1).toLong())

@@ -1,16 +1,28 @@
 package dev.abhishekan.pulse.core.ui.components
-
-import androidx.compose.material3.*
+import androidx.compose.material3.Label
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-data class PulseNavigationItem(val label: String, val icon: @Composable () -> Unit)
+data class PulseNavigationItem(
+    val label: String,
+    val icon: @Composable () -> Unit,
+)
 
 @Composable
-fun PulseBottomNavigationBar(items: List<PulseNavigationItem>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
+fun PulseBottomNavigationBar(
+    items: List<PulseNavigationItem>,
+    selectedIndex: Int,
+    onSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     NavigationBar(modifier, containerColor = MaterialTheme.colorScheme.surface) {
         items.forEachIndexed { index, item ->
-            NavigationBarItem(selectedIndex == index, { onSelected(index) }, icon = item.icon, label = { PulseText(item.label, style = PulseTextStyle.Label) })
+            NavigationBarItem(selectedIndex == index, {
+                onSelected(index)
+            }, icon = item.icon, label = { PulseText(item.label, style = PulseTextStyle.Label) })
         }
     }
 }

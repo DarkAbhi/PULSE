@@ -6,7 +6,11 @@ plugins {
 android {
     namespace = "dev.abhishekan.pulse.feature.garage"
     compileSdk { version = release(37) }
-    defaultConfig { minSdk = 28; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
+    defaultConfig {
+        minSdk = 28
+        testInstrumentationRunner =
+            "androidx.test.runner.AndroidJUnitRunner"
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

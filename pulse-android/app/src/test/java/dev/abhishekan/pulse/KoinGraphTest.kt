@@ -21,10 +21,11 @@ class KoinGraphTest {
             // Android and Navigation supply these at runtime.
             extraTypes = listOf(Context::class, SavedStateHandle::class),
             // Factory literals and the HTTP factory's internally constructed engine aren't DI dependencies.
-            injections = injectedParameters(
-                definition<NetworkConfig>(String::class, Boolean::class),
-                definition<HttpClient>(HttpClientEngine::class),
-            ),
+            injections =
+                injectedParameters(
+                    definition<NetworkConfig>(String::class, Boolean::class),
+                    definition<HttpClient>(HttpClientEngine::class),
+                ),
         )
     }
 }

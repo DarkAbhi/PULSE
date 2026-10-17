@@ -3,8 +3,13 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-val releaseApiUrl = providers.gradleProperty("pulse.releaseApiUrl").orElse("https://pulse.invalid/api/")
+val releaseApiUrl =
+    providers
+        .gradleProperty(
+            "pulse.releaseApiUrl",
+        ).orElse("https://pulse.invalid/api/")
 val debugApiUrl = providers.gradleProperty("pulse.debugApiUrl").orElse("http://10.0.2.2:18081/api/")
+
 fun quoted(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
 android {
@@ -37,7 +42,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    testOptions { unitTests.all { it.systemProperty("pulse.root", rootProject.projectDir.absolutePath) } }
+    testOptions {
+        unitTests.all { it.systemProperty("pulse.root", rootProject.projectDir.absolutePath) }
+    }
     buildFeatures {
         compose = true
         buildConfig = true

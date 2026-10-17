@@ -53,7 +53,7 @@
     <string name="pulse_horizon_add_budget">"Add budget"</string>
     <string name="pulse_horizon_no_budgets_yet">"No budgets yet"</string>
     <string name="pulse_horizon_create_a_budget_to_group_related_spending_and_obligations">"Create a budget to group related spending and obligations."</string>
-    <string name="pulse_horizon_delete_1_s_transactions_obligations_and_subscriptions_remain_with">"Delete “%1$s”? Transactions, obligations and subscriptions remain, with their budget links cleared."</string>
+    <string name="pulse_horizon_delete_budget_confirmation">"Delete “%1$s”? Transactions, obligations and subscriptions remain, with their budget links cleared."</string>
     <string name="pulse_horizon_make_room_for_the_essentials">"Make room for the essentials"</string>
     <string name="pulse_horizon_add_obligation">"Add obligation"</string>
     <string name="pulse_horizon_no_fixed_obligations">"No fixed obligations"</string>
@@ -73,7 +73,7 @@
     <string name="pulse_horizon_monthly_equivalent_1_s">"Monthly equivalent: %1$s"</string>
     <string name="pulse_horizon_next_renewal_1_s">"Next renewal: %1$s"</string>
     <string name="pulse_horizon_billing_day_1_s">"Billing day: %1$s"</string>
-    <string name="pulse_horizon_delete_1_s_linked_transactions_remain_with_their_subscription">"Delete “%1$s”? Linked transactions remain with their subscription link cleared. Any linked fixed obligation is kept with its existing active setting."</string>
+    <string name="pulse_horizon_delete_subscription_confirmation">"Delete “%1$s”? Linked transactions remain with their subscription link cleared. Any linked fixed obligation is kept with its existing active setting."</string>
     <string name="pulse_horizon_view_payments_for_1_s">"View payments for %1$s"</string>
     <string name="pulse_horizon_a_little_further_ahead">"A little further ahead"</string>
     <string name="pulse_horizon_next_month_s_planned_purchases">"Next month’s planned purchases"</string>

@@ -26,7 +26,5 @@ fun UiText.resolve(resources: Resources): String {
     }
 }
 @Composable fun UiText.asString(): String = resolve(LocalResources.current)
-@Composable fun Modifier.pulseDescription(text: UiText): Modifier {
-    val description = text.asString()
-    return semantics { contentDescription = description }
-}
+
+fun Modifier.pulseDescription(text: String): Modifier = semantics { contentDescription = text }

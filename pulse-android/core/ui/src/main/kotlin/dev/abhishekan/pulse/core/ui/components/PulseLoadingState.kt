@@ -1,8 +1,5 @@
 package dev.abhishekan.pulse.core.ui.components
 
-
-import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.asString
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
@@ -17,6 +14,3 @@ fun PulseLoadingState(label: String, modifier: Modifier = Modifier) {
         PulseText(label)
     }
 }
-
-@Composable
-fun PulseLoadingState(label: UiText, modifier: Modifier = Modifier) = PulseLoadingState(label.asString(), modifier)

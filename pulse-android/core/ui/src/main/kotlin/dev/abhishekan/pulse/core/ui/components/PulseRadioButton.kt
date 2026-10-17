@@ -1,8 +1,5 @@
 package dev.abhishekan.pulse.core.ui.components
 
-
-import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.asString
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.RadioButton
@@ -20,6 +17,3 @@ fun PulseRadioButton(selected: Boolean, onClick: () -> Unit, label: String, modi
         PulseText(label, Modifier.padding(vertical = PulseTokens.small))
     }
 }
-
-@Composable
-fun PulseRadioButton(selected: Boolean, onClick: () -> Unit, label: UiText, modifier: Modifier = Modifier, enabled: Boolean = true) = PulseRadioButton(selected, onClick, label.asString(), modifier, enabled)

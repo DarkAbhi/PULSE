@@ -1,12 +1,11 @@
 package dev.abhishekan.pulse.feature.horizon
 
 import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.feature.horizon.R
 
 import dev.abhishekan.pulse.core.domain.model.*
 
-enum class HorizonTab(val label: UiText) { Overview(uiText(R.string.pulse_horizon_overview)), Transactions(uiText(R.string.pulse_horizon_transactions)), Budgets(uiText(R.string.pulse_horizon_budgets)), Obligations(uiText(R.string.pulse_horizon_obligations)), Subscriptions(uiText(R.string.pulse_horizon_subscriptions)), Purchases(uiText(R.string.pulse_horizon_planned_purchases)) }
+enum class HorizonTab(@param:androidx.annotation.StringRes val label: Int) { Overview(R.string.pulse_horizon_overview), Transactions(R.string.pulse_horizon_transactions), Budgets(R.string.pulse_horizon_budgets), Obligations(R.string.pulse_horizon_obligations), Subscriptions(R.string.pulse_horizon_subscriptions), Purchases(R.string.pulse_horizon_planned_purchases) }
 data class HorizonSection<T>(val value: T? = null, val loading: Boolean = true, val error: Failure? = null)
 data class HorizonUiState(
     val tab: HorizonTab = HorizonTab.Overview,

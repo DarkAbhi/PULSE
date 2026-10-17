@@ -1,8 +1,5 @@
 package dev.abhishekan.pulse.core.ui.components
 
-
-import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.asString
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -13,6 +10,3 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 fun PulseTextButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     TextButton(onClick, modifier.defaultMinSize(minHeight = PulseTokens.target), enabled = enabled) { PulseText(text, style = PulseTextStyle.Label) }
 }
-
-@Composable
-fun PulseTextButton(text: UiText, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) = PulseTextButton(text.asString(), onClick, modifier, enabled)

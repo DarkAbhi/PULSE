@@ -2,6 +2,9 @@ package dev.abhishekan.pulse
 
 import android.content.res.Configuration
 import android.content.res.Resources
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.test.*
@@ -24,9 +27,17 @@ class LocalizationDeviceTest {
     @Test fun retainedMessageAndNestedArgumentsFollowCurrentLocale() {
         val retained = uiText(TestR.string.localization_nested, uiText(TestR.string.localization_greeting, "Asha"))
         var current by mutableStateOf(resources(Locale.ENGLISH))
-        compose.setContent { CompositionLocalProvider(LocalResources provides current) { PulseTheme(false) { PulseText(retained) } } }
+        compose.setContent { CompositionLocalProvider(LocalResources provides current) { PulseTheme(false) { Column {
+            PulseText(stringResource(TestR.string.localization_greeting, "Mira"))
+            PulseText(pluralStringResource(TestR.plurals.localization_items, 2, 2))
+            PulseText(retained)
+        } } } }
+        compose.onNodeWithText("Hello, Mira").assertIsDisplayed()
+        compose.onNodeWithText("2 items").assertIsDisplayed()
         compose.onNodeWithText("Notice: Hello, Asha").assertIsDisplayed()
         compose.runOnIdle { current = resources(Locale.FRENCH) }
+        compose.onNodeWithText("Bonjour, Mira").assertIsDisplayed()
+        compose.onNodeWithText("2 éléments").assertIsDisplayed()
         compose.onNodeWithText("Information : Bonjour, Asha").assertIsDisplayed()
     }
     @Test fun quantitiesAndUserProvidedValuesRemainCorrect() {

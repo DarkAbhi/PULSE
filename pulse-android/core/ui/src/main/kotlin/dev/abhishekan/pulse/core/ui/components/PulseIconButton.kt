@@ -1,8 +1,5 @@
 package dev.abhishekan.pulse.core.ui.components
 
-
-import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.asString
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -14,6 +11,3 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 fun PulseIconButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, icon: @Composable () -> Unit) {
     IconButton(onClick, modifier.sizeIn(minWidth = PulseTokens.target, minHeight = PulseTokens.target).semantics { contentDescription = label }, enabled = enabled) { icon() }
 }
-
-@Composable
-fun PulseIconButton(label: UiText, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, icon: @Composable () -> Unit) = PulseIconButton(label.asString(), onClick, modifier, enabled, icon)

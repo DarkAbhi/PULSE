@@ -1,10 +1,7 @@
 package dev.abhishekan.pulse.core.ui.components
 
+import androidx.compose.ui.res.stringResource
 import dev.abhishekan.pulse.core.ui.R
-
-import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.uiText
-import dev.abhishekan.pulse.core.ui.asString
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
@@ -17,7 +14,7 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 
 @Composable
 fun PulseButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, loading: Boolean = false) {
-    val loadingDescription = uiText(R.string.pulse_ui_loading).asString()
+    val loadingDescription = stringResource(R.string.pulse_ui_loading)
     Button(onClick, modifier.defaultMinSize(minHeight = PulseTokens.target).semantics { if (loading) stateDescription = loadingDescription },
         enabled = enabled && !loading, shape = PulseTokens.controlShape) {
         if (loading) {
@@ -27,6 +24,3 @@ fun PulseButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier
         PulseText(text, style = PulseTextStyle.Label)
     }
 }
-
-@Composable
-fun PulseButton(text: UiText, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, loading: Boolean = false) = PulseButton(text.asString(), onClick, modifier, enabled, loading)

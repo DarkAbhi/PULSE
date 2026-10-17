@@ -1,6 +1,6 @@
 package dev.abhishekan.pulse.feature.home
 
-import dev.abhishekan.pulse.core.ui.uiText
+import androidx.compose.ui.res.stringResource
 import dev.abhishekan.pulse.feature.home.R
 
 import androidx.compose.foundation.layout.*
@@ -34,15 +34,15 @@ fun HomeScreen(username: String, state: HomeUiState, retryProfile: () -> Unit, r
         Column(Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxWidth().verticalScroll(rememberScrollState()).padding(margin),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
             val name = (state.profile as? Section.Content)?.value?.name ?: username
-            PulseText(uiText(R.string.pulse_home_good_to_see_you), style = PulseTextStyle.Label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            PulseText(stringResource(R.string.pulse_home_good_to_see_you), style = PulseTextStyle.Label, color = MaterialTheme.colorScheme.onSurfaceVariant)
             PulseText(name, Modifier.semantics { heading() }, PulseTextStyle.Display)
-            PulseText(uiText(R.string.pulse_home_a_little_perspective_on_your_everyday), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            PulseText(stringResource(R.string.pulse_home_a_little_perspective_on_your_everyday), color = MaterialTheme.colorScheme.onSurfaceVariant)
             when (val profile = state.profile) {
                 is Section.Error -> {
-                    PulseText(profile.failure.message)
-                    PulseTextButton(uiText(R.string.pulse_home_retry_profile), retryProfile)
+                    PulseText(profile.failure.message.asString())
+                    PulseTextButton(stringResource(R.string.pulse_home_retry_profile), retryProfile)
                 }
-                Section.Loading -> PulseLoadingState(uiText(R.string.pulse_home_loading_your_profile))
+                Section.Loading -> PulseLoadingState(stringResource(R.string.pulse_home_loading_your_profile))
                 else -> Unit
             }
             if (size == PulseWindowSize.Compact) {

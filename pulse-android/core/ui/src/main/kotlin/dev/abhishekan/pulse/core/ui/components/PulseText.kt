@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse.core.ui.components
 
-
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import androidx.compose.material3.MaterialTheme

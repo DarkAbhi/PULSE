@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse.feature.fitness
 
-import dev.abhishekan.pulse.core.ui.uiText
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import dev.abhishekan.pulse.feature.fitness.R
 
 import androidx.compose.foundation.layout.*
@@ -32,12 +33,12 @@ internal fun FitnessCalendar(state: FitnessUiState, onDate: (LocalDate) -> Unit,
     PulseCard(Modifier.fillMaxWidth()) {
         PulseText(state.month.format(DateTimeFormatter.ofPattern("MMMM yyyy")), Modifier.semantics { heading(); liveRegion = LiveRegionMode.Polite }, PulseTextStyle.Title)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-            PulseTextButton(uiText(R.string.pulse_fitness_previous_month), { onMonth(-1) }, enabled = !state.busy && state.month > YearMonth.of(0, 1))
-            PulseTextButton(uiText(R.string.pulse_fitness_next_month), { onMonth(1) }, enabled = !state.busy && state.month < YearMonth.of(9999, 12))
+            PulseTextButton(stringResource(R.string.pulse_fitness_previous_month), { onMonth(-1) }, enabled = !state.busy && state.month > YearMonth.of(0, 1))
+            PulseTextButton(stringResource(R.string.pulse_fitness_next_month), { onMonth(1) }, enabled = !state.busy && state.month < YearMonth.of(9999, 12))
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-            PulseTextButton(uiText(R.string.pulse_fitness_today), onToday, enabled = !state.busy)
-            PulseTextButton(uiText(R.string.pulse_fitness_choose_date), { choosing = true }, enabled = !state.busy)
+            PulseTextButton(stringResource(R.string.pulse_fitness_today), onToday, enabled = !state.busy)
+            PulseTextButton(stringResource(R.string.pulse_fitness_choose_date), { choosing = true }, enabled = !state.busy)
         }
         val days = remember(state.month) { FitnessDates.calendar(state.month) }
         val workouts = state.overview?.workouts.orEmpty().groupingBy { it.date }.eachCount()
@@ -56,16 +57,16 @@ internal fun FitnessCalendar(state: FitnessUiState, onDate: (LocalDate) -> Unit,
                         week.forEach { date ->
                             val count = workouts[date] ?: 0
                             val today = date == state.overview?.today
-                            val description = uiPlural(if (today) R.plurals.pulse_fitness_today_calendar_workouts else R.plurals.pulse_fitness_calendar_workouts, count, date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy").withLocale(locale)), count)
+                            val description = pluralStringResource(if (today) R.plurals.pulse_fitness_today_calendar_workouts else R.plurals.pulse_fitness_calendar_workouts, count, date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy").withLocale(locale)), count)
                             PulseCalendarDay(date.dayOfMonth.toString(), description, date == state.selected, today, count > 0,
                                 { onDate(date) }, Modifier.weight(1f), enabled = !state.busy && date.year in 0..9999, inMonth = YearMonth.from(date) == state.month)
                         }
                     } }
                 }
-                if (available < minimumWidth) PulseText(uiText(R.string.pulse_fitness_swipe_the_calendar_sideways_to_see_the_full_week), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (available < minimumWidth) PulseText(stringResource(R.string.pulse_fitness_swipe_the_calendar_sideways_to_see_the_full_week), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        PulseText(uiText(R.string.pulse_fitness_border_today_filled_selected_dot_workout_recorded), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        PulseText(stringResource(R.string.pulse_fitness_border_today_filled_selected_dot_workout_recorded), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     if (choosing) PulseDatePickerDialog(state.selected, { onDate(it); choosing = false }, { choosing = false })
 }

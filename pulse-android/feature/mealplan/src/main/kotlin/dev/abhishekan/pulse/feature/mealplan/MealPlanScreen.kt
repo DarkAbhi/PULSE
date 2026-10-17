@@ -1,5 +1,7 @@
 package dev.abhishekan.pulse.feature.mealplan
 
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.feature.mealplan.R
@@ -54,49 +56,49 @@ internal fun MealPlanScreen(state: MealPlanUiState, vm: MealPlanViewModel) {
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
                 state.message?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
                 if (state.reviewRequired) PulseCard(Modifier.fillMaxWidth()) {
-                    PulseText(uiText(R.string.pulse_mealplan_review_before_another_change), style = PulseTextStyle.Title)
-                    PulseText(uiText(R.string.pulse_mealplan_a_previous_update_may_have_reached_the_server_check))
-                    PulseTextButton(uiText(R.string.pulse_mealplan_refresh_server_records), vm::refresh, enabled = !state.busy)
-                    if (state.draft != null) PulseTextButton(if (records) uiText(R.string.pulse_mealplan_return_to_draft) else uiText(R.string.pulse_mealplan_view_server_records), { records = !records })
-                    PulseButton(uiText(R.string.pulse_mealplan_i_reviewed_the_server_records), vm::reviewed, enabled = state.reviewReady && !state.busy)
+                    PulseText(stringResource(R.string.pulse_mealplan_review_before_another_change), style = PulseTextStyle.Title)
+                    PulseText(stringResource(R.string.pulse_mealplan_a_previous_update_may_have_reached_the_server_check))
+                    PulseTextButton(stringResource(R.string.pulse_mealplan_refresh_server_records), vm::refresh, enabled = !state.busy)
+                    if (state.draft != null) PulseTextButton(if (records) stringResource(R.string.pulse_mealplan_return_to_draft) else stringResource(R.string.pulse_mealplan_view_server_records), { records = !records })
+                    PulseButton(stringResource(R.string.pulse_mealplan_i_reviewed_the_server_records), vm::reviewed, enabled = state.reviewReady && !state.busy)
                 }
                 if (state.draft != null && !records) {
                     if (!state.draft.timeForm) {
-                        if (state.times.loading) PulseLoadingState(uiText(R.string.pulse_mealplan_loading_meal_times))
+                        if (state.times.loading) PulseLoadingState(stringResource(R.string.pulse_mealplan_loading_meal_times))
                         state.times.error?.let { PulseErrorState(it.message, vm::refreshTimes) }
                     }
                     MealEditor(state.draft, state.times.value.orEmpty(), state.busy, state.reviewRequired, state.error, vm::update, vm::save, cancel)
                 } else if (state.managing) {
-                    PulseTextButton(uiText(R.string.pulse_mealplan_back_to_planner), { vm.manage(false) }, enabled = !state.busy && state.draft == null)
+                    PulseTextButton(stringResource(R.string.pulse_mealplan_back_to_planner), { vm.manage(false) }, enabled = !state.busy && state.draft == null)
                     MealSectionContent(state.times, vm::refreshTimes) { times -> MealTimes(times, state.canWrite && state.draft == null,
                         { vm.edit(MealDraft(timeForm = true)) }, { time -> deletion = MealChange.DeleteTime(time) to uiText(R.string.pulse_mealplan_delete_1_s_meals_remain_under_other_meals_with , time.name) }) }
                 } else {
-                    if (state.draft != null) PulseTextButton(uiText(R.string.pulse_mealplan_resume_unsaved_edits), { records = false })
+                    if (state.draft != null) PulseTextButton(stringResource(R.string.pulse_mealplan_resume_unsaved_edits), { records = false })
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                        PulseTextButton(uiText(R.string.pulse_mealplan_previous_week), { vm.shift(-1) }, enabled = !state.busy && !state.reviewRequired && state.draft == null)
-                        PulseTextButton(uiText(R.string.pulse_mealplan_today_label), vm::today, enabled = !state.busy && !state.reviewRequired && state.draft == null)
-                        PulseTextButton(uiText(R.string.pulse_mealplan_next_week), { vm.shift(1) }, enabled = !state.busy && !state.reviewRequired && state.draft == null)
-                        PulseTextButton(uiText(R.string.pulse_mealplan_refresh), vm::refresh, enabled = !state.busy && state.draft == null)
-                        PulseTextButton(uiText(R.string.pulse_mealplan_meal_times), { vm.manage(true) }, enabled = !state.busy && state.draft == null)
+                        PulseTextButton(stringResource(R.string.pulse_mealplan_previous_week), { vm.shift(-1) }, enabled = !state.busy && !state.reviewRequired && state.draft == null)
+                        PulseTextButton(stringResource(R.string.pulse_mealplan_today_label), vm::today, enabled = !state.busy && !state.reviewRequired && state.draft == null)
+                        PulseTextButton(stringResource(R.string.pulse_mealplan_next_week), { vm.shift(1) }, enabled = !state.busy && !state.reviewRequired && state.draft == null)
+                        PulseTextButton(stringResource(R.string.pulse_mealplan_refresh), vm::refresh, enabled = !state.busy && state.draft == null)
+                        PulseTextButton(stringResource(R.string.pulse_mealplan_meal_times), { vm.manage(true) }, enabled = !state.busy && state.draft == null)
                     }
                     val dateFormat = DateTimeFormatter.ofPattern("d MMM yyyy")
-                    PulseText(uiText(R.string.pulse_mealplan_week_range , state.week.format(dateFormat), state.week.plusDays(6).format(dateFormat)), style = PulseTextStyle.Title)
+                    PulseText(stringResource(R.string.pulse_mealplan_week_range , state.week.format(dateFormat), state.week.plusDays(6).format(dateFormat)), style = PulseTextStyle.Title)
                     val weekScroll = rememberLazyListState()
                     LaunchedEffect(state.selected) { weekScroll.scrollToItem(state.selected.dayOfWeek.value - 1) }
                     LazyRow(Modifier.fillMaxWidth(), state = weekScroll, horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
                         items(state.days, key = { it.toEpochDay() }) { day ->
-                            PulseFilterChip(if (day == state.today) uiText(R.string.pulse_mealplan_today_date, day.format(DateTimeFormatter.ofPattern("EEE d"))) else UiText.Literal(day.format(DateTimeFormatter.ofPattern("EEE d"))), day == state.selected,
-                                { vm.select(day) }, Modifier.pulseDescription(if (day == state.today) uiText(R.string.pulse_mealplan_today_date_description, day.format(mealDate)) else UiText.Literal(day.format(mealDate))),
+                            PulseFilterChip(if (day == state.today) stringResource(R.string.pulse_mealplan_today_date, day.format(DateTimeFormatter.ofPattern("EEE d"))) else day.format(DateTimeFormatter.ofPattern("EEE d")), day == state.selected,
+                                { vm.select(day) }, Modifier.pulseDescription(if (day == state.today) stringResource(R.string.pulse_mealplan_today_date_description, day.format(mealDate)) else day.format(mealDate)),
                                 enabled = !state.busy && !state.reviewRequired && state.draft == null)
                         }
                     }
                     MealSectionContent(state.meals, vm::refreshMeals) { meals ->
                         PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-                            PulseText(if (state.selected == state.today) uiText(R.string.pulse_mealplan_a_little_care_for_today) else uiText(R.string.pulse_mealplan_make_room_for_good_meals), style = PulseTextStyle.Display)
+                            PulseText(if (state.selected == state.today) stringResource(R.string.pulse_mealplan_a_little_care_for_today) else stringResource(R.string.pulse_mealplan_make_room_for_good_meals), style = PulseTextStyle.Display)
                             val selected = meals.filter { it.date == state.selected }
-                            PulseText(uiText(R.string.pulse_mealplan_consumed_count , selected.count { it.consumed }, selected.size), style = PulseTextStyle.Metric)
-                            PulseText(uiText(R.string.pulse_mealplan_meals_consumed_selected_day))
-                            PulseText(uiPlural(R.plurals.pulse_mealplan_weekly_meals, meals.size, meals.size))
+                            PulseText(stringResource(R.string.pulse_mealplan_consumed_count , selected.count { it.consumed }, selected.size), style = PulseTextStyle.Metric)
+                            PulseText(stringResource(R.string.pulse_mealplan_meals_consumed_selected_day))
+                            PulseText(pluralStringResource(R.plurals.pulse_mealplan_weekly_meals, meals.size, meals.size))
                         }
                         val agenda: @Composable (java.time.LocalDate, Modifier) -> Unit = { day, modifier ->
                             MealAgenda(day, state.today, meals.filter { it.date == day }, state.canWrite && !state.meals.loading && state.meals.error == null && state.draft == null,
@@ -110,13 +112,13 @@ internal fun MealPlanScreen(state: MealPlanUiState, vm: MealPlanViewModel) {
             }
         }
     }
-    if (discard) PulseDialog(uiText(R.string.pulse_mealplan_discard_meal_changes), uiText(R.string.pulse_mealplan_your_unsaved_input_will_be_lost), uiText(R.string.pulse_mealplan_discard), { discard = false; records = false; vm.discard() }, { discard = false })
-    deletion?.let { (change, text) -> PulseDialog(uiText(R.string.pulse_mealplan_delete_from_meal_plan), text, uiText(R.string.pulse_mealplan_delete), { deletion = null; vm.mutate(change) }, { deletion = null }) }
+    if (discard) PulseDialog(stringResource(R.string.pulse_mealplan_discard_meal_changes), stringResource(R.string.pulse_mealplan_your_unsaved_input_will_be_lost), stringResource(R.string.pulse_mealplan_discard), { discard = false; records = false; vm.discard() }, { discard = false })
+    deletion?.let { (change, text) -> PulseDialog(stringResource(R.string.pulse_mealplan_delete_from_meal_plan), text.asString(), stringResource(R.string.pulse_mealplan_delete), { deletion = null; vm.mutate(change) }, { deletion = null }) }
 }
 
 @Composable
 private fun <T> MealSectionContent(section: MealSection<T>, retry: () -> Unit, content: @Composable (T) -> Unit) {
-    if (section.loading) PulseLoadingState(uiText(R.string.pulse_mealplan_refreshing_meal_plan))
+    if (section.loading) PulseLoadingState(stringResource(R.string.pulse_mealplan_refreshing_meal_plan))
     section.error?.let { PulseErrorState(it.message, retry) }
     section.value?.let { content(it) }
 }

@@ -1,8 +1,5 @@
 package dev.abhishekan.pulse.core.ui.components
 
-
-import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.asString
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,6 +12,3 @@ fun PulseEmptyState(title: String, message: String, modifier: Modifier = Modifie
         PulseText(message)
     }
 }
-
-@Composable
-fun PulseEmptyState(title: UiText, message: UiText, modifier: Modifier = Modifier) = PulseEmptyState(title.asString(), message.asString(), modifier)

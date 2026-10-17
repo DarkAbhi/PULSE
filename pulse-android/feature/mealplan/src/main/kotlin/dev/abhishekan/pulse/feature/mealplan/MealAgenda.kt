@@ -1,5 +1,9 @@
 package dev.abhishekan.pulse.feature.mealplan
 
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.mealplan.R
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -19,20 +23,20 @@ internal fun MealAgenda(date: LocalDate, today: LocalDate, meals: List<PlannedMe
     onAdd: () -> Unit, onEdit: (PlannedMeal) -> Unit, onToggle: (PlannedMeal) -> Unit, onDelete: (PlannedMeal) -> Unit,
     modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-        PulseText((if (date == today) "Today · " else "") + date.format(mealDate), Modifier.semantics { heading() }, PulseTextStyle.Title)
-        PulseButton("Add meal", onAdd, enabled = enabled)
-        if (meals.isEmpty()) PulseEmptyState("A little room to plan", "Add a meal for this day. Simple plans count, too.")
+        PulseText(if (date == today) uiText(R.string.pulse_mealplan_today_date, date.format(mealDate)) else UiText.Literal(date.format(mealDate)), Modifier.semantics { heading() }, PulseTextStyle.Title)
+        PulseButton(uiText(R.string.pulse_mealplan_add_meal), onAdd, enabled = enabled)
+        if (meals.isEmpty()) PulseEmptyState(uiText(R.string.pulse_mealplan_a_little_room_to_plan), uiText(R.string.pulse_mealplan_add_a_meal_for_this_day_simple_plans_count))
         meals.sortedWith(compareBy<PlannedMeal> { it.start == null }.thenBy { it.start }.thenBy { it.id }).groupBy { it.timeId }.forEach { (_, group) ->
-            PulseText(group.first().timeName ?: "Other meals", Modifier.semantics { heading() }, PulseTextStyle.Label, MaterialTheme.colorScheme.primary)
+            PulseText(group.first().timeName?.let(UiText::Literal) ?: uiText(R.string.pulse_mealplan_other_meals), Modifier.semantics { heading() }, PulseTextStyle.Label, MaterialTheme.colorScheme.primary)
             group.forEach { meal ->
                 PulseCard(Modifier.fillMaxWidth(), highlighted = meal.consumed) {
                     PulseText(meal.name, style = PulseTextStyle.Title)
                     val start = meal.start; val end = meal.end
-                    if (start != null && end != null) PulseText("${start.format(mealClock)} – ${end.format(mealClock)}${if (end < start) " · overnight" else ""}")
-                    PulseCheckbox(meal.consumed, { onToggle(meal) }, "${if (meal.consumed) "✓ Consumed" else "Planned"} · ${meal.name}", enabled = enabled)
+                    if (start != null && end != null) PulseText(uiText(if (end < start) R.string.pulse_mealplan_overnight_time_range else R.string.pulse_mealplan_time_range, start.format(mealClock), end.format(mealClock)))
+                    PulseCheckbox(meal.consumed, { onToggle(meal) }, uiText(R.string.pulse_mealplan_meal_consumption_label , if (meal.consumed) uiText(R.string.pulse_mealplan_consumed) else uiText(R.string.pulse_mealplan_planned), meal.name), enabled = enabled)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                        PulseTextButton("Edit ${meal.name}", { onEdit(meal) }, enabled = enabled)
-                        PulseTextButton("Delete ${meal.name}", { onDelete(meal) }, enabled = enabled)
+                        PulseTextButton(uiText(R.string.pulse_mealplan_edit_1_s , meal.name), { onEdit(meal) }, enabled = enabled)
+                        PulseTextButton(uiText(R.string.pulse_mealplan_delete_1_s , meal.name), { onDelete(meal) }, enabled = enabled)
                     }
                 }
             }
@@ -42,16 +46,16 @@ internal fun MealAgenda(date: LocalDate, today: LocalDate, meals: List<PlannedMe
 
 @Composable
 internal fun MealTimes(times: List<MealTime>, enabled: Boolean, onAdd: () -> Unit, onDelete: (MealTime) -> Unit) {
-    PulseText("Your daily rhythm", Modifier.semantics { heading() }, PulseTextStyle.Display)
-    PulseText("Default and custom meal times. Meals can also be planned without a time.")
-    PulseButton("Add custom meal time", onAdd, enabled = enabled)
-    if (times.isEmpty()) PulseEmptyState("No meal times available", "Create a custom time, or add meals without one.")
+    PulseText(uiText(R.string.pulse_mealplan_your_daily_rhythm), Modifier.semantics { heading() }, PulseTextStyle.Display)
+    PulseText(uiText(R.string.pulse_mealplan_default_and_custom_meal_times_meals_can_also_be))
+    PulseButton(uiText(R.string.pulse_mealplan_add_custom_meal_time), onAdd, enabled = enabled)
+    if (times.isEmpty()) PulseEmptyState(uiText(R.string.pulse_mealplan_no_meal_times_available), uiText(R.string.pulse_mealplan_create_a_custom_time_or_add_meals_without_one))
     times.forEach { time ->
         PulseCard(Modifier.fillMaxWidth()) {
             PulseText(time.name, style = PulseTextStyle.Title)
-            PulseText("${time.start.format(mealClock)} – ${time.end.format(mealClock)}${if (time.end < time.start) " · overnight" else ""}")
-            if (time.isDefault) PulseText("Default · protected", style = PulseTextStyle.Label)
-            else PulseTextButton("Delete time ${time.name}", { onDelete(time) }, enabled = enabled)
+            PulseText(uiText(if (time.end < time.start) R.string.pulse_mealplan_overnight_time_range else R.string.pulse_mealplan_time_range, time.start.format(mealClock), time.end.format(mealClock)))
+            if (time.isDefault) PulseText(uiText(R.string.pulse_mealplan_default_protected), style = PulseTextStyle.Label)
+            else PulseTextButton(uiText(R.string.pulse_mealplan_delete_time_1_s , time.name), { onDelete(time) }, enabled = enabled)
         }
     }
 }
@@ -63,16 +67,16 @@ internal fun MealWeekBoard(days: List<LocalDate>, selected: LocalDate, today: Lo
             PulseCard(Modifier.weight(1f), highlighted = day == selected) {
                 PulseText(day.format(DateTimeFormatter.ofPattern("EEE")), style = PulseTextStyle.Label)
                 PulseText(day.dayOfMonth.toString(), style = PulseTextStyle.Metric)
-                if (day == today) PulseText("Today", style = PulseTextStyle.Label)
-                if (day == selected) PulseText("Selected", style = PulseTextStyle.Label)
+                if (day == today) PulseText(uiText(R.string.pulse_mealplan_today_label), style = PulseTextStyle.Label)
+                if (day == selected) PulseText(uiText(R.string.pulse_mealplan_selected), style = PulseTextStyle.Label)
                 val items = meals.filter { it.date == day }
-                if (items.isEmpty()) PulseText("No meals yet")
+                if (items.isEmpty()) PulseText(uiText(R.string.pulse_mealplan_no_meals_yet))
                 items.take(3).forEach { meal ->
                     PulseText(meal.name, style = PulseTextStyle.Label)
-                    PulseText(if (meal.consumed) "✓ Consumed" else "Planned")
+                    PulseText(if (meal.consumed) uiText(R.string.pulse_mealplan_consumed) else uiText(R.string.pulse_mealplan_planned))
                 }
-                if (items.size > 3) PulseText("+${items.size - 3} more")
-                PulseTextButton("View ${day.format(DateTimeFormatter.ofPattern("EEE"))}", { onSelect(day) }, enabled = enabled)
+                if (items.size > 3) PulseText(uiPlural(R.plurals.pulse_mealplan_more_meals, items.size - 3, items.size - 3))
+                PulseTextButton(uiText(R.string.pulse_mealplan_view_1_s , day.format(DateTimeFormatter.ofPattern("EEE"))), { onSelect(day) }, enabled = enabled)
             }
         }
     }

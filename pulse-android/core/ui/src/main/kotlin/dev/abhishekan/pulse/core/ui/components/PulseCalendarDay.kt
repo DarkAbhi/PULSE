@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.core.ui.components
 
+
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.asString
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -33,3 +36,6 @@ fun PulseCalendarDay(label: String, description: String, selected: Boolean, toda
         }
     }
 }
+
+@Composable
+fun PulseCalendarDay(label: String, description: UiText, selected: Boolean, today: Boolean, hasActivity: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, inMonth: Boolean = true) = PulseCalendarDay(label, description.asString(), selected, today, hasActivity, onClick, modifier, enabled, inMonth)

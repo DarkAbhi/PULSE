@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.feature.fitness
 
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.fitness.R
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -77,14 +80,14 @@ class FitnessViewModel(private val getOverview: GetFitnessOverview, private val 
             when (val result = record(if (todayAction) null else input.selected)) {
                 is Outcome.Success -> {
                     saved["pending"] = false
-                    state.update { it.copy(createdId = result.value, message = "Workout recorded. A little effort, a little momentum.") }
+                    state.update { it.copy(createdId = result.value, message = uiText(R.string.pulse_fitness_workout_recorded_a_little_effort_a_little_momentum)) }
                     if (load() && todayAction) selectAfterRecord(checkNotNull(state.value.overview).today)
                 }
                 is Outcome.Error -> {
                     val uncertain = result.failure !in setOf(Failure.InvalidInput, Failure.Unauthorized, Failure.NotFound)
                     saved["pending"] = uncertain
                     state.update { it.copy(needsReview = uncertain, message = if (uncertain)
-                        "The response was interrupted. Refresh and review your workouts before recording again."
+                        uiText(R.string.pulse_fitness_the_response_was_interrupted_refresh_and_review_your_workouts)
                         else fitnessFailureMessage(result.failure)) }
                     load()
                 }

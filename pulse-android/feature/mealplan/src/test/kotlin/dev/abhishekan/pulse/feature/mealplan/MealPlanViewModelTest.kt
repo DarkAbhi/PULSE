@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.feature.mealplan
 
+import dev.abhishekan.pulse.core.ui.uiText
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.*
@@ -60,7 +61,7 @@ class MealPlanViewModelTest {
     @Test fun duplicateSubmissionIsBlockedAndSuccessfulSaveKeepsFeedback() = runTest {
         val gate=CompletableDeferred<Outcome<Unit>>();repo.result={gate.await()}
         val vm=vm();runCurrent();vm.add();vm.update(vm.uiState.value.draft!!.copy(name="Rice"));vm.save();vm.save();runCurrent();assertEquals(1,repo.writes)
-        gate.complete(Outcome.Success(Unit));runCurrent();assertNull(vm.uiState.value.draft);assertTrue(vm.uiState.value.message!!.contains("Saved"))
+        gate.complete(Outcome.Success(Unit));runCurrent();assertNull(vm.uiState.value.draft);assertEquals(uiText(R.string.pulse_mealplan_saved_your_meal_plan_is_up_to_date), vm.uiState.value.message)
     }
     @Test fun failedTogglePreservesLastConfirmedValueAndRequiresSuccessfulReviewReads() = runTest {
         val vm=vm();runCurrent();repo.toggle=Outcome.Error(Failure.Timeout);repo.mealFailure=Failure.Connection
@@ -70,7 +71,7 @@ class MealPlanViewModelTest {
     }
     @Test fun successfulConsumptionUsesServerValueAndNeverOptimisticallyChanges() = runTest {
         val vm=vm();runCurrent();vm.toggle(meal);assertFalse(vm.uiState.value.meals.value!!.single().consumed)
-        runCurrent();assertTrue(vm.uiState.value.meals.value!!.single().consumed);assertTrue(vm.uiState.value.message!!.contains("Meal enjoyed"))
+        runCurrent();assertTrue(vm.uiState.value.meals.value!!.single().consumed);assertEquals(uiText(R.string.pulse_mealplan_meal_enjoyed_a_little_care_for_your_day), vm.uiState.value.message)
     }
     @Test fun savedStateRestoresDateTimeDraftSelectionAndInterruptedMutation() = runTest {
         val draft=MealDraft(timeForm=true,name="Late snack",start="23:00",end="01:00",dirty=true)

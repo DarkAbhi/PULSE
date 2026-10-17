@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.feature.horizon
 
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.horizon.R
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -72,7 +75,7 @@ class HorizonViewModel(private val load: LoadHorizon, private val getTransaction
         val draft = state.value.draft ?: return
         val change = try { draft.change() } catch (_: IllegalArgumentException) { null } catch (_: DateTimeException) { null }
         if (change == null || !apply.valid(change)) {
-            state.update { it.copy(formError = "Check the fields: a name is required; amounts use up to 2 decimal places (maximum 9,999,999,999.99), transactions must be positive, dates/times must be valid and days range from 1 to 31.") }; return
+            state.update { it.copy(formError = uiText(R.string.pulse_horizon_check_the_fields_a_name_is_required_amounts_use)) }; return
         }
         mutate(change, closeDraft = true)
     }
@@ -85,10 +88,10 @@ class HorizonViewModel(private val load: LoadHorizon, private val getTransaction
                 is Outcome.Success -> {
                     saved["pending"] = false
                     if (closeDraft) editStored(null)
-                    state.update { it.copy(busy = false, message = "Saved. Your horizon is up to date.") }
+                    state.update { it.copy(busy = false, message = uiText(R.string.pulse_horizon_saved_your_horizon_is_up_to_date)) }
                 }
                 is Outcome.Error -> state.update { it.copy(busy = false, reviewRequired = true,
-                    message = "The change could not be confirmed. Refresh and review the server records before trying again.") }
+                    message = uiText(R.string.pulse_horizon_the_change_could_not_be_confirmed_refresh_and_review)) }
             }
             refresh()
         }
@@ -96,7 +99,7 @@ class HorizonViewModel(private val load: LoadHorizon, private val getTransaction
     fun acknowledgeReview() {
         if (state.value.reviewRequired && state.value.reviewReady) {
             saved["pending"] = false
-            state.update { it.copy(reviewRequired = false, message = "Server records reviewed. Discard a draft if its change already appears in the records.") }
+            state.update { it.copy(reviewRequired = false, message = uiText(R.string.pulse_horizon_server_records_reviewed_discard_a_draft_if_its_change)) }
         }
     }
 }

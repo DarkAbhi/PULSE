@@ -1,5 +1,9 @@
 package dev.abhishekan.pulse.feature.mealplan
 
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.mealplan.R
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -69,16 +73,16 @@ class MealPlanViewModel(private val getWeek: GetMealWeek, private val getTimes: 
         val change = try { draft.change() } catch (_: DateTimeException) { null }
         val cannotClear = draft.id != null && draft.originalTimeId != null && draft.timeId == null
         if (change == null || !apply.valid(change) || cannotClear) {
-            state.update { it.copy(error = if (cannotClear) "Choose another meal time; removing an assigned time is unavailable." else if (draft.timeForm) "Enter a name (1–100 characters) and valid 24-hour times." else "Check the meal name (1–255 characters), date and meal time.") }; return
+            state.update { it.copy(error = if (cannotClear) uiText(R.string.pulse_mealplan_choose_another_meal_time_removing_an_assigned_time_is) else if (draft.timeForm) uiText(R.string.pulse_mealplan_enter_a_name_1_100_characters_and_valid_24) else uiText(R.string.pulse_mealplan_check_the_meal_name_1_255_characters_date_and)) }; return
         }
         mutate(change, true)
     }
     private fun begin() { saved["pending"] = true; state.update { it.copy(busy = true, error = null, message = null) } }
     fun mutate(change: MealChange, closeDraft: Boolean = false) {
         if (!state.value.canWrite) return
-        if (!apply.valid(change)) { state.update { it.copy(message = "This meal time is protected, or the input is invalid.") }; return }
+        if (!apply.valid(change)) { state.update { it.copy(message = uiText(R.string.pulse_mealplan_this_meal_time_is_protected_or_the_input_is)) }; return }
         if (change is MealChange.Save) {
-            if (calendar.shift(change.date, 0) == null) { state.update { it.copy(error = "Choose a date whose whole week fits between years 1 and 9999.") }; return }
+            if (calendar.shift(change.date, 0) == null) { state.update { it.copy(error = uiText(R.string.pulse_mealplan_choose_a_date_whose_whole_week_fits_between_years)) }; return }
             // Keep the affected week available for review after a lost response or process recreation.
             saved["selected"] = change.date.toString()
             val week = calendar.monday(change.date)
@@ -94,13 +98,13 @@ class MealPlanViewModel(private val getWeek: GetMealWeek, private val getTimes: 
             when (val result = setConsumed(meal.id, !meal.consumed)) {
                 is Outcome.Success -> {
                     state.update { it.copy(meals = it.meals.copy(value = it.meals.value?.map { old -> if (old.id == meal.id) result.value else old })) }
-                    finish(Outcome.Success(Unit), message = if (result.value.consumed) "✓ Meal enjoyed. A little care for your day." else "Meal marked as planned.")
+                    finish(Outcome.Success(Unit), message = if (result.value.consumed) uiText(R.string.pulse_mealplan_meal_enjoyed_a_little_care_for_your_day) else uiText(R.string.pulse_mealplan_meal_marked_as_planned))
                 }
                 is Outcome.Error -> finish(result)
             }
         }
     }
-    private fun finish(result: Outcome<Unit>, closeDraft: Boolean = false, date: LocalDate? = null, message: String = "Saved. Your meal plan is up to date.") {
+    private fun finish(result: Outcome<Unit>, closeDraft: Boolean = false, date: LocalDate? = null, message: UiText = uiText(R.string.pulse_mealplan_saved_your_meal_plan_is_up_to_date)) {
         when (result) {
             is Outcome.Success -> {
                 saved["pending"] = false
@@ -110,14 +114,14 @@ class MealPlanViewModel(private val getWeek: GetMealWeek, private val getTimes: 
                 state.update { it.copy(message = message) }
             }
             is Outcome.Error -> state.update { it.copy(busy = false, reviewRequired = true,
-                message = "${result.failure.message} The update could not be confirmed. Your last confirmed values are kept while server records refresh. Review before another attempt.") }
+                message = uiText(R.string.pulse_mealplan_uncertain_change , result.failure.message)) }
         }
         refresh()
     }
     fun reviewed() {
         if (state.value.reviewRequired && state.value.reviewReady) {
             saved["pending"] = false
-            state.update { it.copy(reviewRequired = false, message = "Records reviewed. Discard the draft if it was already saved.") }
+            state.update { it.copy(reviewRequired = false, message = uiText(R.string.pulse_mealplan_records_reviewed_discard_the_draft_if_it_was_already)) }
         }
     }
 }

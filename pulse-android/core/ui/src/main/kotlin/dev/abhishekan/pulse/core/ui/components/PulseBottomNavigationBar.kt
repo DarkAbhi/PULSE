@@ -1,10 +1,15 @@
 package dev.abhishekan.pulse.core.ui.components
 
+
+
+import dev.abhishekan.pulse.core.ui.UiText
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-data class PulseNavigationItem(val label: String, val icon: @Composable () -> Unit)
+data class PulseNavigationItem(val label: UiText, val icon: @Composable () -> Unit) {
+    constructor(label: String, icon: @Composable () -> Unit) : this(UiText.Literal(label), icon)
+}
 
 @Composable
 fun PulseBottomNavigationBar(items: List<PulseNavigationItem>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier = Modifier) {

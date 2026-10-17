@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.feature.fitness
 
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.fitness.R
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -35,58 +38,58 @@ internal fun ExerciseEditor(editor: ExerciseEditorState, busy: Boolean, needsRev
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val stackFields = maxWidth / LocalDensity.current.fontScale < PulseTokens.formColumnsWidth
         PulseCard(Modifier.fillMaxWidth()) {
-            PulseText(if (draft.exerciseId == null) "Add an exercise" else "Edit exercise", Modifier.semantics { heading() }, PulseTextStyle.Title)
-            PulseText("Capture what you did, one set at a time.")
-            PulseTextField(draft.name, onName, "Exercise name", Modifier.fillMaxWidth(), enabled = !busy,
+            PulseText(if (draft.exerciseId == null) uiText(R.string.pulse_fitness_add_an_exercise) else uiText(R.string.pulse_fitness_edit_exercise), Modifier.semantics { heading() }, PulseTextStyle.Title)
+            PulseText(uiText(R.string.pulse_fitness_capture_what_you_did_one_set_at_a_time))
+            PulseTextField(draft.name, onName, uiText(R.string.pulse_fitness_exercise_name), Modifier.fillMaxWidth(), enabled = !busy,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = next)
             if (draft.catalogId != null) {
-                PulseText("Catalogue match selected. You can use your own name for it.")
+                PulseText(uiText(R.string.pulse_fitness_catalogue_match_selected_you_can_use_your_own_name))
                 editor.candidates.firstOrNull { it.id == draft.catalogId }?.let { CatalogInformation(it) }
-                PulseTextButton("Change catalogue match", onClearMatch, enabled = !busy)
-                PulseCheckbox(draft.rememberAlias, onAlias, "Remember this name for future workouts", enabled = !busy)
+                PulseTextButton(uiText(R.string.pulse_fitness_change_catalogue_match), onClearMatch, enabled = !busy)
+                PulseCheckbox(draft.rememberAlias, onAlias, uiText(R.string.pulse_fitness_remember_this_name_for_future_workouts), enabled = !busy)
             } else {
-                PulseText("Search by name above, or keep your own exercise name.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (editor.searching) PulseLoadingState("Finding exercises")
+                PulseText(uiText(R.string.pulse_fitness_search_by_name_above_or_keep_your_own_exercise), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (editor.searching) PulseLoadingState(uiText(R.string.pulse_fitness_finding_exercises))
                 editor.searchError?.let {
                     PulseText(it)
-                    PulseTextButton("Retry catalogue search", onSearch, enabled = !busy)
+                    PulseTextButton(uiText(R.string.pulse_fitness_retry_catalogue_search), onSearch, enabled = !busy)
                 }
-                if (draft.name.isNotBlank() && !editor.searching && editor.searchError == null && editor.candidates.isEmpty()) PulseText("No matches yet. You can save your own exercise name.")
+                if (draft.name.isNotBlank() && !editor.searching && editor.searchError == null && editor.candidates.isEmpty()) PulseText(uiText(R.string.pulse_fitness_no_matches_yet_you_can_save_your_own_exercise))
                 editor.candidates.forEach { candidate ->
-                    PulseRadioButton(false, { onChoose(candidate) }, "${candidate.name} · ${candidate.equipment ?: "Equipment unspecified"}",
+                    PulseRadioButton(false, { onChoose(candidate) }, uiText(R.string.pulse_fitness_exercise_equipment , candidate.name, candidate.equipment ?: uiText(R.string.pulse_fitness_equipment_unspecified)),
                         Modifier.fillMaxWidth(), enabled = !busy)
                 }
             }
-            PulseText("Your sets", Modifier.semantics { heading() }, PulseTextStyle.Title)
-            PulseText("Repetitions: 1–1,000 per set. Leave weight blank for bodyweight. Up to 20 sets.")
+            PulseText(uiText(R.string.pulse_fitness_your_sets), Modifier.semantics { heading() }, PulseTextStyle.Title)
+            PulseText(uiText(R.string.pulse_fitness_repetitions_1_1_000_per_set_leave_weight_blank))
             draft.sets.forEachIndexed { index, set ->
-                PulseText("Set ${index + 1}", style = PulseTextStyle.Label)
+                PulseText(uiText(R.string.pulse_fitness_set_1_s , index + 1), style = PulseTextStyle.Label)
                 // Stack numeric fields when text is large so labels and typed values stay readable.
                 if (stackFields) {
-                    PulseTextField(set.reps, { onSet(index, it, null) }, "Reps, set ${index + 1}", Modifier.fillMaxWidth().focusRequester(repsFocus[index]), enabled = !busy,
+                    PulseTextField(set.reps, { onSet(index, it, null) }, uiText(R.string.pulse_fitness_reps_set_1_s , index + 1), Modifier.fillMaxWidth().focusRequester(repsFocus[index]), enabled = !busy,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { weightFocus[index].requestFocus() }))
                     WeightField(index, set.weight, busy, index == draft.sets.lastIndex, Modifier.focusRequester(weightFocus[index]),
                         { onSet(index, null, it) }, { repsFocus.getOrNull(index + 1)?.requestFocus() }, { keyboard?.hide(); focus.clearFocus() })
                 } else Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                    PulseTextField(set.reps, { onSet(index, it, null) }, "Reps, set ${index + 1}", Modifier.weight(1f).focusRequester(repsFocus[index]), enabled = !busy,
+                    PulseTextField(set.reps, { onSet(index, it, null) }, uiText(R.string.pulse_fitness_reps_set_1_s , index + 1), Modifier.weight(1f).focusRequester(repsFocus[index]), enabled = !busy,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { weightFocus[index].requestFocus() }))
                     Box(Modifier.weight(1f)) { WeightField(index, set.weight, busy, index == draft.sets.lastIndex, Modifier.focusRequester(weightFocus[index]),
                         { onSet(index, null, it) }, { repsFocus.getOrNull(index + 1)?.requestFocus() }, { keyboard?.hide(); focus.clearFocus() }) }
                 }
-                if (draft.sets.size > 1) PulseTextButton("Remove set ${index + 1}", { onRemoveSet(index) }, enabled = !busy)
+                if (draft.sets.size > 1) PulseTextButton(uiText(R.string.pulse_fitness_remove_set_1_s , index + 1), { onRemoveSet(index) }, enabled = !busy)
             }
-            PulseTextButton("Add another set", onAddSet, enabled = !busy && draft.sets.size < 20)
+            PulseTextButton(uiText(R.string.pulse_fitness_add_another_set), onAddSet, enabled = !busy && draft.sets.size < 20)
             editor.error?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = MaterialTheme.colorScheme.error) }
-            PulseButton(if (draft.exerciseId == null) "Save exercise" else "Save changes", { keyboard?.hide(); onSave() }, Modifier.fillMaxWidth(),
+            PulseButton(if (draft.exerciseId == null) uiText(R.string.pulse_fitness_save_exercise) else uiText(R.string.pulse_fitness_save_changes), { keyboard?.hide(); onSave() }, Modifier.fillMaxWidth(),
                 enabled = !needsReview, loading = busy)
-            PulseTextButton("Cancel", onCancel, Modifier.fillMaxWidth(), enabled = !busy)
+            PulseTextButton(uiText(R.string.pulse_fitness_cancel), onCancel, Modifier.fillMaxWidth(), enabled = !busy)
         }
     }
 }
 
 @Composable
 private fun WeightField(index: Int, value: String, busy: Boolean, last: Boolean, modifier: Modifier, onValue: (String) -> Unit, onNext: () -> Unit, onDone: () -> Unit) {
-    PulseTextField(value, onValue, "Weight (kg), set ${index + 1}", modifier.fillMaxWidth(), enabled = !busy,
+    PulseTextField(value, onValue, uiText(R.string.pulse_fitness_weight_kg_set_1_s , index + 1), modifier.fillMaxWidth(), enabled = !busy,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = if (last) ImeAction.Done else ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { onNext() }, onDone = { onDone() }))
 }

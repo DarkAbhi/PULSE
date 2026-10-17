@@ -15,6 +15,7 @@ import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.network.*
+import dev.abhishekan.pulse.core.ui.resolve
 import dev.abhishekan.pulse.core.ui.message
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.*
@@ -133,7 +134,7 @@ class AuthNavigationDeviceTest {
         screenshot("home")
         val notifications = compose.onNodeWithContentDescription("Notifications")
         val target = notifications.getUnclippedBoundsInRoot()
-        Assert.assertTrue((target.right - target.left).value >= 48f && (target.bottom - target.top).value >= 48f)
+        Assert.assertTrue("Notifications touch target was $target", (target.right - target.left).value >= 48f - 0.001f && (target.bottom - target.top).value >= 48f - 0.001f)
         notifications.assertHasClickAction().performClick()
         compose.onNodeWithText("Vehicle care update").assertIsDisplayed()
         compose.onNodeWithContentDescription("Back to Home").performClick()
@@ -199,7 +200,7 @@ class AuthNavigationDeviceTest {
         compose.onNodeWithText("Username").performImeAction()
         compose.onNodeWithText("Password").assertIsFocused().performTextInput("wrong-password")
         compose.onNodeWithText("Password").performImeAction()
-        awaitText(Failure.InvalidCredentials.message)
+        awaitText(Failure.InvalidCredentials.message.resolve(InstrumentationRegistry.getInstrumentation().targetContext.resources))
         screenshot("login-error")
         compose.onNodeWithText("Home", substring = false).assertDoesNotExist()
     }

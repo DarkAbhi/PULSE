@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.feature.auth
 
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.auth.R
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -57,10 +60,10 @@ fun LoginScreen(state: LoginUiState, onUsername: (String) -> Unit, onPassword: (
 @Composable
 private fun BrandIntroduction(expanded: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-        PulseText("PULSE", style = PulseTextStyle.Label, color = MaterialTheme.colorScheme.primary)
-        PulseText(if (expanded) "Your everyday,\nin one place." else "Your everyday, considered.",
+        PulseText(uiText(R.string.pulse_auth_pulse), style = PulseTextStyle.Label, color = MaterialTheme.colorScheme.primary)
+        PulseText(if (expanded) uiText(R.string.pulse_auth_your_everyday_in_one_place) else uiText(R.string.pulse_auth_your_everyday_considered),
             Modifier.semantics { heading() }, PulseTextStyle.Display)
-        PulseText("A private space for your fitness, finances, meals, and vehicle care.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        PulseText(uiText(R.string.pulse_auth_a_private_space_for_your_fitness_finances_meals_and), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -70,21 +73,21 @@ private fun LoginForm(state: LoginUiState, onUsername: (String) -> Unit, onPassw
     val keyboard = LocalSoftwareKeyboardController.current
     val submit = { keyboard?.hide(); onSubmit() }
     PulseCard(Modifier.fillMaxWidth()) {
-        PulseText("Welcome back", Modifier.semantics { heading() }, PulseTextStyle.Title)
-        PulseText("Sign in to pick up where you left off.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        PulseText(uiText(R.string.pulse_auth_welcome_back), Modifier.semantics { heading() }, PulseTextStyle.Title)
+        PulseText(uiText(R.string.pulse_auth_sign_in_to_pick_up_where_you_left_off), color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (notice != null) PulseText(notice, Modifier.semantics { liveRegion = LiveRegionMode.Polite })
         Spacer(Modifier.height(PulseTokens.small))
-        PulseTextField(state.username, onUsername, "Username", Modifier.fillMaxWidth().semantics { contentType = ContentType.Username },
+        PulseTextField(state.username, onUsername, uiText(R.string.pulse_auth_username), Modifier.fillMaxWidth().semantics { contentType = ContentType.Username },
             enabled = !state.loading, error = state.usernameError,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false, imeAction = ImeAction.Next),
             keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }))
-        PulsePasswordField(state.password, onPassword, "Password", Modifier.fillMaxWidth().semantics { contentType = ContentType.Password },
+        PulsePasswordField(state.password, onPassword, uiText(R.string.pulse_auth_password), Modifier.fillMaxWidth().semantics { contentType = ContentType.Password },
             enabled = !state.loading, error = state.passwordError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { submit() }))
         if (state.error != null) PulseText(state.error, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(PulseTokens.small))
-        PulseButton("Continue", submit, Modifier.fillMaxWidth(), loading = state.loading)
-        PulseText("Your account. Your own quiet corner.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        PulseButton(uiText(R.string.pulse_auth_continue), submit, Modifier.fillMaxWidth(), loading = state.loading)
+        PulseText(uiText(R.string.pulse_auth_your_account_your_own_quiet_corner), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

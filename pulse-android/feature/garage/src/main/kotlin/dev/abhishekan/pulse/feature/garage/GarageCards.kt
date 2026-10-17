@@ -1,5 +1,9 @@
 package dev.abhishekan.pulse.feature.garage
 
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.garage.R
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,67 +20,67 @@ import java.time.format.DateTimeFormatter
 internal fun decimal(v: BigDecimal?) = v?.stripTrailingZeros()?.toPlainString() ?: "—"
 internal fun garageDate(v: Instant): String = DateTimeFormatter.ofPattern("d MMM yyyy · HH:mm").withZone(ZoneId.systemDefault()).format(v)
 @Composable
-internal fun GarageActions(label: String, enabled: Boolean, edit: () -> Unit, delete: () -> Unit) {
+internal fun GarageActions(label: UiText, enabled: Boolean, edit: () -> Unit, delete: () -> Unit) {
     // Stack actions so large text and narrow windows retain complete labels and touch targets.
-    PulseTextButton("Edit", edit, Modifier.semantics { contentDescription = "Edit $label" }, enabled)
-    PulseTextButton("Delete", delete, Modifier.semantics { contentDescription = "Delete $label" }, enabled)
+    PulseTextButton(uiText(R.string.pulse_garage_edit), edit, Modifier.pulseDescription(uiText(R.string.pulse_garage_edit_1_s , label)), enabled)
+    PulseTextButton(uiText(R.string.pulse_garage_delete), delete, Modifier.pulseDescription(uiText(R.string.pulse_garage_delete_1_s , label)), enabled)
 }
 @Composable
 internal fun PressureCard(pressure: TirePressure, enabled: Boolean, edit: () -> Unit, fill: () -> Unit) {
     PulseCard(Modifier.fillMaxWidth()) {
-        PulseText("A little air, a smoother ride", style = PulseTextStyle.Title)
-        PulseText("Target tire pressure · PSI", style = PulseTextStyle.Label)
-        PulseText("Solo · Front ${decimal(pressure.frontSolo)} · Rear ${decimal(pressure.rearSolo)}")
-        PulseText("Pillion · Front ${decimal(pressure.frontPillion)} · Rear ${decimal(pressure.rearPillion)}")
-        PulseTextButton("Set tire pressure", edit, enabled = enabled)
-        PulseButton("Record air fill now", fill, enabled = enabled)
-        PulseText("Air fills are recorded at the server’s current time.", style = PulseTextStyle.Label)
+        PulseText(uiText(R.string.pulse_garage_a_little_air_a_smoother_ride), style = PulseTextStyle.Title)
+        PulseText(uiText(R.string.pulse_garage_target_tire_pressure_psi), style = PulseTextStyle.Label)
+        PulseText(uiText(R.string.pulse_garage_solo_front_1_s_rear_2_s , decimal(pressure.frontSolo), decimal(pressure.rearSolo)))
+        PulseText(uiText(R.string.pulse_garage_pillion_front_1_s_rear_2_s , decimal(pressure.frontPillion), decimal(pressure.rearPillion)))
+        PulseTextButton(uiText(R.string.pulse_garage_set_tire_pressure), edit, enabled = enabled)
+        PulseButton(uiText(R.string.pulse_garage_record_air_fill_now), fill, enabled = enabled)
+        PulseText(uiText(R.string.pulse_garage_air_fills_are_recorded_at_the_server_s_current), style = PulseTextStyle.Label)
     }
 }
 @Composable
 internal fun EfficiencyCards(data: VehicleHistory) {
-    if (data.efficiency.isEmpty()) PulseEmptyState("Your story starts here", "Add fuel fill-ups to build an efficiency history. A complete full-to-full interval is needed for mileage.")
+    if (data.efficiency.isEmpty()) PulseEmptyState(uiText(R.string.pulse_garage_your_story_starts_here), uiText(R.string.pulse_garage_add_fuel_fill_ups_to_build_an_efficiency_history))
     data.efficiency.forEach { (type, stat) -> PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-        PulseText("${type.replaceFirstChar(Char::uppercase)} · your efficiency", style = PulseTextStyle.Title)
-        PulseText(stat.average?.let { "${decimal(it)} km/L" } ?: "Not enough history", style = if (stat.average == null) PulseTextStyle.Title else PulseTextStyle.Metric)
-        if (stat.average == null) PulseText("Record another full fill after a full tank to complete an interval. Missed fills reset the baseline.")
-        PulseText("Last ${decimal(stat.last)} · Best ${decimal(stat.max)} · Lowest ${decimal(stat.min)} km/L")
-        PulseText("Recorded volume · ${decimal(stat.totalVolume)} L")
-        PulseText("Recorded cost · ₹${decimal(stat.totalCost)}")
+        PulseText(uiText(R.string.pulse_garage_fuel_efficiency_title , garageOption(type)), style = PulseTextStyle.Title)
+        PulseText(stat.average?.let { uiText(R.string.pulse_garage_efficiency_km_per_litre , decimal(it)) } ?: uiText(R.string.pulse_garage_not_enough_history), style = if (stat.average == null) PulseTextStyle.Title else PulseTextStyle.Metric)
+        if (stat.average == null) PulseText(uiText(R.string.pulse_garage_record_another_full_fill_after_a_full_tank_to))
+        PulseText(uiText(R.string.pulse_garage_last_1_s_best_2_s_lowest_3_s , decimal(stat.last), decimal(stat.max), decimal(stat.min)))
+        PulseText(uiText(R.string.pulse_garage_recorded_volume_1_s_l , decimal(stat.totalVolume)))
+        PulseText(uiText(R.string.pulse_garage_recorded_cost_1_s , decimal(stat.totalCost)))
     } }
 }
 @Composable
-internal fun FuelCards(data: VehicleHistory, vehicle: Long, enabled: Boolean, edit: (GarageDraft) -> Unit, remove: (GarageChange.Delete, String) -> Unit) {
-    if (data.fuel.isEmpty()) PulseEmptyState("No fuel fill-ups", "Record fuel, odometer and cost to start your history.")
+internal fun FuelCards(data: VehicleHistory, vehicle: Long, enabled: Boolean, edit: (GarageDraft) -> Unit, remove: (GarageChange.Delete, UiText) -> Unit) {
+    if (data.fuel.isEmpty()) PulseEmptyState(uiText(R.string.pulse_garage_no_fuel_fill_ups), uiText(R.string.pulse_garage_record_fuel_odometer_and_cost_to_start_your_history))
     data.fuel.forEach { item -> PulseCard(Modifier.fillMaxWidth().testTag("garage-fuel-${item.id}")) {
-        val label = "fuel fill-up ${item.id}"
+        val label = uiText(R.string.pulse_garage_fuel_fill_up_1_s , item.id)
         PulseText(garageDate(item.date), style = PulseTextStyle.Title)
-        PulseText("${decimal(item.odometer)} km", style = PulseTextStyle.Metric)
+        PulseText(uiText(R.string.pulse_garage_distance_km, decimal(item.odometer)), style = PulseTextStyle.Metric)
         item.station?.let { PulseText(it) }; item.notes?.let { PulseText(it) }
-        item.items.forEach { tank -> PulseText("${tank.type.replaceFirstChar(Char::uppercase)} · ${tank.fill} · ${decimal(tank.quantity)} L\n₹${decimal(tank.price)}/L · ₹${decimal(tank.total)} total") }
-        GarageActions(label, enabled, { edit(item.draft(vehicle)) }, { remove(GarageChange.Delete(GarageRecord.Fuel, vehicle, item.id), "Permanently remove this fill-up and all of its fuel items? Efficiency summaries will be recalculated by the server.") })
+        item.items.forEach { tank -> PulseText(uiText(R.string.pulse_garage_fuel_tank_summary , garageOption(tank.type), garageOption(tank.fill), decimal(tank.quantity), decimal(tank.price), decimal(tank.total))) }
+        GarageActions(label, enabled, { edit(item.draft(vehicle)) }, { remove(GarageChange.Delete(GarageRecord.Fuel, vehicle, item.id), uiText(R.string.pulse_garage_permanently_remove_this_fill_up_and_all_of_its)) })
     } }
 }
 @Composable
 internal fun MaintenanceCards(data: VehicleHistory, vehicle: Long, enabled: Boolean, busy: Boolean, edit: (GarageDraft) -> Unit,
-    remove: (GarageChange.Delete, String) -> Unit, upload: (Long) -> Unit, open: (Long, GarageReceipt) -> Unit, download: (Long, GarageReceipt) -> Unit, uploadRecord: Long?, progress: Float?) {
-    if (data.maintenance.isEmpty()) PulseEmptyState("No maintenance yet", "Keep services, repairs, insurance, washes and tyres together.")
+    remove: (GarageChange.Delete, UiText) -> Unit, upload: (Long) -> Unit, open: (Long, GarageReceipt) -> Unit, download: (Long, GarageReceipt) -> Unit, uploadRecord: Long?, progress: Float?) {
+    if (data.maintenance.isEmpty()) PulseEmptyState(uiText(R.string.pulse_garage_no_maintenance_yet), uiText(R.string.pulse_garage_keep_services_repairs_insurance_washes_and_tyres_together))
     data.maintenance.forEach { item -> PulseCard(Modifier.fillMaxWidth().testTag("garage-care-${item.id}")) {
         PulseText(item.title, style = PulseTextStyle.Title)
-        PulseText("₹${decimal(item.amount)}", style = PulseTextStyle.Metric)
-        PulseText("${item.category.replaceFirstChar(Char::uppercase)} · ${garageDate(item.date)}")
-        item.odometer?.let { PulseText("${decimal(it)} km") }; item.provider?.let { PulseText(it) }; item.notes?.let { PulseText(it) }
-        GarageActions(item.title, enabled, { edit(item.draft(vehicle)) }, { remove(GarageChange.Delete(GarageRecord.Maintenance, vehicle, item.id), "Delete “${item.title}”? This permanently removes the maintenance record, receipt metadata and its hosted receipt files. If storage cleanup fails, the server keeps the record; some files may already be removed.") })
-        PulseText("Receipts", Modifier.semantics { heading() }, PulseTextStyle.Label)
-        if (item.receipts.isEmpty()) PulseText("No receipts attached.")
+        PulseText(uiText(R.string.pulse_garage_formatted_value , decimal(item.amount)), style = PulseTextStyle.Metric)
+        PulseText(uiText(R.string.pulse_garage_maintenance_date , garageOption(item.category), garageDate(item.date)))
+        item.odometer?.let { PulseText(uiText(R.string.pulse_garage_distance_km , decimal(it))) }; item.provider?.let { PulseText(it) }; item.notes?.let { PulseText(it) }
+        GarageActions(UiText.Literal(item.title), enabled, { edit(item.draft(vehicle)) }, { remove(GarageChange.Delete(GarageRecord.Maintenance, vehicle, item.id), uiText(R.string.pulse_garage_delete_1_s_this_permanently_removes_the_maintenance_record , item.title)) })
+        PulseText(uiText(R.string.pulse_garage_receipts), Modifier.semantics { heading() }, PulseTextStyle.Label)
+        if (item.receipts.isEmpty()) PulseText(uiText(R.string.pulse_garage_no_receipts_attached))
         item.receipts.forEach { receipt ->
-            PulseText("${receipt.name} · ${receipt.size} bytes")
-            PulseTextButton("Open ${receipt.name}", { open(item.id, receipt) }, enabled = !busy)
-            PulseTextButton("Download ${receipt.name}", { download(item.id, receipt) }, enabled = !busy)
-            PulseTextButton("Remove ${receipt.name}", { remove(GarageChange.Delete(GarageRecord.Receipt, vehicle, receipt.id, item.id), "Permanently remove “${receipt.name}” from server storage and this maintenance record? The maintenance record stays.") }, enabled = enabled)
+            PulseText(uiPlural(R.plurals.pulse_garage_receipt_size, receipt.size.coerceIn(0, Int.MAX_VALUE.toLong()).toInt(), receipt.name, receipt.size))
+            PulseTextButton(uiText(R.string.pulse_garage_open_1_s , receipt.name), { open(item.id, receipt) }, enabled = !busy)
+            PulseTextButton(uiText(R.string.pulse_garage_download_1_s , receipt.name), { download(item.id, receipt) }, enabled = !busy)
+            PulseTextButton(uiText(R.string.pulse_garage_remove_1_s , receipt.name), { remove(GarageChange.Delete(GarageRecord.Receipt, vehicle, receipt.id, item.id), uiText(R.string.pulse_garage_permanently_remove_1_s_from_server_storage_and_this , receipt.name)) }, enabled = enabled)
         }
-        PulseTextButton("Attach receipt to ${item.title}", { upload(item.id) }, enabled = enabled)
+        PulseTextButton(uiText(R.string.pulse_garage_attach_receipt_to_1_s , item.title), { upload(item.id) }, enabled = enabled)
         if (uploadRecord == item.id && progress != null) PulseTransferProgress(progress)
-        PulseText("Up to 10 MB per file. Your saved record is kept if an upload fails.", style = PulseTextStyle.Label)
+        PulseText(uiText(R.string.pulse_garage_up_to_10_mb_per_file_your_saved_record), style = PulseTextStyle.Label)
     } }
 }

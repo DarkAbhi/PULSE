@@ -1,8 +1,12 @@
 package dev.abhishekan.pulse.feature.horizon
 
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.horizon.R
+
 import dev.abhishekan.pulse.core.domain.model.*
 
-enum class HorizonTab(val label: String) { Overview("Overview"), Transactions("Transactions"), Budgets("Budgets"), Obligations("Obligations"), Subscriptions("Subscriptions"), Purchases("Planned purchases") }
+enum class HorizonTab(val label: UiText) { Overview(uiText(R.string.pulse_horizon_overview)), Transactions(uiText(R.string.pulse_horizon_transactions)), Budgets(uiText(R.string.pulse_horizon_budgets)), Obligations(uiText(R.string.pulse_horizon_obligations)), Subscriptions(uiText(R.string.pulse_horizon_subscriptions)), Purchases(uiText(R.string.pulse_horizon_planned_purchases)) }
 data class HorizonSection<T>(val value: T? = null, val loading: Boolean = true, val error: Failure? = null)
 data class HorizonUiState(
     val tab: HorizonTab = HorizonTab.Overview,
@@ -12,7 +16,7 @@ data class HorizonUiState(
     val payments: HorizonSection<List<HorizonTransaction>> = HorizonSection(loading = false),
     val subscriptionId: Long? = null, val search: String = "", val type: String? = null,
     val draft: HorizonDraft? = null, val busy: Boolean = false, val reviewRequired: Boolean = false,
-    val message: String? = null, val formError: String? = null,
+    val message: UiText? = null, val formError: UiText? = null,
 ) {
     val reviewReady: Boolean get() = listOf(overview, transactions, purchases).all { !it.loading && it.error == null && it.value != null } &&
         (subscriptionId == null || (!payments.loading && payments.error == null && payments.value != null))

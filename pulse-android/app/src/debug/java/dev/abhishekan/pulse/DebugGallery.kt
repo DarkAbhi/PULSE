@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse
 
+import dev.abhishekan.pulse.core.ui.uiText
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
@@ -10,7 +11,7 @@ import dev.abhishekan.pulse.core.ui.gallery.PulseComponentGallery
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun DebugGalleryAction(onClick: () -> Unit) { PulseTextButton("Component gallery", onClick) }
+fun DebugGalleryAction(onClick: () -> Unit) { PulseTextButton(uiText(R.string.pulse_app_component_gallery), onClick) }
 
 fun NavGraphBuilder.debugGalleryDestination() {
     composable("gallery") {

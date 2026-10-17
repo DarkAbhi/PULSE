@@ -1,5 +1,9 @@
 package dev.abhishekan.pulse.feature.horizon
 
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.horizon.R
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -16,46 +20,46 @@ import java.math.BigDecimal
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-internal fun money(currency: String, amount: BigDecimal): String {
+internal fun money(currency: String, amount: BigDecimal): UiText {
     val value = amount.setScale(maxOf(2, amount.scale())).toPlainString()
-    return if (currency.isBlank()) value else "$currency $value"
+    return if (currency.isBlank()) UiText.Literal(value) else uiText(R.string.pulse_horizon_money , currency, value)
 }
 @Composable internal fun OverviewCard(data: HorizonOverview, enabled: Boolean, configure: () -> Unit) {
     PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-        PulseText("UNCOMMITTED THIS MONTH", style = PulseTextStyle.Label)
+        PulseText(uiText(R.string.pulse_horizon_uncommitted_this_month), style = PulseTextStyle.Label)
         PulseText(money(data.currency, data.remaining), style = PulseTextStyle.Metric)
-        PulseText(if (data.isOvercommitted) "Your commitments exceed the starting pool." else "A little perspective on what’s available.")
-        PulseText("Starting pool: ${money(data.currency, data.baseAmount)}")
-        if (data.baseAmount.signum() == 0) PulseText("Set a starting pool to make this overview useful. Zero can also be an intentional setting.")
-        PulseTextButton("Configure starting pool", configure, enabled = enabled)
+        PulseText(if (data.isOvercommitted) uiText(R.string.pulse_horizon_your_commitments_exceed_the_starting_pool) else uiText(R.string.pulse_horizon_a_little_perspective_on_what_s_available))
+        PulseText(uiText(R.string.pulse_horizon_starting_pool_1_s , money(data.currency, data.baseAmount)))
+        if (data.baseAmount.signum() == 0) PulseText(uiText(R.string.pulse_horizon_set_a_starting_pool_to_make_this_overview_useful))
+        PulseTextButton(uiText(R.string.pulse_horizon_configure_starting_pool), configure, enabled = enabled)
     }
 }
 @Composable internal fun CommitmentCard(data: HorizonOverview) {
     PulseCard(Modifier.fillMaxWidth()) {
-        PulseText("Monthly commitments", style = PulseTextStyle.Title)
-        PulseText("Fixed obligations: ${money(data.currency, data.deductionsTotal)}")
-        PulseText("Subscriptions: ${money(data.currency, data.subscriptionBurn)}")
-        PulseText("Committed: ${data.committedPercent.toPlainString()}%")
-        PulseText("Budget allocation: ${money(data.currency, data.allocatedTotal)}")
-        PulseText("Recent transaction total: ${money(data.currency, data.transactionsTotal)}")
-        PulseText("Totals and projections come from Pulse. The summary’s transaction total and budget usage use its recent 50 transactions; they are not an all-history balance.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        PulseText(uiText(R.string.pulse_horizon_monthly_commitments), style = PulseTextStyle.Title)
+        PulseText(uiText(R.string.pulse_horizon_fixed_obligations_1_s , money(data.currency, data.deductionsTotal)))
+        PulseText(uiText(R.string.pulse_horizon_subscriptions_1_s , money(data.currency, data.subscriptionBurn)))
+        PulseText(uiText(R.string.pulse_horizon_committed_1_s , data.committedPercent.toPlainString()))
+        PulseText(uiText(R.string.pulse_horizon_budget_allocation_1_s , money(data.currency, data.allocatedTotal)))
+        PulseText(uiText(R.string.pulse_horizon_recent_transaction_total_1_s , money(data.currency, data.transactionsTotal)))
+        PulseText(uiText(R.string.pulse_horizon_totals_and_projections_come_from_pulse_the_summary_s), color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 @Composable internal fun ProjectionCard(data: HorizonOverview) {
     PulseCard(Modifier.fillMaxWidth()) {
-        PulseText("Looking ahead", style = PulseTextStyle.Title)
-        if (data.projections.isEmpty()) PulseEmptyState("No projections", "Projections appear when the server provides them.")
+        PulseText(uiText(R.string.pulse_horizon_looking_ahead), style = PulseTextStyle.Title)
+        if (data.projections.isEmpty()) PulseEmptyState(uiText(R.string.pulse_horizon_no_projections), uiText(R.string.pulse_horizon_projections_appear_when_the_server_provides_them))
         data.projections.forEach { PulseText(it.label, style = PulseTextStyle.Label); PulseText(money(data.currency, it.amount), style = PulseTextStyle.Metric) }
-        PulseText("Projected cumulative uncommitted funds, based on the current monthly plan.")
+        PulseText(uiText(R.string.pulse_horizon_projected_cumulative_uncommitted_funds_based_on_the_current_monthly))
     }
 }
 @Composable internal fun BudgetCard(item: HorizonBudget, currency: String, enabled: Boolean, edit: () -> Unit, delete: () -> Unit) {
     PulseCard(Modifier.fillMaxWidth().testTag("horizon-record-${item.id}")) {
         PulseText(item.name, style = PulseTextStyle.Title)
         PulseText(money(currency, item.available), style = PulseTextStyle.Metric)
-        PulseText(if (item.isOverBudget) "Over budget" else "Available")
-        PulseText("Allocated: ${money(currency, item.allocated)} · Used: ${money(currency, item.used)}")
-        PulseText("${item.usagePercent.toPlainString()}% used")
+        PulseText(if (item.isOverBudget) uiText(R.string.pulse_horizon_over_budget) else uiText(R.string.pulse_horizon_available))
+        PulseText(uiText(R.string.pulse_horizon_allocated_1_s_used_2_s , money(currency, item.allocated), money(currency, item.used)))
+        PulseText(uiText(R.string.pulse_horizon_budget_percent_used , item.usagePercent.toPlainString()))
         LinearProgressIndicator(progress = { item.usagePercent.divide(BigDecimal(100)).coerceIn(BigDecimal.ZERO, BigDecimal.ONE).toFloat() }, modifier = Modifier.fillMaxWidth())
         Actions(item.name, enabled, edit, delete)
     }
@@ -64,50 +68,50 @@ internal fun money(currency: String, amount: BigDecimal): String {
     PulseCard(Modifier.fillMaxWidth().testTag("horizon-record-${item.id}")) {
         PulseText(item.name, style = PulseTextStyle.Title)
         val credit = item.type == "credit"
-        PulseText("${if (credit) "+" else "−"}${money(currency, item.amount)}", style = PulseTextStyle.Metric)
-        if (currency.isBlank()) PulseText("Currency unavailable", style = PulseTextStyle.Label)
-        PulseText(if (credit) "Credit · Income / refund" else "Debit · Spending", style = PulseTextStyle.Label)
+        PulseText(uiText(R.string.pulse_horizon_signed_amount , if (credit) "+" else "−", money(currency, item.amount)), style = PulseTextStyle.Metric)
+        if (currency.isBlank()) PulseText(uiText(R.string.pulse_horizon_currency_unavailable), style = PulseTextStyle.Label)
+        PulseText(if (credit) uiText(R.string.pulse_horizon_credit_income_refund) else uiText(R.string.pulse_horizon_debit_spending), style = PulseTextStyle.Label)
         PulseText(DateTimeFormatter.ofPattern("d MMM yyyy · HH:mm").withZone(ZoneId.systemDefault()).format(item.date))
-        PulseText("Category: ${item.categoryName}")
-        item.budgetName?.let { PulseText("Budget: $it") }; item.subscriptionName?.let { PulseText("Subscription: $it") }; item.notes?.let { PulseText(it) }
+        PulseText(uiText(R.string.pulse_horizon_category_1_s , item.categoryName))
+        item.budgetName?.let { PulseText(uiText(R.string.pulse_horizon_budget_1_s , it)) }; item.subscriptionName?.let { PulseText(uiText(R.string.pulse_horizon_subscription_1_s , it)) }; item.notes?.let { PulseText(it) }
         if (edit != null && delete != null) Actions(item.name, enabled, edit, delete)
     }
 }
 @Composable internal fun Actions(label: String, enabled: Boolean, edit: () -> Unit, delete: () -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium)) { PulseTextButton("Edit", edit, Modifier.semantics { contentDescription = "Edit $label" }, enabled = enabled); PulseTextButton("Delete", delete, Modifier.semantics { contentDescription = "Delete $label" }, enabled = enabled) }
+    Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium)) { PulseTextButton(uiText(R.string.pulse_horizon_edit), edit, Modifier.pulseDescription(uiText(R.string.pulse_horizon_edit_1_s , label)), enabled = enabled); PulseTextButton(uiText(R.string.pulse_horizon_delete), delete, Modifier.pulseDescription(uiText(R.string.pulse_horizon_delete_1_s , label)), enabled = enabled) }
 }
 @Composable internal fun TransactionFilters(state: HorizonUiState, vm: HorizonViewModel) {
     var search by rememberSaveable(state.search) { mutableStateOf(state.search) }
     PulseCard(Modifier.fillMaxWidth()) {
-        PulseTextField(search, { search = it }, "Search transactions", Modifier.fillMaxWidth(), enabled = !state.busy)
+        PulseTextField(search, { search = it }, uiText(R.string.pulse_horizon_search_transactions), Modifier.fillMaxWidth(), enabled = !state.busy)
         val types = listOf(null, "debit", "credit")
-        PulseSelectionField("Filter", state.type ?: "All types", listOf("All types", "Debit", "Credit"), { vm.filter(search, types[it]) }, Modifier.fillMaxWidth(), !state.busy)
-        PulseTextButton("Apply search", { vm.filter(search, state.type) }, enabled = !state.busy)
+        PulseSelectionField(uiText(R.string.pulse_horizon_filter), state.type?.let(::horizonOption) ?: uiText(R.string.pulse_horizon_all_types), listOf(uiText(R.string.pulse_horizon_all_types), uiText(R.string.pulse_horizon_debit), uiText(R.string.pulse_horizon_credit)), { vm.filter(search, types[it]) }, Modifier.fillMaxWidth(), !state.busy)
+        PulseTextButton(uiText(R.string.pulse_horizon_apply_search), { vm.filter(search, state.type) }, enabled = !state.busy)
     }
 }
 @Composable internal fun PageControls(page: HorizonTransactionPage, busy: Boolean, onPage: (Int) -> Unit) {
-    PulseText("Page ${page.page} of ${maxOf(1, page.totalPages)} · ${page.total} transactions")
+    PulseText(uiPlural(R.plurals.pulse_horizon_transaction_page, page.total, page.page, maxOf(1, page.totalPages), page.total))
     Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-        PulseTextButton("Previous page", { onPage(page.page - 1) }, enabled = !busy && page.page > 1)
-        PulseTextButton("Next page", { onPage(page.page + 1) }, enabled = !busy && page.page < page.totalPages)
+        PulseTextButton(uiText(R.string.pulse_horizon_previous_page), { onPage(page.page - 1) }, enabled = !busy && page.page > 1)
+        PulseTextButton(uiText(R.string.pulse_horizon_next_page), { onPage(page.page + 1) }, enabled = !busy && page.page < page.totalPages)
     }
 }
 @Composable internal fun SubscriptionPayments(state: HorizonUiState, vm: HorizonViewModel, enabled: Boolean, currency: String, link: (Long) -> Unit) {
     PulseCard(Modifier.fillMaxWidth()) {
-        PulseText("Payments · ${state.overview.value?.subscriptions?.find { it.id == state.subscriptionId }?.name ?: "Subscription"}", style = PulseTextStyle.Title)
-        PulseTextButton("Close payments", vm::hidePayments)
+        PulseText(uiText(R.string.pulse_horizon_payments_1_s , state.overview.value?.subscriptions?.find { it.id == state.subscriptionId }?.name ?: uiText(R.string.pulse_horizon_subscription)), style = PulseTextStyle.Title)
+        PulseTextButton(uiText(R.string.pulse_horizon_close_payments), vm::hidePayments)
         SectionState(state.payments, { state.subscriptionId?.let(vm::showPayments) }) { items ->
-            if (items.isEmpty()) PulseEmptyState("No linked payments", "Link an existing unassigned debit below.")
+            if (items.isEmpty()) PulseEmptyState(uiText(R.string.pulse_horizon_no_linked_payments), uiText(R.string.pulse_horizon_link_an_existing_unassigned_debit_below))
             items.forEach { TransactionCard(it, currency, false) }
         }
-        PulseText("Link an existing payment", style = PulseTextStyle.Title)
-        PulseText("Only unlinked debits can be linked. Use the search and page controls to find a payment.")
+        PulseText(uiText(R.string.pulse_horizon_link_an_existing_payment), style = PulseTextStyle.Title)
+        PulseText(uiText(R.string.pulse_horizon_only_unlinked_debits_can_be_linked_use_the_search))
         TransactionFilters(state, vm)
         SectionState(state.transactions, { vm.refreshTransactions() }) { page ->
             page.items.filter { it.type == "debit" && it.subscriptionId == null }.forEach { item ->
-                PulseTextButton("Link ${item.name} · ${money(currency, item.amount)}", { link(item.id) }, enabled = enabled)
+                PulseTextButton(uiText(R.string.pulse_horizon_link_1_s_2_s , item.name, money(currency, item.amount)), { link(item.id) }, enabled = enabled)
             }
-            if (page.items.none { it.type == "debit" && it.subscriptionId == null }) PulseText("No eligible payments on this page.")
+            if (page.items.none { it.type == "debit" && it.subscriptionId == null }) PulseText(uiText(R.string.pulse_horizon_no_eligible_payments_on_this_page))
             PageControls(page, state.busy, { vm.refreshTransactions(it) })
         }
     }

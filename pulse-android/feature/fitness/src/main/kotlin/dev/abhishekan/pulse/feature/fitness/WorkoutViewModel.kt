@@ -1,5 +1,9 @@
 package dev.abhishekan.pulse.feature.fitness
 
+import dev.abhishekan.pulse.feature.fitness.R
+
+import dev.abhishekan.pulse.core.ui.uiText
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -100,7 +104,7 @@ class WorkoutViewModel(private val getWorkout: GetWorkoutDetail, private val sea
             when (val result = search(query)) {
                 is Outcome.Success -> state.update { it.copy(editor = it.editor?.copy(candidates = result.value, searching = false)) }
                 is Outcome.Error -> state.update { it.copy(editor = it.editor?.copy(candidates = emptyList(), searching = false,
-                    searchError = "Catalogue unavailable. You can keep your own name or retry the search.")) }
+                    searchError = uiText(R.string.pulse_fitness_catalogue_unavailable))) }
             }
         }
     }
@@ -125,10 +129,10 @@ class WorkoutViewModel(private val getWorkout: GetWorkoutDetail, private val sea
             else -> null
         }
         if (error != null) { state.update { it.copy(editor = editor.copy(error = error)) }; return }
-        mutate("save", { saveExercise(id, draft.exerciseId, input) }) { clearEditor(); state.update { it.copy(message = "Exercise saved. Keep your momentum.") } }
+        mutate("save", { saveExercise(id, draft.exerciseId, input) }) { clearEditor(); state.update { it.copy(message = uiText(R.string.pulse_fitness_exercise_saved)) } }
     }
     fun removeWorkout() = mutate("deleteWorkout", { deleteWorkout(id) }) { state.update { it.copy(deleted = true) } }
-    fun removeExercise(exerciseId: Long) = mutate("deleteExercise", { deleteExercise(id, exerciseId) }) { state.update { it.copy(message = "Exercise and its sets removed.") } }
+    fun removeExercise(exerciseId: Long) = mutate("deleteExercise", { deleteExercise(id, exerciseId) }) { state.update { it.copy(message = uiText(R.string.pulse_fitness_exercise_removed)) } }
     private fun mutate(kind: String, action: suspend () -> Outcome<Unit>, success: () -> Unit) {
         if (state.value.busy || state.value.loading || state.value.needsReview) return
         loadJob?.cancel()
@@ -147,7 +151,7 @@ class WorkoutViewModel(private val getWorkout: GetWorkoutDetail, private val sea
                         val uncertain = result.failure !in setOf(Failure.InvalidInput, Failure.Unauthorized, Failure.NotFound)
                         if (!uncertain) saved.remove<String>("pending")
                         state.update { it.copy(needsReview = uncertain, message = if (uncertain)
-                            "We couldn’t confirm the change. Review the refreshed workout before saving or deleting again."
+                            uiText(R.string.pulse_fitness_uncertain_workout_change)
                             else fitnessFailureMessage(result.failure)) }
                         load()
                     }

@@ -1,9 +1,13 @@
 package dev.abhishekan.pulse.feature.horizon
 
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.horizon.R
+
 import dev.abhishekan.pulse.core.domain.model.*
 import java.time.*
 
-enum class HorizonForm(val label: String) { Config("Starting pool"), Budget("Budget"), Deduction("Fixed obligation"), Transaction("Transaction"), Subscription("Subscription"), Category("Category"), Purchase("Planned purchase") }
+enum class HorizonForm(val label: UiText) { Config(uiText(R.string.pulse_horizon_starting_pool)), Budget(uiText(R.string.pulse_horizon_budget)), Deduction(uiText(R.string.pulse_horizon_fixed_obligation)), Transaction(uiText(R.string.pulse_horizon_transaction)), Subscription(uiText(R.string.pulse_horizon_subscription)), Category(uiText(R.string.pulse_horizon_category)), Purchase(uiText(R.string.pulse_horizon_planned_purchase)) }
 data class HorizonDraft(val kind: HorizonForm, val id: Long? = null, val name: String = "", val amount: String = "", val currency: String = "₹",
     val date: String = "", val time: String = "00:00", val type: String = "debit", val category: String = "bill", val dueDay: String = "",
     val active: Boolean = true, val cycle: String = "monthly", val status: String = "active", val categoryId: Long? = null,

@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.core.ui.components
 
+
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.asString
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
@@ -12,7 +15,7 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 @Composable
 fun PulseTextField(
     value: String, onValueChange: (String) -> Unit, label: String, modifier: Modifier = Modifier,
-    enabled: Boolean = true, error: String? = null,
+    enabled: Boolean = true, error: UiText? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default, keyboardActions: KeyboardActions = KeyboardActions.Default,
     visualTransformation: VisualTransformation = VisualTransformation.None, trailingIcon: (@Composable () -> Unit)? = null,
 ) {
@@ -22,3 +25,9 @@ fun PulseTextField(
         keyboardOptions = keyboardOptions, keyboardActions = keyboardActions,
         visualTransformation = visualTransformation, trailingIcon = trailingIcon, shape = PulseTokens.controlShape)
 }
+
+@Composable
+fun PulseTextField(value: String, onValueChange: (String) -> Unit, label: UiText, modifier: Modifier = Modifier,
+    enabled: Boolean = true, error: UiText? = null, keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default, visualTransformation: VisualTransformation = VisualTransformation.None, trailingIcon: (@Composable () -> Unit)? = null) =
+    PulseTextField(value, onValueChange, label.asString(), modifier, enabled, error, keyboardOptions, keyboardActions, visualTransformation, trailingIcon)

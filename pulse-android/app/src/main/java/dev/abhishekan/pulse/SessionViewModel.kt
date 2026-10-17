@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse
 
+import dev.abhishekan.pulse.core.ui.UiText
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Outcome
@@ -18,7 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-data class SessionOperation(val running: Boolean = false, val error: String? = null)
+data class SessionOperation(val running: Boolean = false, val error: UiText? = null)
 
 class SessionViewModel(
     observe: ObserveSession, private val restore: RestoreSession, private val logout: Logout,

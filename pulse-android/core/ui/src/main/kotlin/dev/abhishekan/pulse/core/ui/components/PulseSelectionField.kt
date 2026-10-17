@@ -1,5 +1,11 @@
 package dev.abhishekan.pulse.core.ui.components
 
+import dev.abhishekan.pulse.core.ui.R
+
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.core.ui.asString
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -17,7 +23,7 @@ fun PulseSelectionField(label: String, selected: String, options: List<String>, 
     val keyboard = LocalSoftwareKeyboardController.current
     Box(modifier) {
         OutlinedButton({ focus.clearFocus(); keyboard?.hide(); expanded = true }, Modifier.fillMaxWidth().heightIn(min = PulseTokens.target), enabled = enabled, shape = PulseTokens.controlShape) {
-            PulseText("$label: $selected")
+            PulseText(uiText(R.string.pulse_ui_selection_label , label, selected))
         }
         DropdownMenu(expanded && enabled, { expanded = false }) {
             options.forEachIndexed { index, text -> DropdownMenuItem(text = { PulseText(text) },
@@ -25,3 +31,10 @@ fun PulseSelectionField(label: String, selected: String, options: List<String>, 
         }
     }
 }
+
+@Composable
+fun PulseSelectionField(label: UiText, selected: String, options: List<String>, onSelect: (Int) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) = PulseSelectionField(label.asString(), selected, options, onSelect, modifier, enabled)
+
+@Composable
+fun PulseSelectionField(label: UiText, selected: UiText, options: List<UiText>, onSelect: (Int) -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) =
+    PulseSelectionField(label.asString(), selected.asString(), options.map { it.asString() }, onSelect, modifier, enabled)

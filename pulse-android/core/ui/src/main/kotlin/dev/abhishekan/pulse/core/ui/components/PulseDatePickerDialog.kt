@@ -1,5 +1,9 @@
 package dev.abhishekan.pulse.core.ui.components
 
+import dev.abhishekan.pulse.core.ui.R
+
+import dev.abhishekan.pulse.core.ui.uiText
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -21,9 +25,9 @@ fun PulseDatePickerDialog(selected: LocalDate, onSelected: (LocalDate) -> Unit, 
     val state = rememberDatePickerState(initialSelectedDateMillis = selected.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
         yearRange = 0..9999, initialDisplayMode = if (inputMode) DisplayMode.Input else DisplayMode.Picker)
     DatePickerDialog(onDismissRequest = onDismiss, modifier = modifier,
-        confirmButton = { PulseTextButton("Choose date", {
+        confirmButton = { PulseTextButton(uiText(R.string.pulse_ui_choose_date), {
             state.selectedDateMillis?.let { onSelected(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()) }
-        }, enabled = state.selectedDateMillis != null) }, dismissButton = { PulseTextButton("Cancel", onDismiss) }) {
+        }, enabled = state.selectedDateMillis != null) }, dismissButton = { PulseTextButton(uiText(R.string.pulse_ui_cancel), onDismiss) }) {
         DatePicker(state, Modifier.verticalScroll(rememberScrollState()))
     }
 }

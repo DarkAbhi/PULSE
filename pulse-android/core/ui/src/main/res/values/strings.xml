@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="pulse_ui_check_your_username_and_password">"Check your username and password."</string>
+    <string name="pulse_ui_that_username_or_password_doesn_t_match_please_try">"That username or password doesn’t match. Please try again."</string>
+    <string name="pulse_ui_your_session_has_expired_please_sign_in_again">"Your session has expired. Please sign in again."</string>
+    <string name="pulse_ui_we_couldn_t_connect_check_your_connection_and_try">"We couldn’t connect. Check your connection and try again."</string>
+    <string name="pulse_ui_the_request_took_too_long_please_try_again">"The request took too long. Please try again."</string>
+    <string name="pulse_ui_pulse_is_temporarily_unavailable_please_try_again_shortly">"Pulse is temporarily unavailable. Please try again shortly."</string>
+    <string name="pulse_ui_we_couldn_t_read_this_update_please_try_again">"We couldn’t read this update. Please try again."</string>
+    <string name="pulse_ui_this_record_is_no_longer_available_refresh_to_see">"This record is no longer available. Refresh to see the latest updates."</string>
+    <string name="pulse_ui_we_couldn_t_access_secure_session_storage_please_try">"We couldn’t access secure session storage. Please try again."</string>
+    <string name="pulse_ui_loading">"Loading"</string>
+    <string name="pulse_ui_choose_date">"Choose date"</string>
+    <string name="pulse_ui_cancel">"Cancel"</string>
+    <string name="pulse_ui_choose_time">"Choose time"</string>
+    <string name="pulse_ui_time">"Time"</string>
+    <string name="pulse_ui_uploading_receipt_1_s">"Uploading receipt · %1$s%%"</string>
+    <string name="pulse_ui_selection_label">"%1$s: %2$s"</string>
+    <string name="pulse_ui_hide">"Hide"</string>
+    <string name="pulse_ui_show">"Show"</string>
+    <string name="pulse_ui_couldn_t_load_this_section">"Couldn’t load this section"</string>
+    <string name="pulse_ui_try_again">"Try again"</string>
+    <string name="pulse_ui_theme_system">"System"</string>
+    <string name="pulse_ui_theme_light">"Light"</string>
+    <string name="pulse_ui_theme_dark">"Dark"</string>
+</resources>

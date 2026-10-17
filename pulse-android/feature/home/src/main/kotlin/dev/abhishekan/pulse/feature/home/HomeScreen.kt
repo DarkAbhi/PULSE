@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.feature.home
 
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.home.R
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -31,15 +34,15 @@ fun HomeScreen(username: String, state: HomeUiState, retryProfile: () -> Unit, r
         Column(Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxWidth().verticalScroll(rememberScrollState()).padding(margin),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
             val name = (state.profile as? Section.Content)?.value?.name ?: username
-            PulseText("Good to see you,", style = PulseTextStyle.Label, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            PulseText(uiText(R.string.pulse_home_good_to_see_you), style = PulseTextStyle.Label, color = MaterialTheme.colorScheme.onSurfaceVariant)
             PulseText(name, Modifier.semantics { heading() }, PulseTextStyle.Display)
-            PulseText("A little perspective on your everyday.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            PulseText(uiText(R.string.pulse_home_a_little_perspective_on_your_everyday), color = MaterialTheme.colorScheme.onSurfaceVariant)
             when (val profile = state.profile) {
                 is Section.Error -> {
                     PulseText(profile.failure.message)
-                    PulseTextButton("Retry profile", retryProfile)
+                    PulseTextButton(uiText(R.string.pulse_home_retry_profile), retryProfile)
                 }
-                Section.Loading -> PulseLoadingState("Loading your profile")
+                Section.Loading -> PulseLoadingState(uiText(R.string.pulse_home_loading_your_profile))
                 else -> Unit
             }
             if (size == PulseWindowSize.Compact) {

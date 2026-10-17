@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.feature.auth
 
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.auth.R
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,8 +29,8 @@ class LoginViewModel(private val login: Login, private val savedState: SavedStat
     fun submit() {
         val input = state.value
         if (input.loading) return
-        val usernameError = if (input.username.isBlank()) "Enter your username." else null
-        val passwordError = if (input.password.isEmpty()) "Enter your password." else null
+        val usernameError = if (input.username.isBlank()) uiText(R.string.pulse_auth_enter_your_username) else null
+        val passwordError = if (input.password.isEmpty()) uiText(R.string.pulse_auth_enter_your_password) else null
         if (usernameError != null || passwordError != null) {
             state.update { it.copy(usernameError = usernameError, passwordError = passwordError, error = null) }
             return

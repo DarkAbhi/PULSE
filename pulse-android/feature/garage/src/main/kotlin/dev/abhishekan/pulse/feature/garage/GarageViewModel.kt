@@ -1,5 +1,9 @@
 package dev.abhishekan.pulse.feature.garage
 
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.garage.R
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -63,12 +67,12 @@ class GarageViewModel(private val getVehicles: GetVehicles, private val getHisto
         val draft = state.value.draft ?: return
         val change = try { draft.change() } catch (_: IllegalArgumentException) { null } catch (_: DateTimeException) { null }
         if (change == null || !apply.valid(change)) {
-            state.update { it.copy(error = "Check the fields. A name/title is required; quantities and costs must be positive, odometer and PSI cannot be negative. Enter at least two fuel values per tank and a valid date/time. Use up to 3 quantity decimals, 2 cost/price decimals, and 1 odometer/PSI decimal. Vehicle names allow 48 characters; titles/providers allow 160 UTF-8 bytes. Values must fit the server’s numeric limits.") }; return
+            state.update { it.copy(error = uiText(R.string.pulse_garage_check_the_fields_a_name_title_is_required_quantities)) }; return
         }
         val existingFuel = state.value.history.value?.fuel.orEmpty()
         val maxOdometer = apply.minimumOdometer(existingFuel)
         if (!apply.validOdometer(change, existingFuel)) {
-            state.update { it.copy(error = "Odometer must be at least ${maxOdometer?.toPlainString()} km, the highest saved fuel reading.") }; return
+            state.update { it.copy(error = uiText(R.string.pulse_garage_odometer_must_be_at_least_1_s_km_the , maxOdometer?.toPlainString())) }; return
         }
         mutate(change, true)
     }
@@ -83,10 +87,10 @@ class GarageViewModel(private val getVehicles: GetVehicles, private val getHisto
             is Outcome.Success -> {
                 saved["pending"] = false
                 if (closeDraft) storeDraft(null)
-                state.update { it.copy(busy = false, progress = null, uploadRecord = null, message = "Saved. Your garage is up to date.") }
+                state.update { it.copy(busy = false, progress = null, uploadRecord = null, message = uiText(R.string.pulse_garage_saved_your_garage_is_up_to_date)) }
             }
             is Outcome.Error -> state.update { it.copy(busy = false, progress = null, uploadRecord = null, reviewRequired = true,
-                message = "${result.failure.message} The change could not be confirmed. Review refreshed records before another attempt. For receipts, choose a readable file between 1 byte and 10 MB. Receipt storage may also be unavailable; your saved maintenance record is kept.") }
+                message = uiText(R.string.pulse_garage_uncertain_change , result.failure.message)) }
         }
         refresh()
     }
@@ -102,12 +106,12 @@ class GarageViewModel(private val getVehicles: GetVehicles, private val getHisto
         viewModelScope.launch {
             when(val result = downloadReceipt(selectedVehicle, record, receipt, destination)) {
                 is Outcome.Success -> state.update { it.copy(busy = false, openUri = result.value.takeIf { destination == null }, openType = receipt.contentType,
-                    message = if (destination == null) null else "Receipt downloaded to your selected document.") }
-                is Outcome.Error -> state.update { it.copy(busy = false, message = "Receipt unavailable. ${result.failure.message} Server storage may be unconfigured or the download link may have expired. Try downloading again.") }
+                    message = if (destination == null) null else uiText(R.string.pulse_garage_receipt_downloaded_to_your_selected_document)) }
+                is Outcome.Error -> state.update { it.copy(busy = false, message = uiText(R.string.pulse_garage_receipt_unavailable_1_s_server_storage_may_be_unconfigured , result.failure.message)) }
             }
         }
     }
     fun opened() { state.update { it.copy(openUri = null) } }
-    fun fileMessage(message: String) { state.update { it.copy(message = message) } }
-    fun acknowledgeReview() { if (state.value.reviewReady && state.value.reviewRequired) { saved["pending"] = false; state.update { it.copy(reviewRequired = false, message = "Records reviewed. Discard the draft if it was already saved.") } } }
+    fun fileMessage(message: UiText) { state.update { it.copy(message = message) } }
+    fun acknowledgeReview() { if (state.value.reviewReady && state.value.reviewRequired) { saved["pending"] = false; state.update { it.copy(reviewRequired = false, message = uiText(R.string.pulse_garage_records_reviewed_discard_the_draft_if_it_was_already)) } } }
 }

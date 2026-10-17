@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.feature.mealplan
 
+import dev.abhishekan.pulse.core.ui.UiText
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -27,4 +28,4 @@ private val fixtures = listOf(PlannedMeal(1, day, "Roasted vegetables & rice", 1
 @Preview(name="Saving form",widthDp=600,heightDp=700)
 @Composable private fun SavingMeal() { PulseTheme(false) { MealEditor(MealDraft(name="Soup",date=day.toString()),emptyList(),true,false,null,{},{},{}) } }
 @Preview(name="Error form",widthDp=360,heightDp=800)
-@Composable private fun InvalidMealTime() { PulseTheme(true) { MealEditor(MealDraft(timeForm=true,name="Snack"),emptyList(),false,false,"Enter a name and valid times.",{},{},{}) } }
+@Composable private fun InvalidMealTime() { PulseTheme(true) { MealEditor(MealDraft(timeForm=true,name="Snack"),emptyList(),false,false,UiText.Literal("Enter a name and valid times."),{},{},{}) } }

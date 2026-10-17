@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.core.ui.components
 
+
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.asString
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Switch
@@ -17,3 +20,6 @@ fun PulseSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, label: Str
         PulseText(label, Modifier.padding(vertical = PulseTokens.small))
     }
 }
+
+@Composable
+fun PulseSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, label: UiText, modifier: Modifier = Modifier, enabled: Boolean = true) = PulseSwitch(checked, onCheckedChange, label.asString(), modifier, enabled)

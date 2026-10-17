@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.core.ui.components
 
+
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.asString
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,3 +23,6 @@ fun PulseText(text: String, modifier: Modifier = Modifier, style: PulseTextStyle
         PulseTextStyle.Metric -> typography.displaySmall.copy(fontFamily = FontFamily.Monospace, fontFeatureSettings = "tnum")
     })
 }
+
+@Composable
+fun PulseText(text: UiText, modifier: Modifier = Modifier, style: PulseTextStyle = PulseTextStyle.Body, color: Color = Color.Unspecified) = PulseText(text.asString(), modifier, style, color)

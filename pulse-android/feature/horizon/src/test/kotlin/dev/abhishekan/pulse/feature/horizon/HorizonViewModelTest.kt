@@ -1,5 +1,7 @@
 package dev.abhishekan.pulse.feature.horizon
 
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.uiText
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.*
@@ -94,9 +96,9 @@ class HorizonViewModelTest {
         assertEquals(tx.date, change.date); assertEquals(tx.amount, change.amount)
     }
     @Test fun monetaryDisplayPreservesBackendPrecisionWithoutInventingCurrency() {
-        assertEquals("USD 12.50", money("USD", "12.5".toBigDecimal()))
-        assertEquals("USD -0.000000000000123456789", money("USD", "-0.000000000000123456789".toBigDecimal()))
-        assertEquals("12.50", money("", "12.50".toBigDecimal()))
+        assertEquals(uiText(R.string.pulse_horizon_money, "USD", "12.50"), money("USD", "12.5".toBigDecimal()))
+        assertEquals(uiText(R.string.pulse_horizon_money, "USD", "-0.000000000000123456789"), money("USD", "-0.000000000000123456789".toBigDecimal()))
+        assertEquals(UiText.Literal("12.50"), money("", "12.50".toBigDecimal()))
     }
     @Test fun allChangesValidateWithoutFloatingPointAndDeletionUsesTypedRecord() = runTest {
         val vm = vm(); runCurrent()

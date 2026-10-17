@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.feature.home
 
+import dev.abhishekan.pulse.core.ui.uiText
 import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Horizon
@@ -85,7 +86,7 @@ class HomeViewModelTest {
     }
 
     @Test fun currencyFormattingDoesNotRoundBackendPrecision() {
-        assertEquals("₹ 12.50", formatMoney("₹", BigDecimal("12.5")))
-        assertEquals("USD -0.000000000000123456789", formatMoney("USD", BigDecimal("-0.000000000000123456789")))
+        assertEquals(uiText(R.string.pulse_home_money, "₹", "12.50"), formatMoney("₹", BigDecimal("12.5")))
+        assertEquals(uiText(R.string.pulse_home_money, "USD", "-0.000000000000123456789"), formatMoney("USD", BigDecimal("-0.000000000000123456789")))
     }
 }

@@ -360,3 +360,23 @@ SavedStateHandle stores small editor fields, selected date, management mode and 
 Tests use production Ktor, encrypted session persistence, repositories, use cases, Koin and navigation against isolated source-derived HTTP fixtures. No personal/live backend account was accessed. Native captures contain test records only. SavedStateHandle tests reconstruct process state; native tests exercise rotation and resizing rather than killing a live personal session. Physical-device TalkBack, external hardware keyboards, other Android versions and live account behavior remain unverified. Configure the release HTTPS API origin before production use.
 
 Phase 6 stops here. Phase 7 remains outside this work.
+
+## String resources and translations
+
+App-owned text lives in each presentation module’s `src/main/res/values/strings.xml`: `:app`, `:core:ui`, and each `:feature:*` module. Shared control labels and domain-failure presentation belong to `:core:ui`; feature-specific messages stay with their feature. The debug component gallery has a separate `core/ui/src/debug/res/values/strings.xml`. Each module uses a distinct `pulse_<module>_` resource prefix because Android merges library resource names into the application.
+
+Add translated files in the corresponding module’s `src/main/res/values-<language>/strings.xml`. Preserve numbered format arguments (such as `%1$s`) and translate complete phrases rather than assembling English fragments. Use `<plurals>` for count-dependent messages and supply the quantity categories required by the target language. Default English resources remain the fallback. API identifiers, navigation routes, saved-state keys, dates and user/server-provided content are data, not translatable app copy.
+
+`UiText` in `:core:ui` retains a string/plural resource and its arguments until rendering. Pulse controls resolve it against the current Compose resources, including nested labels; retained validation and error state therefore follows language changes without placing `Context` or resource IDs in domain models. Literal text remains supported for user/server content. Native file chooser titles resolve resources at the Android boundary. No passwords, session storage, money calculations, API payloads or dependency versions changed as part of localization.
+
+`LocalizationResourcesTest` checks merged resource-name collisions, numbered format arguments and direct hardcoded copy in Pulse controls. `LocalizationDeviceTest` uses test-only English/French resources to check language changes, nested formatting, singular/plural selection and unchanged user text. Those fixtures do not add a production French translation. Run the existing build/unit/lint checks and Android instrumentation suite described above.
+
+Material 3 remains the implementation underneath Pulse’s thin Compose components. `PulseTheme` supplies the project’s own palette, typography and shapes; Material 3 was an implementation choice, not an explicit requirement in the original product brief.
+
+### Localization verification — 18 October 2026
+
+- `./gradlew build :app:assembleDebugAndroidTest` passed for the final code, including debug/release packaging, release shrinking, 141 unit tests, module boundaries, and lint.
+- Lint: zero errors; no issues in infrastructure, shared UI or feature modules. The app retains its 35 existing manifest/toolchain/dependency advisories. Dependency versions were not changed.
+- Android instrumentation: all 39 distinct test cases passed across the full regression and focused reruns on an API 35 emulator with dark tablet dimensions. The full run initially passed 38/39 and exposed subpixel rounding in a strict 48dp assertion at fractional density; the assertion now allows 0.001dp rounding and includes measured bounds on failure. The final 11-test rerun passed authentication/logout, affected Horizon and Meal Plan workflows, resizing, keyboard/draft preservation, and the two language-resource checks.
+- Reviewed screenshots of Home, exercise and fuel editors, Horizon and Meal Plan. Instrumentation uses isolated test backend responses, not a personal account or production data.
+- Actual translations, expanded translated-text layouts, physical devices and a manual TalkBack walkthrough remain unverified. No backend or Phase 7 functionality was added.

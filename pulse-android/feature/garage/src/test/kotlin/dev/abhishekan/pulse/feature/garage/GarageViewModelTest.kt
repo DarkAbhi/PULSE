@@ -1,5 +1,7 @@
 package dev.abhishekan.pulse.feature.garage
 
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.core.ui.message
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.*
@@ -62,7 +64,7 @@ class GarageViewModelTest {
     @Test fun validationsRejectNegativeValuesMissingOperandsAndBackwardNewOdometer() = runTest {
         val vm = vm(); runCurrent(); vm.select(1); runCurrent()
         val base = GarageDraft.new(GarageForm.Fuel, 1).set("odometer", "99").set("quantity0", "2").set("price0", "100")
-        vm.edit(base); vm.save(); runCurrent(); assertTrue(repo.writes.isEmpty()); assertTrue(vm.uiState.value.error!!.contains("100"))
+        vm.edit(base); vm.save(); runCurrent(); assertTrue(repo.writes.isEmpty()); assertEquals(uiText(R.string.pulse_garage_odometer_must_be_at_least_1_s_km_the, "100"), vm.uiState.value.error)
         val apply = ApplyGarageChange(repo)
         assertFalse(apply.valid(GarageChange.Pressure(1, TirePressure(frontSolo = "-1".toBigDecimal()))))
         assertFalse(apply.valid((base.change() as GarageChange.Fuel).copy(items = listOf(FuelItem("petrol", "full", "1".toBigDecimal(), null, null)))))
@@ -77,7 +79,7 @@ class GarageViewModelTest {
         val vm = vm(); runCurrent(); vm.select(1); runCurrent(); repo.uploadResult = Outcome.Error(Failure.Server)
         vm.upload(1, 2, "content://fixture/receipt"); runCurrent()
         assertTrue(vm.uiState.value.reviewRequired); assertNotNull(vm.uiState.value.history.value); assertNull(vm.uiState.value.progress)
-        assertTrue(vm.uiState.value.message!!.contains("maintenance record is kept"))
+        assertEquals(uiText(R.string.pulse_garage_uncertain_change, Failure.Server.message), vm.uiState.value.message)
     }
     @Test fun editingPreservesTimestampAndDecimalAcrossDateBoundaries() {
         val instant = Instant.parse("2026-12-31T23:59:59.123456Z")

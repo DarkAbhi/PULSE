@@ -52,6 +52,6 @@ class AppearanceViewModelTest {
         vm.selectTheme(ThemePreference.Dark)
         runCurrent()
         assertEquals(ThemePreference.System, vm.uiState.value.theme)
-        assertEquals("Couldn’t save appearance. Please try again.", vm.uiState.value.error)
+        assertEquals(dev.abhishekan.pulse.core.ui.uiText(R.string.pulse_app_couldn_t_save_appearance_please_try_again), vm.uiState.value.error)
     }
 }

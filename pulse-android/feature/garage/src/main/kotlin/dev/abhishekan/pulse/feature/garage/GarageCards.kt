@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse.feature.garage
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -11,7 +10,6 @@ import androidx.compose.ui.semantics.semantics
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.GarageRecord
-import dev.abhishekan.pulse.core.domain.model.Maintenance
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.UiText
@@ -22,10 +20,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTransferProgress
-import dev.abhishekan.pulse.core.ui.label
 import dev.abhishekan.pulse.core.ui.pulseDescription
 import dev.abhishekan.pulse.core.ui.uiText
-import dev.abhishekan.pulse.feature.garage.R
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.ZoneId

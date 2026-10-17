@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse.feature.horizon
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
-import dev.abhishekan.pulse.feature.horizon.R
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId

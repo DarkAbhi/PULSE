@@ -1,5 +1,4 @@
 package dev.abhishekan.pulse.core.ui.components
-import androidx.compose.material3.Label
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem

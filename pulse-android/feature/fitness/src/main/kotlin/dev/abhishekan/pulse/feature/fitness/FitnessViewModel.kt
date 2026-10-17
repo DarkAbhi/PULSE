@@ -9,14 +9,10 @@ import dev.abhishekan.pulse.core.domain.usecase.GetFitnessOverview
 import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
 import dev.abhishekan.pulse.core.domain.usecase.RecordWorkout
 import dev.abhishekan.pulse.core.ui.uiText
-import dev.abhishekan.pulse.feature.fitness.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.cancel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.isActive
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock

@@ -5,7 +5,6 @@ import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
 import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.domain.model.PlannedPurchases
 import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.feature.horizon.R
 
 enum class HorizonTab(
     @param:androidx.annotation.StringRes val label: Int,

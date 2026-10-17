@@ -6,7 +6,6 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.bottom
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
@@ -15,7 +14,6 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
-import androidx.compose.ui.test.left
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -26,8 +24,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.right
-import androidx.compose.ui.test.top
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
@@ -48,19 +44,11 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
-import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.append
 import io.ktor.http.content.TextContent
-import io.ktor.http.cookies
-import io.ktor.http.date
-import io.ktor.http.encodedPath
-import io.ktor.http.parameters
-import io.ktor.http.path
-import io.ktor.http.set
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -672,7 +660,7 @@ class FitnessDeviceTest {
         launchFitness()
         tap("Next month")
         val expected =
-            java.time.YearMonth
+            YearMonth
                 .from(backend.today)
                 .plusMonths(1)
                 .atDay(1)

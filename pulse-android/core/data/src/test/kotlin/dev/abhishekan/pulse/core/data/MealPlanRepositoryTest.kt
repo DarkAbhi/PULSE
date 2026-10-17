@@ -12,13 +12,9 @@ import dev.abhishekan.pulse.core.network.SessionMaterialStore
 import dev.abhishekan.pulse.core.network.pulseHttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
-import io.ktor.http.cookies
-import io.ktor.http.date
-import io.ktor.http.encodedPath
 import io.ktor.http.headersOf
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest

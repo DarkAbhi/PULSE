@@ -4,7 +4,6 @@ import dev.abhishekan.pulse.core.domain.model.FuelItem
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.Maintenance
 import dev.abhishekan.pulse.core.domain.model.TirePressure
-import dev.abhishekan.pulse.core.domain.model.Vehicle
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime

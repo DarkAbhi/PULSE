@@ -7,7 +7,6 @@ import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.usecase.Login
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
-import dev.abhishekan.pulse.feature.auth.R
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update

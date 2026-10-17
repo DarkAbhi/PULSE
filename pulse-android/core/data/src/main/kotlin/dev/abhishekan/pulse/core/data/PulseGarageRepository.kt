@@ -3,7 +3,6 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.GarageRecord
-import dev.abhishekan.pulse.core.domain.model.Maintenance
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.Vehicle
@@ -12,8 +11,6 @@ import dev.abhishekan.pulse.core.network.GarageApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.forEach
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -21,7 +18,6 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonUnquotedLiteral
-import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray

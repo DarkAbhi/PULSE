@@ -10,11 +10,9 @@ import dev.abhishekan.pulse.core.domain.usecase.GetPlannedPurchases
 import dev.abhishekan.pulse.core.domain.usecase.GetSubscriptionPayments
 import dev.abhishekan.pulse.core.domain.usecase.LoadHorizon
 import dev.abhishekan.pulse.core.ui.uiText
-import dev.abhishekan.pulse.feature.horizon.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.cancel
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.DateTimeException

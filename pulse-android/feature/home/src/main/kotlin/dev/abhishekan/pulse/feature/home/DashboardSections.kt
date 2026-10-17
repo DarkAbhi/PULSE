@@ -24,7 +24,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
-import dev.abhishekan.pulse.feature.home.R
 import java.math.BigDecimal
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

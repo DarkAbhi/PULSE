@@ -5,7 +5,6 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
-import dev.abhishekan.pulse.feature.fitness.R
 
 internal fun fitnessFailureMessage(failure: Failure): UiText =
     if (failure == Failure.InvalidInput) {

@@ -3,7 +3,6 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Vehicle
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.feature.garage.R
 
 enum class GarageTab(
     @param:androidx.annotation.StringRes val label: Int,

@@ -1,9 +1,6 @@
 package dev.abhishekan.pulse.core.ui
 
 import dev.abhishekan.pulse.core.domain.model.Failure
-import dev.abhishekan.pulse.core.ui.R
-import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.uiText
 
 val Failure.message: UiText get() =
     when (this) {

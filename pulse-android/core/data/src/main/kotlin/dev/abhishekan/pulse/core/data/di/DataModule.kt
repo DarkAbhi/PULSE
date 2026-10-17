@@ -1,5 +1,7 @@
 package dev.abhishekan.pulse.core.data.di
 
+import dev.abhishekan.pulse.core.data.PulseHorizonRepository
+import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
 import dev.abhishekan.pulse.core.data.PulseFitnessRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import android.content.Context
@@ -20,6 +22,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val dataModule = module {
+    singleOf(::PulseHorizonRepository) bind HorizonRepository::class
     singleOf(::PulseFitnessRepository) bind FitnessRepository::class
     single<DataStore<Preferences>> { get<Context>().preferences }
     singleOf(::PulsePreferences) bind PreferencesRepository::class

@@ -17,7 +17,7 @@ internal fun formatMoney(currency: String, amount: BigDecimal): String =
     "$currency ${amount.setScale(maxOf(2, amount.scale())).toPlainString()}"
 
 @Composable
-internal fun HorizonCard(section: Section<Horizon>, onRetry: () -> Unit) {
+internal fun HorizonCard(section: Section<Horizon>, onRetry: () -> Unit, onOpen: () -> Unit) {
     PulseCard(Modifier.fillMaxWidth(), highlighted = section is Section.Content) {
         PulseText("FINANCIAL HORIZON", style = PulseTextStyle.Label)
         when (section) {
@@ -36,6 +36,7 @@ internal fun HorizonCard(section: Section<Horizon>, onRetry: () -> Unit) {
                 PulseText(formatMoney(data.currency, data.deductions))
             }
         }
+        PulseTextButton("Open Financial Horizon", onOpen)
     }
 }
 
@@ -86,10 +87,11 @@ fun NotificationSection(section: Section<List<Notification>>, onRetry: () -> Uni
 }
 
 @Composable
-internal fun SpacesCard(onFitness: () -> Unit) {
+internal fun SpacesCard(onFitness: () -> Unit, onHorizon: () -> Unit) {
     PulseCard(Modifier.fillMaxWidth()) {
         PulseText("Your spaces", style = PulseTextStyle.Title)
         PulseTextButton("Explore Fitness", onFitness)
+        PulseTextButton("Explore Financial Horizon", onHorizon)
         listOf("Fitness" to "Workouts and movement", "Financial Horizon" to "Your monthly room to move",
             "Garage" to "Vehicles, fuel, and maintenance", "Meal Plan" to "Your weekly meals").forEach { (title, description) ->
             Column(Modifier.padding(vertical = PulseTokens.small)) {

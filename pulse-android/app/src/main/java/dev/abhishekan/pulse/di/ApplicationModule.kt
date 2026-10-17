@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.di
 
+import dev.abhishekan.pulse.core.domain.usecase.ObserveHorizonChanges
 import dev.abhishekan.pulse.AppearanceViewModel
 import dev.abhishekan.pulse.SessionViewModel
 import dev.abhishekan.pulse.core.domain.usecase.CheckSessionExpiry
@@ -15,6 +16,7 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val applicationModule = module {
+    factoryOf(::ObserveHorizonChanges)
     factoryOf(::ObserveFitnessChanges)
     factoryOf(::ObserveTheme)
     factoryOf(::SetTheme)

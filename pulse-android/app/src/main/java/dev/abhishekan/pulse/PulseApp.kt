@@ -22,6 +22,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import dev.abhishekan.pulse.feature.horizon.HorizonRoute
 import dev.abhishekan.pulse.feature.fitness.FitnessRoute
 import dev.abhishekan.pulse.feature.fitness.WorkoutRoute
 import androidx.navigation.compose.*
@@ -85,6 +86,7 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
     operation: SessionOperation, onLogout: () -> Unit, clearError: () -> Unit) {
     val nav = rememberNavController()
     var hasFitnessDraft by rememberSaveable { mutableStateOf(false) }
+    var hasHorizonDraft by rememberSaveable { mutableStateOf(false) }
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route
     val inSpaces = entry?.destination?.hierarchy?.any { it.route == "spaces" } == true
@@ -95,7 +97,14 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
             launchSingleTop = true
             restoreState = true
         }
-        if (nav.currentDestination?.route == "space-list") nav.navigate("fitness") { launchSingleTop = true }
+        if (nav.currentDestination?.route in listOf("space-list", "horizon")) nav.navigate("fitness") { launchSingleTop = true }
+    }
+    val openHorizon = {
+        nav.navigate("spaces") {
+            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true; restoreState = true
+        }
+        if (nav.currentDestination?.route != "horizon") nav.navigate("horizon") { launchSingleTop = true }
     }
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(operation.error) {
@@ -104,15 +113,15 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
     Scaffold(
         topBar = {
             if (route != "gallery") PulseTopAppBar(
-                when (route) { "you" -> "You"; "notifications" -> "Notifications"; "space-list" -> "Spaces"; "fitness" -> "Fitness"; "workout/{id}" -> "Workout"; else -> "Pulse" },
+                when (route) { "you" -> "You"; "notifications" -> "Notifications"; "space-list" -> "Spaces"; "fitness" -> "Fitness"; "workout/{id}" -> "Workout"; "horizon" -> "Financial Horizon"; else -> "Pulse" },
                 actions = {
                     if (route == "home") PulseIconButton("Notifications", { nav.navigate("notifications") { launchSingleTop = true } }) {
                         Icon(painterResource(UiR.drawable.pulse_bell), contentDescription = null)
                     }
                 },
                 navigationIcon = {
-                    if (route == "notifications" || route == "fitness" || route == "workout/{id}") PulseIconButton(
-                        when (route) { "notifications" -> "Back to Home"; "fitness" -> "Back to Spaces"; else -> "Back to Fitness" },
+                    if (route == "notifications" || route == "fitness" || route == "horizon" || route == "workout/{id}") PulseIconButton(
+                        when (route) { "notifications" -> "Back to Home"; "fitness", "horizon" -> "Back to Spaces"; else -> "Back to Fitness" },
                         { backDispatcher?.onBackPressed() }) {
                         Icon(painterResource(UiR.drawable.pulse_back), contentDescription = null)
                     }
@@ -135,16 +144,17 @@ private fun SignedInApp(username: String, appearance: AppearanceUiState, onTheme
         snackbarHost = { SnackbarHost(snackbar) { PulseSnackbar(it) } },
     ) { insets ->
         NavHost(nav, startDestination = "home", modifier = Modifier.padding(insets)) {
-            composable("home") { HomeRoute(username, { nav.navigate("notifications") { launchSingleTop = true } }, openFitness) }
+            composable("home") { HomeRoute(username, { nav.navigate("notifications") { launchSingleTop = true } }, openFitness, openHorizon) }
             navigation(startDestination = "space-list", route = "spaces") {
-                composable("space-list") { SpacesScreen { nav.navigate("fitness") { launchSingleTop = true } } }
+                composable("space-list") { SpacesScreen({ nav.navigate("fitness") { launchSingleTop = true } }, { nav.navigate("horizon") { launchSingleTop = true } }) }
+                composable("horizon") { HorizonRoute(onDraftChanged = { hasHorizonDraft = it }) }
                 composable("fitness") { FitnessRoute({ id -> nav.navigate("workout/$id") { launchSingleTop = true } }) }
                 composable("workout/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) {
                     WorkoutRoute(onDeleted = { nav.popBackStack() }, onDraftChanged = { hasFitnessDraft = it })
                 }
             }
             composable("you") {
-                YouScreen(username, appearance, onTheme, operation.running, hasFitnessDraft, onLogout, { nav.navigate("gallery") })
+                YouScreen(username, appearance, onTheme, operation.running, hasFitnessDraft || hasHorizonDraft, onLogout, { nav.navigate("gallery") })
             }
             composable("notifications") {
                 val homeEntry = remember(it) { nav.getBackStackEntry("home") }
@@ -188,12 +198,12 @@ private fun YouScreen(username: String, appearance: AppearanceUiState, onTheme: 
         }
     }
     if (confirmLogout) PulseDialog("Log out and discard edits?",
-        "You have unsaved exercise changes. Logging out will discard this device’s draft. Saved workouts stay in Pulse.",
+        "You have unsaved changes. Logging out will discard this device’s drafts. Saved server records stay in Pulse.",
         "Log out", { confirmLogout = false; onLogout() }, { confirmLogout = false })
 }
 
 @Composable
-private fun SpacesScreen(onFitness: () -> Unit) {
+private fun SpacesScreen(onFitness: () -> Unit, onHorizon: () -> Unit) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth().verticalScroll(rememberScrollState()).padding(PulseTokens.medium),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
@@ -202,6 +212,11 @@ private fun SpacesScreen(onFitness: () -> Unit) {
                 PulseText("Fitness", style = PulseTextStyle.Title)
                 PulseText("Find your rhythm. Record workouts, revisit your activity, and keep track of every set.")
                 PulseButton("Open Fitness", onFitness, Modifier.fillMaxWidth())
+            }
+            PulseCard(Modifier.fillMaxWidth()) {
+                PulseText("Financial Horizon", style = PulseTextStyle.Title)
+                PulseText("Your room to move. Review commitments, track transactions, and plan what’s next.")
+                PulseButton("Open Financial Horizon", onHorizon, Modifier.fillMaxWidth())
             }
         }
     }

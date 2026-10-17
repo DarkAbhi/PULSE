@@ -1,6 +1,6 @@
 # Pulse Android
 
-Native Kotlin/Compose app for `dev.abhishekan.pulse`. Phases 1–3 implement the design system, username/password authentication through the existing Go API, encrypted cookie restoration, the dashboard, and the Fitness space. Product screens fetch API data; preview and test fixtures are confined to debug/test source sets.
+Native Kotlin/Compose app for `dev.abhishekan.pulse`. Phases 1–4 implement the design system, username/password authentication through the existing Go API, encrypted cookie restoration, the dashboard, Fitness, and Financial Horizon. Product screens fetch API data; preview and test fixtures are confined to debug/test source sets.
 
 ## Setup
 
@@ -45,7 +45,7 @@ Source of truth: Go auth/profile/gym/notification handlers and Horizon summary D
 
 | Module | Owns | Project dependencies |
 | --- | --- | --- |
-| `:app` | Application/Koin startup, session gate, appearance, Compose navigation, environment configuration | All seven modules |
+| `:app` | Application/Koin startup, session gate, appearance, Compose navigation, environment configuration | All eight modules |
 | `:core:domain` | Pure models, outcomes, repository contracts and use cases | None; coroutines only |
 | `:core:data` | Repository implementations, mapping, DataStore preferences, Keystore encrypted storage | Domain, network |
 | `:core:network` | One Ktor/OkHttp client, API services/DTOs, cookie policy and storage contract | None |
@@ -53,6 +53,7 @@ Source of truth: Go auth/profile/gym/notification handlers and Horizon summary D
 | `:feature:auth` | Login screen, immutable state, ViewModel, feature DI | Domain, UI |
 | `:feature:home` | Dashboard/notification presentation, independent section state, ViewModel, feature DI | Domain, UI |
 | `:feature:fitness` | Activity calendar, workout details, exercise forms, ViewModels/state and feature DI | Domain, UI |
+| `:feature:horizon` | Financial overview, paged ledger, budgets, obligations, subscriptions, planned purchases, forms and feature DI | Domain, UI |
 
 Features never import data/network or one another. Domain has no Android, Koin, Ktor, or persistence dependencies. Boundary tests enforce the module edges and import restrictions. No database/common/testing module, offline sync, or additional architecture framework was introduced.
 
@@ -74,8 +75,8 @@ core/network/.../network/
   NetworkConfig.kt
   PulseHttpClient.kt
   PulseApi.kt
-feature/{auth,home,fitness}/.../
-  di/{Auth,Home,Fitness}Module.kt
+feature/{auth,home,fitness,horizon}/.../
+  di/{Auth,Home,Fitness,Horizon}Module.kt
   # Screens, ViewModels and immutable UI state in separate files
 app/.../pulse/di/ApplicationModule.kt
 ```
@@ -122,7 +123,7 @@ Profile, workout, finance, and notifications load in separate jobs. Each section
 
 Financial numbers are parsed directly from JSON numeric text into `BigDecimal`, never through `Double`. Display pads short fractions to two places and preserves every supplied decimal place; balances and progress are not fabricated or recomputed. All-zero backend values remain actual zero values.
 
-Home uses a warm financial hero, supporting activity/notification cards, and an overview of the four spaces. Fitness shortcuts are actionable; deferred spaces remain informational. You provides username, persisted System/Light/Dark appearance, and working logout. Spaces lists Fitness, the currently implemented space. Deferred space workflows, profile editing, notification mutations, and onboarding have no clickable placeholders.
+Home uses a warm financial hero, supporting activity/notification cards, and an overview of the four spaces. Fitness and Financial Horizon shortcuts are actionable; deferred spaces remain informational. You provides username, persisted System/Light/Dark appearance, and working logout. Spaces lists Fitness and Financial Horizon, the currently implemented spaces. Deferred space workflows, profile editing, notification mutations, and onboarding have no clickable placeholders.
 
 Shared controls now live in **`core/ui/.../components/`**, one component per file; related models sit with the component that owns them. Themes/tokens and adaptive helpers remain beside that package. There are four type sizes, two weights, tabular/monospace metrics, 4dp spacing increments, 48dp targets, labeled selection semantics, native focus behavior, and tested contrast pairs. Error/retry cards use neutral surfaces so action text remains accessible.
 
@@ -224,4 +225,51 @@ Fitness history currently uses the backend’s unpaginated visits endpoint. A se
 - Emulator display, density, text and appearance settings were restored; temporary captures were removed and the task’s emulator was stopped.
 - Lint reports zero errors and zero core/feature warnings. The app retains 35 existing dependency-update/template advisories. Toolchain and dependency versions remain unchanged.
 
-Phase 4 has not started. Personal/live-backend login, physical-device TalkBack and external-keyboard traversal remain unverified; configure the release HTTPS API origin before production use.
+At the Phase 3 boundary, Phase 4 had not started. Personal/live-backend login, physical-device TalkBack and external-keyboard traversal remain unverified; configure the release HTTPS API origin before production use.
+
+## Phase 4 — Financial Horizon
+
+The `:feature:horizon` module adds native secondary navigation for Overview, Transactions, Budgets, Obligations, Subscriptions and Planned purchases. Home and Spaces open the working finance destination; the existing bottom navigation remains on phones and tablets. No backend or web code was changed. PDF statement extraction, bulk import, Garage and Meal Plan workflows remain outside this phase.
+
+| Workflow | Existing API, relative to `/api/` |
+| --- | --- |
+| Summary, budget usage and projections | `GET /horizon` |
+| Starting pool and currency | `PUT /horizon/config` |
+| Transactions | `GET/POST /horizon/transactions`, `PUT/DELETE /horizon/transactions/{id}` |
+| Categories | Summary categories and `POST /horizon/categories` |
+| Budgets | `POST /horizon/budgets`, `PUT/DELETE /horizon/budgets/{id}` |
+| Fixed obligations | `POST /horizon/deductions`, `PUT/DELETE /horizon/deductions/{id}` |
+| Subscriptions | Summary subscriptions, `POST /horizon/subscriptions`, `PUT/DELETE /horizon/subscriptions/{id}` |
+| Linked payments | `GET/POST /horizon/subscriptions/{id}/transactions` |
+| Planned purchases | `GET/POST/DELETE /next-month-purchases`, `DELETE /next-month-purchases/{id}` |
+
+Transactions request one 20-item page at a time with the supported `search` and `type` filters, honoring server page clamping and totals. Only unlinked debits are offered when linking an existing payment, with confirmation before applying the association. Categories support the API’s name/icon/color metadata; no unsupported category update/delete operation is exposed.
+
+Forms support all exposed budget, category, subscription and obligation associations, including explicit JSON nulls to clear a link. Obligations include category, due day and active state. Subscriptions include monthly/yearly cycles, billing day, optional renewal date, active/paused/cancelled status and notes. Transaction timestamps retain their seconds/precision when editing an unrelated field; native date/time controls change the local date/time and send the corresponding instant. Renewal dates remain calendar dates. Planned purchases use the server’s next-month boundary.
+
+Money stays in `BigDecimal` through domain, mapping, display and unquoted JSON numeric serialization. Inputs respect the existing `NUMERIC(12,2)` database limits: at most two fractional digits, 0–9,999,999,999.99, with strictly positive transactions. Backend totals, projections, renewal dates and budget usage are displayed rather than recalculated in Android. The existing Go finance DTOs/calculations use float64, so Android cannot recover precision already lost on the server. Summary transaction totals and budget usage use the backend’s recent 50 transactions; the UI labels that limitation rather than presenting it as an all-history balance.
+
+Deletion confirmations describe the actual foreign-key behavior: deleting a budget clears budget links while keeping related records; deleting an obligation clears subscription obligation links; deleting a subscription clears transaction subscription links while keeping transactions and fixed obligations. Individual purchase deletion and whole-list clearing require confirmation and do not affect transactions.
+
+Overview, transaction pages, planned purchases and linked payments load independently with retry states. Financial mutations invalidate shared repository revisions, refreshing Home’s financial card without coupling feature modules. Home cancels an older in-flight financial read before loading the current result.
+
+Drafts and pending-operation markers use SavedStateHandle. Rotation, resizing, tab changes and process-state restoration preserve input; leaving a dirty form or logging out requires confirmation. A lost/failed mutation response never triggers an automatic retry: the UI refreshes server state, retains the draft and blocks further mutations until current records are available and explicitly reviewed. Review includes searching/checking additional pages for a possibly committed transaction.
+
+New shared controls are thin Pulse wrappers for selection fields, filter chips and the native time input dialog; the existing date picker and confirmation dialogs are reused. They appear in the debug component gallery. Debug-only finance previews cover light/dark, phone/tablet, landscape, large text and loading/error/disabled/saving states. The overview uses a warm balance hero with a supporting commitment/projection column at suitable widths, and stacks for compact or large-text windows. Forms stay width-constrained. Debit/credit rows use labels and signs as well as visual styling.
+
+The integration reuses the installed versions and documented [Compose menu APIs](https://developer.android.com/develop/ui/compose/components/menu) and [Ktor request parameters](https://ktor.io/docs/client-requests.html). No toolchain or dependency version changed.
+
+### Phase 4 verification results — 17 October 2026
+
+- `./gradlew build`: passed, including debug/release compilation, optimized unsigned release packaging, unit tests and lint.
+- Lint: zero errors, zero core/feature warnings; 35 existing app advisories for dependency updates/template resources. Toolchain and dependency versions are unchanged.
+- **97 unit tests passed**, zero failures/errors/skips. Coverage includes decimal JSON round-tripping, numeric/database limits, exact zero boundaries, pagination/filtering/retry, associations, cancellation/authentication expiry, independent reads, duplicate submissions, uncertain saves, saved-state draft restoration, deleted subscription selection, module boundaries and the full Koin graph.
+- **25 Android tests passed**, zero failures/errors/skips, on Android 15/API 35 in the 1024×900dp dark tablet configuration. This includes all prior authentication, Fitness, storage and gallery regressions plus eight finance scenarios.
+- All **eight finance scenarios** also passed on the normal phone, at 360×800dp with 200% text, and in 800×360dp landscape. They cover configuration, category creation, transaction paging/filtering/CRUD, budget/obligation CRUD, subscription CRUD/payment linking, purchase deletion/clearing, Home refresh, keyboard focus, rotation, tab restoration, native pickers, live resizing and uncertain-response recovery.
+- Focused final device checks at 200% text passed for excluding credit/already-linked payments, closing an open payment panel after subscription deletion, opening new forms at the top, and keeping transaction history readable when currency/summary data is unavailable. The corrected currency label was captured and visually inspected.
+- Native phone/tablet, light/dark, landscape, large-text, form, picker and recovery screenshots were inspected. Preview/fixture amounts remain isolated from production sources.
+- Emulator size/density/text/appearance settings were restored; task-created emulator screenshots were removed and the task’s emulator was stopped.
+
+API workflows were tested through production Ktor, encrypted session persistence, repositories, use cases, Koin and navigation against test-only source-derived HTTP fixtures. No personal/live backend account was accessed. Process-state restoration was checked through SavedStateHandle tests; native tests exercise rotation/resizing/tab restoration rather than killing a live personal session. Physical-device TalkBack, external-keyboard traversal and other Android runtime versions remain unverified. The release HTTPS API origin still needs configuration.
+
+Known server limits remain the existing float64 finance calculations, recent-50 summary transaction/budget usage, and unpaginated linked-payment lists. The main transaction ledger stays paginated. After an uncertain mutation, review waits for successful overview, current ledger page and planned-purchase reads (plus an open payment list), so unresolved read failures intentionally keep writes blocked. Phase 5 has not started.

@@ -15,6 +15,8 @@ import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
 import dev.abhishekan.pulse.core.domain.model.*
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
+import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
+import dev.abhishekan.pulse.core.domain.usecase.ObserveHorizonChanges
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.math.BigDecimal
@@ -39,6 +41,14 @@ class HomeViewModelTest {
         override suspend fun deleteExercise(visitId: Long, exerciseId: Long): Outcome<Unit> = error("Unused")
     }
 
+    private val horizon = object : HorizonRepository {
+        override val changes = MutableStateFlow(0L)
+        override suspend fun overview(): Outcome<HorizonOverview> = error("Unused")
+        override suspend fun transactions(page: Int, search: String, type: String?): Outcome<HorizonTransactionPage> = error("Unused")
+        override suspend fun purchases(): Outcome<PlannedPurchases> = error("Unused")
+        override suspend fun payments(subscriptionId: Long): Outcome<List<HorizonTransaction>> = error("Unused")
+        override suspend fun apply(change: HorizonChange): Outcome<Unit> = error("Unused")
+    }
     @Before fun setup() { Dispatchers.setMain(dispatcher) }
     @After fun cleanup() { models.clear(); dispatcher.scheduler.runCurrent(); Dispatchers.resetMain() }
 
@@ -54,7 +64,7 @@ class HomeViewModelTest {
                 notificationCalls++; return Outcome.Success(listOf(Notification(1, "An update", null, null)))
             }
         }
-        val vm = HomeViewModel(GetProfile(repository), GetWorkoutToday(repository), GetHorizon(repository), GetNotifications(repository), ObserveFitnessChanges(fitness))
+        val vm = HomeViewModel(GetProfile(repository), GetWorkoutToday(repository), GetHorizon(repository), GetNotifications(repository), ObserveFitnessChanges(fitness), ObserveHorizonChanges(horizon))
         models.put("home", vm)
         runCurrent()
         assertEquals(Section.Loading, vm.uiState.value.profile)
@@ -69,6 +79,9 @@ class HomeViewModelTest {
         assertEquals(Section.Empty, vm.uiState.value.profile)
         fitness.changes.value++; runCurrent()
         assertEquals(2, workoutCalls)
+        horizonFails = true; horizon.changes.value++; runCurrent()
+        assertEquals(Section.Error(Failure.Server), vm.uiState.value.horizon)
+        assertEquals(2, workoutCalls); assertEquals(1, notificationCalls)
     }
 
     @Test fun currencyFormattingDoesNotRoundBackendPrecision() {

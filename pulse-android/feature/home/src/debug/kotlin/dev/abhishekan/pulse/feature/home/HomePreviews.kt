@@ -14,8 +14,8 @@ private val preview = HomeUiState(profile = Section.Content(Profile("Preview per
 @Preview(name = "Phone", widthDp = 360, heightDp = 800)
 @Preview(name = "Tablet", widthDp = 1024, heightDp = 900)
 @Preview(name = "Large text", widthDp = 360, heightDp = 800, fontScale = 2f)
-@Composable private fun HomeLightPreview() { PulseTheme(false) { HomeScreen("preview", preview, {}, {}, {}, {}, {}, {}) } }
+@Composable private fun HomeLightPreview() { PulseTheme(false) { HomeScreen("preview", preview, {}, {}, {}, {}, {}, {}, {}) } }
 @Preview(name = "Dark partial failure", widthDp = 1024, heightDp = 900)
 @Composable private fun HomeDarkPreview() {
-    PulseTheme(true) { HomeScreen("preview", preview.copy(horizon = Section.Error(Failure.Connection)), {}, {}, {}, {}, {}, {}) }
+    PulseTheme(true) { HomeScreen("preview", preview.copy(horizon = Section.Error(Failure.Connection)), {}, {}, {}, {}, {}, {}, {}) }
 }

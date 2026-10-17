@@ -242,7 +242,7 @@ class FitnessDeviceTest {
         tap("Spaces")
         compose.onNodeWithContentDescription("Back to Spaces").performClick()
         awaitText("Make room for your everyday.")
-        compose.onNodeWithText("Financial Horizon", substring = false).assertDoesNotExist()
+        compose.onNodeWithText("Open Financial Horizon", substring = false).assertHasClickAction()
         tap("Open Fitness"); awaitText("Record workout")
     }
     @Test fun editorSurvivesRotationTabsAndKeyboardAndWarnsBeforeDiscard() {

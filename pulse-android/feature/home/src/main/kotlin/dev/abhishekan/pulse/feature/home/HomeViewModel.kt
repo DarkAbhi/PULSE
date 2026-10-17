@@ -3,6 +3,7 @@ package dev.abhishekan.pulse.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.usecase.ObserveHorizonChanges
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
 import dev.abhishekan.pulse.core.domain.usecase.GetNotifications
 import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
@@ -17,13 +18,14 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val getProfile: GetProfile, private val getWorkout: GetWorkoutToday,
-    private val getHorizon: GetHorizon, private val getNotifications: GetNotifications, changes: ObserveFitnessChanges,
+    private val getHorizon: GetHorizon, private val getNotifications: GetNotifications, changes: ObserveFitnessChanges, horizonChanges: ObserveHorizonChanges,
 ) : ViewModel() {
     private val state = MutableStateFlow(HomeUiState())
     val uiState = state.asStateFlow()
     private val jobs = mutableMapOf<String, Job>()
     init {
         retryProfile(); retryWorkout(); retryHorizon(); retryNotifications()
+        viewModelScope.launch { horizonChanges().drop(1).collect { jobs["horizon"]?.cancel(); retryHorizon() } }
         viewModelScope.launch { changes().drop(1).collect { jobs["workout"]?.cancel(); retryWorkout() } }
     }
 

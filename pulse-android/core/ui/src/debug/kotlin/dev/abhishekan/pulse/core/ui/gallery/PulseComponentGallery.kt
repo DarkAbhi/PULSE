@@ -76,6 +76,8 @@ private fun Controls(onAction: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var checked by rememberSaveable { mutableStateOf(true) }
     var switched by rememberSaveable { mutableStateOf(false) }
+    var choice by rememberSaveable { mutableIntStateOf(0) }
+    var showTime by rememberSaveable { mutableStateOf(false) }
     var showDate by rememberSaveable { mutableStateOf(false) }
     var selectedDate by rememberSaveable { mutableStateOf("2026-10-17") }
     PulseCard(Modifier.fillMaxWidth()) {
@@ -87,6 +89,12 @@ private fun Controls(onAction: () -> Unit) {
             PulseCalendarDay("20", "20 October, disabled", false, false, false, {}, enabled = false)
         }
         PulseTextButton("Choose sample date: $selectedDate", { showDate = true })
+        PulseSelectionField("Sample selection", listOf("One", "Two")[choice], listOf("One", "Two"), { choice = it }, Modifier.fillMaxWidth())
+        PulseSelectionField("Disabled selection", "One", listOf("One"), {}, enabled = false)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
+            PulseFilterChip("Selected", true, {}); PulseFilterChip("Unselected", false, {}); PulseFilterChip("Disabled", false, {}, enabled = false)
+        }
+        PulseTextButton("Choose sample time", { showTime = true })
         PulseText("The essentials", style = PulseTextStyle.Title)
         PulseText("Forms and actions", color = MaterialTheme.colorScheme.onSurfaceVariant)
         PulseTextField(username, { username = it }, "Sample username", Modifier.fillMaxWidth())
@@ -103,6 +111,7 @@ private fun Controls(onAction: () -> Unit) {
         PulseSwitch(switched, { switched = it }, "Sample switch")
         PulseSwitch(false, {}, "Disabled switch", enabled = false)
     }
+    if (showTime) PulseTimePickerDialog(java.time.LocalTime.of(9, 30), { showTime = false }, { showTime = false })
     if (showDate) PulseDatePickerDialog(java.time.LocalDate.parse(selectedDate), { selectedDate = it.toString(); showDate = false }, { showDate = false })
 }
 

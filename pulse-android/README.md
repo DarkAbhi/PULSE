@@ -334,7 +334,7 @@ Known backend limits remain float64 precision, fixed ₹/L fuel labels, unpagina
 
 ## Phase 6 — Meal Plan
 
-Home and Spaces open the working Meal Plan destination. The native planner provides Monday-based week navigation, a Today action, an automatically visible selected-day chip, and a date/meal-time agenda. The illustrated selected-day agenda uses two card columns on tablets and one on phones or with enlarged text. The weekday strip scrolls on narrow windows, and an illustrated empty state offers Add meal. Consumption uses a labeled checkbox and an accessible Planned/Consumed description, with confirmation feedback after the server responds. No nutritional values or meal fixtures are supplied to production UI.
+Home and Spaces open the working Meal Plan destination. The native planner provides Monday-based week navigation, a Today action, an automatically visible selected-day chip, and a date/meal-time agenda. Each illustrated agenda card groups items by meal time and saved time range, with independent consumption, edit and delete controls for each item. The selected-day agenda uses two card columns on tablets and one on phones or with enlarged text. The weekday strip scrolls on narrow windows, and an illustrated empty state offers Add meal. Consumption uses a labeled checkbox and an accessible Planned/Consumed description, with confirmation feedback after the server responds. No nutritional values or meal fixtures are supplied to production UI.
 
 | Workflow | Existing API, relative to `/api/` |
 | --- | --- |

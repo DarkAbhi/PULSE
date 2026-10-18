@@ -120,15 +120,17 @@ internal fun MealAgenda(
                     PulseButton(stringResource(R.string.pulse_mealplan_add_meal), onAdd, enabled = enabled)
                 }
                 val sorted = meals.sortedWith(compareBy<PlannedMeal> { it.start == null }.thenBy { it.start }.thenBy { it.id })
-                sorted.chunked(columns).forEach { row ->
+                // Deleted meal times can leave different saved ranges under Other meals.
+                val groups = sorted.groupBy { Triple(it.timeId, it.start, it.end) }.values.toList()
+                groups.chunked(columns).forEach { row ->
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                        row.forEach { meal ->
+                        row.forEach { group ->
                             MealIllustratedCard(
-                                meal,
+                                group,
                                 enabled,
-                                { onEdit(meal) },
-                                { onToggle(meal) },
-                                { onDelete(meal) },
+                                onEdit,
+                                onToggle,
+                                onDelete,
                                 Modifier.weight(1f),
                             )
                         }
@@ -142,20 +144,15 @@ internal fun MealAgenda(
 
 @Composable
 private fun MealIllustratedCard(
-    meal: PlannedMeal,
+    meals: List<PlannedMeal>,
     enabled: Boolean,
-    edit: () -> Unit,
-    toggle: () -> Unit,
-    delete: () -> Unit,
+    edit: (PlannedMeal) -> Unit,
+    toggle: (PlannedMeal) -> Unit,
+    delete: (PlannedMeal) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = PulseTheme.colors
-    val consumptionLabel =
-        stringResource(
-            R.string.pulse_mealplan_meal_consumption_label,
-            stringResource(if (meal.consumed) R.string.pulse_mealplan_consumed else R.string.pulse_mealplan_planned),
-            meal.name,
-        )
+    val meal = meals.first()
     val hour = meal.start?.hour
     val artwork =
         when {
@@ -216,31 +213,39 @@ private fun MealIllustratedCard(
                             )
                         }
                     }
-                    PulseCheckbox(
-                        meal.consumed,
-                        { toggle() },
-                        meal.name,
-                        Modifier.semantics {
-                            contentDescription = consumptionLabel
-                        },
-                        enabled = enabled,
-                    )
-                }
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    PulseIconButton(
-                        stringResource(R.string.pulse_mealplan_edit_1_s, meal.name),
-                        edit,
-                        Modifier
-                            .background(
-                                colors.surfaceMuted.copy(alpha = 0.5f),
-                                RoundedCornerShape(12.dp),
-                            ).border(1.dp, colors.border.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
-                        enabled = enabled,
-                    ) {
-                        Icon(painterResource(R.drawable.meal_edit), null)
-                    }
-                    PulseIconButton(stringResource(R.string.pulse_mealplan_delete_1_s, meal.name), delete, enabled = enabled) {
-                        Icon(painterResource(R.drawable.meal_delete), null, tint = colors.error)
+                    meals.forEach { item ->
+                        val consumptionLabel =
+                            stringResource(
+                                R.string.pulse_mealplan_meal_consumption_label,
+                                stringResource(if (item.consumed) R.string.pulse_mealplan_consumed else R.string.pulse_mealplan_planned),
+                                item.name,
+                            )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            PulseCheckbox(
+                                item.consumed,
+                                { toggle(item) },
+                                item.name,
+                                Modifier.weight(1f).semantics { contentDescription = consumptionLabel },
+                                enabled = enabled,
+                            )
+                            PulseIconButton(
+                                stringResource(R.string.pulse_mealplan_edit_1_s, item.name),
+                                { edit(item) },
+                                Modifier
+                                    .background(colors.surfaceMuted.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                    .border(1.dp, colors.border.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                                enabled = enabled,
+                            ) {
+                                Icon(painterResource(R.drawable.meal_edit), null)
+                            }
+                            PulseIconButton(
+                                stringResource(R.string.pulse_mealplan_delete_1_s, item.name),
+                                { delete(item) },
+                                enabled = enabled,
+                            ) {
+                                Icon(painterResource(R.drawable.meal_delete), null, tint = colors.error)
+                            }
+                        }
                     }
                 }
             }

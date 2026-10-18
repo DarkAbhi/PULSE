@@ -2,6 +2,7 @@ package dev.abhishekan.pulse
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
@@ -409,7 +410,11 @@ class MealPlanDeviceTest {
                     )[index]}","meal_time_id":$id,"is_consumed":false}""",
                 )
         }
+        meals[5] = obj("""{"id":5,"date":"$day","name":"Ice cream","meal_time_id":2,"is_consumed":false}""")
         launchPlanner("Omelette")
+        compose.onAllNodesWithText("Lunch").assertCountEquals(1)
+        compose.onNodeWithText("Ice cream").performScrollTo().assertIsDisplayed()
+        screenshot("grouped-meals")
         screenshot("illustrated")
         compose.onNodeWithText("Pulav").performScrollTo().assertIsDisplayed()
         screenshot("illustrated-bottom")
@@ -436,9 +441,12 @@ class MealPlanDeviceTest {
         confirm("Choose date")
         tap("Save meal")
         awaitText("Rice bowl")
+        compose.onAllNodesWithText("Lunch").assertCountEquals(1)
+        compose.onNodeWithText("Soup").assertIsDisplayed()
         assertEquals(1, mutations)
         tap("Planned · Rice bowl")
         awaitText("✓ Consumed · Rice bowl")
+        compose.onNode(hasContentDescription("Planned · Soup")).assertIsDisplayed()
         assertTrue(
             meals.values
                 .single {

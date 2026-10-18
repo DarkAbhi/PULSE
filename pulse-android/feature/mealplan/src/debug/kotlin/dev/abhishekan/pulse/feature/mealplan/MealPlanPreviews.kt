@@ -21,6 +21,7 @@ private val fixtures =
     listOf(
         PlannedMeal(1, day, "Omelette", 1, "Breakfast", LocalTime.of(7, 0), LocalTime.of(10, 0), false),
         PlannedMeal(2, day, "Biryani", 2, "Lunch", LocalTime.NOON, LocalTime.of(14, 30), false),
+        PlannedMeal(5, day, "Ice cream", 2, "Lunch", LocalTime.NOON, LocalTime.of(14, 30), false),
         PlannedMeal(3, day, "Chickpea", 3, "Evening Snacks", LocalTime.of(16, 30), LocalTime.of(18, 30), false),
         PlannedMeal(4, day, "Pulav", 4, "Dinner", LocalTime.of(19, 30), LocalTime.of(22, 0), false),
     )

@@ -11,6 +11,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import dev.abhishekan.pulse.core.domain.model.Vehicle
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -75,6 +76,25 @@ private fun GaragePreview() {
                     PulseErrorState("Receipt storage is unavailable. Your maintenance record is saved.", {
                     })
                 }
+            }
+        }
+    }
+}
+
+@Preview(name = "Garage collection phone", widthDp = 393, heightDp = 850)
+@Preview(name = "Garage collection tablet", widthDp = 1280, heightDp = 800)
+@Preview(name = "Garage collection large text", widthDp = 360, heightDp = 900, fontScale = 2f)
+@Preview(name = "Garage collection dark", widthDp = 393, heightDp = 850, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun GarageCollectionPreview() {
+    PulseTheme {
+        Surface(color = PulseTheme.colors.background) {
+            Column(
+                Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(PulseTokens.cardPadding),
+                verticalArrangement = Arrangement.spacedBy(PulseTokens.large),
+            ) {
+                GarageCollectionHeader(true) {}
+                GarageVehicleGrid(listOf(Vehicle(1, "Himalayan 411"), Vehicle(2, "Suzuki Access 125")), null, true, {})
             }
         }
     }

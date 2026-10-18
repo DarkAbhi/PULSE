@@ -158,4 +158,5 @@
         <item quantity="other">"%1$s · %2$s bytes"</item>
     </plurals>
     <string name="pulse_garage_history_counts">"%1$s · %2$s · %3$s"</string>
+    <string name="pulse_garage_brand">PULSE</string>
 </resources>

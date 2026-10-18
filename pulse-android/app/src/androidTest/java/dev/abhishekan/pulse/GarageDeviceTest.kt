@@ -511,6 +511,18 @@ class GarageDeviceTest {
                 InstrumentationRegistry.getInstrumentation().addMonitor(it)
             }
 
+    @Test fun collectionArtworkAndLongNamesKeepVehicleActionsAccessible() {
+        vehicles[2] = "Weekend adventure motorcycle with a long name"
+        launchGarage()
+        compose.onNodeWithText("Add vehicle").assertIsDisplayed()
+        compose.onNodeWithText("View Comet").performScrollTo().assertIsDisplayed()
+        screenshot("redesigned-collection")
+        compose.onNodeWithText("View Weekend adventure motorcycle with a long name")
+            .performScrollTo().assertIsDisplayed()
+        select()
+        compose.onNodeWithText("Care, at a glance").performScrollTo().assertIsDisplayed()
+    }
+
     @Test fun pullToRefreshLoadsUpdatedVehicleHistory() {
         launchGarage()
         select()

@@ -298,23 +298,10 @@ internal fun GarageScreen(
                     }
                     val collection: @Composable () -> Unit = {
                         Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-                            PulseText(
-                                stringResource(R.string.pulse_garage_your_garage),
-                                Modifier.semantics {
-                                    heading()
-                                },
-                                PulseTextStyle.Display,
-                            )
-                            PulseText(
-                                stringResource(
-                                    R.string.pulse_garage_keep_every_journey_running_smoothly,
-                                ),
-                            )
-                            PulseButton(stringResource(R.string.pulse_garage_add_vehicle), {
-                                records =
-                                    false
+                            GarageCollectionHeader(enabled) {
+                                records = false
                                 vm.create(GarageForm.Vehicle)
-                            }, enabled = enabled)
+                            }
                             GarageSection(state.vehicles, vm::refreshVehicles) { vehicles ->
                                 if (vehicles.isEmpty()) {
                                     PulseEmptyState(
@@ -326,26 +313,12 @@ internal fun GarageScreen(
                                         ),
                                     )
                                 }
-                                vehicles.forEach { vehicle ->
-                                    PulseCard(
-                                        Modifier.fillMaxWidth(),
-                                        highlighted =
-                                            vehicle.id == state.vehicle,
-                                    ) {
-                                        PulseText(vehicle.name, style = PulseTextStyle.Title)
-                                        PulseTextButton(
-                                            stringResource(
-                                                R.string.pulse_garage_view_1_s,
-                                                vehicle.name,
-                                            ),
-                                            {
-                                                vm.select(vehicle.id)
-                                            },
-                                            enabled =
-                                                !state.busy && state.draft == null,
-                                        )
-                                    }
-                                }
+                                GarageVehicleGrid(
+                                    vehicles,
+                                    state.vehicle,
+                                    !state.busy && state.draft == null,
+                                    vm::select,
+                                )
                             }
                         }
                     }

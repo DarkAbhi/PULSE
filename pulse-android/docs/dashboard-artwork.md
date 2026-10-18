@@ -2,11 +2,9 @@
 
 Generated with the built-in image generation tool. Optimized as WebP for Android; the two card illustrations retain alpha transparency.
 
-## room
+## Greeting panel — 19 October 2026
 
-Use case: illustration-story. Asset type: background artwork for a native Android personal dashboard. Create a warm sunlit room, soft hand-painted editorial illustration matching the supplied reference mood: creamy plaster wall filling upper 75 percent as quiet empty space, golden afternoon window light diagonally across wall, a wooden low bench and black motorcycle helmet at bottom left behind a lush leafy houseplant, window frame at far right, small framed green mountain landscape on upper far right. Wide landscape composition 3:2, soft ivory and honey palette, subtle paper texture, polished cozy illustration. No text, no logos, no UI, no people. Leave center and upper left mostly empty cream wall for readable native text. Save as dashboard room background.
-
-Asset: `feature/home/src/main/res/drawable-nodpi/dashboard_room.webp`
+Home uses the shared theme background. The former room image and Pulse branding header have been removed. The greeting is a white rounded surface with a saturated cyan-to-blue-to-magenta glass orb. A single six-second phase drives smooth breathing (0.94–1.04 scale) and three staggered expanding, fading ripple rings, following the supplied PulseOrb example. Animation state is read during drawing rather than recomposing the greeting, and the system motion duration scale disables breathing and rings when animations are removed. Time, date, greeting and display-size name share the panel; notification/profile actions remain available. Ink and gray-violet text keep the white hero readable in either app theme. The layout grows for wrapped names and enlarged text.
 
 ## cat
 
@@ -35,3 +33,16 @@ Both cards use the tallest intrinsic content height at the current column width,
 Validation: build, dashboard lint and 17 app/dashboard unit tests pass. All four dashboard device tests pass on phone and tablet, now asserting equal heights in light, dark, 200% text and retry states. The full login/navigation test asserts that the background top matches the root window top on phone and tablet, and also checks the bottom edge on tablet.
 
 Status-bar follow-up: the debug build and phone login/navigation regression pass with the new top-edge assertion. The tablet emulator disconnected during its run, so the updated tablet status-bar check has not completed.
+
+## Aurora greeting verification — 19 October 2026
+
+- Debug app and instrumentation APK builds, Home formatting checks, all four Home unit tests and Home lint pass (no lint issues).
+- All four dashboard device tests pass on both API 35 emulators: 427dp phone and 1280dp tablet, including light/dark, 200% text, exact balances, actions, matching card heights and independent retry. New assertions check the greeting panel and absence of Pulse branding.
+- Reviewed light/dark phone screenshots and tablet light/200% text screenshots. Test screenshots now use Android's native UI automation capture after Compose PixelCopy timed out in the initial runs.
+- Physical-device animation performance and manual TalkBack were not checked. No new dependencies or backend changes.
+
+## Breathing Pulse orb follow-up — 19 October 2026
+
+Replaced the faint static sphere with the supplied example's saturated cyan/blue/magenta treatment, six-second breathing cycle, three expanding ripple rings and glass highlight. Phone placement reserves white space below the orb; enlarged text moves the orb into the top corner to protect date/greeting contrast. Tablet retains the larger right-hand orb. The drawing uses the existing Compose APIs and respects system motion duration scale without adding dependencies.
+
+Validation: debug app/test builds, Home formatting, all four Home unit tests and Home lint pass. All five dashboard device tests pass on both phone and tablet, including the new frame comparison that verifies visible animation. Native screenshot checks now wait for window transitions and drawing to settle. Reviewed normal and 200% text previews. Physical-device animation performance, changing the system animation setting during use and manual TalkBack were not tested.

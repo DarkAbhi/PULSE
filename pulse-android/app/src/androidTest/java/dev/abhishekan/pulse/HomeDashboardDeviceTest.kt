@@ -2,16 +2,14 @@ package dev.abhishekan.pulse
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
@@ -76,7 +74,9 @@ class HomeDashboardDeviceTest {
 
     private fun capture(name: String) {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val bitmap = compose.onRoot().captureToImage().asAndroidBitmap()
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        automation.waitForIdle(500, 5_000)
+        val bitmap = checkNotNull(automation.takeScreenshot())
         File(context.getExternalFilesDir(null), "dashboard-$name.png").outputStream().use {
             assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it))
         }
@@ -93,6 +93,9 @@ class HomeDashboardDeviceTest {
                 HomeScreen("fixture", state, {}, {}, {}, { horizon++ }, { fitness++ }, { notifications++ }, { profile++ })
             }
         }
+        compose.onNodeWithTag("dashboard-greeting").assertIsDisplayed()
+        compose.onNodeWithText("Pulse", substring = false).assertDoesNotExist()
+        compose.onNodeWithText("Good to see you,").assertIsDisplayed()
         compose.onNodeWithText("Abhishek").assertIsDisplayed()
         assertMatchingCardHeights()
         capture("light")
@@ -107,6 +110,33 @@ class HomeDashboardDeviceTest {
         assertEquals(1, profile)
     }
 
+    @Test fun orbBreathesAndRipplesBehindReadableGreeting() {
+        compose.mainClock.autoAdvance = false
+        show()
+        compose.mainClock.advanceTimeByFrame()
+        compose.onNodeWithText("Abhishek").assertIsDisplayed()
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        automation.waitForIdle(500, 5_000)
+        val before = checkNotNull(automation.takeScreenshot())
+        compose.mainClock.advanceTimeBy(1_500)
+        compose.waitForIdle()
+        compose.waitUntil(5_000) {
+            val after = checkNotNull(automation.takeScreenshot())
+            var changed = 0
+            for (y in 0 until before.height / 2 step 8) {
+                for (x in before.width / 2 until before.width step 8) {
+                    if (before.getPixel(x, y) != after.getPixel(x, y)) changed++
+                }
+            }
+            after.recycle()
+            changed > 50
+        }
+        before.recycle()
+        capture("orb-quarter-cycle")
+        compose.onNodeWithText("Good to see you,").assertIsDisplayed()
+        compose.onNodeWithText("Abhishek").assertIsDisplayed()
+    }
+
     @Test fun darkDashboardKeepsWorkoutReadable() {
         show(dark = true)
         assertMatchingCardHeights()
@@ -116,6 +146,8 @@ class HomeDashboardDeviceTest {
 
     @Test fun largeTextKeepsCardsScrollable() {
         show(fontScale = 2f)
+        compose.onNodeWithText("Abhishek").performScrollTo().assertIsDisplayed()
+        capture("large-text-greeting")
         compose.onNodeWithText("₹ 100000.125").performScrollTo().assertIsDisplayed()
         assertMatchingCardHeights()
         capture("large-text")

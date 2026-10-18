@@ -14,11 +14,9 @@
     <string name="pulse_home_no_workout_recorded_today">"No workout recorded today."</string>
     <string name="pulse_home_workout_recorded">"Workout recorded"</string>
     <string name="pulse_home_money">"%1$s %2$s"</string>
-    <string name="pulse_home_brand">Pulse</string>
     <string name="pulse_home_notifications">Notifications</string>
     <string name="pulse_home_keep_going">Keep going</string>
     <string name="pulse_home_get_moving">Let’s get moving</string>
     <string name="pulse_home_view_fitness">View fitness</string>
-    <string name="pulse_home_wave" translatable="false">" 👋"</string>
     <string name="pulse_home_profile">Profile</string>
 </resources>

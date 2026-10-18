@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -35,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -384,7 +387,13 @@ private fun SignedInApp(
                                 }
                             },
                             navigationIcon = {
-                                if (route == "notifications" ||
+                                if (route == "home") {
+                                    Image(
+                                        painterResource(UiR.drawable.pulse_logo),
+                                        contentDescription = null,
+                                        modifier = Modifier.padding(start = PulseTokens.medium).size(40.dp),
+                                    )
+                                } else if (route == "notifications" ||
                                     nav.previousBackStackEntry?.destination?.route == "notifications" ||
                                     (!isTablet && route in listOf("fitness", "horizon", "garage", "mealplan")) ||
                                     route == "vehicle/{id}" ||

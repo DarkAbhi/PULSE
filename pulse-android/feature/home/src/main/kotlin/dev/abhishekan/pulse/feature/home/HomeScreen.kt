@@ -1,25 +1,20 @@
 package dev.abhishekan.pulse.feature.home
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -90,17 +85,6 @@ fun HomeScreen(
                 .padding(margin),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_logo),
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                )
-                PulseText(stringResource(R.string.pulse_home_brand), style = PulseTextStyle.Title)
-            }
             val name = (state.profile as? Section.Content)?.value?.name ?: username
             PulseText(
                 stringResource(R.string.pulse_home_good_to_see_you),

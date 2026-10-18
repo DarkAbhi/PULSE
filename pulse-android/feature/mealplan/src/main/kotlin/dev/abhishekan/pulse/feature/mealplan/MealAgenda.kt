@@ -1,23 +1,45 @@
 package dev.abhishekan.pulse.feature.mealplan
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -39,48 +61,144 @@ internal fun MealAgenda(
     onDelete: (PlannedMeal) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-        PulseText(
-            if (date ==
-                today
-            ) {
-                stringResource(R.string.pulse_mealplan_today_date, date.format(mealDate))
+    BoxWithConstraints(modifier) {
+        val columns = if (maxWidth / LocalDensity.current.fontScale >= 680.dp) 2 else 1
+        val compact = maxWidth < 600.dp
+        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            if (meals.isEmpty()) {
+                Column(
+                    Modifier.fillMaxWidth().padding(vertical = if (compact) 8.dp else 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Image(
+                        painterResource(R.drawable.meal_empty),
+                        null,
+                        Modifier.widthIn(max = 560.dp).fillMaxWidth().heightIn(max = if (compact) 180.dp else 320.dp),
+                        contentScale = ContentScale.Fit,
+                    )
+                    Text(
+                        stringResource(if (date == today) R.string.pulse_mealplan_empty_today else R.string.pulse_mealplan_empty_day),
+                        Modifier.fillMaxWidth().semantics { heading() },
+                        style = if (compact) PulseTheme.typography.heading2 else PulseTheme.typography.heading1,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
+                        stringResource(R.string.pulse_mealplan_empty_help),
+                        Modifier.fillMaxWidth(),
+                        style = PulseTheme.typography.body1,
+                        color = PulseTheme.colors.textSecondary,
+                        textAlign = TextAlign.Center,
+                    )
+                    PulseButton(stringResource(R.string.pulse_mealplan_add_meal), onAdd, enabled = enabled)
+                }
             } else {
-                date.format(mealDate)
-            },
-            Modifier.semantics { heading() },
-            PulseTextStyle.Title,
-        )
-        PulseButton(stringResource(R.string.pulse_mealplan_add_meal), onAdd, enabled = enabled)
-        if (meals.isEmpty()) {
-            PulseEmptyState(
-                stringResource(R.string.pulse_mealplan_a_little_room_to_plan),
-                stringResource(R.string.pulse_mealplan_add_a_meal_for_this_day_simple_plans_count),
-            )
+                FlowRow(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            PulseText(
+                                date.format(DateTimeFormatter.ofPattern("EEEE")),
+                                Modifier.semantics { heading() },
+                                PulseTextStyle.Display,
+                            )
+                            if (date == today) {
+                                Surface(color = PulseTheme.colors.primarySoft, shape = RoundedCornerShape(50)) {
+                                    PulseText(
+                                        stringResource(R.string.pulse_mealplan_today_label),
+                                        Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                                        color = PulseTheme.colors.action,
+                                    )
+                                }
+                            }
+                        }
+                        PulseText(date.format(DateTimeFormatter.ofPattern("d MMMM yyyy")), color = PulseTheme.colors.textSecondary)
+                    }
+                    PulseButton(stringResource(R.string.pulse_mealplan_add_meal), onAdd, enabled = enabled)
+                }
+                val sorted = meals.sortedWith(compareBy<PlannedMeal> { it.start == null }.thenBy { it.start }.thenBy { it.id })
+                sorted.chunked(columns).forEach { row ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                        row.forEach { meal ->
+                            MealIllustratedCard(
+                                meal,
+                                enabled,
+                                { onEdit(meal) },
+                                { onToggle(meal) },
+                                { onDelete(meal) },
+                                Modifier.weight(1f),
+                            )
+                        }
+                        if (row.size < columns) Spacer(Modifier.weight(1f))
+                    }
+                }
+            }
         }
-        meals
-            .sortedWith(
-                compareBy<PlannedMeal> {
-                    it.start == null
-                }.thenBy { it.start }.thenBy { it.id },
-            ).groupBy { it.timeId }
-            .forEach { (_, group) ->
-                PulseText(
-                    group.first().timeName ?: stringResource(R.string.pulse_mealplan_other_meals),
-                    Modifier.semantics {
-                        heading()
-                    },
-                    PulseTextStyle.Label,
-                    PulseTheme.colors.action,
-                )
-                group.forEach { meal ->
-                    PulseCard(Modifier.fillMaxWidth(), highlighted = meal.consumed) {
-                        PulseText(meal.name, style = PulseTextStyle.Title)
-                        val start = meal.start
-                        val end = meal.end
-                        if (start != null &&
-                            end != null
-                        ) {
+    }
+}
+
+@Composable
+private fun MealIllustratedCard(
+    meal: PlannedMeal,
+    enabled: Boolean,
+    edit: () -> Unit,
+    toggle: () -> Unit,
+    delete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = PulseTheme.colors
+    val consumptionLabel =
+        stringResource(
+            R.string.pulse_mealplan_meal_consumption_label,
+            stringResource(if (meal.consumed) R.string.pulse_mealplan_consumed else R.string.pulse_mealplan_planned),
+            meal.name,
+        )
+    val hour = meal.start?.hour
+    val artwork =
+        when {
+            hour == null -> R.drawable.meal_lunch
+            hour < 11 -> R.drawable.meal_breakfast
+            hour < 15 -> R.drawable.meal_lunch
+            hour < 19 -> R.drawable.meal_snack
+            else -> R.drawable.meal_dinner
+        }
+    val tint =
+        when (artwork) {
+            R.drawable.meal_breakfast -> colors.primary
+            R.drawable.meal_snack -> colors.sage
+            R.drawable.meal_dinner -> colors.lavender
+            else -> colors.coral
+        }
+    Surface(
+        modifier,
+        shape = RoundedCornerShape(20.dp),
+        color = colors.surface,
+        border = BorderStroke(1.dp, tint.copy(alpha = 0.3f)),
+    ) {
+        BoxWithConstraints {
+            val compact = maxWidth < 400.dp || LocalDensity.current.fontScale > 1.3f
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(listOf(tint.copy(alpha = 0.14f), Color.Transparent)),
+                    ).padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (LocalDensity.current.fontScale <= 1.5f) {
+                    Image(painterResource(artwork), null, Modifier.size(if (compact) 80.dp else 132.dp), contentScale = ContentScale.Fit)
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PulseText(meal.timeName ?: stringResource(R.string.pulse_mealplan_other_meals), style = PulseTextStyle.Title)
+                    val start = meal.start
+                    val end = meal.end
+                    if (start != null && end != null) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(painterResource(R.drawable.meal_clock), null, Modifier.size(16.dp), tint = colors.textSecondary)
                             PulseText(
                                 stringResource(
                                     if (end <
@@ -90,54 +208,43 @@ internal fun MealAgenda(
                                     } else {
                                         R.string.pulse_mealplan_time_range
                                     },
-                                    start.format(mealClock),
-                                    end.format(mealClock),
+                                    start.format(DateTimeFormatter.ofPattern("h:mm a")),
+                                    end.format(DateTimeFormatter.ofPattern("h:mm a")),
                                 ),
-                            )
-                        }
-                        PulseCheckbox(
-                            meal.consumed,
-                            {
-                                onToggle(meal)
-                            },
-                            stringResource(
-                                R.string.pulse_mealplan_meal_consumption_label,
-                                if (meal.consumed) {
-                                    stringResource(
-                                        R.string.pulse_mealplan_consumed,
-                                    )
-                                } else {
-                                    stringResource(R.string.pulse_mealplan_planned)
-                                },
-                                meal.name,
-                            ),
-                            enabled = enabled,
-                        )
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                            PulseTextButton(
-                                stringResource(
-                                    R.string.pulse_mealplan_edit_1_s,
-                                    meal.name,
-                                ),
-                                {
-                                    onEdit(meal)
-                                },
-                                enabled = enabled,
-                            )
-                            PulseTextButton(
-                                stringResource(
-                                    R.string.pulse_mealplan_delete_1_s,
-                                    meal.name,
-                                ),
-                                {
-                                    onDelete(meal)
-                                },
-                                enabled = enabled,
+                                style = PulseTextStyle.Body3,
+                                color = colors.textSecondary,
                             )
                         }
                     }
+                    PulseCheckbox(
+                        meal.consumed,
+                        { toggle() },
+                        meal.name,
+                        Modifier.semantics {
+                            contentDescription = consumptionLabel
+                        },
+                        enabled = enabled,
+                    )
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    PulseIconButton(
+                        stringResource(R.string.pulse_mealplan_edit_1_s, meal.name),
+                        edit,
+                        Modifier
+                            .background(
+                                colors.surfaceMuted.copy(alpha = 0.5f),
+                                RoundedCornerShape(12.dp),
+                            ).border(1.dp, colors.border.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                        enabled = enabled,
+                    ) {
+                        Icon(painterResource(R.drawable.meal_edit), null)
+                    }
+                    PulseIconButton(stringResource(R.string.pulse_mealplan_delete_1_s, meal.name), delete, enabled = enabled) {
+                        Icon(painterResource(R.drawable.meal_delete), null, tint = colors.error)
+                    }
                 }
             }
+        }
     }
 }
 
@@ -198,79 +305,6 @@ internal fun MealTimes(
                     ),
                     {
                         onDelete(time)
-                    },
-                    enabled = enabled,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-internal fun MealWeekBoard(
-    days: List<LocalDate>,
-    selected: LocalDate,
-    today: LocalDate,
-    meals: List<PlannedMeal>,
-    enabled: Boolean,
-    onSelect: (LocalDate) -> Unit,
-) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-        days.forEach { day ->
-            PulseCard(Modifier.weight(1f), highlighted = day == selected) {
-                PulseText(
-                    day.format(DateTimeFormatter.ofPattern("EEE")),
-                    style = PulseTextStyle.Label,
-                )
-                PulseText(day.dayOfMonth.toString(), style = PulseTextStyle.Metric)
-                if (day ==
-                    today
-                ) {
-                    PulseText(
-                        stringResource(R.string.pulse_mealplan_today_label),
-                        style = PulseTextStyle.Label,
-                    )
-                }
-                if (day ==
-                    selected
-                ) {
-                    PulseText(
-                        stringResource(R.string.pulse_mealplan_selected),
-                        style = PulseTextStyle.Label,
-                    )
-                }
-                val items = meals.filter { it.date == day }
-                if (items.isEmpty()) PulseText(stringResource(R.string.pulse_mealplan_no_meals_yet))
-                items.take(3).forEach { meal ->
-                    PulseText(meal.name, style = PulseTextStyle.Label)
-                    PulseText(
-                        if (meal.consumed) {
-                            stringResource(
-                                R.string.pulse_mealplan_consumed,
-                            )
-                        } else {
-                            stringResource(R.string.pulse_mealplan_planned)
-                        },
-                    )
-                }
-                if (items.size >
-                    3
-                ) {
-                    PulseText(
-                        pluralStringResource(
-                            R.plurals.pulse_mealplan_more_meals,
-                            items.size - 3,
-                            items.size - 3,
-                        ),
-                    )
-                }
-                PulseTextButton(
-                    stringResource(
-                        R.string.pulse_mealplan_view_1_s,
-                        day.format(DateTimeFormatter.ofPattern("EEE")),
-                    ),
-                    {
-                        onSelect(day)
                     },
                     enabled = enabled,
                 )

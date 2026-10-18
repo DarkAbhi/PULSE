@@ -1,7 +1,6 @@
 package dev.abhishekan.pulse.feature.mealplan
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -14,60 +13,53 @@ import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.time.LocalDate
 import java.time.LocalTime
 
-private val day = LocalDate.of(2026, 10, 17)
+private val day = LocalDate.of(2026, 10, 18)
 private val fixtures =
     listOf(
-        PlannedMeal(
-            1,
-            day,
-            "Roasted vegetables & rice",
-            1,
-            "Lunch",
-            LocalTime.NOON,
-            LocalTime.of(14, 30),
-            false,
-        ),
-        PlannedMeal(2, day, "Fruit & yogurt", null, null, null, null, true),
+        PlannedMeal(1, day, "Omelette", 1, "Breakfast", LocalTime.of(7, 0), LocalTime.of(10, 0), false),
+        PlannedMeal(2, day, "Biryani", 2, "Lunch", LocalTime.NOON, LocalTime.of(14, 30), false),
+        PlannedMeal(3, day, "Chickpea", 3, "Evening Snacks", LocalTime.of(16, 30), LocalTime.of(18, 30), false),
+        PlannedMeal(4, day, "Pulav", 4, "Dinner", LocalTime.of(19, 30), LocalTime.of(22, 0), false),
     )
 
 @Preview(name = "Phone", widthDp = 360, heightDp = 800)
 @Preview(name = "Large text", widthDp = 360, heightDp = 800, fontScale = 2f)
 @Composable
 private fun PlannerLight() {
-    PulseTheme(false) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(
-                    rememberScrollState(),
-                ).padding(PulseTokens.medium),
-            verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
-        ) {
-            PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-                PulseText("A little care for today", style = PulseTextStyle.Display)
-                PulseText("1 / 2", style = PulseTextStyle.Metric)
-                PulseText("Meals consumed · selected day")
-            }
-            MealAgenda(day, day, fixtures, true, {}, {}, {}, {})
-        }
-    }
+    PlannerPreview(false, fixtures)
 }
 
-@Preview(name = "Dark weekly board", widthDp = 1280, heightDp = 900)
+@Preview(name = "Tablet meals", widthDp = 1280, heightDp = 900)
 @Composable
 private fun PlannerDark() {
-    PulseTheme(true) {
-        Row(
-            Modifier.fillMaxSize().padding(PulseTokens.cardPadding),
-            horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-        ) {
-            MealWeekBoard((0L..6L).map(day::plusDays), day, day, fixtures, true, {})
+    PlannerPreview(true, fixtures)
+}
+
+@Preview(name = "Tablet empty", widthDp = 1280, heightDp = 900)
+@Preview(name = "Phone empty", widthDp = 360, heightDp = 800)
+@Composable
+private fun PlannerEmpty() {
+    PlannerPreview(true, emptyList())
+}
+
+@Composable
+private fun PlannerPreview(
+    dark: Boolean,
+    meals: List<PlannedMeal>,
+) {
+    PulseTheme(dark) {
+        androidx.compose.material3.Surface {
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(PulseTokens.cardPadding),
+                verticalArrangement = Arrangement.spacedBy(PulseTokens.large),
+            ) {
+                MealPlannerHeader {}
+                MealCalendar(day.minusDays(6), day, day, true, {}, {}, {})
+                MealAgenda(day, day, meals, true, {}, {}, {}, {}, Modifier.fillMaxWidth())
+            }
         }
     }
 }

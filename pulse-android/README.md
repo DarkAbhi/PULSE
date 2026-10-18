@@ -334,7 +334,7 @@ Known backend limits remain float64 precision, fixed ₹/L fuel labels, unpagina
 
 ## Phase 6 — Meal Plan
 
-Home and Spaces open the working Meal Plan destination. The native planner provides Monday-based week navigation, a Today action, an automatically visible selected-day chip, and a date/meal-time agenda. Wide windows with enough room for the current text scale show a seven-day board; narrower or enlarged-text windows use the selected-day agenda. Status uses “Planned”/“Consumed” text and a checkbox, with confirmation feedback after the server responds. No nutritional values or meal fixtures are supplied to production UI.
+Home and Spaces open the working Meal Plan destination. The native planner provides Monday-based week navigation, a Today action, an automatically visible selected-day chip, and a date/meal-time agenda. The illustrated selected-day agenda uses two card columns on tablets and one on phones or with enlarged text. The weekday strip scrolls on narrow windows, and an illustrated empty state offers Add meal. Consumption uses a labeled checkbox and an accessible Planned/Consumed description, with confirmation feedback after the server responds. No nutritional values or meal fixtures are supplied to production UI.
 
 | Workflow | Existing API, relative to `/api/` |
 | --- | --- |
@@ -351,7 +351,7 @@ A new meal may omit its time. The current Go update contract cannot clear an ass
 
 Meal and meal-time reads load independently and expose loading/error/retry states. Last confirmed meal values remain visible during refresh and failed toggles. No optimistic consumption change occurs: the response supplies the confirmed value. Failed/uncertain writes refresh server records, retain the draft and block another mutation until successful reads are explicitly reviewed. A meal saved for another week moves review to that target week before submission, persisting the selection so process reconstruction reviews the correct date. No mutation retries automatically; duplicate submissions are blocked synchronously.
 
-SavedStateHandle stores small editor fields, selected date, management mode and an interrupted-write marker. Scroll state uses Compose saved state; dirty drafts require discard confirmation and participate in the app's logout warning. Server records are reloaded rather than saved in a Bundle or database. Debug previews demonstrate phone/large text, a dark weekly board, saving and validation errors. The implementation reuses the installed [Compose saved-state APIs](https://developer.android.com/develop/ui/compose/state-saving) and [Ktor request APIs](https://ktor.io/docs/client-requests.html).
+SavedStateHandle stores small editor fields, selected date, management mode and an interrupted-write marker. Scroll state uses Compose saved state; dirty drafts require discard confirmation and participate in the app's logout warning. Server records are reloaded rather than saved in a Bundle or database. Debug previews demonstrate phone/large text, tablet meal cards, illustrated empty states, saving and validation errors. Asset prompts are recorded in [meal-plan-design-assets.md](../docs/meal-plan-design-assets.md). The implementation reuses the installed [Compose saved-state APIs](https://developer.android.com/develop/ui/compose/state-saving) and [Ktor request APIs](https://ktor.io/docs/client-requests.html).
 
 
 ### Phase 6 verification results — 17 October 2026

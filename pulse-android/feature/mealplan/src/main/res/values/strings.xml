@@ -1,5 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="pulse_mealplan_title">Meal Plan</string>
+    <string name="pulse_mealplan_empty_today">No meals planned for today</string>
+    <string name="pulse_mealplan_empty_day">No meals planned for this day</string>
+    <string name="pulse_mealplan_empty_help">Add a meal to keep your plan on track and stay consistent.</string>
     <string name="pulse_mealplan_add_meal">"Add meal"</string>
     <string name="pulse_mealplan_a_little_room_to_plan">"A little room to plan"</string>
     <string name="pulse_mealplan_add_a_meal_for_this_day_simple_plans_count">"Add a meal for this day. Simple plans count, too."</string>

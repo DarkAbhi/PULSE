@@ -3,15 +3,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -23,16 +18,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.MealChange
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
@@ -40,16 +37,13 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
-import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
-import dev.abhishekan.pulse.core.ui.pulseDescription
 import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun MealPlanRoute(
@@ -67,6 +61,7 @@ internal fun MealPlanScreen(
     state: MealPlanUiState,
     vm: MealPlanViewModel,
 ) {
+    val colors = PulseTheme.colors
     var discard by rememberSaveable { mutableStateOf(false) }
     var records by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.draft == null) { if (state.draft == null) records = false }
@@ -81,8 +76,6 @@ internal fun MealPlanScreen(
     }
     val holder = rememberSaveableStateHolder()
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val scale = LocalDensity.current.fontScale
-        val board = maxWidth / scale >= PulseTokens.readingWidth * 2
         holder.SaveableStateProvider(
             if (state.draft != null &&
                 !records
@@ -219,29 +212,38 @@ internal fun MealPlanScreen(
                             },
                         )
                     }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                        PulseTextButton(
-                            stringResource(R.string.pulse_mealplan_previous_week),
-                            {
-                                vm.shift(-1)
-                            },
-                            enabled =
-                                !state.busy && !state.reviewRequired && state.draft == null,
-                        )
+                    MealPlannerHeader { wide ->
+                        if (wide) {
+                            PulseTextButton(
+                                stringResource(R.string.pulse_mealplan_previous_week),
+                                {
+                                    vm.shift(-1)
+                                },
+                                enabled =
+                                    !state.busy && !state.reviewRequired && state.draft == null,
+                            )
+                        }
                         PulseTextButton(
                             stringResource(R.string.pulse_mealplan_today_label),
                             vm::today,
-                            enabled =
-                                !state.busy && !state.reviewRequired && state.draft == null,
-                        )
-                        PulseTextButton(
-                            stringResource(R.string.pulse_mealplan_next_week),
-                            {
-                                vm.shift(1)
+                            Modifier.drawBehind {
+                                if (state.selected == state.today) {
+                                    drawLine(colors.primary, Offset(0f, size.height), Offset(size.width, size.height), 2.dp.toPx())
+                                }
                             },
                             enabled =
                                 !state.busy && !state.reviewRequired && state.draft == null,
                         )
+                        if (wide) {
+                            PulseTextButton(
+                                stringResource(R.string.pulse_mealplan_next_week),
+                                {
+                                    vm.shift(1)
+                                },
+                                enabled =
+                                    !state.busy && !state.reviewRequired && state.draft == null,
+                            )
+                        }
                         PulseTextButton(
                             stringResource(R.string.pulse_mealplan_refresh),
                             vm::refresh,
@@ -257,131 +259,37 @@ internal fun MealPlanScreen(
                                 !state.busy && state.draft == null,
                         )
                     }
-                    val dateFormat = DateTimeFormatter.ofPattern("d MMM yyyy")
-                    PulseText(
-                        stringResource(
-                            R.string.pulse_mealplan_week_range,
-                            state.week.format(dateFormat),
-                            state.week.plusDays(6).format(dateFormat),
-                        ),
-                        style = PulseTextStyle.Title,
+                    MealCalendar(
+                        state.week,
+                        state.selected,
+                        state.today,
+                        !state.busy && !state.reviewRequired && state.draft == null,
+                        { vm.shift(-1) },
+                        { vm.shift(1) },
+                        vm::select,
                     )
-                    val weekScroll = rememberLazyListState()
-                    LaunchedEffect(state.selected) {
-                        weekScroll.scrollToItem(
-                            state.selected.dayOfWeek.value - 1,
-                        )
-                    }
-                    LazyRow(
-                        Modifier.fillMaxWidth(),
-                        state = weekScroll,
-                        horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                    ) {
-                        items(state.days, key = { it.toEpochDay() }) { day ->
-                            PulseFilterChip(
-                                if (day ==
-                                    state.today
-                                ) {
-                                    stringResource(
-                                        R.string.pulse_mealplan_today_date,
-                                        day.format(DateTimeFormatter.ofPattern("EEE d")),
-                                    )
-                                } else {
-                                    day.format(DateTimeFormatter.ofPattern("EEE d"))
-                                },
-                                day == state.selected,
-                                { vm.select(day) },
-                                Modifier.pulseDescription(
-                                    if (day ==
-                                        state.today
-                                    ) {
-                                        stringResource(
-                                            R.string.pulse_mealplan_today_date_description,
-                                            day.format(mealDate),
-                                        )
-                                    } else {
-                                        day.format(mealDate)
-                                    },
-                                ),
-                                enabled =
-                                    !state.busy && !state.reviewRequired && state.draft == null,
-                            )
-                        }
-                    }
                     MealSectionContent(state.meals, vm::refreshMeals) { meals ->
-                        PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-                            PulseText(
-                                if (state.selected ==
-                                    state.today
-                                ) {
-                                    stringResource(R.string.pulse_mealplan_a_little_care_for_today)
-                                } else {
-                                    stringResource(R.string.pulse_mealplan_make_room_for_good_meals)
-                                },
-                                style = PulseTextStyle.Display,
-                            )
-                            val selected = meals.filter { it.date == state.selected }
-                            PulseText(
-                                stringResource(
-                                    R.string.pulse_mealplan_consumed_count,
-                                    selected.count {
-                                        it.consumed
-                                    },
-                                    selected.size,
-                                ),
-                                style = PulseTextStyle.Metric,
-                            )
-                            PulseText(
-                                stringResource(R.string.pulse_mealplan_meals_consumed_selected_day),
-                            )
-                            PulseText(
-                                pluralStringResource(
-                                    R.plurals.pulse_mealplan_weekly_meals,
-                                    meals.size,
-                                    meals.size,
-                                ),
-                            )
-                        }
-                        val agenda: @Composable (
-                            java.time.LocalDate,
-                            Modifier,
-                        ) -> Unit = { day, modifier ->
-                            MealAgenda(
-                                day,
-                                state.today,
-                                meals.filter { it.date == day },
-                                state.canWrite &&
-                                    !state.meals.loading &&
-                                    state.meals.error == null &&
-                                    state.draft == null,
-                                { vm.add(day) },
-                                { vm.edit(MealDraft.edit(it)) },
-                                vm::toggle,
-                                {
-                                    deletion =
-                                        MealChange.Delete(it.id) to
-                                        uiText(
-                                            R.string.pulse_mealplan_remove_1_s_from_2_s_this_deletes_the,
-                                            it.name,
-                                            it.date,
-                                        )
-                                },
-                                modifier,
-                            )
-                        }
-                        if (board) {
-                            MealWeekBoard(
-                                state.days,
-                                state.selected,
-                                state.today,
-                                meals,
-                                !state.busy && !state.reviewRequired && state.draft == null,
-                                vm::select,
-                            )
-                        }
-                        agenda(
+                        MealAgenda(
                             state.selected,
-                            Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth(),
+                            state.today,
+                            meals.filter { it.date == state.selected },
+                            state.canWrite &&
+                                !state.meals.loading &&
+                                state.meals.error == null &&
+                                state.draft == null,
+                            { vm.add(state.selected) },
+                            { vm.edit(MealDraft.edit(it)) },
+                            vm::toggle,
+                            {
+                                deletion =
+                                    MealChange.Delete(it.id) to
+                                    uiText(
+                                        R.string.pulse_mealplan_remove_1_s_from_2_s_this_deletes_the,
+                                        it.name,
+                                        it.date,
+                                    )
+                            },
+                            Modifier.fillMaxWidth(),
                         )
                     }
                 }

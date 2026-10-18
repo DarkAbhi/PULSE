@@ -6,12 +6,14 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
@@ -281,7 +283,7 @@ class MealPlanDeviceTest {
         try {
             compose.waitUntil(20_000) {
                 runCatching {
-                    compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+                    compose.onAllNodes(hasText(text) or hasContentDescription(text)).fetchSemanticsNodes().isNotEmpty()
                 }.getOrDefault(false)
             }
         } catch (
@@ -304,10 +306,10 @@ class MealPlanDeviceTest {
         }
         awaitText(text)
         compose.waitUntil(20_000) {
-            compose.onAllNodes(hasText(text) and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodes((hasText(text) or hasContentDescription(text)) and isEnabled()).fetchSemanticsNodes().isNotEmpty()
         }
         compose
-            .onAllNodesWithText(text)[0]
+            .onAllNodes(hasText(text) or hasContentDescription(text))[0]
             .apply {
                 if (text !in
                     listOf("Home", "Spaces", "You")
@@ -355,24 +357,27 @@ class MealPlanDeviceTest {
                     ).captureToImage()
                     .asAndroidBitmap()
             } else {
-                checkNotNull(
-                    InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot(),
-                )
+                compose.onRoot().captureToImage().asAndroidBitmap()
             }
         file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
         bitmap.recycle()
         shell("cp ${file.absolutePath} /sdcard/Download/${file.name}")
     }
 
-    private fun launchPlanner() {
+    private fun launchPlanner(firstMeal: String = "Soup") {
         scenario = ActivityScenario.launch(MainActivity::class.java)
         awaitText("Welcome back")
         field("Username", "meal-fixture")
         field("Password", "test-only")
         tap("Continue")
-        awaitText("Asha")
-        tap("Explore Meal Plan")
-        awaitText("Soup")
+        awaitText("Home")
+        if (compose.onAllNodesWithText("Meals").fetchSemanticsNodes().isNotEmpty()) {
+            tap("Meals")
+        } else {
+            tap("Spaces")
+            tap("Open Meal Plan")
+        }
+        awaitText(firstMeal)
     }
 
     private fun pickTime(
@@ -383,11 +388,43 @@ class MealPlanDeviceTest {
         tap(option)
     }
 
+    @Test fun illustratedPlannerAndEmptyState() {
+        times.clear()
+        meals.clear()
+        listOf(
+            Triple("Breakfast", "07:00", "10:00"),
+            Triple("Lunch", "12:00", "14:30"),
+            Triple("Evening Snacks", "16:30", "18:30"),
+            Triple("Dinner", "19:30", "22:00"),
+        ).forEachIndexed { index, (name, start, end) ->
+            val id = index + 1L
+            times[id] = obj("""{"id":$id,"name":"$name","start_time":"$start","end_time":"$end","is_default":true}""")
+            meals[id] =
+                obj(
+                    """{"id":$id,"date":"$day","name":"${listOf(
+                        "Omelette",
+                        "Biryani",
+                        "Chickpea",
+                        "Pulav",
+                    )[index]}","meal_time_id":$id,"is_consumed":false}""",
+                )
+        }
+        launchPlanner("Omelette")
+        screenshot("illustrated")
+        compose.onNodeWithText("Pulav").performScrollTo().assertIsDisplayed()
+        screenshot("illustrated-bottom")
+        compose.onNode(hasContentDescription("Next week")).performScrollTo().performClick()
+        awaitText("No meals planned for this day")
+        compose.onNodeWithText("Add meal").performScrollTo().assertIsDisplayed()
+        screenshot("illustrated-empty")
+        assertEquals(0, mutations)
+    }
+
     @Test fun weeklyPlannerMealCrudConsumptionAndEmptyWeeks() {
         launchPlanner()
         screenshot("planner")
         tap("Next week")
-        awaitText("A little room to plan")
+        awaitText("No meals planned for this day")
         tap("Previous week")
         awaitText("Soup")
         tap("Today")
@@ -534,14 +571,14 @@ class MealPlanDeviceTest {
         tap("Cancel")
         confirm("Discard")
         awaitText("Soup")
-        compose.onNodeWithText("Planned · Soup").performScrollTo().assertIsDisplayed()
+        compose.onNode(hasContentDescription("Planned · Soup")).performScrollTo().assertIsDisplayed()
         tap("Home")
         tap("Spaces")
         awaitText("Soup")
-        compose.onNodeWithText("Planned · Soup").assertIsDisplayed()
+        compose.onNode(hasContentDescription("Planned · Soup")).assertIsDisplayed()
     }
 
-    @Test fun liveResizePreservesEditorAndExpandedBoardIsReadable() {
+    @Test fun liveResizePreservesEditorAndMealCardsAreReadable() {
         val size =
             shell("wm size")
                 .lineSequence()
@@ -564,16 +601,8 @@ class MealPlanDeviceTest {
             screenshot("resized-editor")
             tap("Save meal")
             awaitText("Resized meal")
-            val largeText =
-                InstrumentationRegistry
-                    .getInstrumentation()
-                    .targetContext.resources.configuration.fontScale >
-                    1.2f
-            compose.waitUntil(20_000) {
-                compose.onAllNodesWithText("View Mon").fetchSemanticsNodes().isNotEmpty() !=
-                    largeText
-            }
-            screenshot("board")
+            compose.onNodeWithText("Resized meal").performScrollTo().assertIsDisplayed()
+            screenshot("resized-planner")
             assertEquals(1, mutations)
         } finally {
             shell("wm size ${size ?: "reset"}")

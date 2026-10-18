@@ -15,6 +15,8 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isSelectable
@@ -23,6 +25,7 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
@@ -473,6 +476,11 @@ class AccountNotificationsDeviceTest {
             compose.onNodeWithContentDescription("Back to Spaces").assertDoesNotExist()
         }
         awaitText("Account information")
+        val viewport = compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Account information"))).getUnclippedBoundsInRoot()
+        val window = compose.onRoot().getUnclippedBoundsInRoot()
+        assertEquals(window.top.value, viewport.top.value, 1f)
+        assertEquals(window.bottom.value, viewport.bottom.value, 1f)
+        screenshot("tablet-profile-edge-to-edge")
         tap("Change password")
         field("Current password", "unsaved")
         hideKeyboard()

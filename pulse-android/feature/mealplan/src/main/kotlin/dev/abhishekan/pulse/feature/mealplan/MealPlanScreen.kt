@@ -29,6 +29,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.MealChange
+import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
@@ -91,6 +92,7 @@ internal fun MealPlanScreen(
                 Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
+                    .padding(LocalPulseContentPadding.current)
                     .imePadding()
                     .padding(
                         if (maxWidth <

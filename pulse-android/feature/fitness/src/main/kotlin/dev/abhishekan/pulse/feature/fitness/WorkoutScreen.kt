@@ -33,6 +33,7 @@ import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
 import dev.abhishekan.pulse.core.domain.model.WorkoutInfo
+import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -137,6 +138,7 @@ fun WorkoutScreen(
                     max = PulseTokens.readingWidth,
                 ).fillMaxWidth()
                 .verticalScroll(scroll)
+                .padding(LocalPulseContentPadding.current)
                 .imePadding()
                 .padding(PulseTokens.medium),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),

@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.APIKey
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
+import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -214,6 +215,7 @@ internal fun ProfileScreen(
                 .widthIn(max = PulseTokens.contentWidth)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
+                .padding(LocalPulseContentPadding.current)
                 .padding(
                     if (size ==
                         PulseWindowSize.Compact

@@ -4,9 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +25,7 @@ import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -32,8 +36,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,6 +56,7 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.NotificationTarget
 import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
+import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.asString
@@ -296,6 +303,12 @@ private fun SignedInApp(
         // Some keyboards resize the root before IME insets arrive; preserve space for the form.
         val showBars = maxHeight >= PulseTokens.minimumNavigationHeight
         val isTabletTab = isTablet && route in listOf("fitness", "horizon", "garage", "mealplan", "you")
+        val showTopBar =
+            route != "gallery" &&
+                route != "home" &&
+                showBars &&
+                (!isTabletTab || nav.previousBackStackEntry?.destination?.route == "notifications")
+        val showBottomBar = !isTablet && route != "gallery" && showBars
         Row(Modifier.fillMaxSize()) {
             if (isTablet && route != "gallery" && showBars) {
                 val destinations = listOf("home", "fitness", "horizon", "garage", "mealplan", "you")
@@ -340,23 +353,13 @@ private fun SignedInApp(
                 contentColor = PulseTheme.colors.textPrimary,
                 modifier = Modifier.weight(1f),
                 contentWindowInsets =
-                    if (route == "home") {
-                        ScaffoldDefaults.contentWindowInsets.only(
-                            if (isTablet) WindowInsetsSides.Horizontal else WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
-                        )
-                    } else if (showBars) {
+                    if (showBars) {
                         ScaffoldDefaults.contentWindowInsets
                     } else {
-                        WindowInsets.safeDrawing.only(
-                            WindowInsetsSides.Horizontal,
-                        )
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
                     },
                 topBar = {
-                    if (route != "gallery" &&
-                        route != "home" &&
-                        showBars &&
-                        (!isTabletTab || nav.previousBackStackEntry?.destination?.route == "notifications")
-                    ) {
+                    if (showTopBar) {
                         PulseTopAppBar(
                             if (isTabletTab) {
                                 ""
@@ -415,7 +418,7 @@ private fun SignedInApp(
                     }
                 },
                 bottomBar = {
-                    if (!isTablet && route != "gallery" && showBars) {
+                    if (showBottomBar) {
                         PulseBottomNavigationBar(
                             listOf(
                                 PulseNavigationItem(stringResource(R.string.pulse_app_home)) {
@@ -439,111 +442,130 @@ private fun SignedInApp(
                 },
                 snackbarHost = { SnackbarHost(snackbar) { PulseSnackbar(it) } },
             ) { insets ->
-                NavHost(
-                    nav,
-                    startDestination = "home",
-                    modifier = Modifier.padding(insets).consumeWindowInsets(insets),
+                val direction = LocalLayoutDirection.current
+                val fixedPadding =
+                    PaddingValues(
+                        start = insets.calculateStartPadding(direction),
+                        end = insets.calculateEndPadding(direction),
+                        top = if (showTopBar || route == "gallery") insets.calculateTopPadding() else 0.dp,
+                        bottom = if (showBottomBar || route == "gallery") insets.calculateBottomPadding() else 0.dp,
+                    )
+                CompositionLocalProvider(
+                    LocalPulseContentPadding provides
+                        PaddingValues(
+                            top = insets.calculateTopPadding() - fixedPadding.calculateTopPadding(),
+                            bottom = insets.calculateBottomPadding() - fixedPadding.calculateBottomPadding(),
+                        ),
                 ) {
-                    composable("home") {
-                        HomeRoute(
-                            username,
-                            if (isTablet) ({ selectDestination("horizon") }) else openHorizon,
-                            onFitness = if (isTablet) ({ selectDestination("fitness") }) else openFitness,
-                            onNotifications = { nav.navigate("notifications") { launchSingleTop = true } },
-                            onMissingProfile = {
-                                if (!onboardingOffered) {
-                                    onboardingOffered = true
-                                    onboardingVisible = true
-                                }
-                            },
-                        )
-                        if (onboardingVisible) {
-                            ProfileSetupPrompt({
-                                onboardingVisible = false
-                                editProfileName = true
-                                nav.navigate("you") {
-                                    launchSingleTop =
-                                        true
-                                }
-                            }, { onboardingVisible = false })
-                        }
-                    }
-                    navigation(startDestination = "space-list", route = "spaces") {
-                        composable("space-list") {
-                            SpacesScreen({
-                                nav.navigate("fitness") {
-                                    launchSingleTop =
-                                        true
-                                }
-                            }, { nav.navigate("horizon") { launchSingleTop = true } }, {
-                                nav.navigate("garage") {
-                                    launchSingleTop =
-                                        true
-                                }
-                            }, { nav.navigate("mealplan") { launchSingleTop = true } })
-                        }
-                        composable("mealplan") { MealPlanRoute(onDraftChanged = { hasMealDraft = it }) }
-                        composable("garage") { GarageRoute(onDraftChanged = { hasGarageDraft = it }) }
-                        composable("vehicle/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { destination ->
-                            GarageRoute(onDraftChanged = { hasGarageDraft = it }, initialVehicle = destination.arguments?.getLong("id"))
-                        }
-                        composable("horizon") {
-                            HorizonRoute(onDraftChanged = { hasHorizonDraft = it })
-                        }
-                        composable("fitness") {
-                            FitnessRoute({ id ->
-                                nav.navigate("workout/$id") {
-                                    launchSingleTop =
-                                        true
-                                }
-                            })
-                        }
-                        composable(
-                            "workout/{id}",
-                            arguments =
-                                listOf(
-                                    navArgument("id") {
-                                        type =
-                                            NavType.LongType
-                                    },
-                                ),
-                        ) {
-                            WorkoutRoute(onDeleted = { nav.popBackStack() }, onDraftChanged = {
-                                hasFitnessDraft =
-                                    it
-                            })
-                        }
-                    }
-                    composable("you") {
-                        val profile: ProfileViewModel = koinViewModel()
-                        ProfileRoute(
-                            username,
-                            appearance.theme,
-                            appearance.error,
-                            onTheme,
-                            operation.running,
-                            hasFitnessDraft || hasHorizonDraft || hasGarageDraft || hasMealDraft,
-                            onLogout,
-                            editProfileName,
-                            { editProfileName = false },
-                            profile,
-                            onSensitiveEditsChanged = { hasPasswordEdits = it },
-                        ) { DebugGalleryAction { nav.navigate("gallery") } }
-                    }
-                    composable("notifications") {
-                        NotificationsRoute(onOpen = { target ->
-                            // Navigate directly to the owning graph child, retaining Notifications underneath.
-                            when (target) {
-                                NotificationTarget.Fitness -> nav.navigate("fitness") { launchSingleTop = true }
-                                NotificationTarget.Horizon -> nav.navigate("horizon") { launchSingleTop = true }
-                                NotificationTarget.Garage -> nav.navigate("garage") { launchSingleTop = true }
-                                NotificationTarget.MealPlan -> nav.navigate("mealplan") { launchSingleTop = true }
-                                is NotificationTarget.Workout -> nav.navigate("workout/${target.id}") { launchSingleTop = true }
-                                is NotificationTarget.Vehicle -> nav.navigate("vehicle/${target.id}") { launchSingleTop = true }
+                    NavHost(
+                        nav,
+                        startDestination = "home",
+                        modifier =
+                            Modifier
+                                .padding(fixedPadding)
+                                .consumeWindowInsets(insets),
+                    ) {
+                        composable("home") {
+                            HomeRoute(
+                                username,
+                                if (isTablet) ({ selectDestination("horizon") }) else openHorizon,
+                                onFitness = if (isTablet) ({ selectDestination("fitness") }) else openFitness,
+                                onNotifications = { nav.navigate("notifications") { launchSingleTop = true } },
+                                onMissingProfile = {
+                                    if (!onboardingOffered) {
+                                        onboardingOffered = true
+                                        onboardingVisible = true
+                                    }
+                                },
+                            )
+                            if (onboardingVisible) {
+                                ProfileSetupPrompt({
+                                    onboardingVisible = false
+                                    editProfileName = true
+                                    nav.navigate("you") {
+                                        launchSingleTop =
+                                            true
+                                    }
+                                }, { onboardingVisible = false })
                             }
-                        })
+                        }
+                        navigation(startDestination = "space-list", route = "spaces") {
+                            composable("space-list") {
+                                SpacesScreen({
+                                    nav.navigate("fitness") {
+                                        launchSingleTop =
+                                            true
+                                    }
+                                }, { nav.navigate("horizon") { launchSingleTop = true } }, {
+                                    nav.navigate("garage") {
+                                        launchSingleTop =
+                                            true
+                                    }
+                                }, { nav.navigate("mealplan") { launchSingleTop = true } })
+                            }
+                            composable("mealplan") { MealPlanRoute(onDraftChanged = { hasMealDraft = it }) }
+                            composable("garage") { GarageRoute(onDraftChanged = { hasGarageDraft = it }) }
+                            composable("vehicle/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { destination ->
+                                GarageRoute(onDraftChanged = { hasGarageDraft = it }, initialVehicle = destination.arguments?.getLong("id"))
+                            }
+                            composable("horizon") {
+                                HorizonRoute(onDraftChanged = { hasHorizonDraft = it })
+                            }
+                            composable("fitness") {
+                                FitnessRoute({ id ->
+                                    nav.navigate("workout/$id") {
+                                        launchSingleTop =
+                                            true
+                                    }
+                                })
+                            }
+                            composable(
+                                "workout/{id}",
+                                arguments =
+                                    listOf(
+                                        navArgument("id") {
+                                            type =
+                                                NavType.LongType
+                                        },
+                                    ),
+                            ) {
+                                WorkoutRoute(onDeleted = { nav.popBackStack() }, onDraftChanged = {
+                                    hasFitnessDraft =
+                                        it
+                                })
+                            }
+                        }
+                        composable("you") {
+                            val profile: ProfileViewModel = koinViewModel()
+                            ProfileRoute(
+                                username,
+                                appearance.theme,
+                                appearance.error,
+                                onTheme,
+                                operation.running,
+                                hasFitnessDraft || hasHorizonDraft || hasGarageDraft || hasMealDraft,
+                                onLogout,
+                                editProfileName,
+                                { editProfileName = false },
+                                profile,
+                                onSensitiveEditsChanged = { hasPasswordEdits = it },
+                            ) { DebugGalleryAction { nav.navigate("gallery") } }
+                        }
+                        composable("notifications") {
+                            NotificationsRoute(onOpen = { target ->
+                                // Navigate directly to the owning graph child, retaining Notifications underneath.
+                                when (target) {
+                                    NotificationTarget.Fitness -> nav.navigate("fitness") { launchSingleTop = true }
+                                    NotificationTarget.Horizon -> nav.navigate("horizon") { launchSingleTop = true }
+                                    NotificationTarget.Garage -> nav.navigate("garage") { launchSingleTop = true }
+                                    NotificationTarget.MealPlan -> nav.navigate("mealplan") { launchSingleTop = true }
+                                    is NotificationTarget.Workout -> nav.navigate("workout/${target.id}") { launchSingleTop = true }
+                                    is NotificationTarget.Vehicle -> nav.navigate("vehicle/${target.id}") { launchSingleTop = true }
+                                }
+                            })
+                        }
+                        debugGalleryDestination()
                     }
-                    debugGalleryDestination()
                 }
             }
         }
@@ -577,6 +599,7 @@ private fun SpacesScreen(
                     max = PulseTokens.readingWidth,
                 ).fillMaxWidth()
                 .verticalScroll(rememberScrollState())
+                .padding(LocalPulseContentPadding.current)
                 .padding(PulseTokens.medium),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
         ) {

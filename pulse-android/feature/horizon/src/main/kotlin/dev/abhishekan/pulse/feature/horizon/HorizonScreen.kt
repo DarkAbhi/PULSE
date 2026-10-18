@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.HorizonRecord
+import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -82,7 +83,14 @@ internal fun HorizonScreen(
             ?.currency
             .orEmpty()
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { width ->
-        Column(Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxWidth().imePadding()) {
+        Column(
+            Modifier
+                .widthIn(
+                    max = PulseTokens.contentWidth,
+                ).fillMaxWidth()
+                .padding(top = LocalPulseContentPadding.current.calculateTopPadding())
+                .imePadding(),
+        ) {
             if (state.draft == null ||
                 records
             ) {
@@ -114,15 +122,19 @@ internal fun HorizonScreen(
                     }
                 }
                 Column(
-                    Modifier.fillMaxWidth().verticalScroll(scroll).padding(
-                        if (width ==
-                            PulseWindowSize.Compact
-                        ) {
-                            PulseTokens.medium
-                        } else {
-                            PulseTokens.large
-                        },
-                    ),
+                    Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(scroll)
+                        .padding(bottom = LocalPulseContentPadding.current.calculateBottomPadding())
+                        .padding(
+                            if (width ==
+                                PulseWindowSize.Compact
+                            ) {
+                                PulseTokens.medium
+                            } else {
+                                PulseTokens.large
+                            },
+                        ),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                 ) {
                     if (state.reviewRequired) {

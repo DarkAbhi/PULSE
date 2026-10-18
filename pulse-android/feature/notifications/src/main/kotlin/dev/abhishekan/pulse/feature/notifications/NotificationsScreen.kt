@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.NotificationTarget
+import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -67,7 +68,13 @@ internal fun NotificationsScreen(
         Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.TopCenter) {
             LazyColumn(
                 Modifier.widthIn(max = PulseTokens.readingWidth + PulseTokens.cardPadding * 2).fillMaxSize(),
-                contentPadding = PaddingValues(padding),
+                contentPadding =
+                    PaddingValues(
+                        start = padding,
+                        top = padding + LocalPulseContentPadding.current.calculateTopPadding(),
+                        end = padding,
+                        bottom = padding + LocalPulseContentPadding.current.calculateBottomPadding(),
+                    ),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
             ) {
                 item {

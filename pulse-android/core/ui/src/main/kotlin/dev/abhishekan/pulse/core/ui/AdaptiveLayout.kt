@@ -1,9 +1,14 @@
 package dev.abhishekan.pulse.core.ui
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+
+// Apply system-bar spacing inside scrolling content so its viewport stays edge to edge.
+val LocalPulseContentPadding = staticCompositionLocalOf { PaddingValues(0.dp) }
 
 enum class PulseWindowSize { Compact, Medium, Expanded }
 

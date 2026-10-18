@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -79,6 +80,7 @@ fun FitnessScreen(
                         max = PulseTokens.contentWidth,
                     ).fillMaxWidth()
                     .verticalScroll(rememberScrollState())
+                    .padding(LocalPulseContentPadding.current)
                     .padding(
                         if (size ==
                             PulseWindowSize.Compact

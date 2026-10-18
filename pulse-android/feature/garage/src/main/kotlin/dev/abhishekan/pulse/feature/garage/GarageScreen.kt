@@ -39,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.GarageRecord
+import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -195,6 +196,7 @@ internal fun GarageScreen(
                 Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
+                    .padding(LocalPulseContentPadding.current)
                     .imePadding()
                     .padding(
                         if (size ==

@@ -58,7 +58,7 @@ private fun PlannerPreview(
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.large),
             ) {
                 MealCalendar(day.minusDays(6), day, day, true, {}, {}, {}, {}, {}, true, 4)
-                MealAgenda(day, day, meals, true, {}, {}, {}, {}, Modifier.fillMaxWidth())
+                MealAgenda(day, day, meals, true, {}, {}, {}, Modifier.fillMaxWidth())
             }
         }
     }

@@ -8,8 +8,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,17 +25,20 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.MealChange
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
@@ -123,7 +130,7 @@ internal fun MealPlanScreen(
                             } else {
                                 PulseTokens.cardPadding
                             },
-                        ),
+                        ).padding(bottom = if (state.draft == null && !state.managing) 96.dp else 0.dp),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
                 ) {
                     state.message?.let {
@@ -257,7 +264,6 @@ internal fun MealPlanScreen(
                                     !state.meals.loading &&
                                     state.meals.error == null &&
                                     state.draft == null,
-                                { vm.add(state.selected) },
                                 { vm.edit(MealDraft.edit(it)) },
                                 vm::toggle,
                                 {
@@ -273,6 +279,27 @@ internal fun MealPlanScreen(
                             )
                         }
                     }
+                }
+            }
+            if (!state.managing &&
+                state.draft == null &&
+                state.canWrite &&
+                !state.meals.loading &&
+                state.meals.error == null &&
+                state.meals.value != null
+            ) {
+                FloatingActionButton(
+                    onClick = { vm.add(state.selected) },
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(PulseTokens.cardPadding).size(72.dp),
+                    shape = CircleShape,
+                    containerColor = PulseTheme.colors.primary,
+                    contentColor = PulseTheme.colors.onPrimary,
+                ) {
+                    Icon(
+                        painterResource(R.drawable.meal_add),
+                        contentDescription = stringResource(R.string.pulse_mealplan_add_meal),
+                        modifier = Modifier.size(32.dp),
+                    )
                 }
             }
             if (state.meals.loading && !state.managing && (state.draft == null || records)) {

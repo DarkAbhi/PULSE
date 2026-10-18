@@ -1,5 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="pulse_mealplan_editor_subtitle">Add a little goodness to your day.</string>
+    <string name="pulse_mealplan_name_example">e.g. Oats &amp; fruits, paneer wrap</string>
+    <string name="pulse_mealplan_meal_date">Meal date</string>
     <string name="pulse_mealplan_title">Meal Plan</string>
     <string name="pulse_mealplan_empty_today">No meals planned for today</string>
     <string name="pulse_mealplan_empty_day">No meals planned for this day</string>

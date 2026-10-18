@@ -1,21 +1,40 @@
 package dev.abhishekan.pulse.feature.mealplan
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.MealTime
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
@@ -42,7 +61,7 @@ internal fun MealEditor(
     var timePicker by rememberSaveable { mutableStateOf<String?>(null) }
     val focus = LocalFocusManager.current
     PulseCard(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()) {
-        PulseText(
+        MealEditorHeader(
             if (draft.timeForm) {
                 stringResource(R.string.pulse_mealplan_new_meal_time)
             } else if (draft.id ==
@@ -52,8 +71,9 @@ internal fun MealEditor(
             } else {
                 stringResource(R.string.pulse_mealplan_edit_meal)
             },
-            style = PulseTextStyle.Title,
+            illustrated = !draft.timeForm,
         )
+        Spacer(Modifier.height(8.dp))
         PulseTextField(
             draft.name,
             {
@@ -75,7 +95,15 @@ internal fun MealEditor(
                     focus.clearFocus()
                     onSave()
                 }),
+            trailingIcon = { Icon(painterResource(R.drawable.meal_edit), null, Modifier.size(20.dp)) },
         )
+        if (!draft.timeForm && draft.name.isEmpty()) {
+            PulseText(
+                stringResource(R.string.pulse_mealplan_name_example),
+                style = PulseTextStyle.Body3,
+                color = PulseTheme.colors.textSecondary,
+            )
+        }
         if (draft.timeForm) {
             PulseTextButton(stringResource(R.string.pulse_mealplan_start_time_1_s, draft.start), {
                 focus.clearFocus()
@@ -91,11 +119,44 @@ internal fun MealEditor(
                 stringResource(R.string.pulse_mealplan_use_24_hour_times_an_end_earlier_than_the),
             )
         } else {
-            PulseTextButton(stringResource(R.string.pulse_mealplan_meal_date_1_s, draft.date), {
+            Spacer(Modifier.height(8.dp))
+            PulseText(stringResource(R.string.pulse_mealplan_meal_date), style = PulseTextStyle.Label)
+            val formattedDate = runCatching { LocalDate.parse(draft.date).format(mealDate) }.getOrDefault(draft.date)
+            val dateLabel = stringResource(R.string.pulse_mealplan_meal_date_1_s, formattedDate)
+            Surface(
+                onClick = {
+                    focus.clearFocus()
+                    datePicker = true
+                },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = PulseTokens.target)
+                        .testTag("meal-date")
+                        .semantics { contentDescription = dateLabel },
+                enabled = !busy,
+                shape = PulseTheme.shapes.large,
+                color = PulseTheme.colors.surfaceMuted.copy(alpha = 0.35f),
+                border = BorderStroke(1.dp, PulseTheme.colors.border),
+            ) {
+                Row(
+                    Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(painterResource(R.drawable.meal_date), null, Modifier.size(24.dp))
+                    PulseText(
+                        formattedDate,
+                        Modifier.weight(1f),
+                    )
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            PulseText(stringResource(R.string.pulse_mealplan_meal_time), style = PulseTextStyle.Label)
+            MealTimeChips(times, draft.timeId, !busy) {
                 focus.clearFocus()
-                datePicker =
-                    true
-            }, enabled = !busy)
+                onUpdate(draft.copy(timeId = it.id))
+            }
             val choices =
                 buildList {
                     if (draft.timeId != null &&
@@ -140,26 +201,32 @@ internal fun MealEditor(
                 )
             }
         }
-        PulseButton(
-            if (draft.timeForm) {
-                stringResource(
-                    R.string.pulse_mealplan_save_meal_time,
-                )
-            } else {
-                stringResource(R.string.pulse_mealplan_save_meal)
-            },
-            {
+        Spacer(Modifier.height(8.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            PulseButton(stringResource(R.string.pulse_mealplan_cancel), {
                 focus.clearFocus()
-                onSave()
-            },
-            Modifier.fillMaxWidth(),
-            enabled = !review,
-            loading = busy,
-        )
-        PulseTextButton(stringResource(R.string.pulse_mealplan_cancel), {
-            focus.clearFocus()
-            onCancel()
-        }, enabled = !busy)
+                onCancel()
+            }, Modifier.widthIn(min = 160.dp).weight(1f), enabled = !busy, variant = PulseButtonVariant.Secondary)
+            PulseButton(
+                if (draft.timeForm) {
+                    stringResource(
+                        R.string.pulse_mealplan_save_meal_time,
+                    )
+                } else {
+                    stringResource(R.string.pulse_mealplan_save_meal)
+                },
+                {
+                    focus.clearFocus()
+                    onSave()
+                },
+                Modifier.widthIn(min = 160.dp).weight(1f),
+                enabled = !review,
+                loading = busy,
+            )
+        }
     }
     if (datePicker) {
         PulseDatePickerDialog(

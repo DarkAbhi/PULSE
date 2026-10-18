@@ -6,7 +6,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -59,7 +58,6 @@ internal fun MealAgenda(
     today: LocalDate,
     meals: List<PlannedMeal>,
     enabled: Boolean,
-    onAdd: () -> Unit,
     onEdit: (PlannedMeal) -> Unit,
     onToggle: (PlannedMeal) -> Unit,
     onDelete: (PlannedMeal) -> Unit,
@@ -95,35 +93,8 @@ internal fun MealAgenda(
                         color = PulseTheme.colors.textSecondary,
                         textAlign = TextAlign.Center,
                     )
-                    PulseButton(stringResource(R.string.pulse_mealplan_add_meal), onAdd, enabled = enabled)
                 }
             } else {
-                FlowRow(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            PulseText(
-                                date.format(DateTimeFormatter.ofPattern("EEEE")),
-                                Modifier.semantics { heading() },
-                                PulseTextStyle.Display,
-                            )
-                            if (date == today) {
-                                Surface(color = PulseTheme.colors.primarySoft, shape = RoundedCornerShape(50)) {
-                                    PulseText(
-                                        stringResource(R.string.pulse_mealplan_today_label),
-                                        Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                                        color = PulseTheme.colors.action,
-                                    )
-                                }
-                            }
-                        }
-                        PulseText(date.format(DateTimeFormatter.ofPattern("d MMMM yyyy")), color = PulseTheme.colors.textSecondary)
-                    }
-                    PulseButton(stringResource(R.string.pulse_mealplan_add_meal), onAdd, enabled = enabled)
-                }
                 val sorted = meals.sortedWith(compareBy<PlannedMeal> { it.start == null }.thenBy { it.start }.thenBy { it.id })
                 // Deleted meal times can leave different saved ranges under Other meals.
                 val groups = sorted.groupBy { Triple(it.timeId, it.start, it.end) }.values.toList()

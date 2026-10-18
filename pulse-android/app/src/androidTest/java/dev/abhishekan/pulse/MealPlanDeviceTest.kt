@@ -329,7 +329,7 @@ class MealPlanDeviceTest {
         compose
             .onAllNodes(hasText(text) or hasContentDescription(text))[0]
             .apply {
-                if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) {
+                if (text != "Add meal" && (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail())) {
                     performScrollTo()
                 }
             }.assertIsDisplayed()
@@ -539,6 +539,9 @@ class MealPlanDeviceTest {
         val railItem = compose.onNode(hasText("Meals") and isSelectable())
         val railPosition = if (usesNavigationRail()) railItem.getUnclippedBoundsInRoot() else null
         compose.onAllNodesWithText("Lunch").assertCountEquals(1)
+        compose.onAllNodesWithText("Sunday").assertCountEquals(0)
+        compose.onAllNodesWithText("18 October 2026").assertCountEquals(0)
+        compose.onNode(hasContentDescription("Add meal")).assertIsDisplayed()
         compose.onNodeWithText("Ice cream").performScrollTo().assertIsDisplayed()
         screenshot("grouped-meals")
         screenshot("illustrated")
@@ -547,7 +550,7 @@ class MealPlanDeviceTest {
         screenshot("illustrated-bottom")
         compose.onNode(hasContentDescription("Next week")).performScrollTo().performClick()
         awaitText("No meals planned for this day")
-        compose.onNodeWithText("Add meal").performScrollTo().assertIsDisplayed()
+        compose.onNode(hasContentDescription("Add meal")).assertIsDisplayed()
         screenshot("illustrated-empty")
         assertEquals(0, mutations)
     }
@@ -632,12 +635,15 @@ class MealPlanDeviceTest {
         tap("Add meal")
         field("Meal name", "Rice bowl")
         pickTime("No meal time", "Lunch · 12:00–14:30")
-        tap("Meal date: $day")
+        compose.onNodeWithTag("meal-date").performScrollTo().performClick()
         screenshot("date-picker", true)
         confirm("Choose date")
         tap("Save meal")
         awaitText("Rice bowl")
         compose.onAllNodesWithText("Lunch").assertCountEquals(1)
+        compose.onAllNodesWithText("Sunday").assertCountEquals(0)
+        compose.onAllNodesWithText("18 October 2026").assertCountEquals(0)
+        compose.onNode(hasContentDescription("Add meal")).assertIsDisplayed()
         compose.onNodeWithText("Soup").assertIsDisplayed()
         assertEquals(1, mutations)
         tap("Planned · Rice bowl")

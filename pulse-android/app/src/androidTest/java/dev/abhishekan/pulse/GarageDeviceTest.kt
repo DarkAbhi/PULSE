@@ -517,8 +517,10 @@ class GarageDeviceTest {
         compose.onNodeWithText("Add vehicle").assertIsDisplayed()
         compose.onNodeWithText("View Comet").performScrollTo().assertIsDisplayed()
         screenshot("redesigned-collection")
-        compose.onNodeWithText("View Weekend adventure motorcycle with a long name")
-            .performScrollTo().assertIsDisplayed()
+        compose
+            .onNodeWithText("View Weekend adventure motorcycle with a long name")
+            .performScrollTo()
+            .assertIsDisplayed()
         select()
         compose.onNodeWithText("Care, at a glance").performScrollTo().assertIsDisplayed()
     }

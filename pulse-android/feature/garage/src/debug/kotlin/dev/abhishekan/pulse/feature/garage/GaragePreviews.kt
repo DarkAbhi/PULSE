@@ -11,8 +11,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import dev.abhishekan.pulse.core.domain.model.Vehicle
 import dev.abhishekan.pulse.core.domain.model.TirePressure
+import dev.abhishekan.pulse.core.domain.model.Vehicle
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens

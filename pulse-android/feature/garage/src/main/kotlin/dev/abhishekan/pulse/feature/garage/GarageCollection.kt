@@ -35,7 +35,10 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
 @Composable
-internal fun GarageCollectionHeader(enabled: Boolean, add: () -> Unit) {
+internal fun GarageCollectionHeader(
+    enabled: Boolean,
+    add: () -> Unit,
+) {
     val colors = PulseTheme.colors
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val wide = maxWidth >= 720.dp && LocalDensity.current.fontScale <= 1.3f
@@ -110,7 +113,12 @@ private fun GarageVehicleCard(
                         Modifier.size(56.dp).background(colors.primarySoft, RoundedCornerShape(16.dp)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_garage), null, Modifier.size(24.dp), tint = colors.action)
+                        Icon(
+                            painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_garage),
+                            null,
+                            Modifier.size(24.dp),
+                            tint = colors.action,
+                        )
                     }
                     PulseText(vehicle.name, Modifier.semantics { heading() }, PulseTextStyle.Title)
                 }
@@ -132,10 +140,11 @@ private fun GarageVehicleCard(
             enabled = enabled,
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
             shape = RoundedCornerShape(20.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = colors.primarySoft.copy(alpha = 0.5f),
-                contentColor = colors.action,
-            ),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = colors.primarySoft.copy(alpha = 0.5f),
+                    contentColor = colors.action,
+                ),
         ) {
             PulseText(stringResource(R.string.pulse_garage_view_1_s, vehicle.name), Modifier.weight(1f), PulseTextStyle.Label)
             Spacer(Modifier.size(16.dp))
@@ -148,8 +157,10 @@ private fun GarageVehicleCard(
 private fun GarageVehicleArtwork(modifier: Modifier) {
     Box(modifier, contentAlignment = Alignment.Center) {
         Box(
-            Modifier.size(240.dp, 144.dp)
-                .rotate(-12f).background(PulseTheme.colors.primarySoft.copy(alpha = 0.4f), RoundedCornerShape(48)),
+            Modifier
+                .size(240.dp, 144.dp)
+                .rotate(-12f)
+                .background(PulseTheme.colors.primarySoft.copy(alpha = 0.4f), RoundedCornerShape(48)),
         )
         // shortcut: shared artwork for all vehicles, replace when vehicle photos are supported.
         Image(painterResource(R.drawable.garage_vehicle), null, Modifier.matchParentSize().padding(8.dp), contentScale = ContentScale.Fit)

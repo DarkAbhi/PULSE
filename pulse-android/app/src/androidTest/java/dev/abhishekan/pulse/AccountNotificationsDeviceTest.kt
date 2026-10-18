@@ -11,10 +11,13 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.click
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -32,16 +35,25 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
 import dev.abhishekan.pulse.core.data.PulseDashboardRepository
+import dev.abhishekan.pulse.core.data.PulseFitnessRepository
 import dev.abhishekan.pulse.core.data.PulseGarageRepository
+import dev.abhishekan.pulse.core.data.PulseHorizonRepository
+import dev.abhishekan.pulse.core.data.PulseMealPlanRepository
 import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
 import dev.abhishekan.pulse.core.data.PulseProfileRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
+import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
+import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
+import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
+import dev.abhishekan.pulse.core.network.FitnessApi
 import dev.abhishekan.pulse.core.network.GarageApi
+import dev.abhishekan.pulse.core.network.HorizonApi
+import dev.abhishekan.pulse.core.network.MealPlanApi
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
 import dev.abhishekan.pulse.core.network.PulseApi
@@ -268,6 +280,9 @@ class AccountNotificationsDeviceTest {
                 single<ProfileRepository> { PulseProfileRepository(api, auth, dashboard) }
                 single<NotificationsRepository> { PulseNotificationsRepository(api, auth, dashboard) }
                 single<GarageRepository> { PulseGarageRepository(GarageApi(client), auth, GlobalContext.get().get()) }
+                single<FitnessRepository> { PulseFitnessRepository(FitnessApi(client), auth) }
+                single<HorizonRepository> { PulseHorizonRepository(HorizonApi(client), auth) }
+                single<MealPlanRepository> { PulseMealPlanRepository(MealPlanApi(client), auth) }
             }
         loadKoinModules(overrides)
     }
@@ -432,6 +447,60 @@ class AccountNotificationsDeviceTest {
             false
         tap("Refresh profile")
         awaitText("Asha")
+    }
+
+    @Test fun tabletRailOpensFeaturesDirectlyAndGuardsUnsavedPassword() {
+        org.junit.Assume.assumeTrue(
+            InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext.resources.configuration.smallestScreenWidthDp >= 600,
+        )
+        launch()
+        val labels = listOf("Home", "Fitness", "Horizon", "Garage", "Meals", "You")
+        val items = labels.map { hasText(it) and isSelectable() }
+        val bounds = items.map { compose.onNode(it).assertIsDisplayed().getUnclippedBoundsInRoot() }
+        bounds.zipWithNext().forEach { (first, next) ->
+            assertEquals(first.left.value, next.left.value, 1f)
+            assertTrue(first.bottom <= next.top)
+        }
+        compose.onNodeWithText("Spaces").assertDoesNotExist()
+        compose.onNode(items.first()).assertIsSelected()
+        screenshot("tablet-navigation")
+        items.drop(1).forEach { item ->
+            compose.onNode(item).performClick()
+            compose.onNode(item).assertIsSelected()
+            compose.onNodeWithText("Spaces").assertDoesNotExist()
+            compose.onNodeWithContentDescription("Back to Spaces").assertDoesNotExist()
+        }
+        awaitText("Account information")
+        tap("Change password")
+        field("Current password", "unsaved")
+        hideKeyboard()
+        compose.onNode(items[4]).performClick()
+        awaitText("Discard unsaved changes?")
+        confirm("Cancel")
+        compose.onNode(items[5]).assertIsSelected()
+        compose.onNode(items[3]).performClick()
+        confirm("Discard changes")
+        compose.onNode(items[3]).assertIsSelected()
+        assertEquals(0, passwordWrites)
+        scenario!!.recreate()
+        compose.onNode(items[3]).assertIsSelected()
+        compose.onNode(items[0]).performClick()
+        awaitText("Good to see you,")
+        openNotifications()
+        compose.onNode(items[0]).assertIsSelected()
+        tap("Open space")
+        awaitText("Your garage")
+        compose.onNode(items[3]).assertIsSelected()
+        compose.onNodeWithContentDescription("Back to notifications").performClick()
+        awaitText("Your latest updates")
+        compose.onNodeWithContentDescription("Back to Home").performClick()
+        compose.onNode(items[0]).assertIsSelected()
+        openNotifications()
+        compose.onNode(items[0]).performClick()
+        awaitText("Good to see you,")
+        compose.onNodeWithContentDescription("Back to Home").assertDoesNotExist()
     }
 
     @Test fun passwordFeedbackDuplicateProtectionClearingAndLogoutConfirmation() {

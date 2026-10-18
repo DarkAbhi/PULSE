@@ -138,7 +138,7 @@ Home uses a warm financial hero, supporting activity/notification cards, and an 
 
 Shared controls now live in **`core/ui/.../components/`**, one component per file; related models sit with the component that owns them. Themes/tokens and adaptive helpers remain beside that package. There are four type sizes, two weights, tabular/monospace metrics, 4dp spacing increments, 48dp targets, labeled selection semantics, native focus behavior, and tested contrast pairs. Error/retry cards use neutral surfaces so action text remains accessible.
 
-Layouts measure available width: compact below 600dp, medium from 600dp, expanded from 840dp. Phones stack cards; larger windows use readable columns. Tablet login puts branding beside a constrained form. Phone/landscape forms scroll with the keyboard open. Orientation is not locked. Bottom navigation is retained on large windows.
+Layouts measure available width: compact below 600dp, medium from 600dp, expanded from 840dp. Phones stack cards; larger windows use readable columns. Tablet login puts branding beside a constrained form. Phone/landscape forms scroll with the keyboard open. Orientation is not locked. Tablets (smallest screen width of at least 600dp) use a left navigation rail with Home, Fitness, Horizon, Garage, Meals, and You; phones retain Home, Spaces, and You in bottom navigation. The rail highlights the owning feature on workout and vehicle detail screens and scrolls when vertical space is limited.
 
 The debug-only component gallery is reachable from You. Gallery and auth/home previews cover phone/tablet, light/dark, loading/disabled/error/empty states, landscape, and large text. Preview amounts and test backend credentials are not part of release sources.
 

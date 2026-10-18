@@ -37,4 +37,7 @@
     <string name="pulse_app_open_meal_plan">"Open Meal Plan"</string>
     <string name="pulse_app_component_gallery">"Component gallery"</string>
     <string name="pulse_app_back_to_notifications">Back to notifications</string>
+    <string name="pulse_app_horizon">Horizon</string>
+    <string name="pulse_app_meals">Meals</string>
+    <string name="pulse_app_back_to_garage">Back to Garage</string>
 </resources>

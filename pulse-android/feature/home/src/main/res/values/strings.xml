@@ -20,4 +20,5 @@
     <string name="pulse_home_get_moving">Let’s get moving</string>
     <string name="pulse_home_view_fitness">View fitness</string>
     <string name="pulse_home_wave" translatable="false">" 👋"</string>
+    <string name="pulse_home_profile">Profile</string>
 </resources>

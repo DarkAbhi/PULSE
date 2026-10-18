@@ -463,9 +463,13 @@ class HorizonDeviceTest {
     }
 
     private fun tap(text: String) {
+        if (text == "You") {
+            compose.openProfileFromNavigation()
+            return
+        }
         awaitText(text)
         val node = compose.onNodeWithText(text)
-        if (text !in listOf("Home", "Spaces", "You")) node.performScrollTo()
+        if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) node.performScrollTo()
         node.performClick()
     }
 
@@ -594,7 +598,7 @@ class HorizonDeviceTest {
         tap("Home")
         awaitText("Asha")
         compose.onNodeWithText("USD 1910.25").performScrollTo().assertIsDisplayed()
-        tap("Spaces")
+        tap("Horizon")
         addBudget()
         assertEquals(
             "150.25",
@@ -766,13 +770,13 @@ class HorizonDeviceTest {
         scenario!!.recreate()
         awaitText("Unsaved finance")
         tap("Home")
-        tap("Spaces")
+        tap("Horizon")
         awaitText("Unsaved finance")
         tap("You")
         tap("Log out")
         awaitText("Log out and discard edits?")
         confirm("Cancel")
-        tap("Spaces")
+        tap("Horizon")
         awaitText("Unsaved finance")
         compose.onNodeWithText("Name").performScrollTo().performImeAction()
         screenshot("draft")

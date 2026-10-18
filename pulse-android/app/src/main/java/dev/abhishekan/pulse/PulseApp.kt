@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -212,24 +211,23 @@ private fun SignedInApp(
     clearError: () -> Unit,
 ) {
     val nav = rememberNavController()
+    val isTablet = LocalConfiguration.current.smallestScreenWidthDp >= 600
     var onboardingOffered by rememberSaveable { mutableStateOf(false) }
     var onboardingVisible by rememberSaveable { mutableStateOf(false) }
     var editProfileName by rememberSaveable { mutableStateOf(false) }
     var hasPasswordEdits by rememberSaveable { mutableStateOf(false) }
     var pendingDestination by remember { mutableStateOf<String?>(null) }
-    val isTablet = LocalConfiguration.current.smallestScreenWidthDp >= 600
     var hasFitnessDraft by rememberSaveable { mutableStateOf(false) }
     var hasMealDraft by rememberSaveable { mutableStateOf(false) }
     var hasGarageDraft by rememberSaveable { mutableStateOf(false) }
     var hasHorizonDraft by rememberSaveable { mutableStateOf(false) }
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route
-    val inSpaces = entry?.destination?.hierarchy?.any { it.route == "spaces" } == true
     val navigateTo: (String) -> Unit = { destination ->
         nav.navigate(destination) {
             popUpTo(nav.graph.findStartDestination().id) { saveState = true }
             launchSingleTop = true
-            restoreState = !isTablet || destination != "home"
+            restoreState = destination != "home"
         }
     }
     val selectDestination: (String) -> Unit = { destination ->
@@ -240,57 +238,6 @@ private fun SignedInApp(
         }
     }
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
-    val openFitness = {
-        nav.navigate("spaces") {
-            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-            launchSingleTop = true
-            restoreState = true
-        }
-        if (nav.currentDestination?.route in
-            listOf("space-list", "horizon", "garage", "mealplan")
-        ) {
-            nav.navigate("fitness") {
-                launchSingleTop =
-                    true
-            }
-        }
-    }
-    val openHorizon = {
-        nav.navigate("spaces") {
-            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-            launchSingleTop = true
-            restoreState = true
-        }
-        if (nav.currentDestination?.route !=
-            "horizon"
-        ) {
-            nav.navigate("horizon") { launchSingleTop = true }
-        }
-    }
-    val openGarage = {
-        nav.navigate("spaces") {
-            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-            launchSingleTop = true
-            restoreState = true
-        }
-        if (nav.currentDestination?.route !=
-            "garage"
-        ) {
-            nav.navigate("garage") { launchSingleTop = true }
-        }
-    }
-    val openMealPlan = {
-        nav.navigate("spaces") {
-            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-            launchSingleTop = true
-            restoreState = true
-        }
-        if (nav.currentDestination?.route !=
-            "mealplan"
-        ) {
-            nav.navigate("mealplan") { launchSingleTop = true }
-        }
-    }
     val snackbar = remember { SnackbarHostState() }
     val operationMessage = operation.error?.asString()
     LaunchedEffect(operationMessage) {
@@ -302,51 +249,50 @@ private fun SignedInApp(
     BoxWithConstraints(Modifier.fillMaxSize()) {
         // Some keyboards resize the root before IME insets arrive; preserve space for the form.
         val showBars = maxHeight >= PulseTokens.minimumNavigationHeight
-        val isTabletTab = isTablet && route in listOf("fitness", "horizon", "garage", "mealplan", "you")
+        val isTab = route in listOf("fitness", "horizon", "garage", "mealplan", "you")
         val showTopBar =
             route != "gallery" &&
                 route != "home" &&
                 showBars &&
-                (!isTabletTab || nav.previousBackStackEntry?.destination?.route == "notifications")
+                (!isTab || nav.previousBackStackEntry?.destination?.route == "notifications")
         val showBottomBar = !isTablet && route != "gallery" && showBars
+        val destinations = listOf("home", "fitness", "horizon", "garage", "mealplan", "you")
+        val selectedDestination =
+            when (route) {
+                "workout/{id}" -> "fitness"
+                "vehicle/{id}" -> "garage"
+                "notifications" -> "home"
+                else -> route
+            }
+        val navigationItems =
+            listOf(
+                PulseNavigationItem(stringResource(R.string.pulse_app_home)) {
+                    Icon(painterResource(UiR.drawable.pulse_home), null)
+                },
+                PulseNavigationItem(stringResource(R.string.pulse_app_fitness)) {
+                    Icon(painterResource(UiR.drawable.pulse_fitness), null)
+                },
+                PulseNavigationItem(stringResource(R.string.pulse_app_horizon)) {
+                    Icon(painterResource(UiR.drawable.pulse_horizon), null)
+                },
+                PulseNavigationItem(stringResource(R.string.pulse_app_garage)) {
+                    Icon(painterResource(UiR.drawable.pulse_garage), null)
+                },
+                PulseNavigationItem(stringResource(R.string.pulse_app_meals)) {
+                    Icon(painterResource(UiR.drawable.pulse_meals), null)
+                },
+                PulseNavigationItem(stringResource(R.string.pulse_app_you)) {
+                    Icon(painterResource(UiR.drawable.pulse_person), null)
+                },
+            )
+        val onNavigationSelected: (Int) -> Unit = { index ->
+            if (destinations[index] != selectedDestination || route == "notifications") {
+                selectDestination(destinations[index])
+            }
+        }
         Row(Modifier.fillMaxSize()) {
             if (isTablet && route != "gallery" && showBars) {
-                val destinations = listOf("home", "fitness", "horizon", "garage", "mealplan", "you")
-                val selectedDestination =
-                    when (route) {
-                        "workout/{id}" -> "fitness"
-                        "vehicle/{id}" -> "garage"
-                        "notifications" -> "home"
-                        else -> route
-                    }
-                PulseNavigationRail(
-                    listOf(
-                        PulseNavigationItem(stringResource(R.string.pulse_app_home)) {
-                            Icon(painterResource(UiR.drawable.pulse_home), null)
-                        },
-                        PulseNavigationItem(stringResource(R.string.pulse_app_fitness)) {
-                            Icon(painterResource(UiR.drawable.pulse_fitness), null)
-                        },
-                        PulseNavigationItem(stringResource(R.string.pulse_app_horizon)) {
-                            Icon(painterResource(UiR.drawable.pulse_horizon), null)
-                        },
-                        PulseNavigationItem(stringResource(R.string.pulse_app_garage)) {
-                            Icon(painterResource(UiR.drawable.pulse_garage), null)
-                        },
-                        PulseNavigationItem(stringResource(R.string.pulse_app_meals)) {
-                            Icon(painterResource(UiR.drawable.pulse_meals), null)
-                        },
-                        PulseNavigationItem(stringResource(R.string.pulse_app_you)) {
-                            Icon(painterResource(UiR.drawable.pulse_person), null)
-                        },
-                    ),
-                    destinations.indexOf(selectedDestination),
-                    { index ->
-                        if (destinations[index] != selectedDestination || route == "notifications") {
-                            selectDestination(destinations[index])
-                        }
-                    },
-                )
+                PulseNavigationRail(navigationItems, destinations.indexOf(selectedDestination), onNavigationSelected)
             }
             Scaffold(
                 containerColor = PulseTheme.colors.background,
@@ -361,7 +307,7 @@ private fun SignedInApp(
                 topBar = {
                     if (showTopBar) {
                         PulseTopAppBar(
-                            if (isTabletTab) {
+                            if (isTab) {
                                 ""
                             } else {
                                 when (route) {
@@ -379,7 +325,6 @@ private fun SignedInApp(
                             navigationIcon = {
                                 if (route == "notifications" ||
                                     nav.previousBackStackEntry?.destination?.route == "notifications" ||
-                                    (!isTablet && route in listOf("fitness", "horizon", "garage", "mealplan")) ||
                                     route == "vehicle/{id}" ||
                                     route == "workout/{id}"
                                 ) {
@@ -392,16 +337,7 @@ private fun SignedInApp(
                                                     stringResource(
                                                         R.string.pulse_app_back_to_home,
                                                     )
-                                                "vehicle/{id}" ->
-                                                    if (isTablet) {
-                                                        stringResource(R.string.pulse_app_back_to_garage)
-                                                    } else {
-                                                        stringResource(R.string.pulse_app_back_to_spaces)
-                                                    }
-                                                "fitness", "horizon", "garage", "mealplan" ->
-                                                    stringResource(
-                                                        R.string.pulse_app_back_to_spaces,
-                                                    )
+                                                "vehicle/{id}" -> stringResource(R.string.pulse_app_back_to_garage)
                                                 else -> stringResource(R.string.pulse_app_back_to_fitness)
                                             }
                                         },
@@ -420,23 +356,9 @@ private fun SignedInApp(
                 bottomBar = {
                     if (showBottomBar) {
                         PulseBottomNavigationBar(
-                            listOf(
-                                PulseNavigationItem(stringResource(R.string.pulse_app_home)) {
-                                    Icon(painterResource(UiR.drawable.pulse_home), null)
-                                },
-                                PulseNavigationItem(stringResource(R.string.pulse_app_spaces)) {
-                                    Icon(painterResource(UiR.drawable.pulse_spaces), null)
-                                },
-                                PulseNavigationItem(stringResource(R.string.pulse_app_you)) {
-                                    Icon(painterResource(UiR.drawable.pulse_person), null)
-                                },
-                            ),
-                            when {
-                                route == "you" -> 2
-                                inSpaces -> 1
-                                else -> 0
-                            },
-                            { index -> selectDestination(listOf("home", "spaces", "you")[index]) },
+                            navigationItems.take(5),
+                            destinations.indexOf(selectedDestination),
+                            onNavigationSelected,
                         )
                     }
                 },
@@ -468,9 +390,10 @@ private fun SignedInApp(
                         composable("home") {
                             HomeRoute(
                                 username,
-                                if (isTablet) ({ selectDestination("horizon") }) else openHorizon,
-                                onFitness = if (isTablet) ({ selectDestination("fitness") }) else openFitness,
+                                { selectDestination("horizon") },
+                                onFitness = { selectDestination("fitness") },
                                 onNotifications = { nav.navigate("notifications") { launchSingleTop = true } },
+                                onProfile = if (isTablet) null else ({ selectDestination("you") }),
                                 onMissingProfile = {
                                     if (!onboardingOffered) {
                                         onboardingOffered = true

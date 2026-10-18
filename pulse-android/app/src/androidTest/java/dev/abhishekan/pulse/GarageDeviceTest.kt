@@ -368,7 +368,11 @@ class GarageDeviceTest {
     }
 
     private fun tap(text: String) {
-        if (text in listOf("Home", "Spaces", "You")) {
+        if (text == "You") {
+            compose.openProfileFromNavigation()
+            return
+        }
+        if (text in listOf("Home", "Fitness", "Horizon", "Garage", "Meals", "You")) {
             scenario?.onActivity { activity ->
                 activity
                     .getSystemService(
@@ -380,9 +384,7 @@ class GarageDeviceTest {
         compose
             .onNodeWithText(text)
             .apply {
-                if (text !in
-                    listOf("Home", "Spaces", "You")
-                ) {
+                if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) {
                     performScrollTo()
                 }
             }.assertIsDisplayed()
@@ -428,7 +430,7 @@ class GarageDeviceTest {
         field("Password", "test-only")
         tap("Continue")
         awaitText("Asha")
-        tap("Explore Garage")
+        tap("Garage")
         awaitText("Your garage")
     }
 
@@ -589,13 +591,13 @@ class GarageDeviceTest {
         scenario!!.recreate()
         awaitText("Unsaved care")
         tap("Home")
-        tap("Spaces")
+        tap("Garage")
         awaitText("Unsaved care")
         tap("You")
         tap("Log out")
         awaitText("Log out and discard edits?")
         confirm("Cancel")
-        tap("Spaces")
+        tap("Garage")
         awaitText("Unsaved care")
         compose.onNodeWithText("Title").performScrollTo().performImeAction()
         compose.onNodeWithText("Amount (₹)").assertIsFocused()

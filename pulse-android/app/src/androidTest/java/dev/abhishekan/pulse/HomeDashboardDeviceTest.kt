@@ -87,21 +87,24 @@ class HomeDashboardDeviceTest {
         var horizon = 0
         var fitness = 0
         var notifications = 0
+        var profile = 0
         compose.setContent {
             PulseTheme(false) {
-                HomeScreen("fixture", state, {}, {}, {}, { horizon++ }, { fitness++ }, { notifications++ })
+                HomeScreen("fixture", state, {}, {}, {}, { horizon++ }, { fitness++ }, { notifications++ }, { profile++ })
             }
         }
         compose.onNodeWithText("Abhishek").assertIsDisplayed()
         assertMatchingCardHeights()
         capture("light")
         compose.onNodeWithContentDescription("Notifications").assertHasClickAction().performClick()
+        compose.onNodeWithContentDescription("Profile").assertHasClickAction().performClick()
         compose.onNodeWithText("₹ 100000.125").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("Financial Horizon").performScrollTo().performClick()
         compose.onNodeWithContentDescription("FITNESS · TODAY").performScrollTo().performClick()
         assertEquals(1, horizon)
         assertEquals(1, fitness)
         assertEquals(1, notifications)
+        assertEquals(1, profile)
     }
 
     @Test fun darkDashboardKeepsWorkoutReadable() {

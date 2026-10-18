@@ -295,8 +295,12 @@ class MealPlanDeviceTest {
     }
 
     private fun tap(text: String) {
+        if (text == "You") {
+            compose.openProfileFromNavigation()
+            return
+        }
         if (text in
-            listOf("Home", "Spaces", "You")
+            listOf("Home", "Fitness", "Horizon", "Garage", "Meals", "You")
         ) {
             scenario?.onActivity {
                 it
@@ -312,9 +316,7 @@ class MealPlanDeviceTest {
         compose
             .onAllNodes(hasText(text) or hasContentDescription(text))[0]
             .apply {
-                if (text !in
-                    listOf("Home", "Spaces", "You")
-                ) {
+                if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) {
                     performScrollTo()
                 }
             }.assertIsDisplayed()
@@ -372,12 +374,7 @@ class MealPlanDeviceTest {
         field("Password", "test-only")
         tap("Continue")
         awaitText("Home")
-        if (compose.onAllNodesWithText("Meals").fetchSemanticsNodes().isNotEmpty()) {
-            tap("Meals")
-        } else {
-            tap("Spaces")
-            tap("Open Meal Plan")
-        }
+        tap("Meals")
         awaitText(firstMeal)
     }
 
@@ -562,13 +559,13 @@ class MealPlanDeviceTest {
         scenario!!.recreate()
         awaitText("Unsaved bowl")
         tap("Home")
-        tap("Spaces")
+        tap("Meals")
         awaitText("Unsaved bowl")
         tap("You")
         tap("Log out")
         awaitText("Log out and discard edits?")
         confirm("Cancel")
-        tap("Spaces")
+        tap("Meals")
         awaitText("Unsaved bowl")
         field("Meal name", "")
         compose.onNodeWithText("Meal name").performImeAction()
@@ -581,7 +578,7 @@ class MealPlanDeviceTest {
         awaitText("Soup")
         compose.onNode(hasContentDescription("Planned · Soup")).performScrollTo().assertIsDisplayed()
         tap("Home")
-        tap("Spaces")
+        tap("Meals")
         awaitText("Soup")
         compose.onNode(hasContentDescription("Planned · Soup")).assertIsDisplayed()
     }

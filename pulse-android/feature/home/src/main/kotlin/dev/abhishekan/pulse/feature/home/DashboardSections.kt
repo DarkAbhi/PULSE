@@ -168,7 +168,6 @@ private fun IllustratedDashboardCard(
             ) {
                 Row(
                     Modifier
-                        .weight(1f)
                         .background(accent, RoundedCornerShape(24.dp))
                         .heightIn(min = PulseTokens.target)
                         .padding(horizontal = 16.dp, vertical = 12.dp),

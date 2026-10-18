@@ -217,7 +217,7 @@ class AuthNavigationDeviceTest {
         notifications.assertHasClickAction().performClick()
         compose.onNodeWithText("Vehicle care update").assertIsDisplayed()
         compose.onNodeWithContentDescription("Back to Home").performClick()
-        compose.onNodeWithText("You", substring = false).performClick()
+        compose.openProfileFromNavigation()
         compose.onNodeWithText("Appearance").assertIsDisplayed()
         compose.onNodeWithText("Log out").performScrollTo().performClick()
         compose

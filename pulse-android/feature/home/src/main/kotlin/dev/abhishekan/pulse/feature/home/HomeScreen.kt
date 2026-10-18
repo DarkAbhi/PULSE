@@ -65,6 +65,7 @@ fun HomeRoute(
     onFitness: () -> Unit,
     onNotifications: () -> Unit,
     onMissingProfile: () -> Unit = {},
+    onProfile: (() -> Unit)? = null,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -81,6 +82,7 @@ fun HomeRoute(
         onHorizon,
         onFitness,
         onNotifications,
+        onProfile,
     )
 }
 
@@ -94,6 +96,7 @@ fun HomeScreen(
     onHorizon: () -> Unit,
     onFitness: () -> Unit,
     onNotifications: () -> Unit,
+    onProfile: (() -> Unit)? = null,
 ) {
     val colors = PulseTheme.colors
     val light = colors == PulseLightColors
@@ -133,13 +136,17 @@ fun HomeScreen(
                     Image(painterResource(UiR.drawable.pulse_logo), null, Modifier.size(40.dp))
                     PulseText(
                         stringResource(R.string.pulse_home_brand),
-                        Modifier.padding(start = PulseTokens.small),
+                        Modifier.weight(1f).padding(start = PulseTokens.small),
                         PulseTextStyle.Heading2,
                         colors.textPrimary,
                     )
-                    Spacer(Modifier.weight(1f))
                     PulseIconButton(stringResource(R.string.pulse_home_notifications), onNotifications) {
                         Icon(painterResource(UiR.drawable.pulse_bell), null)
+                    }
+                    if (onProfile != null) {
+                        PulseIconButton(stringResource(R.string.pulse_home_profile), onProfile) {
+                            Icon(painterResource(UiR.drawable.pulse_person), null)
+                        }
                     }
                 }
                 DashboardClock()

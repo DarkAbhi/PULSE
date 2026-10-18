@@ -414,9 +414,13 @@ class FitnessDeviceTest {
     }
 
     private fun tap(text: String) {
+        if (text == "You") {
+            compose.openProfileFromNavigation()
+            return
+        }
         awaitText(text)
         val node = compose.onNodeWithText(text, substring = false)
-        if (text !in listOf("Home", "Spaces", "You")) node.performScrollTo()
+        if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) node.performScrollTo()
         node.performClick()
     }
 
@@ -448,8 +452,7 @@ class FitnessDeviceTest {
         compose.onNodeWithText("Password").performScrollTo().performTextInput("test-only-password")
         tap("Continue")
         awaitText("Asha")
-        tap("Spaces")
-        tap("Open Fitness")
+        tap("Fitness")
         awaitText("Record workout")
     }
 
@@ -512,7 +515,7 @@ class FitnessDeviceTest {
         tap("Home")
         awaitText("Asha")
         compose.onNodeWithText("Workout recorded").performScrollTo().assertIsDisplayed()
-        tap("Spaces")
+        tap("Fitness")
         tap("View workout")
         awaitText("Add exercise")
         enterOwnExercise("Squat")
@@ -558,11 +561,10 @@ class FitnessDeviceTest {
         compose.onNodeWithText("No workout recorded today.").performScrollTo().assertIsDisplayed()
         assertEquals(1, backend.records)
         assertEquals(3, backend.saves)
-        tap("Spaces")
-        compose.onNodeWithContentDescription("Back to Spaces").performClick()
-        awaitText("Make room for your everyday.")
-        compose.onNodeWithText("Open Financial Horizon", substring = false).assertHasClickAction()
-        tap("Open Fitness")
+        tap("Fitness")
+        compose.onNodeWithContentDescription("Back to Spaces").assertDoesNotExist()
+        tap("Home")
+        tap("Fitness")
         awaitText("Record workout")
     }
 
@@ -593,7 +595,7 @@ class FitnessDeviceTest {
         awaitText("Log out and discard edits?")
         screenshot("logout-dialog", dialog = true)
         confirm("Cancel")
-        tap("Spaces")
+        tap("Fitness")
         awaitText("Add an exercise")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("Back to Fitness").performClick()

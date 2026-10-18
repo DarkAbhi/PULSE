@@ -23,7 +23,7 @@ private val preview =
 @Preview(name = "Large text", widthDp = 360, heightDp = 800, fontScale = 2f)
 @Composable
 private fun HomeLightPreview() {
-    PulseTheme(false) { HomeScreen("preview", preview, {}, {}, {}, {}, {}, {}) }
+    PulseTheme(false) { HomeScreen("preview", preview, {}, {}, {}, {}, {}, {}, onProfile = {}) }
 }
 
 @Preview(name = "Dark partial failure", widthDp = 1024, heightDp = 900)

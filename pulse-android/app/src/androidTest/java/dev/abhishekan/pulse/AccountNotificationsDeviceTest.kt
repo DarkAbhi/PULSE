@@ -28,6 +28,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.core.view.ViewCompat
@@ -317,14 +318,16 @@ class AccountNotificationsDeviceTest {
     }
 
     private fun tap(text: String) {
+        if (text == "You") {
+            compose.openProfileFromNavigation()
+            return
+        }
         hideKeyboard()
         awaitText(text)
         compose
             .onAllNodesWithText(text)[0]
             .apply {
-                if (text !in
-                    listOf("Home", "Spaces", "You")
-                ) {
+                if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) {
                     performScrollTo()
                 }
             }.performClick()
@@ -452,49 +455,74 @@ class AccountNotificationsDeviceTest {
         awaitText("Asha")
     }
 
-    @Test fun tabletRailOpensFeaturesDirectlyAndGuardsUnsavedPassword() {
-        org.junit.Assume.assumeTrue(
-            InstrumentationRegistry
-                .getInstrumentation()
-                .targetContext.resources.configuration.smallestScreenWidthDp >= 600,
-        )
+    @Test fun adaptiveNavigationOpensFeaturesAndGuardsUnsavedPassword() {
         launch()
-        val labels = listOf("Home", "Fitness", "Horizon", "Garage", "Meals", "You")
+        val rail = usesNavigationRail()
+        val labels = listOf("Home", "Fitness", "Horizon", "Garage", "Meals") + if (rail) listOf("You") else emptyList()
         val items = labels.map { hasText(it) and isSelectable() }
-        val bounds = items.map { compose.onNode(it).assertIsDisplayed().getUnclippedBoundsInRoot() }
+        val bounds =
+            items.map {
+                compose
+                    .onNode(it)
+                    .apply { if (rail) performScrollTo() }
+                    .assertIsDisplayed()
+                    .getUnclippedBoundsInRoot()
+            }
         bounds.zipWithNext().forEach { (first, next) ->
-            assertEquals(first.left.value, next.left.value, 1f)
-            assertTrue(first.bottom <= next.top)
+            if (rail) {
+                assertEquals(first.left.value, next.left.value, 1f)
+                assertTrue(first.bottom <= next.top)
+            } else {
+                assertEquals(first.top.value, next.top.value, 1f)
+                assertTrue(first.right <= next.left)
+            }
         }
         compose.onNodeWithText("Spaces").assertDoesNotExist()
         compose.onNode(items.first()).assertIsSelected()
-        screenshot("tablet-navigation")
+        val actionLayouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        compose.onNodeWithText("Keep going", useUnmergedTree = true).performSemanticsAction(
+            androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult,
+        ) { it(actionLayouts) }
+        assertEquals(1, actionLayouts.single().lineCount)
+        if (!rail) {
+            compose.onNode(hasText("You") and isSelectable()).assertDoesNotExist()
+            val notifications = compose.onNodeWithContentDescription("Notifications").getUnclippedBoundsInRoot()
+            val profile = compose.onNodeWithContentDescription("Profile").assertIsDisplayed().getUnclippedBoundsInRoot()
+            assertEquals(notifications.top.value, profile.top.value, 1f)
+            assertTrue(notifications.right <= profile.left)
+        }
+        screenshot("adaptive-navigation")
         items.drop(1).forEach { item ->
-            compose.onNode(item).performClick()
+            compose.onNode(item).apply { if (rail) performScrollTo() }.performClick()
             compose.onNode(item).assertIsSelected()
             compose.onNodeWithText("Spaces").assertDoesNotExist()
             compose.onNodeWithContentDescription("Back to Spaces").assertDoesNotExist()
         }
+        if (!rail) openProfile()
         awaitText("Account information")
         val viewport = compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Account information"))).getUnclippedBoundsInRoot()
         val window = compose.onRoot().getUnclippedBoundsInRoot()
         assertEquals(window.top.value, viewport.top.value, 1f)
-        assertEquals(window.bottom.value, viewport.bottom.value, 1f)
-        screenshot("tablet-profile-edge-to-edge")
+        if (rail) {
+            assertEquals(window.bottom.value, viewport.bottom.value, 1f)
+        } else {
+            assertTrue(viewport.bottom <= bounds.first().top)
+        }
+        screenshot("profile-edge-to-edge")
         tap("Change password")
         field("Current password", "unsaved")
         hideKeyboard()
-        compose.onNode(items[4]).performClick()
+        compose.onNode(items[4]).apply { if (rail) performScrollTo() }.performClick()
         awaitText("Discard unsaved changes?")
         confirm("Cancel")
-        compose.onNode(items[5]).assertIsSelected()
-        compose.onNode(items[3]).performClick()
+        compose.onNodeWithText("Current password").assertExists()
+        compose.onNode(items[3]).apply { if (rail) performScrollTo() }.performClick()
         confirm("Discard changes")
         compose.onNode(items[3]).assertIsSelected()
         assertEquals(0, passwordWrites)
         scenario!!.recreate()
         compose.onNode(items[3]).assertIsSelected()
-        compose.onNode(items[0]).performClick()
+        compose.onNode(items[0]).apply { if (rail) performScrollTo() }.performClick()
         awaitText("Good to see you,")
         openNotifications()
         compose.onNode(items[0]).assertIsSelected()
@@ -506,7 +534,7 @@ class AccountNotificationsDeviceTest {
         compose.onNodeWithContentDescription("Back to Home").performClick()
         compose.onNode(items[0]).assertIsSelected()
         openNotifications()
-        compose.onNode(items[0]).performClick()
+        compose.onNode(items[0]).apply { if (rail) performScrollTo() }.performClick()
         awaitText("Good to see you,")
         compose.onNodeWithContentDescription("Back to Home").assertDoesNotExist()
     }
@@ -640,14 +668,14 @@ class AccountNotificationsDeviceTest {
         compose.onNodeWithText("Your spaces").assertDoesNotExist()
     }
 
-    @Test fun safeRoutingKeepsSpacesAndBackAndDoesNotDismiss() {
+    @Test fun safeRoutingSelectsGarageAndKeepsBackAndDoesNotDismiss() {
         launch()
         openNotifications()
         tap("Open space")
         awaitText("Your garage")
         compose
             .onNode(
-                hasText("Spaces") and isSelected(),
+                hasText("Garage") and isSelected(),
             ).assertExists()
         assertEquals(2, notifications.size)
         compose.onNodeWithContentDescription("Back to notifications").performClick()

@@ -3,6 +3,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -14,12 +15,14 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 fun PulseLoadingState(
     label: String,
     modifier: Modifier = Modifier,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
 ) {
     Column(
         modifier.semantics(mergeDescendants = true) {
             liveRegion = LiveRegionMode.Polite
         },
         verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
+        horizontalAlignment = horizontalAlignment,
     ) {
         CircularProgressIndicator(color = PulseTheme.colors.action, trackColor = PulseTheme.colors.surfaceStrong)
         PulseText(label)

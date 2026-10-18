@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse.feature.mealplan
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -246,7 +248,7 @@ internal fun MealPlanScreen(
                             !state.busy && state.draft == null,
                             state.times.value?.size,
                         )
-                        MealSectionContent(state.meals, vm::refreshMeals) { meals ->
+                        MealSectionContent(state.meals, vm::refreshMeals, showLoading = false) { meals ->
                             MealAgenda(
                                 state.selected,
                                 state.today,
@@ -271,6 +273,14 @@ internal fun MealPlanScreen(
                             )
                         }
                     }
+                }
+            }
+            if (state.meals.loading && !state.managing && (state.draft == null || records)) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    PulseLoadingState(
+                        stringResource(R.string.pulse_mealplan_refreshing_meal_plan),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    )
                 }
             }
         }
@@ -314,9 +324,10 @@ internal fun MealPlanScreen(
 private fun <T> MealSectionContent(
     section: MealSection<T>,
     retry: () -> Unit,
+    showLoading: Boolean = true,
     content: @Composable (T) -> Unit,
 ) {
-    if (section.loading) {
+    if (section.loading && showLoading) {
         PulseLoadingState(
             stringResource(R.string.pulse_mealplan_refreshing_meal_plan),
         )

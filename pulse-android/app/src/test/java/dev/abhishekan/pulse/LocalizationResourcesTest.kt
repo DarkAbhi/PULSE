@@ -20,6 +20,8 @@ class LocalizationResourcesTest {
             "feature/horizon",
             "feature/garage",
             "feature/mealplan",
+            "feature/profile",
+            "feature/notifications",
         )
 
     @Test fun libraryStringsCannotOverrideOtherFeaturesWhenAndroidMergesResources() {

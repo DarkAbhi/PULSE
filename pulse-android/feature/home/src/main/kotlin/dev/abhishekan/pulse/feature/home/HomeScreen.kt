@@ -37,9 +37,12 @@ fun HomeRoute(
     onHorizon: () -> Unit,
     onGarage: () -> Unit,
     onMealPlan: () -> Unit,
+    onMissingProfile: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val profile = (state.profile as? Section.Content)?.value
+    androidx.compose.runtime.LaunchedEffect(profile) { if (profile?.hasProfile == false) onMissingProfile() }
     // The backend computes today in Asia/Kolkata; refresh after returning to the app.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.retryWorkout() }
     HomeScreen(

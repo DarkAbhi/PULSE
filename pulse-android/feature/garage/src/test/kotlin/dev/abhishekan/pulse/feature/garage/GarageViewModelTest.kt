@@ -135,6 +135,15 @@ class GarageViewModelTest {
             models.put("garage", it)
         }
 
+    @Test fun missingSelectedVehicleReturnsToCollectionWithFeedbackEvenWhenListFinishesFirst() =
+        runTest {
+            repo.vehicles = emptyList()
+            val vm = vm(SavedStateHandle(mapOf("vehicle" to 999L)))
+            runCurrent()
+            assertNull(vm.uiState.value.vehicle)
+            assertEquals(Failure.NotFound.message, vm.uiState.value.message)
+        }
+
     @Test fun historyFailureKeepsCollectionAndRetries() =
         runTest {
             val vm = vm()

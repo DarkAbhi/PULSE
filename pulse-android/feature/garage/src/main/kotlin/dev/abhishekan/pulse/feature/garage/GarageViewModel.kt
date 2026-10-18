@@ -70,6 +70,7 @@ class GarageViewModel(
                             result.value.none { it.id == state.value.vehicle }
                         ) {
                             clearSelection()
+                            state.update { it.copy(message = Failure.NotFound.message) }
                         }
                         state.update { it.copy(vehicles = GarageSection(result.value, false)) }
                     }
@@ -87,6 +88,7 @@ class GarageViewModel(
                     is Outcome.Error -> {
                         if (result.failure == Failure.NotFound) {
                             clearSelection()
+                            state.update { it.copy(message = Failure.NotFound.message) }
                             refreshVehicles()
                         } else {
                             state.update {

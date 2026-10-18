@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +46,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dev.abhishekan.pulse.core.domain.model.Failure
+import dev.abhishekan.pulse.core.domain.model.NotificationTarget
 import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -58,23 +58,23 @@ import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationItem
-import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbar
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTopAppBar
-import dev.abhishekan.pulse.core.ui.label
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.feature.auth.LoginRoute
 import dev.abhishekan.pulse.feature.fitness.FitnessRoute
 import dev.abhishekan.pulse.feature.fitness.WorkoutRoute
 import dev.abhishekan.pulse.feature.garage.GarageRoute
 import dev.abhishekan.pulse.feature.home.HomeRoute
-import dev.abhishekan.pulse.feature.home.HomeViewModel
-import dev.abhishekan.pulse.feature.home.NotificationSection
 import dev.abhishekan.pulse.feature.horizon.HorizonRoute
 import dev.abhishekan.pulse.feature.mealplan.MealPlanRoute
+import dev.abhishekan.pulse.feature.notifications.NotificationsRoute
+import dev.abhishekan.pulse.feature.profile.ProfileRoute
+import dev.abhishekan.pulse.feature.profile.ProfileSetupPrompt
+import dev.abhishekan.pulse.feature.profile.ProfileViewModel
 import org.koin.androidx.compose.koinViewModel
 import dev.abhishekan.pulse.core.ui.R as UiR
 
@@ -202,6 +202,11 @@ private fun SignedInApp(
     clearError: () -> Unit,
 ) {
     val nav = rememberNavController()
+    var onboardingOffered by rememberSaveable { mutableStateOf(false) }
+    var onboardingVisible by rememberSaveable { mutableStateOf(false) }
+    var editProfileName by rememberSaveable { mutableStateOf(false) }
+    var hasPasswordEdits by rememberSaveable { mutableStateOf(false) }
+    var pendingTab by remember { mutableStateOf<Int?>(null) }
     var hasFitnessDraft by rememberSaveable { mutableStateOf(false) }
     var hasMealDraft by rememberSaveable { mutableStateOf(false) }
     var hasGarageDraft by rememberSaveable { mutableStateOf(false) }
@@ -291,7 +296,7 @@ private fun SignedInApp(
                             "fitness" -> stringResource(R.string.pulse_app_fitness)
                             "workout/{id}" -> stringResource(R.string.pulse_app_workout)
                             "horizon" -> stringResource(R.string.pulse_app_financial_horizon)
-                            "garage" -> stringResource(R.string.pulse_app_garage)
+                            "garage", "vehicle/{id}" -> stringResource(R.string.pulse_app_garage)
                             "mealplan" -> stringResource(R.string.pulse_app_meal_plan)
                             else -> stringResource(R.string.pulse_app_pulse)
                         },
@@ -317,20 +322,25 @@ private fun SignedInApp(
                                 route == "fitness" ||
                                 route == "horizon" ||
                                 route == "garage" ||
+                                route == "vehicle/{id}" ||
                                 route == "mealplan" ||
                                 route == "workout/{id}"
                             ) {
                                 PulseIconButton(
-                                    when (route) {
-                                        "notifications" ->
-                                            stringResource(
-                                                R.string.pulse_app_back_to_home,
-                                            )
-                                        "fitness", "horizon", "garage", "mealplan" ->
-                                            stringResource(
-                                                R.string.pulse_app_back_to_spaces,
-                                            )
-                                        else -> stringResource(R.string.pulse_app_back_to_fitness)
+                                    if (nav.previousBackStackEntry?.destination?.route == "notifications") {
+                                        stringResource(R.string.pulse_app_back_to_notifications)
+                                    } else {
+                                        when (route) {
+                                            "notifications" ->
+                                                stringResource(
+                                                    R.string.pulse_app_back_to_home,
+                                                )
+                                            "fitness", "horizon", "garage", "vehicle/{id}", "mealplan" ->
+                                                stringResource(
+                                                    R.string.pulse_app_back_to_spaces,
+                                                )
+                                            else -> stringResource(R.string.pulse_app_back_to_fitness)
+                                        }
                                     },
                                     { backDispatcher?.onBackPressed() },
                                 ) {
@@ -364,10 +374,14 @@ private fun SignedInApp(
                             else -> 0
                         },
                         { index ->
-                            nav.navigate(listOf("home", "spaces", "you")[index]) {
-                                popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            if (hasPasswordEdits && route == "you" && index != 2) {
+                                pendingTab = index
+                            } else {
+                                nav.navigate(listOf("home", "spaces", "you")[index]) {
+                                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                     )
@@ -386,7 +400,22 @@ private fun SignedInApp(
                             launchSingleTop =
                                 true
                         }
-                    }, openFitness, openHorizon, openGarage, openMealPlan)
+                    }, openFitness, openHorizon, openGarage, openMealPlan, onMissingProfile = {
+                        if (!onboardingOffered) {
+                            onboardingOffered = true
+                            onboardingVisible = true
+                        }
+                    })
+                    if (onboardingVisible) {
+                        ProfileSetupPrompt({
+                            onboardingVisible = false
+                            editProfileName = true
+                            nav.navigate("you") {
+                                launchSingleTop =
+                                    true
+                            }
+                        }, { onboardingVisible = false })
+                    }
                 }
                 navigation(startDestination = "space-list", route = "spaces") {
                     composable("space-list") {
@@ -404,6 +433,9 @@ private fun SignedInApp(
                     }
                     composable("mealplan") { MealPlanRoute(onDraftChanged = { hasMealDraft = it }) }
                     composable("garage") { GarageRoute(onDraftChanged = { hasGarageDraft = it }) }
+                    composable("vehicle/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { destination ->
+                        GarageRoute(onDraftChanged = { hasGarageDraft = it }, initialVehicle = destination.arguments?.getLong("id"))
+                    }
                     composable("horizon") {
                         HorizonRoute(onDraftChanged = { hasHorizonDraft = it })
                     }
@@ -432,110 +464,53 @@ private fun SignedInApp(
                     }
                 }
                 composable("you") {
-                    YouScreen(
+                    val profile: ProfileViewModel = koinViewModel()
+                    ProfileRoute(
                         username,
-                        appearance,
+                        appearance.theme,
+                        appearance.error,
                         onTheme,
                         operation.running,
                         hasFitnessDraft || hasHorizonDraft || hasGarageDraft || hasMealDraft,
                         onLogout,
-                        {
-                            nav.navigate("gallery")
-                        },
-                    )
+                        editProfileName,
+                        { editProfileName = false },
+                        profile,
+                        onSensitiveEditsChanged = { hasPasswordEdits = it },
+                    ) { DebugGalleryAction { nav.navigate("gallery") } }
                 }
                 composable("notifications") {
-                    val homeEntry = remember(it) { nav.getBackStackEntry("home") }
-                    val home: HomeViewModel = koinViewModel(viewModelStoreOwner = homeEntry)
-                    val state by home.uiState.collectAsStateWithLifecycle()
-                    Column(
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(
-                                rememberScrollState(),
-                            ).padding(PulseTokens.cardPadding),
-                        verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
-                    ) {
-                        PulseCard(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()) {
-                            PulseText(
-                                stringResource(R.string.pulse_app_your_latest_updates),
-                                style = PulseTextStyle.Title,
-                            )
-                            NotificationSection(state.notifications, home::retryNotifications)
+                    NotificationsRoute(onOpen = { target ->
+                        // Navigate directly to the owning graph child, retaining Notifications underneath.
+                        when (target) {
+                            NotificationTarget.Fitness -> nav.navigate("fitness") { launchSingleTop = true }
+                            NotificationTarget.Horizon -> nav.navigate("horizon") { launchSingleTop = true }
+                            NotificationTarget.Garage -> nav.navigate("garage") { launchSingleTop = true }
+                            NotificationTarget.MealPlan -> nav.navigate("mealplan") { launchSingleTop = true }
+                            is NotificationTarget.Workout -> nav.navigate("workout/${target.id}") { launchSingleTop = true }
+                            is NotificationTarget.Vehicle -> nav.navigate("vehicle/${target.id}") { launchSingleTop = true }
                         }
-                    }
+                    })
                 }
                 debugGalleryDestination()
             }
         }
     }
-}
-
-@Composable
-private fun YouScreen(
-    username: String,
-    appearance: AppearanceUiState,
-    onTheme: (ThemePreference) -> Unit,
-    loggingOut: Boolean,
-    hasFitnessDraft: Boolean,
-    onLogout: () -> Unit,
-    onGallery: () -> Unit,
-) {
-    var confirmLogout by rememberSaveable { mutableStateOf(false) }
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        Column(
-            Modifier
-                .widthIn(
-                    max = PulseTokens.readingWidth,
-                ).fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(PulseTokens.cardPadding),
-            verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
-        ) {
-            PulseCard(Modifier.fillMaxWidth()) {
-                PulseText(username, style = PulseTextStyle.Title)
-                PulseText(stringResource(R.string.pulse_app_your_private_everyday_hub))
-            }
-            PulseCard(Modifier.fillMaxWidth()) {
-                PulseText(
-                    stringResource(R.string.pulse_app_appearance),
-                    style = PulseTextStyle.Title,
-                )
-                Column(Modifier.selectableGroup()) {
-                    ThemePreference.entries.forEach { theme ->
-                        PulseRadioButton(appearance.theme == theme, {
-                            onTheme(theme)
-                        }, theme.label, Modifier.fillMaxWidth())
-                    }
-                }
-                appearance.error?.let { PulseText(it, color = MaterialTheme.colorScheme.error) }
-            }
-            PulseButton(stringResource(R.string.pulse_app_log_out), {
-                if (hasFitnessDraft) {
-                    confirmLogout =
-                        true
-                } else {
-                    onLogout()
-                }
-            }, Modifier.fillMaxWidth(), loading = loggingOut)
-            DebugGalleryAction(onGallery)
-        }
-    }
-    if (confirmLogout) {
+    pendingTab?.let { index ->
         PulseDialog(
-            stringResource(R.string.pulse_app_log_out_and_discard_edits),
-            stringResource(
-                R.string.pulse_app_you_have_unsaved_changes_logging_out_will_discard_this,
-            ),
-            stringResource(R.string.pulse_app_log_out),
+            stringResource(dev.abhishekan.pulse.feature.profile.R.string.pulse_profile_discard_title),
+            stringResource(dev.abhishekan.pulse.feature.profile.R.string.pulse_profile_discard_body),
+            stringResource(dev.abhishekan.pulse.feature.profile.R.string.pulse_profile_discard),
             {
-                confirmLogout = false
-                onLogout()
+                pendingTab = null
+                hasPasswordEdits = false
+                nav.navigate(listOf("home", "spaces", "you")[index]) {
+                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                    launchSingleTop = true
+                    restoreState = true
+                }
             },
-            {
-                confirmLogout =
-                    false
-            },
+            { pendingTab = null },
         )
     }
 }

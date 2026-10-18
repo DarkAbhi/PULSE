@@ -17,6 +17,8 @@ class ArchitectureTest {
                     "core:ui",
                     "feature:auth",
                     "feature:home",
+                    "feature:profile",
+                    "feature:notifications",
                     "feature:fitness",
                     "feature:horizon",
                     "feature:garage",
@@ -32,6 +34,8 @@ class ArchitectureTest {
             "feature/fitness" to setOf("core:domain", "core:ui"),
             "feature/auth" to setOf("core:domain", "core:ui"),
             "feature/home" to setOf("core:domain", "core:ui"),
+            "feature/profile" to setOf("core:domain", "core:ui"),
+            "feature/notifications" to setOf("core:domain", "core:ui"),
         )
 
     @Test fun moduleDirectionsRemainAcyclic() {
@@ -68,7 +72,7 @@ class ArchitectureTest {
         ).forEach {
             assertFalse("Domain imports $it", domain.contains(it))
         }
-        listOf("auth", "home", "fitness", "horizon", "garage", "mealplan").forEach { feature ->
+        listOf("auth", "home", "fitness", "horizon", "garage", "mealplan", "profile", "notifications").forEach { feature ->
             root
                 .resolve("feature/$feature/src")
                 .walkTopDown()
@@ -77,7 +81,7 @@ class ArchitectureTest {
                 }.forEach { file ->
                     (
                         listOf("core.data", "core.network", "io.ktor") +
-                            listOf("auth", "home", "fitness", "horizon", "garage", "mealplan")
+                            listOf("auth", "home", "fitness", "horizon", "garage", "mealplan", "profile", "notifications")
                                 .filter {
                                     it !=
                                         feature

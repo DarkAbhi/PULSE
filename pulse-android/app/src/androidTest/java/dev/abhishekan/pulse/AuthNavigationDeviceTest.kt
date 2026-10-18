@@ -145,6 +145,14 @@ class AuthNavigationDeviceTest {
             module {
                 single<AuthRepository> { auth }
                 single<DashboardRepository> { dashboard }
+                single<dev.abhishekan.pulse.core.domain.repository.ProfileRepository> {
+                    dev.abhishekan.pulse.core.data
+                        .PulseProfileRepository(api, auth, dashboard)
+                }
+                single<dev.abhishekan.pulse.core.domain.repository.NotificationsRepository> {
+                    dev.abhishekan.pulse.core.data
+                        .PulseNotificationsRepository(api, auth, dashboard)
+                }
             }
         loadKoinModules(overrides)
     }
@@ -202,6 +210,16 @@ class AuthNavigationDeviceTest {
         compose.onNodeWithText("You", substring = false).performClick()
         compose.onNodeWithText("Appearance").assertIsDisplayed()
         compose.onNodeWithText("Log out").performScrollTo().performClick()
+        compose
+            .onNode(
+                androidx.compose.ui.test
+                    .hasText("Log out") and
+                    androidx.compose.ui.test
+                        .hasAnyAncestor(
+                            androidx.compose.ui.test
+                                .isDialog(),
+                        ),
+            ).performClick()
         awaitText("Welcome back")
         compose.onNodeWithText("Asha").assertDoesNotExist()
         Assert.assertTrue(auth.session.value is SessionState.SignedOut)

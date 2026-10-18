@@ -52,6 +52,8 @@ android {
 }
 
 dependencies {
+    implementation(project(":feature:profile"))
+    implementation(project(":feature:notifications"))
     implementation(project(":core:domain"))
     implementation(project(":core:data"))
     implementation(project(":core:network"))

@@ -433,6 +433,14 @@ class HorizonDeviceTest {
             module {
                 single<AuthRepository> { auth }
                 single<DashboardRepository> { dashboard }
+                single<dev.abhishekan.pulse.core.domain.repository.ProfileRepository> {
+                    dev.abhishekan.pulse.core.data
+                        .PulseProfileRepository(api, auth, dashboard)
+                }
+                single<dev.abhishekan.pulse.core.domain.repository.NotificationsRepository> {
+                    dev.abhishekan.pulse.core.data
+                        .PulseNotificationsRepository(api, auth, dashboard)
+                }
                 single<HorizonRepository> { horizon }
             }
         loadKoinModules(overrides)

@@ -1,0 +1,20 @@
+<resources>
+    <string name="pulse_notifications_title">"Your latest updates"</string>
+    <string name="pulse_notifications_limit">"Showing up to 100 recent notifications. This is not a complete historical archive."</string>
+    <string name="pulse_notifications_refresh">"Refresh notifications"</string>
+    <string name="pulse_notifications_clear">"Clear all"</string>
+    <string name="pulse_notifications_clear_title">"Clear all notifications?"</string>
+    <string name="pulse_notifications_clear_body">"This dismisses all notifications on the server, including any beyond the 100 displayed here. They cannot be restored."</string>
+    <string name="pulse_notifications_dismiss">"Dismiss"</string>
+    <string name="pulse_notifications_dismiss_title">"Dismiss %1$s"</string>
+    <string name="pulse_notifications_dismissed">"Notifications updated."</string>
+    <string name="pulse_notifications_open">"Open space"</string>
+    <string name="pulse_notifications_open_title">"Open destination for %1$s"</string>
+    <string name="pulse_notifications_source">"Pulse"</string>
+    <string name="pulse_notifications_priority">"! Priority %1$s"</string>
+    <string name="pulse_notifications_empty">"All caught up"</string>
+    <string name="pulse_notifications_empty_body">"Your latest updates will appear here."</string>
+    <string name="pulse_notifications_loading">"Loading notifications"</string>
+    <string name="pulse_notifications_uncertain">"We couldn’t confirm the change. The last confirmed list is preserved until refresh succeeds. Review server notifications before another change."</string>
+    <string name="pulse_notifications_reviewed">"I reviewed the server notifications"</string>
+</resources>

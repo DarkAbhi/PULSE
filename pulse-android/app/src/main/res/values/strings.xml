@@ -26,12 +26,6 @@
     <string name="pulse_app_back_to_spaces">"Back to Spaces"</string>
     <string name="pulse_app_back_to_fitness">"Back to Fitness"</string>
     <string name="pulse_app_home">"Home"</string>
-    <string name="pulse_app_your_latest_updates">"Your latest updates"</string>
-    <string name="pulse_app_your_private_everyday_hub">"Your private everyday hub."</string>
-    <string name="pulse_app_appearance">"Appearance"</string>
-    <string name="pulse_app_log_out">"Log out"</string>
-    <string name="pulse_app_log_out_and_discard_edits">"Log out and discard edits?"</string>
-    <string name="pulse_app_you_have_unsaved_changes_logging_out_will_discard_this">"You have unsaved changes. Logging out will discard this device’s drafts. Saved server records stay in Pulse."</string>
     <string name="pulse_app_make_room_for_your_everyday">"Make room for your everyday."</string>
     <string name="pulse_app_find_your_rhythm_record_workouts_revisit_your_activity_and">"Find your rhythm. Record workouts, revisit your activity, and keep track of every set."</string>
     <string name="pulse_app_open_fitness">"Open Fitness"</string>
@@ -42,4 +36,5 @@
     <string name="pulse_app_a_little_care_for_your_day_plan_the_week">"A little care for your day. Plan the week and keep track of meals enjoyed."</string>
     <string name="pulse_app_open_meal_plan">"Open Meal Plan"</string>
     <string name="pulse_app_component_gallery">"Component gallery"</string>
+    <string name="pulse_app_back_to_notifications">Back to notifications</string>
 </resources>

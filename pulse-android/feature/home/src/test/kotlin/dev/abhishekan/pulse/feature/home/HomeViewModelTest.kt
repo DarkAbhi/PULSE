@@ -141,6 +141,8 @@ class HomeViewModelTest {
                     GetNotifications(repository),
                     ObserveFitnessChanges(fitness),
                     ObserveHorizonChanges(horizon),
+                    dev.abhishekan.pulse.core.domain.usecase
+                        .ObserveDashboardChanges(repository),
                 )
             models.put("home", vm)
             runCurrent()

@@ -35,5 +35,8 @@ import kotlinx.serialization.json.JsonPrimitive
     val id: Long,
     val title: String,
     val body: String? = null,
+    val source: String = "",
+    val priority: Int = 0,
+    @SerialName("target_path") val targetPath: String? = null,
     @SerialName("created_at") val createdAt: String? = null,
 )

@@ -63,8 +63,16 @@ import org.koin.androidx.compose.koinViewModel
 fun GarageRoute(
     onDraftChanged: (Boolean) -> Unit,
     viewModel: GarageViewModel = koinViewModel(),
+    initialVehicle: Long? = null,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    var initialVehicleOpened by rememberSaveable(initialVehicle) { mutableStateOf(false) }
+    LaunchedEffect(initialVehicle) {
+        if (!initialVehicleOpened) {
+            initialVehicleOpened = true
+            initialVehicle?.let(viewModel::select)
+        }
+    }
     val context = LocalContext.current
     val openReceiptTitle = stringResource(R.string.pulse_garage_open_receipt)
     var pickerVehicle by rememberSaveable { mutableStateOf<Long?>(null) }

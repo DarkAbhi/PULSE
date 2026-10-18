@@ -7,4 +7,7 @@ data class Notification(
     val title: String,
     val body: String?,
     val createdAt: Instant?,
+    val source: String = "",
+    val priority: Int = 0,
+    val targetPath: String? = null,
 )

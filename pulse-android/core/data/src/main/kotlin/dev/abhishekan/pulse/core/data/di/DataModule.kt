@@ -12,7 +12,9 @@ import dev.abhishekan.pulse.core.data.PulseFitnessRepository
 import dev.abhishekan.pulse.core.data.PulseGarageRepository
 import dev.abhishekan.pulse.core.data.PulseHorizonRepository
 import dev.abhishekan.pulse.core.data.PulseMealPlanRepository
+import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
 import dev.abhishekan.pulse.core.data.PulsePreferences
+import dev.abhishekan.pulse.core.data.PulseProfileRepository
 import dev.abhishekan.pulse.core.data.preferences
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
@@ -26,6 +28,8 @@ import org.koin.dsl.module
 
 val dataModule =
     module {
+        singleOf(::PulseProfileRepository) bind dev.abhishekan.pulse.core.domain.repository.ProfileRepository::class
+        singleOf(::PulseNotificationsRepository) bind dev.abhishekan.pulse.core.domain.repository.NotificationsRepository::class
         singleOf(::PulseMealPlanRepository) bind
             dev.abhishekan.pulse.core.domain.repository.MealPlanRepository::class
         singleOf(::AndroidReceiptFiles) bind dev.abhishekan.pulse.core.data.ReceiptFiles::class

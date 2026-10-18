@@ -256,6 +256,14 @@ class MealPlanDeviceTest {
             module {
                 single<AuthRepository> { auth }
                 single<DashboardRepository> { PulseDashboardRepository(api, auth) }
+                single<dev.abhishekan.pulse.core.domain.repository.ProfileRepository> {
+                    dev.abhishekan.pulse.core.data
+                        .PulseProfileRepository(api, auth, PulseDashboardRepository(api, auth))
+                }
+                single<dev.abhishekan.pulse.core.domain.repository.NotificationsRepository> {
+                    dev.abhishekan.pulse.core.data
+                        .PulseNotificationsRepository(api, auth, PulseDashboardRepository(api, auth))
+                }
                 single<MealPlanRepository> { repo }
             }
         loadKoinModules(overrides)

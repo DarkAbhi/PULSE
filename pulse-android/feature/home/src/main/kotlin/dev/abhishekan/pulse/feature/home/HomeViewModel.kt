@@ -23,12 +23,21 @@ class HomeViewModel(
     private val getNotifications: GetNotifications,
     changes: ObserveFitnessChanges,
     horizonChanges: ObserveHorizonChanges,
+    dashboardChanges: dev.abhishekan.pulse.core.domain.usecase.ObserveDashboardChanges,
 ) : ViewModel() {
     private val state = MutableStateFlow(HomeUiState())
     val uiState = state.asStateFlow()
     private val jobs = mutableMapOf<String, Job>()
 
     init {
+        viewModelScope.launch {
+            dashboardChanges().drop(1).collect {
+                jobs["profile"]?.cancel()
+                jobs["notifications"]?.cancel()
+                retryProfile()
+                retryNotifications()
+            }
+        }
         retryProfile()
         retryWorkout()
         retryHorizon()
@@ -77,7 +86,7 @@ class HomeViewModel(
     fun retryProfile() =
         load("profile", {
             getProfile()
-        }, { it.name == null }) { state, value -> state.copy(profile = value) }
+        }, { it.name == null && it.hasProfile }) { state, value -> state.copy(profile = value) }
 
     fun retryWorkout() =
         load("workout", {

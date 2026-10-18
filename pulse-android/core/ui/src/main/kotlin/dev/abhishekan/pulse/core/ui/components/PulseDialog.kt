@@ -16,6 +16,7 @@ fun PulseDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    dismissLabel: String = stringResource(R.string.pulse_ui_cancel),
 ) {
     AlertDialog(
         onDismiss,
@@ -24,7 +25,7 @@ fun PulseDialog(
         },
         modifier = modifier,
         dismissButton = {
-            PulseTextButton(stringResource(R.string.pulse_ui_cancel), onDismiss)
+            PulseTextButton(dismissLabel, onDismiss)
         },
         title = {
             PulseText(title, style = PulseTextStyle.Title)

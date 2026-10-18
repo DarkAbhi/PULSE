@@ -221,12 +221,11 @@ class GarageDeviceTest {
                                         request.body.toByteArray().decodeToString().substringBefore(
                                             "\r\n\r\n",
                                         )
-                                    check(
-                                        wire.contains(
-                                            "Content-Disposition: form-data; name=file; filename=",
-                                        ),
-                                    )
-                                    check(!wire.contains("; file;"))
+                                    val disposition = wire.lineSequence().first { it.startsWith("Content-Disposition:", true) }
+                                    check(disposition.contains("form-data", true))
+                                    check(disposition.contains("name=file") || disposition.contains("name=\"file\""))
+                                    check(disposition.contains("filename=receipt.pdf") || disposition.contains("filename=\"receipt.pdf\""))
+                                    check(!disposition.contains("; file;"))
                                 }
                                 if (parts.last() == "attachments" &&
                                     storageError
@@ -340,6 +339,14 @@ class GarageDeviceTest {
             module {
                 single<AuthRepository> { auth }
                 single<DashboardRepository> { PulseDashboardRepository(api, auth) }
+                single<dev.abhishekan.pulse.core.domain.repository.ProfileRepository> {
+                    dev.abhishekan.pulse.core.data
+                        .PulseProfileRepository(api, auth, PulseDashboardRepository(api, auth))
+                }
+                single<dev.abhishekan.pulse.core.domain.repository.NotificationsRepository> {
+                    dev.abhishekan.pulse.core.data
+                        .PulseNotificationsRepository(api, auth, PulseDashboardRepository(api, auth))
+                }
                 single<GarageRepository> { repo }
             }
         loadKoinModules(overrides)

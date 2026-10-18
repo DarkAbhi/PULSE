@@ -152,16 +152,15 @@ internal fun NotificationsCard(
             stringResource(R.string.pulse_home_recent_notifications),
             style = PulseTextStyle.Title,
         )
-        NotificationSection(section, onRetry, preview = true)
+        NotificationPreview(section, onRetry)
         PulseTextButton(stringResource(R.string.pulse_home_view_recent_updates), onOpen)
     }
 }
 
 @Composable
-fun NotificationSection(
+private fun NotificationPreview(
     section: Section<List<Notification>>,
     onRetry: () -> Unit,
-    preview: Boolean = false,
 ) {
     when (section) {
         Section.Loading ->
@@ -175,7 +174,7 @@ fun NotificationSection(
             )
         is Section.Error -> PulseErrorState(section.failure.message, onRetry)
         is Section.Content ->
-            section.value.take(if (preview) 2 else 5).forEach { item ->
+            section.value.take(2).forEach { item ->
                 Column(
                     Modifier.fillMaxWidth().padding(vertical = PulseTokens.small),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.small),

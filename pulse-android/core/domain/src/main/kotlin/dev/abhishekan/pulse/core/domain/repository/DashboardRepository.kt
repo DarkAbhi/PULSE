@@ -7,6 +7,8 @@ import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 
 interface DashboardRepository {
+    val changes: kotlinx.coroutines.flow.Flow<Long> get() = kotlinx.coroutines.flow.emptyFlow()
+
     suspend fun profile(): Outcome<Profile>
 
     suspend fun workout(): Outcome<WorkoutToday>

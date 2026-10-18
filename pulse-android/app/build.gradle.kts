@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -7,8 +9,13 @@ val releaseApiUrl =
     providers
         .gradleProperty(
             "pulse.releaseApiUrl",
-        ).orElse("https://pulse.invalid/api/")
+        ).orElse("http://100.115.134.90:3100/api/")
 val debugApiUrl = providers.gradleProperty("pulse.debugApiUrl").orElse("http://10.0.2.2:18081/api/")
+val releaseSigningFile = rootProject.file(".signing/release.properties")
+val releaseSigning = Properties()
+if (releaseSigningFile.exists()) {
+    releaseSigningFile.inputStream().use { releaseSigning.load(it) }
+}
 
 fun quoted(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
@@ -22,15 +29,29 @@ android {
         applicationId = "dev.abhishekan.pulse"
         minSdk = 28
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (releaseSigningFile.exists()) {
+            create("release") {
+                storeFile = rootProject.file(releaseSigning.getProperty("storeFile"))
+                storePassword = releaseSigning.getProperty("storePassword")
+                keyAlias = releaseSigning.getProperty("keyAlias")
+                keyPassword = releaseSigning.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
         debug { buildConfigField("String", "API_BASE_URL", quoted(debugApiUrl.get())) }
         release {
+            if (releaseSigningFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             buildConfigField("String", "API_BASE_URL", quoted(releaseApiUrl.get()))
             optimization {
                 enable = true

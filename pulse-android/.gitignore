@@ -19,3 +19,4 @@ local.properties
 !**/src/debug/**
 
 .kotlin/
+.signing/

@@ -16,9 +16,16 @@ class NetworkConfig(
         )
         require(uri.path == "/api/") { "API address must end in /api/" }
         require(
-            uri.scheme == "https" || (debug && uri.scheme == "http" && uri.host == "10.0.2.2"),
+            uri.scheme == "https" ||
+                (
+                    uri.scheme == "http" &&
+                        (
+                            (uri.host == "100.115.134.90" && uri.port == 3100) ||
+                                (debug && uri.host == "10.0.2.2")
+                        )
+                ),
         ) {
-            "HTTPS is required except for the debug emulator host"
+            "HTTP is allowed only for the Pulse Tailscale endpoint or the debug emulator host"
         }
     }
 }

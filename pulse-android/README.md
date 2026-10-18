@@ -34,7 +34,32 @@ Debug defaults to **`http://10.0.2.2:18081/api/`**, the emulator-accessible addr
 ./gradlew :app:assembleRelease -Ppulse.releaseApiUrl=https://your-production-host.example/api/
 ```
 
-Use an Android-reachable HTTPS address on real devices. Addresses must end in `/api/` and cannot contain credentials, query parameters, or fragments. Only debug permits HTTP to `10.0.2.2`; release rejects cleartext. The release fallback **`https://pulse.invalid/api/`** is deliberately non-routable. Supply the real HTTPS origin before using a release build. No account credentials are supplied or persisted by the app.
+Release defaults to **`http://100.115.134.90:3100/api/`**, the production web proxy to Go over Tailscale. The phone must have Tailscale connected and permission to reach that host and port. Port 80 does not route the Pulse API, and Go's port 18080 remains bound to the server's localhost. Addresses must end in `/api/` and cannot contain credentials, query parameters, or fragments. HTTP is allowed only for this exact host/port and, in debug, the emulator host `10.0.2.2`. Android's host exception is limited to `100.115.134.90`; the client additionally restricts the port. Other production hosts require HTTPS. No account credentials are supplied or persisted by the app.
+
+HTTP relies on Tailscale for transport encryption. The backend must issue non-Secure session cookies for this HTTP endpoint (`SESSION_COOKIE_SECURE=false`); Secure cookies cannot authenticate HTTP requests. Do not publish this HTTP service to the public internet.
+
+## Signed personal release
+
+Local signing uses the ignored `.signing/release.properties` file:
+
+```properties
+storeFile=.signing/pulse-release.p12
+storePassword=<local-keystore-password>
+keyAlias=pulse-release
+keyPassword=<local-key-password>
+```
+
+Keep this file and the keystore private, and back up the entire `.signing/` directory securely outside the checkout. The same key is required for future in-place updates. Without local signing properties, CI can still compile unsigned release artifacts.
+
+```sh
+./gradlew :app:assembleRelease
+```
+
+The signed APK is `app/build/outputs/apk/release/app-release.apk`. Increment `versionCode` for subsequent releases. A debug install uses a different signing key and must be uninstalled before installing the first release; uninstalling removes its local session and preferences.
+
+Always install and cold-launch the final signed APK before distributing it; debug/device tests and JVM unit tests do not exercise R8's transformed release code. Release 1.0 crashed during Koin initialization because R8 9.4.24 moved a Kotlin text subclass outside its package while its parent remained package-private. The targeted `-keeppackagenames kotlin.text` rule preserves that package while leaving release optimization enabled.
+
+Release 1.0.1 (versionCode 2) was verified on 19 October 2026: signed release build, release lint and formatting checks passed; updating the crashing APK succeeded; three cold launches on an isolated Android 15/API 35 emulator reached the login screen with no process crashes. The original APK's startup crash was reproduced on the same emulator before the fix. Physical-phone startup and authenticated live-backend workflows remain unverified.
 
 Backend contracts inspected:
 

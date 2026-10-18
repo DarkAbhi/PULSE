@@ -46,6 +46,22 @@ class SessionCookiesTest {
             expires = GMTDate(clock.millis() + 60_000),
         )
 
+    @Test fun tailnetHttpSessionPersistsOnlyForItsOwnOrigin() =
+        runTest {
+            val tailnet = NetworkConfig("http://100.115.134.90:3100/api/", false)
+            val loginUrl = Url(tailnet.baseUrl + "auth/login")
+            val store = Store()
+            val cookies = PersistentSessionCookies(store, tailnet, clock)
+            cookies.addCookie(loginUrl, cookie().copy(secure = false))
+            val restored = PersistentSessionCookies(store, tailnet, clock)
+            assertEquals("test-secret", restored.get(Url(tailnet.baseUrl + "profile")).single().value)
+            assertTrue(restored.get(Url("http://100.115.134.90:18080/api/profile")).isEmpty())
+            assertTrue(restored.get(Url("http://100.115.134.91:3100/api/profile")).isEmpty())
+            val secureOnly = PersistentSessionCookies(Store(), tailnet, clock)
+            secureOnly.addCookie(loginUrl, cookie())
+            assertTrue(secureOnly.get(loginUrl).isEmpty())
+        }
+
     @Test fun onlySessionCookieSurvivesReopeningWithAllScopeRules() =
         runTest {
             val store = Store()

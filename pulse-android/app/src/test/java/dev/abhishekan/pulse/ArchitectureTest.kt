@@ -177,7 +177,10 @@ class ArchitectureTest {
         assertTrue(manifest.contains("android:allowBackup=\"false\""))
         assertTrue(manifest.contains("android:usesCleartextTraffic=\"false\""))
         val release = root.resolve("app/src/main/res/xml/network_security_config.xml").readText()
-        assertFalse(release.contains("cleartextTrafficPermitted=\"true\""))
+        assertTrue(release.contains("<base-config cleartextTrafficPermitted=\"false\""))
+        assertEquals(1, Regex("<domain-config").findAll(release).count())
+        assertEquals(1, Regex("<domain ").findAll(release).count())
+        assertTrue(release.contains("includeSubdomains=\"false\">100.115.134.90</domain>"))
         val debug = root.resolve("app/src/debug/res/xml/network_security_config.xml").readText()
         assertTrue(debug.contains("includeSubdomains=\"false\">10.0.2.2"))
         val storage =

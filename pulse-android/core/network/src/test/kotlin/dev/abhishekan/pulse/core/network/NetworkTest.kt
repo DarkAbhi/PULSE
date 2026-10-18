@@ -47,6 +47,9 @@ class NetworkTest {
         listOf(
             "http://example.com/api/",
             "http://10.0.2.2/api/",
+            "http://100.115.134.90/api/",
+            "http://100.115.134.90:18080/api/",
+            "http://100.115.134.91:3100/api/",
             "https://user:secret@example.com/api/",
             "https://example.com/",
             "https://example.com/api/?key=secret",
@@ -59,6 +62,18 @@ class NetworkTest {
         NetworkConfig("https://example.com/api/", false)
         NetworkConfig("http://10.0.2.2:18081/api/", true)
     }
+
+    @Test fun releaseAllowsOnlyTheConfiguredTailnetHttpEndpoint() =
+        runTest {
+            val engine =
+                MockEngine { request ->
+                    assertEquals("http://100.115.134.90:3100/api/profile", request.url.toString())
+                    respond("{}")
+                }
+            pulseHttpClient(NetworkConfig("http://100.115.134.90:3100/api/", false), engine).use {
+                it.get("profile")
+            }
+        }
 
     @Test fun relativePathsUseApiBaseAndRequestsCarryNoCredentials() =
         runTest {

@@ -7,9 +7,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,6 +28,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -64,6 +68,7 @@ internal fun MealAgenda(
     BoxWithConstraints(modifier) {
         val columns = if (maxWidth / LocalDensity.current.fontScale >= 680.dp) 2 else 1
         val compact = maxWidth < 600.dp
+        val compactCard = (maxWidth - 24.dp * (columns - 1)) / columns < 400.dp || LocalDensity.current.fontScale > 1.3f
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             if (meals.isEmpty()) {
                 Column(
@@ -123,15 +128,19 @@ internal fun MealAgenda(
                 // Deleted meal times can leave different saved ranges under Other meals.
                 val groups = sorted.groupBy { Triple(it.timeId, it.start, it.end) }.values.toList()
                 groups.chunked(columns).forEach { row ->
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth().then(if (columns == 2) Modifier.height(IntrinsicSize.Min) else Modifier),
+                        horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    ) {
                         row.forEach { group ->
                             MealIllustratedCard(
                                 group,
+                                compactCard,
                                 enabled,
                                 onEdit,
                                 onToggle,
                                 onDelete,
-                                Modifier.weight(1f),
+                                Modifier.weight(1f).then(if (columns == 2) Modifier.fillMaxHeight() else Modifier),
                             )
                         }
                         if (row.size < columns) Spacer(Modifier.weight(1f))
@@ -145,6 +154,7 @@ internal fun MealAgenda(
 @Composable
 private fun MealIllustratedCard(
     meals: List<PlannedMeal>,
+    compact: Boolean,
     enabled: Boolean,
     edit: (PlannedMeal) -> Unit,
     toggle: (PlannedMeal) -> Unit,
@@ -170,81 +180,78 @@ private fun MealIllustratedCard(
             else -> colors.coral
         }
     Surface(
-        modifier,
+        modifier.testTag("meal-card-${meal.id}"),
         shape = RoundedCornerShape(20.dp),
         color = colors.surface,
         border = BorderStroke(1.dp, tint.copy(alpha = 0.3f)),
     ) {
-        BoxWithConstraints {
-            val compact = maxWidth < 400.dp || LocalDensity.current.fontScale > 1.3f
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Brush.horizontalGradient(listOf(tint.copy(alpha = 0.14f), Color.Transparent)),
-                    ).padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (LocalDensity.current.fontScale <= 1.5f) {
-                    Image(painterResource(artwork), null, Modifier.size(if (compact) 80.dp else 132.dp), contentScale = ContentScale.Fit)
-                }
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PulseText(meal.timeName ?: stringResource(R.string.pulse_mealplan_other_meals), style = PulseTextStyle.Title)
-                    val start = meal.start
-                    val end = meal.end
-                    if (start != null && end != null) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(painterResource(R.drawable.meal_clock), null, Modifier.size(16.dp), tint = colors.textSecondary)
-                            PulseText(
-                                stringResource(
-                                    if (end <
-                                        start
-                                    ) {
-                                        R.string.pulse_mealplan_overnight_time_range
-                                    } else {
-                                        R.string.pulse_mealplan_time_range
-                                    },
-                                    start.format(DateTimeFormatter.ofPattern("h:mm a")),
-                                    end.format(DateTimeFormatter.ofPattern("h:mm a")),
-                                ),
-                                style = PulseTextStyle.Body3,
-                                color = colors.textSecondary,
-                            )
-                        }
-                    }
-                    meals.forEach { item ->
-                        val consumptionLabel =
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.horizontalGradient(listOf(tint.copy(alpha = 0.14f), Color.Transparent)),
+                ).padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (LocalDensity.current.fontScale <= 1.5f) {
+                Image(painterResource(artwork), null, Modifier.size(if (compact) 80.dp else 132.dp), contentScale = ContentScale.Fit)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                PulseText(meal.timeName ?: stringResource(R.string.pulse_mealplan_other_meals), style = PulseTextStyle.Title)
+                val start = meal.start
+                val end = meal.end
+                if (start != null && end != null) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(painterResource(R.drawable.meal_clock), null, Modifier.size(16.dp), tint = colors.textSecondary)
+                        PulseText(
                             stringResource(
-                                R.string.pulse_mealplan_meal_consumption_label,
-                                stringResource(if (item.consumed) R.string.pulse_mealplan_consumed else R.string.pulse_mealplan_planned),
-                                item.name,
-                            )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            PulseCheckbox(
-                                item.consumed,
-                                { toggle(item) },
-                                item.name,
-                                Modifier.weight(1f).semantics { contentDescription = consumptionLabel },
-                                enabled = enabled,
-                            )
-                            PulseIconButton(
-                                stringResource(R.string.pulse_mealplan_edit_1_s, item.name),
-                                { edit(item) },
-                                Modifier
-                                    .background(colors.surfaceMuted.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                                    .border(1.dp, colors.border.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
-                                enabled = enabled,
-                            ) {
-                                Icon(painterResource(R.drawable.meal_edit), null)
-                            }
-                            PulseIconButton(
-                                stringResource(R.string.pulse_mealplan_delete_1_s, item.name),
-                                { delete(item) },
-                                enabled = enabled,
-                            ) {
-                                Icon(painterResource(R.drawable.meal_delete), null, tint = colors.error)
-                            }
+                                if (end <
+                                    start
+                                ) {
+                                    R.string.pulse_mealplan_overnight_time_range
+                                } else {
+                                    R.string.pulse_mealplan_time_range
+                                },
+                                start.format(DateTimeFormatter.ofPattern("h:mm a")),
+                                end.format(DateTimeFormatter.ofPattern("h:mm a")),
+                            ),
+                            style = PulseTextStyle.Body3,
+                            color = colors.textSecondary,
+                        )
+                    }
+                }
+                meals.forEach { item ->
+                    val consumptionLabel =
+                        stringResource(
+                            R.string.pulse_mealplan_meal_consumption_label,
+                            stringResource(if (item.consumed) R.string.pulse_mealplan_consumed else R.string.pulse_mealplan_planned),
+                            item.name,
+                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        PulseCheckbox(
+                            item.consumed,
+                            { toggle(item) },
+                            item.name,
+                            Modifier.weight(1f).semantics { contentDescription = consumptionLabel },
+                            enabled = enabled,
+                        )
+                        PulseIconButton(
+                            stringResource(R.string.pulse_mealplan_edit_1_s, item.name),
+                            { edit(item) },
+                            Modifier
+                                .background(colors.surfaceMuted.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                .border(1.dp, colors.border.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                            enabled = enabled,
+                        ) {
+                            Icon(painterResource(R.drawable.meal_edit), null)
+                        }
+                        PulseIconButton(
+                            stringResource(R.string.pulse_mealplan_delete_1_s, item.name),
+                            { delete(item) },
+                            enabled = enabled,
+                        ) {
+                            Icon(painterResource(R.drawable.meal_delete), null, tint = colors.error)
                         }
                     }
                 }

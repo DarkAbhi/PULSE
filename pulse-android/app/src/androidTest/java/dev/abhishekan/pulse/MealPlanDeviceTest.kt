@@ -20,6 +20,7 @@ import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -545,6 +546,47 @@ class MealPlanDeviceTest {
         compose.onNodeWithText("Add meal").performScrollTo().assertIsDisplayed()
         screenshot("illustrated-empty")
         assertEquals(0, mutations)
+    }
+
+    @Test fun mealCardsMatchOnlyTheirTabletRowHeight() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        times.clear()
+        meals.clear()
+        listOf("Breakfast", "Lunch", "Dinner").forEachIndexed { index, name ->
+            val id = index + 1L
+            val hour = listOf("07", "12", "19")[index]
+            times[id] = obj("""{"id":$id,"name":"$name","start_time":"$hour:00","end_time":"$hour:30","is_default":true}""")
+            meals[id] = obj("""{"id":$id,"date":"$day","name":"Meal $id","meal_time_id":$id,"is_consumed":false}""")
+        }
+        meals[4] = obj("""{"id":4,"date":"$day","name":"Extra lunch","meal_time_id":2,"is_consumed":false}""")
+        try {
+            shell("wm size 2560x1800")
+            shell("wm density 320")
+            launchPlanner("Meal 1")
+
+            fun card(id: Int) = compose.onNodeWithTag("meal-card-$id").getUnclippedBoundsInRoot()
+            val breakfast = card(1)
+            val lunch = card(2)
+            assertEquals(breakfast.top, lunch.top)
+            assertEquals(breakfast.bottom - breakfast.top, lunch.bottom - lunch.top)
+            assertTrue("The next row keeps its own height", card(3).bottom - card(3).top < lunch.bottom - lunch.top)
+            compose.onNodeWithText("Extra lunch").assertIsDisplayed()
+            screenshot("equal-height-tablet-meals")
+            shell("wm size 800x1800")
+            compose.waitForIdle()
+            val phoneBreakfast = card(1)
+            val phoneLunch = card(2)
+            assertTrue("Phone cards remain vertically stacked", phoneLunch.top >= phoneBreakfast.bottom)
+            assertTrue(
+                "Phone cards keep their content height",
+                phoneLunch.bottom - phoneLunch.top > phoneBreakfast.bottom - phoneBreakfast.top,
+            )
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+            compose.waitForIdle()
+        }
     }
 
     @Test fun weeklyPlannerMealCrudConsumptionAndEmptyWeeks() {

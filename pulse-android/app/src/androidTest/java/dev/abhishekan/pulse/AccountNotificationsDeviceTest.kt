@@ -607,7 +607,7 @@ class AccountNotificationsDeviceTest {
         awaitText("We couldn’t confirm the change.", true)
     }
 
-    @Test fun dismissClearBeyondLimitAndHomePreviewStayConsistent() {
+    @Test fun dismissClearBeyondLimitAndReturnToHome() {
         launch()
         openNotifications()
         screenshot("notifications")
@@ -627,7 +627,9 @@ class AccountNotificationsDeviceTest {
         awaitText("All caught up")
         assertTrue(notifications.isEmpty())
         compose.onNodeWithContentDescription("Back to Home").performClick()
-        awaitText("All caught up")
+        awaitText("Good to see you,")
+        compose.onNodeWithText("Recent notifications").assertDoesNotExist()
+        compose.onNodeWithText("Your spaces").assertDoesNotExist()
     }
 
     @Test fun safeRoutingKeepsSpacesAndBackAndDoesNotDismiss() {

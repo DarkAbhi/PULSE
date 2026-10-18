@@ -10,6 +10,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -197,6 +198,15 @@ class AuthNavigationDeviceTest {
         login()
         compose.onNodeWithText("₹ 32000.125").performScrollTo().assertIsDisplayed()
         screenshot("home")
+        val background = compose.onNodeWithTag("dashboard-background").getUnclippedBoundsInRoot()
+        val screen = compose.onRoot().getUnclippedBoundsInRoot()
+        Assert.assertEquals(screen.top.value, background.top.value, 0.5f)
+        if (InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext.resources.configuration.smallestScreenWidthDp >= 600
+        ) {
+            Assert.assertEquals(screen.bottom.value, background.bottom.value, 0.5f)
+        }
         val notifications = compose.onNodeWithContentDescription("Notifications")
         val target = notifications.getUnclippedBoundsInRoot()
         Assert.assertTrue(

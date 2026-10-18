@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -36,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -343,7 +340,11 @@ private fun SignedInApp(
                 contentColor = PulseTheme.colors.textPrimary,
                 modifier = Modifier.weight(1f),
                 contentWindowInsets =
-                    if (showBars) {
+                    if (route == "home") {
+                        ScaffoldDefaults.contentWindowInsets.only(
+                            if (isTablet) WindowInsetsSides.Horizontal else WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
+                        )
+                    } else if (showBars) {
                         ScaffoldDefaults.contentWindowInsets
                     } else {
                         WindowInsets.safeDrawing.only(
@@ -352,6 +353,7 @@ private fun SignedInApp(
                     },
                 topBar = {
                     if (route != "gallery" &&
+                        route != "home" &&
                         showBars &&
                         (!isTabletTab || nav.previousBackStackEntry?.destination?.route == "notifications")
                     ) {
@@ -371,31 +373,8 @@ private fun SignedInApp(
                                     else -> stringResource(R.string.pulse_app_pulse)
                                 }
                             },
-                            actions = {
-                                if (route ==
-                                    "home"
-                                ) {
-                                    PulseIconButton(stringResource(R.string.pulse_app_notifications), {
-                                        nav.navigate("notifications") {
-                                            launchSingleTop =
-                                                true
-                                        }
-                                    }) {
-                                        Icon(
-                                            painterResource(UiR.drawable.pulse_bell),
-                                            contentDescription = null,
-                                        )
-                                    }
-                                }
-                            },
                             navigationIcon = {
-                                if (route == "home") {
-                                    Image(
-                                        painterResource(UiR.drawable.pulse_logo),
-                                        contentDescription = null,
-                                        modifier = Modifier.padding(start = PulseTokens.medium).size(40.dp),
-                                    )
-                                } else if (route == "notifications" ||
+                                if (route == "notifications" ||
                                     nav.previousBackStackEntry?.destination?.route == "notifications" ||
                                     (!isTablet && route in listOf("fitness", "horizon", "garage", "mealplan")) ||
                                     route == "vehicle/{id}" ||
@@ -468,16 +447,9 @@ private fun SignedInApp(
                     composable("home") {
                         HomeRoute(
                             username,
-                            {
-                                nav.navigate("notifications") {
-                                    launchSingleTop =
-                                        true
-                                }
-                            },
-                            if (isTablet) ({ selectDestination("fitness") }) else openFitness,
                             if (isTablet) ({ selectDestination("horizon") }) else openHorizon,
-                            if (isTablet) ({ selectDestination("garage") }) else openGarage,
-                            if (isTablet) ({ selectDestination("mealplan") }) else openMealPlan,
+                            onFitness = if (isTablet) ({ selectDestination("fitness") }) else openFitness,
+                            onNotifications = { nav.navigate("notifications") { launchSingleTop = true } },
                             onMissingProfile = {
                                 if (!onboardingOffered) {
                                     onboardingOffered = true

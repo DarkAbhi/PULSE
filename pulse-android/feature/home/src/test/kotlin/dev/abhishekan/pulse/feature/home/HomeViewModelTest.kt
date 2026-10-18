@@ -19,7 +19,6 @@ import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
-import dev.abhishekan.pulse.core.domain.usecase.GetNotifications
 import dev.abhishekan.pulse.core.domain.usecase.GetProfile
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
 import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
@@ -105,6 +104,7 @@ class HomeViewModelTest {
             val profile = CompletableDeferred<Outcome<Profile>>()
             var profileCalls = 0
             var workoutCalls = 0
+            var workoutRecorded = false
             var notificationCalls = 0
             var horizonFails = true
             val repository =
@@ -116,7 +116,7 @@ class HomeViewModelTest {
 
                     override suspend fun workout(): Outcome<WorkoutToday> {
                         workoutCalls++
-                        return Outcome.Success(WorkoutToday(false))
+                        return Outcome.Success(WorkoutToday(workoutRecorded))
                     }
 
                     override suspend fun horizon(): Outcome<Horizon> =
@@ -138,7 +138,6 @@ class HomeViewModelTest {
                     GetProfile(repository),
                     GetWorkoutToday(repository),
                     GetHorizon(repository),
-                    GetNotifications(repository),
                     ObserveFitnessChanges(fitness),
                     ObserveHorizonChanges(horizon),
                     dev.abhishekan.pulse.core.domain.usecase
@@ -149,7 +148,6 @@ class HomeViewModelTest {
             assertEquals(Section.Loading, vm.uiState.value.profile)
             assertEquals(Section.Empty, vm.uiState.value.workout)
             assertEquals(Section.Error(Failure.Server), vm.uiState.value.horizon)
-            assertTrue(vm.uiState.value.notifications is Section.Content)
             vm.retryProfile()
             runCurrent()
             assertEquals(1, profileCalls)
@@ -157,20 +155,33 @@ class HomeViewModelTest {
             vm.retryHorizon()
             runCurrent()
             assertTrue(vm.uiState.value.horizon is Section.Content)
-            assertEquals(1, notificationCalls)
+            assertEquals(0, notificationCalls)
             profile.complete(Outcome.Success(Profile(null)))
             runCurrent()
             assertEquals(Section.Empty, vm.uiState.value.profile)
+            workoutRecorded = true
             fitness.changes.value++
             runCurrent()
+            assertEquals(Section.Content(WorkoutToday(true)), vm.uiState.value.workout)
             assertEquals(2, workoutCalls)
             horizonFails = true
             horizon.changes.value++
             runCurrent()
             assertEquals(Section.Error(Failure.Server), vm.uiState.value.horizon)
             assertEquals(2, workoutCalls)
-            assertEquals(1, notificationCalls)
+            assertEquals(0, notificationCalls)
         }
+
+    @Test fun dashboardClockUsesIndiaDateAndTwelveHourTime() {
+        assertEquals(
+            "Sunday, 18 Oct 2026 · 12:00 AM",
+            formatDashboardDateTime(java.time.Instant.parse("2026-10-17T18:30:00Z"), java.util.Locale.US),
+        )
+        assertEquals(
+            "Sunday, 18 Oct 2026 · 1:05 PM",
+            formatDashboardDateTime(java.time.Instant.parse("2026-10-18T07:35:00Z"), java.util.Locale.US),
+        )
+    }
 
     @Test fun currencyFormattingDoesNotRoundBackendPrecision() {
         assertEquals(

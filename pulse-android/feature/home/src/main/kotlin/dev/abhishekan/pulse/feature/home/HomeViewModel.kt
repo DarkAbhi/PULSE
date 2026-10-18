@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
-import dev.abhishekan.pulse.core.domain.usecase.GetNotifications
 import dev.abhishekan.pulse.core.domain.usecase.GetProfile
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
 import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
@@ -20,7 +19,6 @@ class HomeViewModel(
     private val getProfile: GetProfile,
     private val getWorkout: GetWorkoutToday,
     private val getHorizon: GetHorizon,
-    private val getNotifications: GetNotifications,
     changes: ObserveFitnessChanges,
     horizonChanges: ObserveHorizonChanges,
     dashboardChanges: dev.abhishekan.pulse.core.domain.usecase.ObserveDashboardChanges,
@@ -33,15 +31,12 @@ class HomeViewModel(
         viewModelScope.launch {
             dashboardChanges().drop(1).collect {
                 jobs["profile"]?.cancel()
-                jobs["notifications"]?.cancel()
                 retryProfile()
-                retryNotifications()
             }
         }
         retryProfile()
         retryWorkout()
         retryHorizon()
-        retryNotifications()
         viewModelScope.launch {
             horizonChanges().drop(1).collect {
                 jobs["horizon"]?.cancel()
@@ -97,9 +92,4 @@ class HomeViewModel(
         load("horizon", {
             getHorizon()
         }, { false }) { state, value -> state.copy(horizon = value) }
-
-    fun retryNotifications() =
-        load("notifications", {
-            getNotifications()
-        }, { it.isEmpty() }) { state, value -> state.copy(notifications = value) }
 }

@@ -1,43 +1,23 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="pulse_home_financial_horizon">Financial Horizon</string>
     <string name="pulse_home_good_to_see_you">"Good to see you,"</string>
     <string name="pulse_home_a_little_perspective_on_your_everyday">"A little perspective on your everyday."</string>
     <string name="pulse_home_retry_profile">"Retry profile"</string>
     <string name="pulse_home_loading_your_profile">"Loading your profile"</string>
-    <string name="pulse_home_financial_horizon">"FINANCIAL HORIZON"</string>
     <string name="pulse_home_loading_your_horizon">"Loading your horizon"</string>
     <string name="pulse_home_no_summary_yet">"No summary yet"</string>
     <string name="pulse_home_your_financial_summary_will_appear_here_when_available">"Your financial summary will appear here when available."</string>
     <string name="pulse_home_your_room_to_move">"Your room to move"</string>
-    <string name="pulse_home_overcommitted_this_month">"Overcommitted this month"</string>
-    <string name="pulse_home_uncommitted_this_month">"Uncommitted this month"</string>
-    <string name="pulse_home_starting_pool">"Starting pool"</string>
-    <string name="pulse_home_fixed_obligations">"Fixed obligations"</string>
-    <string name="pulse_home_open_financial_horizon">"Open Financial Horizon"</string>
     <string name="pulse_home_fitness_today">"FITNESS · TODAY"</string>
     <string name="pulse_home_loading_today_s_workout">"Loading today’s workout"</string>
-    <string name="pulse_home_room_for_movement">"Room for movement"</string>
     <string name="pulse_home_no_workout_recorded_today">"No workout recorded today."</string>
     <string name="pulse_home_workout_recorded">"Workout recorded"</string>
-    <string name="pulse_home_a_little_effort_a_little_momentum_you_showed_up">"A little effort, a little momentum. You showed up today."</string>
-    <string name="pulse_home_open_fitness">"Open Fitness"</string>
-    <string name="pulse_home_today_follows_india_time_asia_kolkata">"Today follows India time (Asia/Kolkata)."</string>
-    <string name="pulse_home_recent_notifications">"Recent notifications"</string>
-    <string name="pulse_home_view_recent_updates">"View recent updates"</string>
-    <string name="pulse_home_loading_notifications">"Loading notifications"</string>
-    <string name="pulse_home_all_caught_up">"All caught up"</string>
-    <string name="pulse_home_your_latest_updates_will_appear_here">"Your latest updates will appear here."</string>
-    <string name="pulse_home_your_spaces">"Your spaces"</string>
-    <string name="pulse_home_explore_fitness">"Explore Fitness"</string>
-    <string name="pulse_home_explore_financial_horizon">"Explore Financial Horizon"</string>
-    <string name="pulse_home_explore_garage">"Explore Garage"</string>
-    <string name="pulse_home_explore_meal_plan">"Explore Meal Plan"</string>
-    <string name="pulse_home_fitness">"Fitness"</string>
-    <string name="pulse_home_workouts_and_movement">"Workouts and movement"</string>
-    <string name="pulse_home_your_monthly_room_to_move">"Your monthly room to move"</string>
-    <string name="pulse_home_garage">"Garage"</string>
-    <string name="pulse_home_vehicles_fuel_and_maintenance">"Vehicles, fuel, and maintenance"</string>
-    <string name="pulse_home_meal_plan">"Meal Plan"</string>
-    <string name="pulse_home_your_weekly_meals">"Your weekly meals"</string>
     <string name="pulse_home_money">"%1$s %2$s"</string>
+    <string name="pulse_home_brand">Pulse</string>
+    <string name="pulse_home_notifications">Notifications</string>
+    <string name="pulse_home_keep_going">Keep going</string>
+    <string name="pulse_home_get_moving">Let’s get moving</string>
+    <string name="pulse_home_view_fitness">View fitness</string>
+    <string name="pulse_home_wave" translatable="false">" 👋"</string>
 </resources>

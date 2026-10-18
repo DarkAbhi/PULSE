@@ -2,6 +2,7 @@ package dev.abhishekan.pulse
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -13,6 +14,7 @@ import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -501,7 +503,20 @@ class HorizonDeviceTest {
         field("Password", "test-only-password")
         tap("Continue")
         awaitText("Asha")
-        tap("Open Financial Horizon")
+        listOf(
+            "Recent notifications",
+            "Your spaces",
+            "Open Financial Horizon",
+            "Open Fitness",
+            "Today follows India time (Asia/Kolkata).",
+            "Starting pool",
+            "Fixed obligations",
+        ).forEach {
+            compose.onNodeWithText(it).assertDoesNotExist()
+        }
+        compose.onNodeWithContentDescription("Financial Horizon").assertHasClickAction()
+        screenshot("home-dashboard")
+        compose.onNodeWithContentDescription("Financial Horizon").performScrollTo().performClick()
         awaitText("Your room to move")
     }
 
@@ -561,6 +576,11 @@ class HorizonDeviceTest {
                 hasText(action) and hasAnyAncestor(hasTestTag("horizon-record-$id")),
             ).performScrollTo()
             .performClick()
+    }
+
+    @Test fun homeDashboardOpensFinancialHorizon() {
+        launchHorizon()
+        awaitText("UNCOMMITTED THIS MONTH")
     }
 
     @Test fun configurationBudgetsAndObligationsWorkAndHomeRefreshes() {

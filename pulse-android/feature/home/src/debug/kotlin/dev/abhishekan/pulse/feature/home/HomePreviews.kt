@@ -16,7 +16,6 @@ private val preview =
             Section.Content(
                 Horizon("₹", BigDecimal("50000.00"), BigDecimal("32000.125"), BigDecimal("18000.00")),
             ),
-        notifications = Section.Empty,
     )
 
 @Preview(name = "Phone", widthDp = 360, heightDp = 800)
@@ -24,7 +23,7 @@ private val preview =
 @Preview(name = "Large text", widthDp = 360, heightDp = 800, fontScale = 2f)
 @Composable
 private fun HomeLightPreview() {
-    PulseTheme(false) { HomeScreen("preview", preview, {}, {}, {}, {}, {}, {}, {}, {}, {}) }
+    PulseTheme(false) { HomeScreen("preview", preview, {}, {}, {}, {}, {}, {}) }
 }
 
 @Preview(name = "Dark partial failure", widthDp = 1024, heightDp = 900)
@@ -32,6 +31,6 @@ private fun HomeLightPreview() {
 private fun HomeDarkPreview() {
     PulseTheme(true) {
         HomeScreen("preview", preview.copy(horizon = Section.Error(Failure.Connection)), {
-        }, {}, {}, {}, {}, {}, {}, {}, {})
+        }, {}, {}, {}, {}, {})
     }
 }

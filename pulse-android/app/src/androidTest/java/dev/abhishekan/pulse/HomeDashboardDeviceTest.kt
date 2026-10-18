@@ -1,0 +1,130 @@
+package dev.abhishekan.pulse
+
+import android.graphics.Bitmap
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.Density
+import androidx.test.platform.app.InstrumentationRegistry
+import dev.abhishekan.pulse.core.domain.model.Failure
+import dev.abhishekan.pulse.core.domain.model.Horizon
+import dev.abhishekan.pulse.core.domain.model.Profile
+import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.feature.home.HomeScreen
+import dev.abhishekan.pulse.feature.home.HomeUiState
+import dev.abhishekan.pulse.feature.home.Section
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+import java.io.File
+import java.math.BigDecimal
+
+class HomeDashboardDeviceTest {
+    @get:Rule val compose = createComposeRule()
+
+    private val state =
+        HomeUiState(
+            profile = Section.Content(Profile("Abhishek")),
+            workout = Section.Empty,
+            horizon =
+                Section.Content(
+                    Horizon("₹", BigDecimal("150000"), BigDecimal("100000.125"), BigDecimal("50000")),
+                ),
+        )
+
+    private fun show(
+        dark: Boolean = false,
+        fontScale: Float = 1f,
+        failure: Boolean = false,
+        onRetry: () -> Unit = {},
+    ) {
+        compose.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
+                PulseTheme(dark) {
+                    HomeScreen(
+                        "fixture",
+                        if (failure) state.copy(horizon = Section.Error(Failure.Connection)) else state,
+                        {},
+                        {},
+                        onRetry,
+                        {},
+                        {},
+                        {},
+                    )
+                }
+            }
+        }
+    }
+
+    private fun assertMatchingCardHeights() {
+        val finance = compose.onNodeWithContentDescription("Financial Horizon").getUnclippedBoundsInRoot()
+        val fitness = compose.onNodeWithContentDescription("FITNESS · TODAY").getUnclippedBoundsInRoot()
+        assertEquals((finance.bottom - finance.top).value, (fitness.bottom - fitness.top).value, 0.5f)
+    }
+
+    private fun capture(name: String) {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val bitmap = compose.onRoot().captureToImage().asAndroidBitmap()
+        File(context.getExternalFilesDir(null), "dashboard-$name.png").outputStream().use {
+            assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it))
+        }
+        bitmap.recycle()
+    }
+
+    @Test fun lightDashboardKeepsExactBalanceAndActions() {
+        var horizon = 0
+        var fitness = 0
+        var notifications = 0
+        compose.setContent {
+            PulseTheme(false) {
+                HomeScreen("fixture", state, {}, {}, {}, { horizon++ }, { fitness++ }, { notifications++ })
+            }
+        }
+        compose.onNodeWithText("Abhishek").assertIsDisplayed()
+        assertMatchingCardHeights()
+        capture("light")
+        compose.onNodeWithContentDescription("Notifications").assertHasClickAction().performClick()
+        compose.onNodeWithText("₹ 100000.125").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithContentDescription("Financial Horizon").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("FITNESS · TODAY").performScrollTo().performClick()
+        assertEquals(1, horizon)
+        assertEquals(1, fitness)
+        assertEquals(1, notifications)
+    }
+
+    @Test fun darkDashboardKeepsWorkoutReadable() {
+        show(dark = true)
+        assertMatchingCardHeights()
+        capture("dark")
+        compose.onNodeWithText("No workout recorded today.").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test fun largeTextKeepsCardsScrollable() {
+        show(fontScale = 2f)
+        compose.onNodeWithText("₹ 100000.125").performScrollTo().assertIsDisplayed()
+        assertMatchingCardHeights()
+        capture("large-text")
+        compose.onNodeWithText("Let’s get moving").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test fun failedFinanceStillRetriesWithoutOpeningCard() {
+        var retries = 0
+        show(failure = true, onRetry = { retries++ })
+        assertMatchingCardHeights()
+        compose.onNodeWithText("Try again").performScrollTo().performClick()
+        assertEquals(1, retries)
+        compose.onNodeWithText("No workout recorded today.").performScrollTo().assertIsDisplayed()
+    }
+}

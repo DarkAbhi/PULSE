@@ -448,6 +448,7 @@ class FitnessDeviceTest {
         compose.onNodeWithText("Password").performScrollTo().performTextInput("test-only-password")
         tap("Continue")
         awaitText("Asha")
+        tap("Spaces")
         tap("Open Fitness")
         awaitText("Record workout")
     }
@@ -554,7 +555,7 @@ class FitnessDeviceTest {
         assertTrue(backend.exercises.isEmpty())
         tap("Home")
         awaitText("Asha")
-        compose.onNodeWithText("Room for movement").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("No workout recorded today.").performScrollTo().assertIsDisplayed()
         assertEquals(1, backend.records)
         assertEquals(3, backend.saves)
         tap("Spaces")

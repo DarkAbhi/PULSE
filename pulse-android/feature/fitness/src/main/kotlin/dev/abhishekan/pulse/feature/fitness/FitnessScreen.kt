@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,6 +24,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -93,7 +93,7 @@ fun FitnessScreen(
                 PulseText(
                     stringResource(R.string.pulse_fitness_fitness),
                     style = PulseTextStyle.Label,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = PulseTheme.colors.action,
                 )
                 PulseText(
                     stringResource(R.string.pulse_fitness_find_your_rhythm),
@@ -158,13 +158,13 @@ fun FitnessScreen(
                                     if (metric.subtitle.isNotBlank()) {
                                         PulseText(
                                             metric.subtitle,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            color = PulseTheme.colors.textSecondary,
                                         )
                                     }
                                     metric.note?.let {
                                         PulseText(
                                             it,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            color = PulseTheme.colors.textSecondary,
                                         )
                                     }
                                 }
@@ -283,7 +283,7 @@ private fun SelectedDay(
             stringResource(
                 R.string.pulse_fitness_dates_follow_asia_kolkata_future_dated_visits_appear_here,
             ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = PulseTheme.colors.textSecondary,
         )
     }
 }

@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 
 @Composable
@@ -20,7 +21,7 @@ fun PulseLoadingState(
         },
         verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
     ) {
-        CircularProgressIndicator()
+        CircularProgressIndicator(color = PulseTheme.colors.action, trackColor = PulseTheme.colors.surfaceStrong)
         PulseText(label)
     }
 }

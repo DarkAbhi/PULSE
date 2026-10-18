@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -23,6 +22,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
@@ -106,7 +106,7 @@ internal fun ExerciseEditor(
                     stringResource(
                         R.string.pulse_fitness_search_by_name_above_or_keep_your_own_exercise,
                     ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = PulseTheme.colors.textSecondary,
                 )
                 if (editor.searching) {
                     PulseLoadingState(
@@ -272,7 +272,7 @@ internal fun ExerciseEditor(
                         liveRegion =
                             LiveRegionMode.Polite
                     },
-                    color = MaterialTheme.colorScheme.error,
+                    color = PulseTheme.colors.error,
                 )
             }
             PulseButton(

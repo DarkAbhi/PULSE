@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 
 @Composable
@@ -31,7 +33,17 @@ fun PulseCheckbox(
             ),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
     ) {
-        Checkbox(checked, null, enabled = enabled)
+        Checkbox(
+            checked,
+            null,
+            enabled = enabled,
+            colors =
+                CheckboxDefaults.colors(
+                    checkedColor = PulseTheme.colors.primary,
+                    checkmarkColor = PulseTheme.colors.onPrimary,
+                    uncheckedColor = PulseTheme.colors.outline,
+                ),
+        )
         Spacer(Modifier.width(PulseTokens.small))
         PulseText(label, Modifier.padding(vertical = PulseTokens.small))
     }

@@ -436,3 +436,12 @@ adb shell am instrument -w -r \
 Tests use production session persistence, Ktor, repositories, use cases, Koin and navigation with source-derived HTTP fixtures. No personal/live backend account was accessed. Saved-state reconstruction is unit tested; device tests exercise recreation and resizing, not an OS process kill during an in-flight account write. Physical devices, manual TalkBack, external hardware keyboards, other Android versions and actual translated production layouts remain unverified. The endpoint's 100-item limit, one-time key tokens and unchanged password/session behavior are backend constraints, not offline guarantees.
 
 Phase 7 stops here. Phase 8 has not started.
+
+
+## Custom visual foundation
+
+See [Design system](docs/design-system.md) for the Pulse-owned token architecture,
+light/dark colors, typography, shared components, font licenses and debug showcase.
+The [pre-implementation audit](docs/design-system-audit.md) records the previous
+Material styling dependencies and migration scope. Validation results are recorded
+in [design-system validation](docs/design-system-validation.md).

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,6 +17,7 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 
 @Composable
@@ -32,7 +32,7 @@ fun PulseCalendarDay(
     enabled: Boolean = true,
     inMonth: Boolean = true,
 ) {
-    val colors = MaterialTheme.colorScheme
+    val colors = PulseTheme.colors
     Surface(
         onClick = onClick,
         enabled = enabled,
@@ -60,11 +60,11 @@ fun PulseCalendarDay(
             if (selected) {
                 colors.onPrimary
             } else if (inMonth) {
-                colors.onSurface
+                colors.textPrimary
             } else {
-                colors.onSurfaceVariant
+                colors.textSecondary
             },
-        border = if (today) BorderStroke(PulseTokens.focusWidth, colors.primary) else null,
+        border = if (today) BorderStroke(PulseTokens.focusWidth, colors.action) else null,
     ) {
         Column(
             Modifier.padding(PulseTokens.tiny),
@@ -81,7 +81,7 @@ fun PulseCalendarDay(
                     } else if (selected) {
                         colors.onPrimary
                     } else {
-                        colors.tertiary
+                        colors.success
                     },
             ) { }
         }

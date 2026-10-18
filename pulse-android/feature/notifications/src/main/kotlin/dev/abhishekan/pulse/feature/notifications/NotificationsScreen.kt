@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -25,6 +24,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.NotificationTarget
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
@@ -123,7 +123,7 @@ internal fun NotificationsScreen(
                                 stringResource(R.string.pulse_notifications_source)
                             },
                             style = PulseTextStyle.Label,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = PulseTheme.colors.action,
                         )
                         PulseText(notification.title, Modifier.semantics { heading() }, PulseTextStyle.Title)
                         notification.body?.takeIf(String::isNotBlank)?.let { PulseText(it) }

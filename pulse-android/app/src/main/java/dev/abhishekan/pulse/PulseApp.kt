@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHost
@@ -54,6 +53,7 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.NotificationTarget
 import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseBottomNavigationBar
@@ -95,7 +95,7 @@ fun PulseApp(
     val operation by viewModel.operation.collectAsStateWithLifecycle()
     when (val current = state) {
         SessionState.Checking ->
-            Scaffold { insets ->
+            Scaffold(containerColor = PulseTheme.colors.background, contentColor = PulseTheme.colors.textPrimary) { insets ->
                 Box(
                     Modifier.fillMaxSize().padding(insets).padding(PulseTokens.cardPadding),
                     contentAlignment = Alignment.Center,
@@ -148,7 +148,7 @@ private fun SessionUnavailable(
     onForget: () -> Unit,
 ) {
     var confirm by rememberSaveable { mutableStateOf(false) }
-    Scaffold { insets ->
+    Scaffold(containerColor = PulseTheme.colors.background, contentColor = PulseTheme.colors.textPrimary) { insets ->
         Box(
             Modifier.fillMaxSize().padding(insets).padding(PulseTokens.cardPadding),
             contentAlignment = Alignment.Center,
@@ -174,7 +174,7 @@ private fun SessionUnavailable(
                     stringResource(
                         R.string.pulse_app_your_saved_session_has_been_kept_on_this_device,
                     ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = PulseTheme.colors.textSecondary,
                 )
                 PulseButton(stringResource(R.string.pulse_app_try_again), onRetry, enabled = !busy)
                 PulseTextButton(stringResource(R.string.pulse_app_forget_this_device_s_session), {
@@ -339,6 +339,8 @@ private fun SignedInApp(
                 )
             }
             Scaffold(
+                containerColor = PulseTheme.colors.background,
+                contentColor = PulseTheme.colors.textPrimary,
                 modifier = Modifier.weight(1f),
                 contentWindowInsets =
                     if (showBars) {

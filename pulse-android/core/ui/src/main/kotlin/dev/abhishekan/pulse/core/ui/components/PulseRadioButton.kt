@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 
 @Composable
@@ -31,7 +33,12 @@ fun PulseRadioButton(
             ),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
     ) {
-        RadioButton(selected, null, enabled = enabled)
+        RadioButton(
+            selected,
+            null,
+            enabled = enabled,
+            colors = RadioButtonDefaults.colors(selectedColor = PulseTheme.colors.action, unselectedColor = PulseTheme.colors.outline),
+        )
         Spacer(Modifier.width(PulseTokens.small))
         PulseText(label, Modifier.padding(vertical = PulseTokens.small))
     }

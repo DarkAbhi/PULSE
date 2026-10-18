@@ -2,12 +2,14 @@ package dev.abhishekan.pulse.core.ui.components
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.VisualTransformation
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 
@@ -49,5 +51,21 @@ fun PulseTextField(
         visualTransformation = visualTransformation,
         trailingIcon = trailingIcon,
         shape = PulseTokens.controlShape,
+        textStyle = PulseTheme.typography.body1,
+        colors =
+            OutlinedTextFieldDefaults.colors(
+                focusedTextColor = PulseTheme.colors.textPrimary,
+                unfocusedTextColor = PulseTheme.colors.textPrimary,
+                disabledTextColor = PulseTheme.colors.textSecondary,
+                focusedContainerColor = PulseTheme.colors.surface,
+                unfocusedContainerColor = PulseTheme.colors.surface,
+                disabledContainerColor = PulseTheme.colors.surfaceMuted,
+                errorContainerColor = PulseTheme.colors.surface,
+                focusedBorderColor = PulseTheme.colors.action,
+                unfocusedBorderColor = PulseTheme.colors.outline,
+                disabledBorderColor = PulseTheme.colors.border,
+                errorBorderColor = PulseTheme.colors.error,
+                cursorColor = PulseTheme.colors.action,
+            ),
     )
 }

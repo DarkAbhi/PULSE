@@ -3,7 +3,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -354,7 +354,7 @@ internal fun HorizonEditor(
                 ),
             )
         }
-        error?.let { PulseText(it, color = MaterialTheme.colorScheme.error) }
+        error?.let { PulseText(it, color = PulseTheme.colors.error) }
         PulseButton(
             stringResource(draft.kind.editorLabel(EditorAction.Save)),
             onSave,

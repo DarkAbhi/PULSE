@@ -2,6 +2,7 @@ package dev.abhishekan.pulse.core.ui.components
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -12,6 +13,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.R
 import java.time.Instant
 import java.time.LocalDate
@@ -46,6 +48,9 @@ fun PulseDatePickerDialog(
     DatePickerDialog(
         onDismissRequest = onDismiss,
         modifier = modifier,
+        shape = PulseTheme.shapes.extraLarge,
+        tonalElevation = PulseTheme.elevation.none,
+        colors = DatePickerDefaults.colors(containerColor = PulseTheme.colors.surface),
         confirmButton = {
             PulseTextButton(stringResource(R.string.pulse_ui_choose_date), {
                 state.selectedDateMillis?.let {
@@ -57,6 +62,17 @@ fun PulseDatePickerDialog(
             PulseTextButton(stringResource(R.string.pulse_ui_cancel), onDismiss)
         },
     ) {
-        DatePicker(state, Modifier.verticalScroll(rememberScrollState()))
+        DatePicker(
+            state,
+            Modifier.verticalScroll(rememberScrollState()),
+            colors =
+                DatePickerDefaults.colors(
+                    containerColor = PulseTheme.colors.surface,
+                    selectedDayContainerColor = PulseTheme.colors.primary,
+                    selectedDayContentColor = PulseTheme.colors.onPrimary,
+                    todayContentColor = PulseTheme.colors.action,
+                    todayDateBorderColor = PulseTheme.colors.action,
+                ),
+        )
     }
 }

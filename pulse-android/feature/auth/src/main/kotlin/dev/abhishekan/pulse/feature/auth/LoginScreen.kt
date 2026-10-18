@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -68,7 +68,7 @@ fun LoginScreen(
     onSubmit: () -> Unit,
     notice: String? = null,
 ) {
-    Scaffold { insets ->
+    Scaffold(containerColor = PulseTheme.colors.background, contentColor = PulseTheme.colors.textPrimary) { insets ->
         PulseAdaptiveLayout(Modifier.fillMaxSize().padding(insets).imePadding()) { size ->
             val margin =
                 if (size ==
@@ -123,7 +123,7 @@ private fun BrandIntroduction(expanded: Boolean) {
         PulseText(
             stringResource(R.string.pulse_auth_pulse),
             style = PulseTextStyle.Label,
-            color = MaterialTheme.colorScheme.primary,
+            color = PulseTheme.colors.action,
         )
         PulseText(
             if (expanded) {
@@ -138,7 +138,7 @@ private fun BrandIntroduction(expanded: Boolean) {
         )
         PulseText(
             stringResource(R.string.pulse_auth_a_private_space_for_your_fitness_finances_meals_and),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = PulseTheme.colors.textSecondary,
         )
     }
 }
@@ -167,7 +167,7 @@ private fun LoginForm(
         )
         PulseText(
             stringResource(R.string.pulse_auth_sign_in_to_pick_up_where_you_left_off),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = PulseTheme.colors.textSecondary,
         )
         if (notice !=
             null
@@ -218,7 +218,7 @@ private fun LoginForm(
                 Modifier.semantics {
                     liveRegion = LiveRegionMode.Polite
                 },
-                color = MaterialTheme.colorScheme.error,
+                color = PulseTheme.colors.error,
             )
         }
         Spacer(Modifier.height(PulseTokens.small))
@@ -230,7 +230,7 @@ private fun LoginForm(
         )
         PulseText(
             stringResource(R.string.pulse_auth_your_account_your_own_quiet_corner),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = PulseTheme.colors.textSecondary,
         )
     }
 }

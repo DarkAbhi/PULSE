@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -80,6 +79,8 @@ fun PulseComponentGallery(
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     Scaffold(
+        containerColor = PulseTheme.colors.background,
+        contentColor = PulseTheme.colors.textPrimary,
         topBar = { PulseTopAppBar(stringResource(R.string.pulse_ui_gallery_pulse_studio)) },
         snackbarHost = { SnackbarHost(snackbar) { PulseSnackbar(it) } },
         bottomBar = {
@@ -122,7 +123,7 @@ fun PulseComponentGallery(
                 PulseText(
                     stringResource(R.string.pulse_ui_gallery_design_system_debug_preview),
                     style = PulseTextStyle.Label,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = PulseTheme.colors.action,
                 )
                 PulseText(
                     stringResource(
@@ -171,9 +172,10 @@ fun PulseComponentGallery(
                 } else {
                     States(size)
                 }
+                if (selectedTab == 0) PulseTokenShowcase()
                 PulseText(
                     stringResource(R.string.pulse_ui_gallery_built_for_your_pace),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = PulseTheme.colors.textSecondary,
                 )
             }
         }
@@ -313,7 +315,7 @@ private fun Controls(onAction: () -> Unit) {
         )
         PulseText(
             stringResource(R.string.pulse_ui_gallery_forms_and_actions),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = PulseTheme.colors.textSecondary,
         )
         PulseTextField(username, {
             username = it
@@ -405,7 +407,7 @@ private fun Appearance(
             PulseRadioButton(false, {
             }, stringResource(R.string.pulse_ui_gallery_disabled_option), enabled = false)
         }
-        if (error != null) PulseText(error, color = MaterialTheme.colorScheme.error)
+        if (error != null) PulseText(error, color = PulseTheme.colors.error)
         PulseText("Aa", style = PulseTextStyle.Display)
         PulseText(
             stringResource(R.string.pulse_ui_gallery_everyday_considered),

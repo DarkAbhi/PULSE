@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 
 @Composable
@@ -21,7 +21,8 @@ fun PulseCard(
         shape = PulseTokens.cardShape,
         colors =
             CardDefaults.cardColors(
-                containerColor = if (highlighted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                containerColor = if (highlighted) PulseTheme.colors.primarySoft else PulseTheme.colors.surface,
+                contentColor = if (highlighted) PulseTheme.colors.onPrimarySoft else PulseTheme.colors.textPrimary,
             ),
         elevation = CardDefaults.cardElevation(PulseTokens.elevation),
     ) {

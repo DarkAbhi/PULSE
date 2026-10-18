@@ -6,6 +6,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.R
 
 @Composable
@@ -24,6 +25,11 @@ fun PulseDialog(
             PulseTextButton(confirmLabel, onConfirm)
         },
         modifier = modifier,
+        shape = PulseTheme.shapes.extraLarge,
+        containerColor = PulseTheme.colors.surface,
+        titleContentColor = PulseTheme.colors.textPrimary,
+        textContentColor = PulseTheme.colors.textSecondary,
+        tonalElevation = PulseTheme.elevation.none,
         dismissButton = {
             PulseTextButton(dismissLabel, onDismiss)
         },

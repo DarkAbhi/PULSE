@@ -5,13 +5,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.abhishekan.pulse.core.domain.model.Horizon
 import dev.abhishekan.pulse.core.domain.model.Notification
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
@@ -108,7 +108,7 @@ internal fun WorkoutCard(
         PulseText(
             stringResource(R.string.pulse_home_fitness_today),
             style = PulseTextStyle.Label,
-            color = MaterialTheme.colorScheme.primary,
+            color = PulseTheme.colors.action,
         )
         when (section) {
             Section.Loading ->
@@ -136,7 +136,7 @@ internal fun WorkoutCard(
         PulseTextButton(stringResource(R.string.pulse_home_open_fitness), onFitness)
         PulseText(
             stringResource(R.string.pulse_home_today_follows_india_time_asia_kolkata),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = PulseTheme.colors.textSecondary,
         )
     }
 }
@@ -188,7 +188,7 @@ private fun NotificationPreview(
                                     "d MMM · HH:mm",
                                 ).withZone(ZoneId.of("Asia/Kolkata"))
                                 .format(it),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = PulseTheme.colors.textSecondary,
                         )
                     }
                 }
@@ -221,7 +221,7 @@ internal fun SpacesCard(
         ).forEach { (title, description) ->
             Column(Modifier.padding(vertical = PulseTokens.small)) {
                 PulseText(title, style = PulseTextStyle.Label)
-                PulseText(description, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                PulseText(description, color = PulseTheme.colors.textSecondary)
             }
         }
     }

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +27,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import dev.abhishekan.pulse.core.domain.model.FitnessDates
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseCalendarDay
 import dev.abhishekan.pulse.core.ui.components.PulseCard
@@ -161,7 +161,7 @@ internal fun FitnessCalendar(
                         stringResource(
                             R.string.pulse_fitness_swipe_the_calendar_sideways_to_see_the_full_week,
                         ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = PulseTheme.colors.textSecondary,
                     )
                 }
             }
@@ -170,7 +170,7 @@ internal fun FitnessCalendar(
             stringResource(
                 R.string.pulse_fitness_border_today_filled_selected_dot_workout_recorded,
             ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = PulseTheme.colors.textSecondary,
         )
     }
     if (choosing) {

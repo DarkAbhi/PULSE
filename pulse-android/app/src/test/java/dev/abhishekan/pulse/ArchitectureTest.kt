@@ -38,6 +38,19 @@ class ArchitectureTest {
             "feature/notifications" to setOf("core:domain", "core:ui"),
         )
 
+    @Test fun customThemeOwnsApplicationStyling() {
+        allowed.keys.forEach { module ->
+            root
+                .resolve("$module/src")
+                .walkTopDown()
+                .filter { it.extension == "kt" && ("/main/" in it.path || "/debug/" in it.path) }
+                .filter { it.name != "PulseMaterialBridge.kt" }
+                .forEach { file ->
+                    assertFalse("Material theme escaped its private bridge in $file", file.readText().contains("MaterialTheme"))
+                }
+        }
+    }
+
     @Test fun moduleDirectionsRemainAcyclic() {
         val pattern = Regex("project\\(\":([^\"]+)\"\\)")
         allowed.forEach { (path, dependencies) ->

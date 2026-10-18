@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 
 @Composable
@@ -31,7 +33,20 @@ fun PulseSwitch(
             ),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
     ) {
-        Switch(checked, null, enabled = enabled)
+        Switch(
+            checked,
+            null,
+            enabled = enabled,
+            colors =
+                SwitchDefaults.colors(
+                    checkedThumbColor = PulseTheme.colors.onPrimary,
+                    checkedTrackColor = PulseTheme.colors.primary,
+                    checkedBorderColor = PulseTheme.colors.action,
+                    uncheckedThumbColor = PulseTheme.colors.textSecondary,
+                    uncheckedTrackColor = PulseTheme.colors.surfaceMuted,
+                    uncheckedBorderColor = PulseTheme.colors.outline,
+                ),
+        )
         Spacer(Modifier.width(PulseTokens.small))
         PulseText(label, Modifier.padding(vertical = PulseTokens.small))
     }

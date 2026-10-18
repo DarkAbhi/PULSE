@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -19,6 +18,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.asString
@@ -89,12 +89,12 @@ fun HomeScreen(
             PulseText(
                 stringResource(R.string.pulse_home_good_to_see_you),
                 style = PulseTextStyle.Label,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = PulseTheme.colors.textSecondary,
             )
             PulseText(name, Modifier.semantics { heading() }, PulseTextStyle.Display)
             PulseText(
                 stringResource(R.string.pulse_home_a_little_perspective_on_your_everyday),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = PulseTheme.colors.textSecondary,
             )
             when (val profile = state.profile) {
                 is Section.Error -> {

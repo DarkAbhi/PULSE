@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -16,7 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -73,14 +76,34 @@ fun FitnessScreen(
 ) {
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         val wide = size != PulseWindowSize.Compact && LocalDensity.current.fontScale < 1.5f
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        val canRefresh = !state.loading && !state.busy
+        val refresh = { if (canRefresh) onRefresh() }
+        val refreshLabel = stringResource(R.string.pulse_fitness_refresh_activity)
+        PullToRefreshBox(
+            isRefreshing = state.loading,
+            onRefresh = refresh,
+            modifier =
+                Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).semantics {
+                    customActions =
+                        if (canRefresh) {
+                            listOf(
+                                CustomAccessibilityAction(refreshLabel) {
+                                    refresh()
+                                    true
+                                },
+                            )
+                        } else {
+                            emptyList()
+                        }
+                },
+            contentAlignment = Alignment.TopCenter,
+        ) {
             Column(
                 Modifier
                     .widthIn(
                         max = PulseTokens.contentWidth,
-                    ).fillMaxWidth()
+                    ).fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(LocalPulseContentPadding.current)
                     .padding(
                         if (size ==
                             PulseWindowSize.Compact
@@ -173,12 +196,6 @@ fun FitnessScreen(
                             }
                         }
                     }
-                    PulseTextButton(
-                        stringResource(R.string.pulse_fitness_refresh_activity),
-                        onRefresh,
-                        enabled =
-                            !state.loading && !state.busy,
-                    )
                 }
             }
         }

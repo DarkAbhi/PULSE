@@ -24,6 +24,8 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
@@ -494,6 +496,23 @@ class FitnessDeviceTest {
                     "cp ${image.absolutePath} /sdcard/Download/${image.name}",
                 ),
             ).use { it.readBytes() }
+    }
+
+    @Test fun pullToRefreshLoadsUpdatedActivity() {
+        launchFitness()
+        compose.onNodeWithText("Refresh activity").assertDoesNotExist()
+        compose.runOnIdle {
+            backend.visits[100] =
+                Backend.Visit(
+                    100,
+                    backend.today
+                        .atTime(12, 0)
+                        .atZone(FitnessDates.zone)
+                        .toInstant(),
+                )
+        }
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Find your rhythm."))).performTouchInput { swipeDown() }
+        awaitText("View workout")
     }
 
     @Test fun calendarAndExerciseCrudRefreshHomeWithoutRestart() {

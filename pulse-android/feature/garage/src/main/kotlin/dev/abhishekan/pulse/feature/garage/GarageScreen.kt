@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,12 +28,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -189,12 +195,16 @@ internal fun GarageScreen(
     }
     val scrollStates = rememberSaveableStateHolder()
     val enabled = !state.busy && !state.reviewRequired && state.draft == null
+    val refreshState = rememberPullToRefreshState()
+    val canRefresh = state.vehicle != null && !state.history.loading && !state.busy && state.draft == null
+    val refresh = { if (canRefresh) vm.refreshHistory() }
+    val refreshLabel = stringResource(R.string.pulse_garage_refresh_vehicle_history)
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         val twoColumns = size != PulseWindowSize.Compact && LocalDensity.current.fontScale <= 1.3f
         val content: @Composable () -> Unit = {
             Column(
                 Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(LocalPulseContentPadding.current)
                     .imePadding()
@@ -537,13 +547,6 @@ internal fun GarageScreen(
                                             }
                                         }
                                     }
-                                    PulseTextButton(
-                                        stringResource(
-                                            R.string.pulse_garage_refresh_vehicle_history,
-                                        ),
-                                        vm::refreshHistory,
-                                        enabled = !state.busy,
-                                    )
                                 }
                             }
                         }
@@ -595,7 +598,29 @@ internal fun GarageScreen(
                     }
                 }
             }
-            Box(Modifier.weight(1f)) {
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .pullToRefresh(
+                        isRefreshing = state.vehicle != null && state.history.loading,
+                        state = refreshState,
+                        enabled = canRefresh,
+                        onRefresh = refresh,
+                    ).semantics {
+                        customActions =
+                            if (canRefresh) {
+                                listOf(
+                                    CustomAccessibilityAction(refreshLabel) {
+                                        refresh()
+                                        true
+                                    },
+                                )
+                            } else {
+                                emptyList()
+                            }
+                    },
+            ) {
                 if (state.draft != null &&
                     !records
                 ) {
@@ -604,6 +629,13 @@ internal fun GarageScreen(
                     scrollStates.SaveableStateProvider("${state.vehicle}-${state.tab}") {
                         content()
                     }
+                }
+                if (state.vehicle != null && state.draft == null) {
+                    PullToRefreshDefaults.Indicator(
+                        state = refreshState,
+                        isRefreshing = state.history.loading,
+                        modifier = Modifier.align(Alignment.TopCenter),
+                    )
                 }
             }
         }

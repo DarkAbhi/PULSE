@@ -2,12 +2,19 @@ package dev.abhishekan.pulse
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
@@ -18,7 +25,11 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
@@ -386,6 +397,120 @@ class MealPlanDeviceTest {
         tap(option)
     }
 
+    @Test fun pullToRefreshLoadsUpdatedMeals() {
+        launchPlanner()
+        compose.onNodeWithText("Refresh").assertDoesNotExist()
+        compose.runOnIdle {
+            meals[10] = obj("""{"id":10,"date":"$day","name":"Updated soup","meal_time_id":1,"is_consumed":false}""")
+        }
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Soup"))).performTouchInput { swipeDown() }
+        awaitText("Updated soup")
+    }
+
+    @Test fun compactWeekFitsPhoneScrollsOnNarrowScreensAndKeepsTabletDatesLarge() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        try {
+            shell("wm size 800x1800")
+            shell("wm density 320")
+            launchPlanner()
+            val root = compose.onRoot().getUnclippedBoundsInRoot()
+            listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
+                val date = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed()
+                val bounds = date.getUnclippedBoundsInRoot()
+                assertTrue("$label is fully visible", bounds.left >= root.left && bounds.right <= root.right)
+                assertTrue("$label keeps its tap target", bounds.right - bounds.left >= 48.dp && bounds.bottom - bounds.top >= 48.dp)
+            }
+            screenshot("compact-week")
+            compose.onNodeWithText("Mon").performClick()
+            compose.onNodeWithText("Sun").assertIsDisplayed().performClick()
+            shell("wm size 640x1800")
+            compose.waitForIdle()
+            val week =
+                compose.onNode(
+                    SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange) and
+                        hasAnyDescendant(hasText("Mon") or hasText("Sun")),
+                )
+            week.performScrollToIndex(0)
+            compose.onNodeWithText("Mon").assertIsDisplayed()
+            week.performScrollToIndex(6)
+            compose.onNodeWithText("Sun").assertIsDisplayed().performClick()
+            screenshot("narrow-week")
+            shell("wm size 2560x1800")
+            compose.waitForIdle()
+            week.performScrollToIndex(0)
+            listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
+                val bounds = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
+                assertEquals("$label keeps its tablet width", 80.dp, bounds.right - bounds.left)
+            }
+            val monday = compose.onNodeWithText("Mon").getUnclippedBoundsInRoot()
+            val tuesday = compose.onNodeWithText("Tue").getUnclippedBoundsInRoot()
+            assertEquals("Tablet dates keep their original spacing", 12.dp, tuesday.left - monday.right)
+            screenshot("tablet-week")
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+            compose.waitForIdle()
+        }
+    }
+
+    @Test fun contextualTodayAndWeekDatePicker() {
+        launchPlanner()
+        val todayAction = hasText("Today") and hasClickAction()
+        compose.onNode(todayAction).assertDoesNotExist()
+        compose.onNodeWithText("Meal Plan").assertDoesNotExist()
+        compose.onNodeWithText("2 slots").assertIsDisplayed()
+        val other = if (day.dayOfWeek.value == 1) day.plusDays(1) else day.minusDays(1)
+        val description =
+            other.format(
+                java.time.format.DateTimeFormatter
+                    .ofPattern("EEEE, d MMM yyyy"),
+            )
+        tap(description)
+        compose.onNode(todayAction).assertIsDisplayed().performClick()
+        awaitText("Soup")
+        compose.onNode(todayAction).assertDoesNotExist()
+        tap("Next week")
+        awaitText("No meals planned for this day")
+        val week = day.plusWeeks(1).with(java.time.DayOfWeek.MONDAY)
+        val range = "${week.format(
+            java.time.format.DateTimeFormatter
+                .ofPattern("d MMM"),
+        )} – ${week.plusDays(6).format(
+            java.time.format.DateTimeFormatter
+                .ofPattern("d MMM yyyy"),
+        )}"
+        screenshot("away-week-navigation")
+        tap(range)
+        compose.onNode(isDialog()).assertExists()
+        val picked = day.plusWeeks(1).withDayOfMonth(if (day.dayOfMonth == 1) 2 else 1)
+        compose
+            .onNode(
+                hasText(
+                    picked.format(
+                        java.time.format.DateTimeFormatter
+                            .ofPattern("EEEE, MMMM d, yyyy"),
+                    ),
+                    substring = true,
+                ) and
+                    hasClickAction() and
+                    hasAnyAncestor(isDialog()),
+            ).performClick()
+        confirm("Choose date")
+        val pickedDescription =
+            picked.format(
+                java.time.format.DateTimeFormatter
+                    .ofPattern("EEEE, d MMM yyyy"),
+            )
+        awaitText(pickedDescription)
+        compose.onNode(hasContentDescription(pickedDescription)).assertIsSelected()
+        compose.onNode(todayAction).assertIsDisplayed().performClick()
+        awaitText("Soup")
+        compose.onNode(todayAction).assertDoesNotExist()
+        screenshot("week-navigation")
+        assertEquals(0, mutations)
+    }
+
     @Test fun illustratedPlannerAndEmptyState() {
         times.clear()
         meals.clear()
@@ -429,7 +554,7 @@ class MealPlanDeviceTest {
         awaitText("No meals planned for this day")
         tap("Previous week")
         awaitText("Soup")
-        tap("Today")
+        compose.onNode(hasText("Today") and hasClickAction()).assertDoesNotExist()
         tap("Add meal")
         field("Meal name", "Rice bowl")
         pickTime("No meal time", "Lunch · 12:00–14:30")

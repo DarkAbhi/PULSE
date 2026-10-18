@@ -57,8 +57,7 @@ private fun PlannerPreview(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(PulseTokens.cardPadding),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.large),
             ) {
-                MealPlannerHeader {}
-                MealCalendar(day.minusDays(6), day, day, true, {}, {}, {})
+                MealCalendar(day.minusDays(6), day, day, true, {}, {}, {}, {}, {}, true, 4)
                 MealAgenda(day, day, meals, true, {}, {}, {}, {}, Modifier.fillMaxWidth())
             }
         }

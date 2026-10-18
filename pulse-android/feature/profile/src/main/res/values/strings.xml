@@ -35,8 +35,7 @@
     <string name="pulse_profile_uncertain">"We couldn’t confirm the change. Review refreshed account information and API keys before another change. If a key was created but its token was lost, revoke that unused key and create another."</string>
     <string name="pulse_profile_review">"Review server records"</string>
     <string name="pulse_profile_reviewed">"I reviewed the server records"</string>
-    <string name="pulse_profile_refresh_profile">"Refresh profile"</string>
-    <string name="pulse_profile_refresh_keys">"Refresh API keys"</string>
+    <string name="pulse_profile_refresh">"Refresh"</string>
     <string name="pulse_profile_about">"About Pulse"</string>
     <string name="pulse_profile_tagline">"Your life, in rhythm"</string>
     <string name="pulse_profile_description">"A private home for your fitness, finances, meals and vehicle care."</string>

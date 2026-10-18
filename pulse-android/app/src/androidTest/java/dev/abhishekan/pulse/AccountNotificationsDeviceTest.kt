@@ -31,6 +31,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
@@ -451,7 +452,9 @@ class AccountNotificationsDeviceTest {
         compose.onNodeWithText("Edit display name").assertIsEnabled()
         profileFailure =
             false
-        tap("Refresh profile")
+        compose.onNodeWithText("Refresh profile").assertDoesNotExist()
+        compose.onNodeWithText("Refresh API keys").assertDoesNotExist()
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Appearance"))).performTouchInput { swipeDown() }
         awaitText("Asha")
     }
 

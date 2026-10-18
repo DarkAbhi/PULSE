@@ -89,4 +89,8 @@
     </plurals>
     <string name="pulse_mealplan_overnight_time_range">"%1$s – %2$s · overnight"</string>
     <string name="pulse_mealplan_today_date_description">"%1$s, today"</string>
+    <plurals name="pulse_mealplan_slots">
+        <item quantity="one">%1$d slot</item>
+        <item quantity="other">%1$d slots</item>
+    </plurals>
 </resources>

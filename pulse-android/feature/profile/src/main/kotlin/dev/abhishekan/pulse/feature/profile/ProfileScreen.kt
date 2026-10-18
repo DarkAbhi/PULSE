@@ -25,6 +25,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -42,8 +43,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -209,145 +212,173 @@ internal fun ProfileScreen(
             else -> cancel()
         }
     }
-    PulseAdaptiveLayout(Modifier.fillMaxSize().imePadding()) { size ->
-        Column(
-            Modifier
-                .widthIn(max = PulseTokens.contentWidth)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(LocalPulseContentPadding.current)
-                .padding(
-                    if (size ==
-                        PulseWindowSize.Compact
-                    ) {
-                        PulseTokens.medium
-                    } else {
-                        PulseTokens.large
-                    },
-                ),
-            verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
-        ) {
-            if (state.uncertain) {
-                PulseCard(Modifier.fillMaxWidth()) {
-                    PulseText(
-                        state.message ?: uiText(R.string.pulse_profile_uncertain),
-                        Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                    )
-                    if (!state.passwordUncertain) {
-                        PulseText(
-                            stringResource(
-                                R.string.pulse_profile_server_name,
-                                state.profile?.name ?: stringResource(R.string.pulse_profile_not_set),
-                            ),
+    val refreshing = state.loading || state.keysLoading
+    val canRefresh = !refreshing && !state.busy && state.editor == null && !loggingOut
+    val refresh = {
+        if (canRefresh) {
+            vm.refreshProfile()
+            vm.refreshKeys()
+        }
+    }
+    val refreshLabel = stringResource(R.string.pulse_profile_refresh)
+    PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = refresh,
+        modifier =
+            Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).semantics {
+                customActions =
+                    if (canRefresh) {
+                        listOf(
+                            CustomAccessibilityAction(refreshLabel) {
+                                refresh()
+                                true
+                            },
                         )
-                        state.profileError?.let { PulseErrorState(it.message, vm::refreshProfile) }
-                        if (state.keysLoaded) {
-                            state.keys.forEach { key ->
-                                PulseText(
-                                    stringResource(R.string.pulse_profile_server_key, key.name, key.prefix),
-                                    style = PulseTextStyle.Label,
-                                )
-                            }
-                        }
-                        state.keysError?.let { PulseErrorState(it.message, vm::refreshKeys) }
-                        PulseTextButton(stringResource(R.string.pulse_profile_review), {
-                            vm.refreshProfile()
-                            vm.refreshKeys()
-                        }, enabled = !state.busy)
+                    } else {
+                        emptyList()
                     }
-                    PulseButton(
-                        stringResource(if (state.passwordUncertain) R.string.pulse_profile_understood else R.string.pulse_profile_reviewed),
-                        vm::acknowledge,
-                        enabled =
-                            state.reviewed && !state.busy,
-                    )
-                }
-            } else {
-                state.message?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
-            }
-            if (state.editor != null) {
-                AccountForm(state, vm, cancel)
-                PulseTextButton(stringResource(R.string.pulse_profile_logout), { logout = true }, enabled = !state.busy && !loggingOut)
-            } else {
-                val identity: @Composable () -> Unit = {
-                    Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
-                        PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-                            PulseText(state.profile?.name ?: username, Modifier.semantics { heading() }, PulseTextStyle.Display)
-                            PulseText(stringResource(R.string.pulse_profile_identity))
-                            PulseText(stringResource(R.string.pulse_profile_username, username))
-                            if (state.loading) PulseLoadingState(stringResource(R.string.pulse_profile_profile_loading))
-                            state.profileError?.let { PulseErrorState(it.message, vm::refreshProfile) }
-                            if (state.profile?.hasProfile == false) PulseText(stringResource(R.string.pulse_profile_profile_fallback))
-                            PulseButton(
-                                stringResource(R.string.pulse_profile_edit_name),
-                                { vm.edit(AccountEditor.Name) },
-                                enabled =
-                                    !state.busy && !state.uncertain,
+            },
+    ) {
+        PulseAdaptiveLayout(Modifier.fillMaxSize().imePadding()) { size ->
+            Column(
+                Modifier
+                    .widthIn(max = PulseTokens.contentWidth)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(
+                        if (size ==
+                            PulseWindowSize.Compact
+                        ) {
+                            PulseTokens.medium
+                        } else {
+                            PulseTokens.large
+                        },
+                    ),
+                verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
+            ) {
+                if (state.uncertain) {
+                    PulseCard(Modifier.fillMaxWidth()) {
+                        PulseText(
+                            state.message ?: uiText(R.string.pulse_profile_uncertain),
+                            Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                        )
+                        if (!state.passwordUncertain) {
+                            PulseText(
+                                stringResource(
+                                    R.string.pulse_profile_server_name,
+                                    state.profile?.name ?: stringResource(R.string.pulse_profile_not_set),
+                                ),
                             )
-                        }
-                        PulseCard(Modifier.fillMaxWidth()) {
-                            PulseText(stringResource(R.string.pulse_profile_appearance), style = PulseTextStyle.Title)
-                            Column(Modifier.selectableGroup()) {
-                                ThemePreference.entries.forEach { choice ->
-                                    PulseRadioButton(
-                                        theme == choice,
-                                        { onTheme(choice) },
-                                        choice.label,
-                                        Modifier.fillMaxWidth(),
+                            state.profileError?.let { PulseErrorState(it.message, vm::refreshProfile) }
+                            if (state.keysLoaded) {
+                                state.keys.forEach { key ->
+                                    PulseText(
+                                        stringResource(R.string.pulse_profile_server_key, key.name, key.prefix),
+                                        style = PulseTextStyle.Label,
                                     )
                                 }
                             }
-                            appearanceError?.let { PulseText(it, color = PulseTheme.colors.error) }
+                            state.keysError?.let { PulseErrorState(it.message, vm::refreshKeys) }
+                            PulseTextButton(stringResource(R.string.pulse_profile_review), {
+                                vm.refreshProfile()
+                                vm.refreshKeys()
+                            }, enabled = !state.busy)
                         }
+                        PulseButton(
+                            stringResource(
+                                if (state.passwordUncertain) {
+                                    R.string.pulse_profile_understood
+                                } else {
+                                    R.string.pulse_profile_reviewed
+                                },
+                            ),
+                            vm::acknowledge,
+                            enabled =
+                                state.reviewed && !state.busy,
+                        )
                     }
-                }
-                val account: @Composable () -> Unit = {
-                    Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
-                        PulseCard(Modifier.fillMaxWidth()) {
-                            PulseText(
-                                stringResource(R.string.pulse_profile_account),
-                                Modifier.semantics { heading() },
-                                PulseTextStyle.Title,
-                            )
-                            PulseTextButton(
-                                stringResource(R.string.pulse_profile_password),
-                                { vm.edit(AccountEditor.Password) },
-                                enabled =
-                                    !state.busy && !state.uncertain,
-                            )
-                            PulseTextButton(
-                                stringResource(R.string.pulse_profile_refresh_profile),
-                                vm::refreshProfile,
-                                enabled = !state.loading,
-                            )
-                        }
-                        APIKeysCard(state, vm) { revoke = it }
-                        PulseCard(Modifier.fillMaxWidth()) {
-                            PulseText(stringResource(R.string.pulse_profile_about), style = PulseTextStyle.Title)
-                            Image(
-                                painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_logo),
-                                contentDescription = null,
-                                modifier = Modifier.size(80.dp),
-                            )
-                            PulseText(stringResource(R.string.pulse_profile_brand), style = PulseTextStyle.Display)
-                            PulseText(stringResource(R.string.pulse_profile_tagline), style = PulseTextStyle.Title)
-                            PulseText(stringResource(R.string.pulse_profile_description))
-                        }
-                        PulseButton(stringResource(R.string.pulse_profile_logout), {
-                            logout = true
-                        }, Modifier.fillMaxWidth(), enabled = !state.busy, loading = loggingOut)
-                        debugContent()
-                    }
-                }
-                if (size == PulseWindowSize.Compact ||
-                    androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f
-                ) {
-                    identity()
-                    account()
                 } else {
-                    Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
-                        Box(Modifier.weight(1f)) { identity() }
-                        Box(Modifier.weight(1f)) { account() }
+                    state.message?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
+                }
+                if (state.editor != null) {
+                    AccountForm(state, vm, cancel)
+                    PulseTextButton(stringResource(R.string.pulse_profile_logout), { logout = true }, enabled = !state.busy && !loggingOut)
+                } else {
+                    val identity: @Composable () -> Unit = {
+                        Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
+                            PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
+                                PulseText(state.profile?.name ?: username, Modifier.semantics { heading() }, PulseTextStyle.Display)
+                                PulseText(stringResource(R.string.pulse_profile_identity))
+                                PulseText(stringResource(R.string.pulse_profile_username, username))
+                                if (state.loading) PulseLoadingState(stringResource(R.string.pulse_profile_profile_loading))
+                                state.profileError?.let { PulseErrorState(it.message, vm::refreshProfile) }
+                                if (state.profile?.hasProfile == false) PulseText(stringResource(R.string.pulse_profile_profile_fallback))
+                                PulseButton(
+                                    stringResource(R.string.pulse_profile_edit_name),
+                                    { vm.edit(AccountEditor.Name) },
+                                    enabled =
+                                        !state.busy && !state.uncertain,
+                                )
+                            }
+                            PulseCard(Modifier.fillMaxWidth()) {
+                                PulseText(stringResource(R.string.pulse_profile_appearance), style = PulseTextStyle.Title)
+                                Column(Modifier.selectableGroup()) {
+                                    ThemePreference.entries.forEach { choice ->
+                                        PulseRadioButton(
+                                            theme == choice,
+                                            { onTheme(choice) },
+                                            choice.label,
+                                            Modifier.fillMaxWidth(),
+                                        )
+                                    }
+                                }
+                                appearanceError?.let { PulseText(it, color = PulseTheme.colors.error) }
+                            }
+                        }
+                    }
+                    val account: @Composable () -> Unit = {
+                        Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
+                            PulseCard(Modifier.fillMaxWidth()) {
+                                PulseText(
+                                    stringResource(R.string.pulse_profile_account),
+                                    Modifier.semantics { heading() },
+                                    PulseTextStyle.Title,
+                                )
+                                PulseTextButton(
+                                    stringResource(R.string.pulse_profile_password),
+                                    { vm.edit(AccountEditor.Password) },
+                                    enabled =
+                                        !state.busy && !state.uncertain,
+                                )
+                            }
+                            APIKeysCard(state, vm) { revoke = it }
+                            PulseCard(Modifier.fillMaxWidth()) {
+                                PulseText(stringResource(R.string.pulse_profile_about), style = PulseTextStyle.Title)
+                                Image(
+                                    painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_logo),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(80.dp),
+                                )
+                                PulseText(stringResource(R.string.pulse_profile_brand), style = PulseTextStyle.Display)
+                                PulseText(stringResource(R.string.pulse_profile_tagline), style = PulseTextStyle.Title)
+                                PulseText(stringResource(R.string.pulse_profile_description))
+                            }
+                            PulseButton(stringResource(R.string.pulse_profile_logout), {
+                                logout = true
+                            }, Modifier.fillMaxWidth(), enabled = !state.busy, loading = loggingOut)
+                            debugContent()
+                        }
+                    }
+                    if (size == PulseWindowSize.Compact ||
+                        androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f
+                    ) {
+                        identity()
+                        account()
+                    } else {
+                        Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
+                            Box(Modifier.weight(1f)) { identity() }
+                            Box(Modifier.weight(1f)) { account() }
+                        }
                     }
                 }
             }
@@ -554,7 +585,6 @@ private fun APIKeysCard(
     PulseCard(Modifier.fillMaxWidth()) {
         PulseText(stringResource(R.string.pulse_profile_keys), Modifier.semantics { heading() }, PulseTextStyle.Title)
         PulseText(stringResource(R.string.pulse_profile_keys_description))
-        PulseTextButton(stringResource(R.string.pulse_profile_refresh_keys), vm::refreshKeys, enabled = !state.keysLoading)
         if (state.keysLoading) PulseLoadingState(stringResource(R.string.pulse_profile_keys))
         state.keysError?.let { PulseErrorState(it.message, vm::refreshKeys) }
         if (state.keysLoaded &&

@@ -11,6 +11,8 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -21,6 +23,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.core.content.FileProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -506,6 +510,19 @@ class GarageDeviceTest {
                 monitors += it
                 InstrumentationRegistry.getInstrumentation().addMonitor(it)
             }
+
+    @Test fun pullToRefreshLoadsUpdatedVehicleHistory() {
+        launchGarage()
+        select()
+        compose.onNodeWithText("Refresh vehicle history").assertDoesNotExist()
+        compose.runOnIdle { vehicles[1] = "Updated Comet" }
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Care, at a glance"))).performTouchInput { swipeDown() }
+        awaitText("Updated Comet")
+        tap("Fuel")
+        compose.runOnIdle { vehicles[1] = "Refreshed Comet" }
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Updated Comet"))).performTouchInput { swipeDown() }
+        awaitText("Refreshed Comet")
+    }
 
     @Test fun vehicleFuelPressureAirAndMaintenanceCrud() {
         launchGarage()

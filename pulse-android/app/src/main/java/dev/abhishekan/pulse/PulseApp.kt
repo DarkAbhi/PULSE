@@ -295,6 +295,7 @@ private fun SignedInApp(
     BoxWithConstraints(Modifier.fillMaxSize()) {
         // Some keyboards resize the root before IME insets arrive; preserve space for the form.
         val showBars = maxHeight >= PulseTokens.minimumNavigationHeight
+        val isTabletTab = isTablet && route in listOf("fitness", "horizon", "garage", "mealplan", "you")
         Row(Modifier.fillMaxSize()) {
             if (isTablet && route != "gallery" && showBars) {
                 val destinations = listOf("home", "fitness", "horizon", "garage", "mealplan", "you")
@@ -345,18 +346,25 @@ private fun SignedInApp(
                         )
                     },
                 topBar = {
-                    if (route != "gallery" && showBars) {
+                    if (route != "gallery" &&
+                        showBars &&
+                        (!isTabletTab || nav.previousBackStackEntry?.destination?.route == "notifications")
+                    ) {
                         PulseTopAppBar(
-                            when (route) {
-                                "you" -> stringResource(R.string.pulse_app_you)
-                                "notifications" -> stringResource(R.string.pulse_app_notifications)
-                                "space-list" -> stringResource(R.string.pulse_app_spaces)
-                                "fitness" -> stringResource(R.string.pulse_app_fitness)
-                                "workout/{id}" -> stringResource(R.string.pulse_app_workout)
-                                "horizon" -> stringResource(R.string.pulse_app_financial_horizon)
-                                "garage", "vehicle/{id}" -> stringResource(R.string.pulse_app_garage)
-                                "mealplan" -> stringResource(R.string.pulse_app_meal_plan)
-                                else -> stringResource(R.string.pulse_app_pulse)
+                            if (isTabletTab) {
+                                ""
+                            } else {
+                                when (route) {
+                                    "you" -> stringResource(R.string.pulse_app_you)
+                                    "notifications" -> stringResource(R.string.pulse_app_notifications)
+                                    "space-list" -> stringResource(R.string.pulse_app_spaces)
+                                    "fitness" -> stringResource(R.string.pulse_app_fitness)
+                                    "workout/{id}" -> stringResource(R.string.pulse_app_workout)
+                                    "horizon" -> stringResource(R.string.pulse_app_financial_horizon)
+                                    "garage", "vehicle/{id}" -> stringResource(R.string.pulse_app_garage)
+                                    "mealplan" -> stringResource(R.string.pulse_app_meal_plan)
+                                    else -> stringResource(R.string.pulse_app_pulse)
+                                }
                             },
                             actions = {
                                 if (route ==

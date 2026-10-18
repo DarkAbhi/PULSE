@@ -9,6 +9,7 @@ import android.content.Context
 import android.os.PersistableBundle
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +41,7 @@ import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentType
@@ -48,6 +50,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.APIKey
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
@@ -319,6 +322,11 @@ internal fun ProfileScreen(
                         APIKeysCard(state, vm) { revoke = it }
                         PulseCard(Modifier.fillMaxWidth()) {
                             PulseText(stringResource(R.string.pulse_profile_about), style = PulseTextStyle.Title)
+                            Image(
+                                painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_logo),
+                                contentDescription = null,
+                                modifier = Modifier.size(80.dp),
+                            )
                             PulseText(stringResource(R.string.pulse_profile_brand), style = PulseTextStyle.Display)
                             PulseText(stringResource(R.string.pulse_profile_tagline), style = PulseTextStyle.Title)
                             PulseText(stringResource(R.string.pulse_profile_description))

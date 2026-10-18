@@ -1,5 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="pulse_home_brand">Pulse</string>
     <string name="pulse_home_good_to_see_you">"Good to see you,"</string>
     <string name="pulse_home_a_little_perspective_on_your_everyday">"A little perspective on your everyday."</string>
     <string name="pulse_home_retry_profile">"Retry profile"</string>

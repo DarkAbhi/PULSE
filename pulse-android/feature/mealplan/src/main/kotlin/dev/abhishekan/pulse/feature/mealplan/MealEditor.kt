@@ -98,11 +98,6 @@ internal fun MealEditor(
             }, enabled = !busy)
             val choices =
                 buildList {
-                    if (draft.originalTimeId ==
-                        null
-                    ) {
-                        add("" to stringResource(R.string.pulse_mealplan_no_meal_time))
-                    }
                     if (draft.timeId != null &&
                         times.none { it.id == draft.timeId }
                     ) {
@@ -126,7 +121,7 @@ internal fun MealEditor(
             PulseSelectionField(
                 stringResource(R.string.pulse_mealplan_meal_time),
                 choices.firstOrNull { it.first == draft.timeId?.toString().orEmpty() }?.second
-                    ?: stringResource(R.string.pulse_mealplan_no_meal_time),
+                    ?: stringResource(R.string.pulse_mealplan_select_meal_time),
                 choices.map {
                     it.second
                 },

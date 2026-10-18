@@ -157,19 +157,18 @@ func (s *Service) CreatePlan(ctx context.Context, userID int64, in CreatePlanInp
 	if in.Name == "" {
 		return PlanDTO{}, ValidationError{"meal name cannot be empty"}
 	}
-	var start, end string
-	var mtID sql.NullInt64
-	if in.MealTimeID != nil {
-		mtID = sql.NullInt64{Int64: *in.MealTimeID, Valid: true}
-		rangeRow, err := s.store.FetchTimeRange(ctx, TimeRangeParams{ID: *in.MealTimeID, UserID: sql.NullInt64{Int64: userID, Valid: true}})
-		if errors.Is(err, sql.ErrNoRows) {
-			return PlanDTO{}, ErrTimeNotFound
-		}
-		if err != nil {
-			return PlanDTO{}, fmt.Errorf("get meal time: %w", err)
-		}
-		start, end = rangeRow.StartTime, rangeRow.EndTime
+	if in.MealTimeID == nil || *in.MealTimeID <= 0 {
+		return PlanDTO{}, ValidationError{"meal time is required"}
 	}
+	mtID := sql.NullInt64{Int64: *in.MealTimeID, Valid: true}
+	rangeRow, err := s.store.FetchTimeRange(ctx, TimeRangeParams{ID: *in.MealTimeID, UserID: sql.NullInt64{Int64: userID, Valid: true}})
+	if errors.Is(err, sql.ErrNoRows) {
+		return PlanDTO{}, ErrTimeNotFound
+	}
+	if err != nil {
+		return PlanDTO{}, fmt.Errorf("get meal time: %w", err)
+	}
+	start, end := rangeRow.StartTime, rangeRow.EndTime
 	isConsumed := in.IsConsumed != nil && *in.IsConsumed
 	row, err := s.store.CreatePlan(ctx, CreatePlanParams{UserID: userID, Column2: in.Date, Name: in.Name, MealTimeID: mtID, Column5: start, Column6: end, IsConsumed: isConsumed})
 	if err != nil {

@@ -70,7 +70,7 @@
     <string name="pulse_mealplan_end_time_1_s">"End time: %1$s"</string>
     <string name="pulse_mealplan_use_24_hour_times_an_end_earlier_than_the">"Use 24-hour times. An end earlier than the start spans midnight; equal endpoints are accepted by Pulse."</string>
     <string name="pulse_mealplan_meal_date_1_s">"Meal date: %1$s"</string>
-    <string name="pulse_mealplan_no_meal_time">"No meal time"</string>
+    <string name="pulse_mealplan_select_meal_time">"Select a meal time"</string>
     <string name="pulse_mealplan_previously_assigned_meal_time">"Previously assigned meal time"</string>
     <string name="pulse_mealplan_time_option">"%1$s · %2$s–%3$s"</string>
     <string name="pulse_mealplan_meal_time">"Meal time"</string>

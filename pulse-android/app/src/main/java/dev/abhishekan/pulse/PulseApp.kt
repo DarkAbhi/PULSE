@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,12 +12,14 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
@@ -290,9 +293,22 @@ private fun SignedInApp(
                 selectDestination(destinations[index])
             }
         }
-        Row(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxSize().background(PulseTheme.colors.background)) {
             if (isTablet && route != "gallery" && showBars) {
-                PulseNavigationRail(navigationItems, destinations.indexOf(selectedDestination), onNavigationSelected)
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Vertical))
+                        .padding(
+                            start = PulseTheme.spacing.cardPadding,
+                            end = PulseTheme.spacing.medium,
+                            top = PulseTheme.spacing.medium,
+                            bottom = PulseTheme.spacing.medium,
+                        ),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    PulseNavigationRail(navigationItems, destinations.indexOf(selectedDestination), onNavigationSelected)
+                }
             }
             Scaffold(
                 containerColor = PulseTheme.colors.background,

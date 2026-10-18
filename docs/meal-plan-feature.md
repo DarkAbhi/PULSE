@@ -12,7 +12,7 @@ The feature is presented as one weekly planner at `/meal-plan`. The page combine
 - Quick actions to add meals, mark them consumed, and remove them.
 - A settings flow for creating and deleting custom meal times.
 
-The feature is intentionally lightweight: a meal is currently represented by a name, date, optional meal-time assignment, and consumed state. It does not currently model ingredients, recipes, calories, nutrition, servings, grocery lists, or meal notes.
+The feature is intentionally lightweight: a meal is currently represented by a name, date, meal-time assignment, and consumed state. It does not currently model ingredients, recipes, calories, nutrition, servings, grocery lists, or meal notes.
 
 ## 2. Product Perspective
 
@@ -58,7 +58,7 @@ Each configured meal-time section shows:
 - Meals assigned to the slot.
 - A message when the slot has no meals yet.
 
-The user adds a meal by entering a required name and optionally choosing a time-of-day slot. When the add flow is opened from a specific section, that section is preselected. A new meal can also be created without a slot, although the current UI normally starts with the first available meal time selected.
+The user adds a meal by entering a required name and choosing a required time-of-day slot. When the add flow is opened from a specific section, that section is preselected. The web UI normally starts with the first available meal time selected; Android requires the user to select one.
 
 Meals without a valid current time assignment appear in an `Other Meals` section. This preserves the meal instead of dropping it when a custom meal time is removed.
 
@@ -192,6 +192,7 @@ The backend remains the final validation boundary:
 
 - Meal-plan dates must use `YYYY-MM-DD`.
 - Meal names are trimmed and cannot be empty.
+- Creating a meal requires a positive `meal_time_id` visible to the current user. Omitted or null IDs are rejected. Existing unassigned meals remain readable; partial updates preserve the current assignment when the field is omitted or null.
 - Meal-time names are trimmed and cannot be empty.
 - Meal-time start and end values must be valid `HH:MM` or `HH:MM:SS` strings.
 - A referenced meal time must be visible to the current user: either a system default or that user's custom slot.

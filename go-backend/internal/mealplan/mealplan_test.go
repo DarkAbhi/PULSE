@@ -32,6 +32,50 @@ func TestCreateTimeRecognizesWrappedUniqueViolation(t *testing.T) {
 	}
 }
 
+type createPlanStore struct {
+	store
+	writes int
+}
+
+func (*createPlanStore) FetchTimeRange(context.Context, TimeRangeParams) (TimeRangeRow, error) {
+	return TimeRangeRow{StartTime: "12:00:00", EndTime: "14:00:00"}, nil
+}
+
+func (s *createPlanStore) CreatePlan(_ context.Context, in CreatePlanParams) (CreatePlanRow, error) {
+	s.writes++
+	return CreatePlanRow{ID: 1, Date: in.Column2, Name: in.Name, MealTimeID: in.MealTimeID}, nil
+}
+
+func TestCreatePlanRequiresMealTime(t *testing.T) {
+	for _, tc := range []struct {
+		name, field string
+		status      int
+	}{
+		{"omitted", "", http.StatusBadRequest},
+		{"null", `,"meal_time_id":null`, http.StatusBadRequest},
+		{"zero", `,"meal_time_id":0`, http.StatusBadRequest},
+		{"negative", `,"meal_time_id":-1`, http.StatusBadRequest},
+		{"selected", `,"meal_time_id":2`, http.StatusCreated},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &createPlanStore{}
+			h := NewHandler(NewService(s), func(*http.Request) (int64, error) { return 1, nil })
+			rec := httptest.NewRecorder()
+			body := `{"date":"2026-09-21","name":"Salad"` + tc.field + `}`
+			h.CreatePlan(rec, httptest.NewRequest(http.MethodPost, "/api/meal-plans", bytes.NewBufferString(body)))
+			if rec.Code != tc.status {
+				t.Fatalf("got %d: %s, want %d", rec.Code, rec.Body.String(), tc.status)
+			}
+			if tc.status == http.StatusBadRequest && (s.writes != 0 || !bytes.Contains(rec.Body.Bytes(), []byte("meal time is required"))) {
+				t.Fatalf("invalid meal was saved or missing validation message: writes=%d body=%s", s.writes, rec.Body.String())
+			}
+			if tc.status == http.StatusCreated && s.writes != 1 {
+				t.Fatalf("expected one saved meal, got %d", s.writes)
+			}
+		})
+	}
+}
+
 func TestRepository(t *testing.T) {
 	_, dsn, cleanup := testhelper.StartPostgresWithDSN(t)
 	defer cleanup()
@@ -183,9 +227,17 @@ func TestHandler_Routes(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
-	h := NewHandler(NewService(NewRepository(pool)), func(*http.Request) (int64, error) { return 1, nil })
+	service := NewService(NewRepository(pool))
+	if err := service.EnsureDefaults(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	times, err := service.ListTimes(context.Background(), 1)
+	if err != nil || len(times) == 0 {
+		t.Fatalf("list times: %+v %v", times, err)
+	}
+	h := NewHandler(service, func(*http.Request) (int64, error) { return 1, nil })
 	rec := httptest.NewRecorder()
-	h.CreatePlan(rec, httptest.NewRequest(http.MethodPost, "/api/meal-plans", bytes.NewBufferString(`{"date":"2026-09-21","name":"Salad"}`)))
+	h.CreatePlan(rec, httptest.NewRequest(http.MethodPost, "/api/meal-plans", bytes.NewBufferString(fmt.Sprintf(`{"date":"2026-09-21","name":"Salad","meal_time_id":%d}`, times[0].ID))))
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("create: %d %s", rec.Code, rec.Body.String())
 	}

@@ -19,7 +19,7 @@ class ApplyMealChange(
                 change.name.validName(255) &&
                     change.date.year in 1..9999 &&
                     (change.id == null || change.id > 0) &&
-                    (change.timeId == null || change.timeId > 0)
+                    (change.timeId != null && change.timeId > 0)
             is MealChange.Delete -> change.id > 0
             // The API accepts overnight and equal endpoints; do not impose an unsupported ordering rule.
             is MealChange.CreateTime ->

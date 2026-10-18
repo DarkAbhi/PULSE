@@ -18,6 +18,7 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -535,17 +536,48 @@ class MealPlanDeviceTest {
         }
         meals[5] = obj("""{"id":5,"date":"$day","name":"Ice cream","meal_time_id":2,"is_consumed":false}""")
         launchPlanner("Omelette")
+        val railItem = compose.onNode(hasText("Meals") and isSelectable())
+        val railPosition = if (usesNavigationRail()) railItem.getUnclippedBoundsInRoot() else null
         compose.onAllNodesWithText("Lunch").assertCountEquals(1)
         compose.onNodeWithText("Ice cream").performScrollTo().assertIsDisplayed()
         screenshot("grouped-meals")
         screenshot("illustrated")
         compose.onNodeWithText("Pulav").performScrollTo().assertIsDisplayed()
+        railPosition?.let { assertEquals("Tablet navigation stays fixed while meals scroll", it, railItem.getUnclippedBoundsInRoot()) }
         screenshot("illustrated-bottom")
         compose.onNode(hasContentDescription("Next week")).performScrollTo().performClick()
         awaitText("No meals planned for this day")
         compose.onNodeWithText("Add meal").performScrollTo().assertIsDisplayed()
         screenshot("illustrated-empty")
         assertEquals(0, mutations)
+    }
+
+    @Test fun floatingRailFitsTabletPortraitAndLandscape() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        try {
+            shell("wm density 320")
+            listOf("2560x1600", "1600x2560").forEachIndexed { index, dimensions ->
+                shell("wm size $dimensions")
+                if (index == 0) launchPlanner() else compose.waitForIdle()
+                val rail =
+                    compose
+                        .onNode(
+                            hasScrollAction() and hasAnyDescendant(hasText("Meals") and isSelectable()),
+                        ).getUnclippedBoundsInRoot()
+                val viewport = compose.onRoot().getUnclippedBoundsInRoot()
+                assertEquals("Floating rail keeps its width", 96.dp, rail.right - rail.left)
+                assertTrue("Rail has breathing room", rail.left - viewport.left >= 24.dp)
+                assertTrue("Rail wraps content inside the viewport", rail.top > viewport.top && rail.bottom < viewport.bottom)
+                val centerOffset = ((rail.top + rail.bottom) - (viewport.top + viewport.bottom)) / 2
+                assertTrue("Rail stays centered between system bars", centerOffset >= (-16).dp && centerOffset <= 16.dp)
+                screenshot("floating-rail-$dimensions")
+            }
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+            compose.waitForIdle()
+        }
     }
 
     @Test fun mealCardsMatchOnlyTheirTabletRowHeight() {

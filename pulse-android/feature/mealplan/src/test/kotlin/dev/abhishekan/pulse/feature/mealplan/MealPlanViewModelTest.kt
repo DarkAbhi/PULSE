@@ -176,7 +176,7 @@ class MealPlanViewModelTest {
             vm.add()
             vm.update(
                 vm.uiState.value.draft!!
-                    .copy(name = "Rice"),
+                    .copy(name = "Rice", timeId = default.id),
             )
             vm.save()
             vm.save()
@@ -189,6 +189,31 @@ class MealPlanViewModelTest {
                 uiText(R.string.pulse_mealplan_saved_your_meal_plan_is_up_to_date),
                 vm.uiState.value.message,
             )
+        }
+
+    @Test fun mealTimeIsRequiredBeforeSaving() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            vm.add()
+            vm.update(
+                vm.uiState.value.draft!!
+                    .copy(name = "Rice"),
+            )
+            vm.save()
+            runCurrent()
+            assertEquals(0, repo.writes)
+            assertEquals(uiText(R.string.pulse_mealplan_select_meal_time), vm.uiState.value.error)
+            assertNotNull(vm.uiState.value.draft)
+
+            vm.update(
+                vm.uiState.value.draft!!
+                    .copy(timeId = default.id),
+            )
+            vm.save()
+            runCurrent()
+            assertEquals(1, repo.writes)
+            assertNull(vm.uiState.value.draft)
         }
 
     @Test fun failedTogglePreservesLastConfirmedValueAndRequiresSuccessfulReviewReads() =
@@ -274,7 +299,7 @@ class MealPlanViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.edit(MealDraft(name = "Rice", date = "2026-02-30"))
+            vm.edit(MealDraft(name = "Rice", date = "2026-02-30", timeId = default.id))
             vm.save()
             runCurrent()
             assertEquals(0, repo.writes)
@@ -285,6 +310,12 @@ class MealPlanViewModelTest {
             runCurrent()
             assertEquals(0, repo.writes)
             val use = ApplyMealChange(repo)
+            listOf(null, 0L, -1L).forEach { timeId ->
+                val change = MealChange.Save(null, meal.date, "Rice", timeId)
+                assertFalse(use.valid(change))
+                assertEquals(Outcome.Error(Failure.InvalidInput), use(change))
+            }
+            assertEquals(0, repo.writes)
             assertFalse(use.valid(MealChange.Save(null, meal.date, " ", null)))
             assertFalse(
                 use.valid(MealChange.CreateTime("x".repeat(101), LocalTime.NOON, LocalTime.MIDNIGHT)),
@@ -323,7 +354,7 @@ class MealPlanViewModelTest {
             vm.add()
             vm.update(
                 vm.uiState.value.draft!!
-                    .copy(name = "Rice"),
+                    .copy(name = "Rice", timeId = default.id),
             )
             vm.save()
             runCurrent()
@@ -342,7 +373,7 @@ class MealPlanViewModelTest {
             val saved = SavedStateHandle()
             val vm = vm(saved)
             runCurrent()
-            vm.edit(MealDraft(name = "Future soup", date = "2027-02-10"))
+            vm.edit(MealDraft(name = "Future soup", date = "2027-02-10", timeId = default.id))
             vm.save()
             runCurrent()
             assertEquals(LocalDate.parse("2027-02-08"), vm.uiState.value.week)

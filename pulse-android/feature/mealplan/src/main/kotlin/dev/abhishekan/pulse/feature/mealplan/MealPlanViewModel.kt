@@ -185,6 +185,8 @@ class MealPlanViewModel(
                             uiText(
                                 R.string.pulse_mealplan_choose_another_meal_time_removing_an_assigned_time_is,
                             )
+                        } else if (!draft.timeForm && draft.timeId == null) {
+                            uiText(R.string.pulse_mealplan_select_meal_time)
                         } else if (draft.timeForm) {
                             uiText(R.string.pulse_mealplan_enter_a_name_1_100_characters_and_valid_24)
                         } else {

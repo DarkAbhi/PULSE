@@ -94,7 +94,16 @@ private fun GarageCollectionPreview() {
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.large),
             ) {
                 GarageCollectionHeader(true) {}
-                GarageVehicleGrid(listOf(Vehicle(1, "Himalayan 411"), Vehicle(2, "Suzuki Access 125")), null, true, {})
+                GarageVehicleGrid(
+                    listOf(
+                        Vehicle(1, "Himalayan 411", "two_wheeler", listOf("petrol")),
+                        Vehicle(2, "Suzuki Access 125", "two_wheeler", listOf("petrol")),
+                    ),
+                    null,
+                    true,
+                    {
+                    },
+                )
             }
         }
     }

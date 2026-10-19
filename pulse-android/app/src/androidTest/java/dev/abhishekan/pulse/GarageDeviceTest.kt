@@ -89,6 +89,7 @@ class GarageDeviceTest {
     private lateinit var client: HttpClient
     private lateinit var store: EncryptedSessionStore
     private val vehicles = linkedMapOf(1L to "Comet")
+    private val vehicleDetails = mutableMapOf<Long, JsonObject>()
     private val fuel = linkedMapOf<Long, JsonObject>()
     private val care = linkedMapOf<Long, JsonObject>()
     private val air = linkedMapOf<Long, JsonObject>()
@@ -114,6 +115,8 @@ class GarageDeviceTest {
     private fun history() =
         buildJsonObject {
             put("vehicle_name", vehicles.values.firstOrNull() ?: "Comet")
+            put("vehicle_type", "two_wheeler")
+            put("fuel_types", JsonArray(listOf(JsonPrimitive("petrol"))))
             pressure.forEach { (k, v) -> put(k, v) }
             put("fuel_fillups", JsonArray(fuel.values.toList()))
             put("air_fills", JsonArray(air.values.toList()))
@@ -207,6 +210,14 @@ class GarageDeviceTest {
                                                 buildJsonObject {
                                                     put("id", id)
                                                     put("name", name)
+                                                    put(
+                                                        "vehicle_type",
+                                                        vehicleDetails[id]?.get("vehicle_type") ?: JsonPrimitive("two_wheeler"),
+                                                    )
+                                                    put(
+                                                        "fuel_types",
+                                                        vehicleDetails[id]?.get("fuel_types") ?: JsonArray(listOf(JsonPrimitive("petrol"))),
+                                                    )
                                                 }
                                             },
                                         ).toString()
@@ -241,8 +252,15 @@ class GarageDeviceTest {
                                 } else if (path ==
                                     "vehicles"
                                 ) {
-                                    vehicles[next++] =
-                                        obj(raw).getValue("name").jsonPrimitive.content
+                                    val details = obj(raw)
+                                    assertTrue(
+                                        details.getValue("vehicle_type").jsonPrimitive.content in listOf("two_wheeler", "four_wheeler"),
+                                    )
+                                    val fuels = details.getValue("fuel_types").jsonArray.map { it.jsonPrimitive.content }
+                                    assertTrue(fuels.size in 1..2 && fuels.distinct().size == fuels.size)
+                                    val id = next++
+                                    vehicles[id] = details.getValue("name").jsonPrimitive.content
+                                    vehicleDetails[id] = details
                                 } else if (parts.size == 2 &&
                                     request.method == HttpMethod.Delete
                                 ) {
@@ -625,13 +643,67 @@ class GarageDeviceTest {
         )
     }
 
+    @Test fun vehicleClassificationRequiresSelectionsAndSurvivesRecreation() {
+        launchGarage()
+        tap("Add vehicle")
+        field("Vehicle name", "Dual fuel car")
+        tap("Save vehicle")
+        compose.waitForIdle()
+        assertEquals(0, mutations)
+        tap("Vehicle type (required): Select an option")
+        tap("Four-wheeler")
+        tap("Fuel type (required): Select an option")
+        tap("Petrol")
+        tap("Dual tank (two fuel types)")
+        tap("Second fuel type (required): Select an option")
+        compose.onNodeWithText("Petrol", useUnmergedTree = true).assertDoesNotExist()
+        tap("CNG")
+        tap("Fuel type (required): Petrol")
+        tap("CNG")
+        awaitText("Second fuel type (required): Select an option")
+        tap("Save vehicle")
+        compose.waitForIdle()
+        assertEquals(0, mutations)
+        tap("Second fuel type (required): Select an option")
+        tap("Petrol")
+        scenario!!.recreate()
+        awaitText("Second fuel type (required): Petrol")
+        screenshot("vehicle-classification")
+        tap("Save vehicle")
+        awaitText("Dual fuel car")
+        awaitText("Four-wheeler · CNG + Petrol")
+        assertEquals(1, mutations)
+    }
+
     @Test fun vehicleFuelPressureAirAndMaintenanceCrud() {
         launchGarage()
         screenshot("collection")
         tap("Add vehicle")
         field("Vehicle name", "Tourer")
+        tap("Vehicle type (required): Select an option")
+        tap("Four-wheeler")
+        tap("Fuel type (required): Select an option")
+        tap("Petrol")
+        tap("Dual tank (two fuel types)")
+        tap("Second fuel type (required): Select an option")
+        tap("CNG")
         tap("Save vehicle")
         awaitText("Tourer")
+        assertEquals(
+            "four_wheeler",
+            vehicleDetails.values
+                .single()
+                .getValue("vehicle_type")
+                .jsonPrimitive.content,
+        )
+        assertEquals(
+            listOf("petrol", "cng"),
+            vehicleDetails.values
+                .single()
+                .getValue("fuel_types")
+                .jsonArray
+                .map { it.jsonPrimitive.content },
+        )
         select()
         screenshot("overview")
         tap("Set tire pressure")

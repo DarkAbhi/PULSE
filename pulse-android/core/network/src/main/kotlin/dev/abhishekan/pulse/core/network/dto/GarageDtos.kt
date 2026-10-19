@@ -7,6 +7,8 @@ import kotlinx.serialization.json.JsonPrimitive
 @Serializable data class VehicleDto(
     val id: Long,
     val name: String,
+    @SerialName("vehicle_type") val vehicleType: String,
+    @SerialName("fuel_types") val fuelTypes: List<String>,
 )
 
 @Serializable data class AirDto(
@@ -61,6 +63,8 @@ import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable data class GarageHistoryDto(
     @SerialName("vehicle_name") val name: String,
+    @SerialName("vehicle_type") val vehicleType: String,
+    @SerialName("fuel_types") val fuelTypes: List<String>,
     @SerialName("front_tire_pressure_solo") val frontSolo: JsonPrimitive? = null,
     @SerialName("rear_tire_pressure_solo") val rearSolo: JsonPrimitive? = null,
     @SerialName("front_tire_pressure_pillion") val frontPillion: JsonPrimitive? = null,

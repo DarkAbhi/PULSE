@@ -6,6 +6,7 @@ import dev.abhishekan.pulse.core.domain.model.GarageRecord
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.Vehicle
+import dev.abhishekan.pulse.core.domain.model.validVehicleDetails
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
 import dev.abhishekan.pulse.core.network.GarageApi
 import kotlinx.coroutines.Dispatchers
@@ -59,9 +60,9 @@ class PulseGarageRepository(
         request {
             api.vehicles().map {
                 require(
-                    it.id > 0 && it.name.isNotBlank(),
+                    it.id > 0 && it.name.isNotBlank() && validVehicleDetails(it.vehicleType, it.fuelTypes),
                 )
-                Vehicle(it.id, it.name)
+                Vehicle(it.id, it.name, it.vehicleType, it.fuelTypes)
             }
         }
 
@@ -95,6 +96,8 @@ class PulseGarageRepository(
                         false,
                         buildJsonObject {
                             put("name", change.name.trim())
+                            put("vehicle_type", change.vehicleType)
+                            putJsonArray("fuel_types") { change.fuelTypes.forEach { add(JsonPrimitive(it)) } }
                             put("is_active", change.active)
                             pressure(change.pressure)
                         },

@@ -7,6 +7,7 @@ import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.Maintenance
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
+import dev.abhishekan.pulse.core.domain.model.validVehicleDetails
 import dev.abhishekan.pulse.core.network.dto.GarageHistoryDto
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
@@ -23,7 +24,7 @@ private fun JsonPrimitive.decimal(): BigDecimal =
 private fun JsonPrimitive?.optional() = this?.takeUnless { it == JsonNull }?.decimal()
 
 internal fun GarageHistoryDto.domain(): VehicleHistory {
-    require(name.isNotBlank())
+    require(name.isNotBlank() && validVehicleDetails(vehicleType, fuelTypes))
     return VehicleHistory(
         name,
         TirePressure(
@@ -87,5 +88,7 @@ internal fun GarageHistoryDto.domain(): VehicleHistory {
                 s.max.optional(),
             )
         },
+        vehicleType,
+        fuelTypes,
     )
 }

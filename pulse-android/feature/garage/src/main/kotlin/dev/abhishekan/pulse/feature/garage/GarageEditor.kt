@@ -18,6 +18,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import dev.abhishekan.pulse.core.domain.model.garageCategories
+import dev.abhishekan.pulse.core.domain.model.garageFuelTypes
+import dev.abhishekan.pulse.core.domain.model.garageVehicleTypes
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
@@ -101,6 +103,30 @@ internal fun GarageEditor(
         when (draft.kind) {
             GarageForm.Vehicle -> {
                 field("name", stringResource(R.string.pulse_garage_vehicle_name))
+                choice("vehicleType", stringResource(R.string.pulse_garage_vehicle_type), garageVehicleTypes)
+                GarageChoice(
+                    stringResource(R.string.pulse_garage_vehicle_fuel),
+                    draft["vehicleFuel"],
+                    garageFuelTypes,
+                    { fuel ->
+                        val updated = draft.set("vehicleFuel", fuel)
+                        change(if (fuel == draft["vehicleSecondFuel"]) updated.set("vehicleSecondFuel", "") else updated)
+                    },
+                    enabled,
+                )
+                PulseCheckbox(
+                    draft["dualTank"] == "true",
+                    { change(draft.set("dualTank", it.toString())) },
+                    stringResource(R.string.pulse_garage_dual_tank),
+                    enabled = enabled,
+                )
+                if (draft["dualTank"] == "true") {
+                    choice(
+                        "vehicleSecondFuel",
+                        stringResource(R.string.pulse_garage_second_fuel),
+                        garageFuelTypes.filter { it != draft["vehicleFuel"] },
+                    )
+                }
                 PulseCheckbox(
                     draft["active"] != "false",
                     {

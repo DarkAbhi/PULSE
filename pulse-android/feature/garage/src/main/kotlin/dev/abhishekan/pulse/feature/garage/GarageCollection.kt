@@ -121,6 +121,14 @@ private fun GarageVehicleCard(
                         )
                     }
                     PulseText(vehicle.name, Modifier.semantics { heading() }, PulseTextStyle.Title)
+                    PulseText(
+                        stringResource(
+                            R.string.pulse_garage_vehicle_summary,
+                            garageOption(vehicle.vehicleType),
+                            vehicle.fuelTypes.map { garageOption(it) }.joinToString(" + "),
+                        ),
+                        color = colors.textSecondary,
+                    )
                 }
             }
             if (wide) {

@@ -8,6 +8,7 @@ import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.garageCategories
 import dev.abhishekan.pulse.core.domain.model.garageFillTypes
 import dev.abhishekan.pulse.core.domain.model.garageFuelTypes
+import dev.abhishekan.pulse.core.domain.model.validVehicleDetails
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
 import java.math.BigDecimal
 
@@ -52,6 +53,7 @@ class ApplyGarageChange(
             is GarageChange.CreateVehicle ->
                 change.name.isNotBlank() &&
                     change.name.trim().codePointCount(0, change.name.trim().length) <= 48 &&
+                    validVehicleDetails(change.vehicleType, change.fuelTypes) &&
                     pressure(change.pressure)
             is GarageChange.Pressure -> change.vehicle > 0 && pressure(change.value)
             is GarageChange.Air -> change.vehicle > 0

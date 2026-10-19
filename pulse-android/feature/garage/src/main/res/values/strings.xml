@@ -109,7 +109,7 @@
     <string name="pulse_garage_save_this_record_first_then_attach_receipts_from_its">"Save this record first, then attach receipts from its history card."</string>
     <string name="pulse_garage_notes_optional">"Notes (optional)"</string>
     <string name="pulse_garage_cancel_editing">"Cancel editing"</string>
-    <string name="pulse_garage_check_the_fields_a_name_title_is_required_quantities">"Check the fields. A name/title is required; quantities and costs must be positive, odometer and PSI cannot be negative. Enter at least two fuel values per tank and a valid date/time. Use up to 3 quantity decimals, 2 cost/price decimals, and 1 odometer/PSI decimal. Vehicle names allow 48 characters; titles/providers allow 160 UTF-8 bytes. Values must fit the server’s numeric limits."</string>
+    <string name="pulse_garage_check_the_fields_a_name_title_is_required_quantities">"Check the fields. A name/title is required; choose a vehicle type and one or two distinct fuel types for a vehicle; quantities and costs must be positive, odometer and PSI cannot be negative. Enter at least two fuel values per tank and a valid date/time. Use up to 3 quantity decimals, 2 cost/price decimals, and 1 odometer/PSI decimal. Vehicle names allow 48 characters; titles/providers allow 160 UTF-8 bytes. Values must fit the server’s numeric limits."</string>
     <string name="pulse_garage_odometer_must_be_at_least_1_s_km_the">"Odometer must be at least %1$s km, the highest saved fuel reading."</string>
     <string name="pulse_garage_saved_your_garage_is_up_to_date">"Saved. Your garage is up to date."</string>
     <string name="pulse_garage_uncertain_change">"%1$s The change could not be confirmed. Review refreshed records before another attempt. For receipts, choose a readable file between 1 byte and 10 MB. Receipt storage may also be unavailable; your saved maintenance record is kept."</string>
@@ -168,4 +168,12 @@
     <string name="pulse_garage_partial_help">A partial fill counts toward the next full-to-full efficiency interval.</string>
     <string name="pulse_garage_full_help">A full tank starts or completes a full-to-full efficiency interval.</string>
     <string name="pulse_garage_missed_help">A missed fill resets the efficiency baseline. The next full tank starts a new interval.</string>
+    <string name="pulse_garage_vehicle_type">Vehicle type (required)</string>
+    <string name="pulse_garage_vehicle_fuel">Fuel type (required)</string>
+    <string name="pulse_garage_second_fuel">Second fuel type (required)</string>
+    <string name="pulse_garage_dual_tank">Dual tank (two fuel types)</string>
+    <string name="pulse_garage_select_option">Select an option</string>
+    <string name="pulse_garage_option_two_wheeler">Two-wheeler</string>
+    <string name="pulse_garage_option_four_wheeler">Four-wheeler</string>
+    <string name="pulse_garage_vehicle_summary">%1$s · %2$s</string>
 </resources>

@@ -4,6 +4,7 @@ import java.math.BigDecimal
 import java.time.Instant
 
 const val RECEIPT_LIMIT = 10 * 1024 * 1024
+val garageVehicleTypes = listOf("two_wheeler", "four_wheeler")
 val garageFuelTypes = listOf("petrol", "diesel", "lpg", "cng", "electric")
 val garageFillTypes = listOf("full", "partial", "missed")
 val garageCategories = listOf("service", "repair", "insurance", "washing", "tyres")
@@ -11,6 +12,8 @@ val garageCategories = listOf("service", "repair", "insurance", "washing", "tyre
 data class Vehicle(
     val id: Long,
     val name: String,
+    val vehicleType: String,
+    val fuelTypes: List<String>,
 )
 
 data class TirePressure(
@@ -77,6 +80,8 @@ data class VehicleHistory(
     val fuel: List<FuelFill>,
     val maintenance: List<Maintenance>,
     val efficiency: Map<String, FuelEfficiency>,
+    val vehicleType: String,
+    val fuelTypes: List<String>,
 )
 
 enum class GarageRecord { Vehicle, Fuel, Air, Maintenance, Receipt }
@@ -86,6 +91,8 @@ sealed interface GarageChange {
         val name: String,
         val active: Boolean,
         val pressure: TirePressure,
+        val vehicleType: String,
+        val fuelTypes: List<String>,
     ) : GarageChange
 
     data class Pressure(
@@ -126,3 +133,12 @@ sealed interface GarageChange {
         val record: Long? = null,
     ) : GarageChange
 }
+
+fun validVehicleDetails(
+    vehicleType: String,
+    fuelTypes: List<String>,
+): Boolean =
+    vehicleType in garageVehicleTypes &&
+        fuelTypes.size in 1..2 &&
+        fuelTypes.all { it in garageFuelTypes } &&
+        fuelTypes.distinct().size == fuelTypes.size

@@ -470,3 +470,11 @@ light/dark colors, typography, shared components, font licenses and debug showca
 The [pre-implementation audit](docs/design-system-audit.md) records the previous
 Material styling dependencies and migration scope. Validation results are recorded
 in [design-system validation](docs/design-system-validation.md).
+
+## Garage vehicle classification
+
+Adding a vehicle requires an explicit two-wheeler/four-wheeler selection and a fuel type. Dual tank reveals a required second, distinct fuel type. New vehicle drafts do not guess these values; selections survive activity recreation, and choosing the current secondary fuel as the primary clears the secondary selection for review.
+
+The Android domain/network models and create payload now carry `vehicle_type` and `fuel_types`, matching the Go API introduced with migration 00024. Vehicle cards show the saved classification and fuel types. Use this app with that backend migration and API deployed; missing or invalid classifications are reported as malformed responses rather than replaced with guesses.
+
+Verification: debug app/test APKs built; 98 unit tests across Garage, data, domain, and app passed; affected formatting checks and Garage debug lint passed with no issues. Two targeted Garage instrumentation tests passed on the API 35 tablet emulator using isolated HTTP fixtures, covering required selections, duplicate-fuel handling, restored drafts, create payloads, and the existing garage CRUD flow. The vehicle classification screenshot was visually reviewed. Physical devices and a live backend were not exercised.

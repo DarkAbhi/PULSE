@@ -64,6 +64,8 @@ data class GarageDraft(
                     get("name"),
                     get("active") != "false",
                     pressure(),
+                    get("vehicleType"),
+                    if (get("dualTank") == "true") listOf(get("vehicleFuel"), get("vehicleSecondFuel")) else listOf(get("vehicleFuel")),
                 )
             GarageForm.Pressure -> GarageChange.Pressure(vehicle, pressure())
             GarageForm.Fuel ->

@@ -47,7 +47,7 @@ class GarageViewModelTest {
 
     private class Repo : GarageRepository {
         override val changes = MutableStateFlow(0L)
-        var vehicles = listOf(Vehicle(1, "Ride"))
+        var vehicles = listOf(Vehicle(1, "Ride", "two_wheeler", listOf("petrol")))
         var failure: Failure? = null
         var reads = 0
         val writes = mutableListOf<GarageChange>()
@@ -78,6 +78,8 @@ class GarageViewModelTest {
                 ),
                 emptyList(),
                 emptyMap(),
+                "two_wheeler",
+                listOf("petrol"),
             )
 
         override suspend fun vehicles() = Outcome.Success(vehicles)
@@ -365,7 +367,7 @@ class GarageViewModelTest {
         assertFalse(
             apply.valid(GarageChange.Pressure(1, TirePressure(frontSolo = "10000".toBigDecimal()))),
         )
-        assertFalse(apply.valid(GarageChange.CreateVehicle("v".repeat(49), true, TirePressure())))
+        assertFalse(apply.valid(GarageChange.CreateVehicle("v".repeat(49), true, TirePressure(), "two_wheeler", listOf("petrol"))))
         assertFalse(
             apply.valid(
                 GarageChange.Care(1, null, "service", "Care", "1.001".toBigDecimal(), Instant.EPOCH, null, null, null),
@@ -425,4 +427,38 @@ class GarageViewModelTest {
             ),
         )
     }
+
+    @Test fun vehicleDetailsAreRequiredAndDualTankDraftSurvivesRestore() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            val draft = GarageDraft.new(GarageForm.Vehicle, 0).set("name", "Tourer")
+            vm.edit(draft)
+            vm.save()
+            runCurrent()
+            assertTrue(repo.writes.isEmpty())
+            assertNotNull(vm.uiState.value.error)
+
+            val single = draft.set("vehicleType", "four_wheeler").set("vehicleFuel", "petrol")
+            val apply = ApplyGarageChange(repo)
+            assertTrue(apply.valid(single.change()))
+            assertEquals(listOf("petrol"), (single.change() as GarageChange.CreateVehicle).fuelTypes)
+            val dual = single.set("dualTank", "true")
+            assertFalse(apply.valid(dual.change()))
+            assertFalse(apply.valid(dual.set("vehicleSecondFuel", "petrol").change()))
+            assertFalse(apply.valid(single.set("vehicleType", "truck").change()))
+            assertFalse(apply.valid(single.set("vehicleFuel", "water").change()))
+            val complete = dual.set("vehicleSecondFuel", "cng")
+            val restored = GarageDraft.restore(complete.saved())
+            assertEquals(complete, restored)
+            val change = restored.change() as GarageChange.CreateVehicle
+            assertTrue(apply.valid(change))
+            assertEquals("four_wheeler", change.vehicleType)
+            assertEquals(listOf("petrol", "cng"), change.fuelTypes)
+            assertEquals(listOf("petrol"), (restored.set("dualTank", "false").change() as GarageChange.CreateVehicle).fuelTypes)
+            vm.edit(restored)
+            vm.save()
+            runCurrent()
+            assertEquals(listOf(change), repo.writes)
+        }
 }

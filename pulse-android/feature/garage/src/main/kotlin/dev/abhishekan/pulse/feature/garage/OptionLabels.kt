@@ -5,6 +5,9 @@ import androidx.compose.ui.res.stringResource
 @androidx.compose.runtime.Composable
 internal fun garageOption(value: String): String =
     when (value) {
+        "" -> stringResource(R.string.pulse_garage_select_option)
+        "two_wheeler" -> stringResource(R.string.pulse_garage_option_two_wheeler)
+        "four_wheeler" -> stringResource(R.string.pulse_garage_option_four_wheeler)
         "petrol" -> stringResource(R.string.pulse_garage_option_petrol)
         "diesel" -> stringResource(R.string.pulse_garage_option_diesel)
         "lpg" -> stringResource(R.string.pulse_garage_option_lpg)

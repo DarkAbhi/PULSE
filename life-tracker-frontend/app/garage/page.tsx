@@ -16,6 +16,8 @@ const apiBaseURL =
 type Vehicle = {
   id: number;
   name: string;
+  vehicle_type: "two_wheeler" | "four_wheeler";
+  fuel_types: string[];
 };
 
 export default async function GaragePage() {

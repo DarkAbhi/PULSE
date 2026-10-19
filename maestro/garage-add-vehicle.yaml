@@ -26,11 +26,18 @@ url: http://localhost:3000
 # 4. Open Add Vehicle modal
 - tapOn: Add vehicle
 - assertVisible: Add a vehicle
-- assertVisible: Give it a name you'll recognize right away.
+- assertVisible: Add its name, vehicle type, and fuel details.
 
 # 5. Fill vehicle details
 - tapOn: "e.g. Honda City"
 - inputText: "Honda Civic"
+
+- tapOn:
+    css: "#vehicle-type"
+- tapOn: Four-wheeler
+- tapOn:
+    css: "#vehicle-fuel-type"
+- tapOn: Petrol
 
 # 6. Submit Add vehicle form
 - tapOn:

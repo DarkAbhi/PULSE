@@ -46,6 +46,8 @@ export type FuelEfficiencyStats = {
 
 export type VehicleHistoryData = {
   vehicle_name: string;
+  vehicle_type: "two_wheeler" | "four_wheeler";
+  fuel_types: string[];
   front_tire_pressure_solo: number | null;
   rear_tire_pressure_solo: number | null;
   front_tire_pressure_pillion: number | null;

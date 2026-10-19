@@ -44,10 +44,10 @@ class SeedDatabaseTest(unittest.TestCase):
         self.assertIn("skipped", self.restore().stdout)
         self.assertEqual(count, self.run_psql("-c", "SELECT count(*) FROM fitness_activity_rings").stdout)
         self.assertEqual(self.run_psql("-c", "SELECT count(*) FROM api_keys UNION ALL SELECT count(*) FROM user_sessions UNION ALL SELECT count(*) FROM vehicle_maintenance_attachments").stdout.split(), ["0", "0", "0"])
-        self.run_psql("-c", "INSERT INTO vehicles (name, user_id) VALUES ('Sequence check', 1)")
+        self.run_psql("-c", "INSERT INTO vehicles (name, user_id, vehicle_type, fuel_types) VALUES ('Sequence check', 1, 'two_wheeler', ARRAY['petrol'])")
 
     def test_populated_database_is_untouched(self):
-        self.run_psql("-c", "INSERT INTO vehicles (name, user_id) VALUES ('Existing development vehicle', 1)")
+        self.run_psql("-c", "INSERT INTO vehicles (name, user_id, vehicle_type, fuel_types) VALUES ('Existing development vehicle', 1, 'two_wheeler', ARRAY['petrol'])")
         self.assertIn("skipped", self.restore().stdout)
         self.assertEqual(self.run_psql("-c", "SELECT name FROM vehicles").stdout.strip(), "Existing development vehicle")
         self.assertEqual(self.run_psql("-c", "SELECT count(*) FROM fitness_activity_rings").stdout.strip(), "0")

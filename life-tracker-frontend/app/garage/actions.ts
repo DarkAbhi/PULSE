@@ -7,7 +7,7 @@ const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
   "http://localhost:8080";
 
-export async function addVehicleAction(name: string) {
+export async function addVehicleAction(data: { name: string; vehicle_type: string; fuel_types: string[] }) {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
@@ -18,7 +18,7 @@ export async function addVehicleAction(name: string) {
         "Content-Type": "application/json",
         Cookie: cookieHeader,
       },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify(data),
     });
 
     const body = await response.json().catch(() => ({}));

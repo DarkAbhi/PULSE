@@ -27,6 +27,7 @@ BASELINE = {"users", "exercise_catalog", "schema_migrations",
 ENUMS = {
     "billing_cycle": {"monthly", "yearly"}, "status": {"active", "paused", "cancelled"},
     "type": {"debit", "credit"}, "fuel_type": {"petrol", "diesel", "lpg", "cng", "electric"},
+    "vehicle_type": {"two_wheeler", "four_wheeler"},
     "fill_type": {"full", "partial", "missed"},
 }
 NUMBERS = {
@@ -70,6 +71,8 @@ def anonymize(table, column, kind, value, row, offset, admin_id):
         return value
     row_id = row.get("id", row.get("user_id", "1"))
     number = int(row_id) if row_id.isdigit() else 1
+    if table == "vehicles" and column == "fuel_types":
+        return "{petrol}"
     if column == "password_hash":
         return PASSWORD_HASH
     if column == "username":

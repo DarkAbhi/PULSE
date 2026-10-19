@@ -167,10 +167,16 @@ type LinkTransactionInput struct {
 	TransactionID int64 `json:"transaction_id"`
 }
 type VehicleName struct {
+	VehicleType string   `json:"vehicle_type" enums:"two_wheeler,four_wheeler"`
+	FuelTypes   []string `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
+
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
 }
 type VehicleInput struct {
+	VehicleType *string   `json:"vehicle_type" enums:"two_wheeler,four_wheeler"`
+	FuelTypes   *[]string `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
+
 	Name                     *string  `json:"name"`
 	IsActive                 *bool    `json:"is_active"`
 	FrontTirePressureSolo    *float64 `json:"front_tire_pressure_solo"`
@@ -180,6 +186,13 @@ type VehicleInput struct {
 	FrontTirePressure        *float64 `json:"front_tire_pressure"`
 	RearTirePressure         *float64 `json:"rear_tire_pressure"`
 }
+type CreateVehicleInput struct {
+	VehicleInput
+	Name        string   `json:"name" binding:"required"`
+	VehicleType string   `json:"vehicle_type" binding:"required" enums:"two_wheeler,four_wheeler"`
+	FuelTypes   []string `json:"fuel_types" binding:"required" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
+}
+
 type TirePressureInput struct {
 	FrontTirePressureSolo    *float64 `json:"front_tire_pressure_solo"`
 	RearTirePressureSolo     *float64 `json:"rear_tire_pressure_solo"`
@@ -257,6 +270,9 @@ type MaintenanceRecord struct {
 	Attachments  []Attachment `json:"attachments"`
 }
 type VehicleHistory struct {
+	VehicleType string   `json:"vehicle_type" enums:"two_wheeler,four_wheeler"`
+	FuelTypes   []string `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
+
 	VehicleName              string              `json:"vehicle_name"`
 	FrontTirePressureSolo    *float64            `json:"front_tire_pressure_solo"`
 	RearTirePressureSolo     *float64            `json:"rear_tire_pressure_solo"`
@@ -1029,7 +1045,7 @@ func operation53() {}
 // @Tags vehicles
 // @Accept json
 // @Produce json
-// @Param body body VehicleInput true "Request body"
+// @Param body body CreateVehicleInput true "Request body"
 // @Security SessionBearer
 // @Success 201 {object} vehicle.DTO
 // @Failure 400 {object} Error

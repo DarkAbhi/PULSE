@@ -2964,7 +2964,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/apidoc.VehicleInput"
+                            "$ref": "#/definitions/apidoc.CreateVehicleInput"
                         }
                     }
                 ],
@@ -4806,6 +4806,60 @@ const docTemplate = `{
                 }
             }
         },
+        "apidoc.CreateVehicleInput": {
+            "type": "object",
+            "required": [
+                "fuel_types",
+                "name",
+                "vehicle_type"
+            ],
+            "properties": {
+                "front_tire_pressure": {
+                    "type": "number"
+                },
+                "front_tire_pressure_pillion": {
+                    "type": "number"
+                },
+                "front_tire_pressure_solo": {
+                    "type": "number"
+                },
+                "fuel_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "petrol",
+                            "diesel",
+                            "lpg",
+                            "cng",
+                            "electric"
+                        ]
+                    }
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rear_tire_pressure": {
+                    "type": "number"
+                },
+                "rear_tire_pressure_pillion": {
+                    "type": "number"
+                },
+                "rear_tire_pressure_solo": {
+                    "type": "number"
+                },
+                "vehicle_type": {
+                    "type": "string",
+                    "enum": [
+                        "two_wheeler",
+                        "four_wheeler"
+                    ]
+                }
+            }
+        },
         "apidoc.CreatedID": {
             "type": "object",
             "properties": {
@@ -5039,8 +5093,7 @@ const docTemplate = `{
                 "economy_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number",
-                        "format": "float64"
+                        "type": "number"
                     }
                 },
                 "id": {
@@ -5379,8 +5432,7 @@ const docTemplate = `{
                 "average_mileage_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number",
-                        "format": "float64"
+                        "type": "number"
                     }
                 },
                 "front_tire_pressure": {
@@ -5396,6 +5448,19 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/apidoc.FuelFillup"
+                    }
+                },
+                "fuel_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "petrol",
+                            "diesel",
+                            "lpg",
+                            "cng",
+                            "electric"
+                        ]
                     }
                 },
                 "maintenance_records": {
@@ -5415,6 +5480,13 @@ const docTemplate = `{
                 },
                 "vehicle_name": {
                     "type": "string"
+                },
+                "vehicle_type": {
+                    "type": "string",
+                    "enum": [
+                        "two_wheeler",
+                        "four_wheeler"
+                    ]
                 }
             }
         },
@@ -5430,6 +5502,19 @@ const docTemplate = `{
                 "front_tire_pressure_solo": {
                     "type": "number"
                 },
+                "fuel_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "petrol",
+                            "diesel",
+                            "lpg",
+                            "cng",
+                            "electric"
+                        ]
+                    }
+                },
                 "is_active": {
                     "type": "boolean"
                 },
@@ -5444,17 +5529,44 @@ const docTemplate = `{
                 },
                 "rear_tire_pressure_solo": {
                     "type": "number"
+                },
+                "vehicle_type": {
+                    "type": "string",
+                    "enum": [
+                        "two_wheeler",
+                        "four_wheeler"
+                    ]
                 }
             }
         },
         "apidoc.VehicleName": {
             "type": "object",
             "properties": {
+                "fuel_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "petrol",
+                            "diesel",
+                            "lpg",
+                            "cng",
+                            "electric"
+                        ]
+                    }
+                },
                 "id": {
                     "type": "integer"
                 },
                 "name": {
                     "type": "string"
+                },
+                "vehicle_type": {
+                    "type": "string",
+                    "enum": [
+                        "two_wheeler",
+                        "four_wheeler"
+                    ]
                 }
             }
         },
@@ -6037,6 +6149,12 @@ const docTemplate = `{
                 "front_tire_pressure_solo": {
                     "type": "number"
                 },
+                "fuel_types": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -6054,6 +6172,9 @@ const docTemplate = `{
                 },
                 "rear_tire_pressure_solo": {
                     "type": "number"
+                },
+                "vehicle_type": {
+                    "type": "string"
                 }
             }
         }

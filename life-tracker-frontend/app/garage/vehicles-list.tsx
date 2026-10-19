@@ -13,6 +13,8 @@ import { markAirFillAction, saveFuelAction } from "./actions";
 type Vehicle = {
   id: number;
   name: string;
+  vehicle_type: "two_wheeler" | "four_wheeler";
+  fuel_types: string[];
 };
 
 type FuelItem = FuelFormItem;
@@ -124,6 +126,10 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
             <h2 className="mt-4 text-lg font-semibold text-foreground">
               {vehicle.name}
             </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {vehicle.vehicle_type === "two_wheeler" ? "Two-wheeler" : "Four-wheeler"}
+              {" · "}{vehicle.fuel_types.join(" + ").toUpperCase()}
+            </p>
             <Button variant="secondary" size="lg"
               onClick={(event) => {
                 event.stopPropagation();

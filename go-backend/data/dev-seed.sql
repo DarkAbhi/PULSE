@@ -17,7 +17,7 @@ COMMIT;
 \quit
 \endif
 DO $$ BEGIN
-    IF NOT EXISTS (SELECT FROM schema_migrations WHERE version = 23 AND NOT dirty) THEN
+    IF NOT EXISTS (SELECT FROM schema_migrations WHERE version = 24 AND NOT dirty) THEN
         RAISE EXCEPTION 'Seed schema version mismatch; regenerate the development seed';
     END IF;
 END $$;
@@ -142,9 +142,9 @@ SELECT setval(pg_get_serial_sequence('public.notifications', 'id'), coalesce(max
 COPY public.user_profiles (user_id, display_name, created_at, updated_at) FROM stdin;
 1	Demo display name 1	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30
 \.
-COPY public.vehicles (id, name, is_active, created_at, updated_at, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion, user_id) FROM stdin;
-1	Demo name 1	true	2026-01-28 08:00:00+05:30	2026-01-28 08:00:00+05:30	32	32	32	32	1
-2	Demo name 2	true	2026-01-29 08:00:00+05:30	2026-01-29 08:00:00+05:30	\N	\N	\N	\N	1
+COPY public.vehicles (id, name, is_active, created_at, updated_at, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion, user_id, vehicle_type, fuel_types) FROM stdin;
+1	Demo name 1	true	2026-01-28 08:00:00+05:30	2026-01-28 08:00:00+05:30	32	32	32	32	1	two_wheeler	{petrol}
+2	Demo name 2	true	2026-01-29 08:00:00+05:30	2026-01-29 08:00:00+05:30	\N	\N	\N	\N	1	two_wheeler	{petrol}
 \.
 SELECT setval(pg_get_serial_sequence('public.vehicles', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.vehicles;
 COPY public.fitness_workouts (id, uuid, activity_type_id, start_time, end_time, duration_seconds, calories_burned, distance_meters, metadata, created_at, updated_at, user_id) FROM stdin;

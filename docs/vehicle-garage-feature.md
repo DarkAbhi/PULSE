@@ -9,7 +9,7 @@ The feature is organized around two screens:
 - **Garage inventory** at `/garage`: a list of vehicles with a quick air-fill status and shortcuts to record air or fuel events.
 - **Vehicle history** at `/garage/[id]`: a detailed record for one vehicle, including fuel economy, fuel fill-ups, tire-pressure targets, air-fill history, and maintenance expenses.
 
-The feature is designed for lightweight, repeated logging rather than a full vehicle-identity registry. A vehicle currently has a name and operational tracking data; richer metadata such as make, model, registration, or odometer profile is not part of the visible product flow.
+The feature is designed for lightweight, repeated logging rather than a full vehicle-identity registry. A vehicle has a name, a required type (two-wheeler or four-wheeler), one or two fuel types, and operational tracking data; richer metadata such as make, model, registration, or odometer profile is not part of the visible product flow.
 
 ## 2. Product Perspective
 
@@ -19,7 +19,7 @@ A signed-in user can:
 
 - Open the Garage from the dashboard.
 - See all registered vehicles as individual vehicle cards.
-- Add a vehicle through a modal using a required name.
+- Add a vehicle through a modal using a required name, vehicle type, and fuel type. Selecting dual tank requires a second distinct fuel type.
 - Open a vehicle to view its history.
 - Mark that air was filled immediately.
 - Add a fuel entry without leaving the vehicle list.
@@ -285,3 +285,15 @@ Attachment support is optional at startup: if no bucket is configured, the uploa
 - [Vehicle ownership migration](../go-backend/migrations/00020_vehicle_gym_ownership.up.sql)
 - [Maintenance schema](../go-backend/migrations/00010_vehicle_maintenance_records.up.sql)
 - [Attachment schema](../go-backend/migrations/00011_vehicle_maintenance_attachments.up.sql)
+
+### Vehicle classification API
+
+`POST /api/vehicles` requires `name`, `vehicle_type` (`two_wheeler` or `four_wheeler`), and `fuel_types` (one or two distinct values from `petrol`, `diesel`, `lpg`, `cng`, `electric`). Two entries represent a dual-tank vehicle. For example:
+
+```json
+{"name":"Honda City","vehicle_type":"four_wheeler","fuel_types":["petrol","cng"]}
+```
+
+List, detail, create, update, tire-pressure, and history responses include these details. Vehicle updates accept either field and preserve omitted fields.
+
+Migration 00024 classifies existing vehicles as `two_wheeler` with `["petrol"]`, as a temporary backfill; correct any existing vehicles that differ through the vehicle update API. Both columns are non-null with database constraints and no permanent default. Apply the migration before running the updated backend. Older clients that create vehicles must supply the new fields.

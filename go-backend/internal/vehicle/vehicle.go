@@ -19,14 +19,16 @@ import (
 )
 
 type payload struct {
-	Name                     *string  `json:"name"`
-	IsActive                 *bool    `json:"is_active"`
-	FrontTirePressureSolo    *float64 `json:"front_tire_pressure_solo"`
-	RearTirePressureSolo     *float64 `json:"rear_tire_pressure_solo"`
-	FrontTirePressurePillion *float64 `json:"front_tire_pressure_pillion"`
-	RearTirePressurePillion  *float64 `json:"rear_tire_pressure_pillion"`
-	FrontTirePressure        *float64 `json:"front_tire_pressure"`
-	RearTirePressure         *float64 `json:"rear_tire_pressure"`
+	VehicleType              *string   `json:"vehicle_type"`
+	FuelTypes                *[]string `json:"fuel_types"`
+	Name                     *string   `json:"name"`
+	IsActive                 *bool     `json:"is_active"`
+	FrontTirePressureSolo    *float64  `json:"front_tire_pressure_solo"`
+	RearTirePressureSolo     *float64  `json:"rear_tire_pressure_solo"`
+	FrontTirePressurePillion *float64  `json:"front_tire_pressure_pillion"`
+	RearTirePressurePillion  *float64  `json:"rear_tire_pressure_pillion"`
+	FrontTirePressure        *float64  `json:"front_tire_pressure"`
+	RearTirePressure         *float64  `json:"rear_tire_pressure"`
 }
 
 type tirePressurePayload struct {
@@ -39,6 +41,8 @@ type tirePressurePayload struct {
 }
 
 type DTO struct {
+	VehicleType              string   `json:"vehicle_type"`
+	FuelTypes                []string `json:"fuel_types"`
 	ID                       int64    `json:"id"`
 	Name                     string   `json:"name"`
 	IsActive                 bool     `json:"is_active"`
@@ -111,8 +115,8 @@ func (h *Handler) requireOwnedVehicle(next http.Handler) http.Handler {
 	})
 }
 
-func dtoFromFields(id int64, name string, isActive bool, frontSolo, rearSolo, frontPillion, rearPillion *float64) DTO {
-	return DTO{ID: id, Name: name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, FrontTirePressure: frontSolo, RearTirePressure: rearSolo}
+func dtoFromFields(id int64, name string, vehicleType string, fuelTypes []string, isActive bool, frontSolo, rearSolo, frontPillion, rearPillion *float64) DTO {
+	return DTO{ID: id, Name: name, VehicleType: vehicleType, FuelTypes: fuelTypes, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, FrontTirePressure: frontSolo, RearTirePressure: rearSolo}
 }
 
 // List lists all vehicles.
@@ -126,15 +130,15 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	out := make([]struct {
-		ID   int64  `json:"id"`
-		Name string `json:"name"`
-	}, 0, len(rows))
+	type listItem struct {
+		ID          int64    `json:"id"`
+		Name        string   `json:"name"`
+		VehicleType string   `json:"vehicle_type"`
+		FuelTypes   []string `json:"fuel_types"`
+	}
+	out := make([]listItem, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, struct {
-			ID   int64  `json:"id"`
-			Name string `json:"name"`
-		}{row.ID, row.Name})
+		out = append(out, listItem{row.ID, row.Name, row.VehicleType, row.FuelTypes})
 	}
 	webutil.WriteJSON(w, http.StatusOK, out)
 }
@@ -154,7 +158,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	if h.writeError(w, r, err) {
 		return
 	}
-	webutil.WriteJSON(w, http.StatusCreated, dtoFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
+	webutil.WriteJSON(w, http.StatusCreated, dtoFromFields(row.ID, row.Name, row.VehicleType, row.FuelTypes, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
 }
 
 // Show gets a vehicle by ID.
@@ -171,7 +175,7 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 	if h.writeError(w, r, err) {
 		return
 	}
-	webutil.WriteJSON(w, http.StatusOK, dtoFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
+	webutil.WriteJSON(w, http.StatusOK, dtoFromFields(row.ID, row.Name, row.VehicleType, row.FuelTypes, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
 }
 
 // Update updates a vehicle's properties.
@@ -193,7 +197,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	if h.writeError(w, r, err) {
 		return
 	}
-	webutil.WriteJSON(w, http.StatusOK, dtoFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
+	webutil.WriteJSON(w, http.StatusOK, dtoFromFields(row.ID, row.Name, row.VehicleType, row.FuelTypes, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
 }
 
 // UpdateTirePressure updates the solo and pillion tire pressures for a vehicle.
@@ -220,7 +224,7 @@ func (h *Handler) UpdateTirePressure(w http.ResponseWriter, r *http.Request) {
 	if h.writeError(w, r, err) {
 		return
 	}
-	webutil.WriteJSON(w, http.StatusOK, dtoFromFields(row.ID, row.Name, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
+	webutil.WriteJSON(w, http.StatusOK, dtoFromFields(row.ID, row.Name, row.VehicleType, row.FuelTypes, row.IsActive, row.FrontTirePressureSolo, row.RearTirePressureSolo, row.FrontTirePressurePillion, row.RearTirePressurePillion))
 }
 
 // Delete deletes a vehicle by ID.
@@ -355,6 +359,8 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 	}
 	webutil.WriteJSON(w, http.StatusOK, map[string]any{
 		"vehicle_name":                 header.Name,
+		"vehicle_type":                 header.VehicleType,
+		"fuel_types":                   header.FuelTypes,
 		"front_tire_pressure_solo":     header.FrontTirePressureSolo,
 		"rear_tire_pressure_solo":      header.RearTirePressureSolo,
 		"front_tire_pressure_pillion":  header.FrontTirePressurePillion,

@@ -73,6 +73,44 @@ definitions:
       new_password:
         type: string
     type: object
+  apidoc.CreateVehicleInput:
+    properties:
+      front_tire_pressure:
+        type: number
+      front_tire_pressure_pillion:
+        type: number
+      front_tire_pressure_solo:
+        type: number
+      fuel_types:
+        items:
+          enum:
+          - petrol
+          - diesel
+          - lpg
+          - cng
+          - electric
+          type: string
+        type: array
+      is_active:
+        type: boolean
+      name:
+        type: string
+      rear_tire_pressure:
+        type: number
+      rear_tire_pressure_pillion:
+        type: number
+      rear_tire_pressure_solo:
+        type: number
+      vehicle_type:
+        enum:
+        - two_wheeler
+        - four_wheeler
+        type: string
+    required:
+    - fuel_types
+    - name
+    - vehicle_type
+    type: object
   apidoc.CreatedID:
     properties:
       id:
@@ -224,7 +262,6 @@ definitions:
     properties:
       economy_km_per_litre:
         additionalProperties:
-          format: float64
           type: number
         type: object
       id:
@@ -448,7 +485,6 @@ definitions:
         type: array
       average_mileage_km_per_litre:
         additionalProperties:
-          format: float64
           type: number
         type: object
       front_tire_pressure:
@@ -460,6 +496,16 @@ definitions:
       fuel_fillups:
         items:
           $ref: '#/definitions/apidoc.FuelFillup'
+        type: array
+      fuel_types:
+        items:
+          enum:
+          - petrol
+          - diesel
+          - lpg
+          - cng
+          - electric
+          type: string
         type: array
       maintenance_records:
         items:
@@ -473,6 +519,11 @@ definitions:
         type: number
       vehicle_name:
         type: string
+      vehicle_type:
+        enum:
+        - two_wheeler
+        - four_wheeler
+        type: string
     type: object
   apidoc.VehicleInput:
     properties:
@@ -482,6 +533,16 @@ definitions:
         type: number
       front_tire_pressure_solo:
         type: number
+      fuel_types:
+        items:
+          enum:
+          - petrol
+          - diesel
+          - lpg
+          - cng
+          - electric
+          type: string
+        type: array
       is_active:
         type: boolean
       name:
@@ -492,12 +553,32 @@ definitions:
         type: number
       rear_tire_pressure_solo:
         type: number
+      vehicle_type:
+        enum:
+        - two_wheeler
+        - four_wheeler
+        type: string
     type: object
   apidoc.VehicleName:
     properties:
+      fuel_types:
+        items:
+          enum:
+          - petrol
+          - diesel
+          - lpg
+          - cng
+          - electric
+          type: string
+        type: array
       id:
         type: integer
       name:
+        type: string
+      vehicle_type:
+        enum:
+        - two_wheeler
+        - four_wheeler
         type: string
     type: object
   apidoc.Visited:
@@ -881,6 +962,10 @@ definitions:
         type: number
       front_tire_pressure_solo:
         type: number
+      fuel_types:
+        items:
+          type: string
+        type: array
       id:
         type: integer
       is_active:
@@ -893,6 +978,8 @@ definitions:
         type: number
       rear_tire_pressure_solo:
         type: number
+      vehicle_type:
+        type: string
     type: object
 info:
   contact: {}
@@ -2776,7 +2863,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/apidoc.VehicleInput'
+          $ref: '#/definitions/apidoc.CreateVehicleInput'
       produces:
       - application/json
       responses:

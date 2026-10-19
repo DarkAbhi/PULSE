@@ -10,6 +10,8 @@ import (
 )
 
 type Changes struct {
+	VehicleType              *string
+	FuelTypes                *[]string
 	Name                     *string
 	IsActive                 *bool
 	FrontTirePressureSolo    *float64
@@ -59,6 +61,12 @@ func (s *Service) Create(ctx context.Context, userID int64, p Changes) (query.Cr
 	if p.Name == nil || *p.Name == "" {
 		return query.CreateVehicleRow{}, ValidationError{"name is required"}
 	}
+	if p.VehicleType == nil || p.FuelTypes == nil {
+		return query.CreateVehicleRow{}, ValidationError{"vehicle_type and fuel_types are required"}
+	}
+	if err := validateVehicleDetails(*p.VehicleType, *p.FuelTypes); err != nil {
+		return query.CreateVehicleRow{}, err
+	}
 	isActive := true
 	if p.IsActive != nil {
 		isActive = *p.IsActive
@@ -67,7 +75,7 @@ func (s *Service) Create(ctx context.Context, userID int64, p Changes) (query.Cr
 	if err := validatePressures(frontSolo, rearSolo, p.FrontTirePressurePillion, p.RearTirePressurePillion); err != nil {
 		return query.CreateVehicleRow{}, err
 	}
-	row, err := s.store.Create(ctx, query.CreateVehicleParams{Name: *p.Name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion, UserID: userID})
+	row, err := s.store.Create(ctx, query.CreateVehicleParams{VehicleType: *p.VehicleType, FuelTypes: *p.FuelTypes, Name: *p.Name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion, UserID: userID})
 	if err != nil {
 		return query.CreateVehicleRow{}, fmt.Errorf("create vehicle: %w", err)
 	}
@@ -90,6 +98,16 @@ func (s *Service) Update(ctx context.Context, id, userID int64, p Changes) (quer
 	}
 	if err != nil {
 		return query.UpdateVehicleRow{}, fmt.Errorf("get vehicle for update: %w", err)
+	}
+	vehicleType, fuelTypes := current.VehicleType, current.FuelTypes
+	if p.VehicleType != nil {
+		vehicleType = *p.VehicleType
+	}
+	if p.FuelTypes != nil {
+		fuelTypes = *p.FuelTypes
+	}
+	if err := validateVehicleDetails(vehicleType, fuelTypes); err != nil {
+		return query.UpdateVehicleRow{}, err
 	}
 	name, isActive := current.Name, current.IsActive
 	if p.Name != nil {
@@ -115,7 +133,7 @@ func (s *Service) Update(ctx context.Context, id, userID int64, p Changes) (quer
 	if err := validatePressures(frontSolo, rearSolo, frontPillion, rearPillion); err != nil {
 		return query.UpdateVehicleRow{}, err
 	}
-	row, err := s.store.Update(ctx, query.UpdateVehicleParams{Name: name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, ID: id, UserID: userID})
+	row, err := s.store.Update(ctx, query.UpdateVehicleParams{VehicleType: vehicleType, FuelTypes: fuelTypes, Name: name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, ID: id, UserID: userID})
 	if errors.Is(err, sql.ErrNoRows) {
 		return query.UpdateVehicleRow{}, ErrNotFound
 	}
@@ -167,6 +185,26 @@ func validatePressures(frontSolo, rearSolo, frontPillion, rearPillion *float64) 
 		if item.value != nil && *item.value < 0 {
 			return ValidationError{item.message}
 		}
+	}
+	return nil
+}
+
+func validateVehicleDetails(vehicleType string, fuelTypes []string) error {
+	if vehicleType != "two_wheeler" && vehicleType != "four_wheeler" {
+		return ValidationError{"vehicle_type must be two_wheeler or four_wheeler"}
+	}
+	if len(fuelTypes) < 1 || len(fuelTypes) > 2 {
+		return ValidationError{"fuel_types must contain one or two fuel types"}
+	}
+	for _, fuel := range fuelTypes {
+		switch fuel {
+		case "petrol", "diesel", "lpg", "cng", "electric":
+		default:
+			return ValidationError{"invalid fuel type"}
+		}
+	}
+	if len(fuelTypes) == 2 && fuelTypes[0] == fuelTypes[1] {
+		return ValidationError{"fuel types must be distinct"}
 	}
 	return nil
 }

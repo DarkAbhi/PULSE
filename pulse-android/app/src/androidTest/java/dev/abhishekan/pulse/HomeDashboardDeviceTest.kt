@@ -89,6 +89,24 @@ class HomeDashboardDeviceTest {
         bitmap.recycle()
     }
 
+    @Test fun workoutAndBalanceRemainVisibleDuringRefreshAndAfterRefreshFailure() {
+        val current = mutableStateOf(state)
+        compose.setContent {
+            PulseTheme(false) {
+                HomeScreen("fixture", current.value, {}, {}, {}, {}, {}, {})
+            }
+        }
+        compose.runOnIdle { current.value = state.copy(refreshing = setOf("workout", "horizon")) }
+        compose.onNodeWithText("No workout recorded today.").assertExists()
+        compose.onNodeWithText("Loading today’s workout").assertDoesNotExist()
+        compose.onNodeWithText("Loading your horizon").assertDoesNotExist()
+        assertMatchingCardHeights()
+        compose.runOnIdle {
+            current.value = state.copy(refreshErrors = mapOf("workout" to Failure.Connection))
+        }
+        compose.onNodeWithText("No workout recorded today.").assertExists()
+    }
+
     @Test fun pageGuttersStayConsistentAcrossCompactAndWideLayouts() {
         val width = mutableStateOf(360.dp)
         compose.setContent {

@@ -29,7 +29,9 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.asString
+import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.message
@@ -105,9 +107,11 @@ fun HomeScreen(
                     Section.Loading -> PulseLoadingState(stringResource(R.string.pulse_home_loading_your_profile))
                     else -> Unit
                 }
+                if ("profile" in state.refreshing && state.profile != Section.Loading) PulseRefreshIndicator()
+                state.refreshErrors["profile"]?.let { PulseErrorState(it.message, retryProfile) }
                 DashboardCards(stackCards) {
-                    HorizonCard(state.horizon, retryHorizon, onHorizon)
-                    WorkoutCard(state.workout, retryWorkout, onFitness)
+                    HorizonCard(state.horizon, retryHorizon, onHorizon, "horizon" in state.refreshing, state.refreshErrors["horizon"])
+                    WorkoutCard(state.workout, retryWorkout, onFitness, "workout" in state.refreshing, state.refreshErrors["workout"])
                 }
                 Spacer(Modifier.height(if (compact) 48.dp else 160.dp))
             }

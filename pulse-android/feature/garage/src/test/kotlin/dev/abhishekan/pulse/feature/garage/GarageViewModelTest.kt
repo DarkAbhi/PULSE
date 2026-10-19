@@ -137,6 +137,28 @@ class GarageViewModelTest {
             models.put("garage", it)
         }
 
+    @Test fun refreshKeepsVehicleAndHistoryDataIncludingOnFailure() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            vm.select(1)
+            runCurrent()
+            val previous = vm.uiState.value
+            repo.failure = Failure.Connection
+            vm.refresh()
+            assertTrue(vm.uiState.value.vehicles.loading)
+            assertTrue(vm.uiState.value.history.loading)
+            assertEquals(previous.vehicles.value, vm.uiState.value.vehicles.value)
+            assertEquals(previous.history.value, vm.uiState.value.history.value)
+            runCurrent()
+            assertEquals(Failure.Connection, vm.uiState.value.history.error)
+            assertEquals(previous.history.value, vm.uiState.value.history.value)
+            repo.vehicles = repo.vehicles + Vehicle(2, "Other", "two_wheeler", listOf("petrol"))
+            vm.select(2)
+            assertNull(vm.uiState.value.history.value)
+            runCurrent()
+        }
+
     @Test fun missingSelectedVehicleReturnsToCollectionWithFeedbackEvenWhenListFinishesFirst() =
         runTest {
             repo.vehicles = emptyList()

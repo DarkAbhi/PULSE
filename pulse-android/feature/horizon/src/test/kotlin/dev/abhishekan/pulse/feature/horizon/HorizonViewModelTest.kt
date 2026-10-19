@@ -58,6 +58,45 @@ class HorizonViewModelTest {
             models.put("finance", it)
         }
 
+    @Test fun refreshRetainsSectionsAndFailedRefreshKeepsDataWithError() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            val previous = vm.uiState.value
+            repo.overviewFailure = Failure.Connection
+            repo.listFailure = Failure.Connection
+            repo.purchaseFailure = Failure.Connection
+            vm.refresh()
+            assertTrue(vm.uiState.value.overview.loading)
+            assertEquals(previous.overview.value, vm.uiState.value.overview.value)
+            assertEquals(previous.transactions.value, vm.uiState.value.transactions.value)
+            assertEquals(previous.purchases.value, vm.uiState.value.purchases.value)
+            runCurrent()
+            assertFalse(vm.uiState.value.overview.loading)
+            assertEquals(Failure.Connection, vm.uiState.value.overview.error)
+            assertEquals(previous.overview.value, vm.uiState.value.overview.value)
+            assertEquals(previous.transactions.value, vm.uiState.value.transactions.value)
+            assertEquals(previous.purchases.value, vm.uiState.value.purchases.value)
+        }
+
+    @Test fun changingPageFilterOrSubscriptionDoesNotRetainUnrelatedRecords() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            vm.refreshTransactions(2)
+            assertNull(vm.uiState.value.transactions.value)
+            runCurrent()
+            vm.filter("tea", "debit")
+            assertNull(vm.uiState.value.transactions.value)
+            runCurrent()
+            vm.showPayments(1)
+            runCurrent()
+            assertNotNull(vm.uiState.value.payments.value)
+            vm.showPayments(2)
+            assertNull(vm.uiState.value.payments.value)
+            runCurrent()
+        }
+
     @Test fun partialFailureKeepsOtherSectionsAndRetriesOnlyOneRead() =
         runTest {
             repo.overviewFailure = Failure.Server

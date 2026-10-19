@@ -57,13 +57,13 @@ class GarageViewModel(
 
     fun refreshVehicles() {
         listJob?.cancel()
-        state.update { it.copy(vehicles = GarageSection()) }
+        state.update { it.copy(vehicles = it.vehicles.copy(loading = true, error = null)) }
         listJob =
             viewModelScope.launch {
                 when (val result = getVehicles()) {
                     is Outcome.Error ->
                         state.update {
-                            it.copy(vehicles = GarageSection(loading = false, error = result.failure))
+                            it.copy(vehicles = it.vehicles.copy(loading = false, error = result.failure))
                         }
                     is Outcome.Success -> {
                         if (state.value.vehicle != null &&
@@ -81,7 +81,7 @@ class GarageViewModel(
     fun refreshHistory() {
         historyJob?.cancel()
         val id = state.value.vehicle ?: return
-        state.update { it.copy(history = GarageSection()) }
+        state.update { it.copy(history = it.history.copy(loading = true, error = null)) }
         historyJob =
             viewModelScope.launch {
                 when (val result = getHistory(id)) {
@@ -93,7 +93,7 @@ class GarageViewModel(
                         } else {
                             state.update {
                                 it.copy(
-                                    history = GarageSection(loading = false, error = result.failure),
+                                    history = it.history.copy(loading = false, error = result.failure),
                                 )
                             }
                         }
@@ -120,7 +120,13 @@ class GarageViewModel(
             clearSelection()
         } else {
             saved["vehicle"] = id
-            state.update { it.copy(vehicle = id, message = null) }
+            state.update {
+                it.copy(
+                    vehicle = id,
+                    message = null,
+                    history = if (it.vehicle == id) it.history else GarageSection(),
+                )
+            }
             refreshHistory()
         }
     }

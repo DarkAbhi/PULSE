@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Horizon
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -38,6 +39,7 @@ import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
@@ -60,6 +62,8 @@ internal fun HorizonCard(
     section: Section<Horizon>,
     onRetry: () -> Unit,
     onOpen: () -> Unit,
+    refreshing: Boolean = false,
+    refreshError: Failure? = null,
 ) {
     // The yellow illustration card keeps dark ink in either appearance.
     PulseTheme(false) {
@@ -72,6 +76,8 @@ internal fun HorizonCard(
             action = stringResource(R.string.pulse_home_keep_going),
             onOpen = onOpen,
         ) {
+            if (refreshing && section != Section.Loading) PulseRefreshIndicator()
+            refreshError?.let { PulseErrorState(it.message, onRetry) }
             when (section) {
                 Section.Loading -> PulseLoadingState(stringResource(R.string.pulse_home_loading_your_horizon))
                 Section.Empty ->
@@ -97,6 +103,8 @@ internal fun WorkoutCard(
     section: Section<WorkoutToday>,
     onRetry: () -> Unit,
     onOpen: () -> Unit,
+    refreshing: Boolean = false,
+    refreshError: Failure? = null,
 ) {
     IllustratedDashboardCard(
         label = stringResource(R.string.pulse_home_fitness_today),
@@ -115,6 +123,8 @@ internal fun WorkoutCard(
             style = PulseTextStyle.Label,
             color = PulseTheme.colors.textSecondary,
         )
+        if (refreshing && section != Section.Loading) PulseRefreshIndicator()
+        refreshError?.let { PulseErrorState(it.message, onRetry) }
         when (section) {
             Section.Loading -> PulseLoadingState(stringResource(R.string.pulse_home_loading_today_s_workout))
             Section.Empty ->

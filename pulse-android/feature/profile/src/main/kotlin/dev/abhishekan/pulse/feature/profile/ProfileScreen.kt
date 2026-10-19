@@ -71,6 +71,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulsePasswordField
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
+import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
@@ -303,7 +304,13 @@ internal fun ProfileScreen(
                                 PulseText(state.profile?.name ?: username, Modifier.semantics { heading() }, PulseTextStyle.Display)
                                 PulseText(stringResource(R.string.pulse_profile_identity))
                                 PulseText(stringResource(R.string.pulse_profile_username, username))
-                                if (state.loading) PulseLoadingState(stringResource(R.string.pulse_profile_profile_loading))
+                                if (state.loading) {
+                                    if (state.profile == null) {
+                                        PulseLoadingState(stringResource(R.string.pulse_profile_profile_loading))
+                                    } else {
+                                        PulseRefreshIndicator()
+                                    }
+                                }
                                 state.profileError?.let { PulseErrorState(it.message, vm::refreshProfile) }
                                 if (state.profile?.hasProfile == false) PulseText(stringResource(R.string.pulse_profile_profile_fallback))
                                 PulseButton(
@@ -578,7 +585,13 @@ private fun APIKeysCard(
     PulseCard(Modifier.fillMaxWidth()) {
         PulseText(stringResource(R.string.pulse_profile_keys), Modifier.semantics { heading() }, PulseTextStyle.Title)
         PulseText(stringResource(R.string.pulse_profile_keys_description))
-        if (state.keysLoading) PulseLoadingState(stringResource(R.string.pulse_profile_keys))
+        if (state.keysLoading) {
+            if (state.keysLoaded) {
+                PulseRefreshIndicator()
+            } else {
+                PulseLoadingState(stringResource(R.string.pulse_profile_keys))
+            }
+        }
         state.keysError?.let { PulseErrorState(it.message, vm::refreshKeys) }
         if (state.keysLoaded &&
             state.keys.isEmpty()

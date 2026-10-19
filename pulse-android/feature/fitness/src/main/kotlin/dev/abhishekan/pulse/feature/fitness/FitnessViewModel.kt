@@ -41,6 +41,7 @@ class FitnessViewModel(
     private var selectionVersion = 0L
     private var firstLoad = saved.get<String>("selected") == null
     private var loadJob: Job? = null
+    private var hasResumed = false
 
     init {
         refresh()
@@ -80,6 +81,10 @@ class FitnessViewModel(
                     select(checkNotNull(state.value.overview).today)
                 }
             }
+    }
+
+    fun resume() {
+        if (hasResumed) refresh() else hasResumed = true
     }
 
     fun refresh(force: Boolean = false) {

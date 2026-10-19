@@ -48,6 +48,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -189,7 +190,7 @@ internal fun MealPlanScreen(
                     }
                     if (state.draft != null && !records) {
                         if (!state.draft.timeForm) {
-                            if (state.times.loading) {
+                            if (state.times.loading && state.times.value == null) {
                                 PulseLoadingState(
                                     stringResource(R.string.pulse_mealplan_loading_meal_times),
                                 )
@@ -298,7 +299,7 @@ internal fun MealPlanScreen(
                     )
                 }
             }
-            if (state.meals.loading && !state.managing && (state.draft == null || records)) {
+            if (state.meals.loading && state.meals.value == null && !state.managing && (state.draft == null || records)) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     PulseLoadingState(
                         stringResource(R.string.pulse_mealplan_refreshing_meal_plan),
@@ -351,9 +352,11 @@ private fun <T> MealSectionContent(
     content: @Composable (T) -> Unit,
 ) {
     if (section.loading && showLoading) {
-        PulseLoadingState(
-            stringResource(R.string.pulse_mealplan_refreshing_meal_plan),
-        )
+        if (section.value == null) {
+            PulseLoadingState(stringResource(R.string.pulse_mealplan_refreshing_meal_plan))
+        } else {
+            PulseRefreshIndicator()
+        }
     }
     section.error?.let { PulseErrorState(it.message, retry) }
     section.value?.let { content(it) }

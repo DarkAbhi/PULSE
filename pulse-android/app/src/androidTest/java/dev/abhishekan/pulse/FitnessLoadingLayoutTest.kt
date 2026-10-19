@@ -25,7 +25,7 @@ import java.time.YearMonth
 class FitnessLoadingLayoutTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun initialAndRefreshLoadingAreCenteredInTheViewport() {
+    @Test fun onlyInitialLoadingReplacesCalendarAndRefreshKeepsItVisible() {
         val day = LocalDate.of(2026, 10, 20)
         var state by mutableStateOf(FitnessUiState(day, YearMonth.from(day)))
         compose.setContent {
@@ -39,8 +39,11 @@ class FitnessLoadingLayoutTest {
         compose.runOnIdle {
             state = state.copy(overview = FitnessOverview(day, emptyList(), emptyList()))
         }
-        assertLoadingCentered()
-        compose.runOnIdle { state = state.copy(loading = false) }
+        compose.onNodeWithText("Refreshing your activity").assertDoesNotExist()
+        compose.onNodeWithText("SELECTED DAY").assertExists()
+        compose.runOnIdle {
+            state = state.copy(loading = false, error = dev.abhishekan.pulse.core.domain.model.Failure.Connection)
+        }
         compose.onNodeWithText("Refreshing your activity").assertDoesNotExist()
         compose.onNodeWithText("SELECTED DAY").assertExists()
     }

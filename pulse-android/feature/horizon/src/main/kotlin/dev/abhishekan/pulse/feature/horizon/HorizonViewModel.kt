@@ -48,16 +48,17 @@ class HorizonViewModel(
     private fun <T> fetch(
         key: String,
         block: suspend () -> Outcome<T>,
+        current: (HorizonUiState) -> HorizonSection<T>,
         update: (HorizonUiState, HorizonSection<T>) -> HorizonUiState,
     ) {
         jobs[key]?.cancel()
-        state.update { update(it, HorizonSection()) }
+        state.update { update(it, current(it).copy(loading = true, error = null)) }
         jobs[key] =
             viewModelScope.launch {
                 val result =
                     when (val value = block()) {
                         is Outcome.Success -> HorizonSection(value.value, loading = false)
-                        is Outcome.Error -> HorizonSection<T>(loading = false, error = value.failure)
+                        is Outcome.Error -> current(state.value).copy(loading = false, error = value.failure)
                     }
                 state.update { update(it, result) }
             }
@@ -71,7 +72,7 @@ class HorizonViewModel(
     }
 
     fun refreshOverview() =
-        fetch("overview", { load() }) { s, v ->
+        fetch("overview", { load() }, { it.overview }) { s, v ->
             if (v.value != null &&
                 s.subscriptionId != null &&
                 v.value.subscriptions.none { it.id == s.subscriptionId }
@@ -86,13 +87,16 @@ class HorizonViewModel(
     fun refreshPurchases() =
         fetch("purchases", {
             getPurchases()
-        }) { s, v -> s.copy(purchases = v) }
+        }, { it.purchases }) { s, v -> s.copy(purchases = v) }
 
     fun refreshTransactions(page: Int = saved["page"] ?: 1) {
+        if (saved.get<Int>("page") != page) {
+            state.update { it.copy(transactions = HorizonSection()) }
+        }
         saved["page"] = page
         val search = state.value.search
         val type = state.value.type
-        fetch("transactions", { getTransactions(page, search, type) }) { s, v ->
+        fetch("transactions", { getTransactions(page, search, type) }, { it.transactions }) { s, v ->
             v.value?.let { saved["page"] = it.page }
             s.copy(transactions = v)
         }
@@ -106,7 +110,18 @@ class HorizonViewModel(
         saved["search"] = search
         saved["type"] = type
         saved["page"] = 1
-        state.update { it.copy(search = search, type = type) }
+        state.update {
+            it.copy(
+                search = search,
+                type = type,
+                transactions =
+                    if (it.search != search || it.type != type || it.transactions.value?.page != 1) {
+                        HorizonSection()
+                    } else {
+                        it.transactions
+                    },
+            )
+        }
         refreshTransactions(1)
     }
 
@@ -117,8 +132,10 @@ class HorizonViewModel(
 
     fun showPayments(id: Long) {
         saved["subscription"] = id
-        state.update { it.copy(subscriptionId = id) }
-        fetch("payments", { getPayments(id) }) { s, v -> s.copy(payments = v) }
+        state.update {
+            it.copy(subscriptionId = id, payments = if (it.subscriptionId == id) it.payments else HorizonSection())
+        }
+        fetch("payments", { getPayments(id) }, { it.payments }) { s, v -> s.copy(payments = v) }
     }
 
     fun hidePayments() {

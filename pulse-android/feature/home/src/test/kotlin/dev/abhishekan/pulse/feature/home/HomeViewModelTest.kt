@@ -167,8 +167,15 @@ class HomeViewModelTest {
             horizonFails = true
             horizon.changes.value++
             runCurrent()
-            assertEquals(Section.Error(Failure.Server), vm.uiState.value.horizon)
+            assertTrue(vm.uiState.value.horizon is Section.Content)
+            assertEquals(Failure.Server, vm.uiState.value.refreshErrors["horizon"])
             assertEquals(2, workoutCalls)
+            vm.retryWorkout()
+            assertEquals(Section.Content(WorkoutToday(true)), vm.uiState.value.workout)
+            assertTrue("workout" in vm.uiState.value.refreshing)
+            runCurrent()
+            assertTrue("workout" !in vm.uiState.value.refreshing)
+            assertEquals(3, workoutCalls)
             assertEquals(0, notificationCalls)
         }
 

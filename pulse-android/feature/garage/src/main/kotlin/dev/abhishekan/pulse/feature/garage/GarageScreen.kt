@@ -57,6 +57,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -649,13 +650,13 @@ private fun <T> GarageSection(
     retry: () -> Unit,
     content: @Composable (T) -> Unit,
 ) {
-    when {
-        section.loading ->
-            PulseLoadingState(
-                stringResource(R.string.pulse_garage_loading_your_garage),
-            )
-        section.error !=
-            null -> PulseErrorState(section.error.message, retry)
-        section.value != null -> content(section.value)
+    if (section.loading) {
+        if (section.value == null) {
+            PulseLoadingState(stringResource(R.string.pulse_garage_loading_your_garage))
+        } else {
+            PulseRefreshIndicator()
+        }
     }
+    section.error?.let { PulseErrorState(it.message, retry) }
+    section.value?.let { content(it) }
 }

@@ -23,4 +23,6 @@ data class HomeUiState(
     val profile: Section<Profile> = Section.Loading,
     val workout: Section<WorkoutToday> = Section.Loading,
     val horizon: Section<Horizon> = Section.Loading,
+    val refreshing: Set<String> = emptySet(),
+    val refreshErrors: Map<String, Failure> = emptyMap(),
 )

@@ -59,7 +59,7 @@ fun FitnessRoute(
     viewModel: FitnessViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
     FitnessScreen(
         state,
         viewModel::select,
@@ -93,10 +93,10 @@ fun FitnessScreen(
             isRefreshing = state.loading,
             state = pullState,
             indicator = {
-                if (!state.loading) {
+                if (state.overview != null || !state.loading) {
                     PullToRefreshDefaults.Indicator(
                         state = pullState,
-                        isRefreshing = false,
+                        isRefreshing = state.loading,
                         modifier = Modifier.align(Alignment.TopCenter),
                     )
                 }
@@ -118,7 +118,7 @@ fun FitnessScreen(
                 },
             contentAlignment = Alignment.TopCenter,
         ) {
-            if (state.loading) {
+            if (state.loading && state.overview == null) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     PulseLoadingState(
                         stringResource(R.string.pulse_fitness_refreshing_your_activity),

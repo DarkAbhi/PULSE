@@ -120,6 +120,26 @@ class MealPlanViewModelTest {
             models.put("meals", it)
         }
 
+    @Test fun resumeDoesNotFetchAndRefreshPreservesMealsOnFailure() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            val previous = vm.uiState.value
+            val reads = repo.reads
+            vm.resume()
+            runCurrent()
+            assertEquals(reads, repo.reads)
+            repo.mealFailure = Failure.Connection
+            vm.refresh()
+            assertTrue(vm.uiState.value.meals.loading)
+            assertEquals(previous.meals.value, vm.uiState.value.meals.value)
+            assertEquals(previous.times.value, vm.uiState.value.times.value)
+            runCurrent()
+            assertFalse(vm.uiState.value.meals.loading)
+            assertEquals(Failure.Connection, vm.uiState.value.meals.error)
+            assertEquals(previous.meals.value, vm.uiState.value.meals.value)
+        }
+
     @Test fun indiaTodayAndMondayWeeksCrossYearMonthAndLeapDay() {
         assertEquals(LocalDate.parse("2027-01-01"), calendar.today())
         listOf(

@@ -53,6 +53,42 @@ class FitnessViewModelTest {
             clock,
         ).also { models.put("overview", it) }
 
+    @Test fun firstResumeDoesNotReloadButReturningRefreshesExistingData() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            vm.resume()
+            runCurrent()
+            assertEquals(listOf("overview"), repo.trace)
+            val previous = vm.uiState.value.overview
+            val gate = CompletableDeferred<Outcome<FitnessOverview>>()
+            repo.overviewRead = { gate.await() }
+            vm.resume()
+            runCurrent()
+            assertTrue(vm.uiState.value.loading)
+            assertEquals(previous, vm.uiState.value.overview)
+            vm.refresh()
+            runCurrent()
+            assertEquals(listOf("overview", "overview"), repo.trace)
+            gate.complete(Outcome.Error(Failure.Connection))
+            runCurrent()
+            assertFalse(vm.uiState.value.loading)
+            assertEquals(previous, vm.uiState.value.overview)
+            assertEquals(Failure.Connection, vm.uiState.value.error)
+        }
+
+    @Test fun firstResumeDuringInitialLoadDoesNotQueueAnotherRequest() =
+        runTest {
+            val gate = CompletableDeferred<Outcome<FitnessOverview>>()
+            repo.overviewRead = { gate.await() }
+            val vm = vm()
+            vm.resume()
+            runCurrent()
+            gate.complete(Outcome.Success(repo.overviewValue))
+            runCurrent()
+            assertEquals(listOf("overview"), repo.trace)
+        }
+
     @Test fun selectedDateSurvivesRecreationAndMonthNavigationCrossesYear() =
         runTest {
             val saved = SavedStateHandle()

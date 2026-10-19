@@ -55,14 +55,21 @@ class HomeViewModel(
         key: String,
         fetch: suspend () -> Outcome<T>,
         empty: (T) -> Boolean,
+        current: (HomeUiState) -> Section<T>,
         update: (HomeUiState, Section<T>) -> HomeUiState,
     ) {
         if (jobs[key]?.isActive == true) return
-        state.update { update(it, Section.Loading) }
+        val previous = current(state.value)
+        val retained = previous is Section.Content || previous == Section.Empty
+        state.update {
+            val next = if (retained) it else update(it, Section.Loading)
+            next.copy(refreshing = next.refreshing + key, refreshErrors = next.refreshErrors - key)
+        }
         jobs[key] =
             viewModelScope.launch {
+                val result = fetch()
                 val section =
-                    when (val result = fetch()) {
+                    when (result) {
                         is Outcome.Error -> Section.Error(result.failure)
                         is Outcome.Success ->
                             if (empty(
@@ -74,22 +81,34 @@ class HomeViewModel(
                                 Section.Content(result.value)
                             }
                     }
-                state.update { update(it, section) }
+                state.update {
+                    val refreshFailure = (result as? Outcome.Error)?.failure?.takeIf { retained }
+                    val next = if (refreshFailure != null) it else update(it, section)
+                    next.copy(
+                        refreshing = next.refreshing - key,
+                        refreshErrors =
+                            if (refreshFailure != null) {
+                                next.refreshErrors + (key to refreshFailure)
+                            } else {
+                                next.refreshErrors - key
+                            },
+                    )
+                }
             }
     }
 
     fun retryProfile() =
         load("profile", {
             getProfile()
-        }, { it.name == null && it.hasProfile }) { state, value -> state.copy(profile = value) }
+        }, { it.name == null && it.hasProfile }, { it.profile }) { state, value -> state.copy(profile = value) }
 
     fun retryWorkout() =
         load("workout", {
             getWorkout()
-        }, { !it.visited }) { state, value -> state.copy(workout = value) }
+        }, { !it.visited }, { it.workout }) { state, value -> state.copy(workout = value) }
 
     fun retryHorizon() =
         load("horizon", {
             getHorizon()
-        }, { false }) { state, value -> state.copy(horizon = value) }
+        }, { false }, { it.horizon }) { state, value -> state.copy(horizon = value) }
 }

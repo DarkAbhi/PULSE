@@ -75,7 +75,10 @@ class FitnessViewModel(
     }
 
     fun selectToday() {
-        if (state.value.busy) return
+        val current = state.value
+        if (current.busy) return
+        val today = FitnessDates.today(clock)
+        if (current.selected == today && current.overview?.today == today) return
         loadJob?.cancel()
         val version = selectionVersion
         loadJob =

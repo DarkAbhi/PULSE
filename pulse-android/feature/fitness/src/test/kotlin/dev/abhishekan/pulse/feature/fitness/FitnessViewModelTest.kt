@@ -23,6 +23,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -44,14 +45,16 @@ class FitnessViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun vm(saved: SavedStateHandle = SavedStateHandle()) =
-        FitnessViewModel(
-            GetFitnessOverview(repo),
-            RecordWorkout(repo),
-            ObserveFitnessChanges(repo),
-            saved,
-            clock,
-        ).also { models.put("overview", it) }
+    private fun vm(
+        saved: SavedStateHandle = SavedStateHandle(),
+        clock: Clock = this.clock,
+    ) = FitnessViewModel(
+        GetFitnessOverview(repo),
+        RecordWorkout(repo),
+        ObserveFitnessChanges(repo),
+        saved,
+        clock,
+    ).also { models.put("overview", it) }
 
     @Test fun consumedWorkoutFeedbackCanBeProducedAgain() =
         runTest {
@@ -198,10 +201,37 @@ class FitnessViewModelTest {
             assertEquals(0, repo.records)
         }
 
-    @Test fun todayActionRevalidatesBackendDayAfterMidnightEvenWithClientClockSkew() =
+    @Test fun todayActionDoesNothingWhenTodayIsAlreadySelected() =
         runTest {
             val vm = vm()
             runCurrent()
+            val before = vm.uiState.value
+            vm.selectToday()
+            vm.selectToday()
+            assertEquals(before, vm.uiState.value)
+            runCurrent()
+            assertEquals(before, vm.uiState.value)
+            assertEquals(listOf("overview"), repo.trace)
+        }
+
+    @Test fun todayActionRevalidatesStaleDayAfterMidnight() =
+        runTest {
+            val vm = vm(clock = Clock.offset(clock, Duration.ofDays(1)))
+            runCurrent()
+            assertEquals(repo.today, vm.uiState.value.selected)
+            val nextDay = repo.today.plusDays(1)
+            repo.overviewValue = repo.overviewValue.copy(today = nextDay)
+            vm.selectToday()
+            runCurrent()
+            assertEquals(nextDay, vm.uiState.value.selected)
+            assertEquals(listOf("overview", "overview"), repo.trace)
+        }
+
+    @Test fun todayActionRevalidatesBackendDayFromAnotherSelectionEvenWithClientClockSkew() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            vm.select(repo.today.minusDays(1))
             val nextDay = repo.today.plusDays(1)
             repo.overviewValue = repo.overviewValue.copy(today = nextDay)
             vm.selectToday()
@@ -216,6 +246,7 @@ class FitnessViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
+            vm.select(repo.today.minusDays(1))
             val gate = CompletableDeferred<Outcome<FitnessOverview>>()
             repo.overviewRead = { gate.await() }
             vm.selectToday()

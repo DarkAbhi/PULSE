@@ -198,6 +198,10 @@ internal fun GarageScreen(
     val enabled = !state.busy && !state.reviewRequired && state.draft == null
     val refreshState = rememberPullToRefreshState()
     val canRefresh = state.vehicle != null && !state.history.loading && !state.busy && state.draft == null
+    val showLoading =
+        !state.reviewRequired &&
+            (state.draft == null || records) &&
+            if (state.vehicle == null) state.vehicles.loading else state.history.loading
     val refresh = { if (canRefresh) vm.refreshHistory() }
     val refreshLabel = stringResource(R.string.pulse_garage_refresh_vehicle_history)
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
@@ -587,7 +591,17 @@ internal fun GarageScreen(
                             }
                     },
             ) {
-                if (state.draft != null &&
+                if (showLoading) {
+                    PulseLoadingState(
+                        stringResource(R.string.pulse_garage_loading_your_garage),
+                        modifier =
+                            Modifier
+                                .align(Alignment.Center)
+                                .padding(LocalPulseContentPadding.current)
+                                .padding(size.pagePadding),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    )
+                } else if (state.draft != null &&
                     !records
                 ) {
                     key(state.draft.kind, state.draft.id) { content() }

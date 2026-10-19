@@ -48,7 +48,9 @@ class MainActivity : ComponentActivity() {
                 )
                 onDispose { }
             }
-            PulseTheme(dark) { PulseApp(state, viewModel::selectTheme) }
+            PulseTheme(dark) {
+                LocalNetworkAccess { PulseApp(state, viewModel::selectTheme) }
+            }
         }
     }
 }

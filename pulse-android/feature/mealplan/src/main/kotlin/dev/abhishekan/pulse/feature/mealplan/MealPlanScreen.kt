@@ -86,8 +86,13 @@ internal fun MealPlanScreen(
     }
     val holder = rememberSaveableStateHolder()
     val refreshing = state.meals.loading || state.times.loading
-    val showAddButton = !state.managing && state.draft == null && state.canWrite &&
-        !state.meals.loading && state.meals.error == null && state.meals.value != null
+    val showAddButton =
+        !state.managing &&
+            state.draft == null &&
+            state.canWrite &&
+            !state.meals.loading &&
+            state.meals.error == null &&
+            state.meals.value != null
     val canRefresh = !state.busy && state.draft == null && !refreshing
     val refresh = { if (canRefresh) vm.refresh() }
     val refreshLabel = stringResource(R.string.pulse_mealplan_refresh)
@@ -126,7 +131,8 @@ internal fun MealPlanScreen(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .imePadding()
-                        .padding(size.pagePadding).padding(bottom = if (showAddButton) 96.dp else 0.dp),
+                        .padding(size.pagePadding)
+                        .padding(bottom = if (showAddButton) 96.dp else 0.dp),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
                 ) {
                     state.message?.let {

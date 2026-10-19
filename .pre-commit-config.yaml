@@ -5,6 +5,12 @@ repos:
       - id: gitleaks
   - repo: local
     hooks:
+      - id: android-ktlint-format
+        name: Android Kotlin formatting
+        entry: bash -c 'cd pulse-android && ./gradlew ktlintFormat'
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: go-tests
         name: Go backend tests
         entry: make -C go-backend test

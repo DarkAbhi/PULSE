@@ -594,8 +594,12 @@ Python 3, and Docker, then install the hooks from the repository root:
 pre-commit install
 ```
 
-Each commit scans staged changes with Gitleaks and runs the Go, Rust, Next.js,
-Hermes MCP, and seed exporter test suites. To run the checks without committing:
+Android formatting also requires the [Pulse Android setup](pulse-android/README.md#setup).
+
+Each commit scans staged changes with Gitleaks, formats Android Kotlin sources
+and Gradle scripts with `ktlintFormat`, and runs the Go, Rust, Next.js, Hermes MCP,
+and seed exporter test suites. If formatting changes files, review and stage them,
+then retry the commit. To run the checks without committing:
 
 ```sh
 pre-commit run --all-files

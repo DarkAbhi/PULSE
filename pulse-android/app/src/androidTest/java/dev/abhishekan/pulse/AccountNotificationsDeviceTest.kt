@@ -508,8 +508,9 @@ class AccountNotificationsDeviceTest {
         var safeTop = 0f
         var safeBottom = 0f
         scenario!!.onActivity { activity ->
-            val safeInsets = checkNotNull(ViewCompat.getRootWindowInsets(activity.window.decorView))
-                .getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            val safeInsets =
+                checkNotNull(ViewCompat.getRootWindowInsets(activity.window.decorView))
+                    .getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
             val density = activity.resources.displayMetrics.density
             safeTop = safeInsets.top / density
             safeBottom = safeInsets.bottom / density

@@ -505,13 +505,22 @@ class AccountNotificationsDeviceTest {
         awaitText("Account information")
         val viewport = compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Account information"))).getUnclippedBoundsInRoot()
         val window = compose.onRoot().getUnclippedBoundsInRoot()
-        assertEquals(window.top.value, viewport.top.value, 1f)
+        var safeTop = 0f
+        var safeBottom = 0f
+        scenario!!.onActivity { activity ->
+            val safeInsets = checkNotNull(ViewCompat.getRootWindowInsets(activity.window.decorView))
+                .getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            val density = activity.resources.displayMetrics.density
+            safeTop = safeInsets.top / density
+            safeBottom = safeInsets.bottom / density
+        }
+        assertEquals(window.top.value + safeTop, viewport.top.value, 1f)
         if (rail) {
-            assertEquals(window.bottom.value, viewport.bottom.value, 1f)
+            assertEquals(window.bottom.value - safeBottom, viewport.bottom.value, 1f)
         } else {
             assertTrue(viewport.bottom <= bounds.first().top)
         }
-        screenshot("profile-edge-to-edge")
+        screenshot("profile-safe-area")
         tap("Change password")
         field("Current password", "unsaved")
         hideKeyboard()

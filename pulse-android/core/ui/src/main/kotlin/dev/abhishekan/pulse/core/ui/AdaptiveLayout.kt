@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-// Apply system-bar spacing inside scrolling content so its viewport stays edge to edge.
+// Optional extra content spacing; the app shell already reserves system bars and navigation.
 val LocalPulseContentPadding = staticCompositionLocalOf { PaddingValues(0.dp) }
 
 enum class PulseWindowSize { Compact, Medium, Expanded }

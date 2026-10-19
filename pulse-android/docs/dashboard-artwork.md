@@ -28,7 +28,7 @@ Asset: `feature/home/src/main/res/drawable-nodpi/dashboard_fitness.webp`
 
 ## Responsive layout correction
 
-Both cards use the tallest intrinsic content height at the current column width, in either stacked or side-by-side layouts. Footer artwork and actions align at the bottom without clipping wrapped text. Home draws behind the status bar on phone and tablet, and behind the bottom system bar on tablet. Scrollable content still respects the top and bottom safe-area insets.
+Both cards use the tallest intrinsic content height at the current column width, in either stacked or side-by-side layouts. Footer artwork and actions align at the bottom without clipping wrapped text. The app shell keeps Home and other page viewports inside the system safe area and clear of app navigation. Scrolling content does not extend behind the status bar or bottom system bar.
 
 Validation: build, dashboard lint and 17 app/dashboard unit tests pass. All four dashboard device tests pass on phone and tablet, now asserting equal heights in light, dark, 200% text and retry states. The full login/navigation test asserts that the background top matches the root window top on phone and tablet, and also checks the bottom edge on tablet.
 

@@ -131,4 +131,20 @@
     </plurals>
     <string name="pulse_fitness_workout_at_time">"Workout · %1$s"</string>
     <string name="pulse_fitness_numbered_workout_at_time">"Workout %1$s · %2$s"</string>
+    <string name="pulse_fitness_selected_day">SELECTED DAY</string>
+    <string name="pulse_fitness_add_workout">Add workout</string>
+    <string name="pulse_fitness_workouts_for_day">Workouts for this day</string>
+    <string name="pulse_fitness_no_workouts_for_day">No workouts logged. Add a workout to get started.</string>
+    <string name="pulse_fitness_workout_title">Workout</string>
+    <string name="pulse_fitness_workout_number">Workout %1$d</string>
+    <string name="pulse_fitness_workout_recorded_legend">Workout recorded</string>
+    <string name="pulse_fitness_selected_day_legend">Selected day</string>
+    <plurals name="pulse_fitness_workouts_logged">
+        <item quantity="one">%d workout logged</item>
+        <item quantity="other">%d workouts logged</item>
+    </plurals>
+    <plurals name="pulse_fitness_workout_count">
+        <item quantity="one">%d workout</item>
+        <item quantity="other">%d workouts</item>
+    </plurals>
 </resources>

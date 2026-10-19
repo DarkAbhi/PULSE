@@ -10,6 +10,7 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -420,8 +421,12 @@ class FitnessDeviceTest {
             compose.openProfileFromNavigation()
             return
         }
+        if (text in listOf("Previous month", "Next month", "Choose date")) {
+            compose.onNodeWithContentDescription(text).performScrollTo().performClick()
+            return
+        }
         awaitText(text)
-        val node = compose.onNodeWithText(text, substring = false)
+        val node = compose.onNode(hasText(text, substring = false) and hasClickAction())
         if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) node.performScrollTo()
         node.performClick()
     }
@@ -430,7 +435,7 @@ class FitnessDeviceTest {
         val date = compose.onNodeWithContentDescription(description)
         val content =
             compose.onNode(
-                hasScrollAction() and hasAnyDescendant(hasText("Find your rhythm.")),
+                hasScrollAction() and hasAnyDescendant(hasText("Workouts for this day")),
             )
         val offset =
             (date.getUnclippedBoundsInRoot().top - content.getUnclippedBoundsInRoot().top).value *
@@ -455,12 +460,12 @@ class FitnessDeviceTest {
         tap("Continue")
         awaitText("Asha")
         tap("Fitness")
-        awaitText("Record workout")
+        awaitText("Add workout")
     }
 
     private fun recordAndOpen() {
-        tap("Record workout")
-        tap("View workout")
+        tap("Add workout")
+        tap("Workout")
         awaitText("Add exercise")
     }
 
@@ -511,15 +516,23 @@ class FitnessDeviceTest {
                         .toInstant(),
                 )
         }
-        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Find your rhythm."))).performTouchInput { swipeDown() }
-        awaitText("View workout")
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Workouts for this day"))).performTouchInput { swipeDown() }
+        awaitText("Workout")
     }
 
     @Test fun calendarAndExerciseCrudRefreshHomeWithoutRestart() {
         launchFitness()
         tap("Previous month")
         tap("Today")
-        awaitText(backend.today.format(DateTimeFormatter.ofPattern("MMMM yyyy")))
+        val monthHeading = compose.onNodeWithContentDescription(backend.today.format(DateTimeFormatter.ofPattern("MMMM yyyy")))
+        monthHeading.assertIsDisplayed()
+        val monthBounds = monthHeading.getUnclippedBoundsInRoot()
+        listOf("Previous month", "Next month", "Choose date").forEach { description ->
+            val control = compose.onNodeWithContentDescription(description)
+            control.assertIsDisplayed()
+            val bounds = control.getUnclippedBoundsInRoot()
+            assertTrue(kotlin.math.abs((bounds.top + bounds.bottom).value / 2 - (monthBounds.top + monthBounds.bottom).value / 2) < 2f)
+        }
         val label = "${backend.today.format(
             DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"),
         )}, today, 0 workouts recorded"
@@ -528,14 +541,20 @@ class FitnessDeviceTest {
         val bounds = day.getUnclippedBoundsInRoot()
         assertTrue((bounds.right - bounds.left).value >= 48f)
         assertTrue((bounds.bottom - bounds.top).value >= 48f)
+        compose.onNodeWithText("SELECTED DAY").assertExists()
+        compose.onNodeWithText("0 workouts logged").assertExists()
+        compose.onNodeWithText("Total duration").assertDoesNotExist()
+        compose.onNodeWithText("Moderate").assertDoesNotExist()
+        compose.onNodeWithText("Workout streak").assertDoesNotExist()
+        compose.onNodeWithText("Dates follow Asia/Kolkata.", substring = true).assertDoesNotExist()
         screenshot("overview")
-        tap("Record workout")
+        tap("Add workout")
         screenshot("day")
         tap("Home")
         awaitText("Asha")
         compose.onNodeWithText("Workout recorded").performScrollTo().assertIsDisplayed()
         tap("Fitness")
-        tap("View workout")
+        tap("Workout")
         awaitText("Add exercise")
         enterOwnExercise("Squat")
         tap("Fixture barbell squat · barbell")
@@ -572,7 +591,7 @@ class FitnessDeviceTest {
                 "This permanently removes this gym visit and all its exercises and sets. Any linked Apple Watch workout import and your exercise catalogue aliases are kept.",
             ).assertIsDisplayed()
         confirm("Delete workout")
-        awaitText("Record workout")
+        awaitText("Add workout")
         assertTrue(backend.visits.isEmpty())
         assertTrue(backend.exercises.isEmpty())
         tap("Home")
@@ -584,7 +603,7 @@ class FitnessDeviceTest {
         compose.onNodeWithContentDescription("Back to Spaces").assertDoesNotExist()
         tap("Home")
         tap("Fitness")
-        awaitText("Record workout")
+        awaitText("Add workout")
     }
 
     @Test fun editorSurvivesRotationTabsAndKeyboardAndWarnsBeforeDiscard() {
@@ -655,7 +674,7 @@ class FitnessDeviceTest {
             DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"),
         )}, 1 workout recorded"
         selectCalendarDate(label)
-        tap("View workout")
+        tap("Workout")
         awaitText("Linked Apple Watch workout")
         compose.onNodeWithText("Energy · 420.5 kcal").performScrollTo().assertIsDisplayed()
         compose
@@ -666,22 +685,22 @@ class FitnessDeviceTest {
         screenshot("imported")
         tap("Delete workout")
         confirm("Delete workout")
-        awaitText("Record workout")
+        awaitText("Add workout")
         assertTrue(backend.imports.contains(7))
     }
 
     @Test fun uncertainVisitCreationRequiresSuccessfulRefreshBeforeAnotherRecord() {
         launchFitness()
         backend.loseRecord = true
-        tap("Record workout")
+        tap("Add workout")
         awaitText("Refresh server records")
-        compose.onNodeWithText("Record workout").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Add workout").performScrollTo().assertIsNotEnabled()
         assertEquals(1, backend.records)
         backend.offlineReads = false
         tap("Refresh server records")
         awaitText("I’ve reviewed the latest records")
         tap("I’ve reviewed the latest records")
-        tap("View workout")
+        tap("Workout")
         awaitText("Add exercise")
         assertEquals(1, backend.records)
     }
@@ -697,8 +716,8 @@ class FitnessDeviceTest {
         tap("Choose date")
         compose.onNode(isDialog()).assertExists()
         confirm("Choose date")
-        tap("Record workout")
-        tap("View workout")
+        tap("Add workout")
+        tap("Workout")
         awaitText("Add exercise")
         assertEquals(
             expected,

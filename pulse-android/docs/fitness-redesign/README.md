@@ -35,3 +35,7 @@ Debug app/test APK builds and fitness formatting checks passed. The calendar/wor
 The mobile month/year label now uses the 18sp title style instead of the 12sp label style. Compact arrow and date buttons have 32dp visual outlines and 20dp icons inside 48dp tap targets; Today uses a 40×32dp visual inside a 48dp target.
 
 Initial loading and refresh loading replace the content with one vertically and horizontally centered loading group. The top pull indicator is hidden while this loading group is active; gesture feedback remains available before refreshing.
+
+## Tablet button outlines
+
+Full-size calendar controls now draw their rounded border outside the icon button's circular clipping layer. This restores the complete tablet outline. Compact mobile controls keep their smaller inset visuals and 48dp tap targets.

@@ -75,20 +75,32 @@ internal fun CalendarControl(
     compact: Boolean = false,
     onClick: () -> Unit,
 ) {
-    PulseIconButton(label, onClick, enabled = enabled) {
+    val glyph: @Composable () -> Unit = {
+        FitnessGlyph(
+            symbol,
+            if (enabled) PulseTheme.colors.textPrimary else PulseTheme.colors.textSecondary,
+            dimension = if (compact) 20.dp else 24.dp,
+        )
+    }
+    if (compact) {
+        PulseIconButton(label, onClick, enabled = enabled) {
+            Surface(
+                modifier = Modifier.size(32.dp),
+                shape = PulseTokens.controlShape,
+                color = PulseTheme.colors.surface,
+                border = BorderStroke(1.dp, PulseTheme.colors.divider),
+            ) {
+                Box(contentAlignment = Alignment.Center) { glyph() }
+            }
+        }
+    } else {
+        // Keep the full-size outline outside IconButton's circular clipping layer.
         Surface(
-            modifier = Modifier.size(if (compact) 32.dp else PulseTokens.target),
             shape = PulseTokens.controlShape,
             color = PulseTheme.colors.surface,
             border = BorderStroke(1.dp, PulseTheme.colors.divider),
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                FitnessGlyph(
-                    symbol,
-                    if (enabled) PulseTheme.colors.textPrimary else PulseTheme.colors.textSecondary,
-                    dimension = if (compact) 20.dp else 24.dp,
-                )
-            }
+            PulseIconButton(label, onClick, enabled = enabled, icon = glyph)
         }
     }
 }

@@ -43,6 +43,11 @@ class GarageViewModel(
             ),
         )
     val uiState = state.asStateFlow()
+
+    fun consumeMessage() {
+        state.update { it.copy(message = null) }
+    }
+
     private var listJob: Job? = null
     private var historyJob: Job? = null
 

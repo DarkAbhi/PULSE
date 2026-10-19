@@ -16,6 +16,12 @@ The original AGP 9.4.1, Gradle 9.6.0, Kotlin/Compose compiler 2.2.10, SDK 37, Co
 
 All versions live in `gradle/libs.versions.toml`. Compatible stable additions remain Koin 4.1.1, Ktor 3.2.3, coroutines 1.10.2, serialization 1.9.0, DataStore 1.1.7, Lifecycle/Navigation 2.9.3, and Activity 1.10.1. Phase 2 uses the existing dependency set; HTTP cookies require no additional Ktor library.
 
+## Action feedback
+
+Use the design system's `PulseSnackbar` for transient action results. The app scaffold owns the host above bottom navigation; `PulseSnackbarProvider` shares it with feature routes. Routes pass their pending `UiText` to `PulseSnackbarEffect` and clear it with `consumeMessage` when queued. Feedback uses the current language, dismisses automatically, supports manual dismissal, and does not occupy screen content space. Keeping the queue at the app host allows feedback to survive navigation without replaying when returning to a route.
+
+Keep validation errors beside fields and uncertain-change review instructions beside their recovery controls. Do not send those persistent instructions to a transient snackbar.
+
 ## Kotlin formatting
 
 Ktlint is applied to every module and the root Gradle scripts. It checks production, debug, unit-test and instrumentation-test Kotlin sources using the shared `.editorconfig`, with Compose function naming supported. Module `check` tasks include ktlint validation.

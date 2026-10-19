@@ -53,6 +53,22 @@ class FitnessViewModelTest {
             clock,
         ).also { models.put("overview", it) }
 
+    @Test fun consumedWorkoutFeedbackCanBeProducedAgain() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            vm.recordSelected()
+            runCurrent()
+            val message = vm.uiState.value.message
+            assertTrue(message != null)
+            vm.consumeMessage()
+            assertNull(vm.uiState.value.message)
+            vm.recordSelected()
+            runCurrent()
+            assertEquals(message, vm.uiState.value.message)
+            assertEquals(2, repo.records)
+        }
+
     @Test fun firstResumeDoesNotReloadButReturningRefreshesExistingData() =
         runTest {
             val vm = vm()

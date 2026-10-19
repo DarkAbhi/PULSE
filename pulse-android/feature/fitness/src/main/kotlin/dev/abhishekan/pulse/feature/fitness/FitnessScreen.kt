@@ -41,10 +41,12 @@ import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
+import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pagePadding
@@ -59,6 +61,7 @@ fun FitnessRoute(
     viewModel: FitnessViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    PulseSnackbarEffect(state.message.takeUnless { state.needsReview }, viewModel::consumeMessage)
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
     FitnessScreen(
         state,
@@ -136,21 +139,13 @@ fun FitnessScreen(
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                 ) {
                     state.error?.let { PulseErrorState(fitnessFailureMessage(it), onRefresh) }
-                    state.message?.let {
-                        PulseText(
-                            it,
-                            Modifier.semantics {
-                                liveRegion =
-                                    LiveRegionMode.Polite
-                            },
-                        )
-                    }
                     if (state.needsReview) {
                         MutationReview(
                             state.reviewReady,
                             state.busy,
                             onRefresh,
                             onReviewed,
+                            message = state.message,
                         )
                     }
                     if (state.overview != null) {
@@ -307,8 +302,10 @@ internal fun MutationReview(
     busy: Boolean,
     onRefresh: () -> Unit,
     onReviewed: () -> Unit,
+    message: UiText? = null,
 ) {
     PulseCard(Modifier.fillMaxWidth()) {
+        message?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
         PulseText(
             stringResource(R.string.pulse_fitness_check_before_trying_again),
             style = PulseTextStyle.Title,

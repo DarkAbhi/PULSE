@@ -42,6 +42,11 @@ class NotificationsViewModel(
             ),
         )
     val uiState = state.asStateFlow()
+
+    fun consumeMessage() {
+        state.update { it.copy(message = null) }
+    }
+
     private var load: Job? = null
 
     init {

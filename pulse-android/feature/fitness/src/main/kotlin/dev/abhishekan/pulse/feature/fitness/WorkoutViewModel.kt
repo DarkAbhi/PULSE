@@ -39,13 +39,24 @@ class WorkoutViewModel(
             ),
         )
     val uiState = state.asStateFlow()
+
+    fun consumeMessage() {
+        state.update { it.copy(message = null) }
+    }
+
     private var loadJob: Job? = null
+    private var hasResumed = false
     private var searchJob: Job? = null
     private var original = ExerciseDraft()
 
     init {
         if (saved.get<Boolean>("editing") == true) restoreEditor()
         refresh()
+    }
+
+    fun resume() {
+        // Initialization owns the first load; later resumes revalidate the existing detail.
+        if (hasResumed) refresh() else hasResumed = true
     }
 
     fun refresh() {

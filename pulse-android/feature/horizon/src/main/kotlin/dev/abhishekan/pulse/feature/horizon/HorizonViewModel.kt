@@ -39,6 +39,11 @@ class HorizonViewModel(
             ),
         )
     val uiState = state.asStateFlow()
+
+    fun consumeMessage() {
+        state.update { it.copy(message = null) }
+    }
+
     private val jobs = mutableMapOf<String, Job>()
 
     init {

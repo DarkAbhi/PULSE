@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse.feature.fitness
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,12 +18,11 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -41,6 +41,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
+import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -55,6 +57,7 @@ fun WorkoutRoute(
     viewModel: WorkoutViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    PulseSnackbarEffect(state.message.takeUnless { state.needsReview }, viewModel::consumeMessage)
     var discard by rememberSaveable { mutableStateOf(false) }
     val close = {
         if (!state.busy) {
@@ -68,7 +71,7 @@ fun WorkoutRoute(
         }
     }
     BackHandler(enabled = state.editor != null || state.busy) { close() }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refresh() }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
     LaunchedEffect(state.editor?.dirty) { onDraftChanged(state.editor?.dirty == true) }
     LaunchedEffect(state.deleted) { if (state.deleted) onDeleted() }
     WorkoutScreen(
@@ -132,6 +135,18 @@ fun WorkoutScreen(
     val detail = state.detail
     val scroll = key(state.editor != null) { rememberScrollState() }
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
+        if (state.loading && detail == null && state.editor == null) {
+            Box(
+                Modifier.fillMaxSize().padding(LocalPulseContentPadding.current),
+                contentAlignment = Alignment.Center,
+            ) {
+                PulseLoadingState(
+                    stringResource(R.string.pulse_fitness_loading_workout),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                )
+            }
+            return@PulseAdaptiveLayout
+        }
         Column(
             Modifier
                 .widthIn(
@@ -143,23 +158,9 @@ fun WorkoutScreen(
                 .padding(size.pagePadding),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
         ) {
-            if (state.loading) {
-                PulseLoadingState(
-                    stringResource(R.string.pulse_fitness_loading_workout),
-                )
-            }
             state.error?.let { PulseErrorState(fitnessFailureMessage(it), onRefresh) }
-            state.message?.let {
-                PulseText(
-                    it,
-                    Modifier.semantics {
-                        liveRegion =
-                            LiveRegionMode.Polite
-                    },
-                )
-            }
             if (state.needsReview) {
-                MutationReview(state.reviewReady, state.busy, onRefresh, onReviewed)
+                MutationReview(state.reviewReady, state.busy, onRefresh, onReviewed, message = state.message)
                 detail?.let { ServerExercises(it.exercises) }
             }
             if (state.editor != null) {
@@ -260,6 +261,13 @@ fun WorkoutScreen(
                         stringResource(R.string.pulse_fitness_saving_your_change),
                     )
                 }
+            }
+        }
+        if (state.loading) {
+            Box(
+                Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxWidth().padding(LocalPulseContentPadding.current),
+            ) {
+                PulseRefreshIndicator()
             }
         }
     }

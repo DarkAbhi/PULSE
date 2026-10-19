@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
 import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
 import dev.abhishekan.pulse.core.domain.usecase.DeleteExercise
 import dev.abhishekan.pulse.core.domain.usecase.DeleteWorkout
@@ -60,6 +61,68 @@ class WorkoutViewModelTest {
         vm.nameChanged("Squat")
         vm.setChanged(0, "10", "12.1234567890123456789")
     }
+
+    @Test fun firstResumeDoesNotRepeatCompletedInitialLoadAndLaterResumeRetainsDetail() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            vm.resume()
+            runCurrent()
+            assertEquals(listOf("workout"), repo.trace)
+            val detail = vm.uiState.value.detail
+            val gate = CompletableDeferred<Outcome<WorkoutDetail>>()
+            repo.detailRead = { gate.await() }
+            vm.resume()
+            runCurrent()
+            assertTrue(vm.uiState.value.loading)
+            assertEquals(detail, vm.uiState.value.detail)
+            vm.refresh()
+            runCurrent()
+            assertEquals(listOf("workout", "workout"), repo.trace)
+            gate.complete(Outcome.Error(Failure.Connection))
+            runCurrent()
+            assertFalse(vm.uiState.value.loading)
+            assertEquals(detail, vm.uiState.value.detail)
+            assertEquals(Failure.Connection, vm.uiState.value.error)
+        }
+
+    @Test fun firstResumeDuringInitialLoadDoesNotQueueAnotherRead() =
+        runTest {
+            val gate = CompletableDeferred<Outcome<WorkoutDetail>>()
+            repo.detailRead = { gate.await() }
+            val vm = vm()
+            vm.resume()
+            runCurrent()
+            gate.complete(Outcome.Success(repo.detailValue))
+            runCurrent()
+            assertEquals(listOf("workout"), repo.trace)
+        }
+
+    @Test fun refreshPreservesUnsavedExerciseDraft() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            fill(vm)
+            val draft =
+                vm.uiState.value.editor
+                    ?.draft
+            val gate = CompletableDeferred<Outcome<WorkoutDetail>>()
+            repo.detailRead = { gate.await() }
+            vm.refresh()
+            runCurrent()
+            assertEquals(
+                draft,
+                vm.uiState.value.editor
+                    ?.draft,
+            )
+            gate.complete(Outcome.Success(repo.detailValue))
+            runCurrent()
+            assertEquals(
+                draft,
+                vm.uiState.value.editor
+                    ?.draft,
+            )
+        }
 
     @Test fun invalidInputNeverSavesAndSetLimitIsEnforced() =
         runTest {

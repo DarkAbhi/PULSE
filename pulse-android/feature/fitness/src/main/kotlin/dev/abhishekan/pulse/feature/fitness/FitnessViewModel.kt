@@ -38,6 +38,11 @@ class FitnessViewModel(
             ),
         )
     val uiState = state.asStateFlow()
+
+    fun consumeMessage() {
+        state.update { it.copy(message = null) }
+    }
+
     private var selectionVersion = 0L
     private var firstLoad = saved.get<String>("selected") == null
     private var loadJob: Job? = null

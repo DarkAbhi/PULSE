@@ -28,9 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -49,6 +47,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
+import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -63,6 +62,7 @@ fun MealPlanRoute(
     viewModel: MealPlanViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     LaunchedEffect(state.draft?.dirty) { onDraftChanged(state.draft?.dirty == true) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
     MealPlanScreen(state, viewModel)
@@ -136,17 +136,9 @@ internal fun MealPlanScreen(
                         .padding(bottom = if (showAddButton) 96.dp else 0.dp),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
                 ) {
-                    state.message?.let {
-                        PulseText(
-                            it,
-                            Modifier.semantics {
-                                liveRegion =
-                                    LiveRegionMode.Polite
-                            },
-                        )
-                    }
                     if (state.reviewRequired) {
                         PulseCard(Modifier.fillMaxWidth()) {
+                            state.message?.let { PulseText(it) }
                             PulseText(
                                 stringResource(R.string.pulse_mealplan_review_before_another_change),
                                 style = PulseTextStyle.Title,

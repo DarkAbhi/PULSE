@@ -65,6 +65,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationItem
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationRail
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbar
+import dev.abhishekan.pulse.core.ui.components.PulseSnackbarProvider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -370,120 +371,122 @@ private fun SignedInApp(
                 },
                 snackbarHost = { SnackbarHost(snackbar) { PulseSnackbar(it) } },
             ) { insets ->
-                NavHost(
-                    nav,
-                    startDestination = "home",
-                    modifier =
-                        Modifier
-                            .padding(insets)
-                            .consumeWindowInsets(insets),
-                ) {
-                    composable("home") {
-                        HomeRoute(
-                            username,
-                            { selectDestination("horizon") },
-                            onFitness = { selectDestination("fitness") },
-                            onNotifications = { nav.navigate("notifications") { launchSingleTop = true } },
-                            onProfile = if (isTablet) null else ({ selectDestination("you") }),
-                            onMissingProfile = {
-                                if (!onboardingOffered) {
-                                    onboardingOffered = true
-                                    onboardingVisible = true
-                                }
-                            },
-                        )
-                        if (onboardingVisible) {
-                            ProfileSetupPrompt({
-                                onboardingVisible = false
-                                editProfileName = true
-                                nav.navigate("you") {
-                                    launchSingleTop =
-                                        true
-                                }
-                            }, { onboardingVisible = false })
-                        }
-                    }
-                    navigation(startDestination = "space-list", route = "spaces") {
-                        composable("space-list") {
-                            SpacesScreen({
-                                nav.navigate("fitness") {
-                                    launchSingleTop =
-                                        true
-                                }
-                            }, { nav.navigate("horizon") { launchSingleTop = true } }, {
-                                nav.navigate("garage") {
-                                    launchSingleTop =
-                                        true
-                                }
-                            }, { nav.navigate("mealplan") { launchSingleTop = true } })
-                        }
-                        composable("mealplan") { MealPlanRoute(onDraftChanged = { hasMealDraft = it }) }
-                        composable("garage") {
-                            GarageRoute(
-                                onDraftChanged = { hasGarageDraft = it },
-                                onDetailChanged = { hasGarageDetail = it },
+                PulseSnackbarProvider(snackbar) {
+                    NavHost(
+                        nav,
+                        startDestination = "home",
+                        modifier =
+                            Modifier
+                                .padding(insets)
+                                .consumeWindowInsets(insets),
+                    ) {
+                        composable("home") {
+                            HomeRoute(
+                                username,
+                                { selectDestination("horizon") },
+                                onFitness = { selectDestination("fitness") },
+                                onNotifications = { nav.navigate("notifications") { launchSingleTop = true } },
+                                onProfile = if (isTablet) null else ({ selectDestination("you") }),
+                                onMissingProfile = {
+                                    if (!onboardingOffered) {
+                                        onboardingOffered = true
+                                        onboardingVisible = true
+                                    }
+                                },
                             )
+                            if (onboardingVisible) {
+                                ProfileSetupPrompt({
+                                    onboardingVisible = false
+                                    editProfileName = true
+                                    nav.navigate("you") {
+                                        launchSingleTop =
+                                            true
+                                    }
+                                }, { onboardingVisible = false })
+                            }
                         }
-                        composable("vehicle/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { destination ->
-                            GarageRoute(onDraftChanged = { hasGarageDraft = it }, initialVehicle = destination.arguments?.getLong("id"))
+                        navigation(startDestination = "space-list", route = "spaces") {
+                            composable("space-list") {
+                                SpacesScreen({
+                                    nav.navigate("fitness") {
+                                        launchSingleTop =
+                                            true
+                                    }
+                                }, { nav.navigate("horizon") { launchSingleTop = true } }, {
+                                    nav.navigate("garage") {
+                                        launchSingleTop =
+                                            true
+                                    }
+                                }, { nav.navigate("mealplan") { launchSingleTop = true } })
+                            }
+                            composable("mealplan") { MealPlanRoute(onDraftChanged = { hasMealDraft = it }) }
+                            composable("garage") {
+                                GarageRoute(
+                                    onDraftChanged = { hasGarageDraft = it },
+                                    onDetailChanged = { hasGarageDetail = it },
+                                )
+                            }
+                            composable("vehicle/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { destination ->
+                                GarageRoute(onDraftChanged = { hasGarageDraft = it }, initialVehicle = destination.arguments?.getLong("id"))
+                            }
+                            composable("horizon") {
+                                HorizonRoute(onDraftChanged = { hasHorizonDraft = it })
+                            }
+                            composable("fitness") {
+                                FitnessRoute({ id ->
+                                    nav.navigate("workout/$id") {
+                                        launchSingleTop =
+                                            true
+                                    }
+                                })
+                            }
+                            composable(
+                                "workout/{id}",
+                                arguments =
+                                    listOf(
+                                        navArgument("id") {
+                                            type =
+                                                NavType.LongType
+                                        },
+                                    ),
+                            ) {
+                                WorkoutRoute(onDeleted = { nav.popBackStack() }, onDraftChanged = {
+                                    hasFitnessDraft =
+                                        it
+                                })
+                            }
                         }
-                        composable("horizon") {
-                            HorizonRoute(onDraftChanged = { hasHorizonDraft = it })
+                        composable("you") {
+                            val profile: ProfileViewModel = koinViewModel()
+                            ProfileRoute(
+                                username,
+                                appearance.theme,
+                                appearance.error,
+                                onTheme,
+                                operation.running,
+                                hasFitnessDraft || hasHorizonDraft || hasGarageDraft || hasMealDraft,
+                                onLogout,
+                                editProfileName,
+                                { editProfileName = false },
+                                profile,
+                                onSensitiveEditsChanged = { hasPasswordEdits = it },
+                            ) { DebugGalleryAction { nav.navigate("gallery") } }
                         }
-                        composable("fitness") {
-                            FitnessRoute({ id ->
-                                nav.navigate("workout/$id") {
-                                    launchSingleTop =
-                                        true
+                        composable("notifications") {
+                            NotificationsRoute(onOpen = { target ->
+                                // Navigate directly to the owning graph child, retaining Notifications underneath.
+                                when (target) {
+                                    NotificationTarget.Fitness -> nav.navigate("fitness") { launchSingleTop = true }
+                                    NotificationTarget.Horizon -> nav.navigate("horizon") { launchSingleTop = true }
+                                    NotificationTarget.Garage -> nav.navigate("garage") { launchSingleTop = true }
+                                    NotificationTarget.MealPlan -> nav.navigate("mealplan") { launchSingleTop = true }
+                                    is NotificationTarget.Workout -> nav.navigate("workout/${target.id}") { launchSingleTop = true }
+                                    is NotificationTarget.Vehicle -> nav.navigate("vehicle/${target.id}") { launchSingleTop = true }
                                 }
                             })
                         }
-                        composable(
-                            "workout/{id}",
-                            arguments =
-                                listOf(
-                                    navArgument("id") {
-                                        type =
-                                            NavType.LongType
-                                    },
-                                ),
-                        ) {
-                            WorkoutRoute(onDeleted = { nav.popBackStack() }, onDraftChanged = {
-                                hasFitnessDraft =
-                                    it
-                            })
-                        }
+                        debugGalleryDestination()
                     }
-                    composable("you") {
-                        val profile: ProfileViewModel = koinViewModel()
-                        ProfileRoute(
-                            username,
-                            appearance.theme,
-                            appearance.error,
-                            onTheme,
-                            operation.running,
-                            hasFitnessDraft || hasHorizonDraft || hasGarageDraft || hasMealDraft,
-                            onLogout,
-                            editProfileName,
-                            { editProfileName = false },
-                            profile,
-                            onSensitiveEditsChanged = { hasPasswordEdits = it },
-                        ) { DebugGalleryAction { nav.navigate("gallery") } }
-                    }
-                    composable("notifications") {
-                        NotificationsRoute(onOpen = { target ->
-                            // Navigate directly to the owning graph child, retaining Notifications underneath.
-                            when (target) {
-                                NotificationTarget.Fitness -> nav.navigate("fitness") { launchSingleTop = true }
-                                NotificationTarget.Horizon -> nav.navigate("horizon") { launchSingleTop = true }
-                                NotificationTarget.Garage -> nav.navigate("garage") { launchSingleTop = true }
-                                NotificationTarget.MealPlan -> nav.navigate("mealplan") { launchSingleTop = true }
-                                is NotificationTarget.Workout -> nav.navigate("workout/${target.id}") { launchSingleTop = true }
-                                is NotificationTarget.Vehicle -> nav.navigate("vehicle/${target.id}") { launchSingleTop = true }
-                            }
-                        })
-                    }
-                    debugGalleryDestination()
                 }
             }
         }

@@ -33,6 +33,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -50,6 +51,7 @@ fun NotificationsRoute(
     viewModel: NotificationsViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    PulseSnackbarEffect(state.message.takeUnless { state.uncertain }, viewModel::consumeMessage)
     NotificationsScreen(state, viewModel::refresh, viewModel::dismiss, viewModel::clearAll, viewModel::acknowledge, onOpen)
 }
 
@@ -109,8 +111,6 @@ internal fun NotificationsScreen(
                             )
                         }
                     }
-                } else {
-                    state.message?.let { message -> item { PulseText(message, Modifier.semantics { liveRegion = LiveRegionMode.Polite }) } }
                 }
                 if (state.loading || state.busy) item { PulseLoadingState(stringResource(R.string.pulse_notifications_loading)) }
                 state.failure?.let { failure -> item { PulseErrorState(failure.message, refresh) } }

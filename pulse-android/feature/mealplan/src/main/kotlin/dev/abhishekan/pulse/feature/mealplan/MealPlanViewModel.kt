@@ -45,6 +45,11 @@ class MealPlanViewModel(
             ),
         )
     val uiState = state.asStateFlow()
+
+    fun consumeMessage() {
+        state.update { it.copy(message = null) }
+    }
+
     private var mealsJob: Job? = null
     private var timesJob: Job? = null
 

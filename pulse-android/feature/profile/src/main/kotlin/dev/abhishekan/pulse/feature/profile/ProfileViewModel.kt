@@ -62,6 +62,11 @@ class ProfileViewModel(
             ),
         )
     val uiState = state.asStateFlow()
+
+    fun consumeMessage() {
+        state.update { it.copy(message = null) }
+    }
+
     private var secretGeneration = 0L
     private var profileJob: Job? = null
     private var keysJob: Job? = null

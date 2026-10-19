@@ -72,6 +72,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulsePasswordField
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
+import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
@@ -114,6 +115,7 @@ fun ProfileRoute(
     debugContent: @Composable () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    PulseSnackbarEffect(state.message.takeUnless { state.uncertain }, viewModel::consumeMessage)
     val context = LocalContext.current
     val activity = context as? Activity
     val hasPasswordEdits =
@@ -291,8 +293,6 @@ internal fun ProfileScreen(
                                 state.reviewed && !state.busy,
                         )
                     }
-                } else {
-                    state.message?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }) }
                 }
                 if (state.editor != null) {
                     AccountForm(state, vm, cancel)

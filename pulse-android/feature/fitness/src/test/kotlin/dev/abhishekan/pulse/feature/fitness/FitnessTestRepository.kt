@@ -23,6 +23,7 @@ internal class FitnessTestRepository : FitnessRepository {
     var readFailure: Failure? = null
     var overviewRead: (suspend () -> Outcome<FitnessOverview>)? = null
     var write: suspend () -> Outcome<Unit> = { Outcome.Success(Unit) }
+    var detailRead: (suspend () -> Outcome<WorkoutDetail>)? = null
     var records = 0
     var saves = 0
     var deletes = 0
@@ -41,7 +42,7 @@ internal class FitnessTestRepository : FitnessRepository {
 
     override suspend fun workout(id: Long): Outcome<WorkoutDetail> {
         trace += "workout"
-        return readFailure?.let { Outcome.Error(it) } ?: Outcome.Success(detailValue)
+        return detailRead?.invoke() ?: readFailure?.let { Outcome.Error(it) } ?: Outcome.Success(detailValue)
     }
 
     override suspend fun search(query: String) = searchAction(query)

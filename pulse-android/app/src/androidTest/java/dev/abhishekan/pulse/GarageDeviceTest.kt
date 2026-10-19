@@ -18,6 +18,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
+import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -643,6 +644,75 @@ class GarageDeviceTest {
         )
     }
 
+    @Test fun tabletVehicleArtworkCyclesWithoutChangingDraft() {
+        launchGarage()
+        tap("Add vehicle")
+        field("Vehicle name", "Unsaved scooter")
+        tap("Two-wheeler")
+        compose.onNodeWithText("Add a new vehicle").performScrollTo()
+        val artwork = hasTestTag("vehicle-editor-artwork")
+        org.junit.Assume.assumeTrue(compose.onAllNodes(artwork).fetchSemanticsNodes().isNotEmpty())
+        org.junit.Assume.assumeTrue(android.animation.ValueAnimator.areAnimatorsEnabled())
+        val first = compose.onNode(artwork).captureToImage().asAndroidBitmap()
+        try {
+            compose.mainClock.advanceTimeBy(10_500)
+            compose.waitUntil(12_000) {
+                val next = compose.onNode(artwork).captureToImage().asAndroidBitmap()
+                val changed = !first.sameAs(next)
+                next.recycle()
+                changed
+            }
+        } finally {
+            first.recycle()
+        }
+        compose.onNodeWithText("Unsaved scooter").assertIsDisplayed()
+        assertEquals(0, mutations)
+        screenshot("vehicle-artwork-cycle")
+    }
+
+    @Test fun addVehicleCancelIsCenteredAndKeepsDiscardProtection() {
+        launchGarage()
+        tap("Add vehicle")
+        field("Vehicle name", "Unsaved scooter")
+        compose.onNodeWithText("Cancel").performScrollTo()
+        val cancelBounds = compose.onNodeWithText("Cancel").fetchSemanticsNode().boundsInRoot
+        val saveBounds = compose.onNodeWithText("Save vehicle").fetchSemanticsNode().boundsInRoot
+        assertEquals(saveBounds.center.x, cancelBounds.center.x, 1f)
+        tap("Cancel")
+        confirm("Discard edits")
+        awaitText("Add vehicle")
+        assertEquals(0, mutations)
+    }
+
+    @Test fun addVehiclePreservesOptionalPressures() {
+        launchGarage()
+        tap("Add vehicle")
+        field("Vehicle name", "City scooter")
+        tap("Two-wheeler")
+        tap("Electric")
+        compose.onNodeWithText("Add a new vehicle").performScrollTo()
+        screenshot("add-vehicle-top")
+        field("Front · solo (PSI)", "28.5")
+        field("Rear · solo (PSI)", "32")
+        field("Front · pillion (PSI)", "30")
+        field("Rear · pillion (PSI)", "36")
+        compose.onNodeWithText("Active vehicle").assertDoesNotExist()
+        compose.onNodeWithText("Cancel editing").assertDoesNotExist()
+        scenario!!.recreate()
+        awaitText("Add a new vehicle")
+        compose.onNodeWithText("Save vehicle").performScrollTo()
+        screenshot("add-vehicle-pressures")
+        tap("Save vehicle")
+        awaitText("City scooter")
+        val saved = vehicleDetails.values.single()
+        assertEquals("true", saved.getValue("is_active").jsonPrimitive.content)
+        assertEquals("28.5", saved.getValue("front_tire_pressure_solo").jsonPrimitive.content)
+        assertEquals("32", saved.getValue("rear_tire_pressure_solo").jsonPrimitive.content)
+        assertEquals("30", saved.getValue("front_tire_pressure_pillion").jsonPrimitive.content)
+        assertEquals("36", saved.getValue("rear_tire_pressure_pillion").jsonPrimitive.content)
+        assertEquals(listOf("electric"), saved.getValue("fuel_types").jsonArray.map { it.jsonPrimitive.content })
+    }
+
     @Test fun vehicleClassificationRequiresSelectionsAndSurvivesRecreation() {
         launchGarage()
         tap("Add vehicle")
@@ -650,22 +720,19 @@ class GarageDeviceTest {
         tap("Save vehicle")
         compose.waitForIdle()
         assertEquals(0, mutations)
-        tap("Vehicle type (required): Select an option")
         tap("Four-wheeler")
-        tap("Fuel type (required): Select an option")
         tap("Petrol")
         tap("Dual tank (two fuel types)")
         tap("Second fuel type (required): Select an option")
-        compose.onNodeWithText("Petrol", useUnmergedTree = true).assertDoesNotExist()
-        tap("CNG")
-        tap("Fuel type (required): Petrol")
+        compose.onNode(hasText("Petrol") and hasAnyAncestor(isPopup())).assertDoesNotExist()
+        compose.onNode(hasText("CNG") and hasAnyAncestor(isPopup())).performClick()
         tap("CNG")
         awaitText("Second fuel type (required): Select an option")
         tap("Save vehicle")
         compose.waitForIdle()
         assertEquals(0, mutations)
         tap("Second fuel type (required): Select an option")
-        tap("Petrol")
+        compose.onNode(hasText("Petrol") and hasAnyAncestor(isPopup())).performClick()
         scenario!!.recreate()
         awaitText("Second fuel type (required): Petrol")
         screenshot("vehicle-classification")
@@ -680,13 +747,11 @@ class GarageDeviceTest {
         screenshot("collection")
         tap("Add vehicle")
         field("Vehicle name", "Tourer")
-        tap("Vehicle type (required): Select an option")
         tap("Four-wheeler")
-        tap("Fuel type (required): Select an option")
         tap("Petrol")
         tap("Dual tank (two fuel types)")
         tap("Second fuel type (required): Select an option")
-        tap("CNG")
+        compose.onNode(hasText("CNG") and hasAnyAncestor(isPopup())).performClick()
         tap("Save vehicle")
         awaitText("Tourer")
         assertEquals(

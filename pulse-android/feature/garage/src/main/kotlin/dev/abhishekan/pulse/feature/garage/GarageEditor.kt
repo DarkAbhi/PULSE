@@ -18,14 +18,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import dev.abhishekan.pulse.core.domain.model.garageCategories
-import dev.abhishekan.pulse.core.domain.model.garageFuelTypes
-import dev.abhishekan.pulse.core.domain.model.garageVehicleTypes
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -47,6 +44,10 @@ internal fun GarageEditor(
     save: () -> Unit,
     cancel: () -> Unit,
 ) {
+    if (draft.kind == GarageForm.Vehicle) {
+        VehicleEditor(draft, busy, blocked, error, change, save, cancel)
+        return
+    }
     if (draft.kind == GarageForm.Fuel) {
         FuelEditor(draft, busy, error, change)
         return
@@ -101,41 +102,7 @@ internal fun GarageEditor(
             style = PulseTextStyle.Title,
         )
         when (draft.kind) {
-            GarageForm.Vehicle -> {
-                field("name", stringResource(R.string.pulse_garage_vehicle_name))
-                choice("vehicleType", stringResource(R.string.pulse_garage_vehicle_type), garageVehicleTypes)
-                GarageChoice(
-                    stringResource(R.string.pulse_garage_vehicle_fuel),
-                    draft["vehicleFuel"],
-                    garageFuelTypes,
-                    { fuel ->
-                        val updated = draft.set("vehicleFuel", fuel)
-                        change(if (fuel == draft["vehicleSecondFuel"]) updated.set("vehicleSecondFuel", "") else updated)
-                    },
-                    enabled,
-                )
-                PulseCheckbox(
-                    draft["dualTank"] == "true",
-                    { change(draft.set("dualTank", it.toString())) },
-                    stringResource(R.string.pulse_garage_dual_tank),
-                    enabled = enabled,
-                )
-                if (draft["dualTank"] == "true") {
-                    choice(
-                        "vehicleSecondFuel",
-                        stringResource(R.string.pulse_garage_second_fuel),
-                        garageFuelTypes.filter { it != draft["vehicleFuel"] },
-                    )
-                }
-                PulseCheckbox(
-                    draft["active"] != "false",
-                    {
-                        change(draft.set("active", it.toString()))
-                    },
-                    stringResource(R.string.pulse_garage_active_vehicle),
-                    enabled = enabled,
-                )
-            }
+            GarageForm.Vehicle -> Unit
             GarageForm.Pressure ->
                 PulseText(
                     stringResource(
@@ -155,14 +122,7 @@ internal fun GarageEditor(
                 field("odometer", stringResource(R.string.pulse_garage_odometer_km), true)
             }
         }
-        if (draft.kind in listOf(GarageForm.Vehicle, GarageForm.Pressure)) {
-            if (draft.kind ==
-                GarageForm.Vehicle
-            ) {
-                PulseText(
-                    stringResource(R.string.pulse_garage_optional_target_tire_pressures_psi),
-                )
-            }
+        if (draft.kind == GarageForm.Pressure) {
             field("frontSolo", stringResource(R.string.pulse_garage_front_solo_psi), true)
             field("rearSolo", stringResource(R.string.pulse_garage_rear_solo_psi), true)
             field("frontPillion", stringResource(R.string.pulse_garage_front_pillion_psi), true)

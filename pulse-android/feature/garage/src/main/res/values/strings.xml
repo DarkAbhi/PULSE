@@ -78,7 +78,6 @@
     <string name="pulse_garage_confirm_deletion">"Confirm deletion"</string>
     <string name="pulse_garage_loading_your_garage">"Loading your garage"</string>
     <string name="pulse_garage_vehicle_name">"Vehicle name"</string>
-    <string name="pulse_garage_active_vehicle">"Active vehicle"</string>
     <string name="pulse_garage_target_tire_pressures_in_psi_leave_a_field_empty">"Target tire pressures in PSI. Leave a field empty to clear its target."</string>
     <string name="pulse_garage_maintenance_category">"Maintenance category"</string>
     <string name="pulse_garage_title">"Title"</string>
@@ -176,4 +175,13 @@
     <string name="pulse_garage_option_two_wheeler">Two-wheeler</string>
     <string name="pulse_garage_option_four_wheeler">Four-wheeler</string>
     <string name="pulse_garage_vehicle_summary">%1$s · %2$s</string>
+    <string name="pulse_garage_new_vehicle_title">Add a new vehicle</string>
+    <string name="pulse_garage_vehicle_intro">Keep all your vehicles in one place and track every journey.</string>
+    <string name="pulse_garage_basic_details">Basic details</string>
+    <string name="pulse_garage_vehicle_benefit_care">Track service &amp; repairs</string>
+    <string name="pulse_garage_vehicle_benefit_fuel">Log fuel &amp; mileage</string>
+    <string name="pulse_garage_vehicle_benefit_details">Keep all details together</string>
+    <string name="pulse_garage_vehicle_pressure_title">Target tire pressures (PSI)</string>
+    <string name="pulse_garage_vehicle_pressure_hint">Optional. Leave blank if you are unsure.</string>
+    <string name="pulse_garage_cancel">Cancel</string>
 </resources>

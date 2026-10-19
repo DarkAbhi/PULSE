@@ -126,3 +126,18 @@ private fun FuelEditorPreview() {
         }
     }
 }
+
+@Preview(name = "Add vehicle tablet", widthDp = 1280, heightDp = 1100)
+@Preview(name = "Add vehicle phone", widthDp = 393, heightDp = 1500)
+@Preview(name = "Add vehicle dark", widthDp = 1280, heightDp = 1100, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(name = "Add vehicle large text", widthDp = 360, heightDp = 1500, fontScale = 2f)
+@Composable
+private fun VehicleEditorPreview() {
+    PulseTheme {
+        Surface(color = PulseTheme.colors.background) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
+                VehicleEditor(GarageDraft.new(GarageForm.Vehicle, 0), false, false, null, {}, {}, {})
+            }
+        }
+    }
+}

@@ -39,10 +39,11 @@ import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.pulseDescription
-import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun FitnessRoute(
@@ -104,15 +105,7 @@ fun FitnessScreen(
                         max = PulseTokens.contentWidth,
                     ).fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(
-                        if (size ==
-                            PulseWindowSize.Compact
-                        ) {
-                            PulseTokens.medium
-                        } else {
-                            PulseTokens.large
-                        },
-                    ),
+                    .padding(size.pagePadding),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
             ) {
                 PulseText(

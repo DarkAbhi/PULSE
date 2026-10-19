@@ -2,6 +2,12 @@ package dev.abhishekan.pulse
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -81,6 +87,28 @@ class HomeDashboardDeviceTest {
             assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it))
         }
         bitmap.recycle()
+    }
+
+    @Test fun pageGuttersStayConsistentAcrossCompactAndWideLayouts() {
+        val width = mutableStateOf(360.dp)
+        compose.setContent {
+            PulseTheme(false) {
+                Box(Modifier.requiredWidth(width.value).fillMaxHeight()) {
+                    HomeScreen("fixture", state, {}, {}, {}, {}, {}, {})
+                }
+            }
+        }
+        listOf(360.dp, 599.dp, 600.dp, 840.dp, 1440.dp).forEach { pageWidth ->
+            compose.runOnIdle { width.value = pageWidth }
+            compose.waitForIdle()
+            val viewport = compose.onNodeWithTag("dashboard-background").getUnclippedBoundsInRoot()
+            val greeting = compose.onNodeWithTag("dashboard-greeting").getUnclippedBoundsInRoot()
+            val padding = if (pageWidth < 600.dp) 16.dp else 32.dp
+            val gutter = (pageWidth - minOf(pageWidth, 1280.dp)) / 2 + padding
+            assertEquals(gutter.value, (greeting.left - viewport.left).value, 1f)
+            assertEquals(gutter.value, (viewport.right - greeting.right).value, 1f)
+            assertEquals(padding.value, (greeting.top - viewport.top).value, 1f)
+        }
     }
 
     @Test fun lightDashboardKeepsExactBalanceAndActions() {

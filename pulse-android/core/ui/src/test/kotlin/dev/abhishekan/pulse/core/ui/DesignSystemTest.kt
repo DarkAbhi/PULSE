@@ -14,6 +14,14 @@ class DesignSystemTest {
         assertEquals(PulseWindowSize.Expanded, pulseWindowSize(840.dp))
     }
 
+    @Test fun pagePaddingUsesTheSameCompactBreakpoint() {
+        assertEquals(16.dp, pulseWindowSize(320.dp).pagePadding)
+        assertEquals(16.dp, pulseWindowSize(599.dp).pagePadding)
+        assertEquals(32.dp, pulseWindowSize(600.dp).pagePadding)
+        assertEquals(32.dp, pulseWindowSize(840.dp).pagePadding)
+        assertEquals(32.dp, pulseWindowSize(1280.dp).pagePadding)
+    }
+
     @Test fun textColorPairsMeetWcagAA() {
         listOf(PulseLightColors, PulseDarkColors).forEach { c ->
             listOf(

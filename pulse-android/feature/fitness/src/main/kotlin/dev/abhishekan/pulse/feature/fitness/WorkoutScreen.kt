@@ -1,7 +1,6 @@
 package dev.abhishekan.pulse.feature.fitness
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,7 +17,6 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -34,6 +32,7 @@ import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
 import dev.abhishekan.pulse.core.domain.model.WorkoutInfo
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
+import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -45,8 +44,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
-import org.koin.androidx.compose.koinViewModel
+import dev.abhishekan.pulse.core.ui.pagePadding
 import java.time.format.DateTimeFormatter
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun WorkoutRoute(
@@ -131,16 +131,16 @@ fun WorkoutScreen(
     var deleteExercise by rememberSaveable { mutableStateOf<Long?>(null) }
     val detail = state.detail
     val scroll = key(state.editor != null) { rememberScrollState() }
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+    PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         Column(
             Modifier
                 .widthIn(
-                    max = PulseTokens.readingWidth,
+                    max = PulseTokens.contentWidth,
                 ).fillMaxWidth()
                 .verticalScroll(scroll)
                 .padding(LocalPulseContentPadding.current)
                 .imePadding()
-                .padding(PulseTokens.medium),
+                .padding(size.pagePadding),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
         ) {
             if (state.loading) {

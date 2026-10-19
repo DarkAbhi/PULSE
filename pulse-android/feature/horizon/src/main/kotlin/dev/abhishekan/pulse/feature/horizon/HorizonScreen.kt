@@ -48,6 +48,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
 
@@ -99,7 +100,7 @@ internal fun HorizonScreen(
                         .fillMaxWidth()
                         .horizontalScroll(
                             rememberScrollState(),
-                        ).padding(horizontal = PulseTokens.medium),
+                        ).padding(start = width.pagePadding, top = width.pagePadding, end = width.pagePadding),
                     horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
                 ) {
                     HorizonTab.entries.forEach { tab ->
@@ -126,15 +127,7 @@ internal fun HorizonScreen(
                         .fillMaxWidth()
                         .verticalScroll(scroll)
                         .padding(bottom = LocalPulseContentPadding.current.calculateBottomPadding())
-                        .padding(
-                            if (width ==
-                                PulseWindowSize.Compact
-                            ) {
-                                PulseTokens.medium
-                            } else {
-                                PulseTokens.large
-                            },
-                        ),
+                        .padding(width.pagePadding),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                 ) {
                     if (state.reviewRequired) {

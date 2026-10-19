@@ -33,6 +33,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.pagePadding
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -80,7 +81,7 @@ fun HomeScreen(
         PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
             val compact = size == PulseWindowSize.Compact
             val stackCards = compact || LocalDensity.current.fontScale > 1.3f
-            val margin = if (compact) PulseTokens.cardPadding else PulseTokens.large
+            val margin = size.pagePadding
             Column(
                 Modifier
                     .widthIn(max = PulseTokens.contentWidth)

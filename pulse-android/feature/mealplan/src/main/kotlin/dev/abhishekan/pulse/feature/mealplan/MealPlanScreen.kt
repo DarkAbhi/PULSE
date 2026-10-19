@@ -2,13 +2,13 @@ package dev.abhishekan.pulse.feature.mealplan
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.MealChange
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
+import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
@@ -51,6 +52,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
 
@@ -84,6 +86,8 @@ internal fun MealPlanScreen(
     }
     val holder = rememberSaveableStateHolder()
     val refreshing = state.meals.loading || state.times.loading
+    val showAddButton = !state.managing && state.draft == null && state.canWrite &&
+        !state.meals.loading && state.meals.error == null && state.meals.value != null
     val canRefresh = !state.busy && state.draft == null && !refreshing
     val refresh = { if (canRefresh) vm.refresh() }
     val refreshLabel = stringResource(R.string.pulse_mealplan_refresh)
@@ -105,7 +109,7 @@ internal fun MealPlanScreen(
                     }
             },
     ) {
-        BoxWithConstraints(Modifier.fillMaxSize()) {
+        PulseAdaptiveLayout(Modifier.align(Alignment.TopCenter).widthIn(max = PulseTokens.contentWidth).fillMaxSize()) { size ->
             holder.SaveableStateProvider(
                 if (state.draft != null &&
                     !records
@@ -122,15 +126,7 @@ internal fun MealPlanScreen(
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .imePadding()
-                        .padding(
-                            if (maxWidth <
-                                PulseTokens.readingWidth
-                            ) {
-                                PulseTokens.medium
-                            } else {
-                                PulseTokens.cardPadding
-                            },
-                        ).padding(bottom = if (state.draft == null && !state.managing) 96.dp else 0.dp),
+                        .padding(size.pagePadding).padding(bottom = if (showAddButton) 96.dp else 0.dp),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
                 ) {
                     state.message?.let {
@@ -281,16 +277,10 @@ internal fun MealPlanScreen(
                     }
                 }
             }
-            if (!state.managing &&
-                state.draft == null &&
-                state.canWrite &&
-                !state.meals.loading &&
-                state.meals.error == null &&
-                state.meals.value != null
-            ) {
+            if (showAddButton) {
                 FloatingActionButton(
                     onClick = { vm.add(state.selected) },
-                    modifier = Modifier.align(Alignment.BottomEnd).padding(PulseTokens.cardPadding).size(72.dp),
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(size.pagePadding).size(72.dp),
                     shape = CircleShape,
                     containerColor = PulseTheme.colors.primary,
                     contentColor = PulseTheme.colors.onPrimary,

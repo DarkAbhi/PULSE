@@ -52,8 +52,10 @@ import dev.abhishekan.pulse.core.domain.model.NotificationTarget
 import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
+import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.R as UiR
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseBottomNavigationBar
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -69,6 +71,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTopAppBar
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.feature.auth.LoginRoute
 import dev.abhishekan.pulse.feature.fitness.FitnessRoute
 import dev.abhishekan.pulse.feature.fitness.WorkoutRoute
@@ -81,7 +84,6 @@ import dev.abhishekan.pulse.feature.profile.ProfileRoute
 import dev.abhishekan.pulse.feature.profile.ProfileSetupPrompt
 import dev.abhishekan.pulse.feature.profile.ProfileViewModel
 import org.koin.androidx.compose.koinViewModel
-import dev.abhishekan.pulse.core.ui.R as UiR
 
 @Composable
 fun PulseApp(
@@ -95,11 +97,10 @@ fun PulseApp(
     when (val current = state) {
         SessionState.Checking ->
             Scaffold(containerColor = PulseTheme.colors.background, contentColor = PulseTheme.colors.textPrimary) { insets ->
-                Box(
-                    Modifier.fillMaxSize().padding(insets).padding(PulseTokens.cardPadding),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    PulseLoadingState(stringResource(R.string.pulse_app_checking_your_session))
+                PulseAdaptiveLayout(Modifier.fillMaxSize().padding(insets)) { size ->
+                    Box(Modifier.fillMaxSize().padding(size.pagePadding), contentAlignment = Alignment.Center) {
+                        PulseLoadingState(stringResource(R.string.pulse_app_checking_your_session))
+                    }
                 }
             }
         is SessionState.Unavailable ->
@@ -148,38 +149,37 @@ private fun SessionUnavailable(
 ) {
     var confirm by rememberSaveable { mutableStateOf(false) }
     Scaffold(containerColor = PulseTheme.colors.background, contentColor = PulseTheme.colors.textPrimary) { insets ->
-        Box(
-            Modifier.fillMaxSize().padding(insets).padding(PulseTokens.cardPadding),
-            contentAlignment = Alignment.Center,
-        ) {
-            PulseCard(
-                Modifier
-                    .widthIn(
-                        max = PulseTokens.readingWidth,
-                    ).fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                PulseText(
-                    stringResource(R.string.pulse_app_we_couldn_t_open_your_session),
-                    style = PulseTextStyle.Title,
-                )
-                PulseText(
-                    stringResource(
-                        R.string.pulse_app_we_couldn_t_validate_your_session_1_s,
-                        failure.message.asString(),
-                    ),
-                )
-                PulseText(
-                    stringResource(
-                        R.string.pulse_app_your_saved_session_has_been_kept_on_this_device,
-                    ),
-                    color = PulseTheme.colors.textSecondary,
-                )
-                PulseButton(stringResource(R.string.pulse_app_try_again), onRetry, enabled = !busy)
-                PulseTextButton(stringResource(R.string.pulse_app_forget_this_device_s_session), {
-                    confirm =
-                        true
-                }, enabled = !busy)
+        PulseAdaptiveLayout(Modifier.fillMaxSize().padding(insets)) { size ->
+            Box(Modifier.fillMaxSize().padding(size.pagePadding), contentAlignment = Alignment.Center) {
+                PulseCard(
+                    Modifier
+                        .widthIn(
+                            max = PulseTokens.readingWidth,
+                        ).fillMaxWidth()
+                        .verticalScroll(rememberScrollState()),
+                ) {
+                    PulseText(
+                        stringResource(R.string.pulse_app_we_couldn_t_open_your_session),
+                        style = PulseTextStyle.Title,
+                    )
+                    PulseText(
+                        stringResource(
+                            R.string.pulse_app_we_couldn_t_validate_your_session_1_s,
+                            failure.message.asString(),
+                        ),
+                    )
+                    PulseText(
+                        stringResource(
+                            R.string.pulse_app_your_saved_session_has_been_kept_on_this_device,
+                        ),
+                        color = PulseTheme.colors.textSecondary,
+                    )
+                    PulseButton(stringResource(R.string.pulse_app_try_again), onRetry, enabled = !busy)
+                    PulseTextButton(stringResource(R.string.pulse_app_forget_this_device_s_session), {
+                        confirm =
+                            true
+                    }, enabled = !busy)
+                }
             }
         }
     }
@@ -503,15 +503,15 @@ private fun SpacesScreen(
     onGarage: () -> Unit,
     onMealPlan: () -> Unit,
 ) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+    PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         Column(
             Modifier
                 .widthIn(
-                    max = PulseTokens.readingWidth,
+                    max = PulseTokens.contentWidth,
                 ).fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(LocalPulseContentPadding.current)
-                .padding(PulseTokens.medium),
+                .padding(size.pagePadding),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
         ) {
             PulseText(

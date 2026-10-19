@@ -77,6 +77,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.label
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.uiText
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -245,15 +246,7 @@ internal fun ProfileScreen(
                     .widthIn(max = PulseTokens.contentWidth)
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(
-                        if (size ==
-                            PulseWindowSize.Compact
-                        ) {
-                            PulseTokens.medium
-                        } else {
-                            PulseTokens.large
-                        },
-                    ),
+                    .padding(size.pagePadding),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
             ) {
                 if (state.uncertain) {

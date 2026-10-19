@@ -63,6 +63,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
 
@@ -208,15 +209,7 @@ internal fun GarageScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(LocalPulseContentPadding.current)
                     .imePadding()
-                    .padding(
-                        if (size ==
-                            PulseWindowSize.Compact
-                        ) {
-                            PulseTokens.medium
-                        } else {
-                            PulseTokens.large
-                        },
-                    ),
+                    .padding(size.pagePadding),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
             ) {
                 if (state.reviewRequired) {
@@ -558,7 +551,7 @@ internal fun GarageScreen(
                         .fillMaxWidth()
                         .horizontalScroll(
                             rememberScrollState(),
-                        ).padding(horizontal = PulseTokens.medium),
+                        ).padding(start = size.pagePadding, top = size.pagePadding, end = size.pagePadding),
                     horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
                 ) {
                     GarageTab.entries.forEach { tab ->

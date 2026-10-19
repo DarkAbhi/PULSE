@@ -1,7 +1,6 @@
 package dev.abhishekan.pulse.feature.notifications
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.NotificationTarget
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
+import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -37,11 +37,12 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.pulseDescription
 import dev.abhishekan.pulse.core.ui.uiText
-import org.koin.androidx.compose.koinViewModel
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun NotificationsRoute(
@@ -63,11 +64,11 @@ internal fun NotificationsScreen(
 ) {
     var confirmation by rememberSaveable { mutableStateOf(false) }
     val enabled = !state.busy && !state.loading && !state.uncertain
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val padding = if (maxWidth < PulseTokens.formColumnsWidth) PulseTokens.medium else PulseTokens.large
+    PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
+        val padding = size.pagePadding
         Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.TopCenter) {
             LazyColumn(
-                Modifier.widthIn(max = PulseTokens.readingWidth + PulseTokens.cardPadding * 2).fillMaxSize(),
+                Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize(),
                 contentPadding =
                     PaddingValues(
                         start = padding,

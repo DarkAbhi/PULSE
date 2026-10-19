@@ -35,6 +35,16 @@ widths, calendar geometry, icon dimensions and picker input-mode breakpoints
 remain behavior/layout constants. New UI should use the semantic scale rather
 than introduce raw colors or text sizes. No new module or dependency was added.
 
+## Page spacing
+
+Every page uses `PulseWindowSize.pagePadding`: 16dp below 600dp of available
+width, and 32dp from 600dp upward. Page containers share the 1280dp maximum
+width and center within wider windows. Tab rows use the same horizontal and top
+inset as their page body. Centered login/session layouts retain their placement
+while using the shared inset values. The app shell reserves system bars and app
+navigation separately. Meal Plan adds 96dp of bottom clearance only while its
+floating add button is visible; the button uses the shared page inset too.
+
 ## Typography
 
 Fonts are bundled resources and licensed under SIL OFL, with each license packaged

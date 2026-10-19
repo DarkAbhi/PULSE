@@ -12,6 +12,9 @@ val LocalPulseContentPadding = staticCompositionLocalOf { PaddingValues(0.dp) }
 
 enum class PulseWindowSize { Compact, Medium, Expanded }
 
+val PulseWindowSize.pagePadding: Dp
+    get() = if (this == PulseWindowSize.Compact) PulseTokens.medium else PulseTokens.large
+
 fun pulseWindowSize(width: Dp): PulseWindowSize =
     when {
         width < 600.dp -> PulseWindowSize.Compact

@@ -43,6 +43,7 @@ import dev.abhishekan.pulse.core.ui.components.PulsePasswordField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.pagePadding
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -70,26 +71,18 @@ fun LoginScreen(
 ) {
     Scaffold(containerColor = PulseTheme.colors.background, contentColor = PulseTheme.colors.textPrimary) { insets ->
         PulseAdaptiveLayout(Modifier.fillMaxSize().padding(insets).imePadding()) { size ->
-            val margin =
-                if (size ==
-                    PulseWindowSize.Compact
-                ) {
-                    PulseTokens.medium
-                } else {
-                    PulseTokens.large
-                }
             Box(
-                Modifier.fillMaxSize().padding(horizontal = margin),
+                Modifier.fillMaxSize().padding(horizontal = size.pagePadding),
                 contentAlignment = Alignment.Center,
             ) {
                 if (size == PulseWindowSize.Compact) {
                     Column(
                         Modifier
                             .widthIn(
-                                max = PulseTokens.readingWidth,
+                                max = PulseTokens.contentWidth - size.pagePadding * 2,
                             ).fillMaxWidth()
                             .verticalScroll(rememberScrollState())
-                            .padding(vertical = PulseTokens.cardPadding),
+                            .padding(vertical = size.pagePadding),
                         verticalArrangement = Arrangement.spacedBy(PulseTokens.large),
                     ) {
                         BrandIntroduction(false)
@@ -99,10 +92,10 @@ fun LoginScreen(
                     Row(
                         Modifier
                             .widthIn(
-                                max = PulseTokens.contentWidth,
+                                max = PulseTokens.contentWidth - size.pagePadding * 2,
                             ).fillMaxWidth()
                             .verticalScroll(rememberScrollState())
-                            .padding(vertical = PulseTokens.large),
+                            .padding(vertical = size.pagePadding),
                         horizontalArrangement = Arrangement.spacedBy(PulseTokens.large),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {

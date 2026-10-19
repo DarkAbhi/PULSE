@@ -61,7 +61,6 @@
     <string name="pulse_garage_room_for_your_first_ride">"Room for your first ride"</string>
     <string name="pulse_garage_add_a_vehicle_to_record_fuel_tire_pressure_and">"Add a vehicle to record fuel, tire pressure and maintenance."</string>
     <string name="pulse_garage_view_1_s">"View %1$s"</string>
-    <string name="pulse_garage_all_vehicles">"All vehicles"</string>
     <string name="pulse_garage_care_at_a_glance">"Care, at a glance"</string>
     <string name="pulse_garage_latest_care_1_s_2_s">"Latest care: %1$s · %2$s"</string>
     <string name="pulse_garage_add_fuel_fill_up">"Add fuel fill-up"</string>
@@ -159,4 +158,14 @@
     </plurals>
     <string name="pulse_garage_history_counts">"%1$s · %2$s · %3$s"</string>
     <string name="pulse_garage_brand">PULSE</string>
+    <string name="pulse_garage_fuel_subtitle">A quick pit stop for your fuel history.</string>
+    <string name="pulse_garage_trip_details">Trip details</string>
+    <string name="pulse_garage_tank_details">Tank details</string>
+    <string name="pulse_garage_additional_information">Additional information</string>
+    <string name="pulse_garage_hide_notes">Hide notes</string>
+    <string name="pulse_garage_missed_fill">Missed fill-up</string>
+    <string name="pulse_garage_fill_help">How does this affect efficiency?</string>
+    <string name="pulse_garage_partial_help">A partial fill counts toward the next full-to-full efficiency interval.</string>
+    <string name="pulse_garage_full_help">A full tank starts or completes a full-to-full efficiency interval.</string>
+    <string name="pulse_garage_missed_help">A missed fill resets the efficiency baseline. The next full tank starts a new interval.</string>
 </resources>

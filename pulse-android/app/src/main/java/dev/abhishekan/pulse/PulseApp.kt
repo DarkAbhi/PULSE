@@ -55,7 +55,6 @@ import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.R as UiR
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseBottomNavigationBar
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -84,6 +83,7 @@ import dev.abhishekan.pulse.feature.profile.ProfileRoute
 import dev.abhishekan.pulse.feature.profile.ProfileSetupPrompt
 import dev.abhishekan.pulse.feature.profile.ProfileViewModel
 import org.koin.androidx.compose.koinViewModel
+import dev.abhishekan.pulse.core.ui.R as UiR
 
 @Composable
 fun PulseApp(
@@ -216,6 +216,7 @@ private fun SignedInApp(
     var hasFitnessDraft by rememberSaveable { mutableStateOf(false) }
     var hasMealDraft by rememberSaveable { mutableStateOf(false) }
     var hasGarageDraft by rememberSaveable { mutableStateOf(false) }
+    var hasGarageDetail by rememberSaveable { mutableStateOf(false) }
     var hasHorizonDraft by rememberSaveable { mutableStateOf(false) }
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route
@@ -250,7 +251,7 @@ private fun SignedInApp(
             route != "gallery" &&
                 route != "home" &&
                 showBars &&
-                (!isTab || nav.previousBackStackEntry?.destination?.route == "notifications")
+                (!isTab || (route == "garage" && hasGarageDetail) || nav.previousBackStackEntry?.destination?.route == "notifications")
         val showBottomBar = !isTablet && route != "gallery" && showBars
         val destinations = listOf("home", "fitness", "horizon", "garage", "mealplan", "you")
         val selectedDestination =
@@ -330,6 +331,7 @@ private fun SignedInApp(
                                 if (route == "notifications" ||
                                     nav.previousBackStackEntry?.destination?.route == "notifications" ||
                                     route == "vehicle/{id}" ||
+                                    (route == "garage" && hasGarageDetail) ||
                                     route == "workout/{id}"
                                 ) {
                                     PulseIconButton(
@@ -341,7 +343,7 @@ private fun SignedInApp(
                                                     stringResource(
                                                         R.string.pulse_app_back_to_home,
                                                     )
-                                                "vehicle/{id}" -> stringResource(R.string.pulse_app_back_to_garage)
+                                                "garage", "vehicle/{id}" -> stringResource(R.string.pulse_app_back_to_garage)
                                                 else -> stringResource(R.string.pulse_app_back_to_fitness)
                                             }
                                         },
@@ -416,7 +418,12 @@ private fun SignedInApp(
                             }, { nav.navigate("mealplan") { launchSingleTop = true } })
                         }
                         composable("mealplan") { MealPlanRoute(onDraftChanged = { hasMealDraft = it }) }
-                        composable("garage") { GarageRoute(onDraftChanged = { hasGarageDraft = it }) }
+                        composable("garage") {
+                            GarageRoute(
+                                onDraftChanged = { hasGarageDraft = it },
+                                onDetailChanged = { hasGarageDetail = it },
+                            )
+                        }
                         composable("vehicle/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { destination ->
                             GarageRoute(onDraftChanged = { hasGarageDraft = it }, initialVehicle = destination.arguments?.getLong("id"))
                         }

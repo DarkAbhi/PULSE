@@ -313,7 +313,7 @@ Known server limits remain the existing float64 finance calculations, recent-50 
 
 ## Phase 5 — Garage
 
-Garage is available from Home and Spaces. Its native vehicle collection opens a vehicle overview, fuel history, maintenance history, and tire/air section. Suitable windows show the collection beside vehicle detail; narrow or large-text windows use one scrolling column. Forms stay width-constrained, use Pulse controls, preserve unsaved fields with SavedStateHandle, and warn before discard/logout. Tab navigation preserves destination state. Only Garage was added in this phase; Meal Plan is deferred.
+Garage is available from Home and Spaces. Its native vehicle collection opens a vehicle overview, fuel history, maintenance history, and tire/air section. Vehicle details occupy a separate page on phones and tablets, with a top-bar back arrow returning to the collection. Forms stay width-constrained, use Pulse controls, preserve unsaved fields with SavedStateHandle, and warn before discard/logout. Tab navigation preserves destination state. Only Garage was added in this phase; Meal Plan is deferred.
 
 | Workflow | Existing API, relative to `/api/` |
 | --- | --- |

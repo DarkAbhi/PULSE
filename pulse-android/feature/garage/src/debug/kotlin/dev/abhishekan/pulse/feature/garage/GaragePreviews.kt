@@ -99,3 +99,21 @@ private fun GarageCollectionPreview() {
         }
     }
 }
+
+@Preview(name = "Fuel cards phone", widthDp = 393, heightDp = 850)
+@Preview(name = "Fuel cards tablet", widthDp = 1024, heightDp = 900)
+@Preview(name = "Fuel cards large text", widthDp = 360, heightDp = 850, fontScale = 2f)
+@Preview(name = "Fuel cards dark", widthDp = 393, heightDp = 850, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun FuelEditorPreview() {
+    PulseTheme {
+        Surface(color = PulseTheme.colors.background) {
+            Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
+                    FuelEditor(GarageDraft.new(GarageForm.Fuel, 1), false, null, {})
+                }
+                FuelEditorActions(false, false, {}, {})
+            }
+        }
+    }
+}

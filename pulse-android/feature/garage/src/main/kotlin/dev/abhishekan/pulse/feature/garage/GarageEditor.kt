@@ -13,14 +13,11 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import dev.abhishekan.pulse.core.domain.model.garageCategories
-import dev.abhishekan.pulse.core.domain.model.garageFillTypes
-import dev.abhishekan.pulse.core.domain.model.garageFuelTypes
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
@@ -48,6 +45,10 @@ internal fun GarageEditor(
     save: () -> Unit,
     cancel: () -> Unit,
 ) {
+    if (draft.kind == GarageForm.Fuel) {
+        FuelEditor(draft, busy, error, change)
+        return
+    }
     var datePicker by remember { mutableStateOf(false) }
     var timePicker by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
@@ -156,88 +157,6 @@ internal fun GarageEditor(
                     draft["zone"].ifBlank {
                         ZoneId.systemDefault().id
                     },
-                ),
-                style = PulseTextStyle.Label,
-            )
-        }
-        if (draft.kind == GarageForm.Fuel) {
-            field("station", stringResource(R.string.pulse_garage_station_vendor_optional))
-            val tanks = draft["tanks"].toIntOrNull() ?: 1
-            repeat(tanks) { i ->
-                PulseText(
-                    stringResource(R.string.pulse_garage_tank_1_s, i + 1),
-                    Modifier.semantics {
-                        heading()
-                    },
-                    PulseTextStyle.Title,
-                )
-                choice(
-                    "type$i",
-                    stringResource(R.string.pulse_garage_fuel_type_tank_1_s, i + 1),
-                    garageFuelTypes,
-                )
-                choice(
-                    "fill$i",
-                    stringResource(R.string.pulse_garage_fill_type_tank_1_s, i + 1),
-                    garageFillTypes,
-                )
-                PulseText(
-                    stringResource(
-                        R.string.pulse_garage_enter_any_two_values_pulse_calculates_the_remaining_value,
-                    ),
-                )
-                field(
-                    "quantity$i",
-                    stringResource(R.string.pulse_garage_quantity_l_tank_1_s, i + 1),
-                    true,
-                )
-                field(
-                    "price$i",
-                    stringResource(
-                        R.string.pulse_garage_price_per_litre_tank_1_s,
-                        i + 1,
-                    ),
-                    true,
-                )
-                field(
-                    "total$i",
-                    stringResource(R.string.pulse_garage_total_cost_tank_1_s, i + 1),
-                    true,
-                )
-                if (draft["type$i"] in
-                    listOf("cng", "electric")
-                ) {
-                    PulseText(
-                        stringResource(
-                            R.string.pulse_garage_the_current_api_records_all_fuel_quantities_in_l,
-                        ),
-                        style = PulseTextStyle.Label,
-                    )
-                }
-                if (i ==
-                    1
-                ) {
-                    PulseTextButton(stringResource(R.string.pulse_garage_remove_second_tank), {
-                        change(draft.set("tanks", "1"))
-                    }, enabled = enabled)
-                }
-            }
-            if (tanks <
-                2
-            ) {
-                PulseTextButton(stringResource(R.string.pulse_garage_add_second_fuel_tank), {
-                    change(
-                        draft.set("tanks", "2").copy(
-                            fields =
-                                draft.fields +
-                                    mapOf("tanks" to "2", "type1" to "petrol", "fill1" to "full"),
-                        ),
-                    )
-                }, enabled = enabled)
-            }
-            PulseText(
-                stringResource(
-                    R.string.pulse_garage_a_missed_fill_resets_the_efficiency_baseline_partial_fills,
                 ),
                 style = PulseTextStyle.Label,
             )

@@ -6,6 +6,7 @@ import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -16,8 +17,10 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
@@ -388,7 +391,7 @@ class GarageDeviceTest {
         compose
             .onNodeWithText(text)
             .apply {
-                if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) {
+                if (!isDisplayed() && (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail())) {
                     performScrollTo()
                 }
             }.assertIsDisplayed()
@@ -525,6 +528,24 @@ class GarageDeviceTest {
         compose.onNodeWithText("Care, at a glance").performScrollTo().assertIsDisplayed()
     }
 
+    @Test fun vehicleDetailsUseSeparatePageWithTopBackAndSurviveRecreation() {
+        launchGarage()
+        select()
+        compose.onNodeWithText("Your garage").assertDoesNotExist()
+        compose.onNodeWithText("Add vehicle").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Back to Garage").assertIsDisplayed()
+        scenario!!.recreate()
+        awaitText("Care, at a glance")
+        compose.onNodeWithContentDescription("Back to Garage").assertIsDisplayed().performClick()
+        awaitText("Your garage")
+        compose.onNodeWithContentDescription("Back to Garage").assertDoesNotExist()
+        select()
+        compose.onNodeWithText("Care, at a glance").performScrollTo()
+        compose.onNodeWithContentDescription("Back to Garage").assertIsDisplayed()
+        scenario!!.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        awaitText("Your garage")
+    }
+
     @Test fun pullToRefreshLoadsUpdatedVehicleHistory() {
         launchGarage()
         select()
@@ -536,6 +557,72 @@ class GarageDeviceTest {
         compose.runOnIdle { vehicles[1] = "Refreshed Comet" }
         compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Updated Comet"))).performTouchInput { swipeDown() }
         awaitText("Refreshed Comet")
+    }
+
+    @Test fun fuelCardsKeepInputsManualAndOptionalDetailsAcrossRecreation() {
+        launchGarage()
+        select()
+        tap("Fuel")
+        tap("Add fuel fill-up")
+        screenshot("fuel-cards-trip")
+        compose.onNodeWithText("Trip details").assertIsDisplayed()
+        compose.onAllNodesWithText("Remove second tank").assertCountEquals(0)
+        field("Odometer (km)", "1500")
+        field("Quantity (L) · tank 1", "2.5")
+        field("Price per litre (₹) · tank 1", "100")
+        val total = compose.onNodeWithText("Total cost (₹) · tank 1")
+        assertEquals("", total.fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.EditableText].text)
+        compose.onNodeWithText("Price per litre (₹) · tank 1").performScrollTo().performClick()
+        compose.onNodeWithText("Save fuel fill-up").assertIsDisplayed()
+        screenshot("fuel-cards-keyboard")
+        scenario?.onActivity { activity ->
+            activity
+                .getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+                .hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
+        }
+        tap("Partial")
+        tap("How does this affect efficiency?")
+        compose.onNodeWithText("A partial fill counts toward the next full-to-full efficiency interval.").assertIsDisplayed()
+        tap("Missed fill-up")
+        compose
+            .onNodeWithText(
+                "A missed fill resets the efficiency baseline. The next full tank starts a new interval.",
+            ).performScrollTo()
+            .assertIsDisplayed()
+        tap("Full")
+        tap("Add second fuel tank")
+        field("Quantity (L) · tank 2", "1")
+        tap("Remove second tank")
+        tap("Add second fuel tank")
+        assertEquals(
+            "1",
+            compose
+                .onNodeWithText(
+                    "Quantity (L) · tank 2",
+                ).fetchSemanticsNode()
+                .config[androidx.compose.ui.semantics.SemanticsProperties.EditableText]
+                .text,
+        )
+        tap("Remove second tank")
+        tap("Notes (optional)")
+        field("Notes (optional)", "Evening pit stop")
+        tap("Hide notes")
+        screenshot("fuel-cards-before-recreation")
+        scenario?.recreate()
+        screenshot("fuel-cards-after-recreation")
+        awaitText("Save fuel fill-up")
+        tap("Notes (optional)")
+        compose.onNodeWithText("Evening pit stop").performScrollTo().assertIsDisplayed()
+        screenshot("fuel-cards-notes")
+        tap("Save fuel fill-up")
+        awaitText("1500 km")
+        assertEquals(
+            "Evening pit stop",
+            fuel.values
+                .single()["notes"]
+                ?.jsonPrimitive
+                ?.content,
+        )
     }
 
     @Test fun vehicleFuelPressureAirAndMaintenanceCrud() {
@@ -645,7 +732,10 @@ class GarageDeviceTest {
                 target
         }
         screenshot("draft")
-        tap("Cancel editing")
+        compose.onNodeWithContentDescription("Back to Garage").performClick()
+        confirm("Cancel")
+        compose.onNodeWithText("Unsaved care").assertExists()
+        compose.onNodeWithContentDescription("Back to Garage").performClick()
         confirm("Discard edits")
         awaitText("Care, at a glance")
     }

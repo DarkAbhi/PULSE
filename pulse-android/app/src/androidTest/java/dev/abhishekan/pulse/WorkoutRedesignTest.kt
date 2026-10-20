@@ -50,6 +50,8 @@ class WorkoutRedesignTest {
         val info = WorkoutInfo(1, instant, instant, instant.plusSeconds(1800), BigDecimal("1800"), BigDecimal("169.9"), true)
         compose.setContent { Content(WorkoutDetail(info, emptyList())) }
         compose.onNodeWithText("Linked Apple Watch workout").assertIsDisplayed()
+        compose.onNodeWithText("Times shown in India time (IST).").assertDoesNotExist()
+        compose.onNodeWithText("Refresh workout").assertDoesNotExist()
         compose.onNodeWithText("169.9 kcal").assertIsDisplayed()
         compose.onNodeWithText("30 minutes").assertIsDisplayed()
         compose.onNodeWithText("No exercises added yet").performScrollTo().assertIsDisplayed()

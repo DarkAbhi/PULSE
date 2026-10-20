@@ -18,11 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -30,8 +27,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,7 +54,6 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.time.format.DateTimeFormatter
 
@@ -67,11 +61,9 @@ import java.time.format.DateTimeFormatter
 internal fun WorkoutDetailContent(
     detail: WorkoutDetail,
     enabled: Boolean,
-    refreshEnabled: Boolean,
     onAdd: () -> Unit,
     onEdit: (Long) -> Unit,
     onRemove: (Long) -> Unit,
-    onRefresh: () -> Unit,
     onDelete: () -> Unit,
 ) {
     WorkoutInformation(detail.info)
@@ -147,7 +139,6 @@ internal fun WorkoutDetailContent(
             }
             val actions: @Composable () -> Unit = {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    WorkoutAction(stringResource(R.string.pulse_fitness_refresh_workout), WorkoutSymbol.Refresh, onRefresh, refreshEnabled)
                     WorkoutAction(
                         stringResource(R.string.pulse_fitness_delete_workout),
                         WorkoutSymbol.Delete,
@@ -271,26 +262,24 @@ private fun WorkoutInformation(info: WorkoutInfo) {
                 }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
-            WorkoutGlyph(WorkoutSymbol.Info, PulseTheme.colors.textSecondary)
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                PulseText(
-                    stringResource(
-                        if (hasMetrics) {
-                            R.string.pulse_fitness_times_shown_in_india_time_ist
-                        } else {
-                            R.string.pulse_fitness_timing_and_energy_data_aren_t_available_for_this
-                        },
-                    ),
-                    style = PulseTextStyle.Body2,
-                    color = PulseTheme.colors.textSecondary,
-                )
-                if (info.imported) {
-                    PulseText(
-                        stringResource(R.string.workout_imported_read_only),
-                        style = PulseTextStyle.Body2,
-                        color = PulseTheme.colors.textSecondary,
-                    )
+        if (!hasMetrics || info.imported) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+                WorkoutGlyph(WorkoutSymbol.Info, PulseTheme.colors.textSecondary)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (!hasMetrics) {
+                        PulseText(
+                            stringResource(R.string.pulse_fitness_timing_and_energy_data_aren_t_available_for_this),
+                            style = PulseTextStyle.Body2,
+                            color = PulseTheme.colors.textSecondary,
+                        )
+                    }
+                    if (info.imported) {
+                        PulseText(
+                            stringResource(R.string.workout_imported_read_only),
+                            style = PulseTextStyle.Body2,
+                            color = PulseTheme.colors.textSecondary,
+                        )
+                    }
                 }
             }
         }
@@ -412,28 +401,8 @@ private fun WorkoutExerciseCard(
 
 @Composable
 internal fun ExerciseInstructions(exercise: CatalogExercise) {
-    var open by rememberSaveable(exercise.id) { mutableStateOf(false) }
     if (exercise.instructions.isEmpty()) return
-    WorkoutAction(stringResource(R.string.workout_view_instructions), WorkoutSymbol.Document, { open = true }, true, soft = true)
-    if (open) {
-        AlertDialog(
-            onDismissRequest = { open = false },
-            title = { PulseText(exercise.name, style = PulseTextStyle.Title) },
-            text = {
-                Column(
-                    Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    exercise.instructions.forEachIndexed { index, text ->
-                        PulseText(stringResource(R.string.pulse_fitness_numbered_instruction, index + 1, text))
-                    }
-                }
-            },
-            confirmButton = { PulseTextButton(stringResource(R.string.workout_close), { open = false }) },
-            containerColor = PulseTheme.colors.surface,
-            textContentColor = PulseTheme.colors.textPrimary,
-        )
-    }
+    EditorInstructions(exercise)
 }
 
 @Composable
@@ -600,7 +569,7 @@ private fun WorkoutIllustration(
 }
 
 @Composable
-private fun WorkoutAction(
+internal fun WorkoutAction(
     text: String,
     symbol: WorkoutSymbol,
     onClick: () -> Unit,
@@ -648,10 +617,10 @@ private fun WorkoutAction(
     }
 }
 
-private enum class WorkoutSymbol { Add, Play, Stop, Clock, Energy, Info, Weight, Muscle, List, Edit, Delete, Refresh, Document }
+internal enum class WorkoutSymbol { Add, Play, Stop, Clock, Energy, Info, Weight, Muscle, List, Edit, Delete, Refresh, Document }
 
 @Composable
-private fun WorkoutGlyph(
+internal fun WorkoutGlyph(
     symbol: WorkoutSymbol,
     color: Color,
 ) {

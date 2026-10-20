@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,8 +22,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -83,6 +90,7 @@ fun WorkoutRoute(
         viewModel::rememberAlias,
         viewModel::save,
         close,
+        onSearchQuery = viewModel::searchCatalogue,
     )
     if (discard) {
         PulseDialog(
@@ -119,6 +127,7 @@ fun WorkoutScreen(
     onAlias: (Boolean) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
+    onSearchQuery: (String) -> Unit = onName,
 ) {
     var deleteWorkout by rememberSaveable { mutableStateOf(false) }
     var deleteExercise by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -137,57 +146,91 @@ fun WorkoutScreen(
             }
             return@PulseAdaptiveLayout
         }
-        Column(
+        val pullState = rememberPullToRefreshState()
+        val canRefresh = !state.loading && !state.busy && state.editor == null
+        val refreshLabel = stringResource(R.string.pulse_fitness_refresh_workout)
+        Box(
             Modifier
-                .widthIn(
-                    max = PulseTokens.contentWidth,
-                ).fillMaxWidth()
-                .verticalScroll(scroll)
+                .fillMaxSize()
                 .padding(LocalPulseContentPadding.current)
-                .imePadding()
-                .padding(size.pagePadding),
-            verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
-        ) {
-            state.error?.let { PulseErrorState(fitnessFailureMessage(it), onRefresh) }
-            if (state.needsReview) {
-                MutationReview(state.reviewReady, state.busy, onRefresh, onReviewed, message = state.message)
-                detail?.let { ServerExercises(it.exercises) }
-            }
-            if (state.editor != null) {
-                ExerciseEditor(
-                    state.editor,
-                    state.busy || state.loading,
-                    state.needsReview,
-                    onName,
-                    onSet,
-                    onAddSet,
-                    onRemoveSet,
-                    onChoose,
-                    onClearMatch,
-                    onSearch,
-                    onAlias,
-                    onSave,
-                    onCancel,
-                )
-            } else if (detail != null) {
-                WorkoutDetailContent(
-                    detail = detail,
-                    enabled = !state.busy && !state.loading && !state.needsReview && state.error == null,
-                    refreshEnabled = !state.busy && !state.loading,
-                    onAdd = { onEdit(null) },
-                    onEdit = { onEdit(it) },
-                    onRemove = { deleteExercise = it },
+                .testTag("workout-refresh")
+                .pullToRefresh(
+                    isRefreshing = state.loading && state.editor == null,
+                    state = pullState,
+                    enabled = canRefresh,
                     onRefresh = onRefresh,
-                    onDelete = { deleteWorkout = true },
-                )
-                if (state.busy) {
-                    PulseLoadingState(
-                        stringResource(R.string.pulse_fitness_saving_your_change),
+                ).semantics {
+                    customActions =
+                        if (canRefresh) {
+                            listOf(
+                                CustomAccessibilityAction(refreshLabel) {
+                                    onRefresh()
+                                    true
+                                },
+                            )
+                        } else {
+                            emptyList()
+                        }
+                },
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            Column(
+                Modifier
+                    .widthIn(
+                        max = if (state.editor != null) PulseTokens.readingWidth + PulseTokens.large * 4 else PulseTokens.contentWidth,
+                    ).fillMaxSize()
+                    .verticalScroll(scroll)
+                    .imePadding()
+                    .padding(size.pagePadding),
+                verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
+            ) {
+                state.error?.let { PulseErrorState(fitnessFailureMessage(it), onRefresh) }
+                if (state.needsReview) {
+                    MutationReview(state.reviewReady, state.busy, onRefresh, onReviewed, message = state.message)
+                    detail?.let { ServerExercises(it.exercises) }
+                }
+                if (state.editor != null) {
+                    ExerciseEditor(
+                        state.editor,
+                        state.busy || state.loading,
+                        state.needsReview,
+                        onName,
+                        onSet,
+                        onAddSet,
+                        onRemoveSet,
+                        onChoose,
+                        onClearMatch,
+                        onSearch,
+                        onAlias,
+                        onSave,
+                        onCancel,
+                        onSearchQuery,
                     )
+                } else if (detail != null) {
+                    WorkoutDetailContent(
+                        detail = detail,
+                        enabled = !state.busy && !state.loading && !state.needsReview && state.error == null,
+                        onAdd = { onEdit(null) },
+                        onEdit = { onEdit(it) },
+                        onRemove = { deleteExercise = it },
+                        onDelete = { deleteWorkout = true },
+                    )
+                    if (state.busy) {
+                        PulseLoadingState(
+                            stringResource(R.string.pulse_fitness_saving_your_change),
+                        )
+                    }
                 }
             }
+            if (state.editor == null) {
+                PullToRefreshDefaults.Indicator(
+                    state = pullState,
+                    isRefreshing = state.loading,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                )
+            }
         }
-        if (state.loading) {
+        if (state.loading && state.editor != null) {
             Box(
                 Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxWidth().padding(LocalPulseContentPadding.current),
             ) {

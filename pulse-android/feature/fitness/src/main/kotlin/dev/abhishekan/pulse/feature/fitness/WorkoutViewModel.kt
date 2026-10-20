@@ -106,7 +106,22 @@ class WorkoutViewModel(
                 ?.draft()
                 ?: ExerciseDraft()
         saved["editing"] = true
-        state.update { it.copy(editor = ExerciseEditorState(original), message = null) }
+        state.update {
+            it.copy(
+                editor =
+                    ExerciseEditorState(
+                        original,
+                        selectedCatalog =
+                            state.value.detail
+                                ?.exercises
+                                ?.firstOrNull {
+                                    it.id ==
+                                        exerciseId
+                                }?.catalog,
+                    ),
+                message = null,
+            )
+        }
         persistDraft(original)
     }
 
@@ -142,6 +157,12 @@ class WorkoutViewModel(
                         searching =
                             current.editor?.searching ?: false,
                         searchError = current.editor?.searchError,
+                        selectedCatalog =
+                            current.editor?.selectedCatalog
+                                ?: current.detail
+                                    ?.exercises
+                                    ?.firstOrNull { it.id == exerciseId }
+                                    ?.catalog,
                     ),
             )
         }
@@ -226,7 +247,7 @@ class WorkoutViewModel(
         updateDraft {
             it.copy(name = candidate.name, catalogId = candidate.id, rememberAlias = false)
         }
-        state.update { it.copy(editor = it.editor?.copy(searching = false)) }
+        state.update { it.copy(editor = it.editor?.copy(searching = false, selectedCatalog = candidate)) }
     }
 
     fun clearMatch() {
@@ -235,11 +256,17 @@ class WorkoutViewModel(
     }
 
     fun findMatches() {
-        searchJob?.cancel()
-        val query =
+        searchCatalogue(
             state.value.editor
                 ?.draft
-                ?.name ?: return
+                ?.name ?: return,
+        )
+    }
+
+    // Browsing a replacement must not mutate the current name, match, alias, or sets.
+    fun searchCatalogue(query: String) {
+        if (state.value.editor == null || state.value.busy) return
+        searchJob?.cancel()
         if (query.isBlank()) {
             state.update {
                 it.copy(

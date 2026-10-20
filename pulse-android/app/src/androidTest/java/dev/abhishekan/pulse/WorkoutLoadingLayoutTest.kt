@@ -12,6 +12,8 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
 import dev.abhishekan.pulse.core.domain.model.WorkoutInfo
@@ -28,12 +30,16 @@ class WorkoutLoadingLayoutTest {
 
     @Test fun initialLoaderIsCenteredAndRefreshKeepsDetailsInPlace() {
         var state by mutableStateOf(WorkoutUiState())
+        var refreshes = 0
         compose.setContent {
             PulseTheme(false) {
                 Box(Modifier.fillMaxSize().testTag("workout-viewport")) {
                     WorkoutScreen(
                         state = state,
-                        onRefresh = {},
+                        onRefresh = {
+                            refreshes++
+                            state = state.copy(loading = true)
+                        },
                         onEdit = {},
                         onDelete = {},
                         onDeleteExercise = {},
@@ -72,11 +78,22 @@ class WorkoutLoadingLayoutTest {
         val heading = compose.onNodeWithText("Timing and energy data aren’t available for this visit.")
         heading.assertIsDisplayed()
         val beforeRefresh = heading.getUnclippedBoundsInRoot()
-        compose.runOnIdle { state = state.copy(loading = true) }
+        compose.onNodeWithText("Refresh workout").assertDoesNotExist()
+        compose.onNodeWithTag("workout-refresh").performTouchInput { swipeDown() }
+        compose.runOnIdle { assertEquals(1, refreshes) }
         loader.assertDoesNotExist()
         heading.assertIsDisplayed()
         assertEquals(beforeRefresh, heading.getUnclippedBoundsInRoot())
-        compose.runOnIdle { state = state.copy(loading = false, error = Failure.Connection) }
+        compose.onNodeWithTag("workout-refresh").performTouchInput { swipeDown() }
+        compose.runOnIdle {
+            assertEquals(1, refreshes)
+            state = state.copy(loading = false, busy = true)
+        }
+        compose.onNodeWithTag("workout-refresh").performTouchInput { swipeDown() }
+        compose.runOnIdle {
+            assertEquals(1, refreshes)
+            state = state.copy(loading = false, busy = false, error = Failure.Connection)
+        }
         loader.assertDoesNotExist()
         heading.assertExists()
     }

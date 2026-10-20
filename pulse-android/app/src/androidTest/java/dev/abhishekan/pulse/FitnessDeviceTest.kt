@@ -15,6 +15,7 @@ import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -465,13 +466,27 @@ class FitnessDeviceTest {
 
     private fun recordAndOpen() {
         tap("Add workout")
+        if (compose.onAllNodesWithContentDescription("Dismiss").fetchSemanticsNodes().isNotEmpty()) {
+            compose.onNodeWithContentDescription("Dismiss").performClick()
+        }
         tap("Workout")
         awaitText("Add exercise")
     }
 
+    private fun chooseCustomName(name: String) {
+        tap("Search for an exercise…")
+        compose
+            .onNode(
+                hasText("Search for an exercise…") and
+                    androidx.compose.ui.test
+                        .hasSetTextAction(),
+            ).performTextInput(name)
+        compose.onNodeWithText("Use $name as a custom exercise").performClick()
+    }
+
     private fun enterOwnExercise(name: String = "Custom mobility") {
         tap("Add exercise")
-        compose.onNodeWithText("Exercise name").performScrollTo().performTextInput(name)
+        chooseCustomName(name)
         compose.onNodeWithText("Reps, set 1").performScrollTo().performTextInput("12")
         compose.onNodeWithText("Weight (kg), set 1").performScrollTo().performTextInput("20.5")
     }
@@ -557,10 +572,18 @@ class FitnessDeviceTest {
         tap("Workout")
         awaitText("Add exercise")
         enterOwnExercise("Squat")
-        tap("Fixture barbell squat · barbell")
+        tap("Change")
+        compose
+            .onNode(
+                hasText("Search for an exercise…") and
+                    androidx.compose.ui.test
+                        .hasSetTextAction(),
+            ).performTextReplacement("Squat")
+        tap("Fixture barbell squat")
         tap("Save exercise")
         awaitText("Add exercise")
-        tap("Edit Fixture barbell squat")
+        tap("Edit exercise")
+        tap("Edit name")
         compose
             .onNodeWithText(
                 "Exercise name",
@@ -610,20 +633,14 @@ class FitnessDeviceTest {
         launchFitness()
         recordAndOpen()
         tap("Add exercise")
-        tap("Save exercise")
-        awaitText("Use an exercise name with 1–100 characters.")
-        compose
-            .onNodeWithText(
-                "Exercise name",
-            ).performScrollTo()
-            .performTextInput("Custom mobility")
-        compose.onNodeWithText("Exercise name").performImeAction()
+        compose.onNodeWithText("Save exercise").performScrollTo().assertIsNotEnabled()
+        chooseCustomName("Custom mobility")
         compose.onNodeWithText("Reps, set 1").performScrollTo().performTextInput("12")
         compose.onNodeWithText("Reps, set 1").performImeAction()
         compose.onNodeWithText("Weight (kg), set 1").assertIsFocused().performTextInput("0")
         compose.onNodeWithText("Weight (kg), set 1").performImeAction()
         scenario!!.recreate()
-        awaitText("Add an exercise")
+        awaitText("Add exercise")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
         screenshot("editor")
         tap("Home")
@@ -634,13 +651,13 @@ class FitnessDeviceTest {
         screenshot("logout-dialog", dialog = true)
         confirm("Cancel")
         tap("Fitness")
-        awaitText("Add an exercise")
+        awaitText("Add exercise")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("Back to Fitness").performClick()
         awaitText("Discard exercise edits?")
         confirm("Cancel")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
-        tap("Cancel")
+        compose.onNodeWithContentDescription("Back").performScrollTo().performClick()
         awaitText("Discard exercise edits?")
         confirm("Discard edits")
         awaitText("Add exercise")
@@ -659,7 +676,7 @@ class FitnessDeviceTest {
         compose.onNodeWithText("Latest recorded exercises").performScrollTo().assertIsDisplayed()
         screenshot("recovery")
         tap("I’ve reviewed the latest records")
-        tap("Cancel")
+        compose.onNodeWithContentDescription("Back").performScrollTo().performClick()
         confirm("Discard edits")
         awaitText("Add exercise")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
@@ -729,6 +746,26 @@ class FitnessDeviceTest {
         assertEquals(1, backend.records)
     }
 
+    @Test fun redesignedEditorRetainsRawSetsAcrossRotationAndSavesOnce() {
+        launchFitness()
+        recordAndOpen()
+        enterOwnExercise("Custom mobility")
+        compose.onNodeWithText("Weight (kg), set 1").performImeAction()
+        tap("Add another set")
+        compose.onNodeWithText("Reps, set 2").performScrollTo().performTextInput("8")
+        compose.onNodeWithText("Weight (kg), set 2").performScrollTo().performTextInput("12.123456789")
+        compose.onNodeWithText("Weight (kg), set 2").performImeAction()
+        scenario!!.recreate()
+        awaitText("Add exercise")
+        compose.onNodeWithText("12.123456789").performScrollTo().assertIsDisplayed()
+        tap("Change")
+        compose.onNodeWithText("Close").performClick()
+        compose.onNodeWithText("12.123456789").performScrollTo().assertIsDisplayed()
+        tap("Save exercise")
+        awaitText("Edit exercise")
+        assertEquals(1, backend.saves)
+    }
+
     @Test fun liveWindowResizePreservesDraftAndAllowsOneSave() {
         fun shell(command: String): String =
             ParcelFileDescriptor
@@ -755,7 +792,7 @@ class FitnessDeviceTest {
             enterOwnExercise()
             shell("wm size 2048x1800")
             shell("wm density 320")
-            awaitText("Add an exercise")
+            awaitText("Add exercise")
             compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
             compose.onNodeWithText("20.5").performScrollTo().assertIsDisplayed()
             assertEquals(0, backend.saves)

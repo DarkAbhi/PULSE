@@ -339,4 +339,84 @@ class WorkoutViewModelTest {
             )
             assertEquals(0, repo.saves)
         }
+
+    @Test fun browsingReplacementPreservesNameAliasMatchAndRawSets() =
+        runTest {
+            val candidate = CatalogExercise("curl", "Bicep curl", "dumbbell", listOf("biceps"), listOf("Curl with control."))
+            repo.searchAction = { Outcome.Success(listOf(candidate.copy(id = "other", name = "Other exercise"))) }
+            val vm = vm()
+            runCurrent()
+            vm.edit()
+            vm.choose(candidate)
+            vm.nameChanged("My curls")
+            vm.rememberAlias(true)
+            vm.setChanged(0, "12", "12.1234567890123456789")
+            vm.addSet()
+            vm.setChanged(1, "", "invalid.")
+            val before =
+                vm.uiState.value.editor!!
+                    .draft
+            vm.searchCatalogue("Other exercise")
+            advanceTimeBy(301)
+            runCurrent()
+            assertEquals(
+                before,
+                vm.uiState.value.editor!!
+                    .draft,
+            )
+            assertEquals(
+                candidate,
+                vm.uiState.value.editor!!
+                    .selectedCatalog,
+            )
+            vm.choose(candidate.copy(id = "other", name = "Other exercise"))
+            assertEquals(
+                before.sets,
+                vm.uiState.value.editor!!
+                    .draft.sets,
+            )
+            assertEquals(
+                "other",
+                vm.uiState.value.editor!!
+                    .draft.catalogId,
+            )
+            assertFalse(
+                vm.uiState.value.editor!!
+                    .draft.rememberAlias,
+            )
+        }
+
+    @Test fun replacementSearchRetainsSelectedMetadataAcrossRefreshAndErrors() =
+        runTest {
+            val candidate = CatalogExercise("curl", "Bicep curl", null, emptyList(), listOf("Curl with control."))
+            repo.searchAction = { Outcome.Error(Failure.Connection) }
+            val vm = vm()
+            runCurrent()
+            vm.edit()
+            vm.choose(candidate)
+            vm.searchCatalogue("unavailable")
+            advanceTimeBy(301)
+            runCurrent()
+            assertNotNull(
+                vm.uiState.value.editor!!
+                    .searchError,
+            )
+            assertEquals(
+                candidate,
+                vm.uiState.value.editor!!
+                    .selectedCatalog,
+            )
+            vm.refresh()
+            runCurrent()
+            assertEquals(
+                candidate,
+                vm.uiState.value.editor!!
+                    .selectedCatalog,
+            )
+            assertEquals(
+                candidate.id,
+                vm.uiState.value.editor!!
+                    .draft.catalogId,
+            )
+        }
 }

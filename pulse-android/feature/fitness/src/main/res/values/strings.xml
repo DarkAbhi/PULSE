@@ -167,4 +167,24 @@
     <plurals name="workout_reps"><item quantity="one">%d rep</item><item quantity="other">%d reps</item></plurals>
     <plurals name="workout_exercises_label"><item quantity="one">exercise</item><item quantity="other">exercises</item></plurals>
     <plurals name="workout_sets_label"><item quantity="one">set</item><item quantity="other">sets</item></plurals>
+    <string name="editor_back">Back</string>
+    <string name="editor_add_title">Add exercise</string>
+    <string name="editor_selected">Selected exercise</string>
+    <string name="editor_change">Change</string>
+    <string name="editor_custom">Custom exercise</string>
+    <string name="editor_matched_to">Catalogue match: %1$s</string>
+    <string name="editor_use_custom">Use without catalogue match</string>
+    <string name="editor_search_placeholder">Search for an exercise…</string>
+    <string name="editor_search_title">Choose an exercise</string>
+    <string name="editor_search_hint">Search the catalogue or enter your own exercise name.</string>
+    <string name="editor_clear_search">Clear search</string>
+    <string name="editor_custom_action">Use %1$s as a custom exercise</string>
+    <string name="editor_empty_title">Find an exercise to get started</string>
+    <string name="editor_empty_body">Choose an exercise to start logging your sets.</string>
+    <string name="editor_set_count">%1$d / 20 sets</string>
+    <string name="editor_add_set">Add another set</string>
+    <string name="editor_remember_body">Reuse your name for this catalogue exercise.</string>
+    <string name="editor_instructions">Instructions</string>
+    <string name="editor_target_muscles">Target muscles</string>
+    <string name="editor_edit_name">Edit name</string>
 </resources>

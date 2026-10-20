@@ -24,6 +24,7 @@ data class ExerciseEditorState(
     val candidates: List<CatalogExercise> = emptyList(),
     val searching: Boolean = false,
     val searchError: UiText? = null,
+    val selectedCatalog: CatalogExercise? = null,
 )
 
 data class WorkoutUiState(

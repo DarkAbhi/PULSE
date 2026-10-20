@@ -69,7 +69,7 @@ class WorkoutLoadingLayoutTest {
                         ),
                 )
         }
-        val heading = compose.onNodeWithText("YOUR WORKOUT")
+        val heading = compose.onNodeWithText("Timing and energy data aren’t available for this visit.")
         heading.assertIsDisplayed()
         val beforeRefresh = heading.getUnclippedBoundsInRoot()
         compose.runOnIdle { state = state.copy(loading = true) }

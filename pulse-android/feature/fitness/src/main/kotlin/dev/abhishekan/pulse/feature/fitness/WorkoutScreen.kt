@@ -3,7 +3,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -22,33 +21,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
-import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
-import dev.abhishekan.pulse.core.domain.model.WorkoutInfo
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.asString
-import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pagePadding
 import org.koin.androidx.compose.koinViewModel
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun WorkoutRoute(
@@ -180,82 +170,16 @@ fun WorkoutScreen(
                     onCancel,
                 )
             } else if (detail != null) {
-                WorkoutInformation(detail.info)
-                PulseButton(
-                    stringResource(R.string.pulse_fitness_add_exercise),
-                    {
-                        onEdit(null)
-                    },
-                    Modifier.fillMaxWidth(),
-                    enabled =
-                        !state.busy && !state.loading && !state.needsReview && state.error == null,
+                WorkoutDetailContent(
+                    detail = detail,
+                    enabled = !state.busy && !state.loading && !state.needsReview && state.error == null,
+                    refreshEnabled = !state.busy && !state.loading,
+                    onAdd = { onEdit(null) },
+                    onEdit = { onEdit(it) },
+                    onRemove = { deleteExercise = it },
+                    onRefresh = onRefresh,
+                    onDelete = { deleteWorkout = true },
                 )
-                if (detail.exercises.isEmpty()) {
-                    PulseEmptyState(
-                        stringResource(R.string.pulse_fitness_start_with_your_first_exercise),
-                        stringResource(
-                            R.string.pulse_fitness_choose_a_catalogue_exercise_or_record_your_own_name,
-                        ),
-                    )
-                }
-                detail.exercises.forEach { exercise ->
-                    PulseCard(Modifier.fillMaxWidth()) {
-                        PulseText(
-                            exercise.name,
-                            Modifier.semantics {
-                                heading()
-                            },
-                            PulseTextStyle.Title,
-                        )
-                        exercise.catalog?.let { CatalogInformation(it) }
-                        exercise.sets.forEach { set ->
-                            PulseText(
-                                pluralStringResource(
-                                    R.plurals.pulse_fitness_exercise_set,
-                                    set.reps,
-                                    set.number,
-                                    set.reps,
-                                    set.weight?.let {
-                                        stringResource(
-                                            R.string.pulse_fitness_weight_kg,
-                                            it.toPlainString(),
-                                        )
-                                    }
-                                        ?: stringResource(R.string.pulse_fitness_bodyweight),
-                                ),
-                            )
-                        }
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                            PulseTextButton(
-                                stringResource(R.string.pulse_fitness_edit_1_s, exercise.name),
-                                {
-                                    onEdit(exercise.id)
-                                },
-                                enabled =
-                                    !state.busy && !state.loading && !state.needsReview,
-                            )
-                            PulseTextButton(
-                                stringResource(R.string.pulse_fitness_delete_1_s, exercise.name),
-                                {
-                                    deleteExercise =
-                                        exercise.id
-                                },
-                                enabled =
-                                    !state.busy && !state.loading && !state.needsReview,
-                            )
-                        }
-                    }
-                }
-                PulseTextButton(
-                    stringResource(R.string.pulse_fitness_refresh_workout),
-                    onRefresh,
-                    enabled =
-                        !state.busy && !state.loading,
-                )
-                PulseTextButton(stringResource(R.string.pulse_fitness_delete_workout), {
-                    deleteWorkout =
-                        true
-                }, enabled = !state.busy && !state.loading && !state.needsReview)
                 if (state.busy) {
                     PulseLoadingState(
                         stringResource(R.string.pulse_fitness_saving_your_change),
@@ -308,101 +232,13 @@ fun WorkoutScreen(
 }
 
 @Composable
-private fun WorkoutInformation(info: WorkoutInfo) {
-    PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-        PulseText(stringResource(R.string.pulse_fitness_your_workout), style = PulseTextStyle.Label)
-        PulseText(
-            info.createdAt
-                .atZone(
-                    FitnessDates.zone,
-                ).format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy")),
-            style = PulseTextStyle.Title,
-        )
-        PulseText(
-            if (info.imported) {
-                stringResource(
-                    R.string.pulse_fitness_linked_apple_watch_workout,
-                )
-            } else {
-                stringResource(R.string.pulse_fitness_recorded_gym_visit)
-            },
-        )
-        val formatter = DateTimeFormatter.ofPattern("d MMM · HH:mm").withZone(FitnessDates.zone)
-        info.start?.let {
-            PulseText(stringResource(R.string.pulse_fitness_started_1_s, formatter.format(it)))
-        }
-        info.end?.let {
-            PulseText(stringResource(R.string.pulse_fitness_finished_1_s, formatter.format(it)))
-        }
-        info.durationSeconds?.let {
-            PulseText(
-                stringResource(
-                    R.string.pulse_fitness_duration_1_s,
-                    formatWorkoutDuration(it).asString(),
-                ),
-            )
-        }
-        info.calories?.let {
-            PulseText(stringResource(R.string.pulse_fitness_energy_1_s_kcal, it.toPlainString()))
-        }
-        PulseText(
-            if (info.start == null &&
-                info.durationSeconds == null &&
-                info.calories == null
-            ) {
-                stringResource(
-                    R.string.pulse_fitness_timing_and_energy_data_aren_t_available_for_this,
-                )
-            } else {
-                stringResource(R.string.pulse_fitness_times_shown_in_india_time_ist)
-            },
-        )
-        if (info.imported) {
-            PulseText(
-                stringResource(
-                    R.string.pulse_fitness_imported_timing_and_energy_are_read_only_you_can,
-                ),
-            )
-        }
-    }
-}
-
-@Composable
 internal fun CatalogInformation(exercise: CatalogExercise) {
     PulseText(exercise.name, style = PulseTextStyle.Label)
     exercise.equipment?.let { PulseText(stringResource(R.string.pulse_fitness_equipment_1_s, it)) }
     if (exercise.muscles.isNotEmpty()) {
-        PulseText(
-            stringResource(R.string.pulse_fitness_muscles_1_s, exercise.muscles.joinToString()),
-        )
+        PulseText(stringResource(R.string.pulse_fitness_muscles_1_s, exercise.muscles.joinToString()))
     }
-    var instructions by rememberSaveable(exercise.id) { mutableStateOf(false) }
-    if (exercise.instructions.isNotEmpty()) {
-        PulseTextButton(
-            if (instructions) {
-                stringResource(
-                    R.string.pulse_fitness_hide_instructions,
-                )
-            } else {
-                stringResource(R.string.pulse_fitness_exercise_instructions)
-            },
-            {
-                instructions =
-                    !instructions
-            },
-        )
-        if (instructions) {
-            exercise.instructions.forEachIndexed { index, text ->
-                PulseText(
-                    stringResource(
-                        R.string.pulse_fitness_numbered_instruction,
-                        index + 1,
-                        text,
-                    ),
-                )
-            }
-        }
-    }
+    ExerciseInstructions(exercise)
 }
 
 @Composable

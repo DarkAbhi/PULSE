@@ -147,4 +147,24 @@
         <item quantity="one">%d workout</item>
         <item quantity="other">%d workouts</item>
     </plurals>
+    <string name="workout_exercises">EXERCISES</string>
+    <string name="workout_empty">No exercises added yet</string>
+    <string name="workout_manage">MANAGE WORKOUT</string>
+    <string name="workout_manage_description">Keep your workout data up to date or remove it if needed.</string>
+    <string name="workout_started">Started</string>
+    <string name="workout_finished">Finished</string>
+    <string name="workout_duration">Duration</string>
+    <string name="workout_energy">Energy</string>
+    <string name="workout_kcal">%1$s kcal</string>
+    <string name="workout_imported_read_only">Imported timing and energy are read-only.</string>
+    <string name="workout_equipment">Equipment</string>
+    <string name="workout_muscles">Muscles</string>
+    <string name="workout_sets">SETS</string>
+    <string name="workout_remove">Remove</string>
+    <string name="workout_view_instructions">View instructions</string>
+    <string name="workout_close">Close</string>
+    <string name="workout_summary">WORKOUT SUMMARY</string>
+    <plurals name="workout_reps"><item quantity="one">%d rep</item><item quantity="other">%d reps</item></plurals>
+    <plurals name="workout_exercises_label"><item quantity="one">exercise</item><item quantity="other">exercises</item></plurals>
+    <plurals name="workout_sets_label"><item quantity="one">set</item><item quantity="other">sets</item></plurals>
 </resources>

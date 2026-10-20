@@ -156,7 +156,6 @@
         <item quantity="other">"%1$s · %2$s bytes"</item>
     </plurals>
     <string name="pulse_garage_history_counts">"%1$s · %2$s · %3$s"</string>
-    <string name="pulse_garage_brand">PULSE</string>
     <string name="pulse_garage_fuel_subtitle">A quick pit stop for your fuel history.</string>
     <string name="pulse_garage_trip_details">Trip details</string>
     <string name="pulse_garage_tank_details">Tank details</string>

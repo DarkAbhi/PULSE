@@ -44,7 +44,6 @@ internal fun GarageCollectionHeader(
         val wide = maxWidth >= 720.dp && LocalDensity.current.fontScale <= 1.3f
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(24.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                PulseText(stringResource(R.string.pulse_garage_brand), style = PulseTextStyle.Overline, color = colors.action)
                 PulseText(
                     stringResource(R.string.pulse_garage_your_garage),
                     Modifier.semantics { heading() },

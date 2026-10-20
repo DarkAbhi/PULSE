@@ -4,6 +4,8 @@ The existing Kotlin/Compose exercise editor now groups exercise identity, catalo
 
 ## Interaction
 
+- The existing application top bar is the only editor heading/back control. It changes from Workout to Add exercise or Edit exercise. Back closes the editor through the existing discard guard and restores the Workout title/detail, rather than leaving the workout route.
+
 - Start from the search surface and a compact empty state; set entry appears after choosing a catalogue exercise or accepting a custom name.
 - Search opens a bounded, centered tablet dialog and a near-full-screen compact-window dialog. Results select immediately. Search, clear, retry, custom names, selection status, and equipment/muscle metadata use the existing catalogue data.
 - Replacement queries use the same debounced ViewModel search job without editing the current draft. Dismissal preserves the name, match, alias preference, and every raw set value.
@@ -18,6 +20,8 @@ The existing Kotlin/Compose exercise editor now groups exercise identity, catalo
 UI-only draft metadata retains the selected catalogue record while replacement search results change. The ViewModel adds a query entry point to the existing search implementation; it does not add another search pipeline. Domain models, APIs, repositories, and persistence schemas are untouched.
 
 ## Verification
+
+Shared app-bar follow-up: debug app/test builds, 26 fitness unit tests, and app/feature Kotlin formatting checks passed. Seven targeted device checks passed on each phone/tablet emulator, including the single top title/back button, clean back navigation, dirty-draft cancellation/discard, and rotation followed by saving. Full-app screenshots: [phone](phone/single-editor-header.png) and [tablet](tablet/single-editor-header.png).
 
 Fitness unit tests: 26 passed. Domain unit tests: 14 passed. Feature lint: no issues. Kotlin formatting checks and debug app/test packaging passed.
 

@@ -14,6 +14,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -52,8 +53,17 @@ fun WorkoutRoute(
     onDeleted: () -> Unit,
     onDraftChanged: (Boolean) -> Unit,
     viewModel: WorkoutViewModel = koinViewModel(),
+    onEditorTitleChanged: (String?) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val editorTitle =
+        state.editor?.let {
+            stringResource(if (it.draft.exerciseId == null) R.string.editor_add_title else R.string.pulse_fitness_edit_exercise)
+        }
+    LaunchedEffect(editorTitle) { onEditorTitleChanged(editorTitle) }
+    DisposableEffect(Unit) {
+        onDispose { onEditorTitleChanged(null) }
+    }
     PulseSnackbarEffect(state.message.takeUnless { state.needsReview }, viewModel::consumeMessage)
     var discard by rememberSaveable { mutableStateOf(false) }
     val close = {

@@ -214,6 +214,7 @@ private fun SignedInApp(
     var editProfileName by rememberSaveable { mutableStateOf(false) }
     var hasPasswordEdits by rememberSaveable { mutableStateOf(false) }
     var pendingDestination by remember { mutableStateOf<String?>(null) }
+    var workoutEditorTitle by remember { mutableStateOf<String?>(null) }
     var hasFitnessDraft by rememberSaveable { mutableStateOf(false) }
     var hasMealDraft by rememberSaveable { mutableStateOf(false) }
     var hasGarageDraft by rememberSaveable { mutableStateOf(false) }
@@ -321,7 +322,7 @@ private fun SignedInApp(
                                     "notifications" -> stringResource(R.string.pulse_app_notifications)
                                     "space-list" -> stringResource(R.string.pulse_app_spaces)
                                     "fitness" -> stringResource(R.string.pulse_app_fitness)
-                                    "workout/{id}" -> stringResource(R.string.pulse_app_workout)
+                                    "workout/{id}" -> workoutEditorTitle ?: stringResource(R.string.pulse_app_workout)
                                     "horizon" -> stringResource(R.string.pulse_app_financial_horizon)
                                     "garage", "vehicle/{id}" -> stringResource(R.string.pulse_app_garage)
                                     "mealplan" -> stringResource(R.string.pulse_app_meal_plan)
@@ -336,7 +337,9 @@ private fun SignedInApp(
                                     route == "workout/{id}"
                                 ) {
                                     PulseIconButton(
-                                        if (nav.previousBackStackEntry?.destination?.route == "notifications") {
+                                        if (route == "workout/{id}" && workoutEditorTitle != null) {
+                                            stringResource(R.string.pulse_app_back_to_workout)
+                                        } else if (nav.previousBackStackEntry?.destination?.route == "notifications") {
                                             stringResource(R.string.pulse_app_back_to_notifications)
                                         } else {
                                             when (route) {
@@ -450,10 +453,11 @@ private fun SignedInApp(
                                         },
                                     ),
                             ) {
-                                WorkoutRoute(onDeleted = { nav.popBackStack() }, onDraftChanged = {
-                                    hasFitnessDraft =
-                                        it
-                                })
+                                WorkoutRoute(
+                                    onDeleted = { nav.popBackStack() },
+                                    onDraftChanged = { hasFitnessDraft = it },
+                                    onEditorTitleChanged = { workoutEditorTitle = it },
+                                )
                             }
                         }
                         composable("you") {

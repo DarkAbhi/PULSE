@@ -172,8 +172,7 @@ class ExerciseEditorRedesignTest {
         compose.runOnIdle { check(editor.value.draft.sets.size == 1) }
         compose.onNodeWithText("Remember this name for future workouts").performScrollTo().performClick()
         compose.runOnIdle { check(editor.value.draft.rememberAlias) }
-        compose.onNodeWithContentDescription("Back").performScrollTo().performClick()
-        compose.runOnIdle { check(cancelled) }
+        compose.onNodeWithContentDescription("Back").assertDoesNotExist()
     }
 
     @Test fun maximumSetsAndInvalidRepetitionsKeepActionsDisabled() {

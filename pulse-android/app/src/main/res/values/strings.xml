@@ -40,4 +40,5 @@
     <string name="pulse_app_horizon">Horizon</string>
     <string name="pulse_app_meals">Meals</string>
     <string name="pulse_app_back_to_garage">Back to Garage</string>
+    <string name="pulse_app_back_to_workout">Back to workout</string>
 </resources>

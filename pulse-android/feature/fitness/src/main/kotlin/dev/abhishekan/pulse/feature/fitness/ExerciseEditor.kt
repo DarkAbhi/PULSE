@@ -102,16 +102,6 @@ internal fun ExerciseEditor(
             ).issue == null
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            PulseIconButton(stringResource(R.string.editor_back), onCancel, enabled = !busy) {
-                PulseText("←", style = PulseTextStyle.Title)
-            }
-            PulseText(
-                stringResource(if (draft.exerciseId == null) R.string.editor_add_title else R.string.pulse_fitness_edit_exercise),
-                Modifier.semantics { heading() },
-                PulseTextStyle.Title,
-            )
-        }
         Crossfade(
             targetState = identityChosen || draft.name.isNotBlank() || draft.catalogId != null,
             animationSpec = tween(PulseTokens.MOTION_MILLIS),

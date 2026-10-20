@@ -657,7 +657,7 @@ class FitnessDeviceTest {
         awaitText("Discard exercise edits?")
         confirm("Cancel")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithContentDescription("Back").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Back to workout").performClick()
         awaitText("Discard exercise edits?")
         confirm("Discard edits")
         awaitText("Add exercise")
@@ -676,7 +676,7 @@ class FitnessDeviceTest {
         compose.onNodeWithText("Latest recorded exercises").performScrollTo().assertIsDisplayed()
         screenshot("recovery")
         tap("I’ve reviewed the latest records")
-        compose.onNodeWithContentDescription("Back").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Back to workout").performClick()
         confirm("Discard edits")
         awaitText("Add exercise")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
@@ -744,6 +744,29 @@ class FitnessDeviceTest {
                 .toLocalDate(),
         )
         assertEquals(1, backend.records)
+    }
+
+    @Test fun exerciseEditorUsesOneAppBarAndBackReturnsToWorkout() {
+        launchFitness()
+        recordAndOpen()
+        tap("Add exercise")
+        compose.onNodeWithText("Find an exercise to get started").assertIsDisplayed()
+        assertEquals(1, compose.onAllNodesWithText("Add exercise").fetchSemanticsNodes().size)
+        compose.onNodeWithText("Workout").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Back").assertDoesNotExist()
+        screenshot("single-editor-header")
+        compose.onNodeWithContentDescription("Back to workout").performClick()
+        awaitText("No exercises added yet")
+        compose.onNodeWithText("Workout").assertIsDisplayed()
+        enterOwnExercise()
+        compose.onNodeWithContentDescription("Back to workout").performClick()
+        awaitText("Discard exercise edits?")
+        confirm("Cancel")
+        compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithContentDescription("Back to workout").performClick()
+        confirm("Discard edits")
+        awaitText("No exercises added yet")
+        compose.onNodeWithText("Workout").assertIsDisplayed()
     }
 
     @Test fun redesignedEditorRetainsRawSetsAcrossRotationAndSavesOnce() {

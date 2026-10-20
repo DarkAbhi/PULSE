@@ -160,6 +160,7 @@ fun FitnessScreen(
                             FitnessCalendar(state, onDate, onMonth, onToday)
                             SelectedDay(state, onRecord, onWorkout)
                         }
+                        FitnessStats(state.overview)
                     }
                 }
             }

@@ -1,5 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="pulse_fitness_stats_title">Your fitness stats</string>
+    <string name="pulse_fitness_stats_period">%1$d so far · Your training at a glance</string>
+    <string name="pulse_fitness_stats_coverage">Data coverage: %1$s</string>
+    <string name="pulse_fitness_stats_unavailable">Stats are unavailable right now. Pull to refresh to try again.</string>
     <string name="pulse_fitness_these_values_weren_t_accepted_check_the_name_repetitions">"These values weren’t accepted. Check the name, repetitions, weight and catalogue selection."</string>
     <string name="pulse_fitness_use_an_exercise_name_with_1_100_characters">"Use an exercise name with 1–100 characters."</string>
     <string name="pulse_fitness_include_1_20_sets">"Include 1–20 sets."</string>

@@ -17,8 +17,14 @@ private val sample =
         FitnessOverview(
             day,
             listOf(
+                FitnessMetric("last_workout", "Last worked out", "Today", "at gym", null),
+                FitnessMetric("attendance", "Gym attendance", "8.28 %", "of days so far this year", null),
                 FitnessMetric("workouts", "Total workouts", "24", "this year", null),
                 FitnessMetric("streak", "Workout streak", "3 weeks", "with a gym visit", null),
+                FitnessMetric("trained", "Total trained", "8h 43m", "This year", "2 days missing timing"),
+                FitnessMetric("volume", "Volume lifted", "1,615 kg", "recorded sets this year", null),
+                FitnessMetric("sets", "Sets", "16", "recorded this year", null),
+                FitnessMetric("preference", "Preferred workout time", "Afternoon", "from recorded starts this year", null),
             ),
             listOf(WorkoutSummary(1, day, "7:30 AM")),
         ),

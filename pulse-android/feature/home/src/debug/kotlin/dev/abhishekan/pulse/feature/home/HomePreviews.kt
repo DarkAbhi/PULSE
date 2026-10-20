@@ -26,7 +26,9 @@ private fun HomeLightPreview() {
     PulseTheme(false) { HomeScreen("preview", preview, {}, {}, {}, {}, {}, {}, onProfile = {}) }
 }
 
-@Preview(name = "Dark partial failure", widthDp = 1024, heightDp = 900)
+@Preview(name = "Dark phone", widthDp = 360, heightDp = 800)
+@Preview(name = "Dark tablet partial failure", widthDp = 1024, heightDp = 900)
+@Preview(name = "Dark large text", widthDp = 360, heightDp = 800, fontScale = 2f)
 @Composable
 private fun HomeDarkPreview() {
     PulseTheme(true) {

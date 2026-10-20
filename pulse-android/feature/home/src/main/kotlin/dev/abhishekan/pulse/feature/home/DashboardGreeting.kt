@@ -8,7 +8,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,9 +58,6 @@ import kotlin.math.PI
 import kotlin.math.cos
 import dev.abhishekan.pulse.core.ui.R as UiR
 
-private val greetingInk = Color(0xFF191633)
-private val greetingMuted = Color(0xFF605C78)
-
 @Composable
 internal fun DashboardGreeting(
     name: String,
@@ -69,6 +65,9 @@ internal fun DashboardGreeting(
     onNotifications: () -> Unit,
     onProfile: (() -> Unit)?,
 ) {
+    val darkTheme = PulseTheme.isDark
+    val greetingInk = if (darkTheme) Color.White else Color(0xFF191633)
+    val greetingMuted = if (darkTheme) Color.White.copy(alpha = 0.85f) else Color(0xFF605C78)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val now by produceState(Instant.now(), lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -82,10 +81,9 @@ internal fun DashboardGreeting(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(32.dp))
-            .background(Color.White)
             .testTag("dashboard-greeting"),
     ) {
-        GreetingAurora(Modifier.matchParentSize(), compact)
+        GreetingAurora(Modifier.matchParentSize(), compact, darkTheme)
         Column(
             Modifier
                 .fillMaxWidth()
@@ -134,7 +132,9 @@ internal fun DashboardGreeting(
 private fun GreetingAurora(
     modifier: Modifier,
     compact: Boolean,
+    darkTheme: Boolean,
 ) {
+    val rippleColor = if (darkTheme) Color.White.copy(alpha = 0.55f) else Color(0xFF4C6BFF).copy(alpha = 0.3f)
     val largeText = LocalDensity.current.fontScale > 1.3f
     val motionScale = rememberCoroutineScope().coroutineContext[MotionDurationScale]
     val transition = rememberInfiniteTransition(label = "Greeting pulse")
@@ -146,6 +146,19 @@ private fun GreetingAurora(
             label = "Orb breath and ripples",
         )
     Canvas(modifier) {
+        if (darkTheme) {
+            drawRect(
+                Brush.linearGradient(
+                    0f to Color(0xFF2B1B8F),
+                    0.55f to Color(0xFF5B2CE0),
+                    1f to Color(0xFFB22BD8),
+                    start = Offset(size.width * 0.25f, 0f),
+                    end = Offset(size.width * 0.75f, size.height),
+                ),
+            )
+        } else {
+            drawRect(Color.White)
+        }
         val reducedMotion = motionScale?.scaleFactor == 0f
         val t = if (reducedMotion) 0f else phase.value
         val center =
@@ -171,7 +184,7 @@ private fun GreetingAurora(
             repeat(3) { index ->
                 val ripple = (t + index / 3f) % 1f
                 drawCircle(
-                    Color(0xFF4C6BFF).copy(alpha = 0.3f * (1f - ripple)),
+                    rippleColor.copy(alpha = rippleColor.alpha * (1f - ripple)),
                     baseRadius * (0.95f + 0.55f * LinearOutSlowInEasing.transform(ripple)),
                     center,
                     style = Stroke(2.dp.toPx()),
@@ -200,10 +213,11 @@ private fun GreetingAurora(
         )
         drawCircle(Color.White.copy(alpha = 0.5f), radius, center, style = Stroke(1.dp.toPx()))
         // Reserve quiet space for text without washing out the right-hand orb.
+        val textBackdrop = if (darkTheme) Color(0xFF2B1B8F) else Color.White
         drawRect(
             Brush.horizontalGradient(
-                0f to Color.White,
-                (if (compact) 0.35f else 0.3f) to Color.White.copy(alpha = 0.96f),
+                0f to textBackdrop,
+                (if (compact) 0.35f else 0.3f) to textBackdrop.copy(alpha = 0.96f),
                 0.55f to Color.Transparent,
             ),
         )

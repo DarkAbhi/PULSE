@@ -1,20 +1,14 @@
 package dev.abhishekan.pulse.feature.notifications
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -29,7 +23,6 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
@@ -52,7 +45,7 @@ fun NotificationsRoute(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.uncertain }, viewModel::consumeMessage)
-    NotificationsScreen(state, viewModel::refresh, viewModel::dismiss, viewModel::clearAll, viewModel::acknowledge, onOpen)
+    NotificationsScreen(state, viewModel::refresh, viewModel::dismiss, viewModel::acknowledge, onOpen)
 }
 
 @Composable
@@ -60,15 +53,18 @@ internal fun NotificationsScreen(
     state: NotificationsUiState,
     refresh: () -> Unit,
     dismiss: (Long) -> Unit,
-    clear: () -> Unit,
     reviewed: () -> Unit,
     open: (NotificationTarget) -> Unit,
 ) {
-    var confirmation by rememberSaveable { mutableStateOf(false) }
     val enabled = !state.busy && !state.loading && !state.uncertain
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         val padding = size.pagePadding
-        Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.TopCenter) {
+        PullToRefreshBox(
+            isRefreshing = state.loading && state.loaded,
+            onRefresh = { if (!state.busy && !state.loading) refresh() },
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = androidx.compose.ui.Alignment.TopCenter,
+        ) {
             LazyColumn(
                 Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize(),
                 contentPadding =
@@ -80,19 +76,6 @@ internal fun NotificationsScreen(
                     ),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
             ) {
-                item {
-                    PulseText(stringResource(R.string.pulse_notifications_title), Modifier.semantics { heading() }, PulseTextStyle.Display)
-                    PulseText(stringResource(R.string.pulse_notifications_limit))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                        PulseTextButton(
-                            stringResource(R.string.pulse_notifications_refresh),
-                            refresh,
-                            enabled =
-                                !state.busy && !state.loading,
-                        )
-                        PulseTextButton(stringResource(R.string.pulse_notifications_clear), { confirmation = true }, enabled = enabled)
-                    }
-                }
                 if (state.uncertain) {
                     item {
                         PulseCard(Modifier.fillMaxWidth()) {
@@ -112,7 +95,11 @@ internal fun NotificationsScreen(
                         }
                     }
                 }
-                if (state.loading || state.busy) item { PulseLoadingState(stringResource(R.string.pulse_notifications_loading)) }
+                if ((state.loading && !state.loaded) ||
+                    state.busy
+                ) {
+                    item { PulseLoadingState(stringResource(R.string.pulse_notifications_loading)) }
+                }
                 state.failure?.let { failure -> item { PulseErrorState(failure.message, refresh) } }
                 if (state.loaded &&
                     state.items.isEmpty()
@@ -174,20 +161,5 @@ internal fun NotificationsScreen(
                 }
             }
         }
-    }
-    if (confirmation) {
-        PulseDialog(
-            stringResource(
-                R.string.pulse_notifications_clear_title,
-            ),
-            stringResource(R.string.pulse_notifications_clear_body),
-            stringResource(R.string.pulse_notifications_clear),
-            {
-                confirmation =
-                    false
-                clear()
-            },
-            { confirmation = false },
-        )
     }
 }

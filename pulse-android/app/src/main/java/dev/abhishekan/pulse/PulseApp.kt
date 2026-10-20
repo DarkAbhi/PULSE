@@ -80,6 +80,7 @@ import dev.abhishekan.pulse.feature.home.HomeRoute
 import dev.abhishekan.pulse.feature.horizon.HorizonRoute
 import dev.abhishekan.pulse.feature.mealplan.MealPlanRoute
 import dev.abhishekan.pulse.feature.notifications.NotificationsRoute
+import dev.abhishekan.pulse.feature.notifications.NotificationsTopBarActions
 import dev.abhishekan.pulse.feature.profile.ProfileRoute
 import dev.abhishekan.pulse.feature.profile.ProfileSetupPrompt
 import dev.abhishekan.pulse.feature.profile.ProfileViewModel
@@ -327,6 +328,13 @@ private fun SignedInApp(
                                     "garage", "vehicle/{id}" -> stringResource(R.string.pulse_app_garage)
                                     "mealplan" -> stringResource(R.string.pulse_app_meal_plan)
                                     else -> stringResource(R.string.pulse_app_pulse)
+                                }
+                            },
+                            actions = {
+                                if (route == "notifications") {
+                                    entry?.let { notificationEntry ->
+                                        NotificationsTopBarActions(koinViewModel(viewModelStoreOwner = notificationEntry))
+                                    }
                                 }
                             },
                             navigationIcon = {

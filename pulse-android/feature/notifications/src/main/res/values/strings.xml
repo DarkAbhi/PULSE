@@ -1,7 +1,5 @@
 <resources>
-    <string name="pulse_notifications_title">"Your latest updates"</string>
-    <string name="pulse_notifications_limit">"Showing up to 100 recent notifications. This is not a complete historical archive."</string>
-    <string name="pulse_notifications_refresh">"Refresh notifications"</string>
+    <string name="pulse_notifications_options">Notification options</string>
     <string name="pulse_notifications_clear">"Clear all"</string>
     <string name="pulse_notifications_clear_title">"Clear all notifications?"</string>
     <string name="pulse_notifications_clear_body">"This dismisses all notifications on the server, including any beyond the 100 displayed here. They cannot be restored."</string>

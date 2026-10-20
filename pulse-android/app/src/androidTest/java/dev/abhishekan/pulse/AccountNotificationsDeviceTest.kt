@@ -370,7 +370,7 @@ class AccountNotificationsDeviceTest {
 
     private fun openNotifications() {
         compose.onNodeWithContentDescription("Notifications").performClick()
-        awaitText("Your latest updates")
+        awaitText("Notifications")
     }
 
     private fun screenshot(name: String) {
@@ -543,7 +543,7 @@ class AccountNotificationsDeviceTest {
         awaitText("Your garage")
         compose.onNode(items[3]).assertIsSelected()
         compose.onNodeWithContentDescription("Back to notifications").performClick()
-        awaitText("Your latest updates")
+        awaitText("Notifications")
         compose.onNodeWithContentDescription("Back to Home").performClick()
         compose.onNode(items[0]).assertIsSelected()
         openNotifications()
@@ -670,6 +670,7 @@ class AccountNotificationsDeviceTest {
             notifications[i] = notification(i, "Notice $i", null)
         }
         openNotifications()
+        compose.onNodeWithContentDescription("Notification options").performClick()
         tap("Clear all")
         awaitText("This dismisses all notifications on the server, including any beyond the 100 displayed here. They cannot be restored.")
         confirm("Clear all")
@@ -679,6 +680,26 @@ class AccountNotificationsDeviceTest {
         awaitText("Good to see you,")
         compose.onNodeWithText("Recent notifications").assertDoesNotExist()
         compose.onNodeWithText("Your spaces").assertDoesNotExist()
+    }
+
+    @Test fun pullToRefreshLoadsNewNotificationsAndWorksWhenEmpty() {
+        launch()
+        openNotifications()
+        awaitText("Vehicle care update")
+        compose.onNodeWithText("Your latest updates").assertDoesNotExist()
+        compose.onNodeWithText("Refresh notifications").assertDoesNotExist()
+        compose.onNodeWithText("Clear all").assertDoesNotExist()
+        notifications[3] = notification(3, "Fresh update", null)
+        compose.onNode(hasScrollAction()).performTouchInput { swipeDown() }
+        awaitText("Fresh update")
+
+        compose.onNodeWithContentDescription("Notification options").performClick()
+        tap("Clear all")
+        confirm("Clear all")
+        awaitText("All caught up")
+        notifications[4] = notification(4, "After empty", null)
+        compose.onNode(hasScrollAction()).performTouchInput { swipeDown() }
+        awaitText("After empty")
     }
 
     @Test fun safeRoutingSelectsGarageAndKeepsBackAndDoesNotDismiss() {
@@ -692,7 +713,7 @@ class AccountNotificationsDeviceTest {
             ).assertExists()
         assertEquals(2, notifications.size)
         compose.onNodeWithContentDescription("Back to notifications").performClick()
-        awaitText("Your latest updates")
+        awaitText("Notifications")
         compose.onAllNodesWithText("Open space").assertCountEquals(1)
     }
 
@@ -762,7 +783,7 @@ class AccountNotificationsDeviceTest {
             tap("Home")
             openNotifications()
             screenshot("large-text-notifications")
-            tap("Refresh notifications")
+            compose.onNode(hasScrollAction()).performTouchInput { swipeDown() }
             awaitText("Vehicle care update")
         } catch (failure: Throwable) {
             screenshot("resize-failure")

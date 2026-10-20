@@ -27,6 +27,8 @@
     <string name="pulse_fitness_your_selected_day">"YOUR SELECTED DAY"</string>
     <string name="pulse_fitness_room_for_movement">"Room for movement."</string>
     <string name="pulse_fitness_record_workout">"Record workout"</string>
+    <string name="pulse_fitness_confirm_record_title">Record workout?</string>
+    <string name="pulse_fitness_confirm_record_message">Record a workout for %1$s? You can add exercises and sets afterward.</string>
     <string name="pulse_fitness_record_another_workout">"Record another workout"</string>
     <string name="pulse_fitness_a_fresh_page">"A fresh page"</string>
     <string name="pulse_fitness_record_a_visit_for_this_date_then_add_your">"Record a visit for this date, then add your exercises and sets."</string>

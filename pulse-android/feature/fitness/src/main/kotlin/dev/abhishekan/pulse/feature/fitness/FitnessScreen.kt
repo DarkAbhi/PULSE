@@ -19,6 +19,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -44,6 +47,7 @@ import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
@@ -177,6 +181,24 @@ private fun SelectedDay(
     val overview = checkNotNull(state.overview)
     val locale = LocalConfiguration.current.locales[0]
     val workouts = overview.workouts.filter { it.date == state.selected }
+    var confirmRecord by rememberSaveable(state.selected) { mutableStateOf(false) }
+    val canRecord = !state.loading && !state.busy && state.error == null && !state.needsReview
+    if (confirmRecord && canRecord) {
+        PulseDialog(
+            title = stringResource(R.string.pulse_fitness_confirm_record_title),
+            message =
+                stringResource(
+                    R.string.pulse_fitness_confirm_record_message,
+                    state.selected.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale)),
+                ),
+            confirmLabel = stringResource(R.string.pulse_fitness_record_workout),
+            onConfirm = {
+                confirmRecord = false
+                onRecord()
+            },
+            onDismiss = { confirmRecord = false },
+        )
+    }
     Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
         PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
             PulseText(
@@ -202,7 +224,7 @@ private fun SelectedDay(
             }
             PulseButton(
                 stringResource(R.string.pulse_fitness_add_workout),
-                onRecord,
+                { confirmRecord = true },
                 Modifier.fillMaxWidth(),
                 enabled = !state.loading && state.error == null && !state.needsReview,
                 loading = state.busy,

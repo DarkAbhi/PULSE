@@ -466,6 +466,7 @@ class FitnessDeviceTest {
 
     private fun recordAndOpen() {
         tap("Add workout")
+        confirm("Record workout")
         if (compose.onAllNodesWithContentDescription("Dismiss").fetchSemanticsNodes().isNotEmpty()) {
             compose.onNodeWithContentDescription("Dismiss").performClick()
         }
@@ -564,6 +565,7 @@ class FitnessDeviceTest {
         compose.onNodeWithText("Dates follow Asia/Kolkata.", substring = true).assertDoesNotExist()
         screenshot("overview")
         tap("Add workout")
+        confirm("Record workout")
         screenshot("day")
         tap("Home")
         awaitText("Asha")
@@ -710,6 +712,7 @@ class FitnessDeviceTest {
         launchFitness()
         backend.loseRecord = true
         tap("Add workout")
+        confirm("Record workout")
         awaitText("Refresh server records")
         compose.onNodeWithText("Add workout").performScrollTo().assertIsNotEnabled()
         assertEquals(1, backend.records)
@@ -734,6 +737,7 @@ class FitnessDeviceTest {
         compose.onNode(isDialog()).assertExists()
         confirm("Choose date")
         tap("Add workout")
+        confirm("Record workout")
         tap("Workout")
         awaitText("Add exercise")
         assertEquals(

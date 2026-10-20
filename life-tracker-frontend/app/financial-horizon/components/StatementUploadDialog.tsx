@@ -1,0 +1,527 @@
+"use client";
+
+import Button from "../../components/design-system/button";
+
+import { useState, useRef } from "react";
+import {
+  X,
+  Upload,
+  FileText,
+  Sparkles,
+  CheckCircle2,
+  AlertCircle,
+  Copy,
+  Check,
+  Code2,
+  List,
+  Plus,
+  Loader2,
+} from "lucide-react";
+import type {
+  StatementExtractionResponse,
+  StatementTransaction,
+} from "../../../services/credit-card-statement-extractor";
+import { extractStatementAction } from "../extract-statement";
+import { CategoryItem } from "../../dashboard/financial-horizon-card";
+import Dialog from "../../components/design-system/dialog";
+
+interface StatementUploadDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  categories: CategoryItem[];
+  onImportTransactions: (
+    transactions: {
+      name: string;
+      amount: number;
+      type?: "debit" | "credit";
+      transactionDate: string;
+      categoryId?: number | null;
+      notes?: string | null;
+    }[]
+  ) => Promise<void>;
+}
+
+/**
+ * Processes raw extracted transaction date:
+ * - If date AND time are present, returns full ISO timestamp.
+ * - If ONLY date is present, returns date formatted as YYYY-MM-DD.
+ * - If BOTH date and time are missing/invalid, defaults to current date and time.
+ */
+export function processTransactionDate(rawDateStr?: string | null): string {
+  if (!rawDateStr || !rawDateStr.trim()) {
+    return new Date().toISOString();
+  }
+
+  const str = rawDateStr.trim();
+  const parsed = new Date(str);
+
+  if (isNaN(parsed.getTime())) {
+    return new Date().toISOString();
+  }
+
+  // Check if string contains time components (e.g. "T", ":", "14:30", "02:30 PM")
+  const hasTime = /[T\:\s]\d{1,2}:\d{2}|am|pm/i.test(str);
+
+  if (hasTime) {
+    return parsed.toISOString();
+  }
+
+  // Date only: format as YYYY-MM-DD
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export default function StatementUploadDialog({
+  isOpen,
+  onClose,
+  categories,
+  onImportTransactions,
+}: StatementUploadDialogProps) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [extractionResult, setExtractionResult] = useState<StatementExtractionResponse | null>(null);
+  const [activeView, setActiveView] = useState<"json" | "preview">("json");
+  const [copied, setCopied] = useState(false);
+  const [selectedTxIndexes, setSelectedTxIndexes] = useState<number[]>([]);
+  const [selectedCategoryMap, setSelectedCategoryMap] = useState<Record<number, number | null>>({});
+  const [isImporting, setIsImporting] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  if (!isOpen) return null;
+
+  const handleFileSelect = (file: File) => {
+    if (!file.name.toLowerCase().endsWith(".pdf") && file.type !== "application/pdf") {
+      setError("Please select a PDF statement file.");
+      return;
+    }
+    setSelectedFile(file);
+    setError(null);
+    setExtractionResult(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileSelect(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleExtract = async () => {
+    if (!selectedFile) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const categoryNames = categories.map((c) => c.name);
+      const formData = new FormData();
+      formData.set("statement", selectedFile);
+      const res = await extractStatementAction(formData, categoryNames);
+
+      setExtractionResult(res);
+      // Pre-select all extracted transactions for preview import
+      if (res.data.transactions) {
+        setSelectedTxIndexes(res.data.transactions.map((_, idx) => idx));
+
+        // Find fallback 'Other' category ID if present in user categories
+        const defaultOtherCategory = categories.find(
+          (c) => c.name.toLowerCase() === "other"
+        );
+        const defaultOtherId = defaultOtherCategory ? defaultOtherCategory.id : null;
+
+        // Auto-match categories by suggestedCategory or default to 'Other'
+        const initialCategoryMap: Record<number, number | null> = {};
+        res.data.transactions.forEach((tx, idx) => {
+          if (tx.suggestedCategory) {
+            const match = categories.find(
+              (c) => c.name.toLowerCase() === tx.suggestedCategory?.toLowerCase()
+            );
+            initialCategoryMap[idx] = match ? match.id : defaultOtherId;
+          } else {
+            initialCategoryMap[idx] = defaultOtherId;
+          }
+        });
+        setSelectedCategoryMap(initialCategoryMap);
+      }
+    } catch (err: any) {
+      setError(err?.message || "Failed to extract statement data. Please try another PDF.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCopyJson = () => {
+    if (!extractionResult?.rawJson) return;
+    navigator.clipboard.writeText(extractionResult.rawJson);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const toggleSelectTx = (index: number) => {
+    setSelectedTxIndexes((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (!extractionResult?.data.transactions) return;
+    if (selectedTxIndexes.length === extractionResult.data.transactions.length) {
+      setSelectedTxIndexes([]);
+    } else {
+      setSelectedTxIndexes(extractionResult.data.transactions.map((_, idx) => idx));
+    }
+  };
+
+  const handleImport = async () => {
+    if (!extractionResult?.data.transactions || selectedTxIndexes.length === 0) return;
+
+    setIsImporting(true);
+    try {
+      const itemsToImport = selectedTxIndexes.map((idx) => {
+        const tx = extractionResult.data.transactions[idx];
+        const formattedTxDate = processTransactionDate(tx.date);
+
+        return {
+          name: tx.description || "Statement Transaction",
+          amount: Math.abs(tx.amount),
+          type: (tx.type && tx.type.toLowerCase() === "credit" ? "credit" : "debit") as "debit" | "credit",
+          transactionDate: formattedTxDate,
+          categoryId: selectedCategoryMap[idx] ?? null,
+          notes: `Imported from statement${
+            extractionResult.data.accountNumber ? ` (${extractionResult.data.accountNumber})` : ""
+          }`,
+        };
+      });
+
+      await onImportTransactions(itemsToImport);
+      onClose();
+    } catch (err: any) {
+      setError(err?.message || "Failed to import transactions.");
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  return (
+    <Dialog panelClassName="relative rounded-3xl p-0 overflow-hidden" size="xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-secondary/30">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-foreground">Import Statement PDF</h3>
+              <p className="text-xs text-muted-foreground">
+                Extract transactions from credit card, debit card, or bank statements via Gemini Gen AI
+              </p>
+            </div>
+          </div>
+          <Button variant="icon"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Content Body */}
+        <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto scrollbar-thin">
+          {/* File Upload Zone */}
+          {!extractionResult && (
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center cursor-pointer transition ${
+                isDragOver
+                  ? "border-primary bg-primary/5"
+                  : selectedFile
+                  ? "border-emerald-500/50 bg-emerald-500/5"
+                  : "border-border/80 bg-secondary/20 hover:border-primary/50 hover:bg-secondary/40"
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,application/pdf"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+              />
+              {selectedFile ? (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <FileText className="h-6 w-6" />
+                  </div>
+                  <h4 className="font-bold text-foreground text-sm">{selectedFile.name}</h4>
+                  <p className="text-xs text-muted-foreground">
+                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB PDF Document
+                  </p>
+                  <span className="mt-2 text-xs font-semibold text-primary hover:underline">
+                    Click to change file
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <Upload className="h-6 w-6" />
+                  </div>
+                  <h4 className="font-bold text-foreground text-sm">
+                    Drag and drop your statement PDF here
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Supports monthly Credit Card, Debit Card, or Bank Account statements
+                  </p>
+                  <Button variant="secondary" size="sm"
+                    type="button"
+                    className="mt-2"
+                  >
+                    Browse Computer
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="flex items-center gap-2.5 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-xs text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Extracting Loading Indicator */}
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-10 space-y-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm font-semibold text-foreground">
+                Analyzing statement with Google Gemini Gen AI...
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Extracting transactions and account summary into structured JSON
+              </p>
+            </div>
+          )}
+
+          {/* Extraction Results View */}
+          {extractionResult && (
+            <div className="space-y-4">
+              {/* Header Tabs: Pure JSON vs Transaction List */}
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <div className="flex items-center gap-2">
+                  <Button variant={activeView === "json" ? "primary" : "secondary"} size="sm"
+                    onClick={() => setActiveView("json")}
+                  >
+                    <Code2 className="h-3.5 w-3.5" /> Pure JSON Output
+                  </Button>
+                  <Button variant={activeView === "preview" ? "primary" : "secondary"} size="sm"
+                    onClick={() => setActiveView("preview")}
+                  >
+                    <List className="h-3.5 w-3.5" /> Transactions (
+                    {extractionResult.data.transactions?.length || 0})
+                  </Button>
+                </div>
+
+                {activeView === "json" ? (
+                  <Button variant="secondary" size="sm"
+                    onClick={handleCopyJson}
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-500" /> Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" /> Copy JSON
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Button variant="tertiary" size="sm"
+                      onClick={toggleSelectAll}
+                    >
+                      {selectedTxIndexes.length === extractionResult.data.transactions.length
+                        ? "Deselect All"
+                        : "Select All"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Statement Overview Badge */}
+              <div className="flex items-center gap-3 flex-wrap text-xs rounded-xl border border-border bg-secondary/20 p-3">
+                {extractionResult.data.statementType && (
+                  <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 font-semibold text-primary capitalize">
+                    {extractionResult.data.statementType.replace("_", " ")}
+                  </span>
+                )}
+                {extractionResult.data.accountNumber && (
+                  <span className="text-muted-foreground">
+                    Account: <strong className="text-foreground">{extractionResult.data.accountNumber}</strong>
+                  </span>
+                )}
+                {extractionResult.data.totalDebits !== undefined && (
+                  <span className="text-muted-foreground">
+                    Total Debits:{" "}
+                    <strong className="text-rose-500">
+                      ₹{extractionResult.data.totalDebits.toLocaleString("en-IN")}
+                    </strong>
+                  </span>
+                )}
+                {extractionResult.data.totalCredits !== undefined && (
+                  <span className="text-muted-foreground">
+                    Total Credits:{" "}
+                    <strong className="text-emerald-500">
+                      ₹{extractionResult.data.totalCredits.toLocaleString("en-IN")}
+                    </strong>
+                  </span>
+                )}
+              </div>
+
+              {/* Pure JSON Code View */}
+              {activeView === "json" && (
+                <div className="relative rounded-2xl border border-border bg-zinc-950 p-4 font-mono text-xs text-zinc-100 overflow-x-auto max-h-96 leading-relaxed">
+                  <pre>{JSON.stringify(JSON.parse(extractionResult.rawJson), null, 2)}</pre>
+                </div>
+              )}
+
+              {/* Transaction List Preview & Category Mapping View */}
+              {activeView === "preview" && (
+                <div className="space-y-2 max-h-96 overflow-y-auto scrollbar-thin pr-1">
+                  {extractionResult.data.transactions.map((tx, idx) => {
+                    const isSelected = selectedTxIndexes.includes(idx);
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-3 text-xs transition ${
+                          isSelected
+                            ? "border-primary/50 bg-primary/5"
+                            : "border-border bg-card opacity-60"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectTx(idx)}
+                            className="mt-0.5 rounded border-border text-primary focus:ring-primary h-4 w-4 shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <div className="font-semibold text-foreground truncate text-sm">
+                              {tx.description}
+                            </div>
+                            <div className="text-muted-foreground text-[11px] flex items-center gap-2 mt-0.5">
+                              <span>{tx.date}</span>
+                              <span className="capitalize font-medium text-secondary-foreground">
+                                • {tx.type}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0 justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-border/40">
+                          {/* Category Selector */}
+                          <select
+                            value={selectedCategoryMap[idx] ?? ""}
+                            onChange={(e) =>
+                              setSelectedCategoryMap((prev) => ({
+                                ...prev,
+                                [idx]: e.target.value ? Number(e.target.value) : null,
+                              }))
+                            }
+                            className="rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            <option value="">Uncategorized</option>
+                            {categories.map((cat) => (
+                              <option key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </option>
+                            ))}
+                          </select>
+
+                          <span
+                            className={`font-bold text-sm ${
+                              tx.type === "credit" ? "text-emerald-500" : "text-foreground"
+                            }`}
+                          >
+                            ₹{tx.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex items-center justify-between border-t border-border px-6 py-4 bg-secondary/20">
+          {extractionResult ? (
+            <Button variant="tertiary" size="sm"
+              onClick={() => setExtractionResult(null)}
+            >
+              Upload Another Statement
+            </Button>
+          ) : (
+            <Button variant="secondary" size="sm"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+          )}
+
+          {!extractionResult ? (
+            <Button variant="primary" size="sm"
+              onClick={handleExtract}
+              disabled={!selectedFile || isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Extracting...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" /> Extract Transactions
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button variant="primary" size="sm"
+              onClick={handleImport}
+              disabled={selectedTxIndexes.length === 0 || isImporting}
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Importing...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" /> Import {selectedTxIndexes.length} Transactions
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+    </Dialog>
+  );
+}

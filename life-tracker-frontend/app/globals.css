@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.5rem;
+  
+  /* Light Theme - Cozy Cream, Rich Espresso & Warm Amber */
+  --background: #faf6f0;          /* Warm cozy cream background */
+  --foreground: #2d2219;          /* Deep rich espresso brown text (no pure black) */
+  
+  --card: #fffdfa;                /* Soft milk/cream card background */
+  --card-foreground: #2d2219;     /* Deep rich espresso */
+  
+  --popover: #fffdfa;
+  --popover-foreground: #2d2219;
+  
+  --primary: #c2410c;             /* Rich amber-terracotta orange */
+  --primary-foreground: #faf6f0;  /* Cozy cream contrast */
+  
+  --secondary: #fef08a;           /* Soft glowing yellow-amber */
+  --secondary-foreground: #7c2d12; /* Dark rich brown contrast */
+  
+  --muted: #f4eae0;               /* Warm hazelnut/milk tea tone */
+  --muted-foreground: #7c6e62;    /* Soft coffee ground brown */
+  
+  --accent: #fdf6e2;              /* Warm butter-cream accent */
+  --accent-foreground: #c2410c;   /* Amber-terracotta accent */
+  
+  --destructive: #be123c;         /* Warm raspberry/rose red */
+  --destructive-foreground: #faf6f0;
+  
+  --border: #eaddd0;              /* Soft warm sand/beige border */
+  --input: #dcc2ac;               /* Soft latte brown border */
+  --ring: #c2410c;                /* Rich amber ring */
+
+  /* Chart mappings matching various dashboard spaces */
+  --chart-1: #c2410c;             /* Amber-terracotta */
+  --chart-2: #0f766e;             /* Cozy pine/teal */
+  --chart-3: #0369a1;             /* Warm denim/sky */
+  --chart-4: #4338ca;             /* Indigo */
+  --chart-5: #7c6e62;             /* Coffee brown */
+}
+
+
+.dark {
+  /* Copy of media query dark theme for manual selector compatibility */
+  --background: #140f0c;
+  --foreground: #faf4eb;
+  
+  --card: #1e1713;
+  --card-foreground: #faf4eb;
+  
+  --popover: #1e1713;
+  --popover-foreground: #faf4eb;
+  
+  --primary: #f59e0b;
+  --primary-foreground: #140f0c;
+  
+  --secondary: #451a03;
+  --secondary-foreground: #fef08a;
+  
+  --muted: #2d2019;
+  --muted-foreground: #a89485;
+  
+  --accent: #2d2019;
+  --accent-foreground: #faf4eb;
+  
+  --destructive: #e11d48;
+  --destructive-foreground: #faf4eb;
+  
+  --border: #33241d;
+  --input: #453229;
+  --ring: #f59e0b;
+  
+  --chart-1: #f59e0b;
+  --chart-2: #14b8a6;
+  --chart-3: #0ea5e9;
+  --chart-4: #6366f1;
+  --chart-5: #a89485;
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-dropdown {
+  animation: dropdown-in 0.15s ease-out both;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+  }
+
+  /* Date picker calendar icon contrast styling for light and dark modes */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.85;
+    filter: none;
+    transition: opacity 0.2s ease;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+  :is(.dark, html.dark, [data-theme="dark"]) input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: brightness(0) invert(1) !important;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}

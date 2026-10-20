@@ -1,0 +1,17 @@
+url: http://localhost:3000
+---
+- launchApp:
+    clearState: true
+- assertVisible: Welcome back
+- tapOn:
+    css: "#username"
+- eraseText
+- inputText: admin
+- tapOn:
+    css: "#password"
+- inputText: password
+- tapOn: Continue
+- assertVisible: Your spaces
+- tapOn: Garage
+- assertVisible: Garage
+- assertVisible: A simple home for every vehicle in your life.

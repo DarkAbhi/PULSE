@@ -1,0 +1,147 @@
+services:
+  migrate-dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: go-backend/Dockerfile
+    environment:
+      DB_HOSTNAME: ${DB_HOSTNAME}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_SSLMODE: ${DB_SSLMODE:-require}
+    command: ["--migrate-up"]
+    restart: "no"
+
+  seed-dev:
+    profiles: ["dev"]
+    image: postgres:17.6
+    depends_on:
+      migrate-dev:
+        condition: service_completed_successfully
+    environment:
+      PGHOST: ${DB_HOSTNAME}
+      PGPORT: ${DB_PORT:-5432}
+      PGUSER: ${DB_USERNAME}
+      PGPASSWORD: ${DB_PASSWORD}
+      PGDATABASE: ${DB_NAME}
+      PGSSLMODE: ${DB_SSLMODE:-require}
+    volumes:
+      - ./go-backend/data/dev-seed.sql:/seed.sql:ro
+    command: ["psql", "-X", "-v", "seed_environment=development", "-f", "/seed.sql"]
+    restart: "no"
+
+  backend-dev:
+    depends_on:
+      seed-dev:
+        condition: service_completed_successfully
+    image: golang:1.25.1-bookworm
+    user: "0:0"
+    entrypoint: []
+    working_dir: /app
+    command: >
+      sh -lc '
+        /usr/local/go/bin/go version &&
+        if [ ! -x /go/bin/air ]; then GOBIN=/go/bin /usr/local/go/bin/go install github.com/air-verse/air@v1.61.5; fi &&
+        /go/bin/air -c .air.toml
+      '
+    volumes:
+      - ./go-backend:/app
+      - ./release.json:/release.json:ro
+      - go_build_cache:/go/pkg/mod
+      - go_tools:/go/bin
+    environment:
+      APP_ENV: development
+      PORT: 8080
+      DB_HOSTNAME: ${DB_HOSTNAME}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_SSLMODE: ${DB_SSLMODE:-require}
+      CORS_ALLOWED_ORIGINS: http://localhost:3102
+      S3_BUCKET: ${S3_BUCKET:-}
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-}
+      OTEL_EXPORTER_OTLP_ENDPOINT: jaeger:4317
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+    ports:
+      - "127.0.0.1:18081:8080"
+    networks:
+      default:
+        aliases:
+          - backend-api
+
+  rust-backend-dev:
+    profiles: ["dev"]
+    depends_on:
+      seed-dev:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: rust-backend/Dockerfile
+    environment:
+      DATABASE_URL: postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOSTNAME}:${DB_PORT:-5432}/${DB_NAME}?sslmode=${RUST_DB_SSLMODE:-disable}
+      PORT: ${RUST_PORT:-8083}
+      RUST_LOG: ${RUST_LOG:-info}
+    networks:
+      default:
+        aliases:
+          - rust-backend-api
+    ports:
+      - "127.0.0.1:18084:${RUST_PORT:-8083}"
+    restart: unless-stopped
+
+  cloudflared-dev:
+    profiles: ["dev"]
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --url http://rust-backend-dev:${RUST_PORT:-8083}
+    depends_on:
+      - rust-backend-dev
+    restart: unless-stopped
+
+  web-dev:
+    image: node:24-bookworm-slim
+    working_dir: /app
+    command: sh -lc "npm ci || npm i && npm run dev"
+    volumes:
+      - ./life-tracker-frontend:/app
+      - ./release.json:/release.json:ro
+      - web_node_modules:/app/node_modules
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      INTERNAL_API_BASE_URL: http://backend-dev:8080
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3102:3000"
+    depends_on:
+      - backend-dev
+
+  alloy:
+    environment:
+      LOG_ENVIRONMENT: development
+
+  prometheus:
+    ports: !override
+      - "127.0.0.1:19090:9090"
+
+  grafana:
+    ports: !override
+      - "127.0.0.1:3103:3000"
+
+  jaeger:
+    ports: !override
+      - "127.0.0.1:16687:16686"
+
+volumes:
+  go_build_cache:
+  web_node_modules:
+  go_tools:

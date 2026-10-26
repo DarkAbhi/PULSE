@@ -22,6 +22,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
     implementation(libs.ktor.core)
+    implementation(libs.ktor.logging)
     implementation(libs.ktor.okhttp)
     implementation(libs.ktor.content.negotiation)
     implementation(libs.ktor.json)

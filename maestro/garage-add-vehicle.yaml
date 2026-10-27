@@ -24,12 +24,16 @@ url: http://localhost:3000
 - assertVisible: Add vehicle
 
 # 4. Open Add Vehicle modal
-- tapOn: Add vehicle
+- tapOn:
+    css: "#add-vehicle-button"
+    enabled: true
+    retryTapIfNoChange: true
 - assertVisible: Add a vehicle
 - assertVisible: Add its name, vehicle type, and fuel details.
 
 # 5. Fill vehicle details
-- tapOn: "e.g. Honda City"
+- tapOn:
+    css: "#vehicle-name"
 - inputText: "Honda Civic"
 
 - tapOn:
@@ -41,8 +45,7 @@ url: http://localhost:3000
 
 # 6. Submit Add vehicle form
 - tapOn:
-    text: "Add vehicle"
-    index: 1
+    css: "#add-vehicle-submit"
 
 # 7. Assert dialog closed and newly added vehicle appears in the list
 - assertNotVisible: "Add a vehicle"

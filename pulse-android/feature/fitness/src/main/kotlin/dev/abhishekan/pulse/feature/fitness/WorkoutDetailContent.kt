@@ -69,12 +69,12 @@ internal fun WorkoutDetailContent(
     WorkoutInformation(detail.info)
     if (detail.exercises.isEmpty()) {
         PulseCard(Modifier.fillMaxWidth()) {
-            WorkoutSectionTitle(stringResource(R.string.workout_exercises))
+            WorkoutSectionTitle(stringResource(R.string.pulse_fitness_workout_exercises))
             BoxWithConstraints {
                 val wide = maxWidth >= 640.dp
                 val copy: @Composable () -> Unit = {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        PulseText(stringResource(R.string.workout_empty), style = PulseTextStyle.Heading2)
+                        PulseText(stringResource(R.string.pulse_fitness_workout_empty), style = PulseTextStyle.Heading2)
                         PulseText(
                             stringResource(R.string.pulse_fitness_choose_a_catalogue_exercise_or_record_your_own_name),
                             color = PulseTheme.colors.textSecondary,
@@ -129,9 +129,9 @@ internal fun WorkoutDetailContent(
             val wide = maxWidth >= 880.dp
             val copy: @Composable () -> Unit = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    WorkoutSectionTitle(stringResource(R.string.workout_manage))
+                    WorkoutSectionTitle(stringResource(R.string.pulse_fitness_workout_manage))
                     PulseText(
-                        stringResource(R.string.workout_manage_description),
+                        stringResource(R.string.pulse_fitness_workout_manage_description),
                         color = PulseTheme.colors.textSecondary,
                         style = PulseTextStyle.Body2,
                     )
@@ -221,7 +221,7 @@ private fun WorkoutInformation(info: WorkoutInfo) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     info.start?.let {
                         MetricTile(
-                            stringResource(R.string.workout_started),
+                            stringResource(R.string.pulse_fitness_workout_started),
                             formatter.format(it),
                             WorkoutSymbol.Play,
                             PulseTheme.colors.successSoft,
@@ -231,7 +231,7 @@ private fun WorkoutInformation(info: WorkoutInfo) {
                     }
                     info.end?.let {
                         MetricTile(
-                            stringResource(R.string.workout_finished),
+                            stringResource(R.string.pulse_fitness_workout_finished),
                             formatter.format(it),
                             WorkoutSymbol.Stop,
                             PulseTheme.colors.errorSoft,
@@ -241,7 +241,7 @@ private fun WorkoutInformation(info: WorkoutInfo) {
                     }
                     info.durationSeconds?.let {
                         MetricTile(
-                            stringResource(R.string.workout_duration),
+                            stringResource(R.string.pulse_fitness_workout_duration),
                             formatWorkoutDuration(it).asString(),
                             WorkoutSymbol.Clock,
                             PulseTheme.colors.lavender.copy(alpha = .18f),
@@ -251,8 +251,8 @@ private fun WorkoutInformation(info: WorkoutInfo) {
                     }
                     info.calories?.let {
                         MetricTile(
-                            stringResource(R.string.workout_energy),
-                            stringResource(R.string.workout_kcal, it.toPlainString()),
+                            stringResource(R.string.pulse_fitness_workout_energy),
+                            stringResource(R.string.pulse_fitness_workout_kcal, it.toPlainString()),
                             WorkoutSymbol.Energy,
                             PulseTheme.colors.warningSoft,
                             PulseTheme.colors.warning,
@@ -275,7 +275,7 @@ private fun WorkoutInformation(info: WorkoutInfo) {
                     }
                     if (info.imported) {
                         PulseText(
-                            stringResource(R.string.workout_imported_read_only),
+                            stringResource(R.string.pulse_fitness_workout_imported_read_only),
                             style = PulseTextStyle.Body2,
                             color = PulseTheme.colors.textSecondary,
                         )
@@ -295,7 +295,7 @@ private fun ExerciseList(
     modifier: Modifier,
 ) {
     PulseCard(modifier) {
-        WorkoutSectionTitle(stringResource(R.string.workout_exercises))
+        WorkoutSectionTitle(stringResource(R.string.pulse_fitness_workout_exercises))
         exercises.forEach { exercise ->
             key(exercise.id) { WorkoutExerciseCard(exercise, enabled, { onEdit(exercise.id) }, { onRemove(exercise.id) }) }
         }
@@ -333,7 +333,7 @@ private fun WorkoutExerciseCard(
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         exercise.catalog?.equipment?.let {
                             MetadataTile(
-                                stringResource(R.string.workout_equipment),
+                                stringResource(R.string.pulse_fitness_workout_equipment),
                                 it,
                                 WorkoutSymbol.Weight,
                             )
@@ -342,7 +342,13 @@ private fun WorkoutExerciseCard(
                             ?.muscles
                             ?.takeIf {
                                 it.isNotEmpty()
-                            }?.let { MetadataTile(stringResource(R.string.workout_muscles), it.joinToString(), WorkoutSymbol.Muscle) }
+                            }?.let {
+                                MetadataTile(
+                                    stringResource(R.string.pulse_fitness_workout_muscles),
+                                    it.joinToString(),
+                                    WorkoutSymbol.Muscle,
+                                )
+                            }
                     }
                 }
                 if (wide && exercise.catalog?.equipment?.contains("barbell", ignoreCase = true) == true) {
@@ -355,7 +361,7 @@ private fun WorkoutExerciseCard(
                 }
             }
             HorizontalDivider(color = PulseTheme.colors.divider)
-            WorkoutSectionTitle(stringResource(R.string.workout_sets))
+            WorkoutSectionTitle(stringResource(R.string.pulse_fitness_workout_sets))
             BoxWithConstraints {
                 val columns =
                     when {
@@ -378,7 +384,10 @@ private fun WorkoutExerciseCard(
                                 PulseText(set.number.toString(), style = PulseTextStyle.Label, color = PulseTheme.colors.onPrimarySoft)
                             }
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                PulseText(pluralStringResource(R.plurals.workout_reps, set.reps, set.reps), style = PulseTextStyle.Label)
+                                PulseText(
+                                    pluralStringResource(R.plurals.pulse_fitness_workout_reps, set.reps, set.reps),
+                                    style = PulseTextStyle.Label,
+                                )
                                 PulseText(
                                     set.weight?.let { stringResource(R.string.pulse_fitness_weight_kg, it.toPlainString()) }
                                         ?: stringResource(R.string.pulse_fitness_bodyweight),
@@ -393,7 +402,13 @@ private fun WorkoutExerciseCard(
             HorizontalDivider(color = PulseTheme.colors.divider)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 WorkoutAction(stringResource(R.string.pulse_fitness_edit_exercise), WorkoutSymbol.Edit, onEdit, enabled)
-                WorkoutAction(stringResource(R.string.workout_remove), WorkoutSymbol.Delete, onRemove, enabled, destructive = true)
+                WorkoutAction(
+                    stringResource(R.string.pulse_fitness_workout_remove),
+                    WorkoutSymbol.Delete,
+                    onRemove,
+                    enabled,
+                    destructive = true,
+                )
             }
         }
     }
@@ -411,20 +426,20 @@ private fun WorkoutSummary(
     modifier: Modifier,
 ) {
     PulseCard(modifier) {
-        WorkoutSectionTitle(stringResource(R.string.workout_summary))
+        WorkoutSectionTitle(stringResource(R.string.pulse_fitness_workout_summary))
         val sets = detail.exercises.sumOf { it.sets.size }
         BoxWithConstraints {
             val compact = maxWidth >= 300.dp && maxWidth < 600.dp
             val exercises: @Composable () -> Unit = {
                 SummaryMetric(
                     detail.exercises.size,
-                    pluralStringResource(R.plurals.workout_exercises_label, detail.exercises.size),
+                    pluralStringResource(R.plurals.pulse_fitness_workout_exercises_label, detail.exercises.size),
                     WorkoutSymbol.Weight,
                     compact,
                 )
             }
             val setCount: @Composable () -> Unit = {
-                SummaryMetric(sets, pluralStringResource(R.plurals.workout_sets_label, sets), WorkoutSymbol.List, compact)
+                SummaryMetric(sets, pluralStringResource(R.plurals.pulse_fitness_workout_sets_label, sets), WorkoutSymbol.List, compact)
             }
             if (compact) {
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {

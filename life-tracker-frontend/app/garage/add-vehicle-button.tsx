@@ -2,7 +2,7 @@
 
 import Button from "../components/design-system/button";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { addVehicleAction } from "./actions";
 import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
@@ -16,6 +16,7 @@ const fuelOptions = [
 ];
 
 export default function AddVehicleButton() {
+  const [isReady, setIsReady] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [vehicleType, setVehicleType] = useState("");
   const [fuelType, setFuelType] = useState("");
@@ -24,6 +25,9 @@ export default function AddVehicleButton() {
   const [vehicleName, setVehicleName] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+
+  // Server-rendered controls become interactive once their handlers are attached.
+  useEffect(() => setIsReady(true), []);
 
   function handleAdd(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,6 +55,10 @@ export default function AddVehicleButton() {
   return (
     <>
       <Button variant="primary" size="lg"
+        id="add-vehicle-button"
+        disabled={!isReady}
+        aria-haspopup="dialog"
+        aria-expanded={isAddOpen}
         className="shrink-0"
         icon={<Plus className="h-4 w-4" />}
         onClick={() => {
@@ -144,6 +152,7 @@ export default function AddVehicleButton() {
                   Cancel
                 </DialogAction>
                 <DialogAction
+                  id="add-vehicle-submit"
                   disabled={isPending}
                   type="submit"
                 >

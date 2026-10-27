@@ -71,11 +71,23 @@ chat IDs and update delivery.
 
 ## Request a build
 
-After this workflow is committed and pushed to the repository's **default branch**:
+The workflow explicitly builds the **migration** branch, regardless of which
+branch hosts the workflow. APK filenames and Telegram messages identify the actual
+checked-out commit. The source branch is fixed in the checkout step as
+`ref: refs/heads/migration`.
+
+GitHub requires the workflow file to exist on the repository's **default branch**
+to enable manual dispatch. Copy just `.github/workflows/android-release.yml` to
+the default branch and push it; your Android app changes can remain on `migration`.
+Also push the `migration` branch so the runner can fetch it. See GitHub's
+[manual workflow instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
 
 1. Open **GitHub → DarkAbhi/PULSE → Actions → Android release APK**.
-2. Click **Run workflow**, select the branch to build, and confirm **Run workflow**.
-3. Wait for the build. The bot posts the signed APK with its commit and run link.
+2. Click **Run workflow**, leave GitHub's **Use workflow from** branch selector on
+   the default branch, and confirm **Run workflow**. The checkout step selects
+   `migration` as the app's source branch.
+3. Wait for the build. The bot posts the signed APK with its source branch, commit,
+   and run link.
    Download and install it on your phone.
 
 The APK uses the version name and code declared in `app/build.gradle.kts` (currently
@@ -98,10 +110,12 @@ on a new version.
 Hermes can invoke this exact workflow using an authenticated GitHub CLI:
 
 ```sh
-gh workflow run android-release.yml --repo DarkAbhi/PULSE --ref <branch>
+gh workflow run android-release.yml --repo DarkAbhi/PULSE
 ```
 
-Replace `<branch>` with the branch you want built. This dispatches asynchronously;
+This builds `migration` using the workflow on the default branch. The workflow
+file must exist on the default branch; `--ref` selects the workflow's branch and
+does not replace this registration requirement. This dispatches asynchronously;
 Telegram delivery happens when the workflow completes. Authenticate the CLI on the
 Hermes host with repository access and permission to run Actions (a fine-grained
 token needs **Actions: write**). That credential belongs on the Hermes host, not

@@ -146,51 +146,53 @@
     <string name="pulse_fitness_workout_recorded_legend">Workout recorded</string>
     <string name="pulse_fitness_selected_day_legend">Selected day</string>
     <plurals name="pulse_fitness_workouts_logged">
-        <item quantity="one">%d workout logged</item>
-        <item quantity="other">%d workouts logged</item>
+        <item quantity="one">%1$d workout logged</item>
+        <item quantity="other">%1$d workouts logged</item>
     </plurals>
     <plurals name="pulse_fitness_workout_count">
-        <item quantity="one">%d workout</item>
-        <item quantity="other">%d workouts</item>
+        <item quantity="one">%1$d workout</item>
+        <item quantity="other">%1$d workouts</item>
     </plurals>
-    <string name="workout_exercises">EXERCISES</string>
-    <string name="workout_empty">No exercises added yet</string>
-    <string name="workout_manage">MANAGE WORKOUT</string>
-    <string name="workout_manage_description">Keep your workout data up to date or remove it if needed.</string>
-    <string name="workout_started">Started</string>
-    <string name="workout_finished">Finished</string>
-    <string name="workout_duration">Duration</string>
-    <string name="workout_energy">Energy</string>
-    <string name="workout_kcal">%1$s kcal</string>
-    <string name="workout_imported_read_only">Imported timing and energy are read-only.</string>
-    <string name="workout_equipment">Equipment</string>
-    <string name="workout_muscles">Muscles</string>
-    <string name="workout_sets">SETS</string>
-    <string name="workout_remove">Remove</string>
-    <string name="workout_view_instructions">View instructions</string>
-    <string name="workout_close">Close</string>
-    <string name="workout_summary">WORKOUT SUMMARY</string>
-    <plurals name="workout_reps"><item quantity="one">%d rep</item><item quantity="other">%d reps</item></plurals>
-    <plurals name="workout_exercises_label"><item quantity="one">exercise</item><item quantity="other">exercises</item></plurals>
-    <plurals name="workout_sets_label"><item quantity="one">set</item><item quantity="other">sets</item></plurals>
-    <string name="editor_back">Back</string>
-    <string name="editor_add_title">Add exercise</string>
-    <string name="editor_selected">Selected exercise</string>
-    <string name="editor_change">Change</string>
-    <string name="editor_custom">Custom exercise</string>
-    <string name="editor_matched_to">Catalogue match: %1$s</string>
-    <string name="editor_use_custom">Use without catalogue match</string>
-    <string name="editor_search_placeholder">Search for an exercise…</string>
-    <string name="editor_search_title">Choose an exercise</string>
-    <string name="editor_search_hint">Search the catalogue or enter your own exercise name.</string>
-    <string name="editor_clear_search">Clear search</string>
-    <string name="editor_custom_action">Use %1$s as a custom exercise</string>
-    <string name="editor_empty_title">Find an exercise to get started</string>
-    <string name="editor_empty_body">Choose an exercise to start logging your sets.</string>
-    <string name="editor_set_count">%1$d / 20 sets</string>
-    <string name="editor_add_set">Add another set</string>
-    <string name="editor_remember_body">Reuse your name for this catalogue exercise.</string>
-    <string name="editor_instructions">Instructions</string>
-    <string name="editor_target_muscles">Target muscles</string>
-    <string name="editor_edit_name">Edit name</string>
+    <string name="pulse_fitness_workout_exercises">EXERCISES</string>
+    <string name="pulse_fitness_workout_empty">No exercises added yet</string>
+    <string name="pulse_fitness_workout_manage">MANAGE WORKOUT</string>
+    <string name="pulse_fitness_workout_manage_description">Keep your workout data up to date or remove it if needed.</string>
+    <string name="pulse_fitness_workout_started">Started</string>
+    <string name="pulse_fitness_workout_finished">Finished</string>
+    <string name="pulse_fitness_workout_duration">Duration</string>
+    <string name="pulse_fitness_workout_energy">Energy</string>
+    <string name="pulse_fitness_workout_kcal">%1$s kcal</string>
+    <string name="pulse_fitness_workout_imported_read_only">Imported timing and energy are read-only.</string>
+    <string name="pulse_fitness_workout_equipment">Equipment</string>
+    <string name="pulse_fitness_workout_muscles">Muscles</string>
+    <string name="pulse_fitness_workout_sets">SETS</string>
+    <string name="pulse_fitness_workout_remove">Remove</string>
+    <string name="pulse_fitness_workout_view_instructions">View instructions</string>
+    <string name="pulse_fitness_workout_close">Close</string>
+    <string name="pulse_fitness_workout_summary">WORKOUT SUMMARY</string>
+    <plurals name="pulse_fitness_workout_reps"><item quantity="one">%1$d rep</item><item quantity="other">%1$d reps</item></plurals>
+    <plurals name="pulse_fitness_workout_exercises_label"><item quantity="one">exercise</item><item quantity="other">exercises</item></plurals>
+    <plurals name="pulse_fitness_workout_sets_label"><item quantity="one">set</item><item quantity="other">sets</item></plurals>
+    <string name="pulse_fitness_editor_back">Back</string>
+    <string name="pulse_fitness_editor_add_title">Add exercise</string>
+    <string name="pulse_fitness_editor_selected">Selected exercise</string>
+    <string name="pulse_fitness_editor_change">Change</string>
+    <string name="pulse_fitness_editor_custom">Custom exercise</string>
+    <string name="pulse_fitness_editor_matched_to">Catalogue match: %1$s</string>
+    <string name="pulse_fitness_editor_use_custom">Use without catalogue match</string>
+    <string name="pulse_fitness_editor_search_placeholder">Search for an exercise…</string>
+    <string name="pulse_fitness_editor_search_title">Choose an exercise</string>
+    <string name="pulse_fitness_editor_search_hint">Search the catalogue or enter your own exercise name.</string>
+    <string name="pulse_fitness_editor_clear_search">Clear search</string>
+    <string name="pulse_fitness_editor_custom_action">Use %1$s as a custom exercise</string>
+    <string name="pulse_fitness_editor_empty_title">Find an exercise to get started</string>
+    <string name="pulse_fitness_editor_empty_body">Choose an exercise to start logging your sets.</string>
+    <string name="pulse_fitness_editor_set_count">%1$d / 20 sets</string>
+    <string name="pulse_fitness_editor_add_set">Add another set</string>
+    <string name="pulse_fitness_editor_remember_body">Reuse your name for this catalogue exercise.</string>
+    <string name="pulse_fitness_editor_instructions">Instructions</string>
+    <string name="pulse_fitness_editor_target_muscles">Target muscles</string>
+    <string name="pulse_fitness_editor_edit_name">Edit name</string>
+    <string name="pulse_fitness_clear_search_glyph" translatable="false">×</string>
+    <string name="pulse_fitness_open_search_glyph" translatable="false">›</string>
 </resources>

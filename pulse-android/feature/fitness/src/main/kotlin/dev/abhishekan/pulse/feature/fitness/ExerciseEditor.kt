@@ -109,17 +109,23 @@ internal fun ExerciseEditor(
         ) { hasName ->
             if (hasName) {
                 PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-                    PulseText(stringResource(R.string.editor_selected), style = PulseTextStyle.Overline)
+                    PulseText(stringResource(R.string.pulse_fitness_editor_selected), style = PulseTextStyle.Overline)
                     PulseText(draft.name, style = PulseTextStyle.Title)
                     selected?.let { ExerciseMetadata(it) }
                     if (draft.catalogId == null) {
-                        PulseText(stringResource(R.string.editor_custom), style = PulseTextStyle.Body2)
+                        PulseText(stringResource(R.string.pulse_fitness_editor_custom), style = PulseTextStyle.Body2)
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                        WorkoutAction(stringResource(R.string.editor_change), WorkoutSymbol.Refresh, openSelector, !busy, soft = true)
+                        WorkoutAction(
+                            stringResource(R.string.pulse_fitness_editor_change),
+                            WorkoutSymbol.Refresh,
+                            openSelector,
+                            !busy,
+                            soft = true,
+                        )
                         selected?.let { EditorInstructions(it) }
                         WorkoutAction(
-                            stringResource(R.string.editor_edit_name),
+                            stringResource(R.string.pulse_fitness_editor_edit_name),
                             WorkoutSymbol.Edit,
                             { editName = !editName },
                             !busy,
@@ -143,10 +149,10 @@ internal fun ExerciseEditor(
                         )
                     }
                     if (selected != null && draft.name != selected.name) {
-                        PulseText(stringResource(R.string.editor_matched_to, selected.name), style = PulseTextStyle.Body2)
+                        PulseText(stringResource(R.string.pulse_fitness_editor_matched_to, selected.name), style = PulseTextStyle.Body2)
                     }
                     if (editName && draft.catalogId != null) {
-                        PulseTextButton(stringResource(R.string.editor_use_custom), onClearMatch, enabled = !busy)
+                        PulseTextButton(stringResource(R.string.pulse_fitness_editor_use_custom), onClearMatch, enabled = !busy)
                     }
                 }
             } else {
@@ -164,11 +170,11 @@ internal fun ExerciseEditor(
                     ) {
                         EditorSearchGlyph()
                         PulseText(
-                            stringResource(R.string.editor_search_placeholder),
+                            stringResource(R.string.pulse_fitness_editor_search_placeholder),
                             Modifier.weight(1f),
                             color = PulseTheme.colors.textSecondary,
                         )
-                        PulseText("›", style = PulseTextStyle.Title)
+                        PulseText(stringResource(R.string.pulse_fitness_open_search_glyph), style = PulseTextStyle.Title)
                     }
                     PulseCard(Modifier.fillMaxWidth()) {
                         Column(
@@ -180,8 +186,8 @@ internal fun ExerciseEditor(
                                 Modifier.size(PulseTheme.spacing.spacious).background(PulseTheme.colors.primarySoft, CircleShape),
                                 contentAlignment = Alignment.Center,
                             ) { WorkoutGlyph(WorkoutSymbol.Weight, PulseTheme.colors.action) }
-                            PulseText(stringResource(R.string.editor_empty_title), style = PulseTextStyle.Title3)
-                            PulseText(stringResource(R.string.editor_empty_body), color = PulseTheme.colors.textSecondary)
+                            PulseText(stringResource(R.string.pulse_fitness_editor_empty_title), style = PulseTextStyle.Title3)
+                            PulseText(stringResource(R.string.pulse_fitness_editor_empty_body), color = PulseTheme.colors.textSecondary)
                         }
                     }
                 }
@@ -191,7 +197,7 @@ internal fun ExerciseEditor(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 PulseText(stringResource(R.string.pulse_fitness_your_sets), Modifier.semantics { heading() }, PulseTextStyle.Title3)
                 PulseText(
-                    stringResource(R.string.editor_set_count, draft.sets.size),
+                    stringResource(R.string.pulse_fitness_editor_set_count, draft.sets.size),
                     style = PulseTextStyle.Caption,
                     color = PulseTheme.colors.textSecondary,
                 )
@@ -237,7 +243,7 @@ internal fun ExerciseEditor(
                                 horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
                             ) {
                                 PulseText(
-                                    "${index + 1}",
+                                    (index + 1).toString(),
                                     Modifier
                                         .background(PulseTheme.colors.surfaceMuted, CircleShape)
                                         .padding(PulseTokens.small)
@@ -265,7 +271,7 @@ internal fun ExerciseEditor(
                     }
                 }
             }
-            WorkoutAction(stringResource(R.string.editor_add_set), WorkoutSymbol.Add, {
+            WorkoutAction(stringResource(R.string.pulse_fitness_editor_add_set), WorkoutSymbol.Add, {
                 rowIds = rowIds + nextRowId++
                 onAddSet()
             }, !busy && draft.sets.size < 20, Modifier.fillMaxWidth().background(PulseTheme.colors.primarySoft, PulseTheme.shapes.medium))
@@ -287,7 +293,7 @@ internal fun ExerciseEditor(
                             enabled = !busy,
                         )
                         PulseText(
-                            stringResource(R.string.editor_remember_body),
+                            stringResource(R.string.pulse_fitness_editor_remember_body),
                             style = PulseTextStyle.Caption,
                             color = PulseTheme.colors.textSecondary,
                         )

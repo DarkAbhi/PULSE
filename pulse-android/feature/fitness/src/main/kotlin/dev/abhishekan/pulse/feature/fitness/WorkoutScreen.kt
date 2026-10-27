@@ -58,7 +58,15 @@ fun WorkoutRoute(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val editorTitle =
         state.editor?.let {
-            stringResource(if (it.draft.exerciseId == null) R.string.editor_add_title else R.string.pulse_fitness_edit_exercise)
+            stringResource(
+                if (it.draft.exerciseId ==
+                    null
+                ) {
+                    R.string.pulse_fitness_editor_add_title
+                } else {
+                    R.string.pulse_fitness_edit_exercise
+                },
+            )
         }
     LaunchedEffect(editorTitle) { onEditorTitleChanged(editorTitle) }
     DisposableEffect(Unit) {

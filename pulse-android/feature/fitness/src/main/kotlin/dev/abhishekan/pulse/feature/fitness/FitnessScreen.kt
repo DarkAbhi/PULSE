@@ -91,7 +91,7 @@ fun FitnessScreen(
     onWorkout: (Long) -> Unit,
 ) {
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
-        val wide = size != PulseWindowSize.Compact && LocalDensity.current.fontScale < 1.5f
+        val wide = size == PulseWindowSize.Expanded && LocalDensity.current.fontScale < 1.5f
         val pullState = rememberPullToRefreshState()
         val canRefresh = !state.loading && !state.busy
         val refresh = { if (canRefresh) onRefresh() }
@@ -139,32 +139,45 @@ fun FitnessScreen(
                             max = PulseTokens.contentWidth,
                         ).fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(size.pagePadding),
+                        .padding(vertical = size.pagePadding),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                 ) {
-                    state.error?.let { PulseErrorState(fitnessFailureMessage(it), onRefresh) }
+                    state.error?.let {
+                        Box(Modifier.padding(horizontal = size.pagePadding)) {
+                            PulseErrorState(fitnessFailureMessage(it), onRefresh)
+                        }
+                    }
                     if (state.needsReview) {
-                        MutationReview(
-                            state.reviewReady,
-                            state.busy,
-                            onRefresh,
-                            onReviewed,
-                            message = state.message,
-                        )
+                        Box(Modifier.padding(horizontal = size.pagePadding)) {
+                            MutationReview(
+                                state.reviewReady,
+                                state.busy,
+                                onRefresh,
+                                onReviewed,
+                                message = state.message,
+                            )
+                        }
                     }
                     if (state.overview != null) {
                         if (wide) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
+                            Row(
+                                Modifier.padding(horizontal = size.pagePadding),
+                                horizontalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
+                            ) {
                                 Box(Modifier.weight(1.1f)) {
                                     FitnessCalendar(state, onDate, onMonth, onToday)
                                 }
                                 Box(Modifier.weight(1f)) { SelectedDay(state, onRecord, onWorkout) }
                             }
                         } else {
-                            FitnessCalendar(state, onDate, onMonth, onToday)
-                            SelectedDay(state, onRecord, onWorkout)
+                            FitnessCalendar(state, onDate, onMonth, onToday, Modifier.padding(horizontal = PulseTokens.tiny))
+                            Box(Modifier.padding(horizontal = size.pagePadding)) {
+                                SelectedDay(state, onRecord, onWorkout)
+                            }
                         }
-                        FitnessStats(state.overview)
+                        Box(Modifier.padding(horizontal = size.pagePadding)) {
+                            FitnessStats(state.overview)
+                        }
                     }
                 }
             }

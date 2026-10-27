@@ -140,7 +140,7 @@ internal fun FitnessCalendarDay(
         enabled = enabled,
         modifier =
             modifier
-                .defaultMinSize(minWidth = PulseTokens.target, minHeight = 56.dp)
+                .defaultMinSize(minHeight = 56.dp)
                 .clearAndSetSemantics {
                     contentDescription = description
                     this.selected = selected
@@ -155,19 +155,14 @@ internal fun FitnessCalendarDay(
                     }
                 },
         shape = PulseTokens.controlShape,
-        color =
-            when {
-                selected -> colors.primary
-                inMonth -> colors.surface
-                else -> colors.background
-            },
+        color = if (selected) colors.primary else Color.Transparent,
         contentColor =
             when {
                 selected -> colors.onPrimary
                 inMonth -> colors.textPrimary
                 else -> colors.textSecondary
             },
-        border = BorderStroke(if (today) 2.dp else 1.dp, if (today) colors.action else colors.divider),
+        border = if (today) BorderStroke(2.dp, colors.action) else null,
     ) {
         Column(
             Modifier.fillMaxWidth().padding(vertical = PulseTokens.small),

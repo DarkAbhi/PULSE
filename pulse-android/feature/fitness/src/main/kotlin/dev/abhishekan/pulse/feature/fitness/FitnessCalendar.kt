@@ -1,5 +1,4 @@
 package dev.abhishekan.pulse.feature.fitness
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -7,9 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
@@ -48,13 +47,14 @@ internal fun FitnessCalendar(
     onDate: (LocalDate) -> Unit,
     onMonth: (Long) -> Unit,
     onToday: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     var choosing by rememberSaveable { mutableStateOf(false) }
-    PulseCard(Modifier.fillMaxWidth()) {
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
+        BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
             val compact = maxWidth < 480.dp
-            val inline = maxWidth >= 264.dp && LocalDensity.current.fontScale < 1.3f
+            val inline = maxWidth >= 304.dp && LocalDensity.current.fontScale < 1.3f
             val fullMonth = state.month.format(DateTimeFormatter.ofPattern("MMMM yyyy", locale))
             val title: @Composable (Modifier) -> Unit = { modifier ->
                 PulseText(
@@ -117,21 +117,19 @@ internal fun FitnessCalendar(
                 .orEmpty()
                 .groupingBy { it.date }
                 .eachCount()
-        val minimumWidth = (PulseTokens.target * 7 + PulseTokens.tiny * 6) * maxOf(1f, LocalDensity.current.fontScale / 1.5f)
         BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val available = maxWidth
-            Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
+            val weekdayStyle = if (maxWidth / 7 < 28.dp * LocalDensity.current.fontScale) TextStyle.NARROW else TextStyle.SHORT
+            // Seven columns still have 44dp targets at 320dp; avoid Material's 48dp
+            // layout minimum expanding neighboring cells into each other on small phones.
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 44.dp) {
                 Column(
-                    Modifier
-                        .horizontalScroll(
-                            rememberScrollState(),
-                        ).width(maxOf(available, minimumWidth)),
+                    Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
                 ) {
-                    Row(Modifier.fillMaxWidth().clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
+                    Row(Modifier.fillMaxWidth().clearAndSetSemantics { }) {
                         DayOfWeek.entries
                             .map {
-                                it.getDisplayName(TextStyle.SHORT, locale)
+                                it.getDisplayName(weekdayStyle, locale)
                             }.forEach { day ->
                                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                                     PulseText(day, style = PulseTextStyle.Label)
@@ -139,7 +137,7 @@ internal fun FitnessCalendar(
                             }
                     }
                     days.chunked(7).forEach { week ->
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
+                        Row(Modifier.fillMaxWidth()) {
                             week.forEach { date ->
                                 val count = workouts[date] ?: 0
                                 val today = date == state.overview?.today
@@ -176,19 +174,10 @@ internal fun FitnessCalendar(
                         }
                     }
                 }
-                if (available <
-                    minimumWidth
-                ) {
-                    PulseText(
-                        stringResource(
-                            R.string.pulse_fitness_swipe_the_calendar_sideways_to_see_the_full_week,
-                        ),
-                        color = PulseTheme.colors.textSecondary,
-                    )
-                }
             }
         }
         FlowRow(
+            modifier = Modifier.padding(horizontal = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
         ) {

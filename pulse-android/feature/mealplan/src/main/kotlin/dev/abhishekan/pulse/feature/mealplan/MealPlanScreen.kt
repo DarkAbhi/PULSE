@@ -25,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -95,6 +96,14 @@ internal fun MealPlanScreen(
             state.meals.error == null &&
             state.meals.value != null
     val canRefresh = !state.busy && state.draft == null && !refreshing
+    val showAddTimeButton =
+        state.managing &&
+            state.draft == null &&
+            state.canWrite &&
+            !state.times.loading &&
+            state.times.error == null &&
+            state.times.value != null
+    val timeActionClearance = (80 * LocalDensity.current.fontScale.coerceAtLeast(1f)).dp
     val refresh = { if (canRefresh) vm.refresh() }
     val refreshLabel = stringResource(R.string.pulse_mealplan_refresh)
     PullToRefreshBox(
@@ -133,7 +142,16 @@ internal fun MealPlanScreen(
                         .verticalScroll(rememberScrollState())
                         .imePadding()
                         .padding(size.pagePadding)
-                        .padding(bottom = if (showAddButton) 96.dp else 0.dp),
+                        .padding(
+                            bottom =
+                                if (showAddTimeButton) {
+                                    timeActionClearance
+                                } else if (showAddButton) {
+                                    96.dp
+                                } else {
+                                    0.dp
+                                },
+                        ),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
                 ) {
                     if (state.reviewRequired) {
@@ -200,19 +218,11 @@ internal fun MealPlanScreen(
                             cancel,
                         )
                     } else if (state.managing) {
-                        PulseTextButton(
-                            stringResource(R.string.pulse_mealplan_back_to_planner),
-                            {
-                                vm.manage(false)
-                            },
-                            enabled =
-                                !state.busy && state.draft == null,
-                        )
+                        MealTimesHeader({ vm.manage(false) }, enabled = !state.busy && state.draft == null)
                         MealSectionContent(state.times, vm::refreshTimes) { times ->
                             MealTimes(
                                 times,
                                 state.canWrite && state.draft == null,
-                                { vm.edit(MealDraft(timeForm = true)) },
                                 { time ->
                                     deletion =
                                         MealChange.DeleteTime(time) to
@@ -290,6 +300,12 @@ internal fun MealPlanScreen(
                         modifier = Modifier.size(32.dp),
                     )
                 }
+            }
+            if (showAddTimeButton) {
+                AddMealTimeButton(
+                    { vm.edit(MealDraft(timeForm = true)) },
+                    Modifier.align(Alignment.BottomEnd).padding(size.pagePadding),
+                )
             }
             if (state.meals.loading && state.meals.value == null && !state.managing && (state.draft == null || records)) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

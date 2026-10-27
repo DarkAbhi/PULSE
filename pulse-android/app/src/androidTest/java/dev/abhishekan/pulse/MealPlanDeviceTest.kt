@@ -329,7 +329,9 @@ class MealPlanDeviceTest {
         compose
             .onAllNodes(hasText(text) or hasContentDescription(text))[0]
             .apply {
-                if (text != "Add meal" && (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail())) {
+                if (text !in listOf("Add meal", "Add custom meal time") &&
+                    (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail())
+                ) {
                     performScrollTo()
                 }
             }.assertIsDisplayed()
@@ -690,17 +692,20 @@ class MealPlanDeviceTest {
         confirm("Choose time")
         tap("Save meal time")
         awaitText("Night snack")
+        compose.waitUntil(10_000) {
+            compose.onAllNodesWithText("Saved. Your meal plan is up to date.").fetchSemanticsNodes().isEmpty()
+        }
         screenshot("times")
-        tap("Back to planner")
+        compose.onNode(hasContentDescription("Back to planner")).performScrollTo().performClick()
         tap("Add meal")
         field("Meal name", "Oats")
-        pickTime("No meal time", "Evening bowl · 18:00–19:00")
+        pickTime("Select a meal time", "Evening bowl · 18:00–19:00")
         tap("Save meal")
         awaitText("Oats")
         tap("Meal times")
         tap("Delete time Evening bowl")
         confirm("Delete")
-        tap("Back to planner")
+        compose.onNode(hasContentDescription("Back to planner")).performScrollTo().performClick()
         awaitText("Other meals")
         awaitText("Oats")
         assertEquals(2, meals.size)

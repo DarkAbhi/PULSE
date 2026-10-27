@@ -50,6 +50,10 @@ HTTP relies on Tailscale for transport encryption. The backend must issue non-Se
 
 ## Signed personal release
 
+For a manually requested GitHub build delivered to Telegram, see
+[Get a production APK in Telegram](docs/release-apk.md), including the four required
+repository secrets and optional production API URL override.
+
 Local signing uses the ignored `.signing/release.properties` file:
 
 ```properties

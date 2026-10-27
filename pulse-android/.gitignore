@@ -20,3 +20,9 @@ local.properties
 
 .kotlin/
 .signing/
+
+# Generated Android packages and release workflow downloads
+*.apk
+*.aab
+*.apks
+/release-output/

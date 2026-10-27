@@ -1,1 +1,4 @@
 /build
+
+# Generated release exports (APK, obfuscation mapping, and metadata)
+/release/

@@ -50,7 +50,7 @@ HTTP relies on Tailscale for transport encryption. The backend must issue non-Se
 
 ## Signed personal release
 
-For a manually requested GitHub build delivered to Telegram, see
+For a GitHub release build delivered to Telegram on every push to `migration`, see
 [Get a production APK in Telegram](docs/release-apk.md), including the four required
 repository secrets and optional production API URL override.
 

@@ -3,7 +3,8 @@
 The **Android release APK** GitHub Actions workflow builds the release variant with
 the existing signing key and sends the APK to your Telegram channel or private chat.
 It also saves the APK and its SHA-256 checksum as a GitHub Actions artifact for 14 days.
-It runs only when requested. It does not publish a Play Store or GitHub Release.
+It runs automatically on every push to `migration`. It does not publish a Play
+Store or GitHub Release.
 
 ## One-time GitHub configuration
 
@@ -69,26 +70,25 @@ The official [Telegram tutorial](https://core.telegram.org/bots/tutorial) explai
 bot creation. The [Bot API](https://core.telegram.org/bots/api#getupdates) documents
 chat IDs and update delivery.
 
-## Request a build
+## Automatic builds from migration
 
-The workflow explicitly builds the **migration** branch, regardless of which
-branch hosts the workflow. APK filenames and Telegram messages identify the actual
-checked-out commit. The source branch is fixed in the checkout step as
-`ref: refs/heads/migration`.
+Keep `.github/workflows/android-release.yml` on **migration** and push that branch
+to GitHub. Each push automatically builds a signed release APK and sends it to
+Telegram. No workflow file on `main`, PR merge, or manual button is required for
+this push trigger. See GitHub's
+[push event documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#push).
 
-GitHub requires the workflow file to exist on the repository's **default branch**
-to enable manual dispatch. Copy just `.github/workflows/android-release.yml` to
-the default branch and push it; your Android app changes can remain on `migration`.
-Also push the `migration` branch so the runner can fetch it. See GitHub's
-[manual workflow instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
+The workflow checks out the exact commit that triggered the push, so a newer push
+cannot change the source of an already queued build. APK filenames and Telegram
+messages identify that commit. Each push has its own run; if one push contains
+multiple commits, the build uses the final commit in that push. There are no path
+filters, so pushes that only change documentation also request a build. Separate
+commits do not cancel each other's release runs.
 
-1. Open **GitHub → DarkAbhi/PULSE → Actions → Android release APK**.
-2. Click **Run workflow**, leave GitHub's **Use workflow from** branch selector on
-   the default branch, and confirm **Run workflow**. The checkout step selects
-   `migration` as the app's source branch.
+1. Commit your changes on `migration` and push them to GitHub.
+2. Open **GitHub → DarkAbhi/PULSE → Actions → Android release APK** to see the run.
 3. Wait for the build. The bot posts the signed APK with its source branch, commit,
-   and run link.
-   Download and install it on your phone.
+   and run link. Download and install it on your phone.
 
 The APK uses the version name and code declared in `app/build.gradle.kts` (currently
 `1.0.1`, code `2`). Increment them when cutting a new app version; the workflow
@@ -105,23 +105,11 @@ Signature verification runs before upload. This is a packaging workflow, not a
 device test suite; follow the README's release cold-launch guidance before relying
 on a new version.
 
-## Trigger the same build from Hermes later
+## Rebuild an existing commit
 
-Hermes can invoke this exact workflow using an authenticated GitHub CLI:
+Open a previous **Android release APK** run in GitHub Actions and choose **Re-run
+all jobs** to rebuild its original commit. This also attempts Telegram delivery
+again. A new source commit is not required to retry a failed build or delivery.
 
-```sh
-gh workflow run android-release.yml --repo DarkAbhi/PULSE
-```
-
-This builds `migration` using the workflow on the default branch. The workflow
-file must exist on the default branch; `--ref` selects the workflow's branch and
-does not replace this registration requirement. This dispatches asynchronously;
-Telegram delivery happens when the workflow completes. Authenticate the CLI on the
-Hermes host with repository access and permission to run Actions (a fine-grained
-token needs **Actions: write**). That credential belongs on the Hermes host, not
-in this build workflow. See GitHub's
-[manual workflow instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
-
-A Telegram `/apk` command requires a bot or Hermes command handler to authenticate
-the requesting user and call that dispatch. The button works without operating
-such a service, so command handling is left for a later integration.
+Telegram command handling through Hermes is not part of this workflow; delivery
+is automatic after a push or a rerun.

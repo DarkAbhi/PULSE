@@ -2,17 +2,20 @@ name: Android release APK
 run-name: Android release APK from migration
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - migration
 
 permissions:
   contents: read
 
 concurrency:
-  group: android-release-migration
+  group: android-release-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
   release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/migration'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -37,7 +40,7 @@ jobs:
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: refs/heads/migration
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Set up Java 25

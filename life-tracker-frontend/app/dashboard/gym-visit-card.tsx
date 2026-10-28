@@ -3,9 +3,8 @@
 import Button from "../components/design-system/button";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Dumbbell, Check, ArrowRight } from "lucide-react";
+import { Dumbbell, ArrowRight } from "lucide-react";
 import ConfirmationDialog from "../components/design-system/confirmation-dialog";
 import { markGymVisitAction } from "./actions";
 
@@ -18,7 +17,6 @@ export default function GymVisitCard({
   initialVisited,
   initialVisitID,
 }: GymVisitCardProps) {
-  const router = useRouter();
   const [gymVisited, setGymVisited] = useState(initialVisited);
   const [gymVisitID, setGymVisitID] = useState<number | null>(initialVisitID);
   const [isMarkingGym, startMarkingGym] = useTransition();
@@ -56,71 +54,25 @@ export default function GymVisitCard({
 
   return (
     <>
-      <article
-        className="cursor-pointer rounded-xl border border-border bg-card px-4 py-3 shadow-sm"
-        onClick={() => router.push("/fitness")}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground"
-              aria-hidden="true"
-            >
-              {gymVisited ? (
-                <Check className="h-4 w-4 text-emerald-primary" />
-              ) : (
-                <Dumbbell className="h-4 w-4" />
-              )}
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-semibold text-foreground">Fitness</h3>
-              <p className="truncate text-xs text-muted-foreground">
-                {gymVisited
-                  ? "You worked out today."
-                  : "You haven't worked out today."}
-              </p>
-            </div>
-          </div>
-          {gymVisited && (
-            <span className="shrink-0 rounded-full bg-emerald-primary/10 px-2 py-1 text-xs font-semibold text-emerald-primary">
-              Done
-            </span>
-          )}
+      <article className="pulse-summary-card pulse-fitness-card">
+        <span className="pulse-card-icon" aria-hidden="true"><Dumbbell className="h-6 w-6" /></span>
+        <p className="pulse-card-label">Fitness · Today</p>
+        <h2>{gymVisited ? "Workout recorded" : "No workout recorded today"}</h2>
+        {gymError && <p className="pulse-card-message" role="alert">{gymError}</p>}
+        <div className="pulse-card-footer">
+          <Link className="pulse-card-cta" href="/fitness">{gymVisited ? "View fitness" : "Get moving"}<ArrowRight className="h-4 w-4" /></Link>
+          <img src="/dashboard/fitness.webp" width="240" height="160" alt="" className="pulse-card-art" />
         </div>
-        {gymError && (
-          <p className="mt-3 text-sm text-destructive" role="alert">
-            {gymError}
-          </p>
-        )}
-        <div className="mt-3 flex items-center gap-3">
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={isMarkingGym}
-            onClick={(event) => {
-              event.stopPropagation();
-              if (gymVisited) {
-                setIsConfirmingAnotherVisit(true);
-                return;
-              }
+        <div className="pulse-workout-actions">
+          <Button variant="tertiary" size="sm" className="pulse-workout-button" disabled={isMarkingGym}
+            onClick={() => {
+              if (gymVisited) { setIsConfirmingAnotherVisit(true); return; }
               void handleMarkGymVisit();
-            }}
-            type="button"
-          >
-            {isMarkingGym
-              ? "Marking…"
-              : gymVisited
-                ? "Add workout"
-                : "Mark workout completed"}
+            }} type="button">
+            {isMarkingGym ? "Marking…" : gymVisited ? "Add workout" : "Mark workout completed"}
           </Button>
           {gymVisited && gymVisitID && (
-            <Link
-              className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:opacity-80"
-              href={`/fitness/${gymVisitID}`}
-              onClick={(event) => event.stopPropagation()}
-            >
-              Log exercises <ArrowRight className="h-4 w-4" />
-            </Link>
+            <Link className="pulse-exercise-link" href={`/fitness/${gymVisitID}`}>Log exercises <ArrowRight className="h-4 w-4" /></Link>
           )}
         </div>
       </article>

@@ -1,7 +1,8 @@
+import "./dashboard.css";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Car, ArrowRight, Utensils } from "lucide-react";
+import { Car, ArrowRight, Utensils, UserRound } from "lucide-react";
 import GreetingHeader from "./greeting-header";
 import GymVisitCard from "./gym-visit-card";
 import NotificationDropdown from "./notification-dropdown";
@@ -90,84 +91,30 @@ export default async function DashboardPage() {
   const needsProfile = !profile.has_profile;
 
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-10 flex items-start justify-between gap-4">
-          <GreetingHeader username={username} displayName={displayName} />
-          <div className="flex shrink-0 items-center gap-3">
-            <NotificationDropdown initialNotifications={notifications} />
-            <Link
-              className="group rounded-full border border-border bg-card p-1 shadow-sm transition hover:shadow-md hover:border-primary/50"
-              href="/profile"
-              aria-label="Profile"
-            >
-              <img
-                alt="Profile placeholder"
-                className="h-12 w-12 rounded-full object-cover transition duration-200 group-hover:scale-105"
-                src="/avatar-placeholder.jpg"
-              />
-            </Link>
-          </div>
-        </header>
-
-        <section aria-labelledby="categories-heading">
-          <h2
-            id="categories-heading"
-            className="mb-4 text-lg font-semibold text-foreground"
-          >
-            Your spaces
-          </h2>
-          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.68fr)]">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Link
-                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm"
-                href="/garage"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground"
-                    aria-hidden="true"
-                  >
-                    <Car className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-foreground">Garage</h3>
-                    <p className="truncate text-xs text-muted-foreground">Vehicles, fuel & maintenance</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </Link>
-
-              <Link
-                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm"
-                href="/meal-plan"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground"
-                    aria-hidden="true"
-                  >
-                    <Utensils className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-foreground">Meal Plan</h3>
-                    <p className="truncate text-xs text-muted-foreground">Weekly meals</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </Link>
-
-              <GymVisitCard
-                initialVisited={gymVisited}
-                initialVisitID={gymVisitID}
-              />
-            </div>
-            <FinancialHorizonCard
-              summary={horizonSummary}
-              error={horizonError}
-            />
-          </div>
+    <main className="pulse-dashboard">
+      <div className="pulse-dashboard-content">
+        <GreetingHeader username={username} displayName={displayName}>
+          <NotificationDropdown initialNotifications={notifications} />
+          <Link className="pulse-profile-link" href="/profile" aria-label="Profile">
+            <UserRound className="h-5 w-5" />
+          </Link>
+        </GreetingHeader>
+        <section className="pulse-dashboard-cards" aria-label="Your day at a glance">
+          <FinancialHorizonCard summary={horizonSummary} error={horizonError} />
+          <GymVisitCard initialVisited={gymVisited} initialVisitID={gymVisitID} />
         </section>
+        <nav className="pulse-spaces" aria-label="Your spaces">
+          <Link className="pulse-space-link" href="/garage">
+            <span className="pulse-space-icon"><Car className="h-5 w-5" /></span>
+            <span><strong>Garage</strong><span>Vehicles, fuel & maintenance</span></span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link className="pulse-space-link" href="/meal-plan">
+            <span className="pulse-space-icon"><Utensils className="h-5 w-5" /></span>
+            <span><strong>Meal Plan</strong><span>Weekly meals</span></span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </nav>
       </div>
 
       {needsProfile && <NamePromptDialog initialDisplayName={displayName} />}

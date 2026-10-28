@@ -1,44 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
-interface GreetingHeaderProps {
-  username: string;
-  displayName: string;
+export function PulseOrb() {
+  return (
+    <div className="pulse-orb-scene" aria-hidden="true">
+      {[0, 2, 4].map((delay) => (
+        <div key={delay} className="pulse-orb pulse-orb-ring" style={{ animationDelay: `${delay}s` }} />
+      ))}
+      <div className="pulse-orb pulse-orb-fill" />
+    </div>
+  );
 }
 
-export default function GreetingHeader({
-  username,
-  displayName,
-}: GreetingHeaderProps) {
-  const [greeting, setGreeting] = useState("Welcome back");
-  const [greetingNote, setGreetingNote] = useState(
-    "A fresh start is waiting for you."
-  );
+export default function GreetingHeader({ username, displayName, children }: {
+  username: string;
+  displayName: string;
+  children?: ReactNode;
+}) {
+  const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) {
-      setGreeting("Good morning");
-      setGreetingNote("A gentle start to a wonderful day.");
-    } else if (hour < 17) {
-      setGreeting("Good afternoon");
-      setGreetingNote("Take a moment to check in with your day.");
-    } else {
-      setGreeting("Good evening");
-      setGreetingNote("A quiet moment to reflect on today.");
-    }
+    const update = () => setNow(new Date());
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
   }, []);
 
   return (
-    <div>
-      <p className="text-sm font-semibold tracking-[0.18em] text-primary">
-        PULSE
-      </p>
-      <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-        {greeting}, {displayName || username}.
-      </h1>
-      <p className="mt-3 text-base text-muted-foreground">{greetingNote}</p>
-    </div>
+    <section className="pulse-hero" aria-label="Welcome">
+      <div className="pulse-hero-art" aria-hidden="true"><PulseOrb /></div>
+      <div className="pulse-hero-top">
+        <div className="pulse-clock">
+          <p className="pulse-clock-time">{now ? now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase() : "—:—"}</p>
+          <p className="pulse-clock-date">{now ? now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short", year: "numeric" }) : "Your day at a glance"}</p>
+        </div>
+        <div className="pulse-hero-actions">{children}</div>
+      </div>
+      <div className="pulse-hero-greeting">
+        <p className="pulse-greeting-eyebrow">Good to see you,</p>
+        <h1>{displayName || username}</h1>
+        <p className="pulse-greeting-note">A little perspective on your everyday.</p>
+      </div>
+    </section>
   );
 }

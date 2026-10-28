@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Compass, ArrowRight } from "lucide-react";
+import { House, ArrowRight } from "lucide-react";
 
 export type BudgetItem = {
   id: number;
@@ -99,86 +99,19 @@ export default function FinancialHorizonCard({
   summary,
   error,
 }: FinancialHorizonCardProps) {
-  if (error || !summary) {
-    return (
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-            <Compass className="h-6 w-6" />
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold text-foreground">
-              Financial Horizon
-            </h3>
-          </div>
-        </div>
-        <p className="mt-4 text-sm text-muted-foreground">
-          {error ??
-            "Set up your monthly income and fixed obligations to calculate uncommitted cash flow."}
-        </p>
-        <Link
-          className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
-          href="/financial-horizon"
-        >
-          Set up horizon <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
-    );
-  }
-
-  const {
-    base_amount,
-    currency,
-    remaining_amount,
-  } = summary;
-  const isHealthy = remaining_amount >= 0;
-
+  const unavailable = error || !summary;
   return (
-    <Link
-      href="/financial-horizon"
-      className="relative block overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-secondary/30 p-6 shadow-sm"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-inner">
-            <Compass className="h-6 w-6" />
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold text-foreground">
-              Financial Horizon
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Your monthly room to move
-            </p>
-          </div>
-        </div>
-        <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground" />
-      </div>
-
-      <div className="mt-6 grid grid-cols-2 gap-4 rounded-xl bg-background/60 p-4 backdrop-blur-sm">
-        <div>
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Starting Pool
-          </span>
-          <p className="mt-1 text-lg font-bold text-foreground">
-            {currency}
-            {base_amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-          </p>
-        </div>
-
-        <div>
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Uncommitted
-          </span>
-          <p
-            className={`mt-1 text-lg font-extrabold ${isHealthy ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
-          >
-            {currency}
-            {remaining_amount.toLocaleString("en-IN", {
-              minimumFractionDigits: 2,
-            })}
-          </p>
-        </div>
+    <Link href="/financial-horizon" className="pulse-summary-card pulse-horizon-card">
+      <span className="pulse-card-icon" aria-hidden="true"><House className="h-6 w-6" fill="currentColor" /></span>
+      <h2>Your room to move</h2>
+      {unavailable ? (
+        <p className="pulse-card-message">{error || "Set up your monthly income and fixed obligations to see your room to move."}</p>
+      ) : (
+        <p className="pulse-money">{summary.currency} {summary.remaining_amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+      )}
+      <div className="pulse-card-footer">
+        <span className="pulse-card-cta">{unavailable ? "Set up horizon" : "Keep going"}<ArrowRight className="h-4 w-4" /></span>
+        <img src="/dashboard/cat.webp" width="240" height="160" alt="" className="pulse-card-art" />
       </div>
     </Link>
   );

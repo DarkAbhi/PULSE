@@ -155,7 +155,7 @@ medium 4dp, high 8dp. Cards and buttons stay flat; dropdowns use low shadow.
 | PulseSelectionField | Neutral outlined trigger, 12dp menu, low shadow | Focus/keyboard dismissal and selection callbacks |
 | PulseFilterChip | Mustard selection, checkmark cue, ink labels, pill | Selection, disabled state and target |
 | PulseCheckbox / RadioButton / Switch | Semantic selected/unselected colors | Parent toggle/select semantics and single callback |
-| PulseCalendarDay | Mustard selection, dark ink, action today outline, semantic activity indicator | Date semantics, enabled/selected states and geometry |
+| PulseCalendarDay | Centered 40dp circles: mustard selection, soft green workout fill/green outline, outer action ring for today; green workout dot overlaid below the date | Date semantics, enabled/selected states, 44dp minimum column width and 56dp tap height; fitness calendar uses the shared component |
 | PulseTopAppBar | Flat canvas and ink | Navigation/actions and insets |
 | Bottom navigation / rail | Mustard indicator, ink selected, neutral supporting content | Destination selection, scroll and insets |
 | PulseDialog / date/time dialogs | Neutral flat surfaces, 20dp corners; explicit picker selected colors | Dismissal, scroll, time/date state and accessibility input modes |

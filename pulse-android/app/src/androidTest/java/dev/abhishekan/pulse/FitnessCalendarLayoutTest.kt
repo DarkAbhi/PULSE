@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
+import dev.abhishekan.pulse.core.domain.model.WorkoutSummary
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.feature.fitness.FitnessScreen
 import dev.abhishekan.pulse.feature.fitness.FitnessUiState
@@ -46,18 +47,21 @@ class FitnessCalendarLayoutTest {
 
     @Test fun allSevenColumnsFitOnWidePhones() = verifyFullWeek(412.dp)
 
+    @Test fun calendarRendersInLightTheme() = verifyFullWeek(360.dp, dark = false)
+
     @Test fun largeTextKeepsTheFullWeekAndDateSelection() = verifyFullWeek(320.dp, fontScale = 2f)
 
     private fun verifyFullWeek(
         width: Dp,
         fontScale: Float = 1f,
+        dark: Boolean = true,
     ) {
         val today = LocalDate.of(2026, 10, 28)
         val month = YearMonth.from(today)
         var selected: LocalDate? = null
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
-                PulseTheme(true) {
+                PulseTheme(dark) {
                     Box(
                         Modifier
                             .width(width)
@@ -66,7 +70,20 @@ class FitnessCalendarLayoutTest {
                             .testTag("viewport"),
                     ) {
                         FitnessScreen(
-                            FitnessUiState(today, month, FitnessOverview(today, emptyList(), emptyList()), loading = false),
+                            FitnessUiState(
+                                today,
+                                month,
+                                FitnessOverview(
+                                    today,
+                                    emptyList(),
+                                    listOf(
+                                        WorkoutSummary(1, today, "Morning"),
+                                        WorkoutSummary(2, LocalDate.of(2026, 9, 28), "Morning"),
+                                        WorkoutSummary(3, LocalDate.of(2026, 9, 30), "Morning"),
+                                    ),
+                                ),
+                                loading = false,
+                            ),
                             { selected = it },
                             {},
                             {},
@@ -102,8 +119,10 @@ class FitnessCalendarLayoutTest {
         compose.runOnIdle { assertEquals(sunday, selected) }
         compose.onNodeWithText("Swipe the calendar sideways", substring = true).assertDoesNotExist()
         compose.onNodeWithContentDescription("Choose date").assertIsDisplayed()
+        compose.mainClock.advanceTimeBy(500)
+        compose.waitForIdle()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        File(context.getExternalFilesDir(null), "calendar-${width.value.toInt()}-$fontScale.png").outputStream().use {
+        File(context.getExternalFilesDir(null), "calendar-${width.value.toInt()}-$fontScale-$dark.png").outputStream().use {
             compose
                 .onNodeWithTag("viewport")
                 .captureToImage()

@@ -4,11 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
@@ -20,17 +16,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.disabled
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.components.PulseCalendarDay
 import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -134,53 +124,17 @@ internal fun FitnessCalendarDay(
     enabled: Boolean = true,
     inMonth: Boolean = true,
 ) {
-    val colors = PulseTheme.colors
-    Surface(
+    PulseCalendarDay(
+        label = label,
+        description = description,
+        selected = selected,
+        today = today,
+        hasActivity = hasActivity,
         onClick = onClick,
+        modifier = modifier,
         enabled = enabled,
-        modifier =
-            modifier
-                .defaultMinSize(minHeight = 56.dp)
-                .clearAndSetSemantics {
-                    contentDescription = description
-                    this.selected = selected
-                    role = Role.Button
-                    if (enabled) {
-                        onClick {
-                            onClick()
-                            true
-                        }
-                    } else {
-                        disabled()
-                    }
-                },
-        shape = PulseTokens.controlShape,
-        color = if (selected) colors.primary else Color.Transparent,
-        contentColor =
-            when {
-                selected -> colors.onPrimary
-                inMonth -> colors.textPrimary
-                else -> colors.textSecondary
-            },
-        border = if (today) BorderStroke(2.dp, colors.action) else null,
-    ) {
-        Column(
-            Modifier.fillMaxWidth().padding(vertical = PulseTokens.small),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
-        ) {
-            PulseText(label, style = PulseTextStyle.Label)
-            Box(Modifier.size(4.dp)) {
-                if (hasActivity) {
-                    Surface(
-                        Modifier.size(4.dp),
-                        shape = CircleShape,
-                        color = if (selected) colors.onPrimary else colors.success,
-                    ) {}
-                }
-            }
-        }
-    }
+        inMonth = inMonth,
+    )
 }
 
 @Composable

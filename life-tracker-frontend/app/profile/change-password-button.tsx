@@ -15,7 +15,7 @@ export default function ChangePasswordButton() {
         onClick={() => setIsDialogOpen(true)}
         type="button"
       >
-        <KeyRound className="h-4 w-4 text-primary" />
+        <KeyRound className="h-4 w-4 text-action" />
         <span>Change Password</span>
       </Button>
 

@@ -75,7 +75,7 @@ export default function QuickActionDropdown({
             <Button variant="menuItem"
               onClick={() => handleAction(onLogTransaction)}
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/10 text-success">
                 <Receipt className="h-4 w-4" />
               </div>
               <div className="text-left">
@@ -87,7 +87,7 @@ export default function QuickActionDropdown({
             <Button variant="menuItem"
               onClick={() => handleAction(onAddFixedObligation)}
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-info/10 text-info">
                 <Calendar className="h-4 w-4" />
               </div>
               <div className="text-left">
@@ -99,7 +99,7 @@ export default function QuickActionDropdown({
             <Button variant="menuItem"
               onClick={() => handleAction(onAddPlannedPurchase)}
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning/10 text-warning">
                 <ShoppingBag className="h-4 w-4" />
               </div>
               <div className="text-left">
@@ -113,7 +113,7 @@ export default function QuickActionDropdown({
             <Button variant="menuItem"
               onClick={() => handleAction(onAddBudget)}
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-lavender/10 text-foreground">
                 <Target className="h-4 w-4" />
               </div>
               <div className="text-left">
@@ -125,7 +125,7 @@ export default function QuickActionDropdown({
             <Button variant="menuItem"
               onClick={() => handleAction(onAddCategory)}
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-500/10 text-slate-600 dark:text-slate-400">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/10 text-muted-foreground">
                 <Tag className="h-4 w-4" />
               </div>
               <div className="text-left">

@@ -63,12 +63,12 @@ export default async function GaragePage() {
         <header className="mb-10 flex items-start justify-between gap-4">
           <div>
             <Link
-              className="flex items-center gap-1 text-sm font-semibold text-primary transition hover:opacity-80 w-fit"
+              className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80 w-fit"
               href="/dashboard"
             >
               <ArrowLeft className="h-4 w-4" /> Dashboard
             </Link>
-            <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-primary uppercase">
+            <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-action uppercase">
               PULSE
             </p>
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">

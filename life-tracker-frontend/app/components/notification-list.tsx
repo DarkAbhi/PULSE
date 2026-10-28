@@ -72,7 +72,7 @@ function NotificationCard({ notification, onDismiss }: { notification: AppNotifi
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{notification.source}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-action">{notification.source}</p>
             <h3 className="mt-1 font-semibold text-foreground">{notification.title}</h3>
           </div>
           <Button variant="tertiary" size="sm"

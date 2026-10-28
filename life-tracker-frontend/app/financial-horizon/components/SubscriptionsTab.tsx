@@ -125,13 +125,13 @@ export default function SubscriptionsTab({
     switch (status) {
       case "active":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-bold text-success border border-success/20">
             <CheckCircle2 className="h-3 w-3" /> Active
           </span>
         );
       case "paused":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20">
+          <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2.5 py-0.5 text-xs font-bold text-warning border border-warning/20">
             <PauseCircle className="h-3 w-3" /> Paused
           </span>
         );
@@ -149,13 +149,13 @@ export default function SubscriptionsTab({
   const getCycleBadge = (cycle: string) => {
     if (cycle === "yearly") {
       return (
-        <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-xs font-semibold text-purple-600 dark:text-purple-400">
+        <span className="rounded-md bg-lavender/10 px-2 py-0.5 text-xs font-semibold text-foreground">
           Yearly
         </span>
       );
     }
     return (
-      <span className="rounded-md bg-sky-500/10 px-2 py-0.5 text-xs font-semibold text-sky-600 dark:text-sky-400">
+      <span className="rounded-md bg-info/10 px-2 py-0.5 text-xs font-semibold text-info">
         Monthly
       </span>
     );
@@ -171,7 +171,7 @@ export default function SubscriptionsTab({
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Monthly Subscription Burn
             </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-lavender/10 text-foreground">
               <Flame className="h-5 w-5" />
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function SubscriptionsTab({
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Annual Outlay
             </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-lavender/10 text-foreground">
               <TrendingUp className="h-5 w-5" />
             </div>
           </div>
@@ -221,7 +221,7 @@ export default function SubscriptionsTab({
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Active Subscriptions
             </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/10 text-success">
               <CreditCard className="h-5 w-5" />
             </div>
           </div>
@@ -244,7 +244,7 @@ export default function SubscriptionsTab({
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Next Upcoming Renewal
             </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10 text-warning">
               <Calendar className="h-5 w-5" />
             </div>
           </div>
@@ -259,7 +259,7 @@ export default function SubscriptionsTab({
                   {nearestRenewal.amount.toLocaleString()}
                 </span>
               </div>
-              <p className="mt-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+              <p className="mt-1 text-xs font-medium text-warning">
                 Renews on{" "}
                 {new Date(nearestRenewal.next_renewal_date).toLocaleDateString(
                   undefined,
@@ -361,7 +361,7 @@ export default function SubscriptionsTab({
                   sub.status === "cancelled"
                     ? "border-border/50 opacity-60"
                     : sub.status === "paused"
-                    ? "border-amber-500/30 bg-amber-500/5"
+                    ? "border-warning/30 bg-warning/5"
                     : "border-border/80"
                 }`}
               >
@@ -428,15 +428,15 @@ export default function SubscriptionsTab({
                     {sub.status === "active" && (
                       <div className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5 text-muted-foreground">
-                          <Calendar className="h-3.5 w-3.5 text-primary" />
+                          <Calendar className="h-3.5 w-3.5 text-action" />
                           Next Renewal:
                         </span>
                         <span
                           className={`font-semibold ${
                             daysLeft <= 3
-                              ? "text-rose-600 dark:text-rose-400 font-bold"
+                              ? "text-destructive dark:text-destructive font-bold"
                               : daysLeft <= 7
-                              ? "text-amber-600 dark:text-amber-400"
+                              ? "text-warning dark:text-warning"
                               : "text-foreground"
                           }`}
                         >
@@ -475,7 +475,7 @@ export default function SubscriptionsTab({
                     onClick={() => onViewTransactions(sub)}
                     title="View payment history"
                   >
-                    <Receipt className="h-3.5 w-3.5 text-primary" />
+                    <Receipt className="h-3.5 w-3.5 text-action" />
                     <span>{sub.linked_transaction_count || 0} Paid</span>
                   </Button>
 

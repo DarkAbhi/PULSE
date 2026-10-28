@@ -823,7 +823,7 @@ export default function FinancialHorizonClient({
         {/* Navigation & Unified Header */}
         <div>
           <Link
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition hover:opacity-80"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-action transition hover:opacity-80"
             href="/dashboard"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Dashboard
@@ -831,7 +831,7 @@ export default function FinancialHorizonClient({
           <div className="mt-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <div className="flex items-center gap-2.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-action">
                   <Compass className="h-6 w-6" />
                 </div>
                 <h1 className="text-3xl font-extrabold text-foreground tracking-tight">

@@ -22,13 +22,13 @@ export default function CategoryDialog({
   const titleId = useId();
 
   const [catName, setCatName] = useState("");
-  const [catColor, setCatColor] = useState("#3b82f6");
+  const [catColor, setCatColor] = useState("#285c70");
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     if (!isOpen) return;
     setCatName("");
-    setCatColor("#3b82f6");
+    setCatColor("#285c70");
     setErrorMsg("");
   }, [isOpen]);
 
@@ -76,7 +76,7 @@ export default function CategoryDialog({
     >
         <div className="flex items-center justify-between border-b border-border pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-action">
               <Tag className="h-5 w-5" />
             </div>
             <h2 className="text-xl font-bold text-foreground" id={titleId}>

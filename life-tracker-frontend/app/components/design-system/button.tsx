@@ -24,17 +24,17 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/20",
+  primary: "bg-primary text-primary-foreground hover:bg-primary-pressed focus-visible:ring-primary/20",
   secondary: "border border-btn-cancel-border bg-btn-cancel-bg text-btn-cancel-text hover:bg-btn-cancel-hover focus-visible:ring-ring/15",
-  tertiary: "text-primary hover:bg-primary/10 focus-visible:ring-primary/20",
-  destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive/20",
+  tertiary: "text-action hover:bg-primary/10 focus-visible:ring-primary/20",
+  destructive: "bg-destructive-soft text-destructive hover:bg-destructive-soft/80 focus-visible:ring-destructive/20",
   destructiveOutline: "border border-destructive/40 text-destructive hover:bg-destructive/10 focus-visible:ring-destructive/20",
-  soft: "border border-primary/20 bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20",
-  warning: "bg-amber-500 text-white hover:bg-amber-600 focus-visible:ring-amber-500/20",
+  soft: "border border-primary/20 bg-primary/10 text-action hover:bg-primary/20 focus-visible:ring-primary/20",
+  warning: "bg-warning-soft text-warning hover:bg-warning-soft/80 focus-visible:ring-warning/20",
   icon: "text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:ring-primary/20",
   iconSecondary: "border border-border bg-card text-foreground hover:bg-secondary focus-visible:ring-primary/20",
   iconDanger: "text-destructive hover:bg-destructive/10 focus-visible:ring-destructive/20",
-  menuItem: "w-full text-foreground hover:bg-primary/10 hover:text-primary focus-visible:ring-primary/20",
+  menuItem: "w-full text-foreground hover:bg-primary/10 hover:text-action focus-visible:ring-primary/20",
 };
 
 const sizes: Record<ButtonSize, string> = {

@@ -58,7 +58,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
               This vehicle may have been deleted or does not exist.
             </p>
             <Link
-              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition hover:opacity-80"
+              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-action transition hover:opacity-80"
               href="/garage"
             >
               <ArrowLeft className="h-4 w-4" /> Back to Garage
@@ -95,14 +95,14 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
       <div className="mx-auto max-w-6xl">
         <div className="flex items-start justify-between gap-4">
           <Link
-            className="flex items-center gap-1 text-sm font-semibold text-primary transition hover:opacity-80 w-fit"
+            className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80 w-fit"
             href="/garage"
           >
             <ArrowLeft className="h-4 w-4" /> Garage
           </Link>
           <DeleteVehicleButton vehicleId={id} vehicleName={data.vehicle_name} />
         </div>
-        <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-primary uppercase">
+        <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-action uppercase">
           VEHICLE HISTORY
         </p>
         <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -111,7 +111,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
         <div className="mt-8 grid gap-8 lg:grid-cols-2">
           <section>
             <h2 className="flex items-center gap-2 text-xl font-semibold">
-              <Fuel className="h-5 w-5 text-primary" /> Fuel fill-ups
+              <Fuel className="h-5 w-5 text-action" /> Fuel fill-ups
             </h2>
             <div className="mt-4 space-y-3">
               {data.fuel_fillups.length === 0 ? (
@@ -129,7 +129,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
                       </p>
                       <span className="flex items-center gap-3">
                         <Link
-                          className="text-sm font-semibold text-primary hover:opacity-85"
+                          className="text-sm font-semibold text-action hover:opacity-85"
                           href={`/garage/${id}?edit=${fill.id}`}
                         >
                           Edit
@@ -159,7 +159,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
           </section>
           <section>
             <h2 className="flex items-center gap-2 text-xl font-semibold">
-              <Wind className="h-5 w-5 text-primary" /> Air fills
+              <Wind className="h-5 w-5 text-action" /> Air fills
             </h2>
             <TirePressureCard
               frontTirePressurePillion={data.front_tire_pressure_pillion}
@@ -195,7 +195,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
         <section className="mt-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-xl font-semibold">
-              <ReceiptText className="h-5 w-5 text-primary" /> Maintenance & expenses
+              <ReceiptText className="h-5 w-5 text-action" /> Maintenance & expenses
             </h2>
             <Link className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90" href={`/garage/${id}?maintenance=new`}>
               <Plus className="h-4 w-4" /> Add record

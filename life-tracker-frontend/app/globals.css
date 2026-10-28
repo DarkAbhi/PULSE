@@ -39,88 +39,138 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
+  --color-primary-pressed: var(--primary-pressed);
+  --color-action: var(--action);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-surface-strong: var(--surface-strong);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-divider: var(--divider);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-coral: var(--coral);
+  --color-sage: var(--sage);
+  --color-sky: var(--sky);
+  --color-lavender: var(--lavender);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-text: var(--inverse-text);
+  --color-inverse-action: var(--inverse-action);
+  --color-btn-cancel-border: var(--btn-cancel-border);
+  --color-btn-cancel-bg: var(--btn-cancel-bg);
+  --color-btn-cancel-text: var(--btn-cancel-text);
+  --color-btn-cancel-hover: var(--btn-cancel-hover);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Shared with Android core/ui/PulseColors.kt. Keep both appearance palettes in sync. */
 :root {
+  color-scheme: light;
   --radius: 0.5rem;
-  
-  /* Light Theme - Cozy Cream, Rich Espresso & Warm Amber */
-  --background: #faf6f0;          /* Warm cozy cream background */
-  --foreground: #2d2219;          /* Deep rich espresso brown text (no pure black) */
-  
-  --card: #fffdfa;                /* Soft milk/cream card background */
-  --card-foreground: #2d2219;     /* Deep rich espresso */
-  
-  --popover: #fffdfa;
-  --popover-foreground: #2d2219;
-  
-  --primary: #c2410c;             /* Rich amber-terracotta orange */
-  --primary-foreground: #faf6f0;  /* Cozy cream contrast */
-  
-  --secondary: #fef08a;           /* Soft glowing yellow-amber */
-  --secondary-foreground: #7c2d12; /* Dark rich brown contrast */
-  
-  --muted: #f4eae0;               /* Warm hazelnut/milk tea tone */
-  --muted-foreground: #7c6e62;    /* Soft coffee ground brown */
-  
-  --accent: #fdf6e2;              /* Warm butter-cream accent */
-  --accent-foreground: #c2410c;   /* Amber-terracotta accent */
-  
-  --destructive: #be123c;         /* Warm raspberry/rose red */
-  --destructive-foreground: #faf6f0;
-  
-  --border: #eaddd0;              /* Soft warm sand/beige border */
-  --input: #dcc2ac;               /* Soft latte brown border */
-  --ring: #c2410c;                /* Rich amber ring */
-
-  /* Chart mappings matching various dashboard spaces */
-  --chart-1: #c2410c;             /* Amber-terracotta */
-  --chart-2: #0f766e;             /* Cozy pine/teal */
-  --chart-3: #0369a1;             /* Warm denim/sky */
-  --chart-4: #4338ca;             /* Indigo */
-  --chart-5: #7c6e62;             /* Coffee brown */
+  --background: #f5f2ea;
+  --foreground: #1c1c1a;
+  --card: #fffdf8;
+  --card-foreground: #1c1c1a;
+  --popover: #fffdf8;
+  --popover-foreground: #1c1c1a;
+  --primary: #edb937;
+  --primary-pressed: #d9a425;
+  --primary-foreground: #1c1c1a;
+  --secondary: #eae7df;
+  --secondary-foreground: #1c1c1a;
+  --muted: #eae7df;
+  --muted-foreground: #605d56;
+  --accent: #f8e7ad;
+  --accent-foreground: #3b3015;
+  --action: #745200;
+  --destructive: #ab3028;
+  --destructive-foreground: #f5f2ea;
+  --destructive-soft: #fbe2db;
+  --border: #d8d4cb;
+  --input: #89857b;
+  --ring: #745200;
+  --surface-strong: #dedad1;
+  --text-tertiary: #625f58;
+  --divider: #e5e1d9;
+  --success: #3e642f;
+  --success-soft: #e3edd9;
+  --warning: #795200;
+  --warning-soft: #f8e7ad;
+  --info: #285c70;
+  --info-soft: #e0eff4;
+  --coral: #d96a4f;
+  --sage: #7e9b65;
+  --sky: #79b9d1;
+  --lavender: #a58ac7;
+  --inverse-surface: #1c1c1a;
+  --inverse-text: #f5f2ea;
+  --inverse-action: #edc660;
+  --chart-1: #edb937;
+  --chart-2: #7e9b65;
+  --chart-3: #79b9d1;
+  --chart-4: #a58ac7;
+  --chart-5: #d96a4f;
+  --btn-cancel-border: var(--border);
+  --btn-cancel-bg: var(--secondary);
+  --btn-cancel-text: var(--secondary-foreground);
+  --btn-cancel-hover: var(--surface-strong);
 }
 
-
 .dark {
-  /* Copy of media query dark theme for manual selector compatibility */
-  --background: #140f0c;
-  --foreground: #faf4eb;
-  
-  --card: #1e1713;
-  --card-foreground: #faf4eb;
-  
-  --popover: #1e1713;
-  --popover-foreground: #faf4eb;
-  
-  --primary: #f59e0b;
-  --primary-foreground: #140f0c;
-  
-  --secondary: #451a03;
-  --secondary-foreground: #fef08a;
-  
-  --muted: #2d2019;
-  --muted-foreground: #a89485;
-  
-  --accent: #2d2019;
-  --accent-foreground: #faf4eb;
-  
-  --destructive: #e11d48;
-  --destructive-foreground: #faf4eb;
-  
-  --border: #33241d;
-  --input: #453229;
-  --ring: #f59e0b;
-  
-  --chart-1: #f59e0b;
-  --chart-2: #14b8a6;
-  --chart-3: #0ea5e9;
-  --chart-4: #6366f1;
-  --chart-5: #a89485;
+  color-scheme: dark;
+  --background: #1c1c1a;
+  --foreground: #f5f2ea;
+  --card: #242420;
+  --card-foreground: #f5f2ea;
+  --popover: #242420;
+  --popover-foreground: #f5f2ea;
+  --primary: #edb937;
+  --primary-pressed: #d9a425;
+  --primary-foreground: #1c1c1a;
+  --secondary: #30302b;
+  --secondary-foreground: #f5f2ea;
+  --muted: #30302b;
+  --muted-foreground: #c8c4ba;
+  --accent: #494022;
+  --accent-foreground: #f8e7ad;
+  --action: #edc660;
+  --destructive: #ffb4a8;
+  --destructive-foreground: #1c1c1a;
+  --destructive-soft: #542c26;
+  --border: #57574d;
+  --input: #979388;
+  --ring: #edc660;
+  --surface-strong: #3b3b34;
+  --text-tertiary: #b5b1a6;
+  --divider: #41413a;
+  --success: #add08e;
+  --success-soft: #2c3e25;
+  --warning: #f0ca6b;
+  --warning-soft: #494022;
+  --info: #a1d6e9;
+  --info-soft: #253f49;
+  --coral: #e88b73;
+  --sage: #9bb681;
+  --sky: #95cde1;
+  --lavender: #bda5d9;
+  --inverse-surface: #f5f2ea;
+  --inverse-text: #1c1c1a;
+  --inverse-action: #745200;
+  --chart-1: #edb937;
+  --chart-2: #9bb681;
+  --chart-3: #95cde1;
+  --chart-4: #bda5d9;
+  --chart-5: #e88b73;
+  --btn-cancel-border: var(--border);
+  --btn-cancel-bg: var(--secondary);
+  --btn-cancel-text: var(--secondary-foreground);
+  --btn-cancel-hover: var(--surface-strong);
 }
 
 @keyframes dropdown-in {

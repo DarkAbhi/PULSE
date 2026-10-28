@@ -21,7 +21,7 @@ export default async function FinancialHorizonPage() {
   const unavailable = (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10">
       <div className="mx-auto max-w-4xl">
-        <Link className="text-sm font-semibold text-primary" href="/dashboard">← Back to Dashboard</Link>
+        <Link className="text-sm font-semibold text-action" href="/dashboard">← Back to Dashboard</Link>
         <h1 className="mt-6 text-3xl font-bold">Financial Horizon</h1>
         <p className="mt-8 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
           We couldn&apos;t reach your financial data. Please try again.
@@ -67,7 +67,7 @@ export default async function FinancialHorizonPage() {
       <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10">
         <div className="mx-auto max-w-4xl">
           <Link
-            className="flex items-center gap-1 text-sm font-semibold text-primary transition hover:opacity-80"
+            className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80"
             href="/dashboard"
           >
             <ArrowLeft className="h-4 w-4" /> Back to Dashboard

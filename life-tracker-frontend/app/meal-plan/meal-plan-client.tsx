@@ -318,12 +318,12 @@ export default function MealPlanClient({
         <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <Link
-              className="flex items-center gap-1 text-sm font-semibold text-primary transition hover:opacity-80 w-fit"
+              className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80 w-fit"
               href="/dashboard"
             >
               <ArrowLeft className="h-4 w-4" /> Dashboard
             </Link>
-            <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-primary uppercase">
+            <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-action uppercase">
               PULSE
             </p>
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -426,7 +426,7 @@ export default function MealPlanClient({
                 {selectedDayObj.dayFull}
               </h2>
               {selectedDayObj.isToday && (
-                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-action">
                   Today
                 </span>
               )}
@@ -622,7 +622,7 @@ export default function MealPlanClient({
         >
           <form onSubmit={handleSubmitAddMeal}>
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-action">
                 <Utensils className="h-5 w-5" />
               </div>
               <div>
@@ -738,7 +738,7 @@ export default function MealPlanClient({
         >
           <form onSubmit={handleSubmitAddMealTime}>
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-action">
                 <Clock className="h-5 w-5" />
               </div>
               <div>
@@ -851,7 +851,7 @@ export default function MealPlanClient({
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-action">
                 <Settings2 className="h-5 w-5" />
               </div>
               <div>

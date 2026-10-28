@@ -1,20 +1,13 @@
-/* Home styling is scoped so other web spaces keep their existing theme. */
+/* Dashboard surfaces share the site theme; hero and finance artwork retain their own colors. */
 .pulse-dashboard {
-  --dashboard-surface: #fff;
-  --dashboard-ink: #24231e;
-  --dashboard-muted: #68665e;
-  --dashboard-green: #e6eddf;
+  --dashboard-surface: var(--card);
+  --dashboard-ink: var(--foreground);
+  --dashboard-muted: var(--muted-foreground);
+  --dashboard-green: var(--success-soft);
   min-height: 100dvh;
   padding: 24px 16px 48px;
-  background: #f6f7fb;
+  background: var(--background);
   color: var(--dashboard-ink);
-}
-.dark .pulse-dashboard {
-  --dashboard-surface: #24251f;
-  --dashboard-ink: #f0efe8;
-  --dashboard-muted: #c5c4ba;
-  --dashboard-green: #2d4026;
-  background: #1c1d19;
 }
 .pulse-dashboard-content { max-width: 1280px; margin-inline: auto; display: grid; gap: 24px; }
 .pulse-hero { position: relative; isolation: isolate; min-width: 0; min-height: 360px; border-radius: 32px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 64px; color: #1a1740; }
@@ -63,7 +56,7 @@
 .pulse-space-link strong { display: block; font-weight: 600; }
 .pulse-space-link span span { display: block; color: var(--dashboard-muted); font-size: 12px; margin-top: 4px; }
 .pulse-dashboard a, .pulse-dashboard button { -webkit-tap-highlight-color: transparent; }
-.pulse-dashboard a:focus-visible, .pulse-dashboard button:focus-visible { outline: 3px solid #6974ed; outline-offset: 4px; }
+.pulse-dashboard a:focus-visible, .pulse-dashboard button:focus-visible { outline: 3px solid var(--ring); outline-offset: 4px; }
 @media (hover: hover) { .pulse-summary-card, .pulse-space-link { transition: box-shadow .2s; } .pulse-horizon-card:hover, .pulse-space-link:hover { box-shadow: 0 8px 24px #00000012; } .pulse-card-cta:hover { filter: brightness(.96); } }
 @media (min-width: 600px) {
   .pulse-dashboard { padding: 32px 24px 64px; }

@@ -89,7 +89,7 @@ export default function PlannedPurchaseDialog({
     >
         <div className="flex items-center justify-between border-b border-border pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10 text-warning">
               <ShoppingBag className="h-5 w-5" />
             </div>
             <h3 id={titleId} className="text-lg font-bold text-foreground">

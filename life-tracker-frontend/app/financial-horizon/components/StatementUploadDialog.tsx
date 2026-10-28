@@ -222,7 +222,7 @@ export default function StatementUploadDialog({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-secondary/30">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary font-bold">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-action font-bold">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
@@ -253,7 +253,7 @@ export default function StatementUploadDialog({
                 isDragOver
                   ? "border-primary bg-primary/5"
                   : selectedFile
-                  ? "border-emerald-500/50 bg-emerald-500/5"
+                  ? "border-success/50 bg-success/5"
                   : "border-border/80 bg-secondary/20 hover:border-primary/50 hover:bg-secondary/40"
               }`}
             >
@@ -266,20 +266,20 @@ export default function StatementUploadDialog({
               />
               {selectedFile ? (
                 <div className="flex flex-col items-center gap-2">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-success/10 text-success">
                     <FileText className="h-6 w-6" />
                   </div>
                   <h4 className="font-bold text-foreground text-sm">{selectedFile.name}</h4>
                   <p className="text-xs text-muted-foreground">
                     {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB PDF Document
                   </p>
-                  <span className="mt-2 text-xs font-semibold text-primary hover:underline">
+                  <span className="mt-2 text-xs font-semibold text-action hover:underline">
                     Click to change file
                   </span>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-2">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-action">
                     <Upload className="h-6 w-6" />
                   </div>
                   <h4 className="font-bold text-foreground text-sm">
@@ -310,7 +310,7 @@ export default function StatementUploadDialog({
           {/* Extracting Loading Indicator */}
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-10 space-y-3">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Loader2 className="h-8 w-8 animate-spin text-action" />
               <p className="text-sm font-semibold text-foreground">
                 Analyzing statement with Google Gemini Gen AI...
               </p>
@@ -345,7 +345,7 @@ export default function StatementUploadDialog({
                   >
                     {copied ? (
                       <>
-                        <Check className="h-3.5 w-3.5 text-emerald-500" /> Copied!
+                        <Check className="h-3.5 w-3.5 text-success" /> Copied!
                       </>
                     ) : (
                       <>
@@ -369,7 +369,7 @@ export default function StatementUploadDialog({
               {/* Statement Overview Badge */}
               <div className="flex items-center gap-3 flex-wrap text-xs rounded-xl border border-border bg-secondary/20 p-3">
                 {extractionResult.data.statementType && (
-                  <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 font-semibold text-primary capitalize">
+                  <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 font-semibold text-action capitalize">
                     {extractionResult.data.statementType.replace("_", " ")}
                   </span>
                 )}
@@ -381,7 +381,7 @@ export default function StatementUploadDialog({
                 {extractionResult.data.totalDebits !== undefined && (
                   <span className="text-muted-foreground">
                     Total Debits:{" "}
-                    <strong className="text-rose-500">
+                    <strong className="text-destructive">
                       ₹{extractionResult.data.totalDebits.toLocaleString("en-IN")}
                     </strong>
                   </span>
@@ -389,7 +389,7 @@ export default function StatementUploadDialog({
                 {extractionResult.data.totalCredits !== undefined && (
                   <span className="text-muted-foreground">
                     Total Credits:{" "}
-                    <strong className="text-emerald-500">
+                    <strong className="text-success">
                       ₹{extractionResult.data.totalCredits.toLocaleString("en-IN")}
                     </strong>
                   </span>
@@ -398,7 +398,7 @@ export default function StatementUploadDialog({
 
               {/* Pure JSON Code View */}
               {activeView === "json" && (
-                <div className="relative rounded-2xl border border-border bg-zinc-950 p-4 font-mono text-xs text-zinc-100 overflow-x-auto max-h-96 leading-relaxed">
+                <div className="relative rounded-2xl border border-border bg-card p-4 font-mono text-xs text-muted-foreground overflow-x-auto max-h-96 leading-relaxed">
                   <pre>{JSON.stringify(JSON.parse(extractionResult.rawJson), null, 2)}</pre>
                 </div>
               )}
@@ -422,7 +422,7 @@ export default function StatementUploadDialog({
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => toggleSelectTx(idx)}
-                            className="mt-0.5 rounded border-border text-primary focus:ring-primary h-4 w-4 shrink-0"
+                            className="mt-0.5 rounded border-border text-action focus:ring-primary h-4 w-4 shrink-0"
                           />
                           <div className="min-w-0">
                             <div className="font-semibold text-foreground truncate text-sm">
@@ -459,7 +459,7 @@ export default function StatementUploadDialog({
 
                           <span
                             className={`font-bold text-sm ${
-                              tx.type === "credit" ? "text-emerald-500" : "text-foreground"
+                              tx.type === "credit" ? "text-success" : "text-foreground"
                             }`}
                           >
                             ₹{tx.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}

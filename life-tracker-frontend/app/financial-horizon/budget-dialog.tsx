@@ -95,7 +95,7 @@ export default function BudgetDialog({
     >
         <div className="flex items-center justify-between border-b border-border pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-action">
               <Target className="h-5 w-5" />
             </div>
             <h2 className="text-xl font-bold text-foreground" id={titleId}>

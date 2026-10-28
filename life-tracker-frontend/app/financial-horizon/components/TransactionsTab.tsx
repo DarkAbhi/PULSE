@@ -60,7 +60,7 @@ export default function TransactionsTab({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-primary" />
+            <Receipt className="h-5 w-5 text-action" />
             <h2 className="text-xl font-bold text-foreground">Transaction History</h2>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function TransactionsTab({
                 >
                   <span
                     className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: cat.color || "#64748b" }}
+                    style={{ backgroundColor: cat.color || "#605d56" }}
                   />
                   <span>{cat.name}</span>
                   {count > 0 && (
@@ -182,7 +182,7 @@ export default function TransactionsTab({
         <div className="space-y-3">
           {filteredTransactions.map((tx) => {
             const matchingCat = categories.find((c) => c.id === tx.category_id || c.name === tx.category_name);
-            const catColor = matchingCat?.color || "#64748b";
+            const catColor = matchingCat?.color || "#605d56";
             const isCredit = tx.type === "credit";
 
             const formattedDate = tx.transaction_date
@@ -220,14 +220,14 @@ export default function TransactionsTab({
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
                           isCredit
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
-                            : "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
+                            ? "bg-success/10 border-success/30 text-success"
+                            : "bg-destructive/10 border-destructive/30 text-destructive"
                         }`}
                       >
                         {isCredit ? "Credit" : "Debit"}
                       </span>
                       {tx.budget_name && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-medium text-primary">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-medium text-action">
                           <Wallet className="h-3 w-3" /> {tx.budget_name}
                         </span>
                       )}
@@ -245,7 +245,7 @@ export default function TransactionsTab({
                 <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
                   <span
                     className={`font-extrabold text-lg ${
-                      isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+                      isCredit ? "text-success dark:text-success" : "text-foreground"
                     }`}
                     suppressHydrationWarning
                   >

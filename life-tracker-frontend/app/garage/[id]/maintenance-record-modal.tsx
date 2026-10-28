@@ -96,14 +96,14 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
       <section className="mt-6 rounded-xl border border-border p-4">
         <h3 className="font-semibold">Receipts and service bills</h3>
         {!record ? <p className="mt-1 text-sm text-muted-foreground">Save this record first, then reopen it to attach receipts or bills.</p> : <>
-          <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-border px-3 py-2 text-sm font-semibold text-primary hover:bg-accent">
+          <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-border px-3 py-2 text-sm font-semibold text-action hover:bg-accent">
             {isUploading ? "Uploading…" : "Upload file"}
             <input className="sr-only" disabled={isUploading} type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAttachment(file); event.currentTarget.value = ""; }} />
           </label>
           <p className="mt-2 text-xs text-muted-foreground">Each upload is saved privately with a unique filename. Your original filename is kept for display and downloads. Maximum 10 MB per file.</p>
           {attachments.length > 0 && <ul className="mt-3 space-y-2">{attachments.map((attachment) => <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm" key={attachment.id}>
             <div className="min-w-0">
-              <a className="break-all font-medium text-primary hover:underline" href={`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments/${attachment.id}`}>{attachment.file_name}</a>
+              <a className="break-all font-medium text-action hover:underline" href={`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments/${attachment.id}`}>{attachment.file_name}</a>
               <p className="mt-1 text-xs text-muted-foreground">Uploaded <time dateTime={attachment.created_at}>{attachmentDateFormatter.format(new Date(attachment.created_at))} IST</time> · {Math.max(1, Math.round(attachment.size_bytes / 1024))} KB</p>
             </div>
             <Button variant="destructiveOutline" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</Button>

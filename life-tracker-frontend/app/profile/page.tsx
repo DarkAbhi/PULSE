@@ -54,7 +54,7 @@ export default async function ProfilePage() {
   return (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
       <div className="mx-auto max-w-6xl">
-        <Link className="flex items-center gap-1 text-sm font-semibold text-primary transition hover:opacity-80 w-fit" href="/dashboard">
+        <Link className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80 w-fit" href="/dashboard">
           <ArrowLeft className="h-4 w-4" /> Dashboard
         </Link>
 
@@ -70,7 +70,7 @@ export default async function ProfilePage() {
             </div>
           </div>
 
-          <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
+          <p className="text-xs font-semibold tracking-[0.18em] text-action uppercase">
             Personal Profile
           </p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">

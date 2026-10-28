@@ -97,7 +97,7 @@ export default function TirePressureModal({
     <Dialog labelledBy="tire-pressure-title" size="md">
       <form onSubmit={handleSubmit}>
         <div className="flex items-center gap-2">
-          <div className="rounded-xl bg-primary/10 p-2 text-primary">
+          <div className="rounded-xl bg-primary/10 p-2 text-action">
             <Gauge className="h-5 w-5" />
           </div>
           <h2 className="text-xl font-bold tracking-tight text-foreground" id="tire-pressure-title">
@@ -112,7 +112,7 @@ export default function TirePressureModal({
           {/* Solo Riding */}
           <div className="rounded-xl border border-border/70 bg-card p-4">
             <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-              <User className="h-4 w-4 text-primary" /> Solo riding
+              <User className="h-4 w-4 text-action" /> Solo riding
             </h3>
             <div className="mt-3 grid grid-cols-2 gap-3">
               <div>
@@ -153,7 +153,7 @@ export default function TirePressureModal({
           {/* With Pillion */}
           <div className="rounded-xl border border-border/70 bg-card p-4">
             <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-              <Users className="h-4 w-4 text-primary" /> With pillion
+              <Users className="h-4 w-4 text-action" /> With pillion
             </h3>
             <div className="mt-3 grid grid-cols-2 gap-3">
               <div>

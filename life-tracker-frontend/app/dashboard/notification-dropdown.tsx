@@ -148,7 +148,7 @@ export default function NotificationDropdown({
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-action">
                             {n.source}
                           </p>
                           <p className="mt-0.5 text-sm font-semibold text-foreground leading-snug">
@@ -194,7 +194,7 @@ export default function NotificationDropdown({
             <Link
               href="/notifications"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/20"
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary/10 px-4 py-2.5 text-sm font-semibold text-action transition hover:bg-primary/20"
             >
               View all notifications
               <ArrowRight className="h-4 w-4" />

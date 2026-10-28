@@ -146,7 +146,7 @@ export default function TransactionDialog({
     >
         <div className="flex items-center justify-between border-b border-border pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-action">
               <Receipt className="h-5 w-5" />
             </div>
             <h2 className="text-xl font-bold text-foreground" id={titleId}>
@@ -178,14 +178,14 @@ export default function TransactionDialog({
                 type="button"
                 onClick={() => setTxType("debit")}
               >
-                <ArrowDownRight className="h-4 w-4 text-rose-500" />
+                <ArrowDownRight className="h-4 w-4 text-destructive" />
                 Debit (Expense)
               </Button>
               <Button variant={txType === "credit" ? "soft" : "secondary"} size="md"
                 type="button"
                 onClick={() => setTxType("credit")}
               >
-                <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+                <ArrowUpRight className="h-4 w-4 text-success" />
                 Credit (Income / Refund)
               </Button>
             </div>

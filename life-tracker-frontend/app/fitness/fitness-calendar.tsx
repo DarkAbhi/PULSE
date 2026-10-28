@@ -74,11 +74,11 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
                     aria-current={date === today ? "date" : undefined}
                     aria-label={`${dayFormatter.format(new Date(`${date}T00:00:00Z`))}, ${count ? `${count} completed workout${count === 1 ? "" : "s"}` : "no workouts"}`}
                     onClick={() => selectDate(date)}
-                    className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/30 sm:h-11 sm:w-11 sm:text-base ${selected ? "border-transparent bg-primary text-primary-foreground" : count ? "border-emerald-600 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 dark:border-emerald-400 dark:bg-emerald-400/15 dark:text-emerald-200 dark:hover:bg-emerald-400/25" : date.slice(0, 7) !== month ? "border-transparent text-muted-foreground/50 hover:bg-secondary" : "border-transparent text-foreground hover:bg-secondary"}`}
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/30 sm:h-11 sm:w-11 sm:text-base ${selected ? "border-transparent bg-primary text-primary-foreground" : count ? "border-success bg-success-soft text-success hover:bg-success-soft dark:border-success dark:bg-success/15 dark:text-success dark:hover:bg-success/25" : date.slice(0, 7) !== month ? "border-transparent text-muted-foreground/50 hover:bg-secondary" : "border-transparent text-foreground hover:bg-secondary"}`}
                   >
                     {Number(date.slice(8))}
                     {count > 0 && (
-                      <span aria-hidden="true" className="absolute -bottom-1 h-2 w-2 rounded-full bg-emerald-600 ring-2 ring-card dark:bg-emerald-400" />
+                      <span aria-hidden="true" className="absolute -bottom-1 h-2 w-2 rounded-full bg-success ring-2 ring-card dark:bg-success" />
                     )}
                   </button>
                 </div>
@@ -86,7 +86,7 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
             })}
           </div>
           <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
-            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-600 dark:bg-emerald-400" />
+            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-success" />
             Workout completed · Dates in India time
           </p>
         </section>

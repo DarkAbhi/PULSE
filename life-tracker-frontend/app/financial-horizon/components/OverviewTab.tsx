@@ -40,11 +40,11 @@ export default function OverviewTab({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
+              <Target className="h-5 w-5 text-action" />
               <h2 className="text-xl font-bold text-foreground">
                 Active Monthly Budgets
               </h2>
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-action">
                 1st – End of Month
               </span>
             </div>
@@ -97,7 +97,7 @@ export default function OverviewTab({
                   <div>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2.5">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-action">
                           <Wallet className="h-4 w-4" />
                         </div>
                         <div>
@@ -144,7 +144,7 @@ export default function OverviewTab({
                         <span className="text-[11px] font-semibold text-muted-foreground uppercase">
                           Committed/Used
                         </span>
-                        <p className="text-sm font-bold text-amber-600 dark:text-amber-400 mt-0.5">
+                        <p className="text-sm font-bold text-warning mt-0.5">
                           {summary.currency}
                           {b.used_amount.toLocaleString("en-IN", {
                             minimumFractionDigits: 2,
@@ -162,8 +162,8 @@ export default function OverviewTab({
                         <span
                           className={`font-bold ${
                             isOverBudget
-                              ? "text-rose-600 dark:text-rose-400"
-                              : "text-emerald-600 dark:text-emerald-400"
+                              ? "text-destructive dark:text-destructive"
+                              : "text-success dark:text-success"
                           }`}
                         >
                           {summary.currency}
@@ -176,10 +176,10 @@ export default function OverviewTab({
                         <div
                           className={`h-full transition-all duration-500 rounded-full ${
                             isOverBudget
-                              ? "bg-rose-500"
+                              ? "bg-destructive"
                               : pct > 80
-                                ? "bg-amber-500"
-                                : "bg-emerald-500"
+                                ? "bg-warning"
+                                : "bg-success"
                           }`}
                           style={{ width: `${pct}%` }}
                         />
@@ -221,7 +221,7 @@ export default function OverviewTab({
       {/* Future Horizon Projections Section */}
       <section className="rounded-3xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-8 shadow-sm">
         <div className="flex items-center gap-3 mb-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-action">
             <ArrowUpRight className="h-5 w-5" />
           </div>
           <div>
@@ -248,7 +248,7 @@ export default function OverviewTab({
               >
                 <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <span>{label} Horizon</span>
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                  <span className="rounded-full bg-success/10 px-2 py-0.5 text-success font-bold">
                     {months} Months
                   </span>
                 </div>

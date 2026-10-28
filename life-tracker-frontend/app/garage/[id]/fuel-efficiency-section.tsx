@@ -29,7 +29,7 @@ export default function FuelEfficiencySection({
   return (
     <section className="mt-8" aria-labelledby="fuel-efficiency-heading">
       <h2 id="fuel-efficiency-heading" className="flex items-center gap-2 text-xl font-semibold">
-        <Fuel className="h-5 w-5 text-primary" /> Fuel Efficiency
+        <Fuel className="h-5 w-5 text-action" /> Fuel Efficiency
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Monitoring your fuel economy as you go.

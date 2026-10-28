@@ -22,7 +22,7 @@ export default function MaintenanceRecordActions({ vehicleId, recordId }: { vehi
   }
   return <>
     <span className="flex items-center gap-3">
-      <Link className="text-sm font-semibold text-primary hover:opacity-85" href={`/garage/${vehicleId}?edit-maintenance=${recordId}`}>Edit</Link>
+      <Link className="text-sm font-semibold text-action hover:opacity-85" href={`/garage/${vehicleId}?edit-maintenance=${recordId}`}>Edit</Link>
       <Button variant="destructiveOutline" size="sm" onClick={() => setIsOpen(true)} type="button"><Trash2 className="h-4 w-4" /> Delete</Button>
     </span>
     <ConfirmationDialog isOpen={isOpen} onClose={() => setIsOpen(false)} onConfirm={remove} title="Delete this record?" description="This will permanently remove this maintenance or expense record." confirmText="Yes, delete" confirmLoadingText="Deleting…" isLoading={isPending} error={error} variant="destructive" />

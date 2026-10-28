@@ -17,14 +17,14 @@ export default function AboutPulse() {
         <div className="flex items-center gap-4">
           <img src="/pulse-logo.png" alt="Pulse logo" width={72} height={72} className="h-18 w-18 object-contain" />
           <div>
-            <p aria-label="Pulse" className="text-3xl font-bold tracking-[0.18em] text-primary">PULSE</p>
+            <p aria-label="Pulse" className="text-3xl font-bold tracking-[0.18em] text-action">PULSE</p>
             <p className="mt-2 text-sm text-muted-foreground">Your life, in rhythm.</p>
           </div>
         </div>
         <dl className="space-y-3 text-sm sm:min-w-72">
           <div className="flex items-center justify-between gap-6">
             <dt className="text-muted-foreground">Version</dt>
-            <dd className="rounded-full bg-primary/10 px-3 py-1 font-semibold text-primary">v{process.env.NEXT_PUBLIC_PULSE_VERSION}</dd>
+            <dd className="rounded-full bg-primary/10 px-3 py-1 font-semibold text-action">v{process.env.NEXT_PUBLIC_PULSE_VERSION}</dd>
           </div>
           {releasedAt && (
             <div className="flex justify-between gap-6">

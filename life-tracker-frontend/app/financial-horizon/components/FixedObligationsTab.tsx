@@ -23,12 +23,12 @@ import {
 import { HorizonSummary, DeductionItem, SubscriptionItem } from "../../dashboard/financial-horizon-card";
 
 const CATEGORIES = [
-  { id: "housing", label: "Housing & Rent", icon: Home, color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" },
-  { id: "investment", label: "Investments & SIPs", icon: TrendingUp, color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" },
-  { id: "bill", label: "Bills & Utilities", icon: Zap, color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" },
-  { id: "subscription", label: "Subscriptions", icon: Tv, color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20" },
-  { id: "debt", label: "Debt & EMIs", icon: CreditCard, color: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20" },
-  { id: "other", label: "Other Fixed", icon: Receipt, color: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20" },
+  { id: "housing", label: "Housing & Rent", icon: Home, color: "bg-info/10 text-info border-info/20" },
+  { id: "investment", label: "Investments & SIPs", icon: TrendingUp, color: "bg-success/10 text-success border-success/20" },
+  { id: "bill", label: "Bills & Utilities", icon: Zap, color: "bg-warning/10 text-warning border-warning/20" },
+  { id: "subscription", label: "Subscriptions", icon: Tv, color: "bg-lavender/10 text-foreground border-lavender/20" },
+  { id: "debt", label: "Debt & EMIs", icon: CreditCard, color: "bg-destructive/10 text-destructive border-destructive/20" },
+  { id: "other", label: "Other Fixed", icon: Receipt, color: "bg-muted/10 text-muted-foreground border-border/20" },
 ] as const;
 
 function formatOrdinalDay(day: number): string {
@@ -101,7 +101,7 @@ export default function FixedObligationsTab({
         id: "other",
         label: "Other Fixed",
         icon: Receipt,
-        color: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
+        color: "bg-muted/10 text-muted-foreground border-border/20",
       }
     );
   };
@@ -144,12 +144,12 @@ export default function FixedObligationsTab({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Calendar className="h-5 w-5 text-primary" />
+            <Calendar className="h-5 w-5 text-action" />
             <h2 className="text-xl font-bold text-foreground">Fixed Obligations & Subscriptions</h2>
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-action">
               {totalActiveCount} Active
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/10 px-2.5 py-0.5 text-xs font-semibold text-purple-600 dark:text-purple-400 border border-purple-500/20">
+            <span className="inline-flex items-center gap-1 rounded-full bg-lavender/10 px-2.5 py-0.5 text-xs font-semibold text-foreground border border-lavender/20">
               {summary.currency}{totalFixedCommitments.toLocaleString("en-IN", { minimumFractionDigits: 2 })}/mo
             </span>
           </div>
@@ -344,7 +344,7 @@ export default function FixedObligationsTab({
                     title={item.is_active ? "Deactivate obligation" : "Activate obligation"}
                   >
                     {item.is_active ? (
-                      <ToggleRight className="h-6 w-6 text-emerald-500" />
+                      <ToggleRight className="h-6 w-6 text-success" />
                     ) : (
                       <ToggleLeft className="h-6 w-6 text-muted-foreground" />
                     )}
@@ -369,7 +369,7 @@ export default function FixedObligationsTab({
                 </div>
 
                 {linkedBudget && (
-                  <div className="mt-3 flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
+                  <div className="mt-3 flex items-center gap-1.5 text-xs text-action bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
                     <Target className="h-3.5 w-3.5" />
                     <span>Budget: <strong>{linkedBudget.name}</strong></span>
                   </div>
@@ -400,12 +400,12 @@ export default function FixedObligationsTab({
             return (
               <div
                 key={`subscription-${sub.id}`}
-                className="group relative flex flex-col justify-between rounded-2xl border border-purple-500/30 bg-gradient-to-br from-card via-card to-purple-500/5 p-5 shadow-xs"
+                className="group relative flex flex-col justify-between rounded-2xl border border-lavender/30 bg-gradient-to-br from-card via-card to-lavender/5 p-5 shadow-xs"
               >
                 <div>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-lavender/10 text-foreground border-lavender/20">
                         <Tv className="h-5 w-5" />
                       </div>
                       <div>
@@ -413,7 +413,7 @@ export default function FixedObligationsTab({
                           {sub.name}
                         </h4>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="inline-flex items-center gap-1 rounded-md bg-purple-500/10 px-2 py-0.5 text-xs font-semibold text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-lavender/10 px-2 py-0.5 text-xs font-semibold text-foreground border border-lavender/20">
                             Subscription
                           </span>
                           {sub.billing_cycle === "yearly" && (
@@ -440,7 +440,7 @@ export default function FixedObligationsTab({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-1 rounded-lg border border-purple-500/20">
+                    <div className="flex items-center gap-1 text-xs text-foreground bg-lavender/10 px-2 py-1 rounded-lg border border-lavender/20">
                       <Calendar className="h-3 w-3" />
                       <span>
                         {sub.billing_cycle === "yearly"
@@ -451,7 +451,7 @@ export default function FixedObligationsTab({
                   </div>
 
                   {sub.budget_name && (
-                    <div className="mt-3 flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
+                    <div className="mt-3 flex items-center gap-1.5 text-xs text-action bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
                       <Target className="h-3.5 w-3.5" />
                       <span>Budget: <strong>{sub.budget_name}</strong></span>
                     </div>

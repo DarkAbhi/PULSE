@@ -32,24 +32,24 @@ export default async function NotificationsPage() {
 
   if (!response.ok) {
     return (
-      <main className="min-h-screen bg-[#fffaf3] px-6 py-10 text-stone-800 sm:px-10 lg:px-16">
+      <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
         <div className="mx-auto max-w-6xl">
           <Link
-            className="flex items-center gap-1 text-sm font-semibold text-amber-800 transition hover:text-amber-950"
+            className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80"
             href="/dashboard"
           >
             <ArrowLeft className="h-4 w-4" /> Dashboard
           </Link>
           <header className="mt-5">
-            <p className="text-sm font-semibold tracking-[0.18em] text-amber-700">
+            <p className="text-sm font-semibold tracking-[0.18em] text-action">
               NOTIFICATIONS
             </p>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Notification center
             </h1>
           </header>
           <p
-            className="mt-10 rounded-xl bg-red-50 p-4 text-sm text-red-700"
+            className="mt-10 rounded-xl bg-destructive-soft p-4 text-sm text-destructive"
             role="alert"
           >
             We couldn&apos;t load your notifications. Please try again.

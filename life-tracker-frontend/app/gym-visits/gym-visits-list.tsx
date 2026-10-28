@@ -36,7 +36,7 @@ export default function GymVisitsList({ visits }: GymVisitsListProps) {
     <div className="space-y-9">
       {[...visitsByDate].map(([date, dateVisits]) => (
         <section key={date}>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-primary">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-action">
             {date}
           </h2>
           <div className="space-y-3">
@@ -60,7 +60,7 @@ export default function GymVisitsList({ visits }: GymVisitsListProps) {
                     </p>
                   </div>
                 </div>
-                <span className="flex items-center gap-1 text-sm font-semibold text-primary">
+                <span className="flex items-center gap-1 text-sm font-semibold text-action">
                   Open <ArrowRight className="h-4 w-4" />
                 </span>
               </Link>

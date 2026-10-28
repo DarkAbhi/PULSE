@@ -35,6 +35,19 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Docker live reload
+
+`make dev` serves the frontend at http://localhost:3102. Docker uses
+`npm run dev:docker` (Webpack) with one-second file polling so edits on Windows
+bind mounts trigger Fast Refresh. Direct `npm run dev` still uses Turbopack.
+The container keeps `.next` in its own named volume so local builds do not
+overwrite the running development server's cache.
+
+After changing the container configuration or startup command, run `make dev-web`
+once to apply it to the frontend alone. Normal page and stylesheet edits refresh
+automatically; no `make dev-down` is needed. Dependency changes require a frontend
+restart to reinstall packages.
+
 ## Tests
 
 From this directory, with Node.js 24 and npm installed:

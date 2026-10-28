@@ -3,7 +3,7 @@
 PROD_COMPOSE = docker compose --env-file .env --project-name life-prod -f docker-compose.yml --profile prod
 DEV_COMPOSE = docker compose --env-file .env.dev --project-name life-dev -f docker-compose.yml -f docker-compose.dev.yml --profile dev
 
-.PHONY: dev-seed dev-seed-export
+.PHONY: dev-seed dev-seed-export dev-web
 
 dev-seed:
 	$(DEV_COMPOSE) run --rm seed-dev
@@ -64,6 +64,10 @@ dev:
 
 dev-down:
 	$(DEV_COMPOSE) down --remove-orphans
+
+# Apply frontend container/config changes without restarting the other services.
+dev-web:
+	$(DEV_COMPOSE) up -d --no-deps web-dev
 
 dev-logs:
 	$(DEV_COMPOSE) logs -f --tail=200 backend-dev rust-backend-dev web-dev

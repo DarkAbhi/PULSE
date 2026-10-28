@@ -15,7 +15,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -98,7 +100,8 @@ internal fun MealPlanScreen(
         }
     }
     val holder = rememberSaveableStateHolder()
-    val refreshing = state.meals.loading || state.times.loading
+    val pullState = rememberPullToRefreshState()
+    val refreshing = if (state.managing) state.times.loading else state.meals.loading || state.times.loading
     val showAddButton =
         !state.managing &&
             state.draft == null &&
@@ -115,25 +118,35 @@ internal fun MealPlanScreen(
             state.times.error == null &&
             state.times.value != null
     val timeActionClearance = (80 * LocalDensity.current.fontScale.coerceAtLeast(1f)).dp
-    val refresh = { if (canRefresh) vm.refresh() }
+    val refresh = {
+        if (canRefresh) {
+            if (state.managing) vm.refreshTimes() else vm.refresh()
+        }
+    }
     val refreshLabel = stringResource(R.string.pulse_mealplan_refresh)
-    PullToRefreshBox(
-        isRefreshing = refreshing,
-        onRefresh = refresh,
+    Box(
         modifier =
-            Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).semantics {
-                customActions =
-                    if (canRefresh) {
-                        listOf(
-                            CustomAccessibilityAction(refreshLabel) {
-                                refresh()
-                                true
-                            },
-                        )
-                    } else {
-                        emptyList()
-                    }
-            },
+            Modifier
+                .fillMaxSize()
+                .padding(LocalPulseContentPadding.current)
+                .pullToRefresh(
+                    isRefreshing = refreshing && state.draft == null,
+                    state = pullState,
+                    enabled = canRefresh,
+                    onRefresh = refresh,
+                ).semantics {
+                    customActions =
+                        if (canRefresh) {
+                            listOf(
+                                CustomAccessibilityAction(refreshLabel) {
+                                    refresh()
+                                    true
+                                },
+                            )
+                        } else {
+                            emptyList()
+                        }
+                },
     ) {
         PulseAdaptiveLayout(Modifier.align(Alignment.TopCenter).widthIn(max = PulseTokens.contentWidth).fillMaxSize()) { size ->
             holder.SaveableStateProvider(
@@ -344,6 +357,13 @@ internal fun MealPlanScreen(
                     )
                 }
             }
+        }
+        if (state.draft == null) {
+            PullToRefreshDefaults.Indicator(
+                state = pullState,
+                isRefreshing = refreshing,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
         }
     }
     if (discard) {

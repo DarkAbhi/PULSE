@@ -257,8 +257,9 @@ private fun SignedInApp(
                 (
                     !isTab ||
                         route == "horizon" ||
+                        (route == "you" && !isTablet) ||
                         (route == "garage" && hasGarageDetail) ||
-                        nav.previousBackStackEntry?.destination?.route == "notifications"
+                        (route != "you" && nav.previousBackStackEntry?.destination?.route == "notifications")
                 )
         val showBottomBar = !isTablet && route != "gallery" && showBars
         val destinations = listOf("home", "fitness", "horizon", "garage", "mealplan", "you")
@@ -349,7 +350,8 @@ private fun SignedInApp(
                             },
                             navigationIcon = {
                                 if (route == "notifications" ||
-                                    nav.previousBackStackEntry?.destination?.route == "notifications" ||
+                                    (route == "you" && !isTablet) ||
+                                    (route != "you" && nav.previousBackStackEntry?.destination?.route == "notifications") ||
                                     route == "vehicle/{id}" ||
                                     (route == "garage" && hasGarageDetail) ||
                                     route == "workout/{id}"
@@ -361,7 +363,7 @@ private fun SignedInApp(
                                             stringResource(R.string.pulse_app_back_to_notifications)
                                         } else {
                                             when (route) {
-                                                "notifications" ->
+                                                "notifications", "you" ->
                                                     stringResource(
                                                         R.string.pulse_app_back_to_home,
                                                     )

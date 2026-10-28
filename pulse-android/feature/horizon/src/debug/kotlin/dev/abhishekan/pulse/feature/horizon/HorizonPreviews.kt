@@ -1,7 +1,6 @@
 package dev.abhishekan.pulse.feature.horizon
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -16,7 +15,6 @@ import dev.abhishekan.pulse.core.domain.model.HorizonProjection
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -36,7 +34,11 @@ private val sample =
         emptyList(),
         emptyList(),
         emptyList(),
-        listOf(HorizonProjection(3, "3 Months", "2626.50".toBigDecimal())),
+        listOf(
+            HorizonProjection(3, "3 Months", "300000.00".toBigDecimal()),
+            HorizonProjection(6, "6 Months", "600000.00".toBigDecimal()),
+            HorizonProjection(12, "12 Months", "1200000.00".toBigDecimal()),
+        ),
     )
 
 @Preview(name = "Finance phone light", widthDp = 360, heightDp = 800)
@@ -54,10 +56,37 @@ private fun DarkOverview() {
     FinancePreview(true)
 }
 
+@Preview(name = "Projections phone", widthDp = 360)
+@Preview(name = "Projections narrow", widthDp = 320)
+@Preview(name = "Projections tablet", widthDp = 900)
+@Preview(name = "Projections large text", widthDp = 360, fontScale = 2f)
+@Composable
+private fun ProjectionsPreview() {
+    PulseTheme(false) {
+        ProjectionCard(sample)
+    }
+}
+
+@Preview(name = "Projections dark", widthDp = 360)
+@Composable
+private fun DarkProjectionsPreview() {
+    PulseTheme(true) {
+        ProjectionCard(sample)
+    }
+}
+
+@Preview(name = "Projections empty", widthDp = 360)
+@Composable
+private fun EmptyProjectionsPreview() {
+    PulseTheme(false) {
+        ProjectionCard(sample.copy(projections = emptyList()))
+    }
+}
+
 @Composable private fun FinancePreview(dark: Boolean) {
     PulseTheme(dark) {
         Surface {
-            PulseAdaptiveLayout { width ->
+            PulseAdaptiveLayout {
                 Column(
                     Modifier
                         .fillMaxSize()
@@ -67,24 +96,8 @@ private fun DarkOverview() {
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                 ) {
                     PulseText("Preview fixtures", style = PulseTextStyle.Label)
-                    if (width ==
-                        PulseWindowSize.Compact
-                    ) {
-                        OverviewCard(sample, true, {})
-                        CommitmentCard(sample)
-                        ProjectionCard(sample)
-                    } else {
-                        Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
-                            Column(Modifier.weight(1.2f)) { OverviewCard(sample, true, {}) }
-                            Column(
-                                Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
-                            ) {
-                                CommitmentCard(sample)
-                                ProjectionCard(sample)
-                            }
-                        }
-                    }
+                    HorizonMetrics(sample, true, {})
+                    ProjectionCard(sample)
                 }
             }
         }

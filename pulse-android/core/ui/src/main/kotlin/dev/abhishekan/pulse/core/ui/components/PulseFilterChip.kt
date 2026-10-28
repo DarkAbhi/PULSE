@@ -19,6 +19,7 @@ fun PulseFilterChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    showSelectedIcon: Boolean = true,
 ) {
     FilterChip(
         selected,
@@ -30,7 +31,7 @@ fun PulseFilterChip(
         enabled = enabled,
         shape = PulseTheme.shapes.pill,
         leadingIcon =
-            if (selected) {
+            if (selected && showSelectedIcon) {
                 {
                     Icon(
                         painterResource(R.drawable.pulse_check),

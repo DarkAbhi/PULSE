@@ -404,6 +404,13 @@ class HorizonDeviceTest {
     }
 
     @Before fun setup() {
+        if (android.os.Build.VERSION.SDK_INT >= 37) {
+            val instrumentation = InstrumentationRegistry.getInstrumentation()
+            instrumentation.uiAutomation.grantRuntimePermission(
+                instrumentation.targetContext.packageName,
+                android.Manifest.permission.ACCESS_LOCAL_NETWORK,
+            )
+        }
         store = GlobalContext.get().get()
         runBlocking { store.clear() }
         backend = Backend()
@@ -462,7 +469,7 @@ class HorizonDeviceTest {
 
     private fun awaitText(text: String) {
         compose.waitUntil(15_000) {
-            compose.onAllNodesWithText(text, substring = false).fetchSemanticsNodes().isNotEmpty()
+            runCatching { compose.onAllNodesWithText(text, substring = false).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
         }
     }
 
@@ -542,7 +549,7 @@ class HorizonDeviceTest {
         tap("Budgets")
         tap("Add budget")
         field("Name", name)
-        field("Amount (USD)", "150.25")
+        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "150.25")
         tap("Save budget")
         awaitText(name)
     }
@@ -550,6 +557,7 @@ class HorizonDeviceTest {
     private fun screenshot(
         name: String,
         dialog: Boolean = false,
+        tag: String? = null,
     ) {
         compose.waitForIdle()
         val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -560,6 +568,8 @@ class HorizonDeviceTest {
                     compose.onNode(
                         isDialog(),
                     )
+                } else if (tag != null) {
+                    compose.onNode(hasTestTag(tag))
                 } else {
                     compose.onRoot()
                 }
@@ -599,14 +609,25 @@ class HorizonDeviceTest {
 
     @Test fun homeDashboardOpensFinancialHorizon() {
         launchHorizon()
-        awaitText("UNCOMMITTED THIS MONTH")
+        awaitText("Starting Pool (Base Income)")
+        compose.onNodeWithContentDescription("Configure starting pool").assertHasClickAction()
+        screenshot("overview-starting-pool")
+        compose.onNodeWithText("Total Committed").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Net Available Pool").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Surplus").performScrollTo().assertIsDisplayed()
+        screenshot("overview-available-pool")
+        compose.onNodeWithText("Monthly commitments").assertDoesNotExist()
+        compose.onNodeWithText("Budget allocation:", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Recent transaction total:", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Future Horizon Projections").performScrollTo().assertIsDisplayed()
+        screenshot("overview-projections")
     }
 
     @Test fun configurationBudgetsAndObligationsWorkAndHomeRefreshes() {
         launchHorizon()
         screenshot("overview")
-        tap("Configure starting pool")
-        field("Amount (USD)", "2000.25")
+        compose.onNodeWithContentDescription("Configure starting pool").performScrollTo().performClick()
+        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "2000.25")
         field("Currency", "USD")
         tap("Save starting pool")
         awaitText("USD 1910.25")
@@ -626,13 +647,13 @@ class HorizonDeviceTest {
         )
         cardAction("Travel", "Edit")
         field("Name", "Travel fund")
-        field("Amount (USD)", "175.50")
+        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "175.50")
         tap("Save budget")
         awaitText("Travel fund")
         tap("Obligations")
         tap("Add obligation")
         field("Name", "Internet")
-        field("Amount (USD)", "50.25")
+        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "50.25")
         field("Due day (1–31, optional)", "31")
         pick("Budget", "None", "Travel fund")
         tap("Active obligation")
@@ -658,6 +679,75 @@ class HorizonDeviceTest {
         assertEquals(1, backend.items("deductions").size)
     }
 
+    @Test fun transactionLedgerAdaptsBetweenPhoneAndTablet() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        listOf("Bills & Utilities", "Food & Dining", "Entertainment", "Health & Fitness", "Transport").forEachIndexed { index, name ->
+            val id = 10L + index
+            backend.items("categories")[id] =
+                buildJsonObject {
+                    put("id", id)
+                    put("name", name)
+                    put("icon", "tag")
+                    put("color", "#6B65B8")
+                    put("is_default", false)
+                }
+        }
+        try {
+            shell("wm size 720x1600")
+            shell("wm density 320")
+            launchHorizon()
+            tap("Transactions")
+            awaitText("Ledger payment 1")
+            compose.onNode(hasTestTag("ledger-category-filter")).performScrollTo().performClick()
+            awaitText("Choose a category")
+            screenshot("filter-categories-phone", tag = "ledger-category-sheet")
+            compose.onNodeWithText("Search categories").performTextReplacement("Transport")
+            compose.onNode(hasTestTag("ledger-category-option-14")).performClick()
+            awaitText("No transactions")
+            compose.onNode(hasTestTag("ledger-category-filter")).performScrollTo().performClick()
+            awaitText("Choose a category")
+            compose.onNodeWithText("Search categories").performTextReplacement("No such category")
+            awaitText("No categories match. Try another name.")
+            compose.onNodeWithText("Search categories").performTextReplacement("Other")
+            compose.onNode(hasTestTag("ledger-category-option-3")).performClick()
+            awaitText("Ledger payment 1")
+            compose.onNode(hasTestTag("ledger-type-filter")).performScrollTo().performClick()
+            awaitText("Transaction type")
+            compose.onNode(hasText("Credit") and hasClickAction() and hasAnyAncestor(hasTestTag("ledger-category-sheet"))).performClick()
+            awaitText("No transactions")
+            compose.onNode(hasTestTag("ledger-type-filter")).performScrollTo().performClick()
+            awaitText("Transaction type")
+            compose.onNode(hasText("All types") and hasClickAction() and hasAnyAncestor(hasTestTag("ledger-category-sheet"))).performClick()
+            awaitText("Ledger payment 1")
+            compose.onNode(hasTestTag("ledger-category-filter") and hasText("Other")).assertIsDisplayed()
+            screenshot("ledger-phone")
+            compose.onNode(hasTestTag("ledger-sort")).performClick()
+            compose.onNodeWithContentDescription("Oldest first. Tap to show newest first on this page.").assertExists()
+            compose.onNode(hasTestTag("ledger-sort")).performClick()
+            shell("wm size 2400x1800")
+            shell("wm density 320")
+            compose.onNode(hasTestTag("ledger-category-more")).performScrollTo().performClick()
+            awaitText("Choose a category")
+            screenshot("filter-categories-tablet", tag = "ledger-category-sheet")
+            compose
+                .onNode(
+                    hasText("All categories") and hasClickAction() and hasAnyAncestor(hasTestTag("ledger-category-sheet")),
+                ).performClick()
+            awaitText("Ledger payment 1")
+            compose.onNodeWithText("Bills & Utilities", useUnmergedTree = true).assertIsDisplayed()
+            screenshot("ledger-tablet")
+            tap("Ledger payment 1")
+            awaitText("Edit")
+            compose.onNodeWithContentDescription("Edit Ledger payment 1").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithContentDescription("Delete Ledger payment 1").performScrollTo().assertIsDisplayed()
+            assertEquals(0, backend.mutations)
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+        }
+    }
+
     @Test fun transactionPaginationCategoryAssociationsAndCrud() {
         launchHorizon()
         tap("Transactions")
@@ -669,7 +759,7 @@ class HorizonDeviceTest {
         awaitText("The everyday ledger")
         tap("Add transaction")
         field("Name", "Coffee refund")
-        field("Amount (USD)", "12.50")
+        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "12.50")
         pick("Type", "Debit", "Credit")
         pick("Category", "None", "Coffee")
         pick("Budget", "None", "Everyday")
@@ -679,22 +769,24 @@ class HorizonDeviceTest {
         tap("Save transaction")
         awaitText("The everyday ledger")
         field("Search transactions", "Coffee refund")
-        tap("Apply search")
+        awaitText("Page 1 of 1 · 1 transaction")
         awaitText("Coffee refund")
         screenshot("transactions")
         val tx = backend.items("transactions").values.last()
         assertEquals("credit", tx["type"]?.jsonPrimitive?.content)
         assertEquals(1L, tx["budget_id"]?.jsonPrimitive?.long)
         assertEquals(4L, tx["subscription_id"]?.jsonPrimitive?.long)
-        cardAction("Coffee refund", "Edit")
+        compose.onNode(hasTestTag("horizon-record-${backend.items("transactions").keys.last()}")).performScrollTo().performClick()
+        tap("Edit")
         field("Name", "Coffee expense")
         pick("Type", "Credit", "Debit")
         pick("Subscription", "Music", "None")
         tap("Save transaction")
         field("Search transactions", "Coffee expense")
-        tap("Apply search")
+        awaitText("Page 1 of 1 · 1 transaction")
         awaitText("Coffee expense")
-        cardAction("Coffee expense", "Delete")
+        compose.onNode(hasTestTag("horizon-record-${backend.items("transactions").keys.last()}")).performScrollTo().performClick()
+        tap("Delete")
         confirm("Delete")
         awaitText("No transactions")
         assertEquals(21, backend.items("transactions").size)
@@ -713,7 +805,7 @@ class HorizonDeviceTest {
         tap("Subscriptions")
         tap("Add subscription")
         field("Name", "Streaming")
-        field("Amount (USD)", "99.99")
+        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "99.99")
         pick("Billing cycle", "Monthly", "Yearly")
         pick("Status", "Active", "Paused")
         pick("Budget", "None", "Everyday")
@@ -758,7 +850,7 @@ class HorizonDeviceTest {
             tap("Add planned purchase")
             compose.onNodeWithText("Add planned purchase").assertIsDisplayed()
             field("Name", name)
-            field("Amount (USD)", "12.50")
+            field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "12.50")
             field("URL (optional)", "https://example.test/item")
             tap("Save planned purchase")
             awaitText(name)
@@ -779,7 +871,7 @@ class HorizonDeviceTest {
         tap("Transactions")
         tap("Add transaction")
         field("Name", "Unsaved finance")
-        field("Amount (USD)", "0.001")
+        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "0.001")
         tap("Save transaction")
         assertEquals(0, backend.mutations)
         scenario!!.recreate()
@@ -806,7 +898,7 @@ class HorizonDeviceTest {
         tap("Budgets")
         tap("Add budget")
         field("Name", "Lost response")
-        field("Amount (USD)", "30.25")
+        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "30.25")
         backend.loseSave =
             true
         tap("Save budget")
@@ -852,9 +944,9 @@ class HorizonDeviceTest {
             tap("Transactions")
             tap("Add transaction")
             field("Name", "Resized draft")
-            field("Amount (USD)", "75.25")
+            field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "75.25")
             compose.onNodeWithText("Name").performScrollTo().performImeAction()
-            compose.onNodeWithText("Amount (USD)").assertIsFocused()
+            compose.onNodeWithText("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})").assertIsFocused()
             compose.onNodeWithText("Date:", substring = true).performScrollTo().performClick()
             compose.onNode(isDialog()).assertExists()
             screenshot("date-picker", true)
@@ -904,6 +996,6 @@ class HorizonDeviceTest {
         tap("Overview")
         backend.summaryError = false
         tap("Try again")
-        awaitText("UNCOMMITTED THIS MONTH")
+        awaitText("Starting Pool (Base Income)")
     }
 }

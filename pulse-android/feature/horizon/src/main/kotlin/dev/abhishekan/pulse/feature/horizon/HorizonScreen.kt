@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,7 +23,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -35,7 +35,6 @@ import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -81,6 +80,8 @@ internal fun HorizonScreen(
     val scrollStates = rememberSaveableStateHolder()
     var discard by rememberSaveable { mutableStateOf(false) }
     var records by rememberSaveable { mutableStateOf(false) }
+    var ledgerCategory by rememberSaveable { mutableStateOf<Long?>(null) }
+    var ledgerOldestFirst by rememberSaveable { mutableStateOf(false) }
     var deletion by remember { mutableStateOf<Pair<HorizonChange, UiText>?>(null) }
     val cancel = { if (state.draft?.dirty == true) discard = true else vm.discard() }
     BackHandler(state.draft != null || state.busy || state.subscriptionId != null) {
@@ -117,6 +118,7 @@ internal fun HorizonScreen(
                             tab == state.tab,
                             { vm.tab(tab) },
                             enabled = !state.busy,
+                            showSelectedIcon = false,
                         )
                     }
                 }
@@ -243,38 +245,10 @@ internal fun HorizonScreen(
                                     PulseTextStyle.Display,
                                 )
                                 SectionState(state.overview, vm::refreshOverview) { data ->
-                                    if (width != PulseWindowSize.Compact &&
-                                        LocalDensity.current.fontScale <= 1.3f
-                                    ) {
-                                        Row(
-                                            horizontalArrangement =
-                                                Arrangement.spacedBy(
-                                                    PulseTokens.cardPadding,
-                                                ),
-                                        ) {
-                                            Column(Modifier.weight(1.2f)) {
-                                                OverviewCard(data, canMutate) {
-                                                    create(HorizonForm.Config)
-                                                }
-                                            }
-                                            Column(
-                                                Modifier.weight(1f),
-                                                verticalArrangement =
-                                                    Arrangement.spacedBy(
-                                                        PulseTokens.cardPadding,
-                                                    ),
-                                            ) {
-                                                CommitmentCard(data)
-                                                ProjectionCard(data)
-                                            }
-                                        }
-                                    } else {
-                                        OverviewCard(data, canMutate) {
-                                            create(HorizonForm.Config)
-                                        }
-                                        CommitmentCard(data)
-                                        ProjectionCard(data)
+                                    HorizonMetrics(data, canMutate) {
+                                        create(HorizonForm.Config)
                                     }
+                                    ProjectionCard(data)
                                 }
                             }
                             HorizonTab.Transactions -> {
@@ -282,56 +256,54 @@ internal fun HorizonScreen(
                                     stringResource(R.string.pulse_horizon_the_everyday_ledger),
                                     style = PulseTextStyle.Display,
                                 )
-                                TransactionFilters(state, vm)
-                                PulseButton(
-                                    stringResource(
-                                        R.string.pulse_horizon_add_transaction,
-                                    ),
-                                    {
-                                        create(HorizonForm.Transaction)
-                                    },
-                                    enabled = canMutate,
-                                )
-                                PulseTextButton(
-                                    stringResource(
-                                        R.string.pulse_horizon_create_category,
-                                    ),
-                                    {
-                                        create(HorizonForm.Category)
-                                    },
-                                    enabled = canMutate,
-                                )
+                                LedgerFilters(state, vm, ledgerCategory, { ledgerCategory = it }, ledgerOldestFirst, {
+                                    ledgerOldestFirst =
+                                        !ledgerOldestFirst
+                                })
+                                FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
+                                    PulseButton(
+                                        stringResource(
+                                            R.string.pulse_horizon_add_transaction,
+                                        ),
+                                        {
+                                            create(HorizonForm.Transaction)
+                                        },
+                                        enabled = canMutate,
+                                    )
+                                    PulseTextButton(
+                                        stringResource(
+                                            R.string.pulse_horizon_create_category,
+                                        ),
+                                        {
+                                            create(HorizonForm.Category)
+                                        },
+                                        enabled = canMutate,
+                                    )
+                                }
                                 SectionState(state.transactions, {
                                     vm.refreshTransactions()
                                 }) { page ->
-                                    if (page.items.isEmpty()) {
-                                        PulseEmptyState(
-                                            stringResource(R.string.pulse_horizon_no_transactions),
-                                            stringResource(
-                                                R.string.pulse_horizon_try_another_filter_or_record_your_first_transaction,
-                                            ),
-                                        )
+                                    if (currency.isBlank()) {
+                                        PulseText(stringResource(R.string.pulse_horizon_currency_unavailable), style = PulseTextStyle.Label)
                                     }
-                                    page.items.forEach { tx ->
-                                        TransactionCard(
-                                            tx,
-                                            currency,
-                                            canMutate,
-                                            {
-                                                edit(tx.draft(currency))
-                                            },
-                                            {
-                                                remove(
-                                                    HorizonRecord.Transaction,
-                                                    tx.id,
-                                                    uiText(
-                                                        R.string.pulse_horizon_delete_1_s_this_permanently_removes_the_transaction_and,
-                                                        tx.name,
-                                                    ),
-                                                )
-                                            },
-                                        )
-                                    }
+                                    HorizonLedger(
+                                        page,
+                                        currency,
+                                        canMutate,
+                                        { edit(it.draft(currency)) },
+                                        { tx ->
+                                            remove(
+                                                HorizonRecord.Transaction,
+                                                tx.id,
+                                                uiText(
+                                                    R.string.pulse_horizon_delete_1_s_this_permanently_removes_the_transaction_and,
+                                                    tx.name,
+                                                ),
+                                            )
+                                        },
+                                        categoryId = ledgerCategory,
+                                        oldestFirst = ledgerOldestFirst,
+                                    )
                                     PageControls(page, state.transactions.loading || state.busy, {
                                         vm.refreshTransactions(it)
                                     })

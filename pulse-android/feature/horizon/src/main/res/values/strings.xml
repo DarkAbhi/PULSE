@@ -94,20 +94,12 @@
     <string name="pulse_horizon_link_payment_action">"Link payment"</string>
     <string name="pulse_horizon_delete">"Delete"</string>
     <string name="pulse_horizon_loading_your_horizon">"Loading your horizon"</string>
-    <string name="pulse_horizon_uncommitted_this_month">"UNCOMMITTED THIS MONTH"</string>
-    <string name="pulse_horizon_your_commitments_exceed_the_starting_pool">"Your commitments exceed the starting pool."</string>
-    <string name="pulse_horizon_a_little_perspective_on_what_s_available">"A little perspective on what’s available."</string>
-    <string name="pulse_horizon_starting_pool_1_s">"Starting pool: %1$s"</string>
-    <string name="pulse_horizon_set_a_starting_pool_to_make_this_overview_useful">"Set a starting pool to make this overview useful. Zero can also be an intentional setting."</string>
     <string name="pulse_horizon_configure_starting_pool">"Configure starting pool"</string>
-    <string name="pulse_horizon_monthly_commitments">"Monthly commitments"</string>
-    <string name="pulse_horizon_fixed_obligations_1_s">"Fixed obligations: %1$s"</string>
-    <string name="pulse_horizon_subscriptions_1_s">"Subscriptions: %1$s"</string>
-    <string name="pulse_horizon_committed_1_s">"Committed: %1$s%%"</string>
-    <string name="pulse_horizon_budget_allocation_1_s">"Budget allocation: %1$s"</string>
-    <string name="pulse_horizon_recent_transaction_total_1_s">"Recent transaction total: %1$s"</string>
-    <string name="pulse_horizon_totals_and_projections_come_from_pulse_the_summary_s">"Totals and projections come from Pulse. The summary’s transaction total and budget usage use its recent 50 transactions; they are not an all-history balance."</string>
-    <string name="pulse_horizon_looking_ahead">"Looking ahead"</string>
+    <string name="pulse_horizon_future_projections">Future Horizon Projections</string>
+    <plurals name="pulse_horizon_projection_reserve">
+        <item quantity="one">Estimated net uncommitted reserve pool over %1$d month.</item>
+        <item quantity="other">Estimated net uncommitted reserve pool over %1$d months.</item>
+    </plurals>
     <string name="pulse_horizon_no_projections">"No projections"</string>
     <string name="pulse_horizon_projections_appear_when_the_server_provides_them">"Projections appear when the server provides them."</string>
     <string name="pulse_horizon_projected_cumulative_uncommitted_funds_based_on_the_current_monthly">"Projected cumulative uncommitted funds, based on the current monthly plan."</string>
@@ -191,4 +183,28 @@
     </plurals>
     <string name="pulse_horizon_obligation_status_with_due_day">"%1$s · %2$s · Due day %3$s"</string>
     <string name="pulse_horizon_currency_profile">Change your currency in Profile.</string>
+    <string name="pulse_horizon_starting_pool_title">Starting Pool (Base Income)</string>
+    <string name="pulse_horizon_baseline_revenue">Baseline monthly revenue stream</string>
+    <string name="pulse_horizon_total_committed">Total Committed</string>
+    <string name="pulse_horizon_percent_of_pool">%1$s%% of pool</string>
+    <string name="pulse_horizon_net_available_pool">Net Available Pool</string>
+    <string name="pulse_horizon_available_pool_description">Uncommitted cash remaining after fixed obligations &amp; subscriptions</string>
+    <string name="pulse_horizon_surplus">Surplus</string>
+    <string name="pulse_horizon_deficit">Deficit</string>
+    <string name="pulse_horizon_ledger_all_categories">All categories</string>
+    <string name="pulse_horizon_ledger_scope">Displayed records · category filters apply to this page</string>
+    <plurals name="pulse_horizon_ledger_count">
+        <item quantity="one">%1$d transaction</item>
+        <item quantity="other">%1$d transactions</item>
+    </plurals>
+    <string name="pulse_horizon_ledger_spent">%1$s spent</string>
+    <string name="pulse_horizon_ledger_summary">Monthly spending</string>
+    <string name="pulse_horizon_ledger_debits_only">Debits only. Income and refunds are excluded.</string>
+    <string name="pulse_horizon_filter_more">More</string>
+    <string name="pulse_horizon_filter_categories">Choose a category</string>
+    <string name="pulse_horizon_filter_type">Transaction type</string>
+    <string name="pulse_horizon_filter_search_categories">Search categories</string>
+    <string name="pulse_horizon_filter_no_categories">No categories match. Try another name.</string>
+    <string name="pulse_horizon_sort_newest">Newest first. Tap to show oldest first on this page.</string>
+    <string name="pulse_horizon_sort_oldest">Oldest first. Tap to show newest first on this page.</string>
 </resources>

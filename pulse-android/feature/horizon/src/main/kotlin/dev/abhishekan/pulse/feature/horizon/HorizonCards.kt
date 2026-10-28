@@ -14,11 +14,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import dev.abhishekan.pulse.core.domain.model.HorizonBudget
-import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
 import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
-import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseCard
@@ -32,122 +30,6 @@ import dev.abhishekan.pulse.core.ui.currencyText
 import dev.abhishekan.pulse.core.ui.pulseDescription
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
-
-@Composable internal fun OverviewCard(
-    data: HorizonOverview,
-    enabled: Boolean,
-    configure: () -> Unit,
-) {
-    PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-        PulseText(
-            stringResource(R.string.pulse_horizon_uncommitted_this_month),
-            style = PulseTextStyle.Label,
-        )
-        PulseText(currencyText(data.remaining).asString(), style = PulseTextStyle.Metric)
-        PulseText(
-            if (data.isOvercommitted) {
-                stringResource(
-                    R.string.pulse_horizon_your_commitments_exceed_the_starting_pool,
-                )
-            } else {
-                stringResource(
-                    R.string.pulse_horizon_a_little_perspective_on_what_s_available,
-                )
-            },
-        )
-        PulseText(
-            stringResource(
-                R.string.pulse_horizon_starting_pool_1_s,
-                currencyText(data.baseAmount).asString(),
-            ),
-        )
-        if (data.baseAmount.signum() ==
-            0
-        ) {
-            PulseText(
-                stringResource(
-                    R.string.pulse_horizon_set_a_starting_pool_to_make_this_overview_useful,
-                ),
-            )
-        }
-        PulseTextButton(
-            stringResource(R.string.pulse_horizon_configure_starting_pool),
-            configure,
-            enabled = enabled,
-        )
-    }
-}
-
-@Composable internal fun CommitmentCard(data: HorizonOverview) {
-    PulseCard(Modifier.fillMaxWidth()) {
-        PulseText(
-            stringResource(R.string.pulse_horizon_monthly_commitments),
-            style = PulseTextStyle.Title,
-        )
-        PulseText(
-            stringResource(
-                R.string.pulse_horizon_fixed_obligations_1_s,
-                currencyText(data.deductionsTotal).asString(),
-            ),
-        )
-        PulseText(
-            stringResource(
-                R.string.pulse_horizon_subscriptions_1_s,
-                currencyText(data.subscriptionBurn).asString(),
-            ),
-        )
-        PulseText(
-            stringResource(
-                R.string.pulse_horizon_committed_1_s,
-                data.committedPercent.toPlainString(),
-            ),
-        )
-        PulseText(
-            stringResource(
-                R.string.pulse_horizon_budget_allocation_1_s,
-                currencyText(data.allocatedTotal).asString(),
-            ),
-        )
-        PulseText(
-            stringResource(
-                R.string.pulse_horizon_recent_transaction_total_1_s,
-                currencyText(data.transactionsTotal).asString(),
-            ),
-        )
-        PulseText(
-            stringResource(
-                R.string.pulse_horizon_totals_and_projections_come_from_pulse_the_summary_s,
-            ),
-            color = PulseTheme.colors.textSecondary,
-        )
-    }
-}
-
-@Composable internal fun ProjectionCard(data: HorizonOverview) {
-    PulseCard(Modifier.fillMaxWidth()) {
-        PulseText(
-            stringResource(R.string.pulse_horizon_looking_ahead),
-            style = PulseTextStyle.Title,
-        )
-        if (data.projections.isEmpty()) {
-            PulseEmptyState(
-                stringResource(R.string.pulse_horizon_no_projections),
-                stringResource(
-                    R.string.pulse_horizon_projections_appear_when_the_server_provides_them,
-                ),
-            )
-        }
-        data.projections.forEach {
-            PulseText(it.label, style = PulseTextStyle.Label)
-            PulseText(currencyText(it.amount).asString(), style = PulseTextStyle.Metric)
-        }
-        PulseText(
-            stringResource(
-                R.string.pulse_horizon_projected_cumulative_uncommitted_funds_based_on_the_current_monthly,
-            ),
-        )
-    }
-}
 
 @Composable internal fun BudgetCard(
     item: HorizonBudget,

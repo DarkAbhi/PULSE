@@ -211,4 +211,13 @@
     <string name="pulse_horizon_log_transaction">Log a transaction</string>
     <string name="pulse_horizon_add_monthly_budget">Add a monthly budget</string>
     <string name="pulse_horizon_add_category_tag">Add a category tag</string>
+    <string name="pulse_horizon_amount">Amount</string>
+    <string name="pulse_horizon_obligation_intro">Track your recurring bills, EMIs and other fixed expenses.</string>
+    <string name="pulse_horizon_obligation_name_hint">e.g. Rent, Home Loan, Netflix</string>
+    <string name="pulse_horizon_obligation_due_label">Due day (optional)</string>
+    <string name="pulse_horizon_obligation_day_hint">1 – 31</string>
+    <string name="pulse_horizon_obligation_budget_label">Budget (optional)</string>
+    <string name="pulse_horizon_obligation_active_hint">Include this in your upcoming obligations and summaries.</string>
+    <string name="pulse_horizon_obligation_cancel">Cancel</string>
+    <string name="pulse_horizon_obligation_save">Save</string>
 </resources>

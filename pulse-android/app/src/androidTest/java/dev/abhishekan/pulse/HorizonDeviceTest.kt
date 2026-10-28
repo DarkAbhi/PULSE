@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -481,7 +482,7 @@ class HorizonDeviceTest {
                 .getSystemService(android.view.inputmethod.InputMethodManager::class.java)
                 .hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
         }
-        val button = hasText(text) and hasClickAction() and isEnabled()
+        val button = (hasText(text) or hasContentDescription(text)) and hasClickAction() and isEnabled()
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         val node = compose.onAllNodes(button)[0]
         if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) node.performScrollTo()
@@ -500,7 +501,7 @@ class HorizonDeviceTest {
         label: String,
         value: String,
     ) {
-        val field = hasText(label) and hasSetTextAction()
+        val field = (hasText(label) or hasContentDescription(label)) and hasSetTextAction()
         compose.waitUntil(15_000) { compose.onAllNodes(field).fetchSemanticsNodes().isNotEmpty() }
         compose.onNode(field).performScrollTo().performTextReplacement(value)
     }
@@ -643,6 +644,10 @@ class HorizonDeviceTest {
                 actions.forEach { (label, title) ->
                     quickAction(label)
                     awaitText(title)
+                    if (label == "Add fixed obligation") {
+                        screenshot("obligation-$layout")
+                        compose.onNode(hasTestTag("obligation-category-other")).performScrollTo().assertIsDisplayed()
+                    }
                     compose.onNodeWithContentDescription("Back to Financial Horizon").assertIsDisplayed().performClick()
                     awaitText("Overview")
                     compose.onNodeWithContentDescription("Back to Financial Horizon").assertDoesNotExist()
@@ -715,14 +720,17 @@ class HorizonDeviceTest {
         awaitText("Travel fund")
         tap("Obligations")
         quickAction("Add fixed obligation")
+        compose.onNode(hasTestTag("obligation-category-investment")).performScrollTo().performClick()
         field("Name", "Internet")
         field("Amount (${UserCurrency.symbol()})", "50.25")
         field("Due day (1–31, optional)", "31")
-        pick("Budget", "None", "Travel fund")
+        compose.onNode(hasTestTag("obligation-budget")).performScrollTo().performClick()
+        tap("Travel fund")
         tap("Active obligation")
         tap("Save fixed obligation")
         awaitText("Internet")
         val obligation = backend.items("deductions").values.last()
+        assertEquals("investment", obligation["category"]?.jsonPrimitive?.content)
         assertEquals(false, obligation["is_active"]?.jsonPrimitive?.boolean)
         assertEquals(31, obligation["due_day"]?.jsonPrimitive?.int)
         cardAction("Internet", "Edit")

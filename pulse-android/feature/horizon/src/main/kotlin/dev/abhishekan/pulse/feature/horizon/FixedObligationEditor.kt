@@ -1,0 +1,456 @@
+package dev.abhishekan.pulse.feature.horizon
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import dev.abhishekan.pulse.core.domain.model.HorizonOverview
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
+import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
+import dev.abhishekan.pulse.core.ui.components.PulseText
+import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+
+@Composable
+internal fun FixedObligationEditor(
+    draft: HorizonDraft,
+    data: HorizonOverview?,
+    busy: Boolean,
+    error: UiText?,
+    blocked: Boolean,
+    onChange: (HorizonDraft) -> Unit,
+    onSave: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val colors = PulseTheme.colors
+    val keyboard = LocalSoftwareKeyboardController.current
+    val saveLabel = stringResource(R.string.pulse_horizon_save_deduction)
+    val cancelLabel = stringResource(R.string.pulse_horizon_cancel_editing)
+    BoxWithConstraints(Modifier.widthIn(max = 1000.dp).fillMaxWidth().testTag("fixed-obligation-editor")) {
+        val wide = maxWidth >= 600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val categoryWidth = 104.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val categories = listOf("bill", "housing", "investment", "subscription", "debt", "other")
+        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            Row(
+                Modifier.fillMaxWidth().background(colors.surface, RoundedCornerShape(20.dp)).padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    Modifier.size(if (wide) 64.dp else 48.dp).background(colors.primarySoft, RoundedCornerShape(16.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(painterResource(R.drawable.pulse_obligation_document), null, Modifier.size(28.dp), tint = colors.onPrimarySoft)
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PulseText(
+                        stringResource(
+                            draft.kind.editorLabel(
+                                if (draft.id ==
+                                    null
+                                ) {
+                                    EditorAction.Add
+                                } else {
+                                    EditorAction.Edit
+                                },
+                            ),
+                        ),
+                        style = if (wide) PulseTextStyle.Title else PulseTextStyle.Title3,
+                    )
+                    PulseText(
+                        stringResource(R.string.pulse_horizon_obligation_intro),
+                        style = PulseTextStyle.Body2,
+                        color = colors.textSecondary,
+                    )
+                }
+            }
+            Surface(shape = RoundedCornerShape(24.dp), color = colors.surface) {
+                Column(Modifier.padding(if (wide) 28.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                    ObligationFieldPair(wide, {
+                        ObligationInput(
+                            stringResource(R.string.pulse_horizon_name),
+                            draft.name,
+                            { onChange(draft.copy(name = it)) },
+                            stringResource(R.string.pulse_horizon_obligation_name_hint),
+                            !busy,
+                            R.drawable.pulse_obligation_tag,
+                        )
+                    }, {
+                        ObligationInput(
+                            stringResource(R.string.pulse_horizon_amount),
+                            draft.amount,
+                            { onChange(draft.copy(amount = it)) },
+                            "0.00",
+                            !busy,
+                            currency = true,
+                            keyboardType = KeyboardType.Decimal,
+                            accessibilityLabel = stringResource(R.string.pulse_horizon_amount_1_s, UserCurrency.symbol()),
+                        )
+                    })
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        PulseText(stringResource(R.string.pulse_horizon_obligation_category), style = PulseTextStyle.Label)
+                        if (wide) {
+                            Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                categories
+                                    .chunked(3)
+                                    .forEach { categories ->
+                                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                            categories.forEach { category ->
+                                                ObligationCategory(
+                                                    category,
+                                                    draft.category == category,
+                                                    !busy,
+                                                    { onChange(draft.copy(category = category)) },
+                                                    Modifier.weight(1f),
+                                                    wide,
+                                                )
+                                            }
+                                        }
+                                    }
+                            }
+                        } else {
+                            Row(
+                                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).selectableGroup(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                categories.forEach { category ->
+                                    ObligationCategory(
+                                        category,
+                                        draft.category == category,
+                                        !busy,
+                                        { onChange(draft.copy(category = category)) },
+                                        Modifier.width(categoryWidth),
+                                        false,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    ObligationFieldPair(wide, {
+                        ObligationInput(
+                            stringResource(R.string.pulse_horizon_obligation_due_label),
+                            draft.dueDay,
+                            { onChange(draft.copy(dueDay = it)) },
+                            stringResource(R.string.pulse_horizon_obligation_day_hint),
+                            !busy,
+                            R.drawable.pulse_obligation_calendar,
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done,
+                            accessibilityLabel =
+                                stringResource(
+                                    R.string.pulse_horizon_1_s_day_1_31_optional,
+                                    stringResource(R.string.pulse_horizon_due),
+                                ),
+                        )
+                    }, {
+                        ObligationBudget(draft, data, !busy, onChange)
+                    })
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .background(colors.primary.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                            .toggleable(
+                                draft.active,
+                                enabled = !busy,
+                                role = Role.Switch,
+                                onValueChange = { onChange(draft.copy(active = it)) },
+                            ).padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            PulseText(stringResource(R.string.pulse_horizon_active_obligation), style = PulseTextStyle.Label)
+                            PulseText(
+                                stringResource(R.string.pulse_horizon_obligation_active_hint),
+                                style = PulseTextStyle.Body2,
+                                color = colors.textSecondary,
+                            )
+                        }
+                        Switch(
+                            draft.active,
+                            null,
+                            enabled = !busy,
+                            colors =
+                                SwitchDefaults.colors(
+                                    checkedTrackColor = colors.primary,
+                                    checkedThumbColor = colors.surface,
+                                    checkedBorderColor = Color.Transparent,
+                                ),
+                        )
+                    }
+                    error?.let {
+                        PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = colors.error)
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        PulseButton(
+                            stringResource(R.string.pulse_horizon_obligation_cancel),
+                            onCancel,
+                            Modifier.weight(1f).heightIn(min = 56.dp).semantics { contentDescription = cancelLabel },
+                            enabled = !busy,
+                            variant = PulseButtonVariant.Secondary,
+                        )
+                        PulseButton(
+                            if (wide) saveLabel else stringResource(R.string.pulse_horizon_obligation_save),
+                            {
+                                keyboard?.hide()
+                                onSave()
+                            },
+                            Modifier.weight(if (wide) 1.3f else 1f).heightIn(min = 56.dp).semantics { contentDescription = saveLabel },
+                            enabled = !blocked && !busy && data != null,
+                            loading = busy,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ObligationFieldPair(
+    wide: Boolean,
+    first: @Composable () -> Unit,
+    second: @Composable () -> Unit,
+) {
+    if (wide) {
+        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            Box(Modifier.weight(1f)) { first() }
+            Box(Modifier.weight(1f)) { second() }
+        }
+    } else {
+        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            first()
+            second()
+        }
+    }
+}
+
+@Composable
+private fun ObligationInput(
+    label: String,
+    value: String,
+    onChange: (String) -> Unit,
+    hint: String,
+    enabled: Boolean,
+    icon: Int? = null,
+    currency: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    imeAction: ImeAction = ImeAction.Next,
+    accessibilityLabel: String = label,
+) {
+    val colors = PulseTheme.colors
+    val keyboard = LocalSoftwareKeyboardController.current
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        PulseText(label, style = PulseTextStyle.Label)
+        OutlinedTextField(
+            value,
+            onChange,
+            Modifier.fillMaxWidth().semantics { contentDescription = accessibilityLabel },
+            enabled = enabled,
+            singleLine = true,
+            placeholder = { PulseText(hint, color = colors.textSecondary) },
+            leadingIcon = {
+                if (currency) PulseText(UserCurrency.symbol()) else icon?.let { Icon(painterResource(it), null, Modifier.size(20.dp)) }
+            },
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+            keyboardActions = KeyboardActions(onDone = { keyboard?.hide() }),
+            textStyle = PulseTheme.typography.body1,
+            shape = RoundedCornerShape(12.dp),
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = colors.textPrimary,
+                    unfocusedTextColor = colors.textPrimary,
+                    focusedBorderColor = colors.action,
+                    unfocusedBorderColor = colors.border,
+                    focusedContainerColor = colors.surface,
+                    unfocusedContainerColor = colors.surface,
+                    cursorColor = colors.action,
+                    focusedLeadingIconColor = colors.textPrimary,
+                    unfocusedLeadingIconColor = colors.textPrimary,
+                ),
+        )
+    }
+}
+
+@Composable
+private fun ObligationCategory(
+    category: String,
+    selected: Boolean,
+    enabled: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier,
+    wide: Boolean,
+) {
+    val colors = PulseTheme.colors
+    val accent =
+        when (category) {
+            "housing", "bill" -> colors.primary
+            "investment" -> colors.sage
+            "subscription" -> colors.coral
+            "debt" -> colors.lavender
+            else -> colors.textSecondary
+        }
+    val icon =
+        when (category) {
+            "housing" -> R.drawable.pulse_obligation_home
+            "investment" -> R.drawable.pulse_obligation_bank
+            "bill" -> R.drawable.pulse_obligation_document
+            "subscription" -> R.drawable.pulse_obligation_recurring
+            "debt" -> R.drawable.pulse_obligation_card
+            else -> R.drawable.pulse_horizon_more
+        }
+    Surface(
+        modifier
+            .selectable(
+                selected,
+                enabled = enabled,
+                role = Role.RadioButton,
+                onClick = onSelect,
+            ).testTag("obligation-category-$category"),
+        shape = RoundedCornerShape(12.dp),
+        color = if (selected) colors.primary.copy(alpha = 0.13f) else colors.background.copy(alpha = 0.45f),
+        border = BorderStroke(1.dp, if (selected) colors.action else colors.border.copy(alpha = 0.65f)),
+    ) {
+        val badge: @Composable () -> Unit = {
+            Box(Modifier.size(40.dp).background(accent.copy(alpha = 0.2f), CircleShape), contentAlignment = Alignment.Center) {
+                Icon(painterResource(icon), null, Modifier.size(22.dp), tint = colors.textPrimary)
+            }
+        }
+        if (wide) {
+            Row(
+                Modifier.padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                badge()
+                PulseText(horizonOption(category), style = PulseTextStyle.Body2)
+            }
+        } else {
+            Column(
+                Modifier.padding(horizontal = 4.dp, vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                badge()
+                PulseText(horizonOption(category), style = PulseTextStyle.Body2)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ObligationBudget(
+    draft: HorizonDraft,
+    data: HorizonOverview?,
+    enabled: Boolean,
+    onChange: (HorizonDraft) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val colors = PulseTheme.colors
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val selected =
+        if (draft.budgetId ==
+            null
+        ) {
+            stringResource(R.string.pulse_horizon_none)
+        } else {
+            data?.budgets?.find { it.id == draft.budgetId }?.name
+                ?: stringResource(R.string.pulse_horizon_unavailable_selection)
+        }
+    val selectionLabel =
+        stringResource(
+            dev.abhishekan.pulse.core.ui.R.string.pulse_ui_selection_label,
+            stringResource(R.string.pulse_horizon_obligation_budget_label),
+            selected,
+        )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        PulseText(stringResource(R.string.pulse_horizon_obligation_budget_label), style = PulseTextStyle.Label)
+        Box {
+            OutlinedButton(
+                {
+                    focus.clearFocus()
+                    keyboard?.hide()
+                    expanded = true
+                },
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .testTag("obligation-budget")
+                    .semantics { contentDescription = selectionLabel },
+                enabled = enabled,
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, colors.border),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textPrimary),
+            ) {
+                Icon(painterResource(R.drawable.pulse_obligation_wallet), null, Modifier.size(20.dp))
+                PulseText(selected, Modifier.weight(1f).padding(horizontal = 16.dp), color = colors.textSecondary)
+                Icon(painterResource(R.drawable.pulse_obligation_chevron), null, Modifier.size(20.dp))
+            }
+            DropdownMenu(expanded && enabled, { expanded = false }, containerColor = colors.surface) {
+                DropdownMenuItem(text = { PulseText(stringResource(R.string.pulse_horizon_none)) }, onClick = {
+                    expanded = false
+                    onChange(draft.copy(budgetId = null))
+                })
+                data?.budgets.orEmpty().forEach { budget ->
+                    DropdownMenuItem(text = { PulseText(budget.name) }, onClick = {
+                        expanded = false
+                        onChange(draft.copy(budgetId = budget.id))
+                    })
+                }
+            }
+        }
+    }
+}

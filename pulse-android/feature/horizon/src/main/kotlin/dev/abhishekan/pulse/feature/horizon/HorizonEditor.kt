@@ -21,7 +21,6 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -43,6 +42,10 @@ internal fun HorizonEditor(
     onSave: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    if (draft.kind == HorizonForm.Deduction) {
+        FixedObligationEditor(draft, data, busy, error, blocked, onChange, onSave, onCancel)
+        return
+    }
     var datePicker by remember { mutableStateOf(false) }
     var timePicker by remember { mutableStateOf(false) }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -155,29 +158,6 @@ internal fun HorizonEditor(
                     onChange(draft.copy(date = ""))
                 }, enabled = enabled)
             }
-        }
-        if (draft.kind == HorizonForm.Deduction) {
-            Choice(
-                stringResource(
-                    R.string.pulse_horizon_obligation_category,
-                ),
-                draft.category,
-                listOf(
-                    "housing",
-                    "investment",
-                    "bill",
-                    "subscription",
-                    "debt",
-                    "other",
-                ),
-                {
-                    onChange(draft.copy(category = it))
-                },
-                enabled,
-            )
-            PulseCheckbox(draft.active, {
-                onChange(draft.copy(active = it))
-            }, stringResource(R.string.pulse_horizon_active_obligation), enabled = enabled)
         }
         if (draft.kind == HorizonForm.Subscription) {
             Choice(

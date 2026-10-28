@@ -168,3 +168,28 @@ private fun StatesPreview() {
         }
     }
 }
+
+@Preview(name = "Fixed obligation phone", widthDp = 360, heightDp = 1000)
+@Preview(name = "Fixed obligation tablet", widthDp = 1024, heightDp = 900)
+@Preview(name = "Fixed obligation large text", widthDp = 360, heightDp = 1000, fontScale = 2f)
+@Composable
+private fun FixedObligationPreview() {
+    ObligationPreviewContent(false)
+}
+
+@Preview(name = "Fixed obligation dark", widthDp = 360, heightDp = 1000)
+@Composable
+private fun FixedObligationDarkPreview() {
+    ObligationPreviewContent(true)
+}
+
+@Composable
+private fun ObligationPreviewContent(dark: Boolean) {
+    PulseTheme(dark) {
+        Surface(color = PulseTheme.colors.background) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
+                FixedObligationEditor(HorizonDraft(HorizonForm.Deduction), sample, false, null, false, {}, {}, {})
+            }
+        }
+    }
+}

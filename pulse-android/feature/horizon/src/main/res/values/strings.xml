@@ -220,4 +220,7 @@
     <string name="pulse_horizon_obligation_active_hint">Include this in your upcoming obligations and summaries.</string>
     <string name="pulse_horizon_obligation_cancel">Cancel</string>
     <string name="pulse_horizon_obligation_save">Save</string>
+    <string name="pulse_horizon_obligation_save_changes">Save changes</string>
+    <string name="pulse_horizon_obligation_more_actions">Obligation actions</string>
+    <string name="pulse_horizon_obligation_delete">Delete obligation</string>
 </resources>

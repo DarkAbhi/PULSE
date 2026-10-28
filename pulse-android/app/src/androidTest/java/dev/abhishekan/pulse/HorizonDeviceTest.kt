@@ -6,6 +6,10 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
@@ -734,8 +738,22 @@ class HorizonDeviceTest {
         assertEquals(false, obligation["is_active"]?.jsonPrimitive?.boolean)
         assertEquals(31, obligation["due_day"]?.jsonPrimitive?.int)
         cardAction("Internet", "Edit")
+        awaitText("Edit fixed obligation")
+        compose.onNode(hasContentDescription("Name") and hasSetTextAction()).assertTextEquals("Internet")
+        compose.onNode(hasContentDescription("Amount (${UserCurrency.symbol()})") and hasSetTextAction()).assertTextContains("50.25")
+        compose.onNode(hasContentDescription("Due day (1–31, optional)") and hasSetTextAction()).assertTextEquals("31")
+        compose.onNode(hasTestTag("obligation-category-investment")).assertIsSelected()
+        compose.onNode(hasTestTag("obligation-budget")).assertTextContains("Travel fund")
+        compose.onNodeWithText("Active obligation").assertIsOff()
+        screenshot("obligation-edit")
+        compose.onNodeWithContentDescription("Obligation actions").performScrollTo().performClick()
+        tap("Delete obligation")
+        awaitText("Confirm deletion")
+        compose.onNode(hasText("Cancel") and hasAnyAncestor(isDialog())).performClick()
+        awaitText("Edit fixed obligation")
+        assertEquals(2, backend.items("deductions").size)
         tap("Active obligation")
-        tap("Save fixed obligation")
+        tap("Save changes")
         awaitText("Internet")
         tap("Budgets")
         cardAction("Travel fund", "Delete")
@@ -744,10 +762,14 @@ class HorizonDeviceTest {
         awaitText("Everyday")
         assertEquals(JsonNull, backend.items("deductions").values.last()["budget_id"])
         tap("Obligations")
-        cardAction("Internet", "Delete")
+        cardAction("Internet", "Edit")
+        field("Name", "Unsaved name")
+        compose.onNodeWithContentDescription("Obligation actions").performScrollTo().performClick()
+        tap("Delete obligation")
         confirm("Delete")
         awaitText("Rent")
         assertEquals(1, backend.items("deductions").size)
+        compose.onNode(hasTestTag("fixed-obligation-editor")).assertDoesNotExist()
     }
 
     @Test fun transactionLedgerAdaptsBetweenPhoneAndTablet() {

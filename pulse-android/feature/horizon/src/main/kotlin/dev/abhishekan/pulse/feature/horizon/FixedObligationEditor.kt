@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.feature.horizon
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -33,6 +36,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -60,6 +65,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
+import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -73,27 +79,29 @@ internal fun FixedObligationEditor(
     onChange: (HorizonDraft) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
+    onDelete: (() -> Unit)? = null,
 ) {
     val colors = PulseTheme.colors
     val keyboard = LocalSoftwareKeyboardController.current
-    val saveLabel = stringResource(R.string.pulse_horizon_save_deduction)
+    val editing = draft.id != null
+    val saveLabel = stringResource(if (editing) R.string.pulse_horizon_obligation_save_changes else R.string.pulse_horizon_save_deduction)
+    var menuExpanded by remember(draft.id) { mutableStateOf(false) }
     val cancelLabel = stringResource(R.string.pulse_horizon_cancel_editing)
     BoxWithConstraints(Modifier.widthIn(max = 1000.dp).fillMaxWidth().testTag("fixed-obligation-editor")) {
         val wide = maxWidth >= 600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
         val categoryWidth = 104.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
         val categories = listOf("bill", "housing", "investment", "subscription", "debt", "other")
-        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        val categoryScroll = rememberScrollState()
+        val categoryStride = with(LocalDensity.current) { (categoryWidth + 12.dp).roundToPx() }
+        LaunchedEffect(draft.id, wide) {
+            if (!wide) categoryScroll.scrollTo(categories.indexOf(draft.category).coerceAtLeast(0) * categoryStride)
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             Row(
-                Modifier.fillMaxWidth().background(colors.surface, RoundedCornerShape(20.dp)).padding(16.dp),
+                Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    Modifier.size(if (wide) 64.dp else 48.dp).background(colors.primarySoft, RoundedCornerShape(16.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(painterResource(R.drawable.pulse_obligation_document), null, Modifier.size(28.dp), tint = colors.onPrimarySoft)
-                }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     PulseText(
                         stringResource(
@@ -115,9 +123,28 @@ internal fun FixedObligationEditor(
                         color = colors.textSecondary,
                     )
                 }
+                if (editing && onDelete != null) {
+                    Box {
+                        PulseIconButton(
+                            stringResource(R.string.pulse_horizon_obligation_more_actions),
+                            { menuExpanded = true },
+                            enabled = !busy && !blocked,
+                        ) { Icon(painterResource(R.drawable.pulse_horizon_more), null) }
+                        DropdownMenu(menuExpanded && !busy && !blocked, { menuExpanded = false }, containerColor = colors.surface) {
+                            DropdownMenuItem(
+                                text = { PulseText(stringResource(R.string.pulse_horizon_obligation_delete), color = colors.error) },
+                                onClick = {
+                                    menuExpanded = false
+                                    keyboard?.hide()
+                                    onDelete()
+                                },
+                            )
+                        }
+                    }
+                }
             }
-            Surface(shape = RoundedCornerShape(24.dp), color = colors.surface) {
-                Column(Modifier.padding(if (wide) 28.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            Surface(color = Color.Transparent) {
+                Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                     ObligationFieldPair(wide, {
                         ObligationInput(
                             stringResource(R.string.pulse_horizon_name),
@@ -162,7 +189,7 @@ internal fun FixedObligationEditor(
                             }
                         } else {
                             Row(
-                                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).selectableGroup(),
+                                Modifier.fillMaxWidth().horizontalScroll(categoryScroll).selectableGroup(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 categories.forEach { category ->
@@ -200,13 +227,12 @@ internal fun FixedObligationEditor(
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .background(colors.primary.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
                             .toggleable(
                                 draft.active,
                                 enabled = !busy,
                                 role = Role.Switch,
                                 onValueChange = { onChange(draft.copy(active = it)) },
-                            ).padding(16.dp),
+                            ).padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
@@ -242,7 +268,7 @@ internal fun FixedObligationEditor(
                             variant = PulseButtonVariant.Secondary,
                         )
                         PulseButton(
-                            if (wide) saveLabel else stringResource(R.string.pulse_horizon_obligation_save),
+                            if (editing || wide) saveLabel else stringResource(R.string.pulse_horizon_obligation_save),
                             {
                                 keyboard?.hide()
                                 onSave()
@@ -265,12 +291,12 @@ private fun ObligationFieldPair(
     second: @Composable () -> Unit,
 ) {
     if (wide) {
-        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
             Box(Modifier.weight(1f)) { first() }
             Box(Modifier.weight(1f)) { second() }
         }
     } else {
-        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
             first()
             second()
         }
@@ -351,6 +377,17 @@ private fun ObligationCategory(
             "debt" -> R.drawable.pulse_obligation_card
             else -> R.drawable.pulse_horizon_more
         }
+    val tileColor by animateColorAsState(
+        if (selected) colors.primary.copy(alpha = 0.13f) else colors.background.copy(alpha = 0.45f),
+        tween(160),
+        label = "obligation-tile-color",
+    )
+    val borderColor by animateColorAsState(
+        if (selected) colors.action else colors.border.copy(alpha = 0.65f),
+        tween(160),
+        label = "obligation-tile-border",
+    )
+    val iconScale by animateFloatAsState(if (selected) 1.04f else 1f, tween(160), label = "obligation-icon-scale")
     Surface(
         modifier
             .selectable(
@@ -360,12 +397,20 @@ private fun ObligationCategory(
                 onClick = onSelect,
             ).testTag("obligation-category-$category"),
         shape = RoundedCornerShape(12.dp),
-        color = if (selected) colors.primary.copy(alpha = 0.13f) else colors.background.copy(alpha = 0.45f),
-        border = BorderStroke(1.dp, if (selected) colors.action else colors.border.copy(alpha = 0.65f)),
+        color = tileColor,
+        border = BorderStroke(1.dp, borderColor),
     ) {
         val badge: @Composable () -> Unit = {
             Box(Modifier.size(40.dp).background(accent.copy(alpha = 0.2f), CircleShape), contentAlignment = Alignment.Center) {
-                Icon(painterResource(icon), null, Modifier.size(22.dp), tint = colors.textPrimary)
+                Icon(
+                    painterResource(icon),
+                    null,
+                    Modifier.size(22.dp).graphicsLayer {
+                        scaleX = iconScale
+                        scaleY = iconScale
+                    },
+                    tint = colors.textPrimary,
+                )
             }
         }
         if (wide) {

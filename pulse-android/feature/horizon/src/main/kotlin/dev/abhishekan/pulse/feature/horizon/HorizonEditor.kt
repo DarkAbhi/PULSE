@@ -41,9 +41,10 @@ internal fun HorizonEditor(
     onChange: (HorizonDraft) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
+    onDelete: (() -> Unit)? = null,
 ) {
     if (draft.kind == HorizonForm.Deduction) {
-        FixedObligationEditor(draft, data, busy, error, blocked, onChange, onSave, onCancel)
+        FixedObligationEditor(draft, data, busy, error, blocked, onChange, onSave, onCancel, onDelete)
         return
     }
     var datePicker by remember { mutableStateOf(false) }

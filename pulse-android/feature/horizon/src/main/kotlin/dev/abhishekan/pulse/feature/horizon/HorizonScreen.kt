@@ -196,6 +196,19 @@ internal fun HorizonScreen(
                             vm::update,
                             vm::save,
                             cancel,
+                            onDelete =
+                                state.draft.id?.takeIf { state.draft.kind == HorizonForm.Deduction }?.let { id ->
+                                    {
+                                        deletion = HorizonChange.Delete(HorizonRecord.Deduction, id) to
+                                            uiText(
+                                                R.string.pulse_horizon_delete_1_s_this_removes_the_fixed_obligation_and,
+                                                state.overview.value
+                                                    ?.deductions
+                                                    ?.find { it.id == id }
+                                                    ?.name ?: state.draft.name,
+                                            )
+                                    }
+                                },
                         )
                     } else {
                         if (state.draft != null &&
@@ -638,7 +651,12 @@ internal fun HorizonScreen(
             {
                 deletion =
                     null
-                vm.mutate(change)
+                val deletingDraft =
+                    change is HorizonChange.Delete &&
+                        change.kind == HorizonRecord.Deduction &&
+                        state.draft?.kind == HorizonForm.Deduction &&
+                        state.draft.id == change.id
+                vm.mutate(change, closeDraft = deletingDraft)
             },
             { deletion = null },
         )

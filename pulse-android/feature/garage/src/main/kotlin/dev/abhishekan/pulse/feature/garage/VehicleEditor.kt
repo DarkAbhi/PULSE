@@ -67,7 +67,6 @@ internal fun VehicleEditor(
                 modifier.background(colors.primarySoft, RoundedCornerShape(20.dp)).padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                PulseText(stringResource(R.string.pulse_garage_your_garage), style = PulseTextStyle.Overline, color = colors.onPrimarySoft)
                 PulseText(
                     stringResource(R.string.pulse_garage_new_vehicle_title),
                     Modifier.semantics { heading() },

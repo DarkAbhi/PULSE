@@ -7,7 +7,6 @@ import android.os.ParcelFileDescriptor
 import android.view.WindowManager
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -37,6 +36,8 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
@@ -679,7 +680,7 @@ class AccountNotificationsDeviceTest {
         launch()
         openNotifications()
         screenshot("notifications")
-        tap("Dismiss")
+        compose.onNodeWithText("Vehicle care update").performTouchInput { swipeLeft() }
         awaitText("Notifications updated.")
         awaitText("Information only")
         compose.onNodeWithText("Vehicle care update").assertDoesNotExist()
@@ -733,7 +734,9 @@ class AccountNotificationsDeviceTest {
     @Test fun safeRoutingSelectsGarageAndKeepsBackAndDoesNotDismiss() {
         launch()
         openNotifications()
-        tap("Open space")
+        compose.onNodeWithText("Open space").assertDoesNotExist()
+        compose.onNodeWithText("Information only").assert(hasClickAction().not())
+        tap("Vehicle care update")
         awaitText("Your garage")
         compose
             .onNode(
@@ -742,14 +745,15 @@ class AccountNotificationsDeviceTest {
         assertEquals(2, notifications.size)
         compose.onNodeWithContentDescription("Back to notifications").performClick()
         awaitText("Notifications")
-        compose.onAllNodesWithText("Open space").assertCountEquals(1)
+        compose.onNodeWithText("Vehicle care update").assert(hasClickAction())
+        compose.onNodeWithText("Open space").assertDoesNotExist()
     }
 
     @Test fun lostDismissalReconcilesWithoutAutomaticMutationRetry() {
         launch()
         openNotifications()
         loseDismiss = true
-        tap("Dismiss")
+        compose.onNodeWithText("Vehicle care update").performTouchInput { swipeRight() }
         awaitText("I reviewed the server notifications")
         assertEquals(1, notifications.size)
         compose.onNodeWithText("Vehicle care update").assertDoesNotExist()
@@ -840,7 +844,7 @@ class AccountNotificationsDeviceTest {
         notifications[1] = notification(1, "Deleted vehicle", "/garage/999")
         launch()
         openNotifications()
-        tap("Open space")
+        tap("Deleted vehicle")
         awaitText("This record is no longer available. Refresh to see the latest updates.")
         awaitText("Your garage")
         scenario!!.recreate()

@@ -1,17 +1,31 @@
 package dev.abhishekan.pulse.feature.notifications
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -28,11 +42,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
-import dev.abhishekan.pulse.core.ui.pulseDescription
 import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
 import java.time.ZoneId
@@ -112,51 +124,89 @@ internal fun NotificationsScreen(
                     }
                 }
                 items(state.items, key = { it.id }) { notification ->
-                    PulseCard(Modifier.fillMaxWidth()) {
-                        PulseText(
-                            notification.source.ifBlank {
-                                stringResource(R.string.pulse_notifications_source)
-                            },
-                            style = PulseTextStyle.Label,
-                            color = PulseTheme.colors.action,
-                        )
-                        PulseText(notification.title, Modifier.semantics { heading() }, PulseTextStyle.Title)
-                        notification.body?.takeIf(String::isNotBlank)?.let { PulseText(it) }
-                        if (notification.priority in
-                            1..2
+                    val target = NotificationTarget.parse(notification.targetPath)
+                    val openLabel = stringResource(R.string.pulse_notifications_open_title, notification.title)
+                    val dismissLabel = stringResource(R.string.pulse_notifications_dismiss_title, notification.title)
+                    val swipeState = rememberSwipeToDismissBoxState()
+                    LaunchedEffect(swipeState.settledValue) {
+                        if (swipeState.settledValue != SwipeToDismissBoxValue.Settled) {
+                            if (enabled) dismiss(notification.id)
+                            // Keep the confirmed card available if the server rejects the change.
+                            swipeState.reset()
+                        }
+                    }
+                    SwipeToDismissBox(
+                        state = swipeState,
+                        gesturesEnabled = enabled,
+                        modifier = Modifier.animateItem(),
+                        backgroundContent = {
+                            Box(
+                                Modifier
+                                    .fillMaxSize()
+                                    .clip(PulseTokens.cardShape)
+                                    .background(PulseTheme.colors.errorSoft)
+                                    .padding(PulseTokens.cardPadding)
+                                    .clearAndSetSemantics {},
+                                contentAlignment =
+                                    if (swipeState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
+                                        Alignment.CenterStart
+                                    } else {
+                                        Alignment.CenterEnd
+                                    },
+                            ) {
+                                PulseText(stringResource(R.string.pulse_notifications_dismiss), color = PulseTheme.colors.error)
+                            }
+                        },
+                    ) {
+                        PulseCard(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(PulseTokens.cardShape)
+                                .then(
+                                    if (target != null) {
+                                        Modifier.clickable(
+                                            enabled = !state.busy,
+                                            onClickLabel = openLabel,
+                                            role = Role.Button,
+                                        ) { open(target) }
+                                    } else {
+                                        Modifier
+                                    },
+                                ).semantics(mergeDescendants = true) {
+                                    if (enabled) {
+                                        customActions =
+                                            listOf(
+                                                CustomAccessibilityAction(dismissLabel) {
+                                                    dismiss(notification.id)
+                                                    true
+                                                },
+                                            )
+                                    }
+                                },
                         ) {
                             PulseText(
-                                stringResource(R.string.pulse_notifications_priority, notification.priority),
-                                style = PulseTextStyle.Label,
-                            )
-                        }
-                        notification.createdAt?.let {
-                            PulseText(
-                                DateTimeFormatter.ofPattern("d MMM yyyy · HH:mm").withZone(ZoneId.systemDefault()).format(it),
-                            )
-                        }
-                        NotificationTarget.parse(notification.targetPath)?.let { target ->
-                            PulseTextButton(
-                                stringResource(R.string.pulse_notifications_open),
-                                {
-                                    open(target)
+                                notification.source.ifBlank {
+                                    stringResource(R.string.pulse_notifications_source)
                                 },
-                                Modifier.pulseDescription(
-                                    stringResource(R.string.pulse_notifications_open_title, notification.title),
-                                ),
-                                enabled = !state.busy,
+                                style = PulseTextStyle.Label,
+                                color = PulseTheme.colors.action,
                             )
+                            PulseText(notification.title, Modifier.semantics { heading() }, PulseTextStyle.Title)
+                            notification.body?.takeIf(String::isNotBlank)?.let { PulseText(it) }
+                            if (notification.priority in
+                                1..2
+                            ) {
+                                PulseText(
+                                    stringResource(R.string.pulse_notifications_priority, notification.priority),
+                                    style = PulseTextStyle.Label,
+                                )
+                            }
+                            notification.createdAt?.let {
+                                PulseText(
+                                    DateTimeFormatter.ofPattern("d MMM yyyy · HH:mm").withZone(ZoneId.systemDefault()).format(it),
+                                )
+                            }
                         }
-                        PulseTextButton(
-                            stringResource(R.string.pulse_notifications_dismiss),
-                            {
-                                dismiss(notification.id)
-                            },
-                            Modifier.pulseDescription(
-                                stringResource(R.string.pulse_notifications_dismiss_title, notification.title),
-                            ),
-                            enabled = enabled,
-                        )
                     }
                 }
             }

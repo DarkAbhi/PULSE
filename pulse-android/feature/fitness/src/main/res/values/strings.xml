@@ -137,7 +137,7 @@
     <string name="pulse_fitness_selected_day">SELECTED DAY</string>
     <string name="pulse_fitness_add_workout">Add workout</string>
     <string name="pulse_fitness_workouts_for_day">Workouts for this day</string>
-    <string name="pulse_fitness_no_workouts_for_day">No workouts logged. Add a workout to get started.</string>
+    <string name="pulse_fitness_no_workouts_for_day">No workouts logged.</string>
     <string name="pulse_fitness_workout_title">Workout</string>
     <string name="pulse_fitness_workout_number">Workout %1$d</string>
     <string name="pulse_fitness_workout_recorded_legend">Workout recorded</string>

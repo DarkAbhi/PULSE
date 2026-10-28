@@ -15,8 +15,15 @@ url: http://localhost:3000
 - tapOn: Continue
 
 # 2. Dashboard -> Navigate to Garage
-- assertVisible: Your spaces
-- tapOn: Garage
+- assertVisible: "Good to see you,"
+- assertVisible:
+    css: "section[aria-label='Welcome'] h1"
+- scrollUntilVisible:
+    element:
+      css: "nav[aria-label='Your spaces'] a[href='/garage']"
+    direction: DOWN
+- tapOn:
+    css: "nav[aria-label='Your spaces'] a[href='/garage']"
 
 # 3. Garage page verification
 - assertVisible: Garage

@@ -11,4 +11,6 @@ url: http://localhost:3000
     css: "#password"
 - inputText: password
 - tapOn: Continue
-- assertVisible: Your spaces
+- assertVisible: "Good to see you,"
+- assertVisible:
+    css: "section[aria-label='Welcome'] h1"

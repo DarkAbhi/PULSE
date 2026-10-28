@@ -16,7 +16,7 @@ The root modules and shared files are:
 | [`life-tracker-frontend/`](life-tracker-frontend/README.md) | Next.js web app and server-side forwarding of browser API requests to the Go backend. |
 | [`hermes-mcp/`](hermes-mcp/README.md) | MCP server that connects Hermes to gym and garage data and workout tools through the Go API. |
 | [`monitoring/`](monitoring/) | Prometheus metrics and alerts, Loki log storage, Alloy collection, Grafana dashboards, and provisioning. |
-| [`maestro/`](maestro/) | UI test flows for login, profile, and garage screens. |
+| [`maestro/`](maestro/) | Browser flows for login, dashboard, profile/themes, and garage screens. |
 | [`docs/`](docs/) | Shared feature documentation and branding assets. |
 | [`Makefile`](Makefile) | Commands to build, deploy, inspect, and migrate the Docker Compose stacks. |
 | [`docker-compose.yml`](docker-compose.yml), [`docker-compose.dev.yml`](docker-compose.dev.yml) | Production services and development overrides, including Jaeger tracing. |
@@ -505,7 +505,15 @@ separate migrated database with the demo account/data. The flows target
 `INTERNAL_API_BASE_URL` at the Go API. Run `maestro test --headless maestro/`
 from the root. These flows write data: use a disposable database. See the
 [CI browser job](.github/workflows/tests.yml) for the full migration, demo seed,
-and server startup sequence. Seed restore checks separately require `psql`
+and server startup sequence. Dashboard checks cover the greeting/clock, notification
+panel, illustrated finance and fitness cards, navigation to the other spaces, and
+the absence of inline workout logging controls. Profile checks also verify light
+and dark theme selection carries back to the dashboard. The flows scroll to the
+lower cards and shortcuts rather than assuming everything fits in one viewport.
+Maestro currently uses a preset browser viewport; these flows do not constitute
+a mobile/tablet viewport matrix.
+
+Seed restore checks separately require `psql`
 and `TEST_SEED_DATABASE_URL`; see [Development seed data](#development-seed-data).
 
 ## Continuous integration

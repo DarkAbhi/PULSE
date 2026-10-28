@@ -193,14 +193,6 @@ internal fun NotificationsScreen(
                             )
                             PulseText(notification.title, Modifier.semantics { heading() }, PulseTextStyle.Title)
                             notification.body?.takeIf(String::isNotBlank)?.let { PulseText(it) }
-                            if (notification.priority in
-                                1..2
-                            ) {
-                                PulseText(
-                                    stringResource(R.string.pulse_notifications_priority, notification.priority),
-                                    style = PulseTextStyle.Label,
-                                )
-                            }
                             notification.createdAt?.let {
                                 PulseText(
                                     DateTimeFormatter.ofPattern("d MMM yyyy · HH:mm").withZone(ZoneId.systemDefault()).format(it),

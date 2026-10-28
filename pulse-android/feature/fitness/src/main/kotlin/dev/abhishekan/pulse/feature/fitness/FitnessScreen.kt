@@ -3,7 +3,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -235,30 +234,6 @@ private fun SelectedDay(
                     style = PulseTextStyle.Label,
                 )
             }
-            PulseButton(
-                stringResource(R.string.pulse_fitness_add_workout),
-                { confirmRecord = true },
-                Modifier.fillMaxWidth(),
-                enabled = !state.loading && state.error == null && !state.needsReview,
-                loading = state.busy,
-            )
-        }
-        PulseCard(Modifier.fillMaxWidth()) {
-            FlowRow(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium),
-            ) {
-                PulseText(
-                    stringResource(R.string.pulse_fitness_workouts_for_day),
-                    Modifier.weight(1f).semantics { heading() },
-                    PulseTextStyle.Label,
-                )
-                PulseText(
-                    pluralStringResource(R.plurals.pulse_fitness_workout_count, workouts.size, workouts.size),
-                    style = PulseTextStyle.Caption,
-                    color = PulseTheme.colors.textSecondary,
-                )
-            }
             if (workouts.isEmpty()) {
                 PulseText(
                     stringResource(R.string.pulse_fitness_no_workouts_for_day),
@@ -308,6 +283,13 @@ private fun SelectedDay(
                     }
                 }
             }
+            PulseButton(
+                stringResource(R.string.pulse_fitness_add_workout),
+                { confirmRecord = true },
+                Modifier.fillMaxWidth().padding(top = PulseTokens.small),
+                enabled = !state.loading && state.error == null && !state.needsReview,
+                loading = state.busy,
+            )
         }
         state.createdId?.takeIf { id -> workouts.none { it.id == id } }?.let { id ->
             PulseButton(stringResource(R.string.pulse_fitness_open_recorded_workout), {

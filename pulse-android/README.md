@@ -171,7 +171,7 @@ Read/corruption/missing-key failures do not silently erase material. Failed dele
 
 ## Dashboard and design system
 
-Profile, workout, finance, and notifications load in separate jobs. Each section has loading, empty, error and retry presentation. A failed section cannot erase successful sections. Missing profile information falls back to username. Workout status refreshes on resume using the backend's Asia/Kolkata definition of today.
+Profile, workout, finance, and notifications load in separate jobs. Each section has loading, empty, error and retry presentation. A failed section cannot erase successful sections. Missing profile information falls back to username. Workout status refreshes on resume using the account's selected time zone definition of today.
 
 Financial numbers are parsed directly from JSON numeric text into `BigDecimal`, never through `Double`. Display pads short fractions to two places and preserves every supplied decimal place; balances and progress are not fabricated or recomputed. All-zero backend values remain actual zero values.
 
@@ -246,7 +246,7 @@ Fitness adds a month calendar, a selected-day workout list, server-provided metr
 | `PUT/DELETE /gym-visits/{id}/exercises/{exerciseId}` | Replace an exercise’s name/match/sets, or delete it |
 | `DELETE /gym-visits/{id}` | Delete visit and cascade its exercises/sets |
 
-All paths above are relative to the configured `/api/` base. No Go/backend or web contracts were changed. The backend accepts future-dated visits: Android retains them in the calendar through the history endpoint while displaying statistics exactly as returned by overview. Calendar dates and “today” use Asia/Kolkata; Material date-picker UTC milliseconds are converted to calendar dates without applying a device-zone shift. No additional past-only restriction was invented.
+All paths above are relative to the configured `/api/` base. No Go/backend or web contracts were changed. The backend accepts future-dated visits: Android retains them in the calendar through the history endpoint while displaying statistics exactly as returned by overview. “Today” follows the profile time zone (UTC by default); Material date-picker UTC milliseconds are converted to calendar dates without applying a device-zone shift. No additional past-only restriction was invented.
 
 Deleting a visit removes its exercises and sets through the database’s cascade. A linked Apple Watch import and catalogue aliases remain. Confirmation dialogs explain those consequences; exercise deletion removes only that exercise and its sets.
 
@@ -384,7 +384,7 @@ Home and Spaces open the working Meal Plan destination. The native planner provi
 | Consumption | `PATCH /meal-plans/{id}/consumed` with `is_consumed` |
 | Meal times | `GET/POST /meal-times`, `DELETE /meal-times/{id}` |
 
-No backend, web, toolchain, or dependency-version changes. Dates stay LocalDate values through DTO mapping and ISO date serialization, without conversion through midnight instants. Today follows Asia/Kolkata, matching the web client. Week/month/year/leap-day boundaries use java.time calendar arithmetic. Forms use native Pulse date/time picker wrappers, meaningful labels, constrained widths and keyboard actions.
+No backend, web, toolchain, or dependency-version changes. Dates stay LocalDate values through DTO mapping and ISO date serialization, without conversion through midnight instants. Today follows the profile time zone (UTC by default). Week/month/year/leap-day boundaries use java.time calendar arithmetic. Forms use native Pulse date/time picker wrappers, meaningful labels, constrained widths and keyboard actions.
 
 Meal names allow up to the database's 255 Unicode characters; custom meal-time names allow 100. Blank names, invalid dates/times and invalid IDs are blocked. The API accepts both HH:mm and HH:mm:ss; it imposes no start-before-end rule. Android therefore accepts equal endpoints and overnight ranges, labeling overnight ranges explicitly. Default meal times are protected from deletion in both the UI and domain use case. Meal-time editing is not exposed because no update endpoint exists.
 

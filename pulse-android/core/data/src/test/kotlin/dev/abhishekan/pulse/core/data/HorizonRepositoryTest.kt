@@ -75,6 +75,13 @@ class HorizonRepositoryTest {
         )
         val engine =
             MockEngine { request ->
+                if (request.url.encodedPath == "/api/profile") {
+                    return@MockEngine respond(
+                        """{"has_profile":false,"timezone":"UTC"}""",
+                        HttpStatusCode.OK,
+                        io.ktor.http.headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                }
                 val path = request.url.encodedPath
                 if (path != "/api/auth/login") failure?.let { throw it }
                 val mutation = request.method != HttpMethod.Get && path != "/api/auth/login"

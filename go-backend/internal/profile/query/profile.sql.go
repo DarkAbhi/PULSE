@@ -20,6 +20,17 @@ func (q *Queries) GetDisplayName(ctx context.Context, userID int64) (string, err
 	return display_name, err
 }
 
+const getTimeZone = `-- name: GetTimeZone :one
+SELECT timezone FROM user_profiles WHERE user_id=$1
+`
+
+func (q *Queries) GetTimeZone(ctx context.Context, userID int64) (string, error) {
+	row := q.db.QueryRow(ctx, getTimeZone, userID)
+	var timezone string
+	err := row.Scan(&timezone)
+	return timezone, err
+}
+
 const saveDisplayName = `-- name: SaveDisplayName :exec
 INSERT INTO user_profiles (user_id,display_name) VALUES ($1,$2)
 ON CONFLICT (user_id) DO UPDATE SET display_name=EXCLUDED.display_name,updated_at=NOW()
@@ -32,5 +43,20 @@ type SaveDisplayNameParams struct {
 
 func (q *Queries) SaveDisplayName(ctx context.Context, arg SaveDisplayNameParams) error {
 	_, err := q.db.Exec(ctx, saveDisplayName, arg.UserID, arg.DisplayName)
+	return err
+}
+
+const saveTimeZone = `-- name: SaveTimeZone :exec
+INSERT INTO user_profiles (user_id, display_name, timezone) VALUES ($1, '', $2)
+ON CONFLICT (user_id) DO UPDATE SET timezone=EXCLUDED.timezone, updated_at=NOW()
+`
+
+type SaveTimeZoneParams struct {
+	UserID   int64
+	Timezone string
+}
+
+func (q *Queries) SaveTimeZone(ctx context.Context, arg SaveTimeZoneParams) error {
+	_, err := q.db.Exec(ctx, saveTimeZone, arg.UserID, arg.Timezone)
 	return err
 }

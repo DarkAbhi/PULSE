@@ -2,6 +2,10 @@ package dev.abhishekan.pulse.core.network.dto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+@Serializable class TimeZoneDto(
+    val timezone: String,
+)
+
 @Serializable class NameRequest(
     val name: String,
 )

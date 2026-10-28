@@ -30,8 +30,8 @@ WHERE w.user_id = $1 AND a.raw_value = 50
     AND w.start_time >= $2 AND w.start_time <= $3
     AND EXISTS (
         SELECT 1 FROM gym_visits g WHERE g.user_id = w.user_id AND g.created_at <= $3
-        AND (g.created_at AT TIME ZONE 'Asia/Kolkata')::date =
-            (w.start_time AT TIME ZONE 'Asia/Kolkata')::date
+        AND (g.created_at AT TIME ZONE sqlc.arg(timezone)::text)::date =
+            (w.start_time AT TIME ZONE sqlc.arg(timezone)::text)::date
     );
 
 -- name: GetVisit :one

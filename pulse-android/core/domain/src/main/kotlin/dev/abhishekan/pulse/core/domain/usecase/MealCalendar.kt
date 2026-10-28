@@ -1,13 +1,13 @@
 package dev.abhishekan.pulse.core.domain.usecase
 
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import java.time.Clock
 import java.time.LocalDate
-import java.time.ZoneId
 
 class MealCalendar(
     private val clock: Clock,
 ) {
-    fun today(): LocalDate = LocalDate.now(clock.withZone(ZoneId.of("Asia/Kolkata")))
+    fun today(): LocalDate = LocalDate.now(clock.withZone(UserTimeZone.zone))
 
     fun monday(date: LocalDate): LocalDate = date.minusDays((date.dayOfWeek.value - 1).toLong())
 

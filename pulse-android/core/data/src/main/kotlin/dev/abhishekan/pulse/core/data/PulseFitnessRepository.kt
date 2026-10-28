@@ -81,8 +81,7 @@ class PulseFitnessRepository(
                         WorkoutSummary(
                             it.id,
                             time.toLocalDate(),
-                            summaries[it.id]?.timeLabel
-                                ?: time.format(DateTimeFormatter.ofPattern("h:mm a")),
+                            time.format(DateTimeFormatter.ofPattern("h:mm a")),
                         )
                 }
                 FitnessOverview(

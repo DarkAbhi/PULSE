@@ -1,8 +1,9 @@
 package dev.abhishekan.pulse.feature.horizon
+
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 
 enum class HorizonForm(
     @param:androidx.annotation.StringRes val label: Int,
@@ -49,9 +50,20 @@ data class HorizonDraft(
     val icon: String = "tag",
     val color: String = "#64748b",
     val dirty: Boolean = false,
+    val zone: String = UserTimeZone.zone.id,
+    val originalInstant: String = "",
 ) {
     fun change(): HorizonChange {
         val value by lazy { amount.toBigDecimal() }
+
+        fun transactionInstant(): java.time.Instant {
+            val location = java.time.ZoneId.of(zone)
+            val local = LocalDate.parse(date).atTime(LocalTime.parse(time))
+            val original = originalInstant.takeIf(String::isNotBlank)?.let(java.time.Instant::parse)
+            if (original?.atZone(location)?.toLocalDateTime() == local) return original
+            require(location.rules.getValidOffsets(local).isNotEmpty())
+            return local.atZone(location).toInstant()
+        }
 
         fun optionalDay() = dueDay.takeIf { it.isNotBlank() }?.toInt()
         return when (kind) {
@@ -73,13 +85,7 @@ data class HorizonDraft(
                     name.trim(),
                     value,
                     type,
-                    LocalDate
-                        .parse(
-                            date,
-                        ).atTime(
-                            LocalTime.parse(time),
-                        ).atZone(ZoneId.systemDefault())
-                        .toInstant(),
+                    transactionInstant(),
                     categoryId,
                     budgetId,
                     subscriptionId,
@@ -142,6 +148,8 @@ data class HorizonDraft(
             icon,
             color,
             dirty.toString(),
+            zone,
+            originalInstant,
         )
 
     companion object {
@@ -171,6 +179,8 @@ data class HorizonDraft(
                 v[19],
                 v[20],
                 v[21].toBoolean(),
+                v.getOrNull(22) ?: UserTimeZone.zone.id,
+                v.getOrNull(23).orEmpty(),
             )
     }
 }

@@ -1,9 +1,11 @@
 package dev.abhishekan.pulse.feature.horizon
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.usecase.ApplyHorizonChange
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizonTransactions
 import dev.abhishekan.pulse.core.domain.usecase.GetPlannedPurchases
@@ -173,7 +175,7 @@ class HorizonViewModel(
 
     fun newForm(kind: HorizonForm) {
         val data = state.value.overview.value
-        val now = ZonedDateTime.now()
+        val now = ZonedDateTime.now(UserTimeZone.zone)
         edit(
             HorizonDraft(
                 kind,

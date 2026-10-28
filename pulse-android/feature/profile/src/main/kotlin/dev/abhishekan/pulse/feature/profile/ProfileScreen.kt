@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.APIKey
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -81,7 +82,6 @@ import dev.abhishekan.pulse.core.ui.label
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.uiText
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -114,6 +114,8 @@ fun ProfileRoute(
     onSensitiveEditsChanged: (Boolean) -> Unit = {},
     debugContent: @Composable () -> Unit = {},
 ) {
+    val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refreshProfile() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.uncertain }, viewModel::consumeMessage)
     val context = LocalContext.current
@@ -148,7 +150,9 @@ fun ProfileRoute(
             onEditorOpened()
         }
     }
-    ProfileScreen(state, username, theme, appearanceError, onTheme, loggingOut, otherEdits, onLogout, viewModel, debugContent)
+    androidx.compose.runtime.key(timeZone) {
+        ProfileScreen(state, username, theme, appearanceError, onTheme, loggingOut, otherEdits, onLogout, viewModel, debugContent)
+    }
     state.token?.let { created ->
         PulseDialog(
             stringResource(R.string.pulse_profile_token_title),
@@ -320,6 +324,7 @@ internal fun ProfileScreen(
                                         !state.busy && !state.uncertain,
                                 )
                             }
+                            TimeZoneCard(state, vm::timeZone)
                             PulseCard(Modifier.fillMaxWidth()) {
                                 PulseText(stringResource(R.string.pulse_profile_appearance), style = PulseTextStyle.Title)
                                 Column(Modifier.selectableGroup()) {
@@ -604,7 +609,7 @@ private fun APIKeysCard(
                 stringResource(
                     R.string.pulse_profile_key_metadata,
                     key.prefix,
-                    DateTimeFormatter.ofPattern("d MMM yyyy").withZone(ZoneId.systemDefault()).format(key.createdAt),
+                    DateTimeFormatter.ofPattern("d MMM yyyy").withZone(UserTimeZone.zone).format(key.createdAt),
                 ),
             )
             PulseTextButton(

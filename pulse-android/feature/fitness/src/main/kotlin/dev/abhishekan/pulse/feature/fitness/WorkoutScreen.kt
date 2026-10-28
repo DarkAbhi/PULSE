@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.fitness
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
@@ -55,6 +57,8 @@ fun WorkoutRoute(
     viewModel: WorkoutViewModel = koinViewModel(),
     onEditorTitleChanged: (String?) -> Unit = {},
 ) {
+    val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val editorTitle =
         state.editor?.let {
@@ -89,27 +93,29 @@ fun WorkoutRoute(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
     LaunchedEffect(state.editor?.dirty) { onDraftChanged(state.editor?.dirty == true) }
     LaunchedEffect(state.deleted) { if (state.deleted) onDeleted() }
-    WorkoutScreen(
-        state,
-        {
-            viewModel.refresh()
-        },
-        viewModel::edit,
-        viewModel::removeWorkout,
-        viewModel::removeExercise,
-        viewModel::acknowledgeReview,
-        viewModel::nameChanged,
-        viewModel::setChanged,
-        viewModel::addSet,
-        viewModel::removeSet,
-        viewModel::choose,
-        viewModel::clearMatch,
-        viewModel::findMatches,
-        viewModel::rememberAlias,
-        viewModel::save,
-        close,
-        onSearchQuery = viewModel::searchCatalogue,
-    )
+    androidx.compose.runtime.key(timeZone) {
+        WorkoutScreen(
+            state,
+            {
+                viewModel.refresh()
+            },
+            viewModel::edit,
+            viewModel::removeWorkout,
+            viewModel::removeExercise,
+            viewModel::acknowledgeReview,
+            viewModel::nameChanged,
+            viewModel::setChanged,
+            viewModel::addSet,
+            viewModel::removeSet,
+            viewModel::choose,
+            viewModel::clearMatch,
+            viewModel::findMatches,
+            viewModel::rememberAlias,
+            viewModel::save,
+            close,
+            onSearchQuery = viewModel::searchCatalogue,
+        )
+    }
     if (discard) {
         PulseDialog(
             stringResource(R.string.pulse_fitness_discard_exercise_edits),

@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.home
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -48,22 +50,30 @@ fun HomeRoute(
     onProfile: (() -> Unit)? = null,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
+    val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(timeZone) {
+        viewModel.retryProfile()
+        viewModel.retryWorkout()
+        viewModel.retryHorizon()
+    }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val profile = (state.profile as? Section.Content)?.value
     androidx.compose.runtime.LaunchedEffect(profile) { if (profile?.hasProfile == false) onMissingProfile() }
-    // The backend computes today in Asia/Kolkata; refresh after returning to the app.
+    // Refresh today after returning to the app.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.retryWorkout() }
-    HomeScreen(
-        username,
-        state,
-        viewModel::retryProfile,
-        viewModel::retryWorkout,
-        viewModel::retryHorizon,
-        onHorizon,
-        onFitness,
-        onNotifications,
-        onProfile,
-    )
+    androidx.compose.runtime.key(timeZone) {
+        HomeScreen(
+            username,
+            state,
+            viewModel::retryProfile,
+            viewModel::retryWorkout,
+            viewModel::retryHorizon,
+            onHorizon,
+            onFitness,
+            onNotifications,
+            onProfile,
+        )
+    }
 }
 
 @Composable

@@ -78,6 +78,7 @@ class AuthAndDashboardTest {
         var omitCookie = false
         var failLogout = false
         var rejectProfile = false
+        var timezone = "UTC"
         var badHorizon = false
         var requestBody = ""
         val requests = mutableListOf<String>()
@@ -116,7 +117,7 @@ class AuthAndDashboardTest {
                     }
                     "/api/profile" -> {
                         if (rejectProfile) status = HttpStatusCode.Unauthorized
-                        text = """{"has_profile":true,"name":null}"""
+                        text = """{"has_profile":true,"name":null,"timezone":"$timezone"}"""
                     }
                     "/api/workout/today" -> text = """{"visited":false}"""
                     "/api/horizon" ->
@@ -166,7 +167,18 @@ class AuthAndDashboardTest {
             Harness(store).use { h ->
                 h.auth.restore()
                 assertEquals("alice", (h.auth.session.value as SessionState.Authenticated).username)
-                assertEquals(listOf("/api/auth/session"), h.requests)
+                assertEquals(listOf("/api/auth/session", "/api/profile"), h.requests)
+            }
+        }
+
+    @Test fun loginLoadsPreferenceBeforeScreensAndLogoutResetsIt() =
+        runTest {
+            Harness().use { h ->
+                h.timezone = "Asia/Tokyo"
+                h.login()
+                assertEquals("Asia/Tokyo", dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone.id)
+                h.auth.logout()
+                assertEquals("UTC", dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone.id)
             }
         }
 

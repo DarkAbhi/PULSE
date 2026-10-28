@@ -289,3 +289,28 @@ func TestSubscriptionsCRUD(t *testing.T) {
 		}
 	}
 }
+
+func TestSubscriptionRenewalUsesProfileCalendar(t *testing.T) {
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
+	defer shutdown()
+	pool := testPool(t, dsn)
+	defer pool.Close()
+	handler := NewSubscriptionsHandler(pool, testSessionLookup(db))
+	location, err := handler.userLocation(context.Background(), 1)
+	if err != nil || location.String() != "UTC" {
+		t.Fatalf("default zone %v, %v", location, err)
+	}
+	if _, err := db.Exec(`INSERT INTO user_profiles (user_id, display_name, timezone) VALUES (1, 'Test', 'America/Los_Angeles')`); err != nil {
+		t.Fatal(err)
+	}
+	location, err = handler.userLocation(context.Background(), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 11, 1, 0, 30, 0, 0, time.UTC)
+	billingDay := 31
+	next := CalculateNextRenewal(&billingDay, nil, "monthly", now.In(location))
+	if next.Format("2006-01-02") != "2026-10-31" {
+		t.Fatalf("renewal date %v should remain October 31 in the profile zone", next)
+	}
+}

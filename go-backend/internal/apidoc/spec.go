@@ -19,6 +19,7 @@ type LoginInput struct {
 }
 type Profile struct {
 	HasProfile bool    `json:"has_profile"`
+	TimeZone   string  `json:"timezone"`
 	Name       *string `json:"name,omitempty"`
 }
 type Name struct {
@@ -638,7 +639,7 @@ func fitnessWorkoutDetail() {}
 
 // fitnessOverview documents GET /api/fitness/overview.
 // @Summary Get render-ready gym statistics, calendar visits, and three recent workouts
-// @Description Uses Asia/Kolkata dates and year-to-date totals; excludes future entries. Weekly streaks use Monday-Sunday weeks. Timing and time preference use imported traditional strength sessions on recorded gym days. Cards disclose missing timing and weights.
+// @Description Uses the profile time zone (UTC by default) for dates and year-to-date totals; excludes future entries. Weekly streaks use Monday-Sunday weeks. Timing and time preference use imported traditional strength sessions on recorded gym days. Cards disclose missing timing and weights.
 // @Tags fitness
 // @Produce json
 // @Security SessionBearer
@@ -1477,3 +1478,21 @@ func profileOperation11() {}
 // @Failure 401 {string} string
 // @Router /debug/pprof/allocs [get]
 func profileOperation12() {}
+
+// TimeZonePreference is an IANA time zone identifier.
+type TimeZonePreference struct {
+	TimeZone string `json:"timezone" example:"America/New_York"`
+}
+
+// @Summary Save profile time zone
+// @Tags profile
+// @Accept json
+// @Produce json
+// @Param body body TimeZonePreference true "IANA time zone preference (UTC by default)"
+// @Security SessionBearer
+// @Success 200 {object} TimeZonePreference
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 500 {object} Error
+// @Router /api/profile/timezone [put]
+func operationSaveTimeZone() {}

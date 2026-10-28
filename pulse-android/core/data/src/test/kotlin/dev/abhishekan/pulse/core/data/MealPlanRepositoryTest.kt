@@ -63,6 +63,13 @@ class MealPlanRepositoryTest {
             pulseHttpClient(
                 config,
                 MockEngine { request ->
+                    if (request.url.encodedPath == "/api/profile") {
+                        return@MockEngine respond(
+                            """{"has_profile":false,"timezone":"UTC"}""",
+                            HttpStatusCode.OK,
+                            io.ktor.http.headersOf(HttpHeaders.ContentType, "application/json"),
+                        )
+                    }
                     if (request.url.encodedPath.endsWith("auth/login")) {
                         respond(
                             """{"username":"fixture"}""",

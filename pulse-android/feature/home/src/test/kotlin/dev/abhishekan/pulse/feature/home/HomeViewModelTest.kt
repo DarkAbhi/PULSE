@@ -179,9 +179,9 @@ class HomeViewModelTest {
             assertEquals(0, notificationCalls)
         }
 
-    @Test fun dashboardClockUsesIndiaDateAndTwelveHourTime() {
+    @Test fun dashboardClockUsesUtcByDefault() {
         assertEquals(
-            "Sunday, 18 Oct 2026",
+            "Saturday, 17 Oct 2026",
             formatDashboardDate(java.time.Instant.parse("2026-10-17T18:30:00Z"), java.util.Locale.US),
         )
         assertEquals(
@@ -190,9 +190,9 @@ class HomeViewModelTest {
         )
     }
 
-    @Test fun dashboardTimeUsesIndiaDateBoundary() {
-        assertEquals("12:00 AM", formatDashboardTime(java.time.Instant.parse("2026-10-17T18:30:00Z"), java.util.Locale.US))
-        assertEquals("1:05 PM", formatDashboardTime(java.time.Instant.parse("2026-10-18T07:35:00Z"), java.util.Locale.US))
+    @Test fun dashboardTimeUsesUtcByDefault() {
+        assertEquals("6:30 PM", formatDashboardTime(java.time.Instant.parse("2026-10-17T18:30:00Z"), java.util.Locale.US))
+        assertEquals("7:35 AM", formatDashboardTime(java.time.Instant.parse("2026-10-18T07:35:00Z"), java.util.Locale.US))
     }
 
     @Test fun currencyFormattingDoesNotRoundBackendPrecision() {

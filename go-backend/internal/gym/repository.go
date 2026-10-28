@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/DarkAbhi/life-backend/internal/gym/query"
+	profilequery "github.com/DarkAbhi/life-backend/internal/profile/query"
 )
 
 type Repository struct {
@@ -223,4 +224,8 @@ func (r *Repository) GetCatalogExercise(ctx context.Context, id string) (catalog
 		return catalogExercise{}, err
 	}
 	return catalogExercise{ID: row.ID, Name: row.Name, Equipment: row.Equipment, Data: row.Data}, nil
+}
+
+func (r *Repository) TimeZone(ctx context.Context, userID int64) (string, error) {
+	return profilequery.New(r.db).GetTimeZone(ctx, userID)
 }

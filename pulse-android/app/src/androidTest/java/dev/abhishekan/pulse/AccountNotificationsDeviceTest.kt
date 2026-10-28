@@ -116,6 +116,8 @@ class AccountNotificationsDeviceTest {
     private lateinit var auth: PulseAuthRepository
     private var name: String? = "Asha"
     private var profileFailure = false
+    private var timezone = "UTC"
+    private var timezoneWrites = 0
     private var wrongPassword = false
     private var loseKey = false
     private var loseDismiss = false
@@ -203,6 +205,7 @@ class AccountNotificationsDeviceTest {
                                             "has_profile",
                                             name != null,
                                         )
+                                        put("timezone", timezone)
                                         name?.let { put("name", it) }
                                     }.toString()
                                 }
@@ -210,6 +213,11 @@ class AccountNotificationsDeviceTest {
                                 profileWrites++
                                 name = json!!.getValue("name").jsonPrimitive.content
                                 buildJsonObject { put("name", name) }.toString()
+                            }
+                            path == "profile/timezone" && verb == "PUT" -> {
+                                timezoneWrites++
+                                timezone = json!!.getValue("timezone").jsonPrimitive.content
+                                buildJsonObject { put("timezone", timezone) }.toString()
                             }
                             path == "profile/password" -> {
                                 passwordWrites++
@@ -424,6 +432,23 @@ class AccountNotificationsDeviceTest {
         field("Key name", label)
         tap("Save changes")
         awaitText("Your API key")
+    }
+
+    @Test fun profileTimeZoneIsSearchableSavedAndRestored() {
+        launch()
+        openProfile()
+        tap("Change time zone")
+        compose.onNodeWithText("Search time zones").performTextReplacement("New_York")
+        hideKeyboard()
+        compose.onNodeWithText("America/New_York").performClick()
+        screenshot("timezone-picker")
+        confirm("Save changes")
+        awaitText("America/New_York")
+        assertEquals("America/New_York", timezone)
+        assertEquals(1, timezoneWrites)
+        scenario!!.recreate()
+        awaitText("America/New_York")
+        screenshot("timezone-saved")
     }
 
     @Test fun displayNameSaveUpdatesHomeAndUnsavedEditsSurviveRotation() {

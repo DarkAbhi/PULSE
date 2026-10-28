@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.garage
+
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
@@ -17,6 +18,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.garageCategories
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -32,7 +34,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 
 @Composable
 internal fun GarageEditor(
@@ -137,15 +138,6 @@ internal fun GarageEditor(
                 timePicker =
                     true
             }, enabled = enabled)
-            PulseText(
-                stringResource(
-                    R.string.pulse_garage_date_and_time_use_1_s,
-                    draft["zone"].ifBlank {
-                        ZoneId.systemDefault().id
-                    },
-                ),
-                style = PulseTextStyle.Label,
-            )
         }
         if (draft.kind ==
             GarageForm.Care
@@ -192,7 +184,7 @@ internal fun GarageEditor(
         PulseDatePickerDialog(
             runCatching {
                 LocalDate.parse(draft["date"])
-            }.getOrDefault(LocalDate.now()),
+            }.getOrDefault(LocalDate.now(UserTimeZone.zone)),
             {
                 change(draft.set("date", it.toString()))
                 datePicker = false

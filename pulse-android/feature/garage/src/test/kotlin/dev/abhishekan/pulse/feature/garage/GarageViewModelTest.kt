@@ -361,9 +361,10 @@ class GarageViewModelTest {
     }
 
     @Test fun unchangedAmbiguousTimestampKeepsItsOriginalOffsetAndGapsAreRejected() {
-        val originalZone = java.util.TimeZone.getDefault()
+        val originalZone = dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone.id
         try {
-            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/New_York"))
+            dev.abhishekan.pulse.core.domain.model.UserTimeZone
+                .select("America/New_York")
             val instant = Instant.parse("2026-11-01T06:30:00Z")
             val item = FuelItem("petrol", "full", "1".toBigDecimal(), "100".toBigDecimal(), null)
             val draft = FuelFill(1, "1".toBigDecimal(), instant, null, null, listOf(item)).draft(1)
@@ -377,7 +378,8 @@ class GarageViewModelTest {
             ) {
             }
         } finally {
-            java.util.TimeZone.setDefault(originalZone)
+            dev.abhishekan.pulse.core.domain.model.UserTimeZone
+                .select(originalZone)
         }
     }
 

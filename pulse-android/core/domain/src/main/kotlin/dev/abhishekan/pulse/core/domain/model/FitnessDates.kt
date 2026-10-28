@@ -6,7 +6,7 @@ import java.time.YearMonth
 import java.time.ZoneId
 
 object FitnessDates {
-    val zone: ZoneId = ZoneId.of("Asia/Kolkata")
+    val zone: ZoneId get() = UserTimeZone.zone
 
     fun today(clock: Clock): LocalDate = LocalDate.now(clock.withZone(zone))
 

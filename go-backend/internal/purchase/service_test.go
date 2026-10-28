@@ -39,3 +39,5 @@ func TestService(t *testing.T) {
 		t.Fatalf("clear: %v", err)
 	}
 }
+
+func (s *stubStore) TimeZone(context.Context, int64) (string, error) { return "UTC", nil }

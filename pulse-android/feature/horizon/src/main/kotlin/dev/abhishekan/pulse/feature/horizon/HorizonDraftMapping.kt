@@ -1,10 +1,11 @@
 package dev.abhishekan.pulse.feature.horizon
+
 import dev.abhishekan.pulse.core.domain.model.HorizonSubscription
 import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
-import java.time.ZoneId
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 
 internal fun HorizonTransaction.draft(currency: String): HorizonDraft {
-    val local = date.atZone(ZoneId.systemDefault())
+    val local = date.atZone(UserTimeZone.zone)
     return HorizonDraft(
         HorizonForm.Transaction,
         id,
@@ -18,6 +19,7 @@ internal fun HorizonTransaction.draft(currency: String): HorizonDraft {
         budgetId = budgetId,
         subscriptionId = subscriptionId,
         notes = notes.orEmpty(),
+        originalInstant = date.toString(),
     )
 }
 

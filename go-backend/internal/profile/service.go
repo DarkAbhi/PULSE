@@ -5,9 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
+	_ "time/tzdata"
 
 	"github.com/jackc/pgx/v5"
 )
+
+var ErrInvalidTimeZone = errors.New("profile: invalid IANA time zone")
 
 var ErrInvalidName = errors.New("profile: name must be between 1 and 120 characters")
 var ErrCurrentPasswordRequired = errors.New("profile: current password is required")
@@ -15,6 +19,8 @@ var ErrNewPasswordTooShort = errors.New("profile: new password must be at least 
 
 type store interface {
 	Name(context.Context, int64) (string, error)
+	TimeZone(context.Context, int64) (string, error)
+	SaveTimeZone(context.Context, int64, string) error
 	Save(context.Context, int64, string) error
 	CreateAPIKey(context.Context, int64, string, string, string) (APIKey, error)
 	ListAPIKeys(context.Context, int64) ([]APIKey, error)
@@ -39,7 +45,7 @@ func (s *Service) Fetch(ctx context.Context, userID int64) (string, bool, error)
 	if err != nil {
 		return "", false, fmt.Errorf("get profile: %w", err)
 	}
-	return name, true, nil
+	return name, name != "", nil
 }
 func (s *Service) Save(ctx context.Context, userID int64, name string) (string, error) {
 	name = strings.TrimSpace(name)
@@ -59,4 +65,34 @@ func (s *Service) ChangePassword(ctx context.Context, userID int64, current, nex
 		return ErrNewPasswordTooShort
 	}
 	return s.passwords.ChangePassword(ctx, userID, current, next)
+}
+
+// TimeZone returns the saved preference, defaulting to UTC before profile setup.
+func (s *Service) TimeZone(ctx context.Context, userID int64) (string, error) {
+	zone, err := s.store.TimeZone(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "UTC", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("get profile timezone: %w", err)
+	}
+	return zone, nil
+}
+
+func (s *Service) SaveTimeZone(ctx context.Context, userID int64, zone string) error {
+	if !validTimeZone(zone) {
+		return ErrInvalidTimeZone
+	}
+	if err := s.store.SaveTimeZone(ctx, userID, zone); err != nil {
+		return fmt.Errorf("save profile timezone: %w", err)
+	}
+	return nil
+}
+
+func validTimeZone(zone string) bool {
+	if zone == "" || zone == "Local" || len(zone) > 100 {
+		return false
+	}
+	_, err := time.LoadLocation(zone)
+	return err == nil
 }

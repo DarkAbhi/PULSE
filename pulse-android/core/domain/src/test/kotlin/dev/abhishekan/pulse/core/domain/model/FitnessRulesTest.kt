@@ -12,9 +12,12 @@ import java.time.ZoneOffset
 
 class FitnessRulesTest {
     @Test fun indiaDateChangesAt1830UtcIncludingYearBoundary() {
+        UserTimeZone.select("Asia/Kolkata")
+
         fun today(instant: String) = FitnessDates.today(Clock.fixed(Instant.parse(instant), ZoneOffset.UTC))
         assertEquals(LocalDate.of(2026, 12, 31), today("2026-12-31T18:29:59Z"))
         assertEquals(LocalDate.of(2027, 1, 1), today("2026-12-31T18:30:00Z"))
+        UserTimeZone.reset()
     }
 
     @Test fun calendarIncludesAdjacentDatesAndCompleteMondayWeeks() {

@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.horizon
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.HorizonRecord
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -58,10 +60,14 @@ fun HorizonRoute(
     onDraftChanged: (Boolean) -> Unit,
     viewModel: HorizonViewModel = koinViewModel(),
 ) {
+    val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     LaunchedEffect(state.draft?.dirty) { onDraftChanged(state.draft?.dirty == true) }
-    HorizonScreen(state, viewModel)
+    androidx.compose.runtime.key(timeZone) {
+        HorizonScreen(state, viewModel)
+    }
 }
 
 @Composable

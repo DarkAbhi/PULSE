@@ -246,7 +246,7 @@ const docTemplate = `{
                         "SessionBearer": []
                     }
                 ],
-                "description": "Uses Asia/Kolkata dates and year-to-date totals; excludes future entries. Weekly streaks use Monday-Sunday weeks. Timing and time preference use imported traditional strength sessions on recorded gym days. Cards disclose missing timing and weights.",
+                "description": "Uses the profile time zone (UTC by default) for dates and year-to-date totals; excludes future entries. Weekly streaks use Monday-Sunday weeks. Timing and time preference use imported traditional strength sessions on recorded gym days. Cards disclose missing timing and weights.",
                 "produces": [
                     "application/json"
                 ],
@@ -2903,6 +2903,62 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/profile/timezone": {
+            "put": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Save profile time zone",
+                "parameters": [
+                    {
+                        "description": "IANA time zone preference (UTC by default)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.TimeZonePreference"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.TimeZonePreference"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/vehicles": {
             "get": {
                 "security": [
@@ -5093,7 +5149,8 @@ const docTemplate = `{
                 "economy_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number"
+                        "type": "number",
+                        "format": "float64"
                     }
                 },
                 "id": {
@@ -5341,6 +5398,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "timezone": {
+                    "type": "string"
                 }
             }
         },
@@ -5389,6 +5449,15 @@ const docTemplate = `{
                 }
             }
         },
+        "apidoc.TimeZonePreference": {
+            "type": "object",
+            "properties": {
+                "timezone": {
+                    "type": "string",
+                    "example": "America/New_York"
+                }
+            }
+        },
         "apidoc.TirePressureInput": {
             "type": "object",
             "properties": {
@@ -5432,7 +5501,8 @@ const docTemplate = `{
                 "average_mileage_km_per_litre": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number"
+                        "type": "number",
+                        "format": "float64"
                     }
                 },
                 "front_tire_pressure": {

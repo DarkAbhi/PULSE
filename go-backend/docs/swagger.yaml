@@ -262,6 +262,7 @@ definitions:
     properties:
       economy_km_per_litre:
         additionalProperties:
+          format: float64
           type: number
         type: object
       id:
@@ -427,6 +428,8 @@ definitions:
         type: boolean
       name:
         type: string
+      timezone:
+        type: string
     type: object
   apidoc.PurchaseInput:
     properties:
@@ -457,6 +460,12 @@ definitions:
       total:
         type: number
     type: object
+  apidoc.TimeZonePreference:
+    properties:
+      timezone:
+        example: America/New_York
+        type: string
+    type: object
   apidoc.TirePressureInput:
     properties:
       front_tire_pressure:
@@ -485,6 +494,7 @@ definitions:
         type: array
       average_mileage_km_per_litre:
         additionalProperties:
+          format: float64
           type: number
         type: object
       front_tire_pressure:
@@ -1135,10 +1145,10 @@ paths:
       - fitness
   /api/fitness/overview:
     get:
-      description: Uses Asia/Kolkata dates and year-to-date totals; excludes future
-        entries. Weekly streaks use Monday-Sunday weeks. Timing and time preference
-        use imported traditional strength sessions on recorded gym days. Cards disclose
-        missing timing and weights.
+      description: Uses the profile time zone (UTC by default) for dates and year-to-date
+        totals; excludes future entries. Weekly streaks use Monday-Sunday weeks. Timing
+        and time preference use imported traditional strength sessions on recorded
+        gym days. Cards disclose missing timing and weights.
       produces:
       - application/json
       responses:
@@ -2828,6 +2838,41 @@ paths:
       security:
       - SessionBearer: []
       summary: Change password
+      tags:
+      - profile
+  /api/profile/timezone:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: IANA time zone preference (UTC by default)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.TimeZonePreference'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.TimeZonePreference'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Save profile time zone
       tags:
       - profile
   /api/vehicles:

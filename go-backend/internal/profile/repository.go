@@ -24,3 +24,10 @@ func (r *Repository) Name(ctx context.Context, userID int64) (string, error) {
 func (r *Repository) Save(ctx context.Context, userID int64, name string) error {
 	return r.queries.SaveDisplayName(ctx, query.SaveDisplayNameParams{UserID: userID, DisplayName: name})
 }
+
+func (r *Repository) TimeZone(ctx context.Context, userID int64) (string, error) {
+	return r.queries.GetTimeZone(ctx, userID)
+}
+func (r *Repository) SaveTimeZone(ctx context.Context, userID int64, zone string) error {
+	return r.queries.SaveTimeZone(ctx, query.SaveTimeZoneParams{UserID: userID, Timezone: zone})
+}

@@ -140,8 +140,8 @@ class MealPlanViewModelTest {
             assertEquals(previous.meals.value, vm.uiState.value.meals.value)
         }
 
-    @Test fun indiaTodayAndMondayWeeksCrossYearMonthAndLeapDay() {
-        assertEquals(LocalDate.parse("2027-01-01"), calendar.today())
+    @Test fun utcTodayAndMondayWeeksCrossYearMonthAndLeapDay() {
+        assertEquals(LocalDate.parse("2026-12-31"), calendar.today())
         listOf(
             "2027-01-01" to "2026-12-28",
             "2024-03-01" to "2024-02-26",
@@ -166,7 +166,7 @@ class MealPlanViewModelTest {
             assertEquals(emptyList<PlannedMeal>(), vm.uiState.value.meals.value)
             vm.today()
             runCurrent()
-            assertEquals(meal.date, vm.uiState.value.selected)
+            assertEquals(calendar.today(), vm.uiState.value.selected)
         }
 
     @Test fun independentFailureAndRetryKeepOtherSection() =

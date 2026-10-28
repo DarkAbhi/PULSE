@@ -144,13 +144,13 @@ func TestAddVisitOnDate(t *testing.T) {
 		if err := db.QueryRow(`SELECT user_id, created_at FROM gym_visits WHERE id=$1`, body.ID).Scan(&ownerID, &createdAt); err != nil {
 			t.Fatal(err)
 		}
-		want := time.Date(2020, 2, 28, 18, 30, 0, 0, time.UTC)
+		want := time.Date(2020, 2, 29, 0, 0, 0, 0, time.UTC)
 		if ownerID != 1 || !createdAt.Equal(want) {
 			t.Fatalf("owner=%d date=%s, want owner=1 date=%s", ownerID, createdAt, want)
 		}
 	})
 	t.Run("today uses current time", func(t *testing.T) {
-		location, err := time.LoadLocation("Asia/Kolkata")
+		location, err := time.LoadLocation("UTC")
 		if err != nil {
 			t.Fatal(err)
 		}

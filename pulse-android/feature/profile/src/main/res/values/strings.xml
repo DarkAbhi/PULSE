@@ -62,4 +62,8 @@
     <string name="pulse_profile_server_name">"Server display name: %1$s"</string>
     <string name="pulse_profile_server_key">"%1$s · Prefix: %2$s"</string>
     <string name="pulse_profile_not_set">"Not set"</string>
+    <string name="pulse_profile_timezone">Time zone</string>
+    <string name="pulse_profile_timezone_select">Change time zone</string>
+    <string name="pulse_profile_timezone_search">Search time zones</string>
+    <string name="pulse_profile_timezone_empty">No matching time zones</string>
 </resources>

@@ -58,6 +58,13 @@ class ProfileViewModelTest {
             return loadFailure?.let { Outcome.Error(it) } ?: Outcome.Success(snapshot)
         }
 
+        override suspend fun saveTimeZone(timezone: String): Outcome<String> {
+            writes++
+            failure?.let { return Outcome.Error(it) }
+            value = value.copy(timezone = timezone)
+            return Outcome.Success(timezone)
+        }
+
         override suspend fun saveName(name: String): Outcome<Profile> {
             writes++
             received = name
@@ -106,7 +113,42 @@ class ProfileViewModelTest {
         CreateAPIKey(repo),
         RevokeAPIKey(repo),
         saved,
+        dev.abhishekan.pulse.core.domain.usecase
+            .SaveProfileTimeZone(repo),
     )
+
+    @Test fun timeZoneSaveUpdatesProfileAndFailureKeepsPreviousPreference() =
+        runTest {
+            val repo = Repo()
+            val vm = vm(repo)
+            runCurrent()
+            vm.timeZone("America/New_York")
+            runCurrent()
+            assertEquals(
+                "America/New_York",
+                vm.uiState.value.profile
+                    ?.timezone,
+            )
+            repo.failure = Failure.InvalidInput
+            vm.timeZone("Europe/London")
+            runCurrent()
+            assertEquals(
+                "America/New_York",
+                vm.uiState.value.profile
+                    ?.timezone,
+            )
+            assertNotNull(vm.uiState.value.error)
+        }
+
+    @Test fun invalidTimeZoneNeverSendsAWrite() =
+        runTest {
+            val repo = Repo()
+            val vm = vm(repo)
+            runCurrent()
+            vm.timeZone("Not/AZone")
+            runCurrent()
+            assertEquals(0, repo.writes)
+        }
 
     @Test fun repeatedEditorOpenPreservesDraftAndSavedState() =
         runTest {

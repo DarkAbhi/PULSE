@@ -101,3 +101,16 @@ func TestBuildOverview(t *testing.T) {
 		})
 	}
 }
+
+func TestOverviewCountsCalendarDaysAcrossDST(t *testing.T) {
+	location, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 3, 9, 12, 0, 0, 0, location)
+	data := overviewData{Visits: []query.OverviewVisitsRow{{ID: 1, CreatedAt: pgtype.Timestamptz{Time: time.Date(2026, 3, 8, 12, 0, 0, 0, location), Valid: true}}}}
+	result := buildOverview(data, now)
+	if result.Cards[0].Value != "1 day ago" {
+		t.Fatalf("DST day count: %q", result.Cards[0].Value)
+	}
+}

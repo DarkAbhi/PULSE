@@ -35,7 +35,7 @@ import java.time.Clock
 
 class AccountRepositoriesTest {
     private class Harness : Closeable {
-        var body = "{}"
+        var body = """{"has_profile":false,"timezone":"UTC"}"""
         var status = HttpStatusCode.OK
         var error: Exception? = null
         var sent = ""
@@ -136,6 +136,34 @@ class AccountRepositoriesTest {
                         .jsonPrimitive.content,
                 )
                 assertEquals(Profile("😀 Asha"), (result as Outcome.Success).value)
+            }
+        }
+
+    @Test fun timeZoneApiSavesAccountPreferenceAndNameSavePreservesIt() =
+        runTest {
+            Harness().use { h ->
+                try {
+                    h.body = """{"timezone":"America/New_York"}"""
+                    assertEquals(Outcome.Success("America/New_York"), h.profile.saveTimeZone("America/New_York"))
+                    assertEquals("/api/profile/timezone", h.path)
+                    assertEquals("PUT", h.method)
+                    assertEquals(
+                        "America/New_York",
+                        Json
+                            .parseToJsonElement(h.sent)
+                            .jsonObject["timezone"]!!
+                            .jsonPrimitive.content,
+                    )
+                    assertEquals("America/New_York", dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone.id)
+                    h.body = """{"name":"Asha"}"""
+                    assertEquals(Profile("Asha", true, "America/New_York"), (h.profile.saveName("Asha") as Outcome.Success).value)
+                    h.status = HttpStatusCode.BadRequest
+                    assertEquals(Outcome.Error(Failure.InvalidInput), h.profile.saveTimeZone("Bad/Zone"))
+                    assertEquals("America/New_York", dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone.id)
+                } finally {
+                    dev.abhishekan.pulse.core.domain.model.UserTimeZone
+                        .reset()
+                }
             }
         }
 

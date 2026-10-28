@@ -22,7 +22,7 @@
     <string name="pulse_fitness_refreshing_your_activity">"Refreshing your activity"</string>
     <string name="pulse_fitness_a_little_perspective">"A little perspective"</string>
     <string name="pulse_fitness_refresh_activity">"Refresh activity"</string>
-    <string name="pulse_fitness_today_india_time">"TODAY · INDIA TIME"</string>
+    <string name="pulse_fitness_today_india_time">"TODAY"</string>
     <string name="pulse_fitness_your_selected_day">"YOUR SELECTED DAY"</string>
     <string name="pulse_fitness_room_for_movement">"Room for movement."</string>
     <string name="pulse_fitness_record_workout">"Record workout"</string>
@@ -34,7 +34,6 @@
     <string name="pulse_fitness_view_workout">"View workout"</string>
     <string name="pulse_fitness_view_workout_1_s_2_s_3_s">"View workout %1$s, %2$s, %3$s"</string>
     <string name="pulse_fitness_open_recorded_workout">"Open recorded workout"</string>
-    <string name="pulse_fitness_dates_follow_asia_kolkata_future_dated_visits_appear_here">"Dates follow Asia/Kolkata. Future-dated visits appear here; statistics include activity up to today."</string>
     <string name="pulse_fitness_check_before_trying_again">"Check before trying again"</string>
     <string name="pulse_fitness_the_latest_server_records_are_shown_below_review_them">"The latest server records are shown below. Review them to avoid recording the same change twice."</string>
     <string name="pulse_fitness_the_change_may_already_have_reached_pulse_refresh_server">"The change may already have reached Pulse. Refresh server records before another save or delete."</string>
@@ -67,7 +66,6 @@
     <string name="pulse_fitness_duration_1_s">"Duration · %1$s"</string>
     <string name="pulse_fitness_energy_1_s_kcal">"Energy · %1$s kcal"</string>
     <string name="pulse_fitness_timing_and_energy_data_aren_t_available_for_this">"Timing and energy data aren’t available for this visit."</string>
-    <string name="pulse_fitness_times_shown_in_india_time_ist">"Times shown in India time (IST)."</string>
     <string name="pulse_fitness_imported_timing_and_energy_are_read_only_you_can">"Imported timing and energy are read-only. You can manage this visit’s recorded exercises below."</string>
     <string name="pulse_fitness_equipment_1_s">"Equipment · %1$s"</string>
     <string name="pulse_fitness_muscles_1_s">"Muscles · %1$s"</string>

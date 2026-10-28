@@ -17,7 +17,7 @@ Implemented on 20 October 2026 in the Android fitness feature.
 
 `CatalogExercise` provides name, equipment, muscles, and instructions; it has no prose description or exercise-image URL. The descriptive squat sentence in the reference is therefore omitted. The bundled barbell illustration is decorative and shown for barbell equipment on sufficiently wide cards; it is not an instructional exercise image. Custom exercises without a catalogue match do not show invented equipment, muscles, or instructions.
 
-Timing and energy are supplied by the existing workout API. They remain read-only. Refresh reloads the workout through the existing API; it does not trigger an Apple Watch sync. The timezone notice is omitted from the UI. Times retain the app's Asia/Kolkata convention.
+Timing and energy are supplied by the existing workout API. They remain read-only. Refresh reloads the workout through the existing API; it does not trigger an Apple Watch sync. The timezone notice is omitted from the UI. Times use the profile time zone (UTC by default).
 
 ## Generated assets
 

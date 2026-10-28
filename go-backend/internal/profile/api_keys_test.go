@@ -93,3 +93,6 @@ func TestAPIKeyCreationAndOwnership(t *testing.T) {
 		t.Fatal("owner could not revoke the key")
 	}
 }
+
+func (s *apiKeyStore) TimeZone(context.Context, int64) (string, error)   { return "UTC", nil }
+func (s *apiKeyStore) SaveTimeZone(context.Context, int64, string) error { return nil }

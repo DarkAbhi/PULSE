@@ -77,11 +77,6 @@ internal fun FitnessStats(overview: FitnessOverview) {
                 }
             }
         }
-        PulseText(
-            stringResource(R.string.pulse_fitness_dates_follow_asia_kolkata_future_dated_visits_appear_here),
-            style = PulseTextStyle.Caption,
-            color = PulseTheme.colors.textSecondary,
-        )
     }
 }
 

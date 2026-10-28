@@ -1,9 +1,11 @@
 package dev.abhishekan.pulse.core.data
+
 import dev.abhishekan.pulse.core.domain.model.APIKey
 import dev.abhishekan.pulse.core.domain.model.CreatedAPIKey
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.Profile
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.network.PulseApi
 import dev.abhishekan.pulse.core.network.dto.APIKeyDto
@@ -52,8 +54,12 @@ class PulseProfileRepository(
 
     override suspend fun profile() =
         request {
+            val version = auth.version
+            val previousZone = UserTimeZone.zone
             val dto = api.profile()
-            Profile(dto.name?.takeIf { dto.hasProfile && it.isNotBlank() }, dto.hasProfile)
+            java.time.ZoneId.of(dto.timezone)
+            if (version == auth.version && previousZone == UserTimeZone.zone) UserTimeZone.select(dto.timezone)
+            Profile(dto.name?.takeIf { dto.hasProfile && it.isNotBlank() }, dto.hasProfile, dto.timezone)
         }.also { if (it is Outcome.Success) dashboard.accountChanged() }
 
     override suspend fun saveName(name: String) =
@@ -63,7 +69,16 @@ class PulseProfileRepository(
                     dev.abhishekan.pulse.core.domain.usecase.AccountValidation
                         .validName(it.name),
                 )
-                Profile(it.name, true)
+                Profile(it.name, true, UserTimeZone.zone.id)
+            }
+        }
+
+    override suspend fun saveTimeZone(timezone: String) =
+        request(true) {
+            val version = auth.version
+            api.saveTimeZone(timezone).timezone.also {
+                require(it == timezone)
+                if (version == auth.version) UserTimeZone.select(it)
             }
         }
 

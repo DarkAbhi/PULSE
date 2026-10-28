@@ -84,6 +84,13 @@ class GarageRepositoryTest {
         val requests = mutableListOf<Pair<String, String>>()
         val engine =
             MockEngine { request ->
+                if (request.url.encodedPath == "/api/profile") {
+                    return@MockEngine respond(
+                        """{"has_profile":false,"timezone":"UTC"}""",
+                        HttpStatusCode.OK,
+                        io.ktor.http.headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                }
                 if (request.url.host == "storage.test") {
                     storageCookie = request.headers[HttpHeaders.Cookie]
                     respond(

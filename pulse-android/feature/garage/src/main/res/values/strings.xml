@@ -90,7 +90,6 @@
     <string name="pulse_garage_rear_pillion_psi">"Rear · pillion (PSI)"</string>
     <string name="pulse_garage_date_1_s">"Date: %1$s"</string>
     <string name="pulse_garage_time_1_s">"Time: %1$s"</string>
-    <string name="pulse_garage_date_and_time_use_1_s">"Date and time use %1$s."</string>
     <string name="pulse_garage_station_vendor_optional">"Station / vendor (optional)"</string>
     <string name="pulse_garage_tank_1_s">"Tank %1$s"</string>
     <string name="pulse_garage_fuel_type_tank_1_s">"Fuel type · tank %1$s"</string>

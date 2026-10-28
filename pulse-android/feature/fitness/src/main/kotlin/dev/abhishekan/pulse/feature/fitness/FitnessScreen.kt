@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.fitness
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -64,19 +66,23 @@ fun FitnessRoute(
     onWorkout: (Long) -> Unit,
     viewModel: FitnessViewModel = koinViewModel(),
 ) {
+    val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.needsReview }, viewModel::consumeMessage)
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
-    FitnessScreen(
-        state,
-        viewModel::select,
-        viewModel::shiftMonth,
-        viewModel::selectToday,
-        { viewModel.refresh() },
-        viewModel::recordSelected,
-        viewModel::acknowledgeReview,
-        onWorkout,
-    )
+    androidx.compose.runtime.key(timeZone) {
+        FitnessScreen(
+            state,
+            viewModel::select,
+            viewModel::shiftMonth,
+            viewModel::selectToday,
+            { viewModel.refresh() },
+            viewModel::recordSelected,
+            viewModel::acknowledgeReview,
+            onWorkout,
+        )
+    }
 }
 
 @Composable

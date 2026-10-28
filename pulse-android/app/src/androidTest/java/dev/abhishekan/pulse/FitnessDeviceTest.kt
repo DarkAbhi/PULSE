@@ -579,7 +579,7 @@ class FitnessDeviceTest {
         compose.onNodeWithText("Total duration").assertDoesNotExist()
         compose.onNodeWithText("Moderate").assertDoesNotExist()
         compose.onNodeWithText("Workout streak").assertDoesNotExist()
-        compose.onNodeWithText("Dates follow Asia/Kolkata.", substring = true).assertExists()
+        compose.onNodeWithText("Dates follow Asia/Kolkata.", substring = true).assertDoesNotExist()
         screenshot("overview")
         tap("Add workout")
         confirm("Record workout")

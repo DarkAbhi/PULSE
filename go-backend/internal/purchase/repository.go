@@ -5,13 +5,17 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	profilequery "github.com/DarkAbhi/life-backend/internal/profile/query"
 	"github.com/DarkAbhi/life-backend/internal/purchase/query"
 )
 
-type Repository struct{ queries *query.Queries }
+type Repository struct {
+	queries  *query.Queries
+	profiles *profilequery.Queries
+}
 
 func NewRepository(db *pgxpool.Pool) *Repository {
-	return &Repository{queries: query.New(db)}
+	return &Repository{queries: query.New(db), profiles: profilequery.New(db)}
 }
 
 func (r *Repository) List(ctx context.Context, userID int64, month string) ([]Item, error) {
@@ -40,4 +44,8 @@ func (r *Repository) Delete(ctx context.Context, userID, id int64, month string)
 
 func (r *Repository) Clear(ctx context.Context, userID int64, month string) error {
 	return r.queries.ClearPurchases(ctx, query.ClearPurchasesParams{UserID: userID, Column2: month})
+}
+
+func (r *Repository) TimeZone(ctx context.Context, userID int64) (string, error) {
+	return r.profiles.GetTimeZone(ctx, userID)
 }

@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.mealplan
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.MealChange
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -64,11 +66,18 @@ fun MealPlanRoute(
     onDraftChanged: (Boolean) -> Unit,
     viewModel: MealPlanViewModel = koinViewModel(),
 ) {
+    val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(timeZone) {
+        viewModel.resume()
+        viewModel.refresh()
+    }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     LaunchedEffect(state.draft?.dirty) { onDraftChanged(state.draft?.dirty == true) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
-    MealPlanScreen(state, viewModel)
+    androidx.compose.runtime.key(timeZone) {
+        MealPlanScreen(state, viewModel)
+    }
 }
 
 @Composable

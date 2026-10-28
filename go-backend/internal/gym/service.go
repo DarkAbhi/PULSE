@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-
-	"github.com/DarkAbhi/life-backend/internal/timeutil"
 )
 
 var ErrVisitNotFound = errors.New("gym: visit not found")
@@ -20,6 +18,7 @@ type ValidationError struct{ Message string }
 func (e ValidationError) Error() string { return e.Message }
 
 type store interface {
+	TimeZone(context.Context, int64) (string, error)
 	OverviewData(context.Context, int64, time.Time, time.Time) (overviewData, error)
 	VisitToday(context.Context, int64, time.Time, time.Time) (int64, error)
 	AddVisit(context.Context, int64) (int64, error)
@@ -45,7 +44,13 @@ func NewService(store store) *Service {
 }
 
 func (s *Service) VisitedToday(ctx context.Context, userID int64, now time.Time) (int64, bool, error) {
-	start, end := timeutil.DayBoundsIndia(now.UTC())
+	location, err := s.location(ctx, userID)
+	if err != nil {
+		return 0, false, err
+	}
+	local := now.In(location)
+	start := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, location)
+	end := start.AddDate(0, 0, 1)
 	id, err := s.store.VisitToday(ctx, userID, start, end)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, false, nil
@@ -63,7 +68,7 @@ func (s *Service) AddVisit(ctx context.Context, userID int64) (int64, error) {
 	return id, nil
 }
 func (s *Service) AddVisitOnDate(ctx context.Context, userID int64, date string) (int64, error) {
-	location, err := time.LoadLocation(timeutil.IndiaTimeZone)
+	location, err := s.location(ctx, userID)
 	if err != nil {
 		return 0, fmt.Errorf("load workout timezone: %w", err)
 	}
@@ -286,4 +291,19 @@ func (s *Service) resolveExercise(ctx context.Context, userID int64, body *creat
 	// Suggested matches require an explicit choice; never infer an ID from similarity.
 	body.ExerciseCatalogID = result.ExerciseCatalogID
 	return nil
+}
+
+func (s *Service) location(ctx context.Context, userID int64) (*time.Location, error) {
+	zone, err := s.store.TimeZone(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return time.UTC, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("load user timezone: %w", err)
+	}
+	location, err := time.LoadLocation(zone)
+	if err != nil {
+		return nil, fmt.Errorf("load user timezone: %w", err)
+	}
+	return location, nil
 }

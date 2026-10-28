@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.horizon
+
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
@@ -14,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
@@ -159,9 +161,6 @@ internal fun HorizonEditor(
                     timePicker =
                         true
                 }, enabled = enabled)
-                PulseText(
-                    stringResource(R.string.pulse_horizon_date_and_time_use_this_device_s_time_zone),
-                )
             } else if (draft.date.isNotBlank()) {
                 PulseTextButton(stringResource(R.string.pulse_horizon_clear_renewal_date), {
                     onChange(draft.copy(date = ""))
@@ -373,7 +372,7 @@ internal fun HorizonEditor(
         PulseDatePickerDialog(
             runCatching {
                 LocalDate.parse(draft.date)
-            }.getOrDefault(LocalDate.now()),
+            }.getOrDefault(LocalDate.now(UserTimeZone.zone)),
             {
                 onChange(draft.copy(date = it.toString()))
                 datePicker = false

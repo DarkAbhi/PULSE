@@ -39,6 +39,15 @@ class PulseApi(
 
     suspend fun saveProfile(name: String): SavedNameDto = client.put("profile") { setBody(NameRequest(name)) }.body()
 
+    suspend fun saveTimeZone(timezone: String): dev.abhishekan.pulse.core.network.dto.TimeZoneDto =
+        client
+            .put("profile/timezone") {
+                setBody(
+                    dev.abhishekan.pulse.core.network.dto
+                        .TimeZoneDto(timezone),
+                )
+            }.body()
+
     suspend fun password(
         current: String,
         next: String,

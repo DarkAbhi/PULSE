@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.mealplan
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.MealTime
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
@@ -241,7 +243,7 @@ internal fun MealEditor(
         PulseDatePickerDialog(
             runCatching {
                 LocalDate.parse(draft.date)
-            }.getOrDefault(LocalDate.now()),
+            }.getOrDefault(LocalDate.now(UserTimeZone.zone)),
             {
                 onUpdate(draft.copy(date = it.toString()))
                 datePicker = false

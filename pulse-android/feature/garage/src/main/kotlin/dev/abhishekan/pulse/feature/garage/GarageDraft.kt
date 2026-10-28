@@ -1,9 +1,11 @@
 package dev.abhishekan.pulse.feature.garage
+
 import dev.abhishekan.pulse.core.domain.model.FuelFill
 import dev.abhishekan.pulse.core.domain.model.FuelItem
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.Maintenance
 import dev.abhishekan.pulse.core.domain.model.TirePressure
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -51,7 +53,7 @@ data class GarageDraft(
             )
 
         fun date(): Instant {
-            val zone = ZoneId.of(get("zone").ifBlank { ZoneId.systemDefault().id })
+            val zone = ZoneId.of(get("zone").ifBlank { UserTimeZone.zone.id })
             val local = LocalDate.parse(get("date")).atTime(LocalTime.parse(get("time")))
             val original = get("originalInstant").takeIf(String::isNotBlank)?.let(Instant::parse)
             if (original?.atZone(zone)?.toLocalDateTime() == local) return original
@@ -123,7 +125,7 @@ data class GarageDraft(
         fun new(
             kind: GarageForm,
             vehicle: Long,
-            now: ZonedDateTime = ZonedDateTime.now(),
+            now: ZonedDateTime = ZonedDateTime.now(UserTimeZone.zone),
         ) = GarageDraft(
             kind,
             vehicle,
@@ -158,7 +160,7 @@ internal fun TirePressure.fields() =
     )
 
 internal fun FuelFill.draft(vehicle: Long): GarageDraft {
-    val local = date.atZone(ZoneId.systemDefault())
+    val local = date.atZone(UserTimeZone.zone)
     val fields =
         mutableMapOf(
             "zone" to local.zone.id,
@@ -185,7 +187,7 @@ internal fun FuelFill.draft(vehicle: Long): GarageDraft {
 }
 
 internal fun Maintenance.draft(vehicle: Long): GarageDraft {
-    val local = date.atZone(ZoneId.systemDefault())
+    val local = date.atZone(UserTimeZone.zone)
     return GarageDraft(
         GarageForm.Care,
         vehicle,

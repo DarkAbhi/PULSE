@@ -3,6 +3,7 @@ package dev.abhishekan.pulse.core.data
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.SessionState
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
 import dev.abhishekan.pulse.core.network.PulseApi
@@ -32,6 +33,7 @@ class PulseAuthRepository(
             try {
                 val expires = cookies.expiresAt()
                 if (expires == null) {
+                    UserTimeZone.reset()
                     mutableSession.value = SessionState.SignedOut()
                 } else {
                     val user = api.session()
@@ -39,6 +41,7 @@ class PulseAuthRepository(
                     if (expires <= clock.millis()) {
                         endSession(expired = true)
                     } else {
+                        UserTimeZone.select(api.profile().timezone)
                         version++
                         mutableSession.value = SessionState.Authenticated(user.username, expires)
                     }
@@ -69,6 +72,7 @@ class PulseAuthRepository(
                 val user = api.login(username, password)
                 require(user.username.isNotBlank())
                 val expires = requireNotNull(cookies.expiresAt())
+                UserTimeZone.select(api.profile().timezone)
                 version++
                 mutableSession.value = SessionState.Authenticated(user.username, expires)
                 Outcome.Success(Unit)
@@ -108,6 +112,7 @@ class PulseAuthRepository(
             try {
                 cookies.clear()
                 version++
+                UserTimeZone.reset()
                 mutableSession.value = SessionState.SignedOut()
                 Outcome.Success(Unit)
             } catch (error: Exception) {
@@ -139,6 +144,7 @@ class PulseAuthRepository(
 
     private suspend fun endSession(expired: Boolean): Outcome<Unit> {
         version++
+        UserTimeZone.reset()
         mutableSession.value = SessionState.SignedOut(expired)
         // Finish local revocation even when removing authenticated navigation cancels the caller.
         return withContext(NonCancellable) {
@@ -147,6 +153,7 @@ class PulseAuthRepository(
                 Outcome.Success(Unit)
             } catch (error: Exception) {
                 val failure = remoteFailure(error)
+                UserTimeZone.reset()
                 mutableSession.value = SessionState.SignedOut(expired, storageProblem = true)
                 Outcome.Error(failure)
             }

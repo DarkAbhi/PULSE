@@ -5,7 +5,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/DarkAbhi/life-backend/internal/auth"
+	profilequery "github.com/DarkAbhi/life-backend/internal/profile/query"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"math"
 	"net/http"
@@ -154,7 +157,11 @@ func (h *SubscriptionsHandler) FetchSubscriptions(userID int64) ([]SubscriptionD
 		return make([]SubscriptionDTO, 0), 0, nil
 	}
 
-	now := time.Now()
+	location, err := h.userLocation(context.Background(), userID)
+	if err != nil {
+		return nil, 0, err
+	}
+	now := time.Now().In(location)
 	subscriptions := make([]SubscriptionDTO, 0)
 	var totalMonthlyBurn float64
 
@@ -247,6 +254,12 @@ func (h *SubscriptionsHandler) CreateSubscription(w http.ResponseWriter, r *http
 		webutil.Unauthorized(w, "session is invalid or expired")
 		return
 	}
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+
+	location, err := h.userLocation(r.Context(), user.ID)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -355,7 +368,7 @@ func (h *SubscriptionsHandler) CreateSubscription(w http.ResponseWriter, r *http
 		s.Notes = &row.Notes.String
 	}
 
-	now := time.Now()
+	now := time.Now().In(location)
 	s.NextRenewalDate = CalculateNextRenewal(s.BillingDay, s.RenewalDate, s.BillingCycle, now)
 	s.MonthlyEquivalentAmount = CalculateMonthlyEquivalent(s.Amount, s.BillingCycle)
 	s.LinkedTransactionCount = 0
@@ -377,6 +390,12 @@ func (h *SubscriptionsHandler) UpdateSubscription(w http.ResponseWriter, r *http
 
 	subID, ok := webutil.ParseID(w, r)
 	if !ok {
+		return
+	}
+
+	location, err := h.userLocation(r.Context(), user.ID)
+	if err != nil {
+		webutil.ServerError(w, err)
 		return
 	}
 
@@ -491,7 +510,7 @@ func (h *SubscriptionsHandler) UpdateSubscription(w http.ResponseWriter, r *http
 		s.LinkedTransactionCount, s.TotalSpent = int(stats.LinkedCount), stats.TotalSpent
 	}
 
-	now := time.Now()
+	now := time.Now().In(location)
 	s.NextRenewalDate = CalculateNextRenewal(s.BillingDay, s.RenewalDate, s.BillingCycle, now)
 	s.MonthlyEquivalentAmount = CalculateMonthlyEquivalent(s.Amount, s.BillingCycle)
 
@@ -651,4 +670,19 @@ func (h *SubscriptionsHandler) LinkSubscriptionTransaction(w http.ResponseWriter
 	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time)
 	enrichTransactionNames(r.Context(), q, user.ID, &item)
 	webutil.WriteJSON(w, http.StatusOK, item)
+}
+
+// userLocation determines the calendar used for upcoming renewal dates.
+func (h *SubscriptionsHandler) userLocation(ctx context.Context, userID int64) (*time.Location, error) {
+	zone, err := profilequery.New(h.DB).GetTimeZone(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		zone = "UTC"
+	} else if err != nil {
+		return nil, fmt.Errorf("get subscription timezone: %w", err)
+	}
+	location, err := time.LoadLocation(zone)
+	if err != nil {
+		return nil, fmt.Errorf("load subscription timezone: %w", err)
+	}
+	return location, nil
 }

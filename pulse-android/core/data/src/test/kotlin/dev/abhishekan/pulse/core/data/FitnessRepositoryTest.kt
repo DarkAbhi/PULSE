@@ -66,6 +66,13 @@ class FitnessRepositoryTest {
         val writes = mutableListOf<Pair<String, String>>()
         val engine =
             MockEngine { request ->
+                if (request.url.encodedPath == "/api/profile") {
+                    return@MockEngine respond(
+                        """{"has_profile":false,"timezone":"UTC"}""",
+                        HttpStatusCode.OK,
+                        io.ktor.http.headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                }
                 val path = request.url.encodedPath
                 if (path != "/api/auth/login") failure?.let { throw it }
                 val mutation = request.method != HttpMethod.Get && path != "/api/auth/login"
@@ -164,15 +171,15 @@ class FitnessRepositoryTest {
         }
     }
 
-    @Test fun calendarUsesIndiaDatesKeepsFutureVisitsAndDropsDeletedOverviewRows() =
+    @Test fun calendarUsesUtcByDefaultKeepsFutureVisitsAndDropsDeletedOverviewRows() =
         runTest {
             Harness().use { h ->
                 val data = (h.repo.overview() as Outcome.Success).value
                 assertEquals(LocalDate.of(2026, 10, 17), data.today)
                 assertEquals("74", data.metrics.single().value)
                 assertEquals(setOf(1L, 2L), data.workouts.map { it.id }.toSet())
-                assertEquals(LocalDate.of(2026, 10, 19), data.workouts.first().date)
-                assertEquals(LocalDate.of(2026, 10, 17), data.workouts.last().date)
+                assertEquals(LocalDate.of(2026, 10, 18), data.workouts.first().date)
+                assertEquals(LocalDate.of(2026, 10, 16), data.workouts.last().date)
             }
         }
 

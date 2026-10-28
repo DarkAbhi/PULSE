@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseIconButton
@@ -51,7 +52,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import kotlinx.coroutines.delay
 import java.time.Instant
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.PI
@@ -227,9 +227,9 @@ private fun GreetingAurora(
 internal fun formatDashboardDate(
     instant: Instant,
     locale: Locale = Locale.getDefault(),
-): String = DateTimeFormatter.ofPattern("EEEE, d MMM yyyy", locale).withZone(ZoneId.of("Asia/Kolkata")).format(instant)
+): String = DateTimeFormatter.ofPattern("EEEE, d MMM yyyy", locale).withZone(UserTimeZone.zone).format(instant)
 
 internal fun formatDashboardTime(
     instant: Instant,
     locale: Locale = Locale.getDefault(),
-): String = DateTimeFormatter.ofPattern("h:mm a", locale).withZone(ZoneId.of("Asia/Kolkata")).format(instant)
+): String = DateTimeFormatter.ofPattern("h:mm a", locale).withZone(UserTimeZone.zone).format(instant)

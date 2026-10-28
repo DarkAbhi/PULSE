@@ -21,6 +21,7 @@ func TestOverviewIntegration(t *testing.T) {
 	// A workout type with a nonstandard database ID verifies classification by raw value.
 	_, err := db.Exec(`
 		INSERT INTO users (id, username, password_hash) VALUES (2, 'overview-other', 'test');
+ INSERT INTO user_profiles (user_id, display_name, timezone) VALUES (1, 'Test', 'Asia/Kolkata');
 		INSERT INTO workout_activity_types (id, raw_value, name) VALUES
 			(999, 50, 'Traditional Strength Training'), (998, 37, 'Running');
 		INSERT INTO fitness_workouts (id, user_id, uuid, activity_type_id, start_time, end_time, duration_seconds) VALUES
@@ -107,5 +108,48 @@ func TestOverviewIntegration(t *testing.T) {
 	}
 	if got.Cards[2].Value != "2" || got.Cards[6].Value != "0" {
 		t.Errorf("deleted visit still counted: %+v", got.Cards)
+	}
+}
+
+func TestProfileTimeZoneDayBoundsAcrossDST(t *testing.T) {
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
+	defer shutdown()
+	if _, err := db.Exec(`INSERT INTO user_profiles (user_id, display_name, timezone) VALUES (1, 'Test', 'America/New_York')`); err != nil {
+		t.Fatal(err)
+	}
+	service := newTestService(t, dsn)
+	location, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, day := range []string{"2026-03-08", "2026-11-01"} {
+		t.Run(day, func(t *testing.T) {
+			if _, err := db.Exec(`DELETE FROM gym_visits`); err != nil {
+				t.Fatal(err)
+			}
+			midnight, err := time.ParseInLocation("2006-01-02", day, location)
+			if err != nil {
+				t.Fatal(err)
+			}
+			next := midnight.AddDate(0, 0, 1)
+			var expected int64
+			if err := db.QueryRow(`INSERT INTO gym_visits (user_id, created_at) VALUES (1, $1) RETURNING id`, next.Add(-time.Second)).Scan(&expected); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := db.Exec(`INSERT INTO gym_visits (user_id, created_at) VALUES (1, $1)`, next); err != nil {
+				t.Fatal(err)
+			}
+			id, visited, err := service.VisitedToday(context.Background(), 1, midnight.Add(12*time.Hour))
+			if err != nil || !visited || id != expected {
+				t.Fatalf("day visit = %d, %v, %v; want %d", id, visited, err, expected)
+			}
+			overview, err := service.Overview(context.Background(), 1, next.Add(-time.Second))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if overview.Today != day || len(overview.CalendarWorkouts[day].Workouts) != 1 {
+				t.Fatalf("incorrect selected-zone calendar: %+v", overview)
+			}
+		})
 	}
 }

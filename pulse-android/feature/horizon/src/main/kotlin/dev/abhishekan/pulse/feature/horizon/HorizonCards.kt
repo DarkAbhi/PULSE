@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.horizon
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +17,7 @@ import dev.abhishekan.pulse.core.domain.model.HorizonBudget
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
 import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
@@ -30,7 +32,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pulseDescription
 import dev.abhishekan.pulse.core.ui.uiText
 import java.math.BigDecimal
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 internal fun money(
@@ -244,7 +245,7 @@ internal fun money(
             DateTimeFormatter
                 .ofPattern(
                     "d MMM yyyy · HH:mm",
-                ).withZone(ZoneId.systemDefault())
+                ).withZone(UserTimeZone.zone)
                 .format(item.date),
         )
         PulseText(stringResource(R.string.pulse_horizon_category_1_s, item.categoryName))

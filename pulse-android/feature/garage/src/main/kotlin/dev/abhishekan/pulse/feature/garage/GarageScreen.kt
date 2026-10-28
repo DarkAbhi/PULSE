@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.garage
+
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import androidx.activity.compose.BackHandler
@@ -42,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.GarageRecord
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -72,6 +74,8 @@ fun GarageRoute(
     initialVehicle: Long? = null,
     onDetailChanged: (Boolean) -> Unit = {},
 ) {
+    val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     var initialVehicleOpened by rememberSaveable(initialVehicle) { mutableStateOf(false) }
@@ -143,38 +147,40 @@ fun GarageRoute(
             viewModel.opened()
         }
     }
-    GarageScreen(state, viewModel, { record ->
-        pickerVehicle = state.vehicle
-        pickerRecord = record
-        try {
-            pick.launch(arrayOf("*/*"))
-        } catch (
-            _: ActivityNotFoundException,
-        ) {
-            viewModel.fileMessage(
-                uiText(R.string.pulse_garage_a_system_file_picker_is_unavailable_on_this_device),
-            )
-        }
-    }, { record, receipt ->
-        downloadVehicle = state.vehicle
-        downloadRecord = record
-        downloadReceipt =
-            arrayListOf(
-                receipt.id.toString(),
-                receipt.name,
-                receipt.contentType,
-                receipt.size.toString(),
-            )
-        try {
-            download.launch(receipt.name)
-        } catch (
-            _: ActivityNotFoundException,
-        ) {
-            viewModel.fileMessage(
-                uiText(R.string.pulse_garage_a_system_document_picker_is_unavailable_on_this_device),
-            )
-        }
-    })
+    androidx.compose.runtime.key(timeZone) {
+        GarageScreen(state, viewModel, { record ->
+            pickerVehicle = state.vehicle
+            pickerRecord = record
+            try {
+                pick.launch(arrayOf("*/*"))
+            } catch (
+                _: ActivityNotFoundException,
+            ) {
+                viewModel.fileMessage(
+                    uiText(R.string.pulse_garage_a_system_file_picker_is_unavailable_on_this_device),
+                )
+            }
+        }, { record, receipt ->
+            downloadVehicle = state.vehicle
+            downloadRecord = record
+            downloadReceipt =
+                arrayListOf(
+                    receipt.id.toString(),
+                    receipt.name,
+                    receipt.contentType,
+                    receipt.size.toString(),
+                )
+            try {
+                download.launch(receipt.name)
+            } catch (
+                _: ActivityNotFoundException,
+            ) {
+                viewModel.fileMessage(
+                    uiText(R.string.pulse_garage_a_system_document_picker_is_unavailable_on_this_device),
+                )
+            }
+        })
+    }
 }
 
 @Composable

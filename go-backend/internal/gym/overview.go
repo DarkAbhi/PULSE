@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/DarkAbhi/life-backend/internal/gym/query"
-	"github.com/DarkAbhi/life-backend/internal/timeutil"
 )
 
 type statCard struct {
@@ -61,6 +60,7 @@ func (r *Repository) OverviewData(ctx context.Context, userID int64, start, now 
 	}
 	sessions, err := q.OverviewSessions(ctx, query.OverviewSessionsParams{
 		UserID:      userID,
+		Timezone:    now.Location().String(),
 		StartTime:   pgtype.Timestamptz{Time: start, Valid: true},
 		StartTime_2: pgtype.Timestamptz{Time: now, Valid: true},
 	})
@@ -74,7 +74,7 @@ func (r *Repository) OverviewData(ctx context.Context, userID int64, start, now 
 }
 
 func (s *Service) Overview(ctx context.Context, userID int64, now time.Time) (fitnessOverview, error) {
-	location, err := time.LoadLocation(timeutil.IndiaTimeZone)
+	location, err := s.location(ctx, userID)
 	if err != nil {
 		return fitnessOverview{}, fmt.Errorf("load fitness timezone: %w", err)
 	}
@@ -130,7 +130,9 @@ func buildOverview(data overviewData, now time.Time) fitnessOverview {
 	if len(data.Visits) > 0 {
 		last := data.Visits[0].CreatedAt.Time.In(now.Location())
 		lastDay := time.Date(last.Year(), last.Month(), last.Day(), 0, 0, 0, 0, now.Location())
-		daysAgo := int(today.Sub(lastDay).Hours() / 24)
+		todayDate := time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.UTC)
+		lastDate := time.Date(lastDay.Year(), lastDay.Month(), lastDay.Day(), 0, 0, 0, 0, time.UTC)
+		daysAgo := int(todayDate.Sub(lastDate).Hours() / 24)
 		lastWorkout = plural(daysAgo, "day") + " ago"
 		if daysAgo == 0 {
 			lastWorkout = "Today"

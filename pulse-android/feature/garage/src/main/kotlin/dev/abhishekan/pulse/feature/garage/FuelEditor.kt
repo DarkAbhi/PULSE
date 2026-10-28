@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.garageFuelTypes
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -48,7 +49,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneId
 
 @Composable
 internal fun FuelEditor(
@@ -113,11 +113,6 @@ internal fun FuelEditor(
                     }
                 }
             }
-            PulseText(
-                stringResource(R.string.pulse_garage_date_and_time_use_1_s, draft["zone"].ifBlank { ZoneId.systemDefault().id }),
-                style = PulseTextStyle.Label,
-                color = PulseTheme.colors.textSecondary,
-            )
             field("odometer", stringResource(R.string.pulse_garage_odometer_km), true)
             field("station", stringResource(R.string.pulse_garage_station_vendor_optional))
         }
@@ -237,7 +232,7 @@ internal fun FuelEditor(
     }
     if (datePicker) {
         PulseDatePickerDialog(
-            runCatching { LocalDate.parse(draft["date"]) }.getOrDefault(LocalDate.now()),
+            runCatching { LocalDate.parse(draft["date"]) }.getOrDefault(LocalDate.now(UserTimeZone.zone)),
             {
                 change(draft.set("date", it.toString()))
                 datePicker = false

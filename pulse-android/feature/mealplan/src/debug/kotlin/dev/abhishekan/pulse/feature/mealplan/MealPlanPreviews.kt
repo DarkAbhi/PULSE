@@ -44,6 +44,8 @@ private fun PlannerDark() {
 }
 
 @Preview(name = "Tablet empty", widthDp = 1280, heightDp = 900)
+@Preview(name = "Small landscape tablet empty", widthDp = 940, heightDp = 600)
+@Preview(name = "Landscape tablet larger text", widthDp = 1100, heightDp = 700, fontScale = 1.3f)
 @Preview(name = "Phone empty", widthDp = 360, heightDp = 800)
 @Composable
 private fun PlannerEmpty() {

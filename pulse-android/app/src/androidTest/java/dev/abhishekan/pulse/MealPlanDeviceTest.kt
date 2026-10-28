@@ -445,7 +445,15 @@ class MealPlanDeviceTest {
             week.performScrollToIndex(6)
             compose.onNodeWithText("Sun").assertIsDisplayed().performClick()
             screenshot("narrow-week")
+            // A smaller landscape tablet enters the wide layout but cannot fit a trailing action beside the centered week.
+            shell("wm size 1920x1200")
+            shell("wm density 280")
+            compose.waitForIdle()
+            week.performScrollToIndex(0)
+            assertMealTimesClearOfDates(stacked = true)
+            screenshot("small-landscape-week")
             shell("wm size 2560x1800")
+            shell("wm density 320")
             compose.waitForIdle()
             week.performScrollToIndex(0)
             listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
@@ -455,11 +463,28 @@ class MealPlanDeviceTest {
             val monday = compose.onNodeWithText("Mon").getUnclippedBoundsInRoot()
             val tuesday = compose.onNodeWithText("Tue").getUnclippedBoundsInRoot()
             assertEquals("Tablet dates keep their original spacing", 12.dp, tuesday.left - monday.right)
+            assertMealTimesClearOfDates(stacked = false)
             screenshot("tablet-week")
         } finally {
             shell("wm size ${size ?: "reset"}")
             shell("wm density ${density ?: "reset"}")
             compose.waitForIdle()
+        }
+    }
+
+    private fun assertMealTimesClearOfDates(stacked: Boolean) {
+        val action = compose.onNode(hasText("Meal times") and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
+        listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
+            val date = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
+            assertTrue(
+                "Meal times must not cover $label",
+                action.right <= date.left || action.left >= date.right || action.bottom <= date.top || action.top >= date.bottom,
+            )
+            if (stacked) {
+                assertTrue("Meal times moves above the week when space is tight", action.bottom + 15.dp <= date.top)
+            } else {
+                assertTrue("Meal times stays beside the week when space permits", action.top < date.bottom && action.bottom > date.top)
+            }
         }
     }
 

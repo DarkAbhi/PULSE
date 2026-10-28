@@ -86,7 +86,7 @@ jobs:
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: pulse-android-device-reports
+          name: pulse-android-device-reports-shard-${{ matrix.shard }}
           path: |
             pulse-android/**/build/reports/androidTests/
             pulse-android/**/build/outputs/androidTest-results/

@@ -493,7 +493,13 @@ class FitnessDeviceTest {
                     androidx.compose.ui.test
                         .hasSetTextAction(),
             ).performTextInput(name)
-        compose.onNodeWithText("Use $name as a custom exercise").performClick()
+        val custom = hasText("Use $name as a custom exercise") and hasClickAction() and isEnabled()
+        compose.waitUntil(15_000) { compose.onAllNodes(custom).fetchSemanticsNodes().isNotEmpty() }
+        compose
+            .onNode(custom)
+            .assertIsDisplayed()
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+        awaitText("Reps, set 1")
     }
 
     private fun enterOwnExercise(name: String = "Custom mobility") {

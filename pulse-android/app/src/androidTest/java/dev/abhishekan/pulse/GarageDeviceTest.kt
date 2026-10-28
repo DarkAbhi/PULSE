@@ -26,14 +26,18 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeDown
 import androidx.core.content.FileProvider
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.AndroidReceiptFiles
@@ -392,8 +396,14 @@ class GarageDeviceTest {
     }
 
     private fun awaitText(text: String) {
-        compose.waitUntil(15_000) {
-            compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+        try {
+            compose.waitUntil(15_000) {
+                compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+            }
+        } catch (failure: Throwable) {
+            println("Waiting for text: $text")
+            println(runCatching { compose.onRoot().printToString(maxDepth = 100) }.getOrElse { "No UI root: ${it.message}" })
+            throw failure
         }
     }
 
@@ -403,20 +413,32 @@ class GarageDeviceTest {
             return
         }
         scenario?.onActivity { activity ->
+            if (text.startsWith("Save ")) activity.window.decorView.clearFocus()
             activity
                 .getSystemService(
                     android.view.inputmethod.InputMethodManager::class.java,
                 ).hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
         }
+        // Keyboard dismissal changes the scroll viewport asynchronously.
+        compose.waitUntil(15_000) {
+            var keyboardHidden = false
+            scenario?.onActivity { activity ->
+                val insets = ViewCompat.getRootWindowInsets(activity.window.decorView)
+                keyboardHidden = insets != null &&
+                    !insets.isVisible(WindowInsetsCompat.Type.ime()) &&
+                    insets.getInsets(WindowInsetsCompat.Type.ime()).bottom == 0
+            }
+            keyboardHidden
+        }
         val button = hasText(text) and hasClickAction() and isEnabled()
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
-        compose
-            .onAllNodes(button)[0]
-            .apply {
-                if (!isDisplayed() && (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail())) {
-                    performScrollTo()
-                }
-            }.assertIsDisplayed()
+        val node = compose.onAllNodes(button)[0]
+        if (hasAnyAncestor(hasScrollAction()).matches(node.fetchSemanticsNode())) {
+            node.performScrollTo()
+        }
+        compose.waitUntil(15_000) { node.isDisplayed() }
+        node
+            .assertIsDisplayed()
             .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
     }
 
@@ -651,29 +673,65 @@ class GarageDeviceTest {
     }
 
     @Test fun tabletVehicleArtworkCyclesWithoutChangingDraft() {
-        launchGarage()
-        tap("Add vehicle")
-        field("Vehicle name", "Unsaved scooter")
-        tap("Two-wheeler")
-        compose.onNodeWithText("Add a new vehicle").performScrollTo()
-        val artwork = hasTestTag("vehicle-editor-artwork")
-        org.junit.Assume.assumeTrue(compose.onAllNodes(artwork).fetchSemanticsNodes().isNotEmpty())
-        org.junit.Assume.assumeTrue(android.animation.ValueAnimator.areAnimatorsEnabled())
-        val first = compose.onNode(artwork).captureToImage().asAndroidBitmap()
+        val originalSize =
+            shell("wm size")
+                .lineSequence()
+                .firstOrNull { it.startsWith("Override size:") }
+                ?.substringAfter(": ")
+        val originalDensity =
+            shell("wm density")
+                .lineSequence()
+                .firstOrNull { it.startsWith("Override density:") }
+                ?.substringAfter(": ")
+        val originalAnimationScale = shell("settings get global animator_duration_scale").toFloatOrNull() ?: 1f
+        val originalFontScale = shell("settings get system font_scale").toFloatOrNull() ?: 1f
         try {
-            compose.mainClock.advanceTimeBy(10_500)
-            compose.waitUntil(12_000) {
-                val next = compose.onNode(artwork).captureToImage().asAndroidBitmap()
-                val changed = !first.sameAs(next)
-                next.recycle()
-                changed
+            launchGarage()
+            // CI starts a phone with animations disabled; this case exercises the tablet animation.
+            shell("wm size 2560x1800")
+            shell("wm density 320")
+            shell("settings put system font_scale 1.0")
+            shell("settings put global animator_duration_scale 1")
+            compose.waitUntil(15_000) {
+                val configuration =
+                    InstrumentationRegistry
+                        .getInstrumentation()
+                        .targetContext.resources.configuration
+                configuration.densityDpi == 320 &&
+                    configuration.fontScale == 1f &&
+                    usesNavigationRail() &&
+                    android.animation.ValueAnimator.areAnimatorsEnabled()
             }
+            awaitText("Your garage")
+            tap("Add vehicle")
+            field("Vehicle name", "Unsaved scooter")
+            tap("Two-wheeler")
+            compose.onNodeWithText("Add a new vehicle").performScrollTo()
+            val artwork = hasTestTag("vehicle-editor-artwork")
+            compose.onNode(artwork).assertExists()
+            val first = compose.onNode(artwork).captureToImage().asAndroidBitmap()
+            try {
+                compose.mainClock.advanceTimeBy(10_500)
+                compose.waitUntil(12_000) {
+                    val next = compose.onNode(artwork).captureToImage().asAndroidBitmap()
+                    val changed = !first.sameAs(next)
+                    next.recycle()
+                    changed
+                }
+            } finally {
+                first.recycle()
+            }
+            compose.onNodeWithText("Unsaved scooter").assertIsDisplayed()
+            assertEquals(0, mutations)
+            screenshot("vehicle-artwork-cycle")
         } finally {
-            first.recycle()
+            scenario?.close()
+            scenario = null
+            shell("settings put global animator_duration_scale $originalAnimationScale")
+            shell("settings put system font_scale $originalFontScale")
+            shell("wm size ${originalSize ?: "reset"}")
+            shell("wm density ${originalDensity ?: "reset"}")
         }
-        compose.onNodeWithText("Unsaved scooter").assertIsDisplayed()
-        assertEquals(0, mutations)
-        screenshot("vehicle-artwork-cycle")
     }
 
     @Test fun addVehicleCancelIsCenteredAndKeepsDiscardProtection() {

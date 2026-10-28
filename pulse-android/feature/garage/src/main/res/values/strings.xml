@@ -175,6 +175,7 @@
     <string name="pulse_garage_option_four_wheeler">Four-wheeler</string>
     <string name="pulse_garage_vehicle_summary">%1$s · %2$s</string>
     <string name="pulse_garage_new_vehicle_title">Add a new vehicle</string>
+    <string name="pulse_garage_back_to_garage">Back to garage</string>
     <string name="pulse_garage_vehicle_intro">Keep all your vehicles in one place and track every journey.</string>
     <string name="pulse_garage_basic_details">Basic details</string>
     <string name="pulse_garage_vehicle_benefit_care">Track service &amp; repairs</string>

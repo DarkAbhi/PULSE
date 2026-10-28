@@ -40,8 +40,10 @@ import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
+import dev.abhishekan.pulse.core.ui.components.PulseBackNavigation
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
@@ -136,152 +138,170 @@ internal fun MealPlanScreen(
                     state.selected.toString()
                 },
             ) {
-                Column(
-                    Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .imePadding()
-                        .padding(size.pagePadding)
-                        .padding(
-                            bottom =
-                                if (showAddTimeButton) {
-                                    timeActionClearance
-                                } else if (showAddButton) {
-                                    96.dp
+                Column(Modifier.fillMaxSize()) {
+                    if (state.draft != null && !records) {
+                        PulseBackNavigation(
+                            stringResource(
+                                if (state.draft.timeForm) {
+                                    R.string.pulse_mealplan_back_to_meal_times
                                 } else {
-                                    0.dp
+                                    R.string.pulse_mealplan_back_to_planner
                                 },
-                        ),
-                    verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
-                ) {
-                    if (state.reviewRequired) {
-                        PulseCard(Modifier.fillMaxWidth()) {
-                            state.message?.let { PulseText(it) }
-                            PulseText(
-                                stringResource(R.string.pulse_mealplan_review_before_another_change),
-                                style = PulseTextStyle.Title,
+                            ),
+                            cancel,
+                            Modifier.fillMaxWidth().padding(horizontal = size.pagePadding),
+                            enabled = !state.busy,
+                        )
+                    }
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState())
+                            .imePadding()
+                            .padding(size.pagePadding)
+                            .padding(
+                                bottom =
+                                    if (showAddTimeButton) {
+                                        timeActionClearance
+                                    } else if (showAddButton) {
+                                        96.dp
+                                    } else {
+                                        0.dp
+                                    },
+                            ),
+                        verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
+                    ) {
+                        if (state.reviewRequired) {
+                            PulseCard(Modifier.fillMaxWidth()) {
+                                state.message?.let { PulseText(it) }
+                                PulseText(
+                                    stringResource(R.string.pulse_mealplan_review_before_another_change),
+                                    style = PulseTextStyle.Title,
+                                )
+                                PulseText(
+                                    stringResource(
+                                        R.string.pulse_mealplan_a_previous_update_may_have_reached_the_server_check,
+                                    ),
+                                )
+                                PulseTextButton(
+                                    stringResource(R.string.pulse_mealplan_refresh_server_records),
+                                    vm::refresh,
+                                    enabled = !state.busy,
+                                )
+                                if (state.draft !=
+                                    null
+                                ) {
+                                    PulseTextButton(
+                                        if (records) {
+                                            stringResource(
+                                                R.string.pulse_mealplan_return_to_draft,
+                                            )
+                                        } else {
+                                            stringResource(
+                                                R.string.pulse_mealplan_view_server_records,
+                                            )
+                                        },
+                                        {
+                                            records =
+                                                !records
+                                        },
+                                    )
+                                }
+                                PulseButton(
+                                    stringResource(R.string.pulse_mealplan_i_reviewed_the_server_records),
+                                    vm::reviewed,
+                                    enabled =
+                                        state.reviewReady && !state.busy,
+                                )
+                            }
+                        }
+                        if (state.draft != null && !records) {
+                            if (!state.draft.timeForm) {
+                                if (state.times.loading && state.times.value == null) {
+                                    PulseLoadingState(
+                                        stringResource(R.string.pulse_mealplan_loading_meal_times),
+                                    )
+                                }
+                                state.times.error?.let { PulseErrorState(it.message, vm::refreshTimes) }
+                            }
+                            MealEditor(
+                                state.draft,
+                                state.times.value.orEmpty(),
+                                state.busy,
+                                state.reviewRequired,
+                                state.error,
+                                vm::update,
+                                vm::save,
+                                cancel,
+                                flat = size != PulseWindowSize.Compact,
                             )
-                            PulseText(
-                                stringResource(
-                                    R.string.pulse_mealplan_a_previous_update_may_have_reached_the_server_check,
-                                ),
-                            )
-                            PulseTextButton(
-                                stringResource(R.string.pulse_mealplan_refresh_server_records),
-                                vm::refresh,
-                                enabled = !state.busy,
-                            )
+                        } else if (state.managing) {
+                            MealTimesHeader({ vm.manage(false) }, enabled = !state.busy && state.draft == null)
+                            MealSectionContent(state.times, vm::refreshTimes) { times ->
+                                MealTimes(
+                                    times,
+                                    state.canWrite && state.draft == null,
+                                    { time ->
+                                        deletion =
+                                            MealChange.DeleteTime(time) to
+                                            uiText(
+                                                R.string.pulse_mealplan_delete_1_s_meals_remain_under_other_meals_with,
+                                                time.name,
+                                            )
+                                    },
+                                )
+                            }
+                        } else {
                             if (state.draft !=
                                 null
                             ) {
                                 PulseTextButton(
-                                    if (records) {
-                                        stringResource(
-                                            R.string.pulse_mealplan_return_to_draft,
-                                        )
-                                    } else {
-                                        stringResource(
-                                            R.string.pulse_mealplan_view_server_records,
-                                        )
-                                    },
+                                    stringResource(
+                                        R.string.pulse_mealplan_resume_unsaved_edits,
+                                    ),
                                     {
                                         records =
-                                            !records
+                                            false
                                     },
                                 )
                             }
-                            PulseButton(
-                                stringResource(R.string.pulse_mealplan_i_reviewed_the_server_records),
-                                vm::reviewed,
-                                enabled =
-                                    state.reviewReady && !state.busy,
-                            )
-                        }
-                    }
-                    if (state.draft != null && !records) {
-                        if (!state.draft.timeForm) {
-                            if (state.times.loading && state.times.value == null) {
-                                PulseLoadingState(
-                                    stringResource(R.string.pulse_mealplan_loading_meal_times),
-                                )
-                            }
-                            state.times.error?.let { PulseErrorState(it.message, vm::refreshTimes) }
-                        }
-                        MealEditor(
-                            state.draft,
-                            state.times.value.orEmpty(),
-                            state.busy,
-                            state.reviewRequired,
-                            state.error,
-                            vm::update,
-                            vm::save,
-                            cancel,
-                        )
-                    } else if (state.managing) {
-                        MealTimesHeader({ vm.manage(false) }, enabled = !state.busy && state.draft == null)
-                        MealSectionContent(state.times, vm::refreshTimes) { times ->
-                            MealTimes(
-                                times,
-                                state.canWrite && state.draft == null,
-                                { time ->
-                                    deletion =
-                                        MealChange.DeleteTime(time) to
-                                        uiText(
-                                            R.string.pulse_mealplan_delete_1_s_meals_remain_under_other_meals_with,
-                                            time.name,
-                                        )
-                                },
-                            )
-                        }
-                    } else {
-                        if (state.draft !=
-                            null
-                        ) {
-                            PulseTextButton(
-                                stringResource(
-                                    R.string.pulse_mealplan_resume_unsaved_edits,
-                                ),
-                                {
-                                    records =
-                                        false
-                                },
-                            )
-                        }
-                        MealCalendar(
-                            state.week,
-                            state.selected,
-                            state.today,
-                            !state.busy && !state.reviewRequired && state.draft == null,
-                            { vm.shift(-1) },
-                            { vm.shift(1) },
-                            vm::select,
-                            vm::today,
-                            { vm.manage(true) },
-                            !state.busy && state.draft == null,
-                            state.times.value?.size,
-                        )
-                        MealSectionContent(state.meals, vm::refreshMeals, showLoading = false) { meals ->
-                            MealAgenda(
+                            MealCalendar(
+                                state.week,
                                 state.selected,
                                 state.today,
-                                meals.filter { it.date == state.selected },
-                                state.canWrite &&
-                                    !state.meals.loading &&
-                                    state.meals.error == null &&
-                                    state.draft == null,
-                                { vm.edit(MealDraft.edit(it)) },
-                                vm::toggle,
-                                {
-                                    deletion =
-                                        MealChange.Delete(it.id) to
-                                        uiText(
-                                            R.string.pulse_mealplan_remove_1_s_from_2_s_this_deletes_the,
-                                            it.name,
-                                            it.date,
-                                        )
-                                },
-                                Modifier.fillMaxWidth(),
+                                !state.busy && !state.reviewRequired && state.draft == null,
+                                { vm.shift(-1) },
+                                { vm.shift(1) },
+                                vm::select,
+                                vm::today,
+                                { vm.manage(true) },
+                                !state.busy && state.draft == null,
+                                state.times.value?.size,
                             )
+                            MealSectionContent(state.meals, vm::refreshMeals, showLoading = false) { meals ->
+                                MealAgenda(
+                                    state.selected,
+                                    state.today,
+                                    meals.filter { it.date == state.selected },
+                                    state.canWrite &&
+                                        !state.meals.loading &&
+                                        state.meals.error == null &&
+                                        state.draft == null,
+                                    { vm.edit(MealDraft.edit(it)) },
+                                    vm::toggle,
+                                    {
+                                        deletion =
+                                            MealChange.Delete(it.id) to
+                                            uiText(
+                                                R.string.pulse_mealplan_remove_1_s_from_2_s_this_deletes_the,
+                                                it.name,
+                                                it.date,
+                                            )
+                                    },
+                                    Modifier.fillMaxWidth(),
+                                )
+                            }
                         }
                     }
                 }

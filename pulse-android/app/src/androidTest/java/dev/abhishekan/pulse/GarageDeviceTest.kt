@@ -14,6 +14,7 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
@@ -744,6 +745,15 @@ class GarageDeviceTest {
         assertEquals(saveBounds.center.x, cancelBounds.center.x, 1f)
         tap("Cancel")
         confirm("Discard edits")
+        awaitText("Add vehicle")
+        tap("Add vehicle")
+        field("Vehicle name", "Back button draft")
+        compose.onNodeWithText("Cancel").performScrollTo()
+        compose.onNode(hasContentDescription("Back to garage")).assertIsDisplayed().performClick()
+        confirm("Discard edits")
+        awaitText("Add vehicle")
+        tap("Add vehicle")
+        compose.onNode(hasContentDescription("Back to garage")).assertIsDisplayed().performClick()
         awaitText("Add vehicle")
         assertEquals(0, mutations)
     }

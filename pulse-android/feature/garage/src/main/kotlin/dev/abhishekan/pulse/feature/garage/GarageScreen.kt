@@ -47,6 +47,7 @@ import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
+import dev.abhishekan.pulse.core.ui.components.PulseBackNavigation
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
@@ -211,6 +212,14 @@ internal fun GarageScreen(
                 Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).imePadding(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                if (state.draft?.kind == GarageForm.Vehicle && !records) {
+                    PulseBackNavigation(
+                        stringResource(R.string.pulse_garage_back_to_garage),
+                        cancel,
+                        Modifier.fillMaxWidth().padding(horizontal = size.pagePadding),
+                        enabled = !state.busy,
+                    )
+                }
                 Column(
                     Modifier
                         .weight(1f)

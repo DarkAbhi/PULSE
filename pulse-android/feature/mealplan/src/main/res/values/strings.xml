@@ -46,6 +46,7 @@
     <string name="pulse_mealplan_i_reviewed_the_server_records">"I reviewed the server records"</string>
     <string name="pulse_mealplan_loading_meal_times">"Loading meal times"</string>
     <string name="pulse_mealplan_back_to_planner">"Back to planner"</string>
+    <string name="pulse_mealplan_back_to_meal_times">Back to meal times</string>
     <string name="pulse_mealplan_delete_1_s_meals_remain_under_other_meals_with">"Delete %1$s? Meals remain under Other meals with their saved time ranges. Only this custom meal time is removed."</string>
     <string name="pulse_mealplan_resume_unsaved_edits">"Resume unsaved edits"</string>
     <string name="pulse_mealplan_previous_week">"Previous week"</string>

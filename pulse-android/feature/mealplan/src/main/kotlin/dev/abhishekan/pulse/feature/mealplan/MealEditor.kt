@@ -1,6 +1,8 @@
 package dev.abhishekan.pulse.feature.mealplan
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -56,11 +58,12 @@ internal fun MealEditor(
     onUpdate: (MealDraft) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
+    flat: Boolean = false,
 ) {
     var datePicker by rememberSaveable { mutableStateOf(false) }
     var timePicker by rememberSaveable { mutableStateOf<String?>(null) }
     val focus = LocalFocusManager.current
-    PulseCard(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()) {
+    val content: @Composable ColumnScope.() -> Unit = {
         MealEditorHeader(
             if (draft.timeForm) {
                 stringResource(R.string.pulse_mealplan_new_meal_time)
@@ -227,6 +230,12 @@ internal fun MealEditor(
                 loading = busy,
             )
         }
+    }
+    val modifier = Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()
+    if (flat) {
+        Column(modifier, verticalArrangement = Arrangement.spacedBy(PulseTokens.small), content = content)
+    } else {
+        PulseCard(modifier, content = content)
     }
     if (datePicker) {
         PulseDatePickerDialog(

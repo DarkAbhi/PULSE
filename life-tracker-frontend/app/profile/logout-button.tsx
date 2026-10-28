@@ -1,5 +1,6 @@
 "use client";
 
+import { useTimeZone } from "../components/time-zone-provider";
 import Button from "../components/design-system/button";
 
 import { useState } from "react";
@@ -11,6 +12,7 @@ const apiBaseURL = "";
 
 export default function LogoutButton() {
   const router = useRouter();
+  const { setTimeZone } = useTimeZone();
   const [isConfirmingLogout, setIsConfirmingLogout] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
@@ -40,7 +42,9 @@ export default function LogoutButton() {
       sessionStorage.clear();
 
       setIsConfirmingLogout(false);
+      setTimeZone("UTC");
       router.replace("/");
+      router.refresh();
     } catch {
       setLogoutError("Unable to reach the server. Please try again.");
     } finally {

@@ -1,5 +1,9 @@
 "use client";
 
+import { formatInstant } from "../../lib/time-zone.mjs";
+
+import { useTimeZone } from "../../components/time-zone-provider";
+
 import Button from "../../components/design-system/button";
 
 import { Receipt, Plus, Tag, Search, Edit2, Trash2, Clock, Wallet, FileUp } from "lucide-react";
@@ -48,6 +52,7 @@ export default function TransactionsTab({
   txCategoryFilter,
   onTxCategoryFilterChange,
 }: TransactionsTabProps) {
+  const { timeZone } = useTimeZone();
   // Category filter is still applied client-side (it's not sent to the API)
   // because categories are metadata on already-fetched records.
   const filteredTransactions = transactions.filter((t) => {
@@ -186,7 +191,7 @@ export default function TransactionsTab({
             const isCredit = tx.type === "credit";
 
             const formattedDate = tx.transaction_date
-              ? new Date(tx.transaction_date).toLocaleString("en-IN", {
+              ? formatInstant(tx.transaction_date, timeZone, {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })

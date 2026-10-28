@@ -1,5 +1,9 @@
 "use client";
 
+import { useTimeZone } from "../components/time-zone-provider";
+
+import { dateKey } from "../lib/time-zone.mjs";
+
 import Button from "../components/design-system/button";
 
 import { useState, useEffect, useTransition, useId } from "react";
@@ -36,41 +40,30 @@ interface MealPlanClientProps {
   initialTodayStr?: string;
 }
 
-const APP_TIMEZONE = "Asia/Kolkata";
-
-function getTodayYMD(tz: string = APP_TIMEZONE): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
 
 function parseYMD(dateStr: string): Date {
-  const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day);
+  return new Date(`${dateStr}T00:00:00Z`);
 }
 
 function formatYMD(d: Date): string {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
 function getMonday(d: Date): Date {
   const date = new Date(d);
-  const day = date.getDay();
+  const day = date.getUTCDay();
   const diff = (day === 0 ? -6 : 1) - day;
-  date.setDate(date.getDate() + diff);
-  date.setHours(0, 0, 0, 0);
+  date.setUTCDate(date.getUTCDate() + diff);
+  date.setUTCHours(0, 0, 0, 0);
   return date;
 }
 
 function addDays(d: Date, days: number): Date {
   const res = new Date(d);
-  res.setDate(res.getDate() + days);
+  res.setUTCDate(res.getUTCDate() + days);
   return res;
 }
 
@@ -90,12 +83,20 @@ export default function MealPlanClient({
   initialMealTimes,
   initialTodayStr,
 }: MealPlanClientProps) {
-  const [todayStr] = useState(() => initialTodayStr ?? getTodayYMD());
+  const { timeZone } = useTimeZone();
+  const [todayStr, setTodayStr] = useState(() => initialTodayStr ?? dateKey(new Date(), timeZone));
   const [currentMonday, setCurrentMonday] = useState(() =>
-    getMonday(parseYMD(initialTodayStr ?? getTodayYMD()))
+    getMonday(parseYMD(initialTodayStr ?? dateKey(new Date(), timeZone)))
   );
+  useEffect(() => {
+    const update = () => setTodayStr(dateKey(new Date(), timeZone));
+    update();
+    const timer = window.setInterval(update, 60000);
+    window.addEventListener("focus", update);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", update); };
+  }, [timeZone]);
   const [selectedDate, setSelectedDate] = useState(
-    () => initialTodayStr ?? getTodayYMD()
+    () => initialTodayStr ?? dateKey(new Date(), timeZone)
   );
   const [meals, setMeals] = useState<MealPlan[]>(initialMeals);
   const [mealTimes, setMealTimes] = useState<MealTime[]>(initialMealTimes);
@@ -133,9 +134,9 @@ export default function MealPlanClient({
     return {
       date: d,
       dateStr,
-      dayShort: d.toLocaleDateString("en-IN", { weekday: "short" }),
-      dayFull: d.toLocaleDateString("en-IN", { weekday: "long" }),
-      monthDay: d.toLocaleDateString("en-IN", { month: "short", day: "numeric" }),
+      dayShort: d.toLocaleDateString("en-IN", { timeZone: "UTC", weekday: "short" }),
+      dayFull: d.toLocaleDateString("en-IN", { timeZone: "UTC", weekday: "long" }),
+      monthDay: d.toLocaleDateString("en-IN", { timeZone: "UTC", month: "short", day: "numeric" }),
       isToday: dateStr === todayStr,
       isSelected: dateStr === selectedDate,
     };
@@ -164,16 +165,16 @@ export default function MealPlanClient({
   const handlePrevWeek = () => setCurrentMonday((prev) => addDays(prev, -7));
   const handleNextWeek = () => setCurrentMonday((prev) => addDays(prev, 7));
   const handleCurrentWeek = () => {
-    const today = getTodayYMD();
+    const today = dateKey(new Date(), timeZone);
     setCurrentMonday(getMonday(parseYMD(today)));
     setSelectedDate(today);
   };
 
   const selectedDayObj = weekDays.find((d) => d.dateStr === selectedDate) ?? {
-    dayFull: parseYMD(selectedDate).toLocaleDateString("en-IN", {
+    dayFull: parseYMD(selectedDate).toLocaleDateString("en-IN", { timeZone: "UTC",
       weekday: "long",
     }),
-    monthDay: parseYMD(selectedDate).toLocaleDateString("en-IN", {
+    monthDay: parseYMD(selectedDate).toLocaleDateString("en-IN", { timeZone: "UTC",
       month: "long",
       day: "numeric",
       year: "numeric",
@@ -299,10 +300,10 @@ export default function MealPlanClient({
     });
   };
 
-  const formattedWeekRange = `${currentMonday.toLocaleDateString("en-IN", {
+  const formattedWeekRange = `${currentMonday.toLocaleDateString("en-IN", { timeZone: "UTC",
     month: "short",
     day: "numeric",
-  })} – ${addDays(currentMonday, 6).toLocaleDateString("en-IN", {
+  })} – ${addDays(currentMonday, 6).toLocaleDateString("en-IN", { timeZone: "UTC",
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -399,7 +400,7 @@ export default function MealPlanClient({
                       active ? "font-bold text-primary-foreground" : "font-semibold"
                     }`}
                   >
-                    {day.date.getDate()}
+                    {day.date.getUTCDate()}
                   </span>
 
                   <div className="mt-1.5 flex items-center justify-center min-h-[6px]">
@@ -432,7 +433,7 @@ export default function MealPlanClient({
               )}
             </div>
             <p className="text-sm text-muted-foreground mt-1" suppressHydrationWarning>
-              {parseYMD(selectedDate).toLocaleDateString("en-IN", {
+              {parseYMD(selectedDate).toLocaleDateString("en-IN", { timeZone: "UTC",
                 month: "long",
                 day: "numeric",
                 year: "numeric",
@@ -631,7 +632,7 @@ export default function MealPlanClient({
                 </h2>
                 <p className="text-xs text-muted-foreground" suppressHydrationWarning>
                   For {selectedDayObj.dayFull},{" "}
-                  {parseYMD(selectedDate).toLocaleDateString("en-IN", {
+                  {parseYMD(selectedDate).toLocaleDateString("en-IN", { timeZone: "UTC",
                     month: "short",
                     day: "numeric",
                   })}

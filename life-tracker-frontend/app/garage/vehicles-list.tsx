@@ -1,4 +1,6 @@
 "use client";
+import { useTimeZone } from "../components/time-zone-provider";
+import { toDateTimeInput, fromDateTimeInput } from "../lib/time-zone.mjs";
 
 import Button from "../components/design-system/button";
 
@@ -27,17 +29,15 @@ const newFuelItem = (): FuelItem => ({
   totalCost: "",
 });
 
-const localDateTime = () =>
-  new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
-
 interface VehiclesListProps {
   vehicles: Vehicle[];
 }
 
 export default function VehiclesList({ vehicles }: VehiclesListProps) {
+  const { timeZone } = useTimeZone();
   const router = useRouter();
+  const [entryTimeZone, setEntryTimeZone] = useState(timeZone);
+  const localDateTime = () => toDateTimeInput(new Date(), timeZone);
   const [pendingAirFillVehicle, setPendingAirFillVehicle] =
     useState<Vehicle | null>(null);
   const [isMarkingAirFill, startMarkingAirFill] = useTransition();
@@ -76,9 +76,12 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
     const numberOrNull = (value: string) =>
       value === "" ? null : Number(value);
 
+    let filledAt: string;
+    try { filledAt = fromDateTimeInput(fuelDateTime, entryTimeZone); }
+    catch (error) { setFuelError(error instanceof Error ? error.message : "Choose a valid date and time."); return; }
     const payload = {
       odometer_km: Number(fuelOdometer),
-      filled_at: new Date(fuelDateTime).toISOString(),
+      filled_at: filledAt,
       station_name: stationName || null,
       notes: fuelNotes || null,
       items: fuelItems.map((item) => ({
@@ -146,6 +149,8 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
               onClick={(event) => {
                 event.stopPropagation();
                 setFuelError("");
+                setEntryTimeZone(timeZone);
+                setFuelDateTime(localDateTime());
                 setFuelVehicle(vehicle);
               }}
               type="button"

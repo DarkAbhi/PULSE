@@ -64,3 +64,10 @@ npm run build
 The Node tests cover frontend utility behavior and need no database or running
 backend. Browser flows are separate; see [Running tests locally](../README.md#running-tests-locally)
 for Maestro setup and commands.
+
+
+## Account time zones
+
+Profile includes a searchable time zone setting shared with Android. The default is UTC. Dates and times render with the account preference, including server-rendered pages. Date/time forms convert local entries back to UTC instants; calendar-only dates retain their selected date. No extra time zone notices are shown around the app.
+
+Shared conversions and tests live in `app/lib/time-zone.mjs` and `app/lib/time-zone.test.mjs`. Run `npm test` and `npm run build` to verify changes. See `../docs/user-time-zones.md` for storage, daylight-saving and deployment details.

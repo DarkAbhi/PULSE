@@ -1,5 +1,7 @@
 "use client";
 
+import { useTimeZone } from "../components/time-zone-provider";
+
 import Link from "next/link";
 import { Dumbbell, ArrowRight } from "lucide-react";
 
@@ -12,18 +14,18 @@ interface GymVisitsListProps {
   visits: GymVisit[];
 }
 
-const dateFormatter = new Intl.DateTimeFormat("en-IN", {
-  dateStyle: "full",
-  timeZone: "Asia/Kolkata",
-});
-
-const timeFormatter = new Intl.DateTimeFormat("en-IN", {
-  hour: "numeric",
-  minute: "2-digit",
-  timeZone: "Asia/Kolkata",
-});
-
 export default function GymVisitsList({ visits }: GymVisitsListProps) {
+  const { timeZone } = useTimeZone();
+  const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "full",
+    timeZone,
+  });
+  const timeFormatter = new Intl.DateTimeFormat("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  });
+
   const visitsByDate = new Map<string, GymVisit[]>();
   for (const visit of visits) {
     const dateLabel = dateFormatter.format(new Date(visit.created_at));

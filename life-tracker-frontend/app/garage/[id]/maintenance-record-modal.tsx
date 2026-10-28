@@ -1,4 +1,6 @@
 "use client";
+import { useTimeZone } from "../../components/time-zone-provider";
+import { dateKey, fromDateTimeInput, formatInstant } from "../../lib/time-zone.mjs";
 
 import Button from "../../components/design-system/button";
 
@@ -11,21 +13,14 @@ import Dialog, { DialogAction, DialogActions } from "../../components/design-sys
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
 type Category = (typeof categories)[number];
 const apiBaseURL = "";
-const attachmentDateFormatter = new Intl.DateTimeFormat("en-IN", {
-  timeZone: "Asia/Kolkata",
-  dateStyle: "medium",
-  timeStyle: "medium",
-});
-
-const localDate = (value?: string) =>
-  value ? new Date(value).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
-
 export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleId: string; record?: MaintenanceRecord }) {
+  const { timeZone } = useTimeZone();
   const router = useRouter();
+  const [entryTimeZone] = useState(timeZone);
   const [category, setCategory] = useState<Category>(record?.category ?? "service");
   const [title, setTitle] = useState(record?.title ?? "");
   const [amount, setAmount] = useState(record ? String(record.amount) : "");
-  const [occurredAt, setOccurredAt] = useState(localDate(record?.occurred_at));
+  const [occurredAt, setOccurredAt] = useState(dateKey(record?.occurred_at ?? new Date(), entryTimeZone));
   const [odometer, setOdometer] = useState(record?.odometer_km == null ? "" : String(record.odometer_km));
   const [provider, setProvider] = useState(record?.provider_name ?? "");
   const [notes, setNotes] = useState(record?.notes ?? "");
@@ -69,8 +64,13 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    let occurredInstant: string;
+    try {
+      occurredInstant = record && dateKey(record.occurred_at, entryTimeZone) === occurredAt
+        ? record.occurred_at : fromDateTimeInput(`${occurredAt}T12:00`, entryTimeZone);
+    } catch (error) { setError(error instanceof Error ? error.message : "Choose a valid date."); return; }
     const payload: SaveMaintenancePayload = {
-      category, title, amount: Number(amount), occurred_at: new Date(`${occurredAt}T12:00:00`).toISOString(),
+      category, title, amount: Number(amount), occurred_at: occurredInstant,
       odometer_km: odometer === "" ? null : Number(odometer), provider_name: provider || null, notes: notes || null,
     };
     startTransition(async () => {
@@ -104,7 +104,7 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
           {attachments.length > 0 && <ul className="mt-3 space-y-2">{attachments.map((attachment) => <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm" key={attachment.id}>
             <div className="min-w-0">
               <a className="break-all font-medium text-action hover:underline" href={`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments/${attachment.id}`}>{attachment.file_name}</a>
-              <p className="mt-1 text-xs text-muted-foreground">Uploaded <time dateTime={attachment.created_at}>{attachmentDateFormatter.format(new Date(attachment.created_at))} IST</time> · {Math.max(1, Math.round(attachment.size_bytes / 1024))} KB</p>
+              <p className="mt-1 text-xs text-muted-foreground">Uploaded <time dateTime={attachment.created_at}>{formatInstant(attachment.created_at, timeZone, { dateStyle: "medium", timeStyle: "medium" })}</time> · {Math.max(1, Math.round(attachment.size_bytes / 1024))} KB</p>
             </div>
             <Button variant="destructiveOutline" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</Button>
           </li>)}</ul>}

@@ -1,5 +1,9 @@
 "use client";
 
+import { formatInstant } from "../lib/time-zone.mjs";
+
+import { useTimeZone } from "../components/time-zone-provider";
+
 import Button from "../components/design-system/button";
 
 import { useState, useTransition, useEffect } from "react";
@@ -71,6 +75,7 @@ export default function FinancialHorizonClient({
   initialPurchasesTotal,
   initialTransactionPage,
 }: FinancialHorizonClientProps) {
+  const { timeZone } = useTimeZone();
   // Navigation & Active Tab State
   const [activeTab, setActiveTab] = useState<HorizonTab>("overview");
 
@@ -1129,7 +1134,7 @@ export default function FinancialHorizonClient({
                     <div>
                       <span className="font-semibold text-foreground">{tx.name}</span>
                       <span className="block text-xs text-muted-foreground">
-                        {new Date(tx.transaction_date).toLocaleDateString(undefined, {
+                        {formatInstant(tx.transaction_date, timeZone, {
                           year: "numeric",
                           month: "short",
                           day: "numeric",

@@ -21,6 +21,7 @@ export default function Home() {
         });
         if (response.ok) {
           router.replace("/dashboard");
+          router.refresh();
           return;
         }
       } catch {
@@ -54,6 +55,7 @@ export default function Home() {
         return;
       }
       router.replace("/dashboard");
+      router.refresh();
     } catch {
       setError("Unable to reach the server. Please try again.");
     } finally {

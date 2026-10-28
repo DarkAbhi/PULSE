@@ -1,4 +1,6 @@
 "use client";
+import { useTimeZone } from "../../components/time-zone-provider";
+import { statementTransactionInstant } from "../../lib/time-zone.mjs";
 
 import Button from "../../components/design-system/button";
 
@@ -41,44 +43,13 @@ interface StatementUploadDialogProps {
   ) => Promise<void>;
 }
 
-/**
- * Processes raw extracted transaction date:
- * - If date AND time are present, returns full ISO timestamp.
- * - If ONLY date is present, returns date formatted as YYYY-MM-DD.
- * - If BOTH date and time are missing/invalid, defaults to current date and time.
- */
-export function processTransactionDate(rawDateStr?: string | null): string {
-  if (!rawDateStr || !rawDateStr.trim()) {
-    return new Date().toISOString();
-  }
-
-  const str = rawDateStr.trim();
-  const parsed = new Date(str);
-
-  if (isNaN(parsed.getTime())) {
-    return new Date().toISOString();
-  }
-
-  // Check if string contains time components (e.g. "T", ":", "14:30", "02:30 PM")
-  const hasTime = /[T\:\s]\d{1,2}:\d{2}|am|pm/i.test(str);
-
-  if (hasTime) {
-    return parsed.toISOString();
-  }
-
-  // Date only: format as YYYY-MM-DD
-  const year = parsed.getFullYear();
-  const month = String(parsed.getMonth() + 1).padStart(2, "0");
-  const day = String(parsed.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 export default function StatementUploadDialog({
   isOpen,
   onClose,
   categories,
   onImportTransactions,
 }: StatementUploadDialogProps) {
+  const { timeZone } = useTimeZone();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -194,7 +165,7 @@ export default function StatementUploadDialog({
     try {
       const itemsToImport = selectedTxIndexes.map((idx) => {
         const tx = extractionResult.data.transactions[idx];
-        const formattedTxDate = processTransactionDate(tx.date);
+        const formattedTxDate = statementTransactionInstant(tx.date, timeZone);
 
         return {
           name: tx.description || "Statement Transaction",

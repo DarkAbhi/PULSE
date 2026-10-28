@@ -1,4 +1,6 @@
 "use client";
+import { useTimeZone } from "../components/time-zone-provider";
+import { dateKey } from "../lib/time-zone.mjs";
 
 import Button from "../components/design-system/button";
 
@@ -36,11 +38,12 @@ export default function SubscriptionDialog({
   budgets,
   currency = "₹",
 }: SubscriptionDialogProps) {
+  const { timeZone } = useTimeZone();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [billingCycle, setBillingCycle] = useState<string>("monthly");
   const [billingDay, setBillingDay] = useState<string>("1");
-  const [renewalDate, setRenewalDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [renewalDate, setRenewalDate] = useState<string>(dateKey(new Date(), timeZone));
   const [status, setStatus] = useState<string>("active");
   const [categoryId, setCategoryId] = useState<string>("");
   const [budgetId, setBudgetId] = useState<string>("");
@@ -64,7 +67,7 @@ export default function SubscriptionDialog({
           ? editingSubscription.renewal_date.slice(0, 10)
           : editingSubscription.next_renewal_date
           ? editingSubscription.next_renewal_date.slice(0, 10)
-          : new Date().toISOString().slice(0, 10)
+          : dateKey(new Date(), timeZone)
       );
       setStatus(editingSubscription.status || "active");
       setCategoryId(editingSubscription.category_id ? editingSubscription.category_id.toString() : "");
@@ -74,8 +77,8 @@ export default function SubscriptionDialog({
       setName("");
       setAmount("");
       setBillingCycle("monthly");
-      setBillingDay(new Date().getDate().toString());
-      setRenewalDate(new Date().toISOString().slice(0, 10));
+      setBillingDay(String(Number(dateKey(new Date(), timeZone).slice(8, 10))));
+      setRenewalDate(dateKey(new Date(), timeZone));
       setStatus("active");
 
       const defaultSubCategory = categories.find(c => c.name.toLowerCase().includes("subscription"));
@@ -122,8 +125,8 @@ export default function SubscriptionDialog({
       }
       parsedRenewalDate = renewalDate;
       const parsedDate = new Date(renewalDate);
-      if (!isNaN(parsedDate.getDate())) {
-        parsedBillingDay = parsedDate.getDate();
+      if (!isNaN(parsedDate.getUTCDate())) {
+        parsedBillingDay = parsedDate.getUTCDate();
       }
     }
 

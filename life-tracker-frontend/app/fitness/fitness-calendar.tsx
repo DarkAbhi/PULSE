@@ -87,7 +87,7 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
           </div>
           <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
             <span aria-hidden="true" className="h-2 w-2 rounded-full bg-success" />
-            Workout completed · Dates in India time
+            Workout completed
           </p>
         </section>
         <section aria-label="Selected day's workouts" className="space-y-4">

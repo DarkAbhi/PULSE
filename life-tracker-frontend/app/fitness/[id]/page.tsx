@@ -1,3 +1,4 @@
+import { getUserTimeZone } from "../../lib/user-time-zone";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -27,35 +28,35 @@ type GymVisit = {
   synced_from_apple_watch: boolean;
 };
 
-const indiaTimeZone = "Asia/Kolkata";
-
-const visitDateFormatter = new Intl.DateTimeFormat("en-IN", {
-  dateStyle: "full",
-  timeZone: indiaTimeZone,
-});
-
-const workoutTimeFormatter = new Intl.DateTimeFormat("en-IN", {
-  timeStyle: "short",
-  timeZone: indiaTimeZone,
-});
-const workoutNumberFormatter = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 3 });
-
-const visitDateKeyFormatter = new Intl.DateTimeFormat("en-CA", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  timeZone: indiaTimeZone,
-});
-
-function isToday(date: Date) {
-  return visitDateKeyFormatter.format(date) === visitDateKeyFormatter.format(new Date());
-}
-
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 export default async function GymVisitPage({ params }: PageProps) {
+  const timeZone = await getUserTimeZone();
+
+  const visitDateFormatter = new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "full",
+    timeZone,
+  });
+
+  const workoutTimeFormatter = new Intl.DateTimeFormat("en-IN", {
+    timeStyle: "short",
+    timeZone,
+  });
+  const workoutNumberFormatter = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 3 });
+
+  const visitDateKeyFormatter = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone,
+  });
+
+  function isToday(date: Date) {
+    return visitDateKeyFormatter.format(date) === visitDateKeyFormatter.format(new Date());
+  }
+
   const { id: visitID } = await params;
 
   const cookieStore = await cookies();
@@ -152,7 +153,6 @@ export default async function GymVisitPage({ params }: PageProps) {
 
           {hasWorkoutDetails && <section aria-labelledby="workout-details-heading" className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
             <h2 id="workout-details-heading" className="text-xl font-semibold">Workout details</h2>
-            <p className="mt-1 text-xs text-muted-foreground">Times shown in India time (IST).</p>
             {detailsError ? (
               <p className="mt-4 text-sm text-destructive" role="alert">{detailsError}</p>
             ) : visit && (

@@ -1,3 +1,7 @@
+
+import { getUserTimeZone } from "../lib/user-time-zone";
+
+import { dateKey } from "../lib/time-zone.mjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import MealPlanClient from "./meal-plan-client";
@@ -11,16 +15,6 @@ const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
   "http://localhost:8080";
 
-const APP_TIMEZONE = "Asia/Kolkata";
-
-function getTodayYMD(tz: string = APP_TIMEZONE): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
 
 export default async function MealPlanPage() {
   const cookieStore = await cookies();
@@ -61,7 +55,7 @@ export default async function MealPlanPage() {
     // If backend is unreachable, client will handle gracefully
   }
 
-  const todayStr = getTodayYMD();
+  const todayStr = dateKey(new Date(), await getUserTimeZone());
 
   return (
     <MealPlanClient

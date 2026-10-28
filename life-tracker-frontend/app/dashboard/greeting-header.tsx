@@ -1,5 +1,7 @@
 "use client";
 
+import { useTimeZone } from "../components/time-zone-provider";
+
 import { useEffect, useState, type ReactNode } from "react";
 
 export function PulseOrb() {
@@ -18,6 +20,7 @@ export default function GreetingHeader({ username, displayName, children }: {
   displayName: string;
   children?: ReactNode;
 }) {
+  const { timeZone } = useTimeZone();
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -32,8 +35,8 @@ export default function GreetingHeader({ username, displayName, children }: {
       <div className="pulse-hero-art" aria-hidden="true"><PulseOrb /></div>
       <div className="pulse-hero-top">
         <div className="pulse-clock">
-          <p className="pulse-clock-time">{now ? now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase() : "—:—"}</p>
-          <p className="pulse-clock-date">{now ? now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short", year: "numeric" }) : "Your day at a glance"}</p>
+          <p className="pulse-clock-time">{now ? now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true, timeZone }).toUpperCase() : "—:—"}</p>
+          <p className="pulse-clock-date">{now ? now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short", year: "numeric", timeZone }) : "Your day at a glance"}</p>
         </div>
         <div className="pulse-hero-actions">{children}</div>
       </div>

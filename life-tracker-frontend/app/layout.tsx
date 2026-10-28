@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
+import TimeZoneProvider from "./components/time-zone-provider";
+import { getUserTimeZone } from "./lib/user-time-zone";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,11 +23,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const timeZone = await getUserTimeZone();
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -37,7 +40,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <TimeZoneProvider initialTimeZone={timeZone}>{children}</TimeZoneProvider>
         </ThemeProvider>
       </body>
     </html>

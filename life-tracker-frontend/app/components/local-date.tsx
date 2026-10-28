@@ -1,22 +1,10 @@
 "use client";
+import { useTimeZone } from "./time-zone-provider";
+import { formatInstant, formatCalendarDate } from "../lib/time-zone.mjs";
 
-import { useEffect, useState } from "react";
-
-interface LocalDateProps {
-  dateString: string;
-  options?: Intl.DateTimeFormatOptions;
-}
-
-export default function LocalDate({ dateString, options }: LocalDateProps) {
-  const [formatted, setFormatted] = useState("");
-
-  useEffect(() => {
-    const formatter = new Intl.DateTimeFormat("en-IN", options ?? {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-    setFormatted(formatter.format(new Date(dateString)));
-  }, [dateString, options]);
-
-  return <span suppressHydrationWarning>{formatted}</span>;
+interface LocalDateProps { dateString: string; options?: Intl.DateTimeFormatOptions; calendarOnly?: boolean; }
+export default function LocalDate({ dateString, options, calendarOnly = false }: LocalDateProps) {
+  const { timeZone } = useTimeZone();
+  const formatted = calendarOnly ? formatCalendarDate(dateString, options ?? { dateStyle: "medium" }) : formatInstant(dateString, timeZone, options);
+  return <time dateTime={dateString}>{formatted}</time>;
 }

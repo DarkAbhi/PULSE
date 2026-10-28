@@ -1,4 +1,6 @@
 "use client";
+import { useTimeZone } from "../components/time-zone-provider";
+import { toDateTimeInput, fromDateTimeInput } from "../lib/time-zone.mjs";
 
 import Button from "../components/design-system/button";
 
@@ -42,7 +44,9 @@ export default function TransactionDialog({
   currency,
   isPending = false,
 }: TransactionDialogProps) {
+  const { timeZone } = useTimeZone();
   const titleId = useId();
+  const [entryTimeZone, setEntryTimeZone] = useState(timeZone);
 
   const [txName, setTxName] = useState("");
   const [txAmount, setTxAmount] = useState("");
@@ -59,12 +63,13 @@ export default function TransactionDialog({
     if (!isOpen) return;
 
     setErrorMsg("");
+    setEntryTimeZone(timeZone);
     if (editingTransaction) {
       setTxName(editingTransaction.name);
       setTxAmount(editingTransaction.amount.toString());
       setTxType(editingTransaction.type || "debit");
       const d = editingTransaction.transaction_date ? new Date(editingTransaction.transaction_date) : new Date();
-      const localIso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      const localIso = toDateTimeInput(d, timeZone);
       setTxDate(localIso);
       setTxCategoryId(editingTransaction.category_id ?? null);
       setTxBudgetId(editingTransaction.budget_id ?? null);
@@ -75,7 +80,7 @@ export default function TransactionDialog({
       setTxAmount(paymentSubscription ? String(paymentSubscription.amount) : "");
       setTxType("debit");
       const now = new Date();
-      const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      const localIso = toDateTimeInput(now, timeZone);
       setTxDate(localIso);
       setTxCategoryId(paymentSubscription?.category_id ?? (categories.length > 0 ? categories[0].id : null));
       setTxBudgetId(paymentSubscription?.budget_id ?? null);
@@ -118,9 +123,8 @@ export default function TransactionDialog({
       return;
     }
 
-    const isoDate = txDate ? new Date(txDate).toISOString() : new Date().toISOString();
-
     try {
+      const isoDate = txDate ? fromDateTimeInput(txDate, entryTimeZone, editingTransaction?.transaction_date) : new Date().toISOString();
       await onSave({
         id: editingTransaction?.id,
         name: txName.trim(),
@@ -132,8 +136,8 @@ export default function TransactionDialog({
         subscriptionId: txSubscriptionId,
         notes: txNotes.trim() || null,
       });
-    } catch {
-      setErrorMsg("Failed to save transaction.");
+    } catch (error) {
+      setErrorMsg(error instanceof RangeError ? error.message : "Failed to save transaction.");
     }
   };
 

@@ -1,4 +1,6 @@
 "use client";
+import { useTimeZone } from "../../components/time-zone-provider";
+import { toDateTimeInput, fromDateTimeInput } from "../../lib/time-zone.mjs";
 
 import Button from "../../components/design-system/button";
 
@@ -14,11 +16,6 @@ interface EditFuelModalProps {
   fill: FuelFill;
 }
 
-const toLocal = (value: string) =>
-  new Date(new Date(value).getTime() - new Date().getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, 16);
-
 const toFormItem = (item: FuelItem): FuelFormItem => ({
   fuelType: item.fuel_type,
   fillType: item.fill_type,
@@ -28,12 +25,14 @@ const toFormItem = (item: FuelItem): FuelFormItem => ({
 });
 
 export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
+  const { timeZone } = useTimeZone();
   const router = useRouter();
+  const [entryTimeZone] = useState(timeZone);
   const [isPending, startTransition] = useTransition();
   const [toastError, setToastError] = useState("");
 
   const [odometer, setOdometer] = useState(String(fill.odometer_km));
-  const [filledAt, setFilledAt] = useState(toLocal(fill.filled_at));
+  const [filledAt, setFilledAt] = useState(toDateTimeInput(fill.filled_at, entryTimeZone));
   const [station, setStation] = useState(fill.station_name ?? "");
   const [notes, setNotes] = useState(fill.notes ?? "");
   const [items, setItems] = useState<FuelFormItem[]>(fill.items.map(toFormItem));
@@ -55,9 +54,12 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
     setToastError("");
 
     const optional = (value: string) => (value === "" ? null : Number(value));
+    let instant: string;
+    try { instant = fromDateTimeInput(filledAt, entryTimeZone, fill.filled_at); }
+    catch (error) { setToastError(error instanceof Error ? error.message : "Choose a valid date and time."); return; }
     const payload = {
       odometer_km: Number(odometer),
-      filled_at: new Date(filledAt).toISOString(),
+      filled_at: instant,
       station_name: station || null,
       notes: notes || null,
       items: items.map((item) => ({

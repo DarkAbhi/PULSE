@@ -1,5 +1,9 @@
 "use client";
 
+import { formatInstant } from "../lib/time-zone.mjs";
+
+import { useTimeZone } from "../components/time-zone-provider";
+
 import { useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
 import Button from "../components/design-system/button";
@@ -22,6 +26,7 @@ export default function LinkSubscriptionPaymentDialog({
   onCreateNew: () => void;
   onLink: (transaction: TransactionItem) => Promise<void>;
 }) {
+  const { timeZone } = useTimeZone();
   const titleId = useId();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -117,7 +122,7 @@ export default function LinkSubscriptionPaymentDialog({
               disabled={!!transaction.subscription_id || saving}
               onChange={() => setSelectedId(transaction.id)}
             />
-            <span className="min-w-0 flex-1 truncate">{transaction.name}<span className="block text-xs text-muted-foreground">{new Date(transaction.transaction_date).toLocaleDateString()} · {transaction.category_name}{transaction.subscription_id ? " · Already linked" : ""}</span></span>
+            <span className="min-w-0 flex-1 truncate">{transaction.name}<span className="block text-xs text-muted-foreground">{formatInstant(transaction.transaction_date, timeZone, { dateStyle: "medium" })} · {transaction.category_name}{transaction.subscription_id ? " · Already linked" : ""}</span></span>
             <span className="font-semibold">{currency}{transaction.amount.toLocaleString()}</span>
           </label>
         ))}

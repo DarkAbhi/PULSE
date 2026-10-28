@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import TimeZoneSettings from "./time-zone-settings";
 import ThemeSettings from "./theme-settings";
 import LogoutButton from "./logout-button";
 import ChangePasswordButton from "./change-password-button";
@@ -18,6 +19,7 @@ const apiBaseURL =
 
 type ProfileResponse = {
   has_profile: boolean;
+  timezone?: string;
   name?: string;
 };
 
@@ -96,6 +98,8 @@ export default async function ProfilePage() {
               </div>
             </div>
           </div>
+
+          <TimeZoneSettings />
 
           <ThemeSettings />
 

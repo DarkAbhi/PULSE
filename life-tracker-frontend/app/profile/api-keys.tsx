@@ -1,5 +1,9 @@
 "use client";
 
+import { formatInstant } from "../lib/time-zone.mjs";
+
+import { useTimeZone } from "../components/time-zone-provider";
+
 import { useEffect, useRef, useState } from "react";
 import { Copy, KeyRound, Plus, Trash2, X } from "lucide-react";
 import Button from "../components/design-system/button";
@@ -15,6 +19,7 @@ type APIKey = {
 };
 
 export default function APIKeys() {
+  const { timeZone } = useTimeZone();
   const [keys, setKeys] = useState<APIKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -111,7 +116,7 @@ export default function APIKeys() {
             <li className="flex items-center justify-between gap-4 py-3" key={key.id}>
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">{key.name}</p>
-                <p className="text-xs text-muted-foreground">{key.token_prefix}… · Created {new Date(key.created_at).toLocaleDateString()}</p>
+                <p className="text-xs text-muted-foreground">{key.token_prefix}… · Created {formatInstant(key.created_at, timeZone, { dateStyle: "medium" })}</p>
               </div>
               <Button variant="iconDanger" size="sm" aria-label={`Revoke ${key.name}`} onClick={() => { setError(""); setRevokeKey(key); }}><Trash2 className="h-4 w-4" /></Button>
             </li>

@@ -1,5 +1,9 @@
 "use client";
 
+import { formatInstant } from "../../lib/time-zone.mjs";
+
+import { useTimeZone } from "../../components/time-zone-provider";
+
 import Button from "../../components/design-system/button";
 
 import { useMemo } from "react";
@@ -95,6 +99,7 @@ export default function FixedObligationsTab({
   onNavigateToSubscriptions,
   isPending = false,
 }: FixedObligationsTabProps) {
+  const { timeZone } = useTimeZone();
   const getCategoryConfig = (catKey: string) => {
     return (
       CATEGORIES.find((c) => c.id === catKey) ?? {
@@ -444,7 +449,7 @@ export default function FixedObligationsTab({
                       <Calendar className="h-3 w-3" />
                       <span>
                         {sub.billing_cycle === "yearly"
-                          ? `Renews ${new Date(sub.next_renewal_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+                          ? `Renews ${formatInstant(sub.next_renewal_date, timeZone, { month: "short", day: "numeric" })}`
                           : `Due ${formatOrdinalDay(sub.billing_day ?? 1)}`}
                       </span>
                     </div>

@@ -1,10 +1,4 @@
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-IN", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Kolkata",
-  }).format(new Date(value));
-}
+import LocalDate from "../components/local-date";
 
 export default function AboutPulse() {
   const releasedAt = process.env.NEXT_PUBLIC_PULSE_RELEASE_DATE;
@@ -29,13 +23,13 @@ export default function AboutPulse() {
           {releasedAt && (
             <div className="flex justify-between gap-6">
               <dt className="text-muted-foreground">Released</dt>
-              <dd><time dateTime={releasedAt}>{formatDate(releasedAt)} IST</time></dd>
+              <dd><LocalDate dateString={releasedAt} /></dd>
             </div>
           )}
           {builtAt && (
             <div className="flex justify-between gap-6">
               <dt className="text-muted-foreground">Built</dt>
-              <dd><time dateTime={builtAt}>{formatDate(builtAt)} IST</time></dd>
+              <dd><LocalDate dateString={builtAt} /></dd>
             </div>
           )}
         </dl>

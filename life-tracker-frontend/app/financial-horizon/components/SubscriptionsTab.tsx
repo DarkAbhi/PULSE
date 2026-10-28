@@ -1,5 +1,9 @@
 "use client";
 
+import { formatInstant, formatCalendarDate, dateKey, calendarDayNumber } from "../../lib/time-zone.mjs";
+
+import { useTimeZone } from "../../components/time-zone-provider";
+
 import Button from "../../components/design-system/button";
 
 import { useState, useMemo } from "react";
@@ -54,6 +58,7 @@ export default function SubscriptionsTab({
   onLogPayment,
   onViewTransactions,
 }: SubscriptionsTabProps) {
+  const { timeZone } = useTimeZone();
   const [searchQuery, setSearchQuery] = useState("");
   const [cycleFilter, setCycleFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -111,14 +116,7 @@ export default function SubscriptionsTab({
 
   // Days until next renewal calculation helper
   const getDaysUntilRenewal = (dateStr: string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const renewal = new Date(dateStr);
-    renewal.setHours(0, 0, 0, 0);
-
-    const diffTime = renewal.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    return calendarDayNumber(dateKey(dateStr, timeZone)) - calendarDayNumber(dateKey(new Date(), timeZone));
   };
 
   const getStatusBadge = (status: string) => {
@@ -261,10 +259,7 @@ export default function SubscriptionsTab({
               </div>
               <p className="mt-1 text-xs font-medium text-warning">
                 Renews on{" "}
-                {new Date(nearestRenewal.next_renewal_date).toLocaleDateString(
-                  undefined,
-                  { month: "short", day: "numeric" }
-                )}{" "}
+                {formatInstant(nearestRenewal.next_renewal_date, timeZone, { month: "short", day: "numeric" })}{" "}
                 ({getDaysUntilRenewal(nearestRenewal.next_renewal_date)}d left)
               </p>
             </div>
@@ -415,7 +410,7 @@ export default function SubscriptionsTab({
                       </span>
                       <span className="font-semibold text-foreground">
                         {sub.billing_cycle === "yearly"
-                          ? new Date(sub.renewal_date || sub.next_renewal_date).toLocaleDateString(undefined, {
+                          ? formatCalendarDate(sub.renewal_date || sub.next_renewal_date, {
                               year: "numeric",
                               month: "short",
                               day: "numeric",
@@ -440,10 +435,7 @@ export default function SubscriptionsTab({
                               : "text-foreground"
                           }`}
                         >
-                          {new Date(sub.next_renewal_date).toLocaleDateString(
-                            undefined,
-                            { month: "short", day: "numeric", year: "numeric" }
-                          )}{" "}
+                          {formatInstant(sub.next_renewal_date, timeZone, { month: "short", day: "numeric", year: "numeric" })}{" "}
                           ({daysLeft === 0 ? "Today" : `${daysLeft}d`})
                         </span>
                       </div>

@@ -3,6 +3,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -213,27 +214,35 @@ private fun SelectedDay(
     }
     Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
         PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-            PulseText(
-                stringResource(R.string.pulse_fitness_selected_day),
-                style = PulseTextStyle.Overline,
-                color = PulseTheme.colors.action,
-            )
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
+            ) {
+                PulseText(
+                    stringResource(R.string.pulse_fitness_selected_day),
+                    Modifier.align(Alignment.CenterVertically).padding(end = PulseTokens.small),
+                    style = PulseTextStyle.Overline,
+                    color = PulseTheme.colors.action,
+                )
+                Surface(
+                    shape = CircleShape,
+                    color = PulseTheme.colors.surface,
+                    contentColor = PulseTheme.colors.action,
+                ) {
+                    PulseText(
+                        pluralStringResource(R.plurals.pulse_fitness_workout_count, workouts.size, workouts.size),
+                        Modifier.padding(horizontal = PulseTokens.small, vertical = PulseTokens.tiny),
+                        style = PulseTextStyle.Caption,
+                        color = PulseTheme.colors.action,
+                    )
+                }
+            }
             PulseText(
                 state.selected.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale)),
                 Modifier.semantics { heading() },
                 style = PulseTextStyle.Title,
             )
-            Row(
-                Modifier.padding(vertical = PulseTokens.small),
-                horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                WorkoutBadge()
-                PulseText(
-                    pluralStringResource(R.plurals.pulse_fitness_workouts_logged, workouts.size, workouts.size),
-                    style = PulseTextStyle.Label,
-                )
-            }
             if (workouts.isEmpty()) {
                 PulseText(
                     stringResource(R.string.pulse_fitness_no_workouts_for_day),

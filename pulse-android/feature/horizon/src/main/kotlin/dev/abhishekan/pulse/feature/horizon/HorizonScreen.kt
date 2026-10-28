@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,8 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.HorizonRecord
@@ -237,13 +234,6 @@ internal fun HorizonScreen(
                         }
                         when (state.tab) {
                             HorizonTab.Overview -> {
-                                PulseText(
-                                    stringResource(R.string.pulse_horizon_your_room_to_move),
-                                    Modifier.semantics {
-                                        heading()
-                                    },
-                                    PulseTextStyle.Display,
-                                )
                                 SectionState(state.overview, vm::refreshOverview) { data ->
                                     HorizonMetrics(data, canMutate) {
                                         create(HorizonForm.Config)
@@ -252,34 +242,10 @@ internal fun HorizonScreen(
                                 }
                             }
                             HorizonTab.Transactions -> {
-                                PulseText(
-                                    stringResource(R.string.pulse_horizon_the_everyday_ledger),
-                                    style = PulseTextStyle.Display,
-                                )
                                 LedgerFilters(state, vm, ledgerCategory, { ledgerCategory = it }, ledgerOldestFirst, {
                                     ledgerOldestFirst =
                                         !ledgerOldestFirst
                                 })
-                                FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                                    PulseButton(
-                                        stringResource(
-                                            R.string.pulse_horizon_add_transaction,
-                                        ),
-                                        {
-                                            create(HorizonForm.Transaction)
-                                        },
-                                        enabled = canMutate,
-                                    )
-                                    PulseTextButton(
-                                        stringResource(
-                                            R.string.pulse_horizon_create_category,
-                                        ),
-                                        {
-                                            create(HorizonForm.Category)
-                                        },
-                                        enabled = canMutate,
-                                    )
-                                }
                                 SectionState(state.transactions, {
                                     vm.refreshTransactions()
                                 }) { page ->
@@ -310,13 +276,6 @@ internal fun HorizonScreen(
                                 }
                             }
                             HorizonTab.Budgets -> {
-                                PulseText(
-                                    stringResource(R.string.pulse_horizon_give_every_priority_room),
-                                    style = PulseTextStyle.Display,
-                                )
-                                PulseButton(stringResource(R.string.pulse_horizon_add_budget), {
-                                    create(HorizonForm.Budget)
-                                }, enabled = canMutate)
                                 SectionState(state.overview, vm::refreshOverview) { data ->
                                     if (data.budgets.isEmpty()) {
                                         PulseEmptyState(
@@ -357,15 +316,6 @@ internal fun HorizonScreen(
                                 }
                             }
                             HorizonTab.Obligations -> {
-                                PulseText(
-                                    stringResource(
-                                        R.string.pulse_horizon_make_room_for_the_essentials,
-                                    ),
-                                    style = PulseTextStyle.Display,
-                                )
-                                PulseButton(stringResource(R.string.pulse_horizon_add_obligation), {
-                                    create(HorizonForm.Deduction)
-                                }, enabled = canMutate)
                                 SectionState(state.overview, vm::refreshOverview) { data ->
                                     if (data.deductions.isEmpty()) {
                                         PulseEmptyState(
@@ -455,19 +405,6 @@ internal fun HorizonScreen(
                                 }
                             }
                             HorizonTab.Subscriptions -> {
-                                PulseText(
-                                    stringResource(R.string.pulse_horizon_know_what_keeps_renewing),
-                                    style = PulseTextStyle.Display,
-                                )
-                                PulseButton(
-                                    stringResource(
-                                        R.string.pulse_horizon_add_subscription,
-                                    ),
-                                    {
-                                        create(HorizonForm.Subscription)
-                                    },
-                                    enabled = canMutate,
-                                )
                                 if (state.subscriptionId !=
                                     null
                                 ) {
@@ -570,22 +507,9 @@ internal fun HorizonScreen(
                             }
                             HorizonTab.Purchases -> {
                                 PulseText(
-                                    stringResource(R.string.pulse_horizon_a_little_further_ahead),
-                                    style = PulseTextStyle.Display,
-                                )
-                                PulseText(
                                     stringResource(
                                         R.string.pulse_horizon_next_month_s_planned_purchases,
                                     ),
-                                )
-                                PulseButton(
-                                    stringResource(
-                                        R.string.pulse_horizon_add_planned_purchase,
-                                    ),
-                                    {
-                                        create(HorizonForm.Purchase)
-                                    },
-                                    enabled = canMutate,
                                 )
                                 SectionState(state.purchases, vm::refreshPurchases) { list ->
                                     if (currency.isBlank()) {

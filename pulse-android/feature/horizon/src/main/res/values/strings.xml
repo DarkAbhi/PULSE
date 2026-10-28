@@ -207,4 +207,8 @@
     <string name="pulse_horizon_filter_no_categories">No categories match. Try another name.</string>
     <string name="pulse_horizon_sort_newest">Newest first. Tap to show oldest first on this page.</string>
     <string name="pulse_horizon_sort_oldest">Oldest first. Tap to show newest first on this page.</string>
+    <string name="pulse_horizon_quick_actions">Financial Horizon quick actions</string>
+    <string name="pulse_horizon_log_transaction">Log a transaction</string>
+    <string name="pulse_horizon_add_monthly_budget">Add a monthly budget</string>
+    <string name="pulse_horizon_add_category_tag">Add a category tag</string>
 </resources>

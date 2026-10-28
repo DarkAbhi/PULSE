@@ -16,7 +16,6 @@ import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -32,6 +31,7 @@ import dev.abhishekan.pulse.core.data.PulseAuthRepository
 import dev.abhishekan.pulse.core.data.PulseDashboardRepository
 import dev.abhishekan.pulse.core.data.PulseHorizonRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
@@ -332,8 +332,6 @@ class HorizonDeviceTest {
             mutations++
             if (path == "horizon/config") {
                 val input = Json.parseToJsonElement(raw).jsonObject
-                currency =
-                    input.getValue("currency").jsonPrimitive.content
                 base =
                     input.getValue("base_amount").jsonPrimitive.content
             } else if (path.startsWith("horizon/subscriptions/") &&
@@ -490,6 +488,14 @@ class HorizonDeviceTest {
         node.assertIsDisplayed().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
     }
 
+    private fun quickAction(label: String) {
+        compose.waitUntil(15_000) {
+            compose.onAllNodes(hasTestTag("horizon-quick-actions") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Financial Horizon quick actions").performClick()
+        tap(label)
+    }
+
     private fun field(
         label: String,
         value: String,
@@ -542,14 +548,14 @@ class HorizonDeviceTest {
         compose.onNodeWithContentDescription("Financial Horizon").assertHasClickAction()
         screenshot("home-dashboard")
         compose.onNodeWithContentDescription("Financial Horizon").performScrollTo().performClick()
-        awaitText("Your room to move")
+        awaitText("Overview")
     }
 
     private fun addBudget(name: String = "Travel") {
         tap("Budgets")
-        tap("Add budget")
+        quickAction("Add a monthly budget")
         field("Name", name)
-        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "150.25")
+        field("Amount (${UserCurrency.symbol()})", "150.25")
         tap("Save budget")
         awaitText(name)
     }
@@ -607,6 +613,54 @@ class HorizonDeviceTest {
             .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
     }
 
+    @Test fun quickActionsOpenEveryFormOnPhoneAndTablet() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        try {
+            launchHorizon()
+            for ((layout, dimensions) in listOf("phone" to "720x1600", "tablet" to "2048x1800")) {
+                shell("wm size $dimensions")
+                shell("wm density 320")
+                awaitText("Overview")
+                val actions =
+                    listOf(
+                        "Log a transaction" to "Add transaction",
+                        "Add fixed obligation" to "Add fixed obligation",
+                        "Add planned purchase" to "Add planned purchase",
+                        "Add subscription" to "Add subscription",
+                        "Add a monthly budget" to "Add budget",
+                        "Add a category tag" to "Add category",
+                    )
+                quickAction("Add a category tag")
+                awaitText("Add category")
+                compose.onNodeWithContentDescription("Financial Horizon quick actions").assertIsNotEnabled()
+                tap("Cancel editing")
+                compose.onNodeWithContentDescription("Financial Horizon quick actions").performClick()
+                actions.forEach { (label, _) -> compose.onNodeWithText(label).assertIsDisplayed() }
+                screenshot("quick-actions-$layout", tag = "horizon-quick-actions-menu")
+                InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+                compose.onNodeWithText("Log a transaction").assertDoesNotExist()
+                actions.forEach { (label, title) ->
+                    quickAction(label)
+                    awaitText(title)
+                    tap("Cancel editing")
+                }
+                compose.onNodeWithText("Your room to move").assertDoesNotExist()
+                screenshot("clean-overview-$layout")
+                tap("Transactions")
+                compose.onNodeWithText("The everyday ledger").assertDoesNotExist()
+                quickAction("Add a monthly budget")
+                awaitText("Add budget")
+                tap("Cancel editing")
+                tap("Overview")
+            }
+            assertEquals(0, backend.mutations)
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+        }
+    }
+
     @Test fun homeDashboardOpensFinancialHorizon() {
         launchHorizon()
         awaitText("Starting Pool (Base Income)")
@@ -627,13 +681,20 @@ class HorizonDeviceTest {
         launchHorizon()
         screenshot("overview")
         compose.onNodeWithContentDescription("Configure starting pool").performScrollTo().performClick()
-        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "2000.25")
-        field("Currency", "USD")
+        field("Amount (${UserCurrency.symbol()})", "2000.25")
         tap("Save starting pool")
-        awaitText("USD 1910.25")
+        awaitText(
+            UserCurrency
+                .format(BigDecimal("1910.25")),
+        )
         tap("Home")
         awaitText("Asha")
-        compose.onNodeWithText("USD 1910.25").performScrollTo().assertIsDisplayed()
+        compose
+            .onNodeWithText(
+                UserCurrency
+                    .format(BigDecimal("1910.25")),
+            ).performScrollTo()
+            .assertIsDisplayed()
         tap("Horizon")
         addBudget()
         assertEquals(
@@ -647,13 +708,13 @@ class HorizonDeviceTest {
         )
         cardAction("Travel", "Edit")
         field("Name", "Travel fund")
-        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "175.50")
+        field("Amount (${UserCurrency.symbol()})", "175.50")
         tap("Save budget")
         awaitText("Travel fund")
         tap("Obligations")
-        tap("Add obligation")
+        quickAction("Add fixed obligation")
         field("Name", "Internet")
-        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "50.25")
+        field("Amount (${UserCurrency.symbol()})", "50.25")
         field("Due day (1–31, optional)", "31")
         pick("Budget", "None", "Travel fund")
         tap("Active obligation")
@@ -753,13 +814,13 @@ class HorizonDeviceTest {
         tap("Transactions")
         tap("Next page")
         awaitText("Page 2 of 2 · 21 transactions")
-        tap("Create category")
+        quickAction("Add a category tag")
         field("Name", "Coffee")
         tap("Save category")
-        awaitText("The everyday ledger")
-        tap("Add transaction")
+        awaitText("Search transactions")
+        quickAction("Log a transaction")
         field("Name", "Coffee refund")
-        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "12.50")
+        field("Amount (${UserCurrency.symbol()})", "12.50")
         pick("Type", "Debit", "Credit")
         pick("Category", "None", "Coffee")
         pick("Budget", "None", "Everyday")
@@ -767,7 +828,7 @@ class HorizonDeviceTest {
         field("Notes (optional)", "Receipt refunded")
         screenshot("transaction-editor")
         tap("Save transaction")
-        awaitText("The everyday ledger")
+        awaitText("Search transactions")
         field("Search transactions", "Coffee refund")
         awaitText("Page 1 of 1 · 1 transaction")
         awaitText("Coffee refund")
@@ -803,9 +864,9 @@ class HorizonDeviceTest {
             )
         launchHorizon()
         tap("Subscriptions")
-        tap("Add subscription")
+        quickAction("Add subscription")
         field("Name", "Streaming")
-        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "99.99")
+        field("Amount (${UserCurrency.symbol()})", "99.99")
         pick("Billing cycle", "Monthly", "Yearly")
         pick("Status", "Active", "Paused")
         pick("Budget", "None", "Everyday")
@@ -819,9 +880,15 @@ class HorizonDeviceTest {
         awaitText("Streaming")
         tap("View payments for Streaming")
         awaitText("Link an existing payment")
-        compose.onNodeWithText("Link Ledger payment 2 · USD 2.50").assertDoesNotExist()
-        compose.onNodeWithText("Link Ledger payment 3 · USD 2.50").assertDoesNotExist()
-        tap("Link Ledger payment 1 · USD 2.50")
+        compose
+            .onNodeWithText(
+                "Link Ledger payment 2 · ${UserCurrency.format(BigDecimal("2.50"))}",
+            ).assertDoesNotExist()
+        compose
+            .onNodeWithText(
+                "Link Ledger payment 3 · ${UserCurrency.format(BigDecimal("2.50"))}",
+            ).assertDoesNotExist()
+        tap("Link Ledger payment 1 · ${UserCurrency.format(BigDecimal("2.50"))}")
         confirm("Link payment")
         awaitText("Ledger payment 1")
         assertEquals(
@@ -847,10 +914,10 @@ class HorizonDeviceTest {
         tap("Planned purchases")
         awaitText("Nothing planned yet")
         for (name in listOf("Desk lamp", "Backpack")) {
-            tap("Add planned purchase")
+            quickAction("Add planned purchase")
             compose.onNodeWithText("Add planned purchase").assertIsDisplayed()
             field("Name", name)
-            field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "12.50")
+            field("Amount (${UserCurrency.symbol()})", "12.50")
             field("URL (optional)", "https://example.test/item")
             tap("Save planned purchase")
             awaitText(name)
@@ -869,9 +936,9 @@ class HorizonDeviceTest {
     @Test fun draftsSurviveRotationTabsAndKeyboardAndWarnBeforeDiscard() {
         launchHorizon()
         tap("Transactions")
-        tap("Add transaction")
+        quickAction("Log a transaction")
         field("Name", "Unsaved finance")
-        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "0.001")
+        field("Amount (${UserCurrency.symbol()})", "0.001")
         tap("Save transaction")
         assertEquals(0, backend.mutations)
         scenario!!.recreate()
@@ -890,15 +957,15 @@ class HorizonDeviceTest {
         tap("Cancel editing")
         awaitText("Discard unsaved changes?")
         confirm("Discard edits")
-        awaitText("The everyday ledger")
+        awaitText("Search transactions")
     }
 
     @Test fun uncertainSaveRefreshesAndBlocksDuplicatesUntilRecordsReviewed() {
         launchHorizon()
         tap("Budgets")
-        tap("Add budget")
+        quickAction("Add a monthly budget")
         field("Name", "Lost response")
-        field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "30.25")
+        field("Amount (${UserCurrency.symbol()})", "30.25")
         backend.loseSave =
             true
         tap("Save budget")
@@ -915,7 +982,7 @@ class HorizonDeviceTest {
         tap("Resume unsaved edits")
         tap("Cancel editing")
         confirm("Discard edits")
-        awaitText("Give every priority room")
+        awaitText("Budgets")
         assertEquals(1, backend.mutations)
         assertEquals(
             1,
@@ -942,11 +1009,11 @@ class HorizonDeviceTest {
         try {
             launchHorizon()
             tap("Transactions")
-            tap("Add transaction")
+            quickAction("Log a transaction")
             field("Name", "Resized draft")
-            field("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})", "75.25")
+            field("Amount (${UserCurrency.symbol()})", "75.25")
             compose.onNodeWithText("Name").performScrollTo().performImeAction()
-            compose.onNodeWithText("Amount (${dev.abhishekan.pulse.core.domain.model.UserCurrency.symbol()})").assertIsFocused()
+            compose.onNodeWithText("Amount (${UserCurrency.symbol()})").assertIsFocused()
             compose.onNodeWithText("Date:", substring = true).performScrollTo().performClick()
             compose.onNode(isDialog()).assertExists()
             screenshot("date-picker", true)
@@ -962,7 +1029,7 @@ class HorizonDeviceTest {
             screenshot("resized-editor")
             assertEquals(0, backend.mutations)
             tap("Save transaction")
-            awaitText("The everyday ledger")
+            awaitText("Search transactions")
             assertEquals(1, backend.mutations)
             assertEquals(
                 "Resized draft",
@@ -985,13 +1052,7 @@ class HorizonDeviceTest {
         launchHorizon()
         tap("Transactions")
         awaitText("Ledger payment 1")
-        compose
-            .onAllNodesWithText(
-                "Currency unavailable",
-                substring = true,
-            ).onFirst()
-            .performScrollTo()
-            .assertIsDisplayed()
+        compose.onNodeWithText("Currency unavailable", substring = true).assertDoesNotExist()
         screenshot("partial-transactions")
         tap("Overview")
         backend.summaryError = false

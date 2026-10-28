@@ -77,6 +77,7 @@ import dev.abhishekan.pulse.feature.fitness.WorkoutRoute
 import dev.abhishekan.pulse.feature.garage.GarageRoute
 import dev.abhishekan.pulse.feature.home.HomeRoute
 import dev.abhishekan.pulse.feature.horizon.HorizonRoute
+import dev.abhishekan.pulse.feature.horizon.HorizonTopBarActions
 import dev.abhishekan.pulse.feature.mealplan.MealPlanRoute
 import dev.abhishekan.pulse.feature.notifications.NotificationsRoute
 import dev.abhishekan.pulse.feature.notifications.NotificationsTopBarActions
@@ -253,7 +254,12 @@ private fun SignedInApp(
             route != "gallery" &&
                 route != "home" &&
                 showBars &&
-                (!isTab || (route == "garage" && hasGarageDetail) || nav.previousBackStackEntry?.destination?.route == "notifications")
+                (
+                    !isTab ||
+                        route == "horizon" ||
+                        (route == "garage" && hasGarageDetail) ||
+                        nav.previousBackStackEntry?.destination?.route == "notifications"
+                )
         val showBottomBar = !isTablet && route != "gallery" && showBars
         val destinations = listOf("home", "fitness", "horizon", "garage", "mealplan", "you")
         val selectedDestination =
@@ -314,7 +320,7 @@ private fun SignedInApp(
                 topBar = {
                     if (showTopBar) {
                         PulseTopAppBar(
-                            if (isTab) {
+                            if (isTab && route != "horizon") {
                                 ""
                             } else {
                                 when (route) {
@@ -330,6 +336,11 @@ private fun SignedInApp(
                                 }
                             },
                             actions = {
+                                if (route == "horizon") {
+                                    entry?.let { horizonEntry ->
+                                        HorizonTopBarActions(koinViewModel(viewModelStoreOwner = horizonEntry))
+                                    }
+                                }
                                 if (route == "notifications") {
                                     entry?.let { notificationEntry ->
                                         NotificationsTopBarActions(koinViewModel(viewModelStoreOwner = notificationEntry))

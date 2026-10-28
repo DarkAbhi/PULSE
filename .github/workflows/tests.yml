@@ -11,7 +11,7 @@ permissions:
 jobs:
   android-unit:
     name: Pulse Android (unit tests and checks)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
       run:
@@ -39,7 +39,7 @@ jobs:
 
   android-ui:
     name: Pulse Android (UI and device tests, shard ${{ matrix.shard }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     # Bound resize-heavy sessions by starting each test shard on a fresh emulator.
     strategy:
@@ -93,7 +93,7 @@ jobs:
 
   go:
     name: Go backend (unit and integration)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
       run:
@@ -111,7 +111,7 @@ jobs:
 
   rust:
     name: Rust backend (unit and database)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
       run:
@@ -127,7 +127,7 @@ jobs:
 
   frontend:
     name: Frontend tests and production build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       NEXT_TELEMETRY_DISABLED: 1
@@ -150,7 +150,7 @@ jobs:
 
   hermes:
     name: Hermes MCP tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -169,7 +169,7 @@ jobs:
 
   browser:
     name: Maestro browser tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       APP_ENV: development

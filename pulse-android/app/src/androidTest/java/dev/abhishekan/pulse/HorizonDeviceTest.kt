@@ -643,7 +643,9 @@ class HorizonDeviceTest {
                 actions.forEach { (label, title) ->
                     quickAction(label)
                     awaitText(title)
-                    tap("Cancel editing")
+                    compose.onNodeWithContentDescription("Back to Financial Horizon").assertIsDisplayed().performClick()
+                    awaitText("Overview")
+                    compose.onNodeWithContentDescription("Back to Financial Horizon").assertDoesNotExist()
                 }
                 compose.onNodeWithText("Your room to move").assertDoesNotExist()
                 screenshot("clean-overview-$layout")
@@ -954,7 +956,11 @@ class HorizonDeviceTest {
         awaitText("Unsaved finance")
         compose.onNodeWithText("Name").performScrollTo().performImeAction()
         screenshot("draft")
-        tap("Cancel editing")
+        compose.onNodeWithContentDescription("Back to Financial Horizon").assertIsDisplayed().performClick()
+        awaitText("Discard unsaved changes?")
+        confirm("Cancel")
+        awaitText("Unsaved finance")
+        compose.onNodeWithContentDescription("Back to Financial Horizon").performClick()
         awaitText("Discard unsaved changes?")
         confirm("Discard edits")
         awaitText("Search transactions")

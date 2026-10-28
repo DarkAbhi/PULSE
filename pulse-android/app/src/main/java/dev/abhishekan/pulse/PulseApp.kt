@@ -78,6 +78,7 @@ import dev.abhishekan.pulse.feature.garage.GarageRoute
 import dev.abhishekan.pulse.feature.home.HomeRoute
 import dev.abhishekan.pulse.feature.horizon.HorizonRoute
 import dev.abhishekan.pulse.feature.horizon.HorizonTopBarActions
+import dev.abhishekan.pulse.feature.horizon.HorizonViewModel
 import dev.abhishekan.pulse.feature.mealplan.MealPlanRoute
 import dev.abhishekan.pulse.feature.notifications.NotificationsRoute
 import dev.abhishekan.pulse.feature.notifications.NotificationsTopBarActions
@@ -320,6 +321,11 @@ private fun SignedInApp(
                 contentWindowInsets = WindowInsets.safeDrawing,
                 topBar = {
                     if (showTopBar) {
+                        val horizonViewModel =
+                            entry?.takeIf { route == "horizon" }?.let {
+                                koinViewModel<HorizonViewModel>(viewModelStoreOwner = it)
+                            }
+                        val horizonState = horizonViewModel?.uiState?.collectAsStateWithLifecycle()?.value
                         PulseTopAppBar(
                             if (isTab && route != "horizon") {
                                 ""
@@ -337,10 +343,8 @@ private fun SignedInApp(
                                 }
                             },
                             actions = {
-                                if (route == "horizon") {
-                                    entry?.let { horizonEntry ->
-                                        HorizonTopBarActions(koinViewModel(viewModelStoreOwner = horizonEntry))
-                                    }
+                                horizonViewModel?.let {
+                                    HorizonTopBarActions(it)
                                 }
                                 if (route == "notifications") {
                                     entry?.let { notificationEntry ->
@@ -349,7 +353,15 @@ private fun SignedInApp(
                                 }
                             },
                             navigationIcon = {
-                                if (route == "notifications" ||
+                                if (horizonState?.draft != null) {
+                                    PulseIconButton(
+                                        stringResource(R.string.pulse_app_back_to_horizon),
+                                        { backDispatcher?.onBackPressed() },
+                                        enabled = !horizonState.busy,
+                                    ) {
+                                        Icon(painterResource(UiR.drawable.pulse_back), contentDescription = null)
+                                    }
+                                } else if (route == "notifications" ||
                                     (route == "you" && !isTablet) ||
                                     (route != "you" && nav.previousBackStackEntry?.destination?.route == "notifications") ||
                                     route == "vehicle/{id}" ||

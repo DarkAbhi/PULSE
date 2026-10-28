@@ -300,13 +300,14 @@ internal fun ProfileScreen(
                 }
                 if (state.editor != null) {
                     AccountForm(state, vm, cancel)
-                    PulseTextButton(stringResource(R.string.pulse_profile_logout), { logout = true }, enabled = !state.busy && !loggingOut)
+                    if (state.editor != AccountEditor.Password) {
+                        PulseTextButton(stringResource(R.string.pulse_profile_logout), { logout = true }, enabled = !state.busy && !loggingOut)
+                    }
                 } else {
                     val identity: @Composable () -> Unit = {
                         Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
                             PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
                                 PulseText(state.profile?.name ?: username, Modifier.semantics { heading() }, PulseTextStyle.Display)
-                                PulseText(stringResource(R.string.pulse_profile_identity))
                                 PulseText(stringResource(R.string.pulse_profile_username, username))
                                 if (state.loading) {
                                     if (state.profile == null) {
@@ -367,7 +368,6 @@ internal fun ProfileScreen(
                                 )
                                 PulseText(stringResource(R.string.pulse_profile_brand), style = PulseTextStyle.Display)
                                 PulseText(stringResource(R.string.pulse_profile_tagline), style = PulseTextStyle.Title)
-                                PulseText(stringResource(R.string.pulse_profile_description))
                             }
                             PulseButton(stringResource(R.string.pulse_profile_logout), {
                                 logout = true

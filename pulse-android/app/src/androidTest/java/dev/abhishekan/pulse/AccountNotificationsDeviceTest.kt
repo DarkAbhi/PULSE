@@ -646,6 +646,7 @@ class AccountNotificationsDeviceTest {
         assertEquals(" current ", sent["current_password"]!!.jsonPrimitive.content)
         tap("Change password")
         awaitText("Current password")
+        compose.onNodeWithText("Log out").assertDoesNotExist()
         compose
             .onNodeWithText(
                 "Current password",
@@ -661,8 +662,11 @@ class AccountNotificationsDeviceTest {
         awaitText("Discard unsaved changes?")
         confirm("Cancel")
         assertSecure(true)
+        tap("Cancel")
+        awaitText("Discard unsaved changes?")
+        confirm("Discard changes")
         tap("Log out")
-        awaitText("Log out and discard edits?")
+        awaitText("Log out of Pulse?")
         confirm("Log out")
         awaitText("Welcome back")
         assertSecure(false)

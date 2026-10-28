@@ -1,6 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="pulse_profile_identity">"Your everyday, in rhythm"</string>
     <string name="pulse_profile_account">"Account information"</string>
     <string name="pulse_profile_username">"Username: %1$s"</string>
     <string name="pulse_profile_edit_name">"Edit display name"</string>
@@ -38,7 +37,6 @@
     <string name="pulse_profile_refresh">"Refresh"</string>
     <string name="pulse_profile_about">"About Pulse"</string>
     <string name="pulse_profile_tagline">"Your life, in rhythm"</string>
-    <string name="pulse_profile_description">"A private home for your fitness, finances, meals and vehicle care."</string>
     <string name="pulse_profile_appearance">"Appearance"</string>
     <string name="pulse_profile_logout">"Log out"</string>
     <string name="pulse_profile_logout_title">"Log out of Pulse?"</string>

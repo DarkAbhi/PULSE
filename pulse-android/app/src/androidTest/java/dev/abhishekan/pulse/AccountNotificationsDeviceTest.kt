@@ -440,14 +440,14 @@ class AccountNotificationsDeviceTest {
         tap("Change time zone")
         compose.onNodeWithText("Search time zones").performTextReplacement("New_York")
         hideKeyboard()
-        compose.onNodeWithText("America/New_York").performClick()
+        compose.onNodeWithText("America/New York").performClick()
         screenshot("timezone-picker")
         confirm("Save changes")
-        awaitText("America/New_York")
+        awaitText("America/New York")
         assertEquals("America/New_York", timezone)
         assertEquals(1, timezoneWrites)
         scenario!!.recreate()
-        awaitText("America/New_York")
+        awaitText("America/New York")
         screenshot("timezone-saved")
     }
 

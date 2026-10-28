@@ -35,7 +35,7 @@ internal fun TimeZoneCard(
     val current = state.profile?.timezone ?: "UTC"
     PulseCard(Modifier.fillMaxWidth()) {
         PulseText(stringResource(R.string.pulse_profile_timezone), style = PulseTextStyle.Title)
-        PulseText(current)
+        PulseText(current.replace('_', ' '))
         PulseTextButton(stringResource(R.string.pulse_profile_timezone_select), {
             selected = current
             search = ""
@@ -65,7 +65,7 @@ internal fun TimeZoneCard(
                     if (matches.isEmpty()) PulseText(stringResource(R.string.pulse_profile_timezone_empty))
                     LazyColumn(Modifier.heightIn(max = 360.dp)) {
                         items(matches, key = { it }) { zone ->
-                            PulseRadioButton(selected == zone, { selected = zone }, zone, Modifier.fillMaxWidth())
+                            PulseRadioButton(selected == zone, { selected = zone }, zone.replace('_', ' '), Modifier.fillMaxWidth())
                         }
                     }
                 }

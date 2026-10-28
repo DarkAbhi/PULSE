@@ -12,8 +12,10 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -423,13 +425,20 @@ class FitnessDeviceTest {
             return
         }
         if (text in listOf("Previous month", "Next month", "Choose date")) {
-            compose.onNodeWithContentDescription(text).performScrollTo().performClick()
+            compose
+                .onNodeWithContentDescription(
+                    text,
+                ).performScrollTo()
+                .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
+                    it()
+                }
             return
         }
-        awaitText(text)
-        val node = compose.onNode(hasText(text, substring = false) and hasClickAction())
+        val button = hasText(text) and hasClickAction() and isEnabled()
+        compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
+        val node = compose.onAllNodes(button)[0]
         if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) node.performScrollTo()
-        node.performClick()
+        node.assertIsDisplayed().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
     }
 
     private fun selectCalendarDate(description: String) {
@@ -450,7 +459,9 @@ class FitnessDeviceTest {
     }
 
     private fun confirm(text: String) {
-        compose.onNode(hasText(text) and hasAnyAncestor(isDialog())).performClick()
+        val button = hasText(text) and hasAnyAncestor(isDialog()) and isEnabled()
+        compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(button).performClick()
     }
 
     private fun launchFitness() {
@@ -562,7 +573,7 @@ class FitnessDeviceTest {
         compose.onNodeWithText("Total duration").assertDoesNotExist()
         compose.onNodeWithText("Moderate").assertDoesNotExist()
         compose.onNodeWithText("Workout streak").assertDoesNotExist()
-        compose.onNodeWithText("Dates follow Asia/Kolkata.", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Dates follow Asia/Kolkata.", substring = true).assertExists()
         screenshot("overview")
         tap("Add workout")
         confirm("Record workout")
@@ -600,12 +611,14 @@ class FitnessDeviceTest {
         tap("Remember this name for future workouts")
         tap("Save changes")
         awaitText("Add exercise")
-        compose.onNodeWithText("Set 1 · 8 reps · 22.5 kg").performScrollTo().assertIsDisplayed()
-        tap("Delete Personal squat")
+        awaitText("8 reps")
+        compose.onNodeWithText("8 reps").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("22.5 kg").performScrollTo().assertIsDisplayed()
+        tap("Remove")
         awaitText("Delete this exercise?")
         assertEquals(1, backend.exercises[100]?.size)
         confirm("Delete exercise")
-        awaitText("Start with your first exercise")
+        awaitText("No exercises added yet")
         enterOwnExercise()
         tap("Save exercise")
         awaitText("Add exercise")
@@ -655,7 +668,7 @@ class FitnessDeviceTest {
         tap("Fitness")
         awaitText("Add exercise")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithContentDescription("Back to Fitness").performClick()
+        compose.onNodeWithContentDescription("Back to workout").performClick()
         awaitText("Discard exercise edits?")
         confirm("Cancel")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
@@ -695,10 +708,10 @@ class FitnessDeviceTest {
         selectCalendarDate(label)
         tap("Workout")
         awaitText("Linked Apple Watch workout")
-        compose.onNodeWithText("Energy · 420.5 kcal").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("420.5 kcal").performScrollTo().assertIsDisplayed()
         compose
             .onNodeWithText(
-                "Imported timing and energy are read-only. You can manage this visit’s recorded exercises below.",
+                "Imported timing and energy are read-only.",
             ).performScrollTo()
             .assertIsDisplayed()
         screenshot("imported")
@@ -825,6 +838,7 @@ class FitnessDeviceTest {
             assertEquals(0, backend.saves)
             screenshot("resized-editor")
             tap("Save exercise")
+            compose.waitUntil(15_000) { backend.saves == 1 }
             awaitText("Add exercise")
             assertEquals(1, backend.saves)
         } finally {

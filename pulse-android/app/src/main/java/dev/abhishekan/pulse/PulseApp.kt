@@ -44,7 +44,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import dev.abhishekan.pulse.core.domain.model.Failure
@@ -416,57 +415,55 @@ private fun SignedInApp(
                                 }, { onboardingVisible = false })
                             }
                         }
-                        navigation(startDestination = "space-list", route = "spaces") {
-                            composable("space-list") {
-                                SpacesScreen({
-                                    nav.navigate("fitness") {
-                                        launchSingleTop =
-                                            true
-                                    }
-                                }, { nav.navigate("horizon") { launchSingleTop = true } }, {
-                                    nav.navigate("garage") {
-                                        launchSingleTop =
-                                            true
-                                    }
-                                }, { nav.navigate("mealplan") { launchSingleTop = true } })
-                            }
-                            composable("mealplan") { MealPlanRoute(onDraftChanged = { hasMealDraft = it }) }
-                            composable("garage") {
-                                GarageRoute(
-                                    onDraftChanged = { hasGarageDraft = it },
-                                    onDetailChanged = { hasGarageDetail = it },
-                                )
-                            }
-                            composable("vehicle/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { destination ->
-                                GarageRoute(onDraftChanged = { hasGarageDraft = it }, initialVehicle = destination.arguments?.getLong("id"))
-                            }
-                            composable("horizon") {
-                                HorizonRoute(onDraftChanged = { hasHorizonDraft = it })
-                            }
-                            composable("fitness") {
-                                FitnessRoute({ id ->
-                                    nav.navigate("workout/$id") {
-                                        launchSingleTop =
-                                            true
-                                    }
-                                })
-                            }
-                            composable(
-                                "workout/{id}",
-                                arguments =
-                                    listOf(
-                                        navArgument("id") {
-                                            type =
-                                                NavType.LongType
-                                        },
-                                    ),
-                            ) {
-                                WorkoutRoute(
-                                    onDeleted = { nav.popBackStack() },
-                                    onDraftChanged = { hasFitnessDraft = it },
-                                    onEditorTitleChanged = { workoutEditorTitle = it },
-                                )
-                            }
+                        composable("space-list") {
+                            SpacesScreen({
+                                nav.navigate("fitness") {
+                                    launchSingleTop =
+                                        true
+                                }
+                            }, { nav.navigate("horizon") { launchSingleTop = true } }, {
+                                nav.navigate("garage") {
+                                    launchSingleTop =
+                                        true
+                                }
+                            }, { nav.navigate("mealplan") { launchSingleTop = true } })
+                        }
+                        composable("mealplan") { MealPlanRoute(onDraftChanged = { hasMealDraft = it }) }
+                        composable("garage") {
+                            GarageRoute(
+                                onDraftChanged = { hasGarageDraft = it },
+                                onDetailChanged = { hasGarageDetail = it },
+                            )
+                        }
+                        composable("vehicle/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { destination ->
+                            GarageRoute(onDraftChanged = { hasGarageDraft = it }, initialVehicle = destination.arguments?.getLong("id"))
+                        }
+                        composable("horizon") {
+                            HorizonRoute(onDraftChanged = { hasHorizonDraft = it })
+                        }
+                        composable("fitness") {
+                            FitnessRoute({ id ->
+                                nav.navigate("workout/$id") {
+                                    launchSingleTop =
+                                        true
+                                }
+                            })
+                        }
+                        composable(
+                            "workout/{id}",
+                            arguments =
+                                listOf(
+                                    navArgument("id") {
+                                        type =
+                                            NavType.LongType
+                                    },
+                                ),
+                        ) {
+                            WorkoutRoute(
+                                onDeleted = { nav.popBackStack() },
+                                onDraftChanged = { hasFitnessDraft = it },
+                                onEditorTitleChanged = { workoutEditorTitle = it },
+                            )
                         }
                         composable("you") {
                             val profile: ProfileViewModel = koinViewModel()

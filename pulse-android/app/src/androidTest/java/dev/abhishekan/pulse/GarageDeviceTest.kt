@@ -13,11 +13,14 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -26,6 +29,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
@@ -398,23 +402,22 @@ class GarageDeviceTest {
             compose.openProfileFromNavigation()
             return
         }
-        if (text in listOf("Home", "Fitness", "Horizon", "Garage", "Meals", "You")) {
-            scenario?.onActivity { activity ->
-                activity
-                    .getSystemService(
-                        android.view.inputmethod.InputMethodManager::class.java,
-                    ).hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
-            }
+        scenario?.onActivity { activity ->
+            activity
+                .getSystemService(
+                    android.view.inputmethod.InputMethodManager::class.java,
+                ).hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
         }
-        awaitText(text)
+        val button = hasText(text) and hasClickAction() and isEnabled()
+        compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         compose
-            .onNodeWithText(text)
+            .onAllNodes(button)[0]
             .apply {
                 if (!isDisplayed() && (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail())) {
                     performScrollTo()
                 }
             }.assertIsDisplayed()
-            .performClick()
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
     }
 
     private fun pick(
@@ -431,7 +434,9 @@ class GarageDeviceTest {
         label: String,
         value: String,
     ) {
-        compose.onNodeWithText(label).performScrollTo().performTextReplacement(value)
+        val field = hasText(label) and hasSetTextAction()
+        compose.waitUntil(15_000) { compose.onAllNodes(field).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(field).performScrollTo().performTextReplacement(value)
     }
 
     private fun confirm(text: String) {
@@ -473,7 +478,8 @@ class GarageDeviceTest {
             .onNode(
                 hasText(action) and hasAnyAncestor(hasTestTag(tag)),
             ).performScrollTo()
-            .performClick()
+            .assertIsDisplayed()
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
     }
 
     private fun shell(command: String) =
@@ -703,6 +709,7 @@ class GarageDeviceTest {
         compose.onNodeWithText("Save vehicle").performScrollTo()
         screenshot("add-vehicle-pressures")
         tap("Save vehicle")
+        compose.waitUntil(15_000) { vehicleDetails.values.any { it["name"]?.jsonPrimitive?.content == "City scooter" } }
         awaitText("City scooter")
         val saved = vehicleDetails.values.single()
         assertEquals("true", saved.getValue("is_active").jsonPrimitive.content)

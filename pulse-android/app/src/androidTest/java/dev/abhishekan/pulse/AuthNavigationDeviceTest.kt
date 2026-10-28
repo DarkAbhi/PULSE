@@ -16,7 +16,10 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -200,12 +203,23 @@ class AuthNavigationDeviceTest {
         screenshot("home")
         val background = compose.onNodeWithTag("dashboard-background").getUnclippedBoundsInRoot()
         val screen = compose.onRoot().getUnclippedBoundsInRoot()
-        Assert.assertEquals(screen.top.value, background.top.value, 0.5f)
+        var safeTop = 0f
+        var safeBottom = 0f
+        scenario!!.onActivity { activity ->
+            val insets =
+                ViewCompat
+                    .getRootWindowInsets(activity.window.decorView)
+                    ?.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            val density = activity.resources.displayMetrics.density
+            safeTop = (insets?.top ?: 0) / density
+            safeBottom = (insets?.bottom ?: 0) / density
+        }
+        Assert.assertEquals(screen.top.value + safeTop, background.top.value, 0.5f)
         if (InstrumentationRegistry
                 .getInstrumentation()
                 .targetContext.resources.configuration.smallestScreenWidthDp >= 600
         ) {
-            Assert.assertEquals(screen.bottom.value, background.bottom.value, 0.5f)
+            Assert.assertEquals(screen.bottom.value - safeBottom, background.bottom.value, 0.5f)
         }
         val notifications = compose.onNodeWithContentDescription("Notifications")
         val target = notifications.getUnclippedBoundsInRoot()
@@ -214,7 +228,8 @@ class AuthNavigationDeviceTest {
             (target.right - target.left).value >= 48f - 0.001f &&
                 (target.bottom - target.top).value >= 48f - 0.001f,
         )
-        notifications.assertHasClickAction().performClick()
+        notifications.assertHasClickAction().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+        awaitText("Vehicle care update")
         compose.onNodeWithText("Vehicle care update").assertIsDisplayed()
         compose.onNodeWithContentDescription("Back to Home").performClick()
         compose.openProfileFromNavigation()

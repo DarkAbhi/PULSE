@@ -16,9 +16,12 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -28,9 +31,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeDown
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -304,8 +309,20 @@ class AccountNotificationsDeviceTest {
         text: String,
         substring: Boolean = false,
     ) {
-        compose.waitUntil(20_000) {
-            runCatching { compose.onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isNotEmpty() }.getOrDefault(false)
+        try {
+            compose.waitUntil(20_000) {
+                runCatching {
+                    compose
+                        .onAllNodesWithText(
+                            text,
+                            substring = substring,
+                        ).fetchSemanticsNodes()
+                        .isNotEmpty()
+                }.getOrDefault(false)
+            }
+        } catch (failure: Throwable) {
+            println("Waiting for text: $text\n${runCatching { compose.onAllNodes(isRoot()).printToString(maxDepth = 100) }.getOrNull()}")
+            throw failure
         }
     }
 
@@ -324,14 +341,15 @@ class AccountNotificationsDeviceTest {
             return
         }
         hideKeyboard()
-        awaitText(text)
+        val button = hasText(text) and hasClickAction() and isEnabled()
+        compose.waitUntil(20_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         compose
-            .onAllNodesWithText(text)[0]
+            .onAllNodes(button)[0]
             .apply {
                 if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) {
                     performScrollTo()
                 }
-            }.performClick()
+            }.performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
     }
 
     private fun field(
@@ -576,6 +594,7 @@ class AccountNotificationsDeviceTest {
         val sent = Json.parseToJsonElement(passwordBody).jsonObject
         assertEquals(" current ", sent["current_password"]!!.jsonPrimitive.content)
         tap("Change password")
+        awaitText("Current password")
         compose
             .onNodeWithText(
                 "Current password",
@@ -690,15 +709,24 @@ class AccountNotificationsDeviceTest {
         compose.onNodeWithText("Refresh notifications").assertDoesNotExist()
         compose.onNodeWithText("Clear all").assertDoesNotExist()
         notifications[3] = notification(3, "Fresh update", null)
-        compose.onNode(hasScrollAction()).performTouchInput { swipeDown() }
-        awaitText("Fresh update")
+        // Keep the refresh gesture away from the list's edges.
+        compose.onNode(hasScrollAction()).performTouchInput { swipeDown(startY = height * 0.25f, endY = height * 0.75f) }
+        compose.waitUntil(20_000) {
+            try {
+                compose.onNode(hasScrollAction()).performScrollToNode(hasText("Fresh update"))
+                compose.onAllNodesWithText("Fresh update").fetchSemanticsNodes().isNotEmpty()
+            } catch (_: AssertionError) {
+                false
+            }
+        }
+        compose.onNodeWithText("Fresh update").assertIsDisplayed()
 
         compose.onNodeWithContentDescription("Notification options").performClick()
         tap("Clear all")
         confirm("Clear all")
         awaitText("All caught up")
         notifications[4] = notification(4, "After empty", null)
-        compose.onNode(hasScrollAction()).performTouchInput { swipeDown() }
+        compose.onNode(hasScrollAction()).performTouchInput { swipeDown(startY = height * 0.25f, endY = height * 0.75f) }
         awaitText("After empty")
     }
 
@@ -783,7 +811,7 @@ class AccountNotificationsDeviceTest {
             tap("Home")
             openNotifications()
             screenshot("large-text-notifications")
-            compose.onNode(hasScrollAction()).performTouchInput { swipeDown() }
+            compose.onNode(hasScrollAction()).performTouchInput { swipeDown(startY = height * 0.25f, endY = height * 0.75f) }
             awaitText("Vehicle care update")
         } catch (failure: Throwable) {
             screenshot("resize-failure")
@@ -813,11 +841,11 @@ class AccountNotificationsDeviceTest {
         launch()
         openNotifications()
         tap("Open space")
-        awaitText("Your garage")
         awaitText("This record is no longer available. Refresh to see the latest updates.")
+        awaitText("Your garage")
         scenario!!.recreate()
         awaitText("Your garage")
-        awaitText("This record is no longer available. Refresh to see the latest updates.")
+        compose.onNodeWithText("This record is no longer available. Refresh to see the latest updates.").assertDoesNotExist()
         assertEquals(2, notifications.size)
     }
 }

@@ -8,9 +8,12 @@ import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -20,6 +23,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -467,21 +471,31 @@ class HorizonDeviceTest {
             compose.openProfileFromNavigation()
             return
         }
-        awaitText(text)
-        val node = compose.onNodeWithText(text)
+        scenario?.onActivity { activity ->
+            activity
+                .getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+                .hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
+        }
+        val button = hasText(text) and hasClickAction() and isEnabled()
+        compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
+        val node = compose.onAllNodes(button)[0]
         if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) node.performScrollTo()
-        node.performClick()
+        node.assertIsDisplayed().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
     }
 
     private fun field(
         label: String,
         value: String,
     ) {
-        compose.onNodeWithText(label).performScrollTo().performTextReplacement(value)
+        val field = hasText(label) and hasSetTextAction()
+        compose.waitUntil(15_000) { compose.onAllNodes(field).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(field).performScrollTo().performTextReplacement(value)
     }
 
     private fun confirm(text: String) {
-        compose.onNode(hasText(text) and hasAnyAncestor(isDialog())).performClick()
+        val button = hasText(text) and hasAnyAncestor(isDialog()) and isEnabled()
+        compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(button).performClick()
     }
 
     private fun pick(
@@ -579,7 +593,8 @@ class HorizonDeviceTest {
             .onNode(
                 hasText(action) and hasAnyAncestor(hasTestTag("horizon-record-$id")),
             ).performScrollTo()
-            .performClick()
+            .assertIsDisplayed()
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
     }
 
     @Test fun homeDashboardOpensFinancialHorizon() {

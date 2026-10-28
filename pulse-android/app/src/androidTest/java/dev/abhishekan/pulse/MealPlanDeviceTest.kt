@@ -28,6 +28,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
@@ -324,10 +325,14 @@ class MealPlanDeviceTest {
         }
         awaitText(text)
         compose.waitUntil(20_000) {
-            compose.onAllNodes((hasText(text) or hasContentDescription(text)) and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+            compose
+                .onAllNodes(
+                    (hasText(text) or hasContentDescription(text)) and hasClickAction() and isEnabled(),
+                ).fetchSemanticsNodes()
+                .isNotEmpty()
         }
         compose
-            .onAllNodes(hasText(text) or hasContentDescription(text))[0]
+            .onAllNodes((hasText(text) or hasContentDescription(text)) and hasClickAction() and isEnabled())[0]
             .apply {
                 if (text !in listOf("Add meal", "Add custom meal time") &&
                     (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail())
@@ -335,7 +340,7 @@ class MealPlanDeviceTest {
                     performScrollTo()
                 }
             }.assertIsDisplayed()
-            .performClick()
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
     }
 
     private fun field(
@@ -636,7 +641,7 @@ class MealPlanDeviceTest {
         compose.onNode(hasText("Today") and hasClickAction()).assertDoesNotExist()
         tap("Add meal")
         field("Meal name", "Rice bowl")
-        pickTime("No meal time", "Lunch · 12:00–14:30")
+        pickTime("Select a meal time", "Lunch · 12:00–14:30")
         compose.onNodeWithTag("meal-date").performScrollTo().performClick()
         screenshot("date-picker", true)
         confirm("Choose date")
@@ -744,6 +749,7 @@ class MealPlanDeviceTest {
         launchPlanner()
         tap("Add meal")
         field("Meal name", "Lost bowl")
+        pickTime("Select a meal time", "Lunch · 12:00–14:30")
         loseSave = true
         tap("Save meal")
         awaitText("Review before another change")
@@ -810,11 +816,13 @@ class MealPlanDeviceTest {
             launchPlanner()
             tap("Add meal")
             field("Meal name", "Resized meal")
+            pickTime("Select a meal time", "Lunch · 12:00–14:30")
             shell("wm size 2560x1800")
             shell("wm density 320")
             awaitText("Resized meal")
             screenshot("resized-editor")
             tap("Save meal")
+            compose.waitUntil(20_000) { mutations == 1 }
             awaitText("Resized meal")
             compose.onNodeWithText("Resized meal").performScrollTo().assertIsDisplayed()
             screenshot("resized-planner")

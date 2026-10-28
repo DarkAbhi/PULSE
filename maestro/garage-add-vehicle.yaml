@@ -25,8 +25,8 @@ url: http://localhost:3000
 
 # 4. Open Add Vehicle modal
 - tapOn:
-    css: "#add-vehicle-button"
-    enabled: true
+    # Maestro's web hierarchy does not expose the native `enabled` property.
+    css: "#add-vehicle-button:not(:disabled)"
     retryTapIfNoChange: true
 - assertVisible: Add a vehicle
 - assertVisible: Add its name, vehicle type, and fuel details.
@@ -38,10 +38,16 @@ url: http://localhost:3000
 
 - tapOn:
     css: "#vehicle-type"
-- tapOn: Four-wheeler
+- inputText: "f"
+- pressKey: Enter
+- assertVisible:
+    css: "#vehicle-type:has(option[value='four_wheeler']:checked)"
 - tapOn:
     css: "#vehicle-fuel-type"
-- tapOn: Petrol
+- inputText: "p"
+- pressKey: Enter
+- assertVisible:
+    css: "#vehicle-fuel-type:has(option[value='petrol']:checked)"
 
 # 6. Submit Add vehicle form
 - tapOn:

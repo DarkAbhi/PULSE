@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/DarkAbhi/life-backend/internal/gym"
+	"github.com/docker/go-connections/nat"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/testcontainers/testcontainers-go"
@@ -40,7 +41,10 @@ func startPostgres(t *testing.T) *testEnv {
 			"POSTGRES_USER":     "user",
 			"POSTGRES_DB":       "testdb",
 		},
-		WaitingFor: wait.ForListeningPort("5432/tcp").WithStartupTimeout(60 * time.Second),
+		// A published port can open before PostgreSQL accepts queries.
+		WaitingFor: wait.ForSQL("5432/tcp", "pgx", func(host string, port nat.Port) string {
+			return fmt.Sprintf("postgres://user:pass@%s:%s/testdb?sslmode=disable", host, port.Port())
+		}).WithStartupTimeout(60 * time.Second),
 	}
 	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,

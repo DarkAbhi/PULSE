@@ -18,6 +18,7 @@ type LoginInput struct {
 	Password string `json:"password"`
 }
 type Profile struct {
+	Currency   string  `json:"currency" example:"GBP"`
 	HasProfile bool    `json:"has_profile"`
 	TimeZone   string  `json:"timezone"`
 	Name       *string `json:"name,omitempty"`
@@ -1496,3 +1497,22 @@ type TimeZonePreference struct {
 // @Failure 500 {object} Error
 // @Router /api/profile/timezone [put]
 func operationSaveTimeZone() {}
+
+// CurrencyPreference is the single account currency, without exchange conversion.
+type CurrencyPreference struct {
+	Currency string `json:"currency" example:"INR"`
+}
+
+// @Summary Save profile currency
+// @Description Applies to all Financial Horizon amounts. Existing amounts are relabeled without conversion. Use an uppercase supported ISO 4217 code.
+// @Tags profile
+// @Accept json
+// @Produce json
+// @Param body body CurrencyPreference true "Currency preference (GBP by default)"
+// @Security SessionBearer
+// @Success 200 {object} CurrencyPreference
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 500 {object} Error
+// @Router /api/profile/currency [put]
+func operationSaveCurrency() {}

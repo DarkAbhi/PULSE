@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +38,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -64,6 +68,7 @@ internal fun DashboardGreeting(
     compact: Boolean,
     onNotifications: () -> Unit,
     onProfile: (() -> Unit)?,
+    notificationCount: Int = 0,
 ) {
     val darkTheme = PulseTheme.isDark
     val greetingInk = if (darkTheme) Color.White else Color(0xFF191633)
@@ -95,8 +100,26 @@ internal fun DashboardGreeting(
                     PulseText(formatDashboardTime(now), style = PulseTextStyle.Heading2, color = greetingInk)
                     PulseText(formatDashboardDate(now), color = greetingMuted)
                 }
-                PulseIconButton(stringResource(R.string.pulse_home_notifications), onNotifications) {
-                    Icon(painterResource(UiR.drawable.pulse_bell), null, tint = greetingInk)
+                val notificationLabel =
+                    if (notificationCount > 0) {
+                        pluralStringResource(R.plurals.pulse_home_notification_count, notificationCount, notificationCount)
+                    } else {
+                        stringResource(R.string.pulse_home_notifications)
+                    }
+                PulseIconButton(notificationLabel, onNotifications) {
+                    BadgedBox(badge = {
+                        if (notificationCount > 0) {
+                            Badge(
+                                modifier = Modifier.testTag("dashboard-notification-badge").clearAndSetSemantics {},
+                                containerColor = PulseTheme.colors.primary,
+                                contentColor = PulseTheme.colors.onPrimary,
+                            ) {
+                                Text(if (notificationCount > 9) "9+" else notificationCount.toString())
+                            }
+                        }
+                    }) {
+                        Icon(painterResource(UiR.drawable.pulse_bell), null, tint = greetingInk)
+                    }
                 }
                 if (onProfile != null) {
                     PulseIconButton(stringResource(R.string.pulse_home_profile), onProfile) {

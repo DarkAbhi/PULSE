@@ -1,4 +1,6 @@
 "use client";
+
+import { formatMoney, currencySymbol } from "../lib/currency.mjs";
 import { useTimeZone } from "../components/time-zone-provider";
 import { dateKey } from "../lib/time-zone.mjs";
 
@@ -26,7 +28,7 @@ interface SubscriptionDialogProps {
   editingSubscription?: SubscriptionItem | null;
   categories: CategoryItem[];
   budgets: BudgetItem[];
-  currency?: string;
+  currency: string;
 }
 
 export default function SubscriptionDialog({
@@ -36,7 +38,7 @@ export default function SubscriptionDialog({
   editingSubscription,
   categories,
   budgets,
-  currency = "₹",
+  currency,
 }: SubscriptionDialogProps) {
   const { timeZone } = useTimeZone();
   const [name, setName] = useState("");
@@ -205,7 +207,7 @@ export default function SubscriptionDialog({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
-                Amount ({currency}) *
+                Amount ({currencySymbol(currency)}) *
               </label>
               <input
                 type="number"
@@ -314,7 +316,7 @@ export default function SubscriptionDialog({
                 <option value="">None (No Budget)</option>
                 {budgets.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.name} ({currency}{b.allocated_amount.toLocaleString()})
+                    {b.name} ({formatMoney(b.allocated_amount, currency)})
                   </option>
                 ))}
               </select>

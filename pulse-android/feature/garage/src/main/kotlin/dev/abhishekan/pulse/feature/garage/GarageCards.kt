@@ -153,7 +153,11 @@ internal fun EfficiencyCards(data: VehicleHistory) {
                 ),
             )
             PulseText(
-                stringResource(R.string.pulse_garage_recorded_cost_1_s, decimal(stat.totalCost)),
+                stringResource(
+                    R.string.pulse_garage_recorded_cost_1_s,
+                    dev.abhishekan.pulse.core.domain.model.UserCurrency
+                        .format(stat.totalCost),
+                ),
             )
         }
     }
@@ -192,8 +196,10 @@ internal fun FuelCards(
                         garageOption(tank.type),
                         garageOption(tank.fill),
                         decimal(tank.quantity),
-                        decimal(tank.price),
-                        decimal(tank.total),
+                        dev.abhishekan.pulse.core.domain.model.UserCurrency
+                            .format(tank.price),
+                        dev.abhishekan.pulse.core.domain.model.UserCurrency
+                            .format(tank.total),
                     ),
                 )
             }
@@ -235,7 +241,11 @@ internal fun MaintenanceCards(
         PulseCard(Modifier.fillMaxWidth().testTag("garage-care-${item.id}")) {
             PulseText(item.title, style = PulseTextStyle.Title)
             PulseText(
-                stringResource(R.string.pulse_garage_formatted_value, decimal(item.amount)),
+                stringResource(
+                    R.string.pulse_garage_formatted_value,
+                    dev.abhishekan.pulse.core.domain.model.UserCurrency
+                        .format(item.amount),
+                ),
                 style = PulseTextStyle.Metric,
             )
             PulseText(

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
+import dev.abhishekan.pulse.core.domain.usecase.GetNotificationCount
 import dev.abhishekan.pulse.core.domain.usecase.GetProfile
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
 import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
@@ -22,6 +23,7 @@ class HomeViewModel(
     changes: ObserveFitnessChanges,
     horizonChanges: ObserveHorizonChanges,
     dashboardChanges: dev.abhishekan.pulse.core.domain.usecase.ObserveDashboardChanges,
+    private val getNotificationCount: GetNotificationCount,
 ) : ViewModel() {
     private val state = MutableStateFlow(HomeUiState())
     val uiState = state.asStateFlow()
@@ -37,6 +39,7 @@ class HomeViewModel(
         retryProfile()
         retryWorkout()
         retryHorizon()
+        refreshNotificationCount()
         viewModelScope.launch {
             horizonChanges().drop(1).collect {
                 jobs["horizon"]?.cancel()
@@ -49,6 +52,17 @@ class HomeViewModel(
                 retryWorkout()
             }
         }
+    }
+
+    fun refreshNotificationCount() {
+        if (jobs["notifications"]?.isActive == true) return
+        jobs["notifications"] =
+            viewModelScope.launch {
+                when (val result = getNotificationCount()) {
+                    is Outcome.Success -> state.update { it.copy(notificationCount = result.value) }
+                    is Outcome.Error -> Unit // Keep the last known count when a refresh fails.
+                }
+            }
     }
 
     private fun <T> load(

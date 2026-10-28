@@ -25,4 +25,5 @@ data class HomeUiState(
     val horizon: Section<Horizon> = Section.Loading,
     val refreshing: Set<String> = emptySet(),
     val refreshErrors: Map<String, Failure> = emptyMap(),
+    val notificationCount: Int = 0,
 )

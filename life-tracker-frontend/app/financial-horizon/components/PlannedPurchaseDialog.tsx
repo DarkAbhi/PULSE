@@ -1,5 +1,7 @@
 "use client";
 
+import { currencySymbol } from "../../lib/currency.mjs";
+
 import Button from "../../components/design-system/button";
 
 import { useState, useEffect, useId } from "react";
@@ -10,7 +12,7 @@ export interface PlannedPurchaseDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: { name: string; price: number; url: string | null }) => Promise<void> | void;
-  currency?: string;
+  currency: string;
   isPending?: boolean;
 }
 
@@ -18,7 +20,7 @@ export default function PlannedPurchaseDialog({
   isOpen,
   onClose,
   onSave,
-  currency = "₹",
+  currency,
   isPending = false,
 }: PlannedPurchaseDialogProps) {
   const titleId = useId();
@@ -126,7 +128,7 @@ export default function PlannedPurchaseDialog({
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Price ({currency}) *</label>
+            <label className="text-xs font-semibold text-muted-foreground">Price ({currencySymbol(currency)}) *</label>
             <input
               type="number"
               step="0.01"

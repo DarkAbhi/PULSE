@@ -1,4 +1,6 @@
 "use client";
+
+import { currencySymbol } from "../lib/currency.mjs";
 import { useTimeZone } from "../components/time-zone-provider";
 import { toDateTimeInput, fromDateTimeInput } from "../lib/time-zone.mjs";
 
@@ -209,7 +211,7 @@ export default function TransactionDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Amount ({currency})</label>
+              <label className="text-xs font-semibold text-muted-foreground">Amount ({currencySymbol(currency)})</label>
               <input
                 type="number"
                 step="0.01"
@@ -276,7 +278,7 @@ export default function TransactionDialog({
                 <option value="">-- Unlinked --</option>
                 {subscriptions.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} ({currency}{s.amount})
+                    {s.name} ({currencySymbol(currency)}{s.amount})
                   </option>
                 ))}
               </select>

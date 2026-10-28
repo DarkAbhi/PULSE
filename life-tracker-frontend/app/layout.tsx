@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
+import CurrencyProvider from "./components/currency-provider";
+import { getUserCurrency } from "./lib/user-currency";
 import TimeZoneProvider from "./components/time-zone-provider";
 import { getUserTimeZone } from "./lib/user-time-zone";
 
@@ -28,7 +30,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const timeZone = await getUserTimeZone();
+  const [timeZone, currency] = await Promise.all([getUserTimeZone(), getUserCurrency()]);
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -40,7 +42,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TimeZoneProvider initialTimeZone={timeZone}>{children}</TimeZoneProvider>
+          <TimeZoneProvider initialTimeZone={timeZone}><CurrencyProvider initialCurrency={currency}>{children}</CurrencyProvider></TimeZoneProvider>
         </ThemeProvider>
       </body>
     </html>

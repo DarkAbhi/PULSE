@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse.feature.home.di
 
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
+import dev.abhishekan.pulse.core.domain.usecase.GetNotificationCount
 import dev.abhishekan.pulse.core.domain.usecase.GetProfile
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
 import dev.abhishekan.pulse.core.domain.usecase.ObserveDashboardChanges
@@ -15,5 +16,6 @@ val homeModule =
         factoryOf(::GetProfile)
         factoryOf(::GetWorkoutToday)
         factoryOf(::GetHorizon)
+        factoryOf(::GetNotificationCount)
         viewModelOf(::HomeViewModel)
     }

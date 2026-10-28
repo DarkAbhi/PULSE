@@ -50,6 +50,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.currencyText
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.uiText
@@ -60,12 +61,14 @@ fun HorizonRoute(
     onDraftChanged: (Boolean) -> Unit,
     viewModel: HorizonViewModel = koinViewModel(),
 ) {
+    val accountCurrency by dev.abhishekan.pulse.core.domain.model.UserCurrency.changes
+        .collectAsStateWithLifecycle()
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     LaunchedEffect(state.draft?.dirty) { onDraftChanged(state.draft?.dirty == true) }
-    androidx.compose.runtime.key(timeZone) {
+    androidx.compose.runtime.key(timeZone, accountCurrency) {
         HorizonScreen(state, viewModel)
     }
 }
@@ -87,10 +90,7 @@ internal fun HorizonScreen(
             else -> vm.hidePayments()
         }
     }
-    val currency =
-        state.overview.value
-            ?.currency
-            .orEmpty()
+    val currency = dev.abhishekan.pulse.core.domain.model.UserCurrency.code
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { width ->
         Column(
             Modifier
@@ -413,7 +413,7 @@ internal fun HorizonScreen(
                                         ) {
                                             PulseText(item.name, style = PulseTextStyle.Title)
                                             PulseText(
-                                                money(currency, item.amount).asString(),
+                                                currencyText(item.amount).asString(),
                                                 style = PulseTextStyle.Metric,
                                             )
                                             PulseText(
@@ -524,7 +524,7 @@ internal fun HorizonScreen(
                                         ) {
                                             PulseText(item.name, style = PulseTextStyle.Title)
                                             PulseText(
-                                                money(currency, item.amount).asString(),
+                                                currencyText(item.amount).asString(),
                                                 style = PulseTextStyle.Metric,
                                             )
                                             PulseText(
@@ -537,7 +537,7 @@ internal fun HorizonScreen(
                                             PulseText(
                                                 stringResource(
                                                     R.string.pulse_horizon_monthly_equivalent_1_s,
-                                                    money(currency, item.monthlyAmount).asString(),
+                                                    currencyText(item.monthlyAmount).asString(),
                                                 ),
                                             )
                                             item.nextRenewal?.let {
@@ -561,7 +561,7 @@ internal fun HorizonScreen(
                                                     R.plurals.pulse_horizon_linked_payments,
                                                     item.linkedCount,
                                                     item.linkedCount,
-                                                    money(currency, item.totalSpent).asString(),
+                                                    currencyText(item.totalSpent).asString(),
                                                 ),
                                             )
                                             item.notes?.let { PulseText(it) }
@@ -627,7 +627,7 @@ internal fun HorizonScreen(
                                     PulseText(
                                         stringResource(
                                             R.string.pulse_horizon_planned_total_1_s,
-                                            money(currency, list.total).asString(),
+                                            currencyText(list.total).asString(),
                                         ),
                                         style = PulseTextStyle.Title,
                                     )
@@ -645,7 +645,7 @@ internal fun HorizonScreen(
                                         PulseCard(Modifier.fillMaxWidth()) {
                                             PulseText(item.name, style = PulseTextStyle.Title)
                                             PulseText(
-                                                money(currency, item.price).asString(),
+                                                currencyText(item.price).asString(),
                                                 style = PulseTextStyle.Metric,
                                             )
                                             if (currency.isBlank()) {

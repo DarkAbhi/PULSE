@@ -107,6 +107,29 @@ class HomeDashboardDeviceTest {
         compose.onNodeWithText("No workout recorded today.").assertExists()
     }
 
+    @Test fun notificationBadgeTracksCountAndKeepsTheBellClickable() {
+        val current = mutableStateOf(state)
+        var opened = 0
+        compose.setContent {
+            PulseTheme(false) {
+                HomeScreen("fixture", current.value, {}, {}, {}, {}, {}, { opened++ })
+            }
+        }
+        compose.onNodeWithTag("dashboard-notification-badge", useUnmergedTree = true).assertDoesNotExist()
+        listOf(1, 9, 12).forEach { count ->
+            compose.runOnIdle { current.value = state.copy(notificationCount = count) }
+            compose
+                .onNodeWithText(if (count > 9) "9+" else count.toString(), useUnmergedTree = true)
+                .assertIsDisplayed()
+            val label = if (count == 1) "Notifications, 1 notification" else "Notifications, $count notifications"
+            compose.onNodeWithContentDescription(label).assertHasClickAction().performClick()
+        }
+        assertEquals(3, opened)
+        compose.runOnIdle { current.value = state }
+        compose.onNodeWithTag("dashboard-notification-badge", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithContentDescription("Notifications").assertHasClickAction()
+    }
+
     @Test fun pageGuttersStayConsistentAcrossCompactAndWideLayouts() {
         val width = mutableStateOf(360.dp)
         compose.setContent {

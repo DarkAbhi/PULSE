@@ -118,6 +118,12 @@ definitions:
       message:
         type: string
     type: object
+  apidoc.CurrencyPreference:
+    properties:
+      currency:
+        example: INR
+        type: string
+    type: object
   apidoc.Error:
     properties:
       error:
@@ -424,6 +430,9 @@ definitions:
     type: object
   apidoc.Profile:
     properties:
+      currency:
+        example: GBP
+        type: string
       has_profile:
         type: boolean
       name:
@@ -2803,6 +2812,43 @@ paths:
       security:
       - SessionBearer: []
       summary: Save profile
+      tags:
+      - profile
+  /api/profile/currency:
+    put:
+      consumes:
+      - application/json
+      description: Applies to all Financial Horizon amounts. Existing amounts are
+        relabeled without conversion. Use an uppercase supported ISO 4217 code.
+      parameters:
+      - description: Currency preference (GBP by default)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.CurrencyPreference'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/apidoc.CurrencyPreference'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Save profile currency
       tags:
       - profile
   /api/profile/password:

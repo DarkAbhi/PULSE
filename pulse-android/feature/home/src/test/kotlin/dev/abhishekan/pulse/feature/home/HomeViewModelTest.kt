@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.home
+
 import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.domain.model.ExerciseInput
@@ -18,12 +19,14 @@ import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
+import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
+import dev.abhishekan.pulse.core.domain.usecase.GetNotificationCount
 import dev.abhishekan.pulse.core.domain.usecase.GetProfile
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
 import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
 import dev.abhishekan.pulse.core.domain.usecase.ObserveHorizonChanges
-import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.core.ui.currencyText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +47,15 @@ import java.time.LocalDate
 class HomeViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val models = ViewModelStore()
+    private var notificationResult: Outcome<List<Notification>> = Outcome.Success(emptyList())
+    private val notifications =
+        object : NotificationsRepository {
+            override suspend fun list() = notificationResult
+
+            override suspend fun dismiss(id: Long): Outcome<Unit> = error("Unused")
+
+            override suspend fun clear(): Outcome<Unit> = error("Unused")
+        }
     private val fitness =
         object : FitnessRepository {
             override val changes = MutableStateFlow(0L)
@@ -142,6 +154,7 @@ class HomeViewModelTest {
                     ObserveHorizonChanges(horizon),
                     dev.abhishekan.pulse.core.domain.usecase
                         .ObserveDashboardChanges(repository),
+                    GetNotificationCount(notifications),
                 )
             models.put("home", vm)
             runCurrent()
@@ -156,6 +169,23 @@ class HomeViewModelTest {
             runCurrent()
             assertTrue(vm.uiState.value.horizon is Section.Content)
             assertEquals(0, notificationCalls)
+            // The badge uses the complete notification center, not the five-item dashboard preview.
+            notificationResult = Outcome.Success(List(12) { Notification(it.toLong() + 1, "Update", null, null) })
+            vm.refreshNotificationCount()
+            runCurrent()
+            assertEquals(12, vm.uiState.value.notificationCount)
+            notificationResult = Outcome.Error(Failure.Connection)
+            vm.refreshNotificationCount()
+            runCurrent()
+            assertEquals(12, vm.uiState.value.notificationCount)
+            notificationResult = Outcome.Success(listOf(Notification(1, "Update", null, null)))
+            vm.refreshNotificationCount()
+            runCurrent()
+            assertEquals(1, vm.uiState.value.notificationCount)
+            notificationResult = Outcome.Success(emptyList())
+            vm.refreshNotificationCount()
+            runCurrent()
+            assertEquals(0, vm.uiState.value.notificationCount)
             profile.complete(Outcome.Success(Profile(null)))
             runCurrent()
             assertEquals(Section.Empty, vm.uiState.value.profile)
@@ -196,13 +226,25 @@ class HomeViewModelTest {
     }
 
     @Test fun currencyFormattingDoesNotRoundBackendPrecision() {
-        assertEquals(
-            uiText(R.string.pulse_home_money, "₹", "12.50"),
-            formatMoney("₹", BigDecimal("12.5")),
-        )
-        assertEquals(
-            uiText(R.string.pulse_home_money, "USD", "-0.000000000000123456789"),
-            formatMoney("USD", BigDecimal("-0.000000000000123456789")),
-        )
+        val previous = java.util.Locale.getDefault()
+        try {
+            java.util.Locale.setDefault(java.util.Locale.US)
+            dev.abhishekan.pulse.core.domain.model.UserCurrency
+                .select("USD")
+            assertEquals(
+                dev.abhishekan.pulse.core.ui.UiText
+                    .Literal("\$12.50"),
+                currencyText(BigDecimal("12.5")),
+            )
+            assertEquals(
+                dev.abhishekan.pulse.core.ui.UiText
+                    .Literal("-\$0.000000000000123456789"),
+                currencyText(BigDecimal("-0.000000000000123456789")),
+            )
+        } finally {
+            dev.abhishekan.pulse.core.domain.model.UserCurrency
+                .reset()
+            java.util.Locale.setDefault(previous)
+        }
     }
 }

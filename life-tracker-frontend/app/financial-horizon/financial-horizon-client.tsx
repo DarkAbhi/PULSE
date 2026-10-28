@@ -1,7 +1,10 @@
 "use client";
 
+import { formatMoney } from "../lib/currency.mjs";
+
 import { formatInstant } from "../lib/time-zone.mjs";
 
+import { useCurrency } from "../components/currency-provider";
 import { useTimeZone } from "../components/time-zone-provider";
 
 import Button from "../components/design-system/button";
@@ -76,6 +79,8 @@ export default function FinancialHorizonClient({
   initialTransactionPage,
 }: FinancialHorizonClientProps) {
   const { timeZone } = useTimeZone();
+  const { currency } = useCurrency();
+  useEffect(() => { setSummary(previous => ({ ...previous, currency })); }, [currency]);
   // Navigation & Active Tab State
   const [activeTab, setActiveTab] = useState<HorizonTab>("overview");
 
@@ -89,7 +94,6 @@ export default function FinancialHorizonClient({
   // Base Income Editing State
   const [isEditingBase, setIsEditingBase] = useState(false);
   const [baseInput, setBaseInput] = useState(initialSummary.base_amount.toString());
-  const [currencyInput, setCurrencyInput] = useState(initialSummary.currency);
 
   // Fixed Deduction Category Filter State
   const [activeCategory, setActiveCategory] = useState<string>("all");
@@ -333,7 +337,7 @@ export default function FinancialHorizonClient({
     }
 
     startTransition(async () => {
-      const res = await updateHorizonConfigAction(parsedAmount, currencyInput);
+      const res = await updateHorizonConfigAction(parsedAmount);
       if (res.ok && res.summary) {
         setSummary({
           ...res.summary,
@@ -892,8 +896,6 @@ export default function FinancialHorizonClient({
           setIsEditingBase={setIsEditingBase}
           baseInput={baseInput}
           setBaseInput={setBaseInput}
-          currencyInput={currencyInput}
-          setCurrencyInput={setCurrencyInput}
           handleSaveBaseConfig={handleSaveBaseConfig}
           isPending={isPending}
         />
@@ -1105,7 +1107,7 @@ export default function FinancialHorizonClient({
                   {viewingSubTransactions.name} Payment History
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  {subTransactionsList.length} recorded payments • Total spent: {summary.currency}{subTransactionsList.reduce((sum, t) => sum + t.amount, 0).toLocaleString()}
+                  {subTransactionsList.length} recorded payments • Total spent: {formatMoney(subTransactionsList.reduce((sum, t) => sum + t.amount, 0), summary.currency)}
                 </p>
               </div>
               <Button variant="icon"
@@ -1142,7 +1144,7 @@ export default function FinancialHorizonClient({
                       </span>
                     </div>
                     <span className="font-bold text-foreground">
-                      {summary.currency}{tx.amount.toLocaleString()}
+                      {formatMoney(tx.amount, summary.currency)}
                     </span>
                   </div>
                 ))

@@ -1,4 +1,7 @@
 "use client";
+
+import { formatMoney } from "../../lib/currency.mjs";
+import { useCurrency } from "../../components/currency-provider";
 import { useTimeZone } from "../../components/time-zone-provider";
 import { statementTransactionInstant } from "../../lib/time-zone.mjs";
 
@@ -50,6 +53,7 @@ export default function StatementUploadDialog({
   onImportTransactions,
 }: StatementUploadDialogProps) {
   const { timeZone } = useTimeZone();
+  const { currency } = useCurrency();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -353,7 +357,7 @@ export default function StatementUploadDialog({
                   <span className="text-muted-foreground">
                     Total Debits:{" "}
                     <strong className="text-destructive">
-                      ₹{extractionResult.data.totalDebits.toLocaleString("en-IN")}
+                      {formatMoney(extractionResult.data.totalDebits, currency)}
                     </strong>
                   </span>
                 )}
@@ -361,7 +365,7 @@ export default function StatementUploadDialog({
                   <span className="text-muted-foreground">
                     Total Credits:{" "}
                     <strong className="text-success">
-                      ₹{extractionResult.data.totalCredits.toLocaleString("en-IN")}
+                      {formatMoney(extractionResult.data.totalCredits, currency)}
                     </strong>
                   </span>
                 )}
@@ -433,7 +437,7 @@ export default function StatementUploadDialog({
                               tx.type === "credit" ? "text-success" : "text-foreground"
                             }`}
                           >
-                            ₹{tx.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                            {formatMoney(tx.amount, currency)}
                           </span>
                         </div>
                       </div>

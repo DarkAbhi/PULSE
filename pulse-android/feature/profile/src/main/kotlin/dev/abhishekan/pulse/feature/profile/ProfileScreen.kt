@@ -325,6 +325,7 @@ internal fun ProfileScreen(
                                 )
                             }
                             TimeZoneCard(state, vm::timeZone)
+                            CurrencyCard(state, vm::currency)
                             PulseCard(Modifier.fillMaxWidth()) {
                                 PulseText(stringResource(R.string.pulse_profile_appearance), style = PulseTextStyle.Title)
                                 Column(Modifier.selectableGroup()) {

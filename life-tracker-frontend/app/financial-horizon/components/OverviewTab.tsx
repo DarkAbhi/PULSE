@@ -1,5 +1,7 @@
 "use client";
 
+import { formatMoney, currencySymbol } from "../../lib/currency.mjs";
+
 import Button from "../../components/design-system/button";
 
 import {
@@ -134,10 +136,7 @@ export default function OverviewTab({
                           Allocated
                         </span>
                         <p className="text-sm font-bold text-foreground mt-0.5">
-                          {summary.currency}
-                          {b.allocated_amount.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                          })}
+                          {formatMoney(b.allocated_amount, summary.currency)}
                         </p>
                       </div>
                       <div>
@@ -145,10 +144,7 @@ export default function OverviewTab({
                           Committed/Used
                         </span>
                         <p className="text-sm font-bold text-warning mt-0.5">
-                          {summary.currency}
-                          {b.used_amount.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                          })}
+                          {formatMoney(b.used_amount, summary.currency)}
                         </p>
                       </div>
                     </div>
@@ -166,10 +162,7 @@ export default function OverviewTab({
                               : "text-success dark:text-success"
                           }`}
                         >
-                          {summary.currency}
-                          {b.available_amount.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                          })}
+                          {formatMoney(b.available_amount, summary.currency)}
                         </span>
                       </div>
                       <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
@@ -204,7 +197,7 @@ export default function OverviewTab({
                             key={item.id}
                             className="inline-flex items-center gap-1 rounded-md bg-background border border-border px-2 py-0.5 text-[11px] font-medium text-foreground"
                           >
-                            {item.name} ({summary.currency}
+                            {item.name} ({currencySymbol(summary.currency)}
                             {item.amount})
                           </span>
                         ))}
@@ -254,10 +247,7 @@ export default function OverviewTab({
                 </div>
 
                 <p className="mt-4 text-2xl font-extrabold text-foreground">
-                  {summary.currency}
-                  {projectedReserve.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatMoney(projectedReserve, summary.currency)}
                 </p>
 
                 <p className="mt-2 text-xs text-muted-foreground">

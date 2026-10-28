@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/DarkAbhi/life-backend/internal/horizon/query"
+	profilequery "github.com/DarkAbhi/life-backend/internal/profile/query"
 )
 
 type Service struct {
@@ -32,7 +33,11 @@ func NewService(db *pgxpool.Pool) *Service {
 	}
 }
 
-func (s *Service) UpsertConfig(ctx context.Context, userID int64, baseAmount float64, currency string) error {
+func (s *Service) UpsertConfig(ctx context.Context, userID int64, baseAmount float64, _ string) error {
+	currency, err := profilequery.New(s.db).GetCurrency(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("get profile currency: %w", err)
+	}
 	return query.New(s.db).UpsertHorizonConfig(ctx, query.UpsertHorizonConfigParams{UserID: userID, BaseAmount: baseAmount, Currency: currency})
 }
 
@@ -43,16 +48,18 @@ func (s *Service) Summary(ctx context.Context, userID int64) (*SummaryDTO, error
 	}
 
 	var baseAmount float64
-	var currency string
+	currency, err := profilequery.New(s.db).GetCurrency(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get profile currency: %w", err)
+	}
 
 	config, err := query.New(s.db).GetHorizonConfig(ctx, userID)
 	if errors.Is(err, sql.ErrNoRows) {
 		baseAmount = 0
-		currency = "₹"
 	} else if err != nil {
 		return nil, fmt.Errorf("get horizon config: %w", err)
 	} else {
-		baseAmount, currency = config.BaseAmount, config.Currency
+		baseAmount = config.BaseAmount
 	}
 
 	// Fetch Budgets

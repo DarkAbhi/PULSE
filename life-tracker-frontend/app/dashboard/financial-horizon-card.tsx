@@ -1,3 +1,5 @@
+
+import { formatMoney } from "../lib/currency.mjs";
 import Link from "next/link";
 import { House, ArrowRight } from "lucide-react";
 
@@ -107,7 +109,7 @@ export default function FinancialHorizonCard({
       {unavailable ? (
         <p className="pulse-card-message">{error || "Set up your monthly income and fixed obligations to see your room to move."}</p>
       ) : (
-        <p className="pulse-money">{summary.currency} {summary.remaining_amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        <p className="pulse-money">{formatMoney(summary.remaining_amount, summary.currency)}</p>
       )}
       <div className="pulse-card-footer">
         <span className="pulse-card-cta">{unavailable ? "Set up horizon" : "Keep going"}<ArrowRight className="h-4 w-4" /></span>

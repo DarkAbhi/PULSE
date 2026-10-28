@@ -58,6 +58,13 @@ class ProfileViewModelTest {
             return loadFailure?.let { Outcome.Error(it) } ?: Outcome.Success(snapshot)
         }
 
+        override suspend fun saveCurrency(currency: String): Outcome<String> {
+            writes++
+            failure?.let { return Outcome.Error(it) }
+            value = value.copy(currency = currency)
+            return Outcome.Success(currency)
+        }
+
         override suspend fun saveTimeZone(timezone: String): Outcome<String> {
             writes++
             failure?.let { return Outcome.Error(it) }
@@ -114,8 +121,46 @@ class ProfileViewModelTest {
         RevokeAPIKey(repo),
         saved,
         dev.abhishekan.pulse.core.domain.usecase
+            .SaveProfileCurrency(repo),
+        dev.abhishekan.pulse.core.domain.usecase
             .SaveProfileTimeZone(repo),
     )
+
+    @Test fun currencySavePreservesProfileAndFailureKeepsPreference() =
+        runTest {
+            val repo = Repo()
+            val vm = vm(repo)
+            runCurrent()
+            vm.currency("INR")
+            runCurrent()
+            assertEquals(
+                "INR",
+                vm.uiState.value.profile
+                    ?.currency,
+            )
+            assertEquals(
+                repo.value.name,
+                vm.uiState.value.profile
+                    ?.name,
+            )
+            val writes = repo.writes
+            vm.currency("ZZZ")
+            runCurrent()
+            assertEquals(writes, repo.writes)
+            assertEquals(
+                "INR",
+                vm.uiState.value.profile
+                    ?.currency,
+            )
+            repo.failure = Failure.InvalidInput
+            vm.currency("USD")
+            runCurrent()
+            assertEquals(
+                "INR",
+                vm.uiState.value.profile
+                    ?.currency,
+            )
+        }
 
     @Test fun timeZoneSaveUpdatesProfileAndFailureKeepsPreviousPreference() =
         runTest {

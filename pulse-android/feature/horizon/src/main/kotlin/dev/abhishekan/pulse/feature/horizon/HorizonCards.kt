@@ -20,7 +20,6 @@ import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
@@ -29,24 +28,10 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.currencyText
 import dev.abhishekan.pulse.core.ui.pulseDescription
-import dev.abhishekan.pulse.core.ui.uiText
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
-
-internal fun money(
-    currency: String,
-    amount: BigDecimal,
-): UiText {
-    val value = amount.setScale(maxOf(2, amount.scale())).toPlainString()
-    return if (currency.isBlank()) {
-        UiText.Literal(
-            value,
-        )
-    } else {
-        uiText(R.string.pulse_horizon_money, currency, value)
-    }
-}
 
 @Composable internal fun OverviewCard(
     data: HorizonOverview,
@@ -58,7 +43,7 @@ internal fun money(
             stringResource(R.string.pulse_horizon_uncommitted_this_month),
             style = PulseTextStyle.Label,
         )
-        PulseText(money(data.currency, data.remaining).asString(), style = PulseTextStyle.Metric)
+        PulseText(currencyText(data.remaining).asString(), style = PulseTextStyle.Metric)
         PulseText(
             if (data.isOvercommitted) {
                 stringResource(
@@ -73,7 +58,7 @@ internal fun money(
         PulseText(
             stringResource(
                 R.string.pulse_horizon_starting_pool_1_s,
-                money(data.currency, data.baseAmount).asString(),
+                currencyText(data.baseAmount).asString(),
             ),
         )
         if (data.baseAmount.signum() ==
@@ -102,13 +87,13 @@ internal fun money(
         PulseText(
             stringResource(
                 R.string.pulse_horizon_fixed_obligations_1_s,
-                money(data.currency, data.deductionsTotal).asString(),
+                currencyText(data.deductionsTotal).asString(),
             ),
         )
         PulseText(
             stringResource(
                 R.string.pulse_horizon_subscriptions_1_s,
-                money(data.currency, data.subscriptionBurn).asString(),
+                currencyText(data.subscriptionBurn).asString(),
             ),
         )
         PulseText(
@@ -120,13 +105,13 @@ internal fun money(
         PulseText(
             stringResource(
                 R.string.pulse_horizon_budget_allocation_1_s,
-                money(data.currency, data.allocatedTotal).asString(),
+                currencyText(data.allocatedTotal).asString(),
             ),
         )
         PulseText(
             stringResource(
                 R.string.pulse_horizon_recent_transaction_total_1_s,
-                money(data.currency, data.transactionsTotal).asString(),
+                currencyText(data.transactionsTotal).asString(),
             ),
         )
         PulseText(
@@ -154,7 +139,7 @@ internal fun money(
         }
         data.projections.forEach {
             PulseText(it.label, style = PulseTextStyle.Label)
-            PulseText(money(data.currency, it.amount).asString(), style = PulseTextStyle.Metric)
+            PulseText(currencyText(it.amount).asString(), style = PulseTextStyle.Metric)
         }
         PulseText(
             stringResource(
@@ -173,7 +158,7 @@ internal fun money(
 ) {
     PulseCard(Modifier.fillMaxWidth().testTag("horizon-record-${item.id}")) {
         PulseText(item.name, style = PulseTextStyle.Title)
-        PulseText(money(currency, item.available).asString(), style = PulseTextStyle.Metric)
+        PulseText(currencyText(item.available).asString(), style = PulseTextStyle.Metric)
         PulseText(
             if (item.isOverBudget) {
                 stringResource(
@@ -186,8 +171,8 @@ internal fun money(
         PulseText(
             stringResource(
                 R.string.pulse_horizon_allocated_1_s_used_2_s,
-                money(currency, item.allocated).asString(),
-                money(currency, item.used).asString(),
+                currencyText(item.allocated).asString(),
+                currencyText(item.used).asString(),
             ),
         )
         PulseText(
@@ -221,7 +206,7 @@ internal fun money(
             stringResource(
                 R.string.pulse_horizon_signed_amount,
                 if (credit) "+" else "−",
-                money(currency, item.amount).asString(),
+                currencyText(item.amount).asString(),
             ),
             style = PulseTextStyle.Metric,
         )
@@ -396,7 +381,7 @@ internal fun money(
                     stringResource(
                         R.string.pulse_horizon_link_1_s_2_s,
                         item.name,
-                        money(currency, item.amount).asString(),
+                        currencyText(item.amount).asString(),
                     ),
                     {
                         link(item.id)

@@ -1,3 +1,5 @@
+import { getUserCurrency } from "../../lib/user-currency";
+import { formatMoney } from "../../lib/currency.mjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -22,6 +24,7 @@ interface PageProps {
 }
 
 export default async function VehiclePage({ params, searchParams }: PageProps) {
+  const currency = await getUserCurrency();
   const { id } = await params;
   const { edit, maintenance, "edit-maintenance": editMaintenance } = await searchParams;
   
@@ -149,7 +152,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
                     {fill.items.map((item, index) => (
                       <p className="mt-2 text-sm text-muted-foreground" key={index}>
                         {item.fuel_type} · {item.fill_type} · {item.quantity} L
-                        · ₹{item.total_cost}
+                        · {formatMoney(item.total_cost, currency)}
                       </p>
                     ))}
                   </article>
@@ -211,7 +214,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
                     <p className="font-semibold">{record.title}</p>
                     <p className="mt-1 text-sm text-muted-foreground"><span className="capitalize">{record.category}</span> · <LocalDate dateString={record.occurred_at} />{record.odometer_km != null ? ` · ${record.odometer_km} km` : ""}</p>
                   </div>
-                  <div className="flex items-start gap-4"><p className="font-semibold">₹{record.amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p><MaintenanceRecordActions vehicleId={id} recordId={record.id} /></div>
+                  <div className="flex items-start gap-4"><p className="font-semibold">{formatMoney(record.amount, currency)}</p><MaintenanceRecordActions vehicleId={id} recordId={record.id} /></div>
                 </div>
                 {record.provider_name && <p className="mt-2 text-sm text-muted-foreground">{record.provider_name}</p>}
                 {record.notes && <p className="mt-2 text-sm text-muted-foreground">{record.notes}</p>}

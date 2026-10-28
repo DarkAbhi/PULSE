@@ -139,6 +139,38 @@ class AccountRepositoriesTest {
             }
         }
 
+    @Test fun currencyApiSavesPreferenceAndNameSavePreservesIt() =
+        runTest {
+            Harness().use { h ->
+                val currency = dev.abhishekan.pulse.core.domain.model.UserCurrency
+                try {
+                    h.body = """{"currency":"INR"}"""
+                    assertEquals(Outcome.Success("INR"), h.profile.saveCurrency("INR"))
+                    assertEquals("/api/profile/currency", h.path)
+                    assertEquals("PUT", h.method)
+                    assertEquals(
+                        "INR",
+                        Json
+                            .parseToJsonElement(h.sent)
+                            .jsonObject["currency"]!!
+                            .jsonPrimitive.content,
+                    )
+                    assertEquals("INR", currency.code)
+                    h.body = """{"name":"Asha"}"""
+                    assertEquals("INR", (h.profile.saveName("Asha") as Outcome.Success).value.currency)
+                    h.status = HttpStatusCode.BadRequest
+                    assertEquals(Outcome.Error(Failure.InvalidInput), h.profile.saveCurrency("ZZZ"))
+                    assertEquals("INR", currency.code)
+                    h.status = HttpStatusCode.OK
+                    h.body = """{"has_profile":true,"name":"Asha","currency":"JPY"}"""
+                    assertEquals("JPY", (h.profile.profile() as Outcome.Success).value.currency)
+                    assertEquals("JPY", currency.code)
+                } finally {
+                    currency.reset()
+                }
+            }
+        }
+
     @Test fun timeZoneApiSavesAccountPreferenceAndNameSavePreservesIt() =
         runTest {
             Harness().use { h ->

@@ -1,5 +1,7 @@
 "use client";
 
+import { formatMoney } from "../lib/currency.mjs";
+
 import { formatInstant } from "../lib/time-zone.mjs";
 
 import { useTimeZone } from "../components/time-zone-provider";
@@ -123,7 +125,7 @@ export default function LinkSubscriptionPaymentDialog({
               onChange={() => setSelectedId(transaction.id)}
             />
             <span className="min-w-0 flex-1 truncate">{transaction.name}<span className="block text-xs text-muted-foreground">{formatInstant(transaction.transaction_date, timeZone, { dateStyle: "medium" })} · {transaction.category_name}{transaction.subscription_id ? " · Already linked" : ""}</span></span>
-            <span className="font-semibold">{currency}{transaction.amount.toLocaleString()}</span>
+            <span className="font-semibold">{formatMoney(transaction.amount, currency)}</span>
           </label>
         ))}
       </div>

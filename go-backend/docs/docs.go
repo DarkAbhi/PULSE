@@ -2847,6 +2847,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/profile/currency": {
+            "put": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Applies to all Financial Horizon amounts. Existing amounts are relabeled without conversion. Use an uppercase supported ISO 4217 code.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Save profile currency",
+                "parameters": [
+                    {
+                        "description": "Currency preference (GBP by default)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.CurrencyPreference"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.CurrencyPreference"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/profile/password": {
             "put": {
                 "security": [
@@ -4927,6 +4984,15 @@ const docTemplate = `{
                 }
             }
         },
+        "apidoc.CurrencyPreference": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string",
+                    "example": "INR"
+                }
+            }
+        },
         "apidoc.Error": {
             "type": "object",
             "properties": {
@@ -5393,6 +5459,10 @@ const docTemplate = `{
         "apidoc.Profile": {
             "type": "object",
             "properties": {
+                "currency": {
+                    "type": "string",
+                    "example": "GBP"
+                },
                 "has_profile": {
                     "type": "boolean"
                 },

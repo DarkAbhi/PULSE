@@ -46,7 +46,7 @@ export async function getTransactionsPageAction(
   }
 }
 
-export async function updateHorizonConfigAction(baseAmount: number, currency: string = "₹") {
+export async function updateHorizonConfigAction(baseAmount: number) {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
@@ -57,7 +57,7 @@ export async function updateHorizonConfigAction(baseAmount: number, currency: st
         "Content-Type": "application/json",
         Cookie: cookieHeader,
       },
-      body: JSON.stringify({ base_amount: baseAmount, currency }),
+      body: JSON.stringify({ base_amount: baseAmount }),
     });
 
     const body = await response.json().catch(() => ({}));

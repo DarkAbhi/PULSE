@@ -165,6 +165,8 @@ internal fun FuelEditor(
                             "price$tank",
                             stringResource(
                                 R.string.pulse_garage_price_per_litre_tank_1_s,
+                                dev.abhishekan.pulse.core.domain.model.UserCurrency
+                                    .symbol(),
                                 tank + 1,
                             ),
                             true,
@@ -175,6 +177,8 @@ internal fun FuelEditor(
                             "total$tank",
                             stringResource(
                                 R.string.pulse_garage_total_cost_tank_1_s,
+                                dev.abhishekan.pulse.core.domain.model.UserCurrency
+                                    .symbol(),
                                 tank + 1,
                             ),
                             true,

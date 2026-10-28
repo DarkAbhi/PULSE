@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.horizon
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.Failure
@@ -12,7 +13,7 @@ import dev.abhishekan.pulse.core.domain.usecase.GetPlannedPurchases
 import dev.abhishekan.pulse.core.domain.usecase.GetSubscriptionPayments
 import dev.abhishekan.pulse.core.domain.usecase.LoadHorizon
 import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.core.ui.currencyText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -315,16 +316,19 @@ class HorizonViewModelTest {
         assertEquals(tx.amount, change.amount)
     }
 
-    @Test fun monetaryDisplayPreservesBackendPrecisionWithoutInventingCurrency() {
-        assertEquals(
-            uiText(R.string.pulse_horizon_money, "USD", "12.50"),
-            money("USD", "12.5".toBigDecimal()),
-        )
-        assertEquals(
-            uiText(R.string.pulse_horizon_money, "USD", "-0.000000000000123456789"),
-            money("USD", "-0.000000000000123456789".toBigDecimal()),
-        )
-        assertEquals(UiText.Literal("12.50"), money("", "12.50".toBigDecimal()))
+    @Test fun monetaryDisplayUsesAccountCurrencyAndPreservesPrecision() {
+        val previous = java.util.Locale.getDefault()
+        try {
+            java.util.Locale.setDefault(java.util.Locale.US)
+            dev.abhishekan.pulse.core.domain.model.UserCurrency
+                .select("USD")
+            assertEquals(UiText.Literal("\$12.50"), currencyText("12.5".toBigDecimal()))
+            assertEquals(UiText.Literal("-\$0.000000000000123456789"), currencyText("-0.000000000000123456789".toBigDecimal()))
+        } finally {
+            dev.abhishekan.pulse.core.domain.model.UserCurrency
+                .reset()
+            java.util.Locale.setDefault(previous)
+        }
     }
 
     @Test fun allChangesValidateWithoutFloatingPointAndDeletionUsesTypedRecord() =

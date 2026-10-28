@@ -66,4 +66,9 @@
     <string name="pulse_profile_timezone_select">Change time zone</string>
     <string name="pulse_profile_timezone_search">Search time zones</string>
     <string name="pulse_profile_timezone_empty">No matching time zones</string>
+    <string name="pulse_profile_currency">Currency</string>
+    <string name="pulse_profile_currency_select">Choose currency</string>
+    <string name="pulse_profile_currency_search">Search currencies</string>
+    <string name="pulse_profile_currency_empty">No matching currencies</string>
+    <string name="pulse_profile_currency_explanation">One currency applies to all amounts. Changing it relabels existing amounts; it does not convert them.</string>
 </resources>

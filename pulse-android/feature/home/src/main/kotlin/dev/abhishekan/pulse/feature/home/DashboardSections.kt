@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.home
+
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,7 +35,6 @@ import dev.abhishekan.pulse.core.domain.model.Horizon
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
@@ -42,20 +42,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.currencyText
 import dev.abhishekan.pulse.core.ui.message
-import dev.abhishekan.pulse.core.ui.uiText
-import java.math.BigDecimal
 import dev.abhishekan.pulse.core.ui.R as UiR
-
-internal fun formatMoney(
-    currency: String,
-    amount: BigDecimal,
-): UiText =
-    uiText(
-        R.string.pulse_home_money,
-        currency,
-        amount.setScale(maxOf(2, amount.scale())).toPlainString(),
-    )
 
 @Composable
 internal fun HorizonCard(
@@ -89,7 +78,7 @@ internal fun HorizonCard(
                 is Section.Content -> {
                     PulseText(stringResource(R.string.pulse_home_your_room_to_move), style = PulseTextStyle.Title)
                     PulseText(
-                        formatMoney(section.value.currency, section.value.remainingAmount).asString(),
+                        currencyText(section.value.remainingAmount).asString(),
                         style = PulseTextStyle.Metric,
                     )
                 }

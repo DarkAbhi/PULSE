@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
@@ -53,12 +52,8 @@ func (h *Handler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currency := "₹"
-	if in.Currency != nil && strings.TrimSpace(*in.Currency) != "" {
-		currency = strings.TrimSpace(*in.Currency)
-	}
-
-	err = h.service.UpsertConfig(r.Context(), user.ID, in.BaseAmount, currency)
+	// Legacy currency input remains accepted; the profile is authoritative.
+	err = h.service.UpsertConfig(r.Context(), user.ID, in.BaseAmount, "")
 
 	if err != nil {
 		webutil.ServerError(w, err)

@@ -19,6 +19,7 @@ import kotlinx.serialization.json.JsonPrimitive
     ) val hasProfile: Boolean,
     val name: String? = null,
     val timezone: String = "UTC",
+    val currency: String = "GBP",
 )
 
 @Serializable class WorkoutDto(

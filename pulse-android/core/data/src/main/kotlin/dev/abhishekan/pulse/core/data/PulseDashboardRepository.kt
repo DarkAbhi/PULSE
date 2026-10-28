@@ -39,7 +39,7 @@ class PulseDashboardRepository(
     override suspend fun profile(): Outcome<Profile> =
         fetch {
             val dto = api.profile()
-            Profile(if (dto.hasProfile) dto.name?.trim()?.takeIf { it.isNotEmpty() } else null, dto.hasProfile, dto.timezone)
+            Profile(if (dto.hasProfile) dto.name?.trim()?.takeIf { it.isNotEmpty() } else null, dto.hasProfile, dto.timezone, dto.currency)
         }
 
     override suspend fun workout(): Outcome<WorkoutToday> =

@@ -1,5 +1,7 @@
 "use client";
 
+import { formatMoney, currencySymbol } from "../../lib/currency.mjs";
+
 import Button from "../../components/design-system/button";
 
 import { Edit2, Sparkles, Wallet, Lock } from "lucide-react";
@@ -14,8 +16,6 @@ interface HeaderMetricsProps {
   setIsEditingBase: (val: boolean) => void;
   baseInput: string;
   setBaseInput: (val: string) => void;
-  currencyInput: string;
-  setCurrencyInput: (val: string) => void;
   handleSaveBaseConfig: (e: React.FormEvent) => void;
   isPending?: boolean;
 }
@@ -29,8 +29,6 @@ export default function HeaderMetrics({
   setIsEditingBase,
   baseInput,
   setBaseInput,
-  currencyInput,
-  setCurrencyInput,
   handleSaveBaseConfig,
   isPending = false,
 }: HeaderMetricsProps) {
@@ -58,13 +56,7 @@ export default function HeaderMetrics({
         {isEditingBase ? (
           <form onSubmit={handleSaveBaseConfig} className="mt-3 space-y-2">
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={currencyInput}
-                onChange={(e) => setCurrencyInput(e.target.value)}
-                className="w-12 rounded-xl border border-border bg-background px-2 py-1 text-center text-xs font-bold"
-                placeholder="₹"
-              />
+              <span className="self-center text-sm font-semibold">{currencySymbol(summary.currency)}</span>
               <input
                 type="number"
                 step="0.01"
@@ -94,8 +86,7 @@ export default function HeaderMetrics({
         ) : (
           <div className="mt-3">
             <p className="text-2xl font-extrabold text-foreground tracking-tight">
-              {summary.currency}
-              {summary.base_amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              {formatMoney(summary.base_amount, summary.currency)}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">Baseline monthly revenue stream</p>
           </div>
@@ -119,15 +110,14 @@ export default function HeaderMetrics({
         </div>
         <div className="mt-3">
           <p className="text-2xl font-extrabold text-foreground tracking-tight">
-            {summary.currency}
-            {totalCommitted.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            {formatMoney(totalCommitted, summary.currency)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground flex items-center gap-2">
-            <span>Fixed ({summary.currency}{summary.total_deductions.toLocaleString("en-IN")})</span>
+            <span>Fixed ({formatMoney(summary.total_deductions, summary.currency)})</span>
             {(summary.total_subscription_burn ?? 0) > 0 && (
               <>
                 <span>+</span>
-                <span>Subscriptions ({summary.currency}{(summary.total_subscription_burn ?? 0).toLocaleString("en-IN")})</span>
+                <span>Subscriptions ({formatMoney((summary.total_subscription_burn ?? 0), summary.currency)})</span>
               </>
             )}
           </p>
@@ -163,8 +153,7 @@ export default function HeaderMetrics({
                 : "text-destructive dark:text-destructive"
             }`}
           >
-            {summary.currency}
-            {uncommittedPool.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            {formatMoney(uncommittedPool, summary.currency)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground font-medium">
             Uncommitted cash remaining after fixed obligations &amp; subscriptions

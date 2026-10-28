@@ -1,5 +1,7 @@
 "use client";
 
+import { currencySymbol } from "../lib/currency.mjs";
+
 import Button from "../components/design-system/button";
 
 import { useState, useEffect, useId } from "react";
@@ -12,7 +14,7 @@ export interface BudgetDialogProps {
   onClose: () => void;
   onSave: (data: { id?: number; name: string; allocatedAmount: number }) => Promise<void> | void;
   editingBudget?: BudgetItem | null;
-  currency?: string;
+  currency: string;
   isPending?: boolean;
 }
 
@@ -21,7 +23,7 @@ export default function BudgetDialog({
   onClose,
   onSave,
   editingBudget = null,
-  currency = "₹",
+  currency,
   isPending = false,
 }: BudgetDialogProps) {
   const titleId = useId();
@@ -133,7 +135,7 @@ export default function BudgetDialog({
 
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground">
-              Monthly Allocated Amount ({currency})
+              Monthly Allocated Amount ({currencySymbol(currency)})
             </label>
             <input
               type="number"

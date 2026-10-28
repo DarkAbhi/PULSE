@@ -1,5 +1,7 @@
 "use client";
 
+import { formatMoney } from "../../lib/currency.mjs";
+
 import { formatInstant, formatCalendarDate, dateKey, calendarDayNumber } from "../../lib/time-zone.mjs";
 
 import { useTimeZone } from "../../components/time-zone-provider";
@@ -37,7 +39,7 @@ interface SubscriptionsTabProps {
   subscriptions: SubscriptionItem[];
   categories: CategoryItem[];
   budgets: BudgetItem[];
-  currency?: string;
+  currency: string;
   onAddSubscription: () => void;
   onEditSubscription: (sub: SubscriptionItem) => void;
   onDeleteSubscription: (sub: SubscriptionItem) => void;
@@ -50,7 +52,7 @@ export default function SubscriptionsTab({
   subscriptions,
   categories,
   budgets,
-  currency = "₹",
+  currency,
   onAddSubscription,
   onEditSubscription,
   onDeleteSubscription,
@@ -175,11 +177,7 @@ export default function SubscriptionsTab({
           </div>
           <div className="mt-3">
             <span className="text-2xl font-black text-foreground">
-              {currency}
-              {totalMonthlyBurn.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {formatMoney(totalMonthlyBurn, currency)}
             </span>
             <span className="text-xs text-muted-foreground ml-1">/ month</span>
           </div>
@@ -200,11 +198,7 @@ export default function SubscriptionsTab({
           </div>
           <div className="mt-3">
             <span className="text-2xl font-black text-foreground">
-              {currency}
-              {totalYearlyOutlay.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {formatMoney(totalYearlyOutlay, currency)}
             </span>
             <span className="text-xs text-muted-foreground ml-1">/ year</span>
           </div>
@@ -253,8 +247,7 @@ export default function SubscriptionsTab({
                   {nearestRenewal.name}
                 </span>
                 <span className="text-xs font-bold text-foreground">
-                  {currency}
-                  {nearestRenewal.amount.toLocaleString()}
+                  {formatMoney(nearestRenewal.amount, currency)}
                 </span>
               </div>
               <p className="mt-1 text-xs font-medium text-warning">
@@ -383,8 +376,7 @@ export default function SubscriptionsTab({
                     {/* Price Tag */}
                     <div className="text-right shrink-0">
                       <span className="text-lg font-black text-foreground">
-                        {currency}
-                        {sub.amount.toLocaleString()}
+                        {formatMoney(sub.amount, currency)}
                       </span>
                       <span className="text-xs text-muted-foreground font-medium block">
                         / {sub.billing_cycle === "yearly" ? "year" : "month"}
@@ -395,8 +387,7 @@ export default function SubscriptionsTab({
                   {/* Monthly Equivalent if yearly */}
                   {sub.billing_cycle !== "monthly" && sub.status === "active" && (
                     <div className="mt-2 text-xs text-muted-foreground font-medium bg-secondary/50 rounded-lg px-2.5 py-1 inline-block">
-                      ≈ {currency}
-                      {sub.monthly_equivalent_amount.toLocaleString()}/mo equivalent
+                      ≈ {formatMoney(sub.monthly_equivalent_amount, currency)}/mo equivalent
                     </div>
                   )}
 

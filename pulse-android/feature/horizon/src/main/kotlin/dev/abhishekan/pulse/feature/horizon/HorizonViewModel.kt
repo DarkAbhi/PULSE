@@ -179,7 +179,7 @@ class HorizonViewModel(
         edit(
             HorizonDraft(
                 kind,
-                currency = data?.currency ?: "₹",
+                currency = dev.abhishekan.pulse.core.domain.model.UserCurrency.code,
                 amount =
                     if (kind ==
                         HorizonForm.Config

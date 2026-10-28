@@ -1,5 +1,7 @@
 "use client";
 
+import { formatMoney } from "../../lib/currency.mjs";
+
 import { formatInstant } from "../../lib/time-zone.mjs";
 
 import { useTimeZone } from "../../components/time-zone-provider";
@@ -254,7 +256,7 @@ export default function TransactionsTab({
                     }`}
                     suppressHydrationWarning
                   >
-                    {isCredit ? "+" : "-"}{summary.currency}{tx.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    {isCredit ? "+" : "-"}{formatMoney(tx.amount, summary.currency)}
                   </span>
                   <div className="flex items-center gap-1">
                     <Button variant="icon"

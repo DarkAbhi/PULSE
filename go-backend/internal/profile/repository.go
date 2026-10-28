@@ -31,3 +31,10 @@ func (r *Repository) TimeZone(ctx context.Context, userID int64) (string, error)
 func (r *Repository) SaveTimeZone(ctx context.Context, userID int64, zone string) error {
 	return r.queries.SaveTimeZone(ctx, query.SaveTimeZoneParams{UserID: userID, Timezone: zone})
 }
+
+func (r *Repository) Currency(ctx context.Context, userID int64) (string, error) {
+	return r.queries.GetCurrency(ctx, userID)
+}
+func (r *Repository) SaveCurrency(ctx context.Context, userID int64, code string) error {
+	return r.queries.SaveCurrency(ctx, query.SaveCurrencyParams{UserID: userID, Currency: code})
+}

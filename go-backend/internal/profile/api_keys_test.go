@@ -96,3 +96,6 @@ func TestAPIKeyCreationAndOwnership(t *testing.T) {
 
 func (s *apiKeyStore) TimeZone(context.Context, int64) (string, error)   { return "UTC", nil }
 func (s *apiKeyStore) SaveTimeZone(context.Context, int64, string) error { return nil }
+
+func (s *apiKeyStore) Currency(context.Context, int64) (string, error)   { return "GBP", nil }
+func (s *apiKeyStore) SaveCurrency(context.Context, int64, string) error { return nil }

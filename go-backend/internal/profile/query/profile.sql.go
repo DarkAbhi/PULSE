@@ -9,6 +9,17 @@ import (
 	"context"
 )
 
+const getCurrency = `-- name: GetCurrency :one
+SELECT COALESCE((SELECT currency FROM user_profiles WHERE user_id=$1), 'GBP')::text AS currency
+`
+
+func (q *Queries) GetCurrency(ctx context.Context, userID int64) (string, error) {
+	row := q.db.QueryRow(ctx, getCurrency, userID)
+	var currency string
+	err := row.Scan(&currency)
+	return currency, err
+}
+
 const getDisplayName = `-- name: GetDisplayName :one
 SELECT display_name FROM user_profiles WHERE user_id=$1
 `
@@ -29,6 +40,21 @@ func (q *Queries) GetTimeZone(ctx context.Context, userID int64) (string, error)
 	var timezone string
 	err := row.Scan(&timezone)
 	return timezone, err
+}
+
+const saveCurrency = `-- name: SaveCurrency :exec
+INSERT INTO user_profiles (user_id, display_name, currency) VALUES ($1, '', $2)
+ON CONFLICT (user_id) DO UPDATE SET currency=EXCLUDED.currency, updated_at=NOW()
+`
+
+type SaveCurrencyParams struct {
+	UserID   int64
+	Currency string
+}
+
+func (q *Queries) SaveCurrency(ctx context.Context, arg SaveCurrencyParams) error {
+	_, err := q.db.Exec(ctx, saveCurrency, arg.UserID, arg.Currency)
+	return err
 }
 
 const saveDisplayName = `-- name: SaveDisplayName :exec

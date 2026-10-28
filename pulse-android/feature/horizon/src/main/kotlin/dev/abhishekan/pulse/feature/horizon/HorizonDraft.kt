@@ -32,7 +32,7 @@ data class HorizonDraft(
     val id: Long? = null,
     val name: String = "",
     val amount: String = "",
-    val currency: String = "₹",
+    val currency: String = dev.abhishekan.pulse.core.domain.model.UserCurrency.code,
     val date: String = "",
     val time: String = "00:00",
     val type: String = "debit",

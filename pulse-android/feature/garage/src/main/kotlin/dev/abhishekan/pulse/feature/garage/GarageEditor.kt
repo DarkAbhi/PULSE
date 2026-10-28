@@ -117,7 +117,15 @@ internal fun GarageEditor(
                     garageCategories,
                 )
                 field("title", stringResource(R.string.pulse_garage_title))
-                field("amount", stringResource(R.string.pulse_garage_amount), true)
+                field(
+                    "amount",
+                    stringResource(
+                        R.string.pulse_garage_amount,
+                        dev.abhishekan.pulse.core.domain.model.UserCurrency
+                            .symbol(),
+                    ),
+                    true,
+                )
             }
             GarageForm.Fuel -> {
                 field("odometer", stringResource(R.string.pulse_garage_odometer_km), true)

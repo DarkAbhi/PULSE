@@ -1,5 +1,7 @@
 "use client";
 
+import { formatMoney } from "../../lib/currency.mjs";
+
 import Button from "../../components/design-system/button";
 
 import { ShoppingBag, Plus, Trash2, ExternalLink, Wallet, TrendingDown } from "lucide-react";
@@ -48,7 +50,7 @@ export default function PlannedPurchasesTab({
             </span>
           </div>
           <p className="text-2xl font-extrabold text-foreground tracking-tight">
-            {summary.currency}{uncommittedPool.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            {formatMoney(uncommittedPool, summary.currency)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             Uncommitted cash after fixed obligations &amp; subscriptions
@@ -93,11 +95,11 @@ export default function PlannedPurchasesTab({
               ? "text-success dark:text-success"
               : "text-destructive dark:text-destructive"
           }`}>
-            {summary.currency}{(hasPurchases ? netRemainingPool : uncommittedPool).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+            {formatMoney((hasPurchases ? netRemainingPool : uncommittedPool), summary.currency)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             {hasPurchases
-              ? `After deducting ${summary.currency}${purchasesTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })} in planned purchases`
+              ? `After deducting ${formatMoney(purchasesTotal, summary.currency)} in planned purchases`
               : "Add planned purchases below to see the impact"}
           </p>
         </div>
@@ -119,7 +121,7 @@ export default function PlannedPurchasesTab({
 
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-warning/10 px-3 py-1.5 text-xs font-bold text-warning border border-warning/20">
-              Total Planned: {summary.currency}{purchasesTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+              Total Planned: {formatMoney(purchasesTotal, summary.currency)}
             </div>
 
             <Button variant="warning" size="sm"
@@ -178,7 +180,7 @@ export default function PlannedPurchasesTab({
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <span className="font-bold text-foreground text-sm">
-                    {summary.currency}{item.price.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    {formatMoney(item.price, summary.currency)}
                   </span>
                   <Button variant="iconDanger"
                     onClick={() => onConfirmDeletePurchase(item)}

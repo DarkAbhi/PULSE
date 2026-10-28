@@ -8,6 +8,7 @@ import (
 	"time"
 	_ "time/tzdata"
 
+	"github.com/DarkAbhi/life-backend/internal/currency"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -18,6 +19,8 @@ var ErrCurrentPasswordRequired = errors.New("profile: current password is requir
 var ErrNewPasswordTooShort = errors.New("profile: new password must be at least 6 characters")
 
 type store interface {
+	Currency(context.Context, int64) (string, error)
+	SaveCurrency(context.Context, int64, string) error
 	Name(context.Context, int64) (string, error)
 	TimeZone(context.Context, int64) (string, error)
 	SaveTimeZone(context.Context, int64, string) error
@@ -95,4 +98,26 @@ func validTimeZone(zone string) bool {
 	}
 	_, err := time.LoadLocation(zone)
 	return err == nil
+}
+
+var ErrInvalidCurrency = errors.New("profile: unsupported currency")
+
+func (s *Service) Currency(ctx context.Context, userID int64) (string, error) {
+	code, err := s.store.Currency(ctx, userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return currency.Default, nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("get profile currency: %w", err)
+	}
+	return code, nil
+}
+func (s *Service) SaveCurrency(ctx context.Context, userID int64, code string) error {
+	if !currency.Valid(code) {
+		return ErrInvalidCurrency
+	}
+	if err := s.store.SaveCurrency(ctx, userID, code); err != nil {
+		return fmt.Errorf("save profile currency: %w", err)
+	}
+	return nil
 }

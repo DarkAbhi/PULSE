@@ -24,6 +24,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/profile", h.Show)
 	r.Put("/profile", h.Save)
 	r.Put("/profile/timezone", h.SaveTimeZone)
+	r.Put("/profile/currency", h.SaveCurrency)
 	r.Put("/profile/password", h.ChangePassword)
 	r.Get("/profile/api-keys", h.ListAPIKeys)
 	r.Post("/profile/api-keys", h.CreateAPIKey)
@@ -56,11 +57,16 @@ func (h *Handler) Show(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	if !has {
-		webutil.WriteJSON(w, http.StatusOK, map[string]any{"has_profile": false, "timezone": zone})
+	code, err := h.service.Currency(r.Context(), id)
+	if err != nil {
+		webutil.ServerError(w, err)
 		return
 	}
-	webutil.WriteJSON(w, http.StatusOK, map[string]any{"has_profile": true, "name": name, "timezone": zone})
+	if !has {
+		webutil.WriteJSON(w, http.StatusOK, map[string]any{"has_profile": false, "timezone": zone, "currency": code})
+		return
+	}
+	webutil.WriteJSON(w, http.StatusOK, map[string]any{"has_profile": true, "name": name, "timezone": zone, "currency": code})
 }
 func (h *Handler) Save(w http.ResponseWriter, r *http.Request) {
 	id, ok := h.authenticatedUser(w, r)
@@ -138,4 +144,30 @@ func (h *Handler) SaveTimeZone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	webutil.WriteJSON(w, http.StatusOK, map[string]string{"timezone": body.TimeZone})
+}
+
+func (h *Handler) SaveCurrency(w http.ResponseWriter, r *http.Request) {
+	id, ok := h.authenticatedUser(w, r)
+	if !ok {
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	defer r.Body.Close()
+	var body struct {
+		Currency string `json:"currency"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		webutil.BadRequest(w, "invalid json")
+		return
+	}
+	err := h.service.SaveCurrency(r.Context(), id, body.Currency)
+	if errors.Is(err, ErrInvalidCurrency) {
+		webutil.BadRequest(w, "currency must be a supported ISO 4217 code")
+		return
+	}
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	webutil.WriteJSON(w, http.StatusOK, map[string]string{"currency": body.Currency})
 }

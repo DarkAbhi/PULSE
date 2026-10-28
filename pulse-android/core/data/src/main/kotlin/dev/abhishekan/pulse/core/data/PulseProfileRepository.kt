@@ -5,6 +5,7 @@ import dev.abhishekan.pulse.core.domain.model.CreatedAPIKey
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.Profile
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.network.PulseApi
@@ -56,10 +57,13 @@ class PulseProfileRepository(
         request {
             val version = auth.version
             val previousZone = UserTimeZone.zone
+            val previousCurrency = UserCurrency.code
             val dto = api.profile()
             java.time.ZoneId.of(dto.timezone)
+            require(UserCurrency.valid(dto.currency))
+            if (version == auth.version && previousCurrency == UserCurrency.code) UserCurrency.select(dto.currency)
             if (version == auth.version && previousZone == UserTimeZone.zone) UserTimeZone.select(dto.timezone)
-            Profile(dto.name?.takeIf { dto.hasProfile && it.isNotBlank() }, dto.hasProfile, dto.timezone)
+            Profile(dto.name?.takeIf { dto.hasProfile && it.isNotBlank() }, dto.hasProfile, dto.timezone, dto.currency)
         }.also { if (it is Outcome.Success) dashboard.accountChanged() }
 
     override suspend fun saveName(name: String) =
@@ -69,7 +73,16 @@ class PulseProfileRepository(
                     dev.abhishekan.pulse.core.domain.usecase.AccountValidation
                         .validName(it.name),
                 )
-                Profile(it.name, true, UserTimeZone.zone.id)
+                Profile(it.name, true, UserTimeZone.zone.id, UserCurrency.code)
+            }
+        }
+
+    override suspend fun saveCurrency(currency: String) =
+        request(true) {
+            val version = auth.version
+            api.saveCurrency(currency).currency.also {
+                require(it == currency && UserCurrency.valid(it))
+                if (version == auth.version) UserCurrency.select(it)
             }
         }
 

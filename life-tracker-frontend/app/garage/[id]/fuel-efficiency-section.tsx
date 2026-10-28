@@ -1,3 +1,5 @@
+import { currencySymbol } from "../../lib/currency.mjs";
+import { getUserCurrency } from "../../lib/user-currency";
 import { Fuel } from "lucide-react";
 import { FuelEfficiencyStats } from "./types";
 
@@ -18,11 +20,12 @@ const formatNumber = (value: number | null, decimals: number) =>
         maximumFractionDigits: decimals,
       });
 
-export default function FuelEfficiencySection({
+export default async function FuelEfficiencySection({
   stats,
 }: {
   stats: Record<string, FuelEfficiencyStats>;
 }) {
+  const currency = await getUserCurrency();
   const entries = Object.entries(stats).sort(([a], [b]) => a.localeCompare(b));
   const groups = entries.length > 0 ? entries : [["", emptyStats] as const];
 
@@ -36,7 +39,7 @@ export default function FuelEfficiencySection({
       </p>
       {groups.map(([fuelType, summary]) => {
         const cards = [
-          { label: "Total refuelling", value: summary.total_cost, decimals: 2, unit: "INR so far" },
+          { label: "Total refuelling", value: summary.total_cost, decimals: 2, unit: `${currencySymbol(currency)} so far` },
           { label: "Total volume", value: summary.total_volume, decimals: 3, unit: fuelType ? `L · ${fuelType}` : "L" },
           { label: "Avg fuel efficiency", value: summary.average_km_per_litre, decimals: 3, unit: "km/L" },
           { label: "Max fuel efficiency", value: summary.max_km_per_litre, decimals: 3, unit: "km/L" },

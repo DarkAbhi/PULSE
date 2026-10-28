@@ -74,6 +74,8 @@ fun GarageRoute(
     initialVehicle: Long? = null,
     onDetailChanged: (Boolean) -> Unit = {},
 ) {
+    val currency by dev.abhishekan.pulse.core.domain.model.UserCurrency.changes
+        .collectAsStateWithLifecycle()
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -147,7 +149,7 @@ fun GarageRoute(
             viewModel.opened()
         }
     }
-    androidx.compose.runtime.key(timeZone) {
+    androidx.compose.runtime.key(timeZone, currency) {
         GarageScreen(state, viewModel, { record ->
             pickerVehicle = state.vehicle
             pickerRecord = record

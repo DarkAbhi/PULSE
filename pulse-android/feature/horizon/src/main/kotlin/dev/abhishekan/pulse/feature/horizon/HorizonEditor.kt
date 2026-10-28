@@ -100,7 +100,11 @@ internal fun HorizonEditor(
             PulseTextField(
                 draft.amount,
                 { onChange(draft.copy(amount = it)) },
-                stringResource(R.string.pulse_horizon_amount_1_s, draft.currency),
+                stringResource(
+                    R.string.pulse_horizon_amount_1_s,
+                    dev.abhishekan.pulse.core.domain.model.UserCurrency
+                        .symbol(),
+                ),
                 Modifier.fillMaxWidth(),
                 enabled,
                 keyboardOptions =
@@ -110,23 +114,8 @@ internal fun HorizonEditor(
                     ),
             )
         }
-        if (draft.kind ==
-            HorizonForm.Config
-        ) {
-            PulseTextField(
-                draft.currency,
-                {
-                    onChange(draft.copy(currency = it))
-                },
-                stringResource(R.string.pulse_horizon_currency),
-                Modifier.fillMaxWidth(),
-                enabled,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions =
-                    KeyboardActions(onDone = {
-                        keyboard?.hide()
-                    }),
-            )
+        if (draft.kind == HorizonForm.Config) {
+            PulseText(stringResource(R.string.pulse_horizon_currency_profile))
         }
         if (draft.kind == HorizonForm.Transaction) {
             Choice(

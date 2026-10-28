@@ -29,6 +29,7 @@ class ProfileViewModel(
     private val createKey: CreateAPIKey,
     private val revokeKey: RevokeAPIKey,
     private val saved: SavedStateHandle,
+    private val saveCurrency: dev.abhishekan.pulse.core.domain.usecase.SaveProfileCurrency,
     private val saveTimeZone: dev.abhishekan.pulse.core.domain.usecase.SaveProfileTimeZone,
 ) : ViewModel() {
     private val state =
@@ -357,6 +358,41 @@ class ProfileViewModel(
                         it.copy(
                             busy = false,
                             profile = it.profile?.copy(timezone = result.value),
+                            message = uiText(R.string.pulse_profile_saved),
+                        )
+                    }
+                    refreshAfterMutation()
+                }
+                is Outcome.Error -> {
+                    val uncertain = result.failure in setOf(Failure.Connection, Failure.Timeout, Failure.Server, Failure.Malformed)
+                    if (!uncertain) saved.remove<String>("pending")
+                    state.update {
+                        it.copy(
+                            busy = false,
+                            uncertain = uncertain,
+                            reviewed = false,
+                            error = result.failure.message,
+                            message = if (uncertain) uiText(R.string.pulse_profile_uncertain) else null,
+                        )
+                    }
+                    if (uncertain) refreshAfterMutation()
+                }
+            }
+        }
+    }
+
+    fun currency(value: String) {
+        if (state.value.busy || state.value.uncertain || state.value.loading) return
+        state.update { it.copy(busy = true, error = null) }
+        saved["pending"] = "Currency"
+        viewModelScope.launch {
+            when (val result = saveCurrency(value)) {
+                is Outcome.Success -> {
+                    saved.remove<String>("pending")
+                    state.update {
+                        it.copy(
+                            busy = false,
+                            profile = it.profile?.copy(currency = result.value),
                             message = uiText(R.string.pulse_profile_saved),
                         )
                     }

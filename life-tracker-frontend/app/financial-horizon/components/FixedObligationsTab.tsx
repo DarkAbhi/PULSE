@@ -1,5 +1,7 @@
 "use client";
 
+import { formatMoney, currencySymbol } from "../../lib/currency.mjs";
+
 import { formatInstant } from "../../lib/time-zone.mjs";
 
 import { useTimeZone } from "../../components/time-zone-provider";
@@ -155,7 +157,7 @@ export default function FixedObligationsTab({
               {totalActiveCount} Active
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-lavender/10 px-2.5 py-0.5 text-xs font-semibold text-foreground border border-lavender/20">
-              {summary.currency}{totalFixedCommitments.toLocaleString("en-IN", { minimumFractionDigits: 2 })}/mo
+              {formatMoney(totalFixedCommitments, summary.currency)}/mo
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -239,7 +241,7 @@ export default function FixedObligationsTab({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Monthly Amount ({summary.currency})</label>
+              <label className="text-xs font-semibold text-muted-foreground">Monthly Amount ({currencySymbol(summary.currency)})</label>
               <input
                 type="number"
                 step="0.01"
@@ -275,7 +277,7 @@ export default function FixedObligationsTab({
                 <option value="">-- No Budget Link --</option>
                 {(summary.budgets ?? []).map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.name} ({summary.currency}{b.allocated_amount.toLocaleString("en-IN")})
+                    {b.name} ({formatMoney(b.allocated_amount, summary.currency)})
                   </option>
                 ))}
               </select>
@@ -360,8 +362,7 @@ export default function FixedObligationsTab({
                   <div>
                     <span className="text-xs text-muted-foreground">Monthly Amount</span>
                     <p className="text-xl font-bold text-foreground">
-                      {summary.currency}
-                      {item.amount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                      {formatMoney(item.amount, summary.currency)}
                     </p>
                   </div>
 
@@ -435,12 +436,11 @@ export default function FixedObligationsTab({
                     <div>
                       <span className="text-xs text-muted-foreground">Monthly Equivalent</span>
                       <p className="text-xl font-bold text-foreground">
-                        {summary.currency}
-                        {monthlyAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                        {formatMoney(monthlyAmount, summary.currency)}
                       </p>
                       {sub.billing_cycle === "yearly" && (
                         <span className="text-xs text-muted-foreground block mt-0.5">
-                          ({summary.currency}{sub.amount.toLocaleString()}/year)
+                          ({formatMoney(sub.amount, summary.currency)}/year)
                         </span>
                       )}
                     </div>

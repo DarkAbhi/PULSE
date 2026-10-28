@@ -9,7 +9,7 @@
     <string name="pulse_horizon_planned_purchase">"Planned purchase"</string>
     <string name="pulse_horizon_money">"%1$s %2$s"</string>
     <string name="pulse_horizon_edit">"Edit"</string>
-    <string name="pulse_horizon_set_the_monthly_starting_pool_and_currency_used_by">"Set the monthly starting pool and currency used by Financial Horizon."</string>
+    <string name="pulse_horizon_set_the_monthly_starting_pool_and_currency_used_by">"Set the monthly starting pool used by Financial Horizon."</string>
     <string name="pulse_horizon_planned_for_next_month_as_defined_by_the_server">"Planned for next month, as defined by the server."</string>
     <string name="pulse_horizon_name">"Name"</string>
     <string name="pulse_horizon_amount_1_s">"Amount (%1$s)"</string>
@@ -190,4 +190,5 @@
         <item quantity="other">"Page %1$s of %2$s · %3$s transactions"</item>
     </plurals>
     <string name="pulse_horizon_obligation_status_with_due_day">"%1$s · %2$s · Due day %3$s"</string>
+    <string name="pulse_horizon_currency_profile">Change your currency in Profile.</string>
 </resources>

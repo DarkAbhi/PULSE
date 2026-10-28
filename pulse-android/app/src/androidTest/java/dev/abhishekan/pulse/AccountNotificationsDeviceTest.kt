@@ -116,6 +116,8 @@ class AccountNotificationsDeviceTest {
     private lateinit var auth: PulseAuthRepository
     private var name: String? = "Asha"
     private var profileFailure = false
+    private var currency = "GBP"
+    private var currencyWrites = 0
     private var timezone = "UTC"
     private var timezoneWrites = 0
     private var wrongPassword = false
@@ -206,6 +208,7 @@ class AccountNotificationsDeviceTest {
                                             name != null,
                                         )
                                         put("timezone", timezone)
+                                        put("currency", currency)
                                         name?.let { put("name", it) }
                                     }.toString()
                                 }
@@ -213,6 +216,11 @@ class AccountNotificationsDeviceTest {
                                 profileWrites++
                                 name = json!!.getValue("name").jsonPrimitive.content
                                 buildJsonObject { put("name", name) }.toString()
+                            }
+                            path == "profile/currency" && verb == "PUT" -> {
+                                currencyWrites++
+                                currency = json!!.getValue("currency").jsonPrimitive.content
+                                buildJsonObject { put("currency", currency) }.toString()
                             }
                             path == "profile/timezone" && verb == "PUT" -> {
                                 timezoneWrites++
@@ -432,6 +440,23 @@ class AccountNotificationsDeviceTest {
         field("Key name", label)
         tap("Save changes")
         awaitText("Your API key")
+    }
+
+    @Test fun profileCurrencyIsSearchableSavedAndRestored() {
+        launch()
+        openProfile()
+        tap("Choose currency")
+        compose.onNodeWithText("Search currencies").performTextReplacement("INR")
+        hideKeyboard()
+        compose.onNodeWithText("INR — Indian Rupee").performClick()
+        screenshot("currency-picker")
+        confirm("Save changes")
+        awaitText("INR — Indian Rupee")
+        assertEquals("INR", currency)
+        assertEquals(1, currencyWrites)
+        scenario!!.recreate()
+        awaitText("INR — Indian Rupee")
+        screenshot("currency-saved")
     }
 
     @Test fun profileTimeZoneIsSearchableSavedAndRestored() {

@@ -7,6 +7,8 @@ import dev.abhishekan.pulse.core.domain.model.Profile
 interface ProfileRepository {
     suspend fun profile(): Outcome<Profile>
 
+    suspend fun saveCurrency(currency: String): Outcome<String>
+
     suspend fun saveTimeZone(timezone: String): Outcome<String>
 
     suspend fun saveName(name: String): Outcome<Profile>

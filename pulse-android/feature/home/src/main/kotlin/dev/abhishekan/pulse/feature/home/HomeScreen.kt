@@ -50,6 +50,8 @@ fun HomeRoute(
     onProfile: (() -> Unit)? = null,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
+    val currency by dev.abhishekan.pulse.core.domain.model.UserCurrency.changes
+        .collectAsStateWithLifecycle()
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     androidx.compose.runtime.LaunchedEffect(timeZone) {
         viewModel.retryProfile()
@@ -60,8 +62,11 @@ fun HomeRoute(
     val profile = (state.profile as? Section.Content)?.value
     androidx.compose.runtime.LaunchedEffect(profile) { if (profile?.hasProfile == false) onMissingProfile() }
     // Refresh today after returning to the app.
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.retryWorkout() }
-    androidx.compose.runtime.key(timeZone) {
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.retryWorkout()
+        viewModel.refreshNotificationCount()
+    }
+    androidx.compose.runtime.key(timeZone, currency) {
         HomeScreen(
             username,
             state,
@@ -108,6 +113,7 @@ fun HomeScreen(
                     compact = stackCards,
                     onNotifications = onNotifications,
                     onProfile = onProfile,
+                    notificationCount = state.notificationCount,
                 )
                 when (val profile = state.profile) {
                     is Section.Error -> {

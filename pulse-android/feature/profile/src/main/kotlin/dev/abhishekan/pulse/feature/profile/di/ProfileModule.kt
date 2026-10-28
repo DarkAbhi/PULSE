@@ -4,6 +4,7 @@ import dev.abhishekan.pulse.core.domain.usecase.CreateAPIKey
 import dev.abhishekan.pulse.core.domain.usecase.GetAPIKeys
 import dev.abhishekan.pulse.core.domain.usecase.GetAccountProfile
 import dev.abhishekan.pulse.core.domain.usecase.RevokeAPIKey
+import dev.abhishekan.pulse.core.domain.usecase.SaveProfileCurrency
 import dev.abhishekan.pulse.core.domain.usecase.SaveProfileName
 import dev.abhishekan.pulse.core.domain.usecase.SaveProfileTimeZone
 import dev.abhishekan.pulse.feature.profile.ProfileViewModel
@@ -15,6 +16,7 @@ val profileModule =
     module {
         factoryOf(::GetAccountProfile)
         factoryOf(::SaveProfileName)
+        factoryOf(::SaveProfileCurrency)
         factoryOf(::SaveProfileTimeZone)
         factoryOf(::ChangePassword)
         factoryOf(::GetAPIKeys)

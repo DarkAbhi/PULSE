@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Info } from "lucide-react";
 import Button from "../components/design-system/button";
 import GymVisitsList, { type WorkoutGroup } from "./gym-visits-list";
 import { calendarDays, shiftMonth } from "./calendar-utils.mjs";
-import { markGymVisitAction } from "../dashboard/actions";
+import { markGymVisitAction } from "./actions";
 
 const monthFormatter = new Intl.DateTimeFormat("en-IN", {
   month: "long", year: "numeric", timeZone: "UTC",

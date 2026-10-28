@@ -40,7 +40,6 @@ export default async function DashboardPage() {
 
   let profile: ProfileResponse = { has_profile: false };
   let gymVisited = false;
-  let gymVisitID: number | null = null;
   let notifications: AppNotification[] = [];
   let horizonSummary: HorizonSummary | null = null;
   let horizonError = "";
@@ -68,9 +67,8 @@ export default async function DashboardPage() {
     profile = (await profileRes.json()) as ProfileResponse;
 
     if (gymRes.ok) {
-      const gym = (await gymRes.json()) as { visited: boolean; id?: number };
+      const gym = (await gymRes.json()) as { visited: boolean };
       gymVisited = gym.visited;
-      gymVisitID = gym.id ?? null;
     }
 
     if (notificationsRes.ok) {
@@ -101,7 +99,7 @@ export default async function DashboardPage() {
         </GreetingHeader>
         <section className="pulse-dashboard-cards" aria-label="Your day at a glance">
           <FinancialHorizonCard summary={horizonSummary} error={horizonError} />
-          <GymVisitCard initialVisited={gymVisited} initialVisitID={gymVisitID} />
+          <GymVisitCard visited={gymVisited} />
         </section>
         <nav className="pulse-spaces" aria-label="Your spaces">
           <Link className="pulse-space-link" href="/garage">

@@ -564,6 +564,7 @@ internal fun GarageScreen(
                             state.tab == tab,
                             { vm.tab(tab) },
                             enabled = !state.busy,
+                            showSelectedIcon = false,
                         )
                     }
                 }

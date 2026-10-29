@@ -314,7 +314,7 @@ private fun PurchaseBadge(summary: Boolean = false) {
 
 /** Broad bezier lobes echo the reference's layered clouds at any aspect ratio. */
 @Composable
-private fun Modifier.purchaseClouds(): Modifier {
+internal fun Modifier.purchaseClouds(): Modifier {
     val colors = PulseTheme.colors
     return drawBehind {
         val w = size.width

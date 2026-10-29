@@ -379,80 +379,30 @@ internal fun HorizonScreen(
                                             ),
                                         )
                                     }
-                                    data.deductions.forEach { item ->
-                                        PulseCard(
-                                            Modifier.fillMaxWidth().testTag(
-                                                "horizon-record-${item.id}",
-                                            ),
-                                        ) {
-                                            PulseText(item.name, style = PulseTextStyle.Title)
-                                            PulseText(
-                                                currencyText(item.amount).asString(),
-                                                style = PulseTextStyle.Metric,
-                                            )
-                                            PulseText(
-                                                stringResource(
-                                                    if (item.dueDay ==
-                                                        null
-                                                    ) {
-                                                        R.string.pulse_horizon_obligation_status
-                                                    } else {
-                                                        R.string.pulse_horizon_obligation_status_with_due_day
-                                                    },
-                                                    horizonOption(item.category),
-                                                    if (item.active) {
-                                                        stringResource(
-                                                            R.string.pulse_horizon_active,
-                                                        )
-                                                    } else {
-                                                        stringResource(
-                                                            R.string.pulse_horizon_inactive,
-                                                        )
-                                                    },
-                                                    item.dueDay ?: 0,
-                                                ),
-                                            )
-                                            item.budgetId?.let { id ->
-                                                PulseText(
-                                                    stringResource(
-                                                        R.string.pulse_horizon_budget_1_s,
-                                                        data.budgets.find { it.id == id }?.name
-                                                            ?: stringResource(
-                                                                R.string.pulse_horizon_unavailable,
-                                                            ),
-                                                    ),
+                                    ObligationGrid(data.deductions) { item ->
+                                        ObligationCard(
+                                            item = item,
+                                            budgetName = item.budgetId?.let { id ->
+                                                data.budgets.find { it.id == id }?.name
+                                                    ?: stringResource(R.string.pulse_horizon_unavailable)
+                                            },
+                                            enabled = canMutate,
+                                            edit = {
+                                                edit(HorizonDraft(
+                                                    HorizonForm.Deduction, item.id, item.name,
+                                                    item.amount.toPlainString(), currency,
+                                                    category = item.category,
+                                                    dueDay = item.dueDay?.toString().orEmpty(),
+                                                    active = item.active, budgetId = item.budgetId,
+                                                ))
+                                            },
+                                            delete = {
+                                                remove(
+                                                    HorizonRecord.Deduction, item.id,
+                                                    uiText(R.string.pulse_horizon_delete_1_s_this_removes_the_fixed_obligation_and, item.name),
                                                 )
-                                            }
-                                            Actions(
-                                                item.name,
-                                                canMutate,
-                                                {
-                                                    edit(
-                                                        HorizonDraft(
-                                                            HorizonForm.Deduction,
-                                                            item.id,
-                                                            item.name,
-                                                            item.amount.toPlainString(),
-                                                            currency,
-                                                            category = item.category,
-                                                            dueDay = item.dueDay?.toString().orEmpty(),
-                                                            active = item.active,
-                                                            budgetId = item.budgetId,
-                                                        ),
-                                                    )
-                                                },
-                                                {
-                                                    remove(
-                                                        HorizonRecord.Deduction,
-                                                        item.id,
-                                                        uiText(
-                                                            R.string.pulse_horizon_delete_1_s_this_removes_the_fixed_obligation_and,
-                                                            item.name,
-                                                        ),
-                                                    )
-                                                },
-                                            )
-                                        }
+                                            },
+                                        )
                                     }
                                 }
                             }

@@ -562,7 +562,7 @@ private fun SignedInApp(
                                 }
                             })
                         }
-                        debugGalleryDestination()
+                        debugGalleryDestination { nav.popBackStack() }
                     }
                 }
             }

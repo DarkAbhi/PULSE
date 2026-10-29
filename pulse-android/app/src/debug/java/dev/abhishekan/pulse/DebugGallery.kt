@@ -16,12 +16,12 @@ fun DebugGalleryAction(onClick: () -> Unit) {
     PulseButton(stringResource(R.string.pulse_app_component_gallery), onClick, style = PulseButtonStyle.Text)
 }
 
-fun NavGraphBuilder.debugGalleryDestination() {
+fun NavGraphBuilder.debugGalleryDestination(onBack: () -> Unit) {
     composable("gallery") {
         val viewModel: AppearanceViewModel = koinViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         PulseComponentGallery(state.theme.name, {
             viewModel.selectTheme(ThemePreference.valueOf(it))
-        }, state.error)
+        }, state.error, onBack = onBack)
     }
 }

@@ -7,4 +7,5 @@ import androidx.navigation.NavGraphBuilder
 @Suppress("UNUSED_PARAMETER")
 fun DebugGalleryAction(onClick: () -> Unit) { }
 
-fun NavGraphBuilder.debugGalleryDestination() { }
+@Suppress("UNUSED_PARAMETER")
+fun NavGraphBuilder.debugGalleryDestination(onBack: () -> Unit) { }

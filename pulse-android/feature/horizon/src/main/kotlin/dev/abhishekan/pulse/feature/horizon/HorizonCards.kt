@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import dev.abhishekan.pulse.core.domain.model.HorizonBudget
 import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
 import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
@@ -22,58 +21,13 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
-import dev.abhishekan.pulse.core.ui.components.PulseLinearProgressIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.currencyText
 import dev.abhishekan.pulse.core.ui.pulseDescription
-import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
-
-@Composable internal fun BudgetCard(
-    item: HorizonBudget,
-    currency: String,
-    enabled: Boolean,
-    edit: () -> Unit,
-    delete: () -> Unit,
-) {
-    PulseCard(Modifier.fillMaxWidth().testTag("horizon-record-${item.id}")) {
-        PulseText(item.name, style = PulseTextStyle.Title)
-        PulseText(currencyText(item.available).asString(), style = PulseTextStyle.Metric)
-        PulseText(
-            if (item.isOverBudget) {
-                stringResource(
-                    R.string.pulse_horizon_over_budget,
-                )
-            } else {
-                stringResource(R.string.pulse_horizon_available)
-            },
-        )
-        PulseText(
-            stringResource(
-                R.string.pulse_horizon_allocated_1_s_used_2_s,
-                currencyText(item.allocated).asString(),
-                currencyText(item.used).asString(),
-            ),
-        )
-        PulseText(
-            stringResource(
-                R.string.pulse_horizon_budget_percent_used,
-                item.usagePercent.toPlainString(),
-            ),
-        )
-        PulseLinearProgressIndicator(progress = {
-            item.usagePercent
-                .divide(
-                    BigDecimal(100),
-                ).coerceIn(BigDecimal.ZERO, BigDecimal.ONE)
-                .toFloat()
-        }, modifier = Modifier.fillMaxWidth())
-        Actions(item.name, enabled, edit, delete)
-    }
-}
 
 @Composable internal fun TransactionCard(
     item: HorizonTransaction,

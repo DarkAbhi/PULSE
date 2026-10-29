@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsSelected
@@ -613,6 +614,11 @@ class HorizonDeviceTest {
         name: String,
         action: String,
     ) {
+        if (backend.items("budgets").values.any { it["name"]?.jsonPrimitive?.content == name }) {
+            compose.onNodeWithContentDescription("Actions for $name").performScrollTo().performClick()
+            compose.onNodeWithContentDescription("$action $name").assertIsDisplayed().performClick()
+            return
+        }
         val id =
             backend.records.values
                 .flatMap { it.values }
@@ -627,6 +633,52 @@ class HorizonDeviceTest {
             ).performScrollTo()
             .assertIsDisplayed()
             .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+    }
+
+    @Test fun budgetCardsAndMenusAdaptToPhoneTabletAndLargeText() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        val fontScale = shell("settings get system font_scale").trim()
+        val names = listOf("Home", "Food & Dining", "Transport", "Shopping", "Entertainment", "Miscellaneous")
+        val allocations = listOf(25000, 8000, 5000, 6000, 4000, 3000)
+        val spending = listOf(18000, 4200, 1800, 2500, 1200, 600)
+        backend.currency = "INR"
+        backend.items("budgets").clear()
+        names.forEachIndexed { index, name ->
+            val id = 200L + index
+            backend.items("budgets")[id] =
+                buildJsonObject {
+                    put("id", id)
+                    put("name", name)
+                    put("allocated_amount", allocations[index])
+                    put("used_amount", spending[index])
+                    put("available_amount", allocations[index] - spending[index])
+                    put("usage_percentage", spending[index] * 100.0 / allocations[index])
+                }
+        }
+        try {
+            launchHorizon()
+            tap("Budgets")
+            for ((layout, dimensions) in listOf("phone" to "720x1600", "tablet" to "2560x1800", "large-text" to "720x1600")) {
+                shell("wm size $dimensions")
+                shell("wm density 320")
+                shell("settings put system font_scale ${if (layout == "large-text") "1.8" else "1.0"}")
+                compose.onNode(hasText("Home") and hasAnyAncestor(hasTestTag("budget-grid"))).performScrollTo().assertIsDisplayed()
+                screenshot("budget-cards-$layout")
+                names.forEach { name ->
+                    compose.onNodeWithContentDescription("Actions for $name").performScrollTo().performClick()
+                    compose.onNodeWithContentDescription("Edit $name").assertIsDisplayed()
+                    compose.onNodeWithContentDescription("Delete $name").assertIsDisplayed()
+                    androidx.test.espresso.Espresso
+                        .pressBack()
+                }
+            }
+            assertEquals(0, backend.mutations)
+        } finally {
+            shell(if (size == null) "wm size reset" else "wm size $size")
+            shell(if (density == null) "wm density reset" else "wm density $density")
+            shell("settings put system font_scale $fontScale")
+        }
     }
 
     @Test fun quickActionsOpenEveryFormOnPhoneAndTablet() {
@@ -649,7 +701,7 @@ class HorizonDeviceTest {
                     )
                 quickAction("Add a category tag")
                 awaitText("Add category")
-                compose.onNodeWithContentDescription("Financial Horizon quick actions").assertIsNotEnabled()
+                compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
                 tap("Cancel editing")
                 compose.onNodeWithContentDescription("Financial Horizon quick actions").performClick()
                 actions.forEach { (label, _) -> compose.onNodeWithText(label).assertIsDisplayed() }
@@ -861,9 +913,7 @@ class HorizonDeviceTest {
             awaitText("Ledger payment 1")
             compose.onNode(hasTestTag("ledger-category-filter") and hasText("Other")).assertIsDisplayed()
             screenshot("ledger-phone")
-            compose.onNode(hasTestTag("ledger-sort")).performClick()
-            compose.onNodeWithContentDescription("Oldest first. Tap to show newest first on this page.").assertExists()
-            compose.onNode(hasTestTag("ledger-sort")).performClick()
+            compose.onNode(hasTestTag("ledger-sort")).assertDoesNotExist()
             shell("wm size 2400x1800")
             shell("wm density 320")
             compose.onNode(hasTestTag("ledger-category-more")).performScrollTo().performClick()
@@ -946,7 +996,7 @@ class HorizonDeviceTest {
         field("Subscription name *", "Streaming")
         field("Amount (${UserCurrency.symbol()}) *", "99.99")
         compose.onNodeWithText("Date:", substring = true).assertDoesNotExist()
-        compose.onNode(hasText("Add subscription") and hasClickAction()).assertIsDisplayed()
+        compose.onNode(hasText("Add subscription") and hasClickAction()).assertExists()
         compose.onNodeWithText("Basic details").assertIsDisplayed()
         screenshot("subscription-basic")
         field("Billing day of month (1–31) *", "20")
@@ -963,7 +1013,8 @@ class HorizonDeviceTest {
         compose
             .onNode(
                 hasText("Add subscription") and hasClickAction(),
-            ).assertIsDisplayed()
+            ).performScrollTo()
+            .assertIsDisplayed()
             .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
                 it()
             }
@@ -990,7 +1041,8 @@ class HorizonDeviceTest {
         compose
             .onNodeWithText(
                 "Save changes",
-            ).assertIsDisplayed()
+            ).performScrollTo()
+            .assertIsDisplayed()
             .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
                 it()
             }
@@ -1018,13 +1070,71 @@ class HorizonDeviceTest {
                 ?.long,
         )
         screenshot("payments")
-        cardAction("Streaming", "Delete")
+        tap("More actions for Streaming")
+        tap("Delete Streaming")
         confirm("Delete")
         awaitText("Music")
         compose.onNodeWithText("Close payments").assertDoesNotExist()
         assertEquals(21, backend.items("transactions").size)
         assertEquals(JsonNull, backend.items("transactions").getValue(1)["subscription_id"])
         assertTrue(backend.items("deductions").containsKey(2))
+    }
+
+    @Test fun subscriptionListAdaptsAndUsesExistingApiData() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        val fontScale = shell("settings get system font_scale").trim()
+        val today = java.time.LocalDate.now(dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone)
+        backend.items("subscriptions")[4] =
+            JsonObject(
+                backend.items("subscriptions").getValue(4) +
+                    mapOf(
+                        "next_renewal_date" to JsonPrimitive("${today.plusDays(3)}T00:00:00Z"),
+                        "category_id" to JsonPrimitive(3),
+                        "linked_transaction_count" to JsonPrimitive(2),
+                        "total_spent" to JsonPrimitive(20),
+                    ),
+            )
+        backend.items("subscriptions")[5] =
+            JsonObject(
+                backend.items("subscriptions").getValue(4) +
+                    mapOf(
+                        "id" to JsonPrimitive(5),
+                        "name" to JsonPrimitive("Annual cloud storage"),
+                        "billing_cycle" to JsonPrimitive("yearly"),
+                        "status" to JsonPrimitive("paused"),
+                        "next_renewal_date" to JsonNull,
+                        "billing_day" to JsonNull,
+                    ),
+            )
+        try {
+            launchHorizon()
+            tap("Subscriptions")
+            for ((layout, dimensions) in listOf("phone" to "720x1600", "tablet" to "2560x1800", "large-text" to "720x1600")) {
+                shell("wm size $dimensions")
+                shell("wm density 320")
+                shell("settings put system font_scale ${if (layout == "large-text") "1.8" else "1.0"}")
+                awaitText("Your subscriptions")
+                compose.onNodeWithText("in 3 days").performScrollTo().assertIsDisplayed()
+                compose
+                    .onNode(
+                        hasText("2 linked payments") and hasAnyAncestor(hasTestTag("horizon-record-4")),
+                    ).performScrollTo()
+                    .assertIsDisplayed()
+                compose.onNodeWithContentDescription("View payments for Music").performScrollTo().assertIsDisplayed()
+                screenshot("subscription-list-$layout-card")
+                compose.onNodeWithText("No active renewal").performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText("Monthly subscription spend").performScrollTo().assertIsDisplayed()
+                screenshot("subscription-list-$layout-summary")
+                compose.onNodeWithText("Sort by: Next renewal").assertDoesNotExist()
+                compose.onNode(hasText("Add subscription") and hasClickAction()).assertDoesNotExist()
+            }
+            assertEquals(0, backend.mutations)
+        } finally {
+            shell(if (size == null) "wm size reset" else "wm size $size")
+            shell(if (density == null) "wm density reset" else "wm density $density")
+            shell("settings put system font_scale $fontScale")
+        }
     }
 
     @Test fun subscriptionFormSectionsStayReachableOnPhoneTabletAndLargeText() {
@@ -1042,15 +1152,71 @@ class HorizonDeviceTest {
                 compose.onNode(hasTestTag("subscription-section-menu")).assertDoesNotExist()
                 compose.onNode(hasTestTag("subscription-notes")).performScrollTo()
                 compose.onNode(hasTestTag("subscription-notes")).assertIsDisplayed()
-                compose.onNode(hasText("Add subscription") and hasClickAction()).assertIsDisplayed()
+                compose.onNode(hasTestTag("horizon-editor-actions")).performScrollTo().assertIsDisplayed()
                 screenshot("subscription-$layout-notes")
                 compose.onNode(hasTestTag("subscription-section-menu")).assertDoesNotExist()
                 compose.onNodeWithText("Subscription name *").performScrollTo()
                 compose.onNodeWithText("Subscription name *").assertIsDisplayed()
+                if (layout == "phone") compose.onNode(hasText("Add subscription") and hasClickAction()).assertIsNotDisplayed()
                 compose.onNodeWithText("Monthly").performScrollTo().assertIsDisplayed()
                 screenshot("subscription-$layout-basic")
             }
             assertEquals(0, backend.mutations)
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+            shell("settings put system font_scale ${fontScale.takeUnless { it == "null" || it.isEmpty() } ?: "1.0"}")
+        }
+    }
+
+    @Test fun categoryFormAdaptsRetainsAppearanceAndSaves() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        val fontScale = shell("settings get system font_scale").trim()
+        try {
+            launchHorizon()
+            quickAction("Add a category tag")
+            compose.onNodeWithText("Add category").assertIsDisplayed()
+            compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
+            tap("Save category")
+            compose.onNode(hasTestTag("category-name")).assertIsFocused()
+            awaitText("Enter a category name of up to 100 characters.")
+            field("Name", "Weekend outings")
+            compose.onNode(hasTestTag("category-icon-shopping-cart")).performScrollTo().performClick()
+            compose.onNode(hasTestTag("category-color-#d96a4f")).performScrollTo().performClick()
+            scenario!!.recreate()
+            awaitText("Add category")
+            compose.onNode(hasTestTag("category-icon-shopping-cart")).assertIsSelected()
+            compose.onNode(hasTestTag("category-color-#d96a4f")).assertIsSelected()
+            compose.onNode(hasTestTag("category-name")).assertTextContains("Weekend outings")
+            for ((layout, dimensions) in listOf("phone" to "720x1600", "tablet" to "2048x1800", "large-text" to "720x1600")) {
+                shell("wm size $dimensions")
+                shell("wm density 320")
+                shell("settings put system font_scale ${if (layout == "large-text") "1.8" else "1.0"}")
+                compose.waitForIdle()
+                compose.onNode(hasTestTag("category-name")).performScrollTo().assertIsDisplayed()
+                screenshot("category-$layout-details")
+                compose.onNode(hasTestTag("category-color-#d96a4f")).performScrollTo().assertIsDisplayed()
+                compose.onNode(hasTestTag("horizon-editor-actions")).performScrollTo().assertIsDisplayed()
+                assertEquals(
+                    compose
+                        .onNodeWithText("Cancel")
+                        .fetchSemanticsNode()
+                        .boundsInRoot.width,
+                    compose
+                        .onNodeWithText("Save category")
+                        .fetchSemanticsNode()
+                        .boundsInRoot.width,
+                    1f,
+                )
+                screenshot("category-$layout-actions")
+            }
+            tap("Save category")
+            compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("category-editor")).fetchSemanticsNodes().isEmpty() }
+            val category = backend.items("categories").values.last()
+            assertEquals("Weekend outings", category["name"]?.jsonPrimitive?.content)
+            assertEquals("shopping-cart", category["icon"]?.jsonPrimitive?.content)
+            assertEquals("#d96a4f", category["color"]?.jsonPrimitive?.content)
         } finally {
             shell("wm size ${size ?: "reset"}")
             shell("wm density ${density ?: "reset"}")
@@ -1067,7 +1233,13 @@ class HorizonDeviceTest {
             quickAction("Add a monthly budget")
             compose.onNodeWithText("Add budget").assertIsDisplayed()
             compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
-            compose.onNodeWithText("Save budget").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            compose
+                .onNodeWithText(
+                    "Save budget",
+                ).performScrollTo()
+                .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
+                    it()
+                }
             compose.onNode(hasTestTag("budget-name")).assertIsFocused()
             field("Name", "Groceries")
             field("Amount (${UserCurrency.symbol()})", "250.50")
@@ -1087,10 +1259,17 @@ class HorizonDeviceTest {
                     compose.onNode(hasTestTag("budget-preview")).assertDoesNotExist()
                 }
                 compose.onNode(hasTestTag("budget-amount")).performScrollTo().assertIsDisplayed()
-                compose.onNodeWithText("Save budget").assertIsDisplayed()
+                compose.onNodeWithText("Save budget").performScrollTo().assertIsDisplayed()
+                compose.onNode(hasTestTag("horizon-editor-actions")).performScrollTo().assertIsDisplayed()
                 screenshot("budget-$layout")
             }
-            compose.onNodeWithText("Save budget").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            compose
+                .onNodeWithText(
+                    "Save budget",
+                ).performScrollTo()
+                .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
+                    it()
+                }
             compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("budget-editor")).fetchSemanticsNodes().isEmpty() }
             assertEquals(
                 "250.50",

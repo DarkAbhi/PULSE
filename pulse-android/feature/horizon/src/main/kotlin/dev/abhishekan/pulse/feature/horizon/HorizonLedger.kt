@@ -1,7 +1,6 @@
 package dev.abhishekan.pulse.feature.horizon
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,21 +43,16 @@ import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.asString
-import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.currencyText
-import java.math.BigDecimal
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 internal fun ledgerMonths(items: List<HorizonTransaction>) =
     items.sortedByDescending { it.date }.groupBy { YearMonth.from(it.date.atZone(UserTimeZone.zone)) }
-
-internal fun ledgerSpending(items: List<HorizonTransaction>): BigDecimal =
-    items.filter { it.type == "debit" }.fold(BigDecimal.ZERO) { sum, tx -> sum + tx.amount }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,11 +63,9 @@ internal fun HorizonLedger(
     edit: (HorizonTransaction) -> Unit,
     delete: (HorizonTransaction) -> Unit,
     categoryId: Long? = null,
-    oldestFirst: Boolean = false,
 ) {
     var selectedId by rememberSaveable { mutableStateOf<Long?>(null) }
     val items = page.items.filter { categoryId == null || it.categoryId == categoryId }
-    PulseText(stringResource(R.string.pulse_horizon_ledger_scope), style = PulseTextStyle.Caption, color = PulseTheme.colors.textSecondary)
     if (items.isEmpty()) {
         PulseEmptyState(
             stringResource(R.string.pulse_horizon_no_transactions),
@@ -85,25 +76,15 @@ internal fun HorizonLedger(
         val wide = maxWidth >= 840.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
         val ledger: @Composable (Modifier) -> Unit = { modifier ->
             Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                val months = ledgerMonths(items).entries.toList().let { if (oldestFirst) it.reversed() else it }
-                months.forEach { (month, monthItems) ->
-                    val transactions = if (oldestFirst) monthItems.reversed() else monthItems
+                ledgerMonths(items).forEach { (month, transactions) ->
                     key(month) {
                         Surface(shape = PulseTheme.shapes.extraLarge, color = PulseTheme.colors.surface) {
                             Column(Modifier.fillMaxWidth().padding(16.dp)) {
                                 PulseText(month.format(DateTimeFormatter.ofPattern("MMMM yyyy")), style = PulseTextStyle.Title)
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    PulseText(
-                                        pluralStringResource(R.plurals.pulse_horizon_ledger_count, transactions.size, transactions.size),
-                                        style = PulseTextStyle.Caption,
-                                    )
-                                    Crossfade(ledgerSpending(transactions), label = "Monthly spending") { amount ->
-                                        PulseText(
-                                            stringResource(R.string.pulse_horizon_ledger_spent, currencyText(amount).asString()),
-                                            style = PulseTextStyle.Caption,
-                                        )
-                                    }
-                                }
+                                PulseText(
+                                    pluralStringResource(R.plurals.pulse_horizon_ledger_count, transactions.size, transactions.size),
+                                    style = PulseTextStyle.Caption,
+                                )
                                 transactions.forEachIndexed { index, tx ->
                                     key(tx.id) {
                                         var entered by remember { mutableStateOf(false) }
@@ -120,17 +101,7 @@ internal fun HorizonLedger(
                 }
             }
         }
-        if (wide) {
-            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-                ledger(Modifier.weight(1f))
-                LedgerSummary(items, Modifier.width(240.dp))
-            }
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                ledger(Modifier.fillMaxWidth())
-                if (items.isNotEmpty()) LedgerSummary(items, Modifier.fillMaxWidth())
-            }
-        }
+        ledger(Modifier.fillMaxWidth())
     }
     page.items.find { it.id == selectedId }?.let { tx ->
         ModalBottomSheet(onDismissRequest = {
@@ -228,27 +199,5 @@ private fun LedgerBadges(tx: HorizonTransaction) {
             style = PulseTextStyle.Caption,
             color = if (tx.type == "credit") PulseTheme.colors.success else PulseTheme.colors.textSecondary,
         )
-    }
-}
-
-@Composable
-private fun LedgerSummary(
-    items: List<HorizonTransaction>,
-    modifier: Modifier,
-) {
-    PulseCard(modifier.testTag("horizon-ledger-summary")) {
-        PulseText(stringResource(R.string.pulse_horizon_ledger_summary), style = PulseTextStyle.Title)
-        PulseText(
-            stringResource(R.string.pulse_horizon_ledger_scope),
-            style = PulseTextStyle.Caption,
-            color = PulseTheme.colors.textSecondary,
-        )
-        ledgerMonths(items).forEach { (month, transactions) ->
-            PulseText(month.format(DateTimeFormatter.ofPattern("MMMM yyyy")), style = PulseTextStyle.Label)
-            Crossfade(ledgerSpending(transactions), label = "Spending total") { amount ->
-                PulseText(currencyText(amount).asString(), style = PulseTextStyle.Heading3)
-            }
-        }
-        PulseText(stringResource(R.string.pulse_horizon_ledger_debits_only), style = PulseTextStyle.Caption)
     }
 }

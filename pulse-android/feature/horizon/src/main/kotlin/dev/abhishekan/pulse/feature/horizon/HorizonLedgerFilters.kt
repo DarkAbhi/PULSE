@@ -34,9 +34,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.HorizonCategory
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -54,8 +52,6 @@ internal fun LedgerFilters(
     vm: HorizonViewModel,
     categoryId: Long?,
     onCategory: (Long?) -> Unit,
-    oldestFirst: Boolean,
-    onSort: () -> Unit,
 ) {
     var search by rememberSaveable { mutableStateOf(state.search) }
     var sheet by rememberSaveable { mutableStateOf<String?>(null) }
@@ -159,17 +155,6 @@ internal fun LedgerFilters(
                     },
                 )
             }
-            val sortLabel = stringResource(if (oldestFirst) R.string.pulse_horizon_sort_oldest else R.string.pulse_horizon_sort_newest)
-            LedgerFilterPill(
-                "",
-                oldestFirst,
-                Modifier.testTag("ledger-sort").semantics {
-                    contentDescription = sortLabel
-                },
-                sort = true,
-                enabled = !state.busy,
-                onClick = onSort,
-            )
         }
     }
     if (sheet != null) {
@@ -198,11 +183,6 @@ internal fun LedgerFilters(
                     style = PulseTextStyle.Title,
                 )
                 if (sheet == "category") {
-                    PulseText(
-                        stringResource(R.string.pulse_horizon_ledger_scope),
-                        style = PulseTextStyle.Caption,
-                        color = PulseTheme.colors.textSecondary,
-                    )
                     PulseTextField(categorySearch, {
                         categorySearch = it
                     }, stringResource(R.string.pulse_horizon_filter_search_categories), Modifier.fillMaxWidth())
@@ -274,7 +254,6 @@ private fun LedgerFilterPill(
     active: Boolean,
     modifier: Modifier = Modifier,
     dropdown: Boolean = false,
-    sort: Boolean = false,
     color: Color? = null,
     enabled: Boolean = true,
     onClick: () -> Unit,
@@ -289,52 +268,23 @@ private fun LedgerFilterPill(
         showSelectedIcon = false,
         leadingIcon = color?.let { { Box(Modifier.size(8.dp).background(it, CircleShape)) } },
         trailingIcon =
-            if (dropdown || sort) {
+            if (dropdown) {
                 {
                     Canvas(Modifier.size(16.dp)) {
-                        if (sort) {
-                            val x = size.width * 0.3f
-                            val y = size.height * 0.2f
-                            drawLine(foreground, Offset(x, y), Offset(x, size.height - y), 1.5.dp.toPx(), StrokeCap.Round)
-                            drawLine(foreground, Offset(x, y), Offset(x - y, y * 2), 1.5.dp.toPx(), StrokeCap.Round)
-                            drawLine(foreground, Offset(x, y), Offset(x + y, y * 2), 1.5.dp.toPx(), StrokeCap.Round)
-                            drawLine(
-                                foreground,
-                                Offset(size.width - x, y),
-                                Offset(size.width - x, size.height - y),
-                                1.5.dp.toPx(),
-                                StrokeCap.Round,
-                            )
-                            drawLine(
-                                foreground,
-                                Offset(size.width - x, size.height - y),
-                                Offset(size.width - x - y, size.height - y * 2),
-                                1.5.dp.toPx(),
-                                StrokeCap.Round,
-                            )
-                            drawLine(
-                                foreground,
-                                Offset(size.width - x, size.height - y),
-                                Offset(size.width - x + y, size.height - y * 2),
-                                1.5.dp.toPx(),
-                                StrokeCap.Round,
-                            )
-                        } else {
-                            drawLine(
-                                foreground,
-                                Offset(size.width * 0.25f, size.height * 0.4f),
-                                Offset(size.width * 0.5f, size.height * 0.65f),
-                                1.5.dp.toPx(),
-                                StrokeCap.Round,
-                            )
-                            drawLine(
-                                foreground,
-                                Offset(size.width * 0.5f, size.height * 0.65f),
-                                Offset(size.width * 0.75f, size.height * 0.4f),
-                                1.5.dp.toPx(),
-                                StrokeCap.Round,
-                            )
-                        }
+                        drawLine(
+                            foreground,
+                            Offset(size.width * 0.25f, size.height * 0.4f),
+                            Offset(size.width * 0.5f, size.height * 0.65f),
+                            1.5.dp.toPx(),
+                            StrokeCap.Round,
+                        )
+                        drawLine(
+                            foreground,
+                            Offset(size.width * 0.5f, size.height * 0.65f),
+                            Offset(size.width * 0.75f, size.height * 0.4f),
+                            1.5.dp.toPx(),
+                            StrokeCap.Round,
+                        )
                     }
                 }
             } else {

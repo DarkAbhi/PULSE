@@ -345,10 +345,13 @@ private fun SignedInApp(
                                                         dev.abhishekan.pulse.feature.horizon.HorizonForm.Purchase,
                                                         dev.abhishekan.pulse.feature.horizon.HorizonForm.Subscription,
                                                         dev.abhishekan.pulse.feature.horizon.HorizonForm.Budget,
+                                                        dev.abhishekan.pulse.feature.horizon.HorizonForm.Category,
                                                     )
                                             }?.let {
                                                 stringResource(
-                                                    if (it.kind == dev.abhishekan.pulse.feature.horizon.HorizonForm.Budget) {
+                                                    if (it.kind == dev.abhishekan.pulse.feature.horizon.HorizonForm.Category) {
+                                                        dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_add_category
+                                                    } else if (it.kind == dev.abhishekan.pulse.feature.horizon.HorizonForm.Budget) {
                                                         if (it.id == null) {
                                                             dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_add_budget
                                                         } else {

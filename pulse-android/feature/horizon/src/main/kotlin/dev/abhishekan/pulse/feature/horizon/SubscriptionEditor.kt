@@ -443,40 +443,38 @@ internal fun HorizonEditorActions(
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
     val cancelLabel = stringResource(R.string.pulse_horizon_cancel_editing)
-    Surface(color = PulseTheme.colors.surface) {
-        BoxWithConstraints(Modifier.fillMaxWidth().padding(16.dp)) {
-            val stacked = maxWidth < 300.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
-            val cancel: @Composable (Modifier) -> Unit = { modifier ->
-                PulseButton(
-                    stringResource(R.string.pulse_horizon_obligation_cancel),
-                    onCancel,
-                    modifier.heightIn(min = 56.dp).semantics { contentDescription = cancelLabel },
-                    enabled = !busy,
-                    variant = PulseButtonVariant.Secondary,
-                )
+    BoxWithConstraints(Modifier.fillMaxWidth().testTag("horizon-editor-actions")) {
+        val stacked = maxWidth < 300.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val cancel: @Composable (Modifier) -> Unit = { modifier ->
+            PulseButton(
+                stringResource(R.string.pulse_horizon_obligation_cancel),
+                onCancel,
+                modifier.heightIn(min = 56.dp).semantics { contentDescription = cancelLabel },
+                enabled = !busy,
+                variant = PulseButtonVariant.Secondary,
+            )
+        }
+        val save: @Composable (Modifier) -> Unit = { modifier ->
+            PulseButton(
+                saveLabel,
+                {
+                    keyboard?.hide()
+                    onSave()
+                },
+                modifier.heightIn(min = 56.dp),
+                enabled = enabled,
+                loading = busy,
+            )
+        }
+        if (stacked) {
+            Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
+                save(Modifier.fillMaxWidth())
+                cancel(Modifier.fillMaxWidth())
             }
-            val save: @Composable (Modifier) -> Unit = { modifier ->
-                PulseButton(
-                    saveLabel,
-                    {
-                        keyboard?.hide()
-                        onSave()
-                    },
-                    modifier.heightIn(min = 56.dp),
-                    enabled = enabled,
-                    loading = busy,
-                )
-            }
-            if (stacked) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    save(Modifier.fillMaxWidth())
-                    cancel(Modifier.fillMaxWidth())
-                }
-            } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    cancel(Modifier.weight(1f))
-                    save(Modifier.weight(1.5f))
-                }
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(PulseTheme.spacing.compact)) {
+                cancel(Modifier.weight(1f))
+                save(Modifier.weight(1f))
             }
         }
     }

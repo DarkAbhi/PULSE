@@ -1058,6 +1058,65 @@ class HorizonDeviceTest {
         }
     }
 
+    @Test fun budgetFormAdaptsAndSavesSpendingLimit() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        val fontScale = shell("settings get system font_scale").trim()
+        try {
+            launchHorizon()
+            quickAction("Add a monthly budget")
+            compose.onNodeWithText("Add budget").assertIsDisplayed()
+            compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
+            compose.onNodeWithText("Save budget").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            compose.onNode(hasTestTag("budget-name")).assertIsFocused()
+            field("Name", "Groceries")
+            field("Amount (${UserCurrency.symbol()})", "250.50")
+            for ((layout, dimensions) in listOf(
+                "phone" to "720x1600",
+                "tablet" to "2048x1800",
+                "landscape" to "1280x720",
+                "large-text" to "720x1600",
+            )) {
+                shell("wm size $dimensions")
+                shell("wm density 320")
+                shell("settings put system font_scale ${if (layout == "large-text") "1.8" else "1.0"}")
+                compose.waitForIdle()
+                if (layout == "tablet") {
+                    compose.onNode(hasTestTag("budget-preview")).performScrollTo().assertIsDisplayed()
+                } else {
+                    compose.onNode(hasTestTag("budget-preview")).assertDoesNotExist()
+                }
+                compose.onNode(hasTestTag("budget-amount")).performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText("Save budget").assertIsDisplayed()
+                screenshot("budget-$layout")
+            }
+            compose.onNodeWithText("Save budget").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("budget-editor")).fetchSemanticsNodes().isEmpty() }
+            assertEquals(
+                "250.50",
+                backend
+                    .items("budgets")
+                    .values
+                    .last()["allocated_amount"]
+                    ?.jsonPrimitive
+                    ?.content,
+            )
+            assertEquals(
+                "Groceries",
+                backend
+                    .items("budgets")
+                    .values
+                    .last()["name"]
+                    ?.jsonPrimitive
+                    ?.content,
+            )
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+            shell("settings put system font_scale ${fontScale.takeUnless { it == "null" || it.isEmpty() } ?: "1.0"}")
+        }
+    }
+
     @Test fun plannedPurchasesRequireConfirmationForIndividualAndClear() {
         launchHorizon()
         tap("Planned purchases")

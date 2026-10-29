@@ -282,4 +282,16 @@
     <string name="pulse_subscription_monthly_help">Your billing day determines the next monthly renewal. In shorter months, billing falls on the last available day.</string>
     <string name="pulse_subscription_yearly_help">Your renewal date determines when you’re charged each year.</string>
     <string name="pulse_subscription_notes_placeholder">e.g. Shared plan with family, renewal URL, payment card used…</string>
+    <string name="pulse_budget_details">Budget details</string>
+    <string name="pulse_budget_details_hint">Give your budget a name and set the amount you want to track.</string>
+    <string name="pulse_budget_name">Budget name *</string>
+    <string name="pulse_budget_name_hint">e.g. Groceries, Dining Out, Fuel</string>
+    <string name="pulse_budget_name_error">Enter a budget name of up to 160 characters.</string>
+    <string name="pulse_budget_amount">Amount (%1$s) *</string>
+    <string name="pulse_budget_amount_hint">This will be used as your budget limit.</string>
+    <string name="pulse_budget_preview">Quick preview</string>
+    <string name="pulse_budget_preview_hint">Set a monthly spending cap to track your expenses more clearly.</string>
+    <string name="pulse_budget_preview_limit">Helps you stay within your spending limit</string>
+    <string name="pulse_budget_preview_compare">See how your spending compares to your budget</string>
+    <string name="pulse_budget_preview_organize">Keeps your finances organized and on track</string>
 </resources>

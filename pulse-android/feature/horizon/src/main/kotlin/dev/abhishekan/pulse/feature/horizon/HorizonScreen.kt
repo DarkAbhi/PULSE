@@ -22,6 +22,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -32,6 +33,7 @@ import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -89,7 +91,7 @@ internal fun HorizonScreen(
         }
     }
     val currency = dev.abhishekan.pulse.core.domain.model.UserCurrency.code
-    val subscriptionDraft = state.draft?.takeIf { it.kind == HorizonForm.Subscription && !records }
+    val pinnedDraft = state.draft?.takeIf { it.kind in listOf(HorizonForm.Subscription, HorizonForm.Budget) && !records }
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { width ->
         Column(
             Modifier
@@ -132,7 +134,7 @@ internal fun HorizonScreen(
                 }
                 Column(
                     Modifier
-                        .then(if (subscriptionDraft != null) Modifier.weight(1f) else Modifier)
+                        .then(if (pinnedDraft != null) Modifier.weight(1f) else Modifier)
                         .fillMaxWidth()
                         .verticalScroll(scroll)
                         .padding(bottom = LocalPulseContentPadding.current.calculateBottomPadding())
@@ -198,6 +200,16 @@ internal fun HorizonScreen(
                                 state.busy,
                                 state.formError,
                                 vm::update,
+                            )
+                        } else if (state.draft.kind == HorizonForm.Budget) {
+                            BudgetEditor(
+                                state.draft,
+                                state.busy,
+                                state.formError,
+                                LocalConfiguration.current.smallestScreenWidthDp >= 600 && width != PulseWindowSize.Compact,
+                                !state.reviewRequired && !state.busy && state.overview.value != null,
+                                vm::update,
+                                vm::save,
                             )
                         } else {
                             HorizonEditor(
@@ -556,10 +568,18 @@ internal fun HorizonScreen(
             } else {
                 scrollStates.SaveableStateProvider(state.tab.name) { content() }
             }
-            if (subscriptionDraft != null) {
+            if (pinnedDraft != null) {
                 Column(Modifier.padding(bottom = LocalPulseContentPadding.current.calculateBottomPadding())) {
-                    SubscriptionActions(
-                        subscriptionDraft,
+                    HorizonEditorActions(
+                        stringResource(
+                            if (pinnedDraft.kind == HorizonForm.Budget) {
+                                R.string.pulse_horizon_save_budget
+                            } else if (pinnedDraft.id == null) {
+                                R.string.pulse_horizon_add_subscription
+                            } else {
+                                R.string.pulse_horizon_obligation_save_changes
+                            },
+                        ),
                         !state.reviewRequired && !state.busy && state.overview.value != null,
                         state.busy,
                         vm::save,

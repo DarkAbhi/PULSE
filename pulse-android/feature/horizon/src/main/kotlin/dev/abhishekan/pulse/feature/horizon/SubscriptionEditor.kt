@@ -434,14 +434,15 @@ private fun SubscriptionRelation(
 }
 
 @Composable
-internal fun SubscriptionActions(
-    draft: HorizonDraft,
+internal fun HorizonEditorActions(
+    saveLabel: String,
     enabled: Boolean,
     busy: Boolean,
     onSave: () -> Unit,
     onCancel: () -> Unit,
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
+    val cancelLabel = stringResource(R.string.pulse_horizon_cancel_editing)
     Surface(color = PulseTheme.colors.surface) {
         BoxWithConstraints(Modifier.fillMaxWidth().padding(16.dp)) {
             val stacked = maxWidth < 300.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
@@ -449,22 +450,14 @@ internal fun SubscriptionActions(
                 PulseButton(
                     stringResource(R.string.pulse_horizon_obligation_cancel),
                     onCancel,
-                    modifier.heightIn(min = 56.dp),
+                    modifier.heightIn(min = 56.dp).semantics { contentDescription = cancelLabel },
                     enabled = !busy,
                     variant = PulseButtonVariant.Secondary,
                 )
             }
             val save: @Composable (Modifier) -> Unit = { modifier ->
                 PulseButton(
-                    stringResource(
-                        if (draft.id ==
-                            null
-                        ) {
-                            R.string.pulse_horizon_add_subscription
-                        } else {
-                            R.string.pulse_horizon_obligation_save_changes
-                        },
-                    ),
+                    saveLabel,
                     {
                         keyboard?.hide()
                         onSave()

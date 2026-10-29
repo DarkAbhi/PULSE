@@ -344,10 +344,17 @@ private fun SignedInApp(
                                                         dev.abhishekan.pulse.feature.horizon.HorizonForm.Deduction,
                                                         dev.abhishekan.pulse.feature.horizon.HorizonForm.Purchase,
                                                         dev.abhishekan.pulse.feature.horizon.HorizonForm.Subscription,
+                                                        dev.abhishekan.pulse.feature.horizon.HorizonForm.Budget,
                                                     )
                                             }?.let {
                                                 stringResource(
-                                                    if (it.kind == dev.abhishekan.pulse.feature.horizon.HorizonForm.Subscription) {
+                                                    if (it.kind == dev.abhishekan.pulse.feature.horizon.HorizonForm.Budget) {
+                                                        if (it.id == null) {
+                                                            dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_add_budget
+                                                        } else {
+                                                            dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_edit_budget
+                                                        }
+                                                    } else if (it.kind == dev.abhishekan.pulse.feature.horizon.HorizonForm.Subscription) {
                                                         if (it.id == null) {
                                                             dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_add_subscription
                                                         } else {

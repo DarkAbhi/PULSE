@@ -33,6 +33,7 @@ fun HorizonTopBarActions(viewModel: HorizonViewModel) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     if (state.draft?.kind == HorizonForm.Purchase) return
     if (state.draft?.kind == HorizonForm.Subscription) return
+    if (state.draft?.kind == HorizonForm.Budget) return
     if (state.draft?.kind == HorizonForm.Deduction) {
         state.draft?.id?.let { ObligationTopBarActions(state, viewModel, it) }
         return

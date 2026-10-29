@@ -24,7 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -305,11 +304,11 @@ private fun LedgerFilterPill(
         ) {
             if (color != null) Box(Modifier.size(8.dp).background(color, CircleShape))
             if (!sort) {
-                Text(
+                PulseText(
                     label,
                     if (flexLabel) Modifier.weight(1f, fill = false) else Modifier,
                     color = foreground,
-                    style = PulseTheme.typography.label2,
+                    style = PulseTextStyle.Label2,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

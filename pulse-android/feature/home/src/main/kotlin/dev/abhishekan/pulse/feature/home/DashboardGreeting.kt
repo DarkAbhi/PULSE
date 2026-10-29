@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -115,7 +114,7 @@ internal fun DashboardGreeting(
                                 containerColor = PulseTheme.colors.primary,
                                 contentColor = PulseTheme.colors.onPrimary,
                             ) {
-                                Text(if (notificationCount > 9) "9+" else notificationCount.toString())
+                                PulseText(if (notificationCount > 9) "9+" else notificationCount.toString(), style = PulseTextStyle.Caption)
                             }
                         }
                     }) {
@@ -131,7 +130,7 @@ internal fun DashboardGreeting(
             Spacer(Modifier.weight(1f).heightIn(min = 48.dp))
             Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
                 PulseText(stringResource(R.string.pulse_home_good_to_see_you), style = PulseTextStyle.Title2, color = greetingMuted)
-                Text(
+                PulseText(
                     name,
                     Modifier.fillMaxWidth().semantics { heading() },
                     color = greetingInk,

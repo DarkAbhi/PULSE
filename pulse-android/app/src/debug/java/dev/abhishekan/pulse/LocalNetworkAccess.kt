@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,6 +27,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import dev.abhishekan.pulse.core.ui.components.PulseText
+import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
 @Composable
 internal fun LocalNetworkAccess(content: @Composable () -> Unit) {
@@ -63,16 +64,16 @@ internal fun LocalNetworkAccess(content: @Composable () -> Unit) {
                 modifier = Modifier.padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
             ) {
-                Text(stringResource(R.string.debug_local_network_required))
+                PulseText(stringResource(R.string.debug_local_network_required))
                 Button(onClick = { request.launch(permission) }) {
-                    Text(stringResource(R.string.debug_allow_local_network))
+                    PulseText(stringResource(R.string.debug_allow_local_network), style = PulseTextStyle.Label)
                 }
                 Button(onClick = {
                     context.startActivity(
                         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")),
                     )
                 }) {
-                    Text(stringResource(R.string.debug_open_app_settings))
+                    PulseText(stringResource(R.string.debug_open_app_settings), style = PulseTextStyle.Label)
                 }
             }
         }

@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,7 +66,7 @@ internal fun PlannedPurchaseList(
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             if (!wide) PurchaseIcon(R.drawable.pulse_purchase_cart)
-                            Text(
+                            PulseText(
                                 stringResource(R.string.pulse_horizon_purchase_summary_eyebrow),
                                 style =
                                     PulseTheme.typography.body2.copy(
@@ -265,7 +264,7 @@ private fun PurchaseAmount(
     text: String,
     modifier: Modifier = Modifier,
 ) {
-    Text(
+    PulseText(
         text,
         modifier,
         style = PulseTheme.typography.heading2.copy(fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),
@@ -278,7 +277,12 @@ private fun PurchaseTitle(
     text: String,
     modifier: Modifier = Modifier,
 ) {
-    Text(text, modifier, style = PulseTheme.typography.title3.copy(fontWeight = FontWeight.Bold), color = PulseTheme.colors.textPrimary)
+    PulseText(
+        text,
+        modifier,
+        style = PulseTheme.typography.title3.copy(fontWeight = FontWeight.Bold),
+        color = PulseTheme.colors.textPrimary,
+    )
 }
 
 @Composable

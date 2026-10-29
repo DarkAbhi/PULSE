@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -115,7 +114,7 @@ private fun ProjectionTile(
             PulseText(projection.label, Modifier.weight(1f), PulseTextStyle.Label, accent)
             ProjectionBars(accent)
         }
-        Text(
+        PulseText(
             currencyText(projection.amount).asString(),
             color = PulseTheme.colors.textPrimary,
             style = PulseTheme.typography.heading3.copy(fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),

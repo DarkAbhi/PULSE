@@ -4,6 +4,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
@@ -35,12 +38,18 @@ fun PulseText(
     modifier: Modifier = Modifier,
     style: PulseTextStyle = PulseTextStyle.Body,
     color: Color = Color.Unspecified,
+    textAlign: TextAlign? = null,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
 ) {
     val typography = PulseTheme.typography
-    Text(
+    PulseText(
         text,
         modifier,
         color = color,
+        textAlign = textAlign,
+        maxLines = maxLines,
+        overflow = overflow,
         style =
             when (style) {
                 PulseTextStyle.Body -> typography.body1
@@ -71,4 +80,29 @@ fun PulseText(
     modifier: Modifier = Modifier,
     style: PulseTextStyle = PulseTextStyle.Body,
     color: Color = Color.Unspecified,
-) = PulseText(text.asString(), modifier, style, color)
+    textAlign: TextAlign? = null,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
+) = PulseText(text.asString(), modifier, style, color, textAlign, maxLines, overflow)
+
+/** Use a customized Pulse typography token when a semantic style needs adjustments. */
+@Composable
+fun PulseText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle,
+    color: Color = Color.Unspecified,
+    textAlign: TextAlign? = null,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
+) {
+    Text(
+        text = text,
+        modifier = modifier,
+        style = style,
+        color = color,
+        textAlign = textAlign,
+        maxLines = maxLines,
+        overflow = overflow,
+    )
+}

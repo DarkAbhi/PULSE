@@ -20,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,16 +79,16 @@ internal fun MealAgenda(
                         Modifier.widthIn(max = 560.dp).fillMaxWidth().heightIn(max = if (compact) 180.dp else 320.dp),
                         contentScale = ContentScale.Fit,
                     )
-                    Text(
+                    PulseText(
                         stringResource(if (date == today) R.string.pulse_mealplan_empty_today else R.string.pulse_mealplan_empty_day),
                         Modifier.fillMaxWidth().semantics { heading() },
-                        style = if (compact) PulseTheme.typography.heading2 else PulseTheme.typography.heading1,
+                        style = if (compact) PulseTextStyle.Heading2 else PulseTextStyle.Heading1,
                         textAlign = TextAlign.Center,
                     )
-                    Text(
+                    PulseText(
                         stringResource(R.string.pulse_mealplan_empty_help),
                         Modifier.fillMaxWidth(),
-                        style = PulseTheme.typography.body1,
+                        style = PulseTextStyle.Body,
                         color = PulseTheme.colors.textSecondary,
                         textAlign = TextAlign.Center,
                     )
@@ -347,10 +346,10 @@ internal fun AddMealTimeButton(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(painterResource(R.drawable.meal_add), null, Modifier.size(24.dp))
-            Text(
+            PulseText(
                 stringResource(R.string.pulse_mealplan_add_custom_meal_time),
                 modifier = Modifier.weight(1f, fill = false),
-                style = PulseTheme.typography.body1,
+                style = PulseTextStyle.Body,
             )
         }
     }

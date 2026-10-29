@@ -841,7 +841,7 @@ class HorizonDeviceTest {
         compose.onNode(hasTestTag("obligation-due-day")).performClick()
         compose.onNode(hasTestTag("obligation-day-31")).performScrollTo().performClick()
         compose.onNode(hasTestTag("obligation-category-investment")).assertIsSelected()
-        compose.onNode(hasTestTag("obligation-budget")).assertTextContains("Budget (optional): Travel fund")
+        compose.onNode(hasTestTag("obligation-budget")).assertTextContains("Travel fund")
         compose.onNodeWithText("Active obligation").assertIsOff()
         screenshot("obligation-edit")
         compose.onNodeWithContentDescription("Obligation actions").performClick()

@@ -347,6 +347,7 @@ private fun ObligationBudget(
         onSelect = { index -> onChange(draft.copy(budgetId = budgets.getOrNull(index - 1)?.id)) },
         modifier = Modifier.fillMaxWidth(),
         triggerModifier = Modifier.heightIn(min = 56.dp).testTag("obligation-budget"),
+        labelAbove = true,
         enabled = enabled,
     )
 }

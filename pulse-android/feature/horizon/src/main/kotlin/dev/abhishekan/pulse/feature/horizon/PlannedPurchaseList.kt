@@ -37,6 +37,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextButton
@@ -151,7 +152,7 @@ internal fun PlannedPurchaseList(
             stringResource(R.string.pulse_horizon_clear_planned_purchases),
             clear,
             enabled = enabled,
-            color = colors.error,
+            variant = PulseButtonVariant.Destructive,
             leadingIcon = { PurchaseIcon(R.drawable.pulse_purchase_delete) },
         )
     }

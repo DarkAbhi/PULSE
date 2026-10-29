@@ -7,7 +7,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 
@@ -17,7 +16,7 @@ fun PulseTextButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    color: Color = Color.Unspecified,
+    variant: PulseButtonVariant = PulseButtonVariant.Tertiary,
     leadingIcon: (@Composable () -> Unit)? = null,
 ) {
     TextButton(
@@ -27,7 +26,7 @@ fun PulseTextButton(
         shape = PulseTheme.shapes.small,
         colors =
             ButtonDefaults.textButtonColors(
-                contentColor = if (color == Color.Unspecified) PulseTheme.colors.action else color,
+                contentColor = if (variant == PulseButtonVariant.Destructive) PulseTheme.colors.error else PulseTheme.colors.action,
                 disabledContentColor = PulseTheme.colors.textSecondary,
             ),
     ) {

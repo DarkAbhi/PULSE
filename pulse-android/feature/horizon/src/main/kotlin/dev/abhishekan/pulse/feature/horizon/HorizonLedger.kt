@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -31,10 +30,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -157,19 +154,11 @@ private fun LedgerRow(
             if (!wide) LedgerBadges(tx)
         }
         if (wide) Box(Modifier.weight(0.8f)) { LedgerBadges(tx) }
-        Column(horizontalAlignment = Alignment.End) {
-            PulseText(
-                stringResource(R.string.pulse_horizon_signed_amount, if (credit) "+" else "−", currencyText(tx.amount).asString()),
-                style = PulseTextStyle.Label,
-                color = if (credit) PulseTheme.colors.success else PulseTheme.colors.textPrimary,
-            )
-            Icon(
-                painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_back),
-                contentDescription = null,
-                modifier = Modifier.size(16.dp).rotate(180f),
-                tint = PulseTheme.colors.textTertiary,
-            )
-        }
+        PulseText(
+            stringResource(R.string.pulse_horizon_signed_amount, if (credit) "+" else "−", currencyText(tx.amount).asString()),
+            style = PulseTheme.typography.title3.copy(fontFeatureSettings = "tnum"),
+            color = if (credit) PulseTheme.colors.success else PulseTheme.colors.textPrimary,
+        )
     }
 }
 

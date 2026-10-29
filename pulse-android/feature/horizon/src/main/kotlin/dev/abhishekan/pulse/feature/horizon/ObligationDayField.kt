@@ -49,11 +49,16 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 internal fun ObligationDayField(
     value: String,
     enabled: Boolean,
+    labelRes: Int = R.string.pulse_horizon_obligation_due_label,
+    titleRes: Int = R.string.pulse_horizon_obligation_choose_day,
+    helpRes: Int = R.string.pulse_horizon_obligation_short_month,
+    clearRes: Int = R.string.pulse_horizon_obligation_clear_day,
+    tagPrefix: String = "obligation",
     onChange: (String) -> Unit,
 ) {
     var open by rememberSaveable { mutableStateOf(false) }
     val colors = PulseTheme.colors
-    val label = stringResource(R.string.pulse_horizon_obligation_due_label)
+    val label = stringResource(labelRes)
     val selected = value.ifBlank { stringResource(R.string.pulse_horizon_not_set) }
     val description = "$label: $selected"
     val focus = LocalFocusManager.current
@@ -71,7 +76,7 @@ internal fun ObligationDayField(
                 Modifier
                     .fillMaxWidth()
                     .heightIn(min = 56.dp)
-                    .testTag("obligation-due-day")
+                    .testTag("$tagPrefix-due-day")
                     .semantics { contentDescription = description },
             enabled = enabled,
             variant = PulseButtonVariant.Secondary,
@@ -92,12 +97,12 @@ internal fun ObligationDayField(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 24.dp)
-                    .testTag("obligation-day-picker"),
+                    .testTag("$tagPrefix-day-picker"),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                PulseText(stringResource(R.string.pulse_horizon_obligation_choose_day), style = PulseTextStyle.Title3)
+                PulseText(stringResource(titleRes), style = PulseTextStyle.Title3)
                 PulseText(
-                    stringResource(R.string.pulse_horizon_obligation_short_month),
+                    stringResource(helpRes),
                     style = PulseTextStyle.Body2,
                     color = colors.textSecondary,
                 )
@@ -113,7 +118,7 @@ internal fun ObligationDayField(
                                         Modifier
                                             .weight(1f)
                                             .heightIn(min = 48.dp)
-                                            .testTag("obligation-day-$day")
+                                            .testTag("$tagPrefix-day-$day")
                                             .selectable(checked, role = Role.RadioButton) {
                                                 onChange(day.toString())
                                                 open = false
@@ -132,7 +137,7 @@ internal fun ObligationDayField(
                         }
                     }
                 }
-                PulseButton(stringResource(R.string.pulse_horizon_obligation_clear_day), {
+                PulseButton(stringResource(clearRes), {
                     onChange("")
                     open = false
                 }, Modifier.fillMaxWidth(), style = PulseButtonStyle.Text)

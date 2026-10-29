@@ -36,12 +36,12 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.HorizonCategory
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
+import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -221,23 +221,22 @@ internal fun LedgerFilters(
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         item {
-                            LedgerSheetOption(allCategories, categoryId == null) {
+                            PulseCheckbox(categoryId == null, {
                                 onCategory(null)
                                 sheet = null
-                            }
+                            }, allCategories, Modifier.fillMaxWidth())
                         }
                         val matches = categories.filter { it.name.contains(categorySearch.trim(), ignoreCase = true) }
                         items(matches, key = { it.id }) { category ->
-                            LedgerSheetOption(
-                                category.name,
+                            PulseCheckbox(
                                 categoryId == category.id,
-                                category.filterColor(),
-                                Modifier.testTag("ledger-category-option-${category.id}"),
-                            ) {
-                                onCategory(category.id)
-                                sheet =
-                                    null
-                            }
+                                {
+                                    onCategory(category.id)
+                                    sheet = null
+                                },
+                                category.name,
+                                Modifier.fillMaxWidth().testTag("ledger-category-option-${category.id}"),
+                            )
                         }
                         if (matches.isEmpty()) {
                             item {
@@ -327,12 +326,8 @@ private fun LedgerFilterPill(
 private fun LedgerSheetOption(
     label: String,
     active: Boolean,
-    color: Color? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        if (color != null) Box(Modifier.padding(start = 16.dp).size(12.dp).background(color, CircleShape))
-        PulseRadioButton(active, onClick, label, modifier.weight(1f))
-    }
+    PulseRadioButton(active, onClick, label, modifier.fillMaxWidth())
 }

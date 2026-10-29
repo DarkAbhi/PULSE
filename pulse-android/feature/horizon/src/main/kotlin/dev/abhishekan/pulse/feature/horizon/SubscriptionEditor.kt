@@ -129,14 +129,15 @@ internal fun SubscriptionEditor(
             }
             SubscriptionSection(1, R.string.pulse_subscription_recurring_hint, R.drawable.pulse_obligation_calendar) {
                 if (draft.cycle == "monthly") {
-                    SubscriptionInput(
-                        draft.dueDay,
-                        { value -> if (value.length <= 2 && value.all(Char::isDigit)) onChange(draft.copy(dueDay = value)) },
-                        stringResource(R.string.pulse_horizon_billing_day_required),
-                        stringResource(R.string.pulse_horizon_obligation_day_hint),
-                        !busy,
-                        KeyboardType.Number,
-                    )
+                    ObligationDayField(
+                        value = draft.dueDay,
+                        enabled = !busy,
+                        labelRes = R.string.pulse_horizon_billing_day_required,
+                        titleRes = R.string.pulse_subscription_choose_billing_day,
+                        helpRes = R.string.pulse_subscription_short_month,
+                        clearRes = R.string.pulse_subscription_clear_billing_day,
+                        tagPrefix = "subscription",
+                    ) { onChange(draft.copy(dueDay = it)) }
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         PulseText(stringResource(R.string.pulse_subscription_renewal), style = PulseTextStyle.Label)

@@ -65,7 +65,6 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -79,13 +78,11 @@ internal fun FixedObligationEditor(
     onChange: (HorizonDraft) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
-    onDelete: (() -> Unit)? = null,
 ) {
     val colors = PulseTheme.colors
     val keyboard = LocalSoftwareKeyboardController.current
     val editing = draft.id != null
     val saveLabel = stringResource(if (editing) R.string.pulse_horizon_obligation_save_changes else R.string.pulse_horizon_save_deduction)
-    var menuExpanded by remember(draft.id) { mutableStateOf(false) }
     val cancelLabel = stringResource(R.string.pulse_horizon_cancel_editing)
     BoxWithConstraints(Modifier.widthIn(max = 1000.dp).fillMaxWidth().testTag("fixed-obligation-editor")) {
         val wide = maxWidth >= 600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
@@ -97,52 +94,6 @@ internal fun FixedObligationEditor(
             if (!wide) categoryScroll.scrollTo(categories.indexOf(draft.category).coerceAtLeast(0) * categoryStride)
         }
         Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PulseText(
-                        stringResource(
-                            draft.kind.editorLabel(
-                                if (draft.id ==
-                                    null
-                                ) {
-                                    EditorAction.Add
-                                } else {
-                                    EditorAction.Edit
-                                },
-                            ),
-                        ),
-                        style = if (wide) PulseTextStyle.Title else PulseTextStyle.Title3,
-                    )
-                    PulseText(
-                        stringResource(R.string.pulse_horizon_obligation_intro),
-                        style = PulseTextStyle.Body2,
-                        color = colors.textSecondary,
-                    )
-                }
-                if (editing && onDelete != null) {
-                    Box {
-                        PulseIconButton(
-                            stringResource(R.string.pulse_horizon_obligation_more_actions),
-                            { menuExpanded = true },
-                            enabled = !busy && !blocked,
-                        ) { Icon(painterResource(R.drawable.pulse_horizon_more), null) }
-                        DropdownMenu(menuExpanded && !busy && !blocked, { menuExpanded = false }, containerColor = colors.surface) {
-                            DropdownMenuItem(
-                                text = { PulseText(stringResource(R.string.pulse_horizon_obligation_delete), color = colors.error) },
-                                onClick = {
-                                    menuExpanded = false
-                                    keyboard?.hide()
-                                    onDelete()
-                                },
-                            )
-                        }
-                    }
-                }
-            }
             Surface(color = Color.Transparent) {
                 Column(Modifier.padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                     ObligationFieldPair(wide, {
@@ -206,21 +157,7 @@ internal fun FixedObligationEditor(
                         }
                     }
                     ObligationFieldPair(wide, {
-                        ObligationInput(
-                            stringResource(R.string.pulse_horizon_obligation_due_label),
-                            draft.dueDay,
-                            { onChange(draft.copy(dueDay = it)) },
-                            stringResource(R.string.pulse_horizon_obligation_day_hint),
-                            !busy,
-                            R.drawable.pulse_obligation_calendar,
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done,
-                            accessibilityLabel =
-                                stringResource(
-                                    R.string.pulse_horizon_1_s_day_1_31_optional,
-                                    stringResource(R.string.pulse_horizon_due),
-                                ),
-                        )
+                        ObligationDayField(draft.dueDay, !busy) { onChange(draft.copy(dueDay = it)) }
                     }, {
                         ObligationBudget(draft, data, !busy, onChange)
                     })

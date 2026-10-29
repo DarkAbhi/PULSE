@@ -282,7 +282,7 @@ class HorizonDeviceTest {
                         Reply(
                             buildJsonObject {
                                 put("items", JsonArray(items("purchases").values.toList()))
-                                put("total", 12.5)
+                                put("total", JsonPrimitive(items("purchases").values.fold(BigDecimal.ZERO) { total, item -> total + item.getValue("price").jsonPrimitive.content.toBigDecimal() }))
                             }.toString(),
                         )
                     "horizon/transactions" -> {
@@ -649,7 +649,13 @@ class HorizonDeviceTest {
                     quickAction(label)
                     awaitText(title)
                     if (label == "Add fixed obligation") {
+                        compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
+                        compose.onNodeWithContentDescription("Obligation actions").assertDoesNotExist()
                         screenshot("obligation-$layout")
+                        compose.onNode(hasTestTag("obligation-due-day")).performScrollTo().performClick()
+                        awaitText("Choose due day")
+                        screenshot("obligation-days-$layout", tag = "obligation-day-picker")
+                        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
                         compose.onNode(hasTestTag("obligation-category-other")).performScrollTo().assertIsDisplayed()
                     }
                     compose.onNodeWithContentDescription("Back to Financial Horizon").assertIsDisplayed().performClick()
@@ -727,7 +733,9 @@ class HorizonDeviceTest {
         compose.onNode(hasTestTag("obligation-category-investment")).performScrollTo().performClick()
         field("Name", "Internet")
         field("Amount (${UserCurrency.symbol()})", "50.25")
-        field("Due day (1–31, optional)", "31")
+        compose.onNode(hasTestTag("obligation-due-day")).performScrollTo().performClick()
+        awaitText("Choose due day")
+        compose.onNode(hasTestTag("obligation-day-31")).performScrollTo().performClick()
         compose.onNode(hasTestTag("obligation-budget")).performScrollTo().performClick()
         tap("Travel fund")
         tap("Active obligation")
@@ -741,12 +749,25 @@ class HorizonDeviceTest {
         awaitText("Edit fixed obligation")
         compose.onNode(hasContentDescription("Name") and hasSetTextAction()).assertTextEquals("Internet")
         compose.onNode(hasContentDescription("Amount (${UserCurrency.symbol()})") and hasSetTextAction()).assertTextContains("50.25")
-        compose.onNode(hasContentDescription("Due day (1–31, optional)") and hasSetTextAction()).assertTextEquals("31")
+        compose.onNode(hasTestTag("obligation-due-day")).assertTextContains("31")
+        compose.onNode(hasTestTag("obligation-due-day")).performScrollTo().performClick()
+        compose.onNode(hasTestTag("obligation-day-31")).assertIsSelected()
+        tap("Clear due day")
+        compose.onNode(hasTestTag("obligation-due-day")).assertTextContains("Not set")
+        compose.onNode(hasTestTag("obligation-due-day")).performClick()
+        awaitText("Choose due day")
+        compose.waitForIdle()
+        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+        compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag("obligation-day-picker")).fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithText("Discard unsaved changes?").assertDoesNotExist()
+        compose.onNode(hasTestTag("obligation-due-day")).assertTextContains("Not set")
+        compose.onNode(hasTestTag("obligation-due-day")).performClick()
+        compose.onNode(hasTestTag("obligation-day-31")).performScrollTo().performClick()
         compose.onNode(hasTestTag("obligation-category-investment")).assertIsSelected()
         compose.onNode(hasTestTag("obligation-budget")).assertTextContains("Travel fund")
         compose.onNodeWithText("Active obligation").assertIsOff()
         screenshot("obligation-edit")
-        compose.onNodeWithContentDescription("Obligation actions").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Obligation actions").performClick()
         tap("Delete obligation")
         awaitText("Confirm deletion")
         compose.onNode(hasText("Cancel") and hasAnyAncestor(isDialog())).performClick()
@@ -764,7 +785,7 @@ class HorizonDeviceTest {
         tap("Obligations")
         cardAction("Internet", "Edit")
         field("Name", "Unsaved name")
-        compose.onNodeWithContentDescription("Obligation actions").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Obligation actions").performClick()
         tap("Delete obligation")
         confirm("Delete")
         awaitText("Rent")
@@ -945,15 +966,21 @@ class HorizonDeviceTest {
         launchHorizon()
         tap("Planned purchases")
         awaitText("Nothing planned yet")
+        compose.onNodeWithText("Clear planned purchases").assertDoesNotExist()
+        compose.onNodeWithText("Sort by", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Plan your first purchase").performScrollTo().assertHasClickAction()
+        screenshot("purchase-list-empty")
         for (name in listOf("Desk lamp", "Backpack")) {
-            quickAction("Add planned purchase")
+            if (name == "Desk lamp") tap("Plan your first purchase") else tap("Add purchase")
             compose.onNodeWithText("Add planned purchase").assertIsDisplayed()
-            field("Name", name)
-            field("Amount (${UserCurrency.symbol()})", "12.50")
-            field("URL (optional)", "https://example.test/item")
-            tap("Save planned purchase")
+            field("Purchase name *", name)
+            field("Estimated purchase amount *", "12.50")
+            field("Product link (optional)", "https://example.test/item")
+            tap("Add purchase")
             awaitText(name)
         }
+        awaitText("2 planned purchases")
+        screenshot("purchase-list-filled")
         tap("Delete Desk lamp")
         assertEquals(2, backend.items("purchases").size)
         confirm("Delete")
@@ -963,6 +990,110 @@ class HorizonDeviceTest {
         confirm("Delete")
         awaitText("Nothing planned yet")
         assertTrue(backend.items("purchases").isEmpty())
+    }
+
+    @Test fun purchaseListAdaptsToPhoneTabletAndLargeText() {
+        backend.currency = "INR"
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        val fontScale = shell("settings get system font_scale").trim()
+        try {
+            launchHorizon()
+            compose.runOnIdle { UserCurrency.select("INR") }
+            tap("Planned purchases")
+            tap("Plan your first purchase")
+            field("Purchase name *", "New monitor")
+            field("Estimated purchase amount *", "20000")
+            tap("Add purchase")
+            awaitText("New monitor")
+            for ((layout, dimensions) in listOf("phone" to "720x1600", "tablet" to "2048x1800", "large-text" to "720x1600")) {
+                shell("wm size $dimensions")
+                shell("wm density 320")
+                shell("settings put system font_scale ${if (layout == "large-text") "1.8" else "1.0"}")
+                awaitText("1 planned purchase")
+                compose.onNodeWithText("Add purchase").performScrollTo().assertIsDisplayed()
+                compose.onNodeWithContentDescription("Delete New monitor").performScrollTo().assertIsDisplayed().assertHasClickAction()
+                compose.onNode(hasTestTag("purchase-summary")).performScrollTo()
+                screenshot("purchase-list-$layout")
+            }
+            assertEquals(1, backend.items("purchases").size)
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+            shell("settings put system font_scale ${fontScale.takeUnless { it == "null" || it.isEmpty() } ?: "1.0"}")
+        }
+    }
+    @Test fun purchaseFormValidatesRetainsDraftAndAllowsAnEmptyLink() {
+        launchHorizon()
+        tap("Planned purchases")
+        quickAction("Add planned purchase")
+        compose.onNodeWithText("Add planned purchase").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
+        compose.onNode(hasText("Add planned purchase") and hasAnyAncestor(hasTestTag("planned-purchase-editor"))).assertDoesNotExist()
+        compose.onNodeWithText("Plan a purchase for your upcoming financial forecast.").assertDoesNotExist()
+        compose.onNodeWithText("Planning for").assertIsDisplayed()
+        tap("Add purchase")
+        compose.onNode(hasTestTag("purchase-name")).assertIsFocused()
+        awaitText("Enter a purchase name of up to 160 characters.")
+        assertTrue(backend.items("purchases").isEmpty())
+        field("Purchase name *", "Monitor")
+        field("Estimated purchase amount *", "125000.50")
+        field("Product link (optional)", "not-a-link")
+        tap("Add purchase")
+        compose.onNode(hasTestTag("purchase-url")).assertIsFocused()
+        awaitText("Enter a valid http or https link.")
+        assertTrue(backend.items("purchases").isEmpty())
+        field("Product link (optional)", "https://example.test/item")
+        awaitText("Valid link. You can reference this purchase later.")
+        scenario!!.recreate()
+        awaitText("Add planned purchase")
+        compose.onNode(hasTestTag("purchase-name")).assertTextContains("Monitor")
+        compose.onNodeWithContentDescription("Clear product link").performScrollTo().performClick()
+        tap("Add purchase")
+        awaitText("Monitor")
+        assertEquals(1, backend.items("purchases").size)
+        assertEquals(JsonNull, backend.items("purchases").values.single()["url"])
+        compose.onNodeWithContentDescription("Financial Horizon quick actions").assertIsDisplayed()
+    }
+
+    @Test fun purchaseFormAdaptsToPhoneTabletLandscapeAndLargeText() {
+        backend.currency = "INR"
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        val fontScale = shell("settings get system font_scale").trim()
+        try {
+            launchHorizon()
+            compose.runOnIdle { UserCurrency.select("INR") }
+            quickAction("Add planned purchase")
+            field("Purchase name *", "New monitor")
+            field("Estimated purchase amount *", "125000.50")
+            val layouts =
+                listOf(
+                    "phone" to "720x1600",
+                    "tablet" to "2048x1800",
+                    "landscape" to "1600x720",
+                    "large-text" to "720x1600",
+                )
+            for ((layout, dimensions) in layouts) {
+                shell("wm size $dimensions")
+                shell("wm density 320")
+                shell("settings put system font_scale ${if (layout == "large-text") "1.8" else "1.0"}")
+                awaitText("Add planned purchase")
+                compose.onNode(hasTestTag("purchase-name")).performScrollTo().assertTextContains("New monitor")
+                compose.onNode(hasTestTag("purchase-amount")).performScrollTo().assertIsDisplayed()
+                compose.onNode(hasTestTag("purchase-url")).performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText("Add purchase").performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText("Planning for").performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText("Add planned purchase").assertIsDisplayed()
+                compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
+                screenshot("purchase-$layout")
+            }
+            assertEquals(0, backend.mutations)
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+            shell("settings put system font_scale ${fontScale.takeUnless { it == "null" || it.isEmpty() } ?: "1.0"}")
+        }
     }
 
     @Test fun draftsSurviveRotationTabsAndKeyboardAndWarnBeforeDiscard() {

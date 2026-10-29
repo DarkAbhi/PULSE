@@ -196,19 +196,6 @@ internal fun HorizonScreen(
                             vm::update,
                             vm::save,
                             cancel,
-                            onDelete =
-                                state.draft.id?.takeIf { state.draft.kind == HorizonForm.Deduction }?.let { id ->
-                                    {
-                                        deletion = HorizonChange.Delete(HorizonRecord.Deduction, id) to
-                                            uiText(
-                                                R.string.pulse_horizon_delete_1_s_this_removes_the_fixed_obligation_and,
-                                                state.overview.value
-                                                    ?.deductions
-                                                    ?.find { it.id == id }
-                                                    ?.name ?: state.draft.name,
-                                            )
-                                    }
-                                },
                         )
                     } else {
                         if (state.draft != null &&
@@ -519,87 +506,24 @@ internal fun HorizonScreen(
                                 }
                             }
                             HorizonTab.Purchases -> {
-                                PulseText(
-                                    stringResource(
-                                        R.string.pulse_horizon_next_month_s_planned_purchases,
-                                    ),
-                                )
                                 SectionState(state.purchases, vm::refreshPurchases) { list ->
-                                    if (currency.isBlank()) {
-                                        PulseText(
-                                            stringResource(
-                                                R.string.pulse_horizon_currency_unavailable,
-                                            ),
-                                            style = PulseTextStyle.Label,
-                                        )
-                                    }
-                                    PulseText(
-                                        stringResource(
-                                            R.string.pulse_horizon_planned_total_1_s,
-                                            currencyText(list.total).asString(),
-                                        ),
-                                        style = PulseTextStyle.Title,
+                                    PlannedPurchaseList(
+                                        purchases = list,
+                                        currency = currency,
+                                        enabled = canMutate,
+                                        add = { create(HorizonForm.Purchase) },
+                                        delete = { item ->
+                                            remove(
+                                                HorizonRecord.Purchase,
+                                                item.id,
+                                                uiText(R.string.pulse_horizon_remove_1_s_from_next_month_s_planned_purchases, item.name),
+                                            )
+                                        },
+                                        clear = {
+                                            deletion = HorizonChange.ClearPurchases to
+                                                uiText(R.string.pulse_horizon_permanently_remove_every_purchase_in_next_month_s_list)
+                                        },
                                     )
-                                    if (list.items.isEmpty()) {
-                                        PulseEmptyState(
-                                            stringResource(
-                                                R.string.pulse_horizon_nothing_planned_yet,
-                                            ),
-                                            stringResource(
-                                                R.string.pulse_horizon_add_something_you_re_setting_aside_for_next_month,
-                                            ),
-                                        )
-                                    }
-                                    list.items.forEach { item ->
-                                        PulseCard(Modifier.fillMaxWidth()) {
-                                            PulseText(item.name, style = PulseTextStyle.Title)
-                                            PulseText(
-                                                currencyText(item.price).asString(),
-                                                style = PulseTextStyle.Metric,
-                                            )
-                                            if (currency.isBlank()) {
-                                                PulseText(
-                                                    stringResource(
-                                                        R.string.pulse_horizon_currency_unavailable,
-                                                    ),
-                                                    style = PulseTextStyle.Label,
-                                                )
-                                            }
-                                            item.url?.let { PulseText(it) }
-                                            PulseTextButton(
-                                                stringResource(
-                                                    R.string.pulse_horizon_delete_1_s,
-                                                    item.name,
-                                                ),
-                                                {
-                                                    remove(
-                                                        HorizonRecord.Purchase,
-                                                        item.id,
-                                                        uiText(
-                                                            R.string.pulse_horizon_remove_1_s_from_next_month_s_planned_purchases,
-                                                            item.name,
-                                                        ),
-                                                    )
-                                                },
-                                                enabled = canMutate,
-                                            )
-                                        }
-                                    }
-                                    if (list.items.isNotEmpty()) {
-                                        PulseTextButton(
-                                            stringResource(
-                                                R.string.pulse_horizon_clear_planned_purchases,
-                                            ),
-                                            {
-                                                deletion =
-                                                    HorizonChange.ClearPurchases to
-                                                    uiText(
-                                                        R.string.pulse_horizon_permanently_remove_every_purchase_in_next_month_s_list,
-                                                    )
-                                            },
-                                            enabled = canMutate,
-                                        )
-                                    }
                                 }
                             }
                         }

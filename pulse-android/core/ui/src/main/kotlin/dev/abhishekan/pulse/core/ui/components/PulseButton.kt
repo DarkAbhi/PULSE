@@ -32,6 +32,7 @@ fun PulseButton(
     enabled: Boolean = true,
     loading: Boolean = false,
     variant: PulseButtonVariant = PulseButtonVariant.Primary,
+    leadingIcon: (@Composable () -> Unit)? = null,
 ) {
     val colors = PulseTheme.colors
     val interaction = remember { MutableInteractionSource() }
@@ -83,6 +84,9 @@ fun PulseButton(
                 Modifier.size(PulseTokens.medium),
                 color = LocalContentColor.current,
             )
+            Spacer(Modifier.width(PulseTokens.small))
+        } else if (leadingIcon != null) {
+            leadingIcon()
             Spacer(Modifier.width(PulseTokens.small))
         }
         PulseText(text, style = PulseTextStyle.Label)

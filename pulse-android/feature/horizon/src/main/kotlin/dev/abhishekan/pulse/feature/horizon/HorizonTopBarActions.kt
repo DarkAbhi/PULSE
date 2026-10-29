@@ -11,14 +11,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.abhishekan.pulse.core.domain.model.HorizonChange
+import dev.abhishekan.pulse.core.domain.model.HorizonRecord
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 
@@ -26,6 +30,11 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 @Composable
 fun HorizonTopBarActions(viewModel: HorizonViewModel) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    if (state.draft?.kind == HorizonForm.Purchase) return
+    if (state.draft?.kind == HorizonForm.Deduction) {
+        state.draft?.id?.let { ObligationTopBarActions(state, viewModel, it) }
+        return
+    }
     var expanded by remember { mutableStateOf(false) }
     val canCreate = !state.busy && !state.reviewRequired && state.overview.value != null && state.draft == null
     LaunchedEffect(canCreate) {
@@ -70,5 +79,50 @@ fun HorizonTopBarActions(viewModel: HorizonViewModel) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ObligationTopBarActions(
+    state: HorizonUiState,
+    viewModel: HorizonViewModel,
+    id: Long,
+) {
+    var expanded by remember(id) { mutableStateOf(false) }
+    var confirming by rememberSaveable(id) { mutableStateOf(false) }
+    val enabled = !state.busy && !state.reviewRequired && state.overview.value != null
+    Box {
+        PulseIconButton(
+            stringResource(R.string.pulse_horizon_obligation_more_actions),
+            { expanded = true },
+            enabled = enabled,
+        ) { Icon(painterResource(R.drawable.pulse_horizon_more), null) }
+        DropdownMenu(expanded && enabled, { expanded = false }, containerColor = PulseTheme.colors.surface) {
+            DropdownMenuItem(
+                text = { PulseText(stringResource(R.string.pulse_horizon_obligation_delete), color = PulseTheme.colors.error) },
+                onClick = {
+                    expanded = false
+                    confirming = true
+                },
+            )
+        }
+    }
+    if (confirming) {
+        PulseDialog(
+            stringResource(R.string.pulse_horizon_confirm_deletion),
+            stringResource(
+                R.string.pulse_horizon_delete_1_s_this_removes_the_fixed_obligation_and,
+                state.overview.value
+                    ?.deductions
+                    ?.find { it.id == id }
+                    ?.name ?: state.draft?.name.orEmpty(),
+            ),
+            stringResource(R.string.pulse_horizon_delete),
+            {
+                confirming = false
+                if (enabled) viewModel.mutate(HorizonChange.Delete(HorizonRecord.Deduction, id), closeDraft = true)
+            },
+            { confirming = false },
+        )
     }
 }

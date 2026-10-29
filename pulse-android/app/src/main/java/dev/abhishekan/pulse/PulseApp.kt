@@ -336,7 +336,32 @@ private fun SignedInApp(
                                     "space-list" -> stringResource(R.string.pulse_app_spaces)
                                     "fitness" -> stringResource(R.string.pulse_app_fitness)
                                     "workout/{id}" -> workoutEditorTitle ?: stringResource(R.string.pulse_app_workout)
-                                    "horizon" -> stringResource(R.string.pulse_app_financial_horizon)
+                                    "horizon" ->
+                                        horizonState
+                                            ?.draft
+                                            ?.takeIf {
+                                                it.kind in
+                                                    listOf(
+                                                        dev.abhishekan.pulse.feature.horizon.HorizonForm.Deduction,
+                                                        dev.abhishekan.pulse.feature.horizon.HorizonForm.Purchase,
+                                                    )
+                                            }?.let {
+                                                stringResource(
+                                                    if (it.kind == dev.abhishekan.pulse.feature.horizon.HorizonForm.Purchase) {
+                                                        if (it.id == null) {
+                                                            dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_add_purchase
+                                                        } else {
+                                                            dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_edit_purchase
+                                                        }
+                                                    } else if (it.id ==
+                                                        null
+                                                    ) {
+                                                        dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_add_deduction
+                                                    } else {
+                                                        dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_edit_deduction
+                                                    },
+                                                )
+                                            } ?: stringResource(R.string.pulse_app_financial_horizon)
                                     "garage", "vehicle/{id}" -> stringResource(R.string.pulse_app_garage)
                                     "mealplan" -> stringResource(R.string.pulse_app_meal_plan)
                                     else -> stringResource(R.string.pulse_app_pulse)

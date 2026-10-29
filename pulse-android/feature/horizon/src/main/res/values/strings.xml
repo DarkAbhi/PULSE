@@ -223,4 +223,42 @@
     <string name="pulse_horizon_obligation_save_changes">Save changes</string>
     <string name="pulse_horizon_obligation_more_actions">Obligation actions</string>
     <string name="pulse_horizon_obligation_delete">Delete obligation</string>
+    <string name="pulse_horizon_obligation_choose_day">Choose due day</string>
+    <string name="pulse_horizon_obligation_short_month">Choosing the 31st may need a different due date in shorter months.</string>
+    <string name="pulse_horizon_obligation_clear_day">Clear due day</string>
+    <string name="pulse_horizon_purchase_intro">Plan a purchase for your upcoming financial forecast.</string>
+    <string name="pulse_horizon_purchase_planning_for">Planning for</string>
+    <string name="pulse_horizon_purchase_next_month">Next month</string>
+    <string name="pulse_horizon_purchase_period_hint">Included in next month’s forecast. Automatically selected.</string>
+    <string name="pulse_horizon_purchase_name">Purchase name *</string>
+    <string name="pulse_horizon_purchase_name_hint">e.g. New monitor</string>
+    <string name="pulse_horizon_purchase_name_error">Enter a purchase name of up to 160 characters.</string>
+    <string name="pulse_horizon_purchase_amount">Estimated purchase amount *</string>
+    <string name="pulse_horizon_purchase_amount_hint">Enter the amount you expect to spend.</string>
+    <string name="pulse_horizon_purchase_amount_error">Enter an amount from 0 to 9,99,99,99,999.99 with up to 2 decimal places.</string>
+    <string name="pulse_horizon_purchase_link">Product link (optional)</string>
+    <string name="pulse_horizon_purchase_link_hint">Paste product URL</string>
+    <string name="pulse_horizon_purchase_link_help">Add a product link to easily reference this purchase later.</string>
+    <string name="pulse_horizon_purchase_link_valid">Valid link. You can reference this purchase later.</string>
+    <string name="pulse_horizon_purchase_link_error">Enter a valid http or https link.</string>
+    <string name="pulse_horizon_purchase_clear_link">Clear product link</string>
+    <string name="pulse_horizon_purchase_add">Add purchase</string>
+    <string name="pulse_horizon_purchase_cancel">Cancel</string>
+    <string name="pulse_horizon_purchase_review_needed">Review the server records above before saving again.</string>
+    <string name="pulse_horizon_purchase_loading_needed">Your financial details must finish loading before you can save.</string>
+    <string name="pulse_horizon_purchase_amount_placeholder">0.00</string>
+    <string name="pulse_horizon_purchase_required">Required</string>
+    <string name="pulse_horizon_purchase_empty_body">Make room for something you’re looking forward to. Add a purchase to see how it fits into next month’s forecast.</string>
+    <string name="pulse_horizon_purchase_first">Plan your first purchase</string>
+    <string name="pulse_horizon_purchase_planned_next_month">Planned for next month</string>
+    <plurals name="pulse_horizon_purchase_summary_count">
+        <item quantity="one">%1$d purchase planned for next month</item>
+        <item quantity="other">%1$d purchases planned for next month</item>
+    </plurals>
+    <plurals name="pulse_horizon_purchase_list_count">
+        <item quantity="one">%1$d planned purchase</item>
+        <item quantity="other">%1$d planned purchases</item>
+    </plurals>
+    <string name="pulse_horizon_purchase_summary_eyebrow">NEXT MONTH’S PLANNED PURCHASES</string>
+    <string name="pulse_horizon_purchase_summary_total">Planned total %1$s</string>
 </resources>

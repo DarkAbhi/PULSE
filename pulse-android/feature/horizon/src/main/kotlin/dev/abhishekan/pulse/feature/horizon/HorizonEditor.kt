@@ -41,10 +41,13 @@ internal fun HorizonEditor(
     onChange: (HorizonDraft) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
-    onDelete: (() -> Unit)? = null,
 ) {
+    if (draft.kind == HorizonForm.Purchase) {
+        PlannedPurchaseEditor(draft, data, busy, error, blocked, onChange, onSave, onCancel)
+        return
+    }
     if (draft.kind == HorizonForm.Deduction) {
-        FixedObligationEditor(draft, data, busy, error, blocked, onChange, onSave, onCancel, onDelete)
+        FixedObligationEditor(draft, data, busy, error, blocked, onChange, onSave, onCancel)
         return
     }
     var datePicker by remember { mutableStateOf(false) }
@@ -72,15 +75,6 @@ internal fun HorizonEditor(
             PulseText(
                 stringResource(
                     R.string.pulse_horizon_set_the_monthly_starting_pool_and_currency_used_by,
-                ),
-            )
-        }
-        if (draft.kind ==
-            HorizonForm.Purchase
-        ) {
-            PulseText(
-                stringResource(
-                    R.string.pulse_horizon_planned_for_next_month_as_defined_by_the_server,
                 ),
             )
         }
@@ -282,28 +276,6 @@ internal fun HorizonEditor(
                 Modifier.fillMaxWidth(),
                 enabled,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions =
-                    KeyboardActions(onDone = {
-                        keyboard?.hide()
-                    }),
-            )
-        }
-        if (draft.kind ==
-            HorizonForm.Purchase
-        ) {
-            PulseTextField(
-                draft.url,
-                {
-                    onChange(draft.copy(url = it))
-                },
-                stringResource(R.string.pulse_horizon_url_optional),
-                Modifier.fillMaxWidth(),
-                enabled,
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = KeyboardType.Uri,
-                        imeAction = ImeAction.Done,
-                    ),
                 keyboardActions =
                     KeyboardActions(onDone = {
                         keyboard?.hide()

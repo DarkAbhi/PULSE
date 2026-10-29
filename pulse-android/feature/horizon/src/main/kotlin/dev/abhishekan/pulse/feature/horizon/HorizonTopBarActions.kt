@@ -31,55 +31,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 @Composable
 fun HorizonTopBarActions(viewModel: HorizonViewModel) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    if (state.draft?.kind == HorizonForm.Purchase) return
-    if (state.draft?.kind == HorizonForm.Subscription) return
-    if (state.draft?.kind == HorizonForm.Budget) return
-    if (state.draft?.kind == HorizonForm.Category) return
     if (state.draft?.kind == HorizonForm.Deduction) {
         state.draft?.id?.let { ObligationTopBarActions(state, viewModel, it) }
-        return
-    }
-    var expanded by remember { mutableStateOf(false) }
-    val canCreate = !state.busy && !state.reviewRequired && state.overview.value != null && state.draft == null
-    LaunchedEffect(canCreate) {
-        if (!canCreate) expanded = false
-    }
-    Box {
-        PulseButton(
-            stringResource(R.string.pulse_horizon_quick_actions),
-            { expanded = true },
-            modifier = Modifier.testTag("horizon-quick-actions"),
-            enabled = canCreate,
-            style = PulseButtonStyle.Icon,
-        ) {
-            Icon(painterResource(R.drawable.pulse_horizon_more), contentDescription = null)
-        }
-        PulseDropdownMenu(
-            expanded = expanded && canCreate,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.testTag("horizon-quick-actions-menu"),
-        ) {
-            val actions =
-                listOf(
-                    HorizonForm.Transaction to R.string.pulse_horizon_log_transaction,
-                    HorizonForm.Deduction to R.string.pulse_horizon_add_deduction,
-                    HorizonForm.Purchase to R.string.pulse_horizon_add_planned_purchase,
-                    HorizonForm.Subscription to R.string.pulse_horizon_add_subscription,
-                    HorizonForm.Budget to R.string.pulse_horizon_add_monthly_budget,
-                    HorizonForm.Category to R.string.pulse_horizon_add_category_tag,
-                )
-            actions.forEach { (form, label) ->
-                if (form == HorizonForm.Budget) PulseHorizontalDivider(color = PulseTheme.colors.border)
-                PulseDropdownMenuItem(
-                    text = { PulseText(stringResource(label)) },
-                    onClick = {
-                        expanded = false
-                        if (canCreate) viewModel.newForm(form)
-                    },
-                    modifier = Modifier.heightIn(min = PulseTokens.target),
-                )
-            }
-        }
     }
 }
 

@@ -250,16 +250,20 @@ private fun SignedInApp(
         // Some keyboards resize the root before IME insets arrive; preserve space for the form.
         val showBars = maxHeight >= PulseTokens.minimumNavigationHeight
         val isTab = route in listOf("fitness", "horizon", "garage", "mealplan", "you")
+        val horizonViewModel = entry?.takeIf { route == "horizon" }?.let {
+            koinViewModel<HorizonViewModel>(viewModelStoreOwner = it)
+        }
+        val horizonState = horizonViewModel?.uiState?.collectAsStateWithLifecycle()?.value
         val showTopBar =
             route != "gallery" &&
                 route != "home" &&
                 showBars &&
                 (
                     !isTab ||
-                        route == "horizon" ||
+                        (route == "horizon" && horizonState?.draft != null) ||
                         (route == "you" && !isTablet) ||
                         (route == "garage" && hasGarageDetail) ||
-                        (route != "you" && nav.previousBackStackEntry?.destination?.route == "notifications")
+                        (route != "you" && route != "horizon" && nav.previousBackStackEntry?.destination?.route == "notifications")
                 )
         val showBottomBar = !isTablet && route != "gallery" && showBars
         val destinations = listOf("home", "fitness", "horizon", "garage", "mealplan", "you")
@@ -320,11 +324,6 @@ private fun SignedInApp(
                 contentWindowInsets = WindowInsets.safeDrawing,
                 topBar = {
                     if (showTopBar) {
-                        val horizonViewModel =
-                            entry?.takeIf { route == "horizon" }?.let {
-                                koinViewModel<HorizonViewModel>(viewModelStoreOwner = it)
-                            }
-                        val horizonState = horizonViewModel?.uiState?.collectAsStateWithLifecycle()?.value
                         PulseTopAppBar(
                             if (isTab && route != "horizon") {
                                 ""

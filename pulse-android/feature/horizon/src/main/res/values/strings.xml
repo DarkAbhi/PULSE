@@ -337,4 +337,7 @@
     <string name="pulse_budget_actions">Actions for %1$s</string>
     <string name="pulse_budget_remaining">%1$s remaining</string>
     <string name="pulse_budget_over_by">Over budget by %1$s</string>
+    <string name="pulse_horizon_category_type_action">Add category type</string>
+    <string name="pulse_horizon_budgets_heading">Budgets</string>
+    <string name="pulse_horizon_obligations_heading">Obligations</string>
 </resources>

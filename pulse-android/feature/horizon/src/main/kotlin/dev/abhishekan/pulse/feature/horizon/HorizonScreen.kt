@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -298,7 +299,12 @@ internal fun HorizonScreen(
                                 }
                             }
                             HorizonTab.Transactions -> {
-                                LedgerFilters(state, vm, ledgerCategory, { ledgerCategory = it })
+                                LedgerFilters(
+                                    state, vm, ledgerCategory, { ledgerCategory = it },
+                                    canMutate = canMutate,
+                                    addCategory = { create(HorizonForm.Category) },
+                                    logTransaction = { create(HorizonForm.Transaction) },
+                                )
                                 SectionState(state.transactions, {
                                     vm.refreshTransactions()
                                 }) { page ->
@@ -328,6 +334,7 @@ internal fun HorizonScreen(
                                 }
                             }
                             HorizonTab.Budgets -> {
+                                HorizonSectionAction(R.string.pulse_horizon_budgets_heading, R.string.pulse_horizon_add_budget, canMutate) { create(HorizonForm.Budget) }
                                 SectionState(state.overview, vm::refreshOverview) { data ->
                                     if (data.budgets.isEmpty()) {
                                         PulseEmptyState(
@@ -368,6 +375,7 @@ internal fun HorizonScreen(
                                 }
                             }
                             HorizonTab.Obligations -> {
+                                HorizonSectionAction(R.string.pulse_horizon_obligations_heading, R.string.pulse_horizon_add_obligation, canMutate) { create(HorizonForm.Deduction) }
                                 SectionState(state.overview, vm::refreshOverview) { data ->
                                     if (data.deductions.isEmpty()) {
                                         PulseEmptyState(
@@ -423,6 +431,7 @@ internal fun HorizonScreen(
                                         data = data,
                                         canMutate = canMutate,
                                         canViewPayments = !state.busy,
+                                        add = { create(HorizonForm.Subscription) },
                                         edit = { edit(it.draft(currency)) },
                                         delete = { item ->
                                             remove(
@@ -535,4 +544,16 @@ internal fun <T> SectionState(
     }
     section.error?.let { PulseErrorState(it.message, retry) }
     section.value?.let { content(it) }
+}
+
+@Composable
+internal fun HorizonSectionAction(title: Int, action: Int, enabled: Boolean, onClick: () -> Unit) {
+    FlowRow(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
+    ) {
+        PulseText(stringResource(title), style = PulseTextStyle.Heading2)
+        PulseButton(stringResource(action), onClick, enabled = enabled)
+    }
 }

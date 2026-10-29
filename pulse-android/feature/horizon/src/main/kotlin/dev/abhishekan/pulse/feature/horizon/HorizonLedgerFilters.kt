@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,6 +40,8 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.HorizonCategory
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -52,6 +56,9 @@ internal fun LedgerFilters(
     vm: HorizonViewModel,
     categoryId: Long?,
     onCategory: (Long?) -> Unit,
+    canMutate: Boolean,
+    addCategory: () -> Unit,
+    logTransaction: () -> Unit,
 ) {
     var search by rememberSaveable { mutableStateOf(state.search) }
     var sheet by rememberSaveable { mutableStateOf<String?>(null) }
@@ -74,9 +81,32 @@ internal fun LedgerFilters(
             vm.filter(search, state.type)
         }
     }
-    PulseTextField(search, {
-        search = it
-    }, stringResource(R.string.pulse_horizon_search_transactions), Modifier.fillMaxWidth(), enabled = !state.busy)
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val wide = maxWidth >= 720.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val actions: @Composable (Modifier) -> Unit = { actionModifier ->
+            PulseButton(
+                stringResource(R.string.pulse_horizon_category_type_action),
+                addCategory,
+                modifier = actionModifier,
+                enabled = canMutate,
+                variant = PulseButtonVariant.Secondary,
+            )
+            PulseButton(stringResource(R.string.pulse_horizon_log_transaction), logTransaction, modifier = actionModifier, enabled = canMutate)
+        }
+        if (wide) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                PulseTextField(search, { search = it }, stringResource(R.string.pulse_horizon_search_transactions), Modifier.weight(1f), enabled = !state.busy)
+                actions(Modifier.offset(y = 4.dp))
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                PulseTextField(search, { search = it }, stringResource(R.string.pulse_horizon_search_transactions), Modifier.fillMaxWidth(), enabled = !state.busy)
+                FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    actions(Modifier)
+                }
+            }
+        }
+    }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val tablet = maxWidth >= 900.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

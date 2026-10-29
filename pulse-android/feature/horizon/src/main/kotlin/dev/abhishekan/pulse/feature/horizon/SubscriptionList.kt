@@ -60,6 +60,7 @@ internal fun SubscriptionList(
     data: HorizonOverview,
     canMutate: Boolean,
     canViewPayments: Boolean,
+    add: () -> Unit,
     edit: (HorizonSubscription) -> Unit,
     delete: (HorizonSubscription) -> Unit,
     payments: (HorizonSubscription) -> Unit,
@@ -127,10 +128,11 @@ internal fun SubscriptionList(
                     }
                 }
             }
-            PulseText(
-                stringResource(R.string.pulse_subscription_your_subscriptions),
-                Modifier.semantics { heading() },
-                style = PulseTextStyle.Heading2,
+            HorizonSectionAction(
+                R.string.pulse_subscription_your_subscriptions,
+                R.string.pulse_horizon_add_subscription,
+                canMutate,
+                add,
             )
             if (data.subscriptions.isEmpty()) {
                 PulseEmptyState(

@@ -43,10 +43,65 @@ class ArchitectureTest {
             root
                 .resolve("$module/src")
                 .walkTopDown()
-                .filter { it.extension == "kt" && ("/main/" in it.path || "/debug/" in it.path) }
-                .filter { it.name != "PulseMaterialBridge.kt" }
+                .filter {
+                    it.extension == "kt" &&
+                        it.relativeTo(root).invariantSeparatorsPath.let { path ->
+                            "/main/" in path ||
+                                "/debug/" in path ||
+                                "/release/" in path
+                        }
+                }.filter { it.name != "PulseMaterialBridge.kt" }
                 .forEach { file ->
                     assertFalse("Material theme escaped its private bridge in $file", file.readText().contains("MaterialTheme"))
+                }
+        }
+    }
+
+    @Test fun applicationControlsUseTheDesignSystem() {
+        // These are layout, icon, gesture or specialized presentation primitives with no
+        // equivalent Pulse control. All general purpose controls belong behind core:ui.
+        val primitives =
+            setOf(
+                "Icon",
+                "Surface",
+                "Scaffold",
+                "SnackbarHost",
+                "SnackbarHostState",
+                "Badge",
+                "BadgedBox",
+                "ExperimentalMaterial3Api",
+                "ModalBottomSheet",
+                "rememberModalBottomSheetState",
+                "LocalMinimumInteractiveComponentSize",
+                "LocalContentColor",
+                "SwipeToDismissBox",
+                "SwipeToDismissBoxValue",
+                "rememberSwipeToDismissBoxState",
+                "pulltorefresh.PullToRefreshBox",
+                "pulltorefresh.PullToRefreshDefaults",
+                "pulltorefresh.pullToRefresh",
+                "pulltorefresh.rememberPullToRefreshState",
+            )
+        val materialReference = Regex("androidx\\.compose\\.(material3?|foundation\\.text)\\.([A-Za-z0-9_.*]+)")
+        allowed.keys.filter { it == "app" || it.startsWith("feature/") }.forEach { module ->
+            root
+                .resolve("$module/src")
+                .listFiles()
+                .orEmpty()
+                .filter { it.name in setOf("main", "debug", "release") }
+                .flatMap { it.walkTopDown().filter { file -> file.extension == "kt" }.toList() }
+                .forEach { file ->
+                    materialReference.findAll(file.readText()).forEach { reference ->
+                        val library = reference.groupValues[1]
+                        val symbol = reference.groupValues[2]
+                        val allowedReference =
+                            if (library == "foundation.text") {
+                                symbol in setOf("KeyboardActions", "KeyboardOptions")
+                            } else {
+                                library == "material3" && symbol.removeSuffix(".current") in primitives
+                            }
+                        assertTrue("Use a Pulse component instead of ${reference.value} in $file", allowedReference)
+                    }
                 }
         }
     }

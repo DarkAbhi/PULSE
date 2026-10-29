@@ -43,6 +43,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -70,23 +71,13 @@ internal fun MealCalendar(
     val scroll = rememberLazyListState()
     LaunchedEffect(selected) { scroll.animateScrollToItem(selected.dayOfWeek.value - 1) }
     val todayButton: @Composable () -> Unit = {
-        Surface(
+        PulseButton(
+            text = stringResource(R.string.pulse_mealplan_today_label),
             onClick = jumpToToday,
             enabled = enabled,
-            shape = CircleShape,
-            color = colors.primary.copy(alpha = 0.12f),
-            contentColor = colors.action,
-            border = BorderStroke(1.dp, colors.primary.copy(alpha = 0.3f)),
-        ) {
-            Row(
-                Modifier.defaultMinSize(minHeight = 48.dp).padding(horizontal = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Icon(painterResource(R.drawable.meal_today), null, Modifier.size(20.dp))
-                PulseText(stringResource(R.string.pulse_mealplan_today_label), style = PulseTextStyle.Label)
-            }
-        }
+            variant = PulseButtonVariant.Secondary,
+            leadingIcon = { Icon(painterResource(R.drawable.meal_today), null, Modifier.size(20.dp)) },
+        )
     }
     val mealTimes: @Composable () -> Unit = {
         Surface(
@@ -146,21 +137,17 @@ internal fun MealCalendar(
                             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Surface(
-                                onClick = { pickingDate = true },
-                                enabled = enabled,
-                                color = androidx.compose.ui.graphics.Color.Transparent,
-                            ) {
-                                PulseText(
+                            PulseButton(
+                                text =
                                     stringResource(
                                         R.string.pulse_mealplan_week_range,
                                         week.format(DateTimeFormatter.ofPattern("d MMM")),
                                         week.plusDays(6).format(format),
                                     ),
-                                    Modifier.defaultMinSize(minHeight = 48.dp).padding(vertical = 12.dp),
-                                    style = if (wide) PulseTextStyle.Title3 else PulseTextStyle.Body2,
-                                )
-                            }
+                                onClick = { pickingDate = true },
+                                enabled = enabled,
+                                style = PulseButtonStyle.Text,
+                            )
                             if (wide && selected != today) todayButton()
                         }
                         PulseButton(

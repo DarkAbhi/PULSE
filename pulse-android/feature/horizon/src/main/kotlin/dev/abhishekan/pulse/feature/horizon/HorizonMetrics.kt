@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -104,33 +103,28 @@ private fun HorizonMetricCard(
     enabled: Boolean = true,
     configure: () -> Unit = {},
 ) {
-    val dark = PulseTheme.isDark
+    val colors = PulseTheme.colors
     val background =
         when (kind) {
-            MetricKind.Starting -> if (dark) Color(0xFF3B321C) else Color(0xFFFFEFC2)
-            MetricKind.Committed -> if (dark) Color(0xFF3E2B28) else Color(0xFFFCE7DF)
-            MetricKind.Available ->
-                if (deficit) {
-                    if (dark) Color(0xFF42282B) else Color(0xFFFFE3E5)
-                } else {
-                    if (dark) Color(0xFF203A2B) else Color(0xFFE0F3E1)
-                }
+            MetricKind.Starting -> colors.primarySoft
+            MetricKind.Committed -> colors.warningSoft
+            MetricKind.Available -> if (deficit) colors.errorSoft else colors.successSoft
         }
     val accent =
         when (kind) {
-            MetricKind.Starting -> if (dark) Color(0xFFFFD36C) else Color(0xFFF4B82F)
-            MetricKind.Committed -> if (dark) Color(0xFFF4AB97) else Color(0xFFE6957E)
-            MetricKind.Available ->
-                if (deficit) {
-                    if (dark) Color(0xFFFFA3AA) else Color(0xFFB93D4A)
-                } else {
-                    if (dark) Color(0xFF8AD49C) else Color(0xFF61B977)
-                }
+            MetricKind.Starting -> colors.action
+            MetricKind.Committed -> colors.warning
+            MetricKind.Available -> if (deficit) colors.error else colors.success
         }
-    val foreground = if (dark) Color(0xFFF8F4EB) else Color(0xFF152018)
+    val foreground =
+        when (kind) {
+            MetricKind.Starting -> colors.onPrimarySoft
+            MetricKind.Committed -> colors.warning
+            MetricKind.Available -> if (deficit) colors.error else colors.success
+        }
     Surface(
         modifier.testTag("horizon-metric-${kind.name.lowercase()}"),
-        shape = RoundedCornerShape(20.dp),
+        shape = PulseTheme.shapes.large,
         color = background,
         contentColor = foreground,
     ) {
@@ -141,7 +135,7 @@ private fun HorizonMetricCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Box(
-                    Modifier.background(accent.copy(alpha = 0.3f), RoundedCornerShape(12.dp)).size(36.dp),
+                    Modifier.background(accent.copy(alpha = 0.3f), PulseTheme.shapes.medium).size(36.dp),
                     contentAlignment = Alignment.Center,
                 ) { MetricIcon(kind, foreground) }
                 PulseText(title, Modifier.weight(1f), PulseTextStyle.Label, foreground)
@@ -168,13 +162,13 @@ private fun HorizonMetricCard(
                             Modifier
                                 .background(
                                     accent.copy(alpha = 0.25f),
-                                    RoundedCornerShape(50),
+                                    PulseTheme.shapes.pill,
                                 ).padding(horizontal = 8.dp, vertical = 4.dp),
                             PulseTextStyle.Caption,
                             foreground,
                         )
                     }
-                    PulseText(description, style = PulseTextStyle.Caption, color = foreground.copy(alpha = 0.8f))
+                    PulseText(description, style = PulseTextStyle.Caption, color = foreground)
                 }
                 if (kind == MetricKind.Committed) {
                     Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) {
@@ -186,7 +180,10 @@ private fun HorizonMetricCard(
                             drawArc(accent, -90f, ratio.coerceIn(0f, 100f) * 3.6f, false, Offset(inset, inset), ringSize, style = stroke)
                         }
                         PulseText(
-                            "${ratio.toBigDecimal().setScale(0, RoundingMode.HALF_UP)}%",
+                            stringResource(
+                                R.string.pulse_horizon_percentage,
+                                ratio.toBigDecimal().setScale(0, RoundingMode.HALF_UP).toPlainString(),
+                            ),
                             style = PulseTextStyle.Caption,
                             color = foreground,
                         )

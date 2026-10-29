@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,8 +26,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
 @Composable
 internal fun LocalNetworkAccess(content: @Composable () -> Unit) {
@@ -59,22 +59,18 @@ internal fun LocalNetworkAccess(content: @Composable () -> Unit) {
     if (granted) {
         content()
     } else {
-        Surface(modifier = Modifier.fillMaxSize()) {
+        Surface(modifier = Modifier.fillMaxSize(), color = PulseTheme.colors.background, contentColor = PulseTheme.colors.textPrimary) {
             Column(
                 modifier = Modifier.padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
             ) {
                 PulseText(stringResource(R.string.debug_local_network_required))
-                Button(onClick = { request.launch(permission) }) {
-                    PulseText(stringResource(R.string.debug_allow_local_network), style = PulseTextStyle.Label)
-                }
-                Button(onClick = {
+                PulseButton(stringResource(R.string.debug_allow_local_network), onClick = { request.launch(permission) })
+                PulseButton(stringResource(R.string.debug_open_app_settings), onClick = {
                     context.startActivity(
                         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")),
                     )
-                }) {
-                    PulseText(stringResource(R.string.debug_open_app_settings), style = PulseTextStyle.Label)
-                }
+                })
             }
         }
     }

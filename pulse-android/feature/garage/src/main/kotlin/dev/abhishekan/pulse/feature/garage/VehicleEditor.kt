@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse.feature.garage
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -12,14 +11,11 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,7 +25,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -44,6 +39,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
+import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
+import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -138,7 +135,7 @@ internal fun VehicleEditor(
                         !busy,
                     )
                 }
-                HorizontalDivider(color = colors.border)
+                PulseHorizontalDivider(color = colors.border)
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     PulseText(
                         stringResource(R.string.pulse_garage_vehicle_pressure_title),
@@ -219,7 +216,6 @@ private fun VehicleOptions(
     enabled: Boolean,
     select: (String) -> Unit,
 ) {
-    val colors = PulseTheme.colors
     val focus = LocalFocusManager.current
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         PulseText(label, style = PulseTextStyle.Label)
@@ -228,8 +224,8 @@ private fun VehicleOptions(
                 when {
                     LocalDensity.current.fontScale > 1.3f -> 1
                     options.size == 2 -> 2
-                    maxWidth >= 480.dp -> 5
-                    maxWidth >= 400.dp -> 3
+                    maxWidth >= 640.dp -> 3
+                    maxWidth >= 400.dp -> 2
                     else -> 2
                 }
             Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -237,31 +233,16 @@ private fun VehicleOptions(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         row.forEach { option ->
                             val selected = option == value
-                            Surface(
-                                modifier =
-                                    Modifier
-                                        .weight(
-                                            1f,
-                                        ).selectable(selected, enabled, Role.RadioButton, onClick = {
-                                            focus.clearFocus()
-                                            select(option)
-                                        }),
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (selected) colors.primarySoft else colors.surface,
-                                border = BorderStroke(1.dp, if (selected) colors.action else colors.border),
-                            ) {
-                                Column(
-                                    Modifier.heightIn(min = 64.dp).padding(12.dp),
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                ) {
-                                    PulseText(
-                                        garageOption(option),
-                                        style = PulseTextStyle.Label,
-                                        color = if (enabled) colors.textPrimary else colors.textSecondary,
-                                    )
-                                }
-                            }
+                            PulseRadioButton(
+                                selected = selected,
+                                onClick = {
+                                    focus.clearFocus()
+                                    select(option)
+                                },
+                                label = garageOption(option),
+                                modifier = Modifier.weight(1f).heightIn(min = 64.dp),
+                                enabled = enabled,
+                            )
                         }
                         repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
                     }

@@ -10,19 +10,14 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,7 +47,10 @@ import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
 import dev.abhishekan.pulse.core.domain.model.WorkoutInfo
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.asString
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.time.format.DateTimeFormatter
@@ -360,7 +358,7 @@ private fun WorkoutExerciseCard(
                     metadata()
                 }
             }
-            HorizontalDivider(color = PulseTheme.colors.divider)
+            PulseHorizontalDivider(color = PulseTheme.colors.divider)
             WorkoutSectionTitle(stringResource(R.string.pulse_fitness_workout_sets))
             BoxWithConstraints {
                 val columns =
@@ -399,7 +397,7 @@ private fun WorkoutExerciseCard(
                     }
                 }
             }
-            HorizontalDivider(color = PulseTheme.colors.divider)
+            PulseHorizontalDivider(color = PulseTheme.colors.divider)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 WorkoutAction(stringResource(R.string.pulse_fitness_edit_exercise), WorkoutSymbol.Edit, onEdit, enabled)
                 WorkoutAction(
@@ -594,42 +592,22 @@ internal fun WorkoutAction(
     destructive: Boolean = false,
     soft: Boolean = false,
 ) {
-    val colors = PulseTheme.colors
-    val foreground =
-        when {
-            destructive -> colors.error
-            primary -> colors.onPrimary
-            else -> colors.action
-        }
-    Button(
-        onClick,
-        modifier.heightIn(min = 48.dp),
+    PulseButton(
+        text = text,
+        onClick = onClick,
+        modifier = modifier,
         enabled = enabled,
-        shape = RoundedCornerShape(if (primary) 28.dp else 12.dp),
-        border =
-            if (!primary &&
-                !soft
-            ) {
-                BorderStroke(1.dp, if (destructive) colors.error.copy(alpha = .35f) else colors.action.copy(alpha = .5f))
-            } else {
-                null
+        variant =
+            when {
+                destructive -> PulseButtonVariant.DestructiveSoft
+                primary -> PulseButtonVariant.Primary
+                soft -> PulseButtonVariant.Soft
+                else -> PulseButtonVariant.Secondary
             },
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor =
-                    when {
-                        primary -> colors.primary
-                        destructive -> colors.errorSoft
-                        soft -> colors.primarySoft
-                        else -> Color.Transparent
-                    },
-                contentColor = foreground,
-            ),
-    ) {
-        WorkoutGlyph(symbol, if (enabled) foreground else colors.textSecondary)
-        Spacer(Modifier.width(12.dp))
-        PulseText(text, style = PulseTextStyle.Label)
-    }
+        leadingIcon = {
+            WorkoutGlyph(symbol, androidx.compose.material3.LocalContentColor.current)
+        },
+    )
 }
 
 internal enum class WorkoutSymbol { Add, Play, Stop, Clock, Energy, Info, Weight, Muscle, List, Edit, Delete, Refresh, Document }

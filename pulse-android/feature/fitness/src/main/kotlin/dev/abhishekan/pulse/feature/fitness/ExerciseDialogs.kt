@@ -3,7 +3,6 @@ package dev.abhishekan.pulse.feature.fitness
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -37,7 +36,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selectableGroup
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.window.Dialog
@@ -48,6 +46,7 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -155,38 +154,19 @@ internal fun ExerciseSelector(
             }
             editor.candidates.forEach { candidate ->
                 val selected = editor.draft.catalogId == candidate.id
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(if (selected) PulseTheme.colors.primarySoft else PulseTheme.colors.surface, PulseTheme.shapes.medium)
-                        .border(
-                            PulseTokens.focusWidth / 2,
-                            if (selected) PulseTheme.colors.primary else PulseTheme.colors.border,
-                            PulseTheme.shapes.medium,
-                        ).clickable(enabled = !busy, role = androidx.compose.ui.semantics.Role.RadioButton) { onChoose(candidate) }
-                        .semantics { this.selected = selected }
-                        .heightIn(min = PulseTokens.target)
-                        .padding(PulseTokens.medium),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                ) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
-                        PulseText(candidate.name, style = PulseTextStyle.Label)
-                        val metadata =
-                            listOfNotNull(
-                                candidate.equipment?.takeIf { it.isNotBlank() },
-                                candidate.muscles.takeIf { it.isNotEmpty() }?.joinToString(),
-                            )
-                        if (metadata.isNotEmpty()) {
-                            PulseText(
-                                metadata.joinToString(" · "),
-                                style = PulseTextStyle.Body2,
-                                color = PulseTheme.colors.textSecondary,
-                            )
-                        }
-                    }
-                    PulseText(if (selected) "✓" else "+", style = PulseTextStyle.Title, color = PulseTheme.colors.action)
-                }
+                val metadata =
+                    listOfNotNull(
+                        candidate.equipment?.takeIf { it.isNotBlank() },
+                        candidate.muscles.takeIf { it.isNotEmpty() }?.joinToString(),
+                    )
+                PulseRadioButton(
+                    selected = selected,
+                    onClick = { onChoose(candidate) },
+                    label = candidate.name,
+                    supportingText = metadata.takeIf { it.isNotEmpty() }?.joinToString(" � "),
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !busy,
+                )
             }
         }
         if (query.isNotBlank()) {

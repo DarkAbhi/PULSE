@@ -1,28 +1,22 @@
 package dev.abhishekan.pulse.feature.mealplan
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
@@ -128,34 +122,17 @@ internal fun MealEditor(
             PulseText(stringResource(R.string.pulse_mealplan_meal_date), style = PulseTextStyle.Label)
             val formattedDate = runCatching { LocalDate.parse(draft.date).format(mealDate) }.getOrDefault(draft.date)
             val dateLabel = stringResource(R.string.pulse_mealplan_meal_date_1_s, formattedDate)
-            Surface(
+            PulseButton(
+                text = formattedDate,
                 onClick = {
                     focus.clearFocus()
                     datePicker = true
                 },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = PulseTokens.target)
-                        .testTag("meal-date")
-                        .semantics { contentDescription = dateLabel },
+                modifier = Modifier.fillMaxWidth().testTag("meal-date").semantics { contentDescription = dateLabel },
                 enabled = !busy,
-                shape = PulseTheme.shapes.large,
-                color = PulseTheme.colors.surfaceMuted.copy(alpha = 0.35f),
-                border = BorderStroke(1.dp, PulseTheme.colors.border),
-            ) {
-                Row(
-                    Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(painterResource(R.drawable.meal_date), null, Modifier.size(24.dp))
-                    PulseText(
-                        formattedDate,
-                        Modifier.weight(1f),
-                    )
-                }
-            }
+                variant = PulseButtonVariant.Secondary,
+                leadingIcon = { Icon(painterResource(R.drawable.meal_date), null, Modifier.size(24.dp)) },
+            )
             Spacer(Modifier.height(8.dp))
             PulseText(stringResource(R.string.pulse_mealplan_meal_time), style = PulseTextStyle.Label)
             MealTimeChips(times, draft.timeId, !busy) {

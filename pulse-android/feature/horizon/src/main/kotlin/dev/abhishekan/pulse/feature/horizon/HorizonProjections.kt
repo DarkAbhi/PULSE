@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,7 +23,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.domain.model.HorizonProjection
@@ -37,16 +35,15 @@ import dev.abhishekan.pulse.core.ui.currencyText
 
 @Composable
 internal fun ProjectionCard(data: HorizonOverview) {
-    val dark = PulseTheme.isDark
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = if (dark) PulseTheme.colors.surface else Color(0xFFFFFCF6),
+        shape = PulseTheme.shapes.large,
+        color = PulseTheme.colors.surface,
         contentColor = PulseTheme.colors.textPrimary,
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                ProjectionHeadingIcon(dark)
+                ProjectionHeadingIcon()
                 PulseText(
                     stringResource(R.string.pulse_horizon_future_projections),
                     modifier = Modifier.weight(1f),
@@ -100,12 +97,12 @@ private fun ProjectionTile(
             12 -> 2
             else -> index % 3
         }
-    val dark = PulseTheme.isDark
-    val accent = (if (dark) darkAccents else lightAccents)[paletteIndex]
-    val background = (if (dark) darkSurfaces else lightSurfaces)[paletteIndex]
+    val colors = PulseTheme.colors
+    val accent = listOf(colors.action, colors.info, colors.success)[paletteIndex]
+    val background = listOf(colors.primarySoft, colors.infoSoft, colors.successSoft)[paletteIndex]
     Column(
         modifier
-            .background(background, RoundedCornerShape(20.dp))
+            .background(background, PulseTheme.shapes.large)
             .semantics(mergeDescendants = true) {}
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -117,7 +114,7 @@ private fun ProjectionTile(
         PulseText(
             currencyText(projection.amount).asString(),
             color = PulseTheme.colors.textPrimary,
-            style = PulseTheme.typography.heading3.copy(fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),
+            style = PulseTextStyle.Heading3,
         )
         PulseText(
             pluralStringResource(R.plurals.pulse_horizon_projection_reserve, projection.months, projection.months),
@@ -128,10 +125,10 @@ private fun ProjectionTile(
 }
 
 @Composable
-private fun ProjectionHeadingIcon(dark: Boolean) {
-    val ink = if (dark) Color(0xFFFFDE91) else Color(0xFF503900)
+private fun ProjectionHeadingIcon() {
+    val ink = PulseTheme.colors.onPrimarySoft
     Box(
-        Modifier.size(40.dp).background(if (dark) Color(0xFF493A1D) else Color(0xFFFFEDBC), RoundedCornerShape(16.dp)),
+        Modifier.size(40.dp).background(PulseTheme.colors.primarySoft, PulseTheme.shapes.large),
         contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.size(24.dp)) {
@@ -175,8 +172,3 @@ private fun ProjectionBars(accent: Color) {
         }
     }
 }
-
-private val lightSurfaces = listOf(Color(0xFFF3EDFC), Color(0xFFEBF2FF), Color(0xFFEAF6EA))
-private val darkSurfaces = listOf(Color(0xFF30253E), Color(0xFF202F46), Color(0xFF20382B))
-private val lightAccents = listOf(Color(0xFF8240BB), Color(0xFF2264C6), Color(0xFF267A40))
-private val darkAccents = listOf(Color(0xFFD5ACFF), Color(0xFF9BC2FF), Color(0xFF98D9A7))

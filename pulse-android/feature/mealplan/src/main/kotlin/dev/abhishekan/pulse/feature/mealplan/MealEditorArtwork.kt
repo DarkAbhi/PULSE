@@ -1,7 +1,5 @@
 package dev.abhishekan.pulse.feature.mealplan
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,16 +8,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -31,6 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -101,41 +95,20 @@ internal fun MealTimeChips(
                     time.start.hour < 19 -> R.drawable.meal_sunset
                     else -> R.drawable.meal_moon
                 }
-            val selected = selectedId == time.id
-            val background by animateColorAsState(
-                if (selected) colors.primarySoft else accent.copy(alpha = 0.12f),
-                label = "meal-time-color",
-            )
-            FilterChip(
-                selected = selected,
+            PulseFilterChip(
+                label = time.name,
+                selected = selectedId == time.id,
                 onClick = { onSelect(time) },
-                label = { PulseText(time.name) },
-                modifier = Modifier.padding(vertical = 4.dp).heightIn(min = 48.dp),
+                modifier = Modifier.padding(vertical = 4.dp),
                 enabled = enabled,
                 leadingIcon = {
-                    Icon(painterResource(icon), null, Modifier.size(24.dp), tint = accent)
+                    Icon(
+                        painterResource(icon),
+                        null,
+                        Modifier.size(24.dp),
+                        tint = if (selectedId == time.id) colors.onPrimary else accent,
+                    )
                 },
-                trailingIcon =
-                    if (selected) {
-                        {
-                            Icon(
-                                painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_check),
-                                null,
-                                Modifier.size(16.dp),
-                            )
-                        }
-                    } else {
-                        null
-                    },
-                shape = CircleShape,
-                border = BorderStroke(1.dp, if (selected) colors.action else accent.copy(alpha = 0.25f)),
-                colors =
-                    FilterChipDefaults.filterChipColors(
-                        containerColor = background,
-                        selectedContainerColor = background,
-                        labelColor = colors.textPrimary,
-                        selectedLabelColor = colors.onPrimarySoft,
-                    ),
             )
         }
     }

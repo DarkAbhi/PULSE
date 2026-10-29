@@ -14,13 +14,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -43,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -62,26 +60,23 @@ internal fun ObligationDayField(
     val keyboard = LocalSoftwareKeyboardController.current
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         PulseText(label, style = PulseTextStyle.Label)
-        OutlinedButton(
-            {
+        PulseButton(
+            text = selected,
+            onClick = {
                 focus.clearFocus()
                 keyboard?.hide()
                 open = true
             },
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .testTag("obligation-due-day")
-                .semantics { contentDescription = description },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .testTag("obligation-due-day")
+                    .semantics { contentDescription = description },
             enabled = enabled,
-            shape = RoundedCornerShape(12.dp),
-            border = BorderStroke(1.dp, colors.border),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textPrimary, containerColor = colors.surface),
-        ) {
-            Icon(painterResource(R.drawable.pulse_obligation_calendar), null, Modifier.size(20.dp))
-            PulseText(selected, Modifier.weight(1f).padding(horizontal = 16.dp))
-            Icon(painterResource(R.drawable.pulse_obligation_chevron), null, Modifier.size(20.dp))
-        }
+            variant = PulseButtonVariant.Secondary,
+            leadingIcon = { Icon(painterResource(R.drawable.pulse_obligation_calendar), null, Modifier.size(20.dp)) },
+        )
     }
     if (open && enabled) {
         ModalBottomSheet(
@@ -123,7 +118,7 @@ internal fun ObligationDayField(
                                                 onChange(day.toString())
                                                 open = false
                                             },
-                                        shape = RoundedCornerShape(8.dp),
+                                        shape = PulseTheme.shapes.small,
                                         color = if (checked) colors.primarySoft else colors.surface,
                                         border = BorderStroke(1.dp, if (checked) colors.action else colors.border),
                                     ) {

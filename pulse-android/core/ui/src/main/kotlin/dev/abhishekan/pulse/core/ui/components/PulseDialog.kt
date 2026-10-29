@@ -39,3 +39,28 @@ fun PulseDialog(
         text = { PulseText(message, Modifier.verticalScroll(rememberScrollState())) },
     )
 }
+
+/** Slot-based dialog for searchable pickers and forms, retaining platform dialog mechanics. */
+@Composable
+fun PulseDialog(
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    dismissButton: (@Composable () -> Unit)? = null,
+    title: (@Composable () -> Unit)? = null,
+    text: (@Composable () -> Unit)? = null,
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        confirmButton = confirmButton,
+        modifier = modifier,
+        dismissButton = dismissButton,
+        title = title,
+        text = text,
+        shape = PulseTheme.shapes.extraLarge,
+        containerColor = PulseTheme.colors.surface,
+        titleContentColor = PulseTheme.colors.textPrimary,
+        textContentColor = PulseTheme.colors.textSecondary,
+        tonalElevation = PulseTheme.elevation.none,
+    )
+}

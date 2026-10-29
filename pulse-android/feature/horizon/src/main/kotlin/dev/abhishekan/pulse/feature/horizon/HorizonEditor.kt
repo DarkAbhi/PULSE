@@ -21,6 +21,7 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
@@ -86,7 +87,13 @@ internal fun HorizonEditor(
                 {
                     onChange(draft.copy(name = it))
                 },
-                stringResource(R.string.pulse_horizon_name),
+                stringResource(
+                    if (draft.kind == HorizonForm.Subscription) {
+                        R.string.pulse_horizon_subscription_name_required
+                    } else {
+                        R.string.pulse_horizon_name
+                    },
+                ),
                 Modifier.fillMaxWidth(),
                 enabled,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -129,7 +136,7 @@ internal fun HorizonEditor(
             )
             PulseText(stringResource(R.string.pulse_horizon_debit_credit_explanation))
         }
-        if (draft.kind == HorizonForm.Transaction || draft.kind == HorizonForm.Subscription) {
+        if (draft.kind == HorizonForm.Transaction) {
             PulseButton(
                 stringResource(
                     R.string.pulse_horizon_date_1_s,
@@ -149,10 +156,6 @@ internal fun HorizonEditor(
                     timePicker =
                         true
                 }, enabled = enabled, style = PulseButtonStyle.Text)
-            } else if (draft.date.isNotBlank()) {
-                PulseButton(stringResource(R.string.pulse_horizon_clear_renewal_date), {
-                    onChange(draft.copy(date = ""))
-                }, enabled = enabled, style = PulseButtonStyle.Text)
             }
         }
         if (draft.kind == HorizonForm.Subscription) {
@@ -167,6 +170,31 @@ internal fun HorizonEditor(
                 },
                 enabled,
             )
+            if (draft.cycle == "monthly") {
+                PulseTextField(
+                    draft.dueDay,
+                    { onChange(draft.copy(dueDay = it)) },
+                    stringResource(R.string.pulse_horizon_billing_day_required),
+                    Modifier.fillMaxWidth(),
+                    enabled,
+                    keyboardOptions =
+                        KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next,
+                        ),
+                )
+            } else {
+                PulseButton(
+                    stringResource(
+                        R.string.pulse_horizon_annual_renewal_date_required,
+                        draft.date.ifBlank { stringResource(R.string.pulse_horizon_not_set) },
+                    ),
+                    { datePicker = true },
+                    Modifier.fillMaxWidth(),
+                    enabled = enabled,
+                    variant = PulseButtonVariant.Secondary,
+                )
+            }
             Choice(
                 stringResource(
                     R.string.pulse_horizon_status,
@@ -178,14 +206,9 @@ internal fun HorizonEditor(
                 },
                 enabled,
             )
-            PulseText(
-                stringResource(
-                    R.string.pulse_horizon_for_yearly_billing_the_renewal_date_supplies_the_renewal,
-                ),
-            )
         }
         if (draft.kind in
-            listOf(HorizonForm.Deduction, HorizonForm.Subscription)
+            listOf(HorizonForm.Deduction)
         ) {
             PulseTextField(
                 draft.dueDay,
@@ -227,7 +250,13 @@ internal fun HorizonEditor(
             listOf(HorizonForm.Transaction, HorizonForm.Subscription, HorizonForm.Deduction)
         ) {
             Relation(
-                stringResource(R.string.pulse_horizon_budget),
+                stringResource(
+                    if (draft.kind == HorizonForm.Subscription) {
+                        R.string.pulse_horizon_link_to_budget
+                    } else {
+                        R.string.pulse_horizon_budget
+                    },
+                ),
                 draft.budgetId,
                 data?.budgets.orEmpty().map {
                     it.id to
@@ -251,20 +280,6 @@ internal fun HorizonEditor(
                 enabled,
             )
         }
-        if (draft.kind ==
-            HorizonForm.Subscription
-        ) {
-            Relation(
-                stringResource(R.string.pulse_horizon_fixed_obligation),
-                draft.deductionId,
-                data?.deductions.orEmpty().map {
-                    it.id to
-                        it.name
-                },
-                { onChange(draft.copy(deductionId = it)) },
-                enabled,
-            )
-        }
         if (draft.kind in
             listOf(HorizonForm.Transaction, HorizonForm.Subscription)
         ) {
@@ -273,7 +288,13 @@ internal fun HorizonEditor(
                 {
                     onChange(draft.copy(notes = it))
                 },
-                stringResource(R.string.pulse_horizon_notes_optional),
+                stringResource(
+                    if (draft.kind == HorizonForm.Subscription) {
+                        R.string.pulse_horizon_notes_renewal_link_optional
+                    } else {
+                        R.string.pulse_horizon_notes_optional
+                    },
+                ),
                 Modifier.fillMaxWidth(),
                 enabled,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),

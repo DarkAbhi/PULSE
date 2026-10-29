@@ -20,33 +20,20 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -65,7 +52,10 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
+import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
+import dev.abhishekan.pulse.core.ui.components.PulseSwitch
 import dev.abhishekan.pulse.core.ui.components.PulseText
+import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
 @Composable
@@ -161,38 +151,15 @@ internal fun FixedObligationEditor(
                     }, {
                         ObligationBudget(draft, data, !busy, onChange)
                     })
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .toggleable(
-                                draft.active,
-                                enabled = !busy,
-                                role = Role.Switch,
-                                onValueChange = { onChange(draft.copy(active = it)) },
-                            ).padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            PulseText(stringResource(R.string.pulse_horizon_active_obligation), style = PulseTextStyle.Label)
-                            PulseText(
-                                stringResource(R.string.pulse_horizon_obligation_active_hint),
-                                style = PulseTextStyle.Body2,
-                                color = colors.textSecondary,
-                            )
-                        }
-                        Switch(
-                            draft.active,
-                            null,
-                            enabled = !busy,
-                            colors =
-                                SwitchDefaults.colors(
-                                    checkedTrackColor = colors.primary,
-                                    checkedThumbColor = colors.surface,
-                                    checkedBorderColor = Color.Transparent,
-                                ),
-                        )
-                    }
+                    PulseSwitch(
+                        checked = draft.active,
+                        onCheckedChange = { onChange(draft.copy(active = it)) },
+                        label = stringResource(R.string.pulse_horizon_active_obligation),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        enabled = !busy,
+                        supportingText = stringResource(R.string.pulse_horizon_obligation_active_hint),
+                        switchAtEnd = true,
+                    )
                     error?.let {
                         PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = colors.error)
                     }
@@ -255,36 +222,21 @@ private fun ObligationInput(
 ) {
     val colors = PulseTheme.colors
     val keyboard = LocalSoftwareKeyboardController.current
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        PulseText(label, style = PulseTextStyle.Label)
-        OutlinedTextField(
-            value,
-            onChange,
-            Modifier.fillMaxWidth().semantics { contentDescription = accessibilityLabel },
-            enabled = enabled,
-            singleLine = true,
-            placeholder = { PulseText(hint, color = colors.textSecondary) },
-            leadingIcon = {
-                if (currency) PulseText(UserCurrency.symbol()) else icon?.let { Icon(painterResource(it), null, Modifier.size(20.dp)) }
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
-            keyboardActions = KeyboardActions(onDone = { keyboard?.hide() }),
-            textStyle = PulseTheme.typography.body1,
-            shape = RoundedCornerShape(12.dp),
-            colors =
-                OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = colors.textPrimary,
-                    unfocusedTextColor = colors.textPrimary,
-                    focusedBorderColor = colors.action,
-                    unfocusedBorderColor = colors.border,
-                    focusedContainerColor = colors.surface,
-                    unfocusedContainerColor = colors.surface,
-                    cursorColor = colors.action,
-                    focusedLeadingIconColor = colors.textPrimary,
-                    unfocusedLeadingIconColor = colors.textPrimary,
-                ),
-        )
-    }
+    PulseTextField(
+        value,
+        onChange,
+        label,
+        Modifier.fillMaxWidth().semantics { contentDescription = accessibilityLabel },
+        enabled = enabled,
+        labelAbove = true,
+        accessibilityLabel = accessibilityLabel,
+        placeholder = { PulseText(hint, color = colors.textSecondary) },
+        leadingIcon = {
+            if (currency) PulseText(UserCurrency.symbol()) else icon?.let { Icon(painterResource(it), null, Modifier.size(20.dp)) }
+        },
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+        keyboardActions = KeyboardActions(onDone = { keyboard?.hide() }),
+    )
 }
 
 @Composable
@@ -333,7 +285,7 @@ private fun ObligationCategory(
                 role = Role.RadioButton,
                 onClick = onSelect,
             ).testTag("obligation-category-$category"),
-        shape = RoundedCornerShape(12.dp),
+        shape = PulseTheme.shapes.medium,
         color = tileColor,
         border = BorderStroke(1.dp, borderColor),
     ) {
@@ -379,60 +331,22 @@ private fun ObligationBudget(
     enabled: Boolean,
     onChange: (HorizonDraft) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    val colors = PulseTheme.colors
-    val focus = LocalFocusManager.current
-    val keyboard = LocalSoftwareKeyboardController.current
+    val budgets = data?.budgets.orEmpty()
+    val none = stringResource(R.string.pulse_horizon_none)
     val selected =
-        if (draft.budgetId ==
-            null
-        ) {
-            stringResource(R.string.pulse_horizon_none)
+        if (draft.budgetId == null) {
+            none
         } else {
-            data?.budgets?.find { it.id == draft.budgetId }?.name
+            budgets.find { it.id == draft.budgetId }?.name
                 ?: stringResource(R.string.pulse_horizon_unavailable_selection)
         }
-    val selectionLabel =
-        stringResource(
-            dev.abhishekan.pulse.core.ui.R.string.pulse_ui_selection_label,
-            stringResource(R.string.pulse_horizon_obligation_budget_label),
-            selected,
-        )
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        PulseText(stringResource(R.string.pulse_horizon_obligation_budget_label), style = PulseTextStyle.Label)
-        Box {
-            OutlinedButton(
-                {
-                    focus.clearFocus()
-                    keyboard?.hide()
-                    expanded = true
-                },
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 56.dp)
-                    .testTag("obligation-budget")
-                    .semantics { contentDescription = selectionLabel },
-                enabled = enabled,
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, colors.border),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textPrimary),
-            ) {
-                Icon(painterResource(R.drawable.pulse_obligation_wallet), null, Modifier.size(20.dp))
-                PulseText(selected, Modifier.weight(1f).padding(horizontal = 16.dp), color = colors.textSecondary)
-                Icon(painterResource(R.drawable.pulse_obligation_chevron), null, Modifier.size(20.dp))
-            }
-            DropdownMenu(expanded && enabled, { expanded = false }, containerColor = colors.surface) {
-                DropdownMenuItem(text = { PulseText(stringResource(R.string.pulse_horizon_none)) }, onClick = {
-                    expanded = false
-                    onChange(draft.copy(budgetId = null))
-                })
-                data?.budgets.orEmpty().forEach { budget ->
-                    DropdownMenuItem(text = { PulseText(budget.name) }, onClick = {
-                        expanded = false
-                        onChange(draft.copy(budgetId = budget.id))
-                    })
-                }
-            }
-        }
-    }
+    PulseSelectionField(
+        label = stringResource(R.string.pulse_horizon_obligation_budget_label),
+        selected = selected,
+        options = listOf(none) + budgets.map { it.name },
+        onSelect = { index -> onChange(draft.copy(budgetId = budgets.getOrNull(index - 1)?.id)) },
+        modifier = Modifier.fillMaxWidth(),
+        triggerModifier = Modifier.heightIn(min = 56.dp).testTag("obligation-budget"),
+        enabled = enabled,
+    )
 }

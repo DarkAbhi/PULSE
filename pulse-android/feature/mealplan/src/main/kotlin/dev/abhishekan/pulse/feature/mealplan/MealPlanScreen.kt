@@ -11,9 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
@@ -42,7 +40,6 @@ import dev.abhishekan.pulse.core.domain.model.MealChange
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
-import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
@@ -53,6 +50,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
+import dev.abhishekan.pulse.core.ui.components.PulseFloatingActionButton
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
@@ -332,12 +330,9 @@ internal fun MealPlanScreen(
                 }
             }
             if (showAddButton) {
-                FloatingActionButton(
+                PulseFloatingActionButton(
                     onClick = { vm.add(state.selected) },
                     modifier = Modifier.align(Alignment.BottomEnd).padding(size.pagePadding).size(72.dp),
-                    shape = CircleShape,
-                    containerColor = PulseTheme.colors.primary,
-                    contentColor = PulseTheme.colors.onPrimary,
                 ) {
                     Icon(
                         painterResource(R.drawable.meal_add),

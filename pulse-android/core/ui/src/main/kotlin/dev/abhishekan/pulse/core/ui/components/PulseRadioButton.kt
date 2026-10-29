@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.core.ui.components
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
@@ -20,6 +21,7 @@ fun PulseRadioButton(
     label: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    supportingText: String? = null,
 ) {
     Row(
         modifier
@@ -40,6 +42,9 @@ fun PulseRadioButton(
             colors = RadioButtonDefaults.colors(selectedColor = PulseTheme.colors.action, unselectedColor = PulseTheme.colors.outline),
         )
         Spacer(Modifier.width(PulseTokens.small))
-        PulseText(label, Modifier.padding(vertical = PulseTokens.small))
+        Column(Modifier.padding(vertical = PulseTokens.small)) {
+            PulseText(label)
+            supportingText?.let { PulseText(it, style = PulseTextStyle.Body2, color = PulseTheme.colors.textSecondary) }
+        }
     }
 }

@@ -2,6 +2,7 @@ package dev.abhishekan.pulse.core.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.size
@@ -27,7 +28,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.R
 
-enum class PulseButtonVariant { Primary, Secondary, Tertiary, Destructive }
+enum class PulseButtonVariant { Primary, Secondary, Tertiary, Destructive, Soft, DestructiveSoft }
 
 /** Presentation is independent of the action's visual emphasis ([PulseButtonVariant]). */
 enum class PulseButtonStyle { Standard, Text, Icon }
@@ -47,6 +48,7 @@ fun PulseButton(
     variant: PulseButtonVariant = PulseButtonVariant.Primary,
     leadingIcon: (@Composable () -> Unit)? = null,
     style: PulseButtonStyle = PulseButtonStyle.Standard,
+    trailingIcon: (@Composable () -> Unit)? = null,
     icon: (@Composable () -> Unit)? = null,
 ) {
     val colors = PulseTheme.colors
@@ -77,7 +79,7 @@ fun PulseButton(
         }
         return
     }
-    val content: @Composable () -> Unit = {
+    val content: @Composable RowScope.() -> Unit = {
         if (loading) {
             CircularProgressIndicator(Modifier.size(PulseTokens.medium), color = LocalContentColor.current)
             Spacer(Modifier.width(PulseTokens.small))
@@ -85,7 +87,15 @@ fun PulseButton(
             leadingIcon()
             Spacer(Modifier.width(PulseTokens.small))
         }
-        PulseText(text, style = PulseTextStyle.Label)
+        PulseText(
+            text,
+            modifier = if (trailingIcon != null) Modifier.weight(1f, fill = false) else Modifier,
+            style = PulseTextStyle.Label,
+        )
+        if (trailingIcon != null && !loading) {
+            Spacer(Modifier.width(PulseTokens.small))
+            trailingIcon()
+        }
     }
     if (style == PulseButtonStyle.Text) {
         TextButton(
@@ -109,11 +119,15 @@ fun PulseButton(
             PulseButtonVariant.Secondary -> colors.surface
             PulseButtonVariant.Tertiary -> Color.Transparent
             PulseButtonVariant.Destructive -> colors.error
+            PulseButtonVariant.Soft -> colors.primarySoft
+            PulseButtonVariant.DestructiveSoft -> colors.errorSoft
         }
     val foreground =
         when (variant) {
             PulseButtonVariant.Primary -> colors.onPrimary
             PulseButtonVariant.Destructive -> colors.background
+            PulseButtonVariant.Soft -> colors.onPrimarySoft
+            PulseButtonVariant.DestructiveSoft -> colors.error
             else -> colors.action
         }
     Button(

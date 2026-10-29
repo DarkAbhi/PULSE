@@ -189,12 +189,17 @@ class HorizonViewModel(
                         ""
                     },
                 date =
-                    if (kind ==
-                        HorizonForm.Transaction
-                    ) {
+                    if (kind in listOf(HorizonForm.Transaction, HorizonForm.Subscription)) {
                         now.toLocalDate().toString()
                     } else {
                         ""
+                    },
+                dueDay = if (kind == HorizonForm.Subscription) now.dayOfMonth.toString() else "",
+                categoryId =
+                    if (kind == HorizonForm.Subscription) {
+                        data?.categories?.find { it.name.contains("subscription", ignoreCase = true) }?.id
+                    } else {
+                        null
                     },
                 time =
                     now

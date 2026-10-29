@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -27,9 +26,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import dev.abhishekan.pulse.core.domain.model.PlannedPurchase
 import dev.abhishekan.pulse.core.domain.model.PlannedPurchases
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -38,6 +35,7 @@ import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
+import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.currencyText
@@ -68,13 +66,7 @@ internal fun PlannedPurchaseList(
                             if (!wide) PurchaseIcon(R.drawable.pulse_purchase_cart)
                             PulseText(
                                 stringResource(R.string.pulse_horizon_purchase_summary_eyebrow),
-                                style =
-                                    PulseTheme.typography.body2.copy(
-                                        fontSize = 10.sp,
-                                        lineHeight = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 1.4.sp,
-                                    ),
+                                style = PulseTextStyle.Overline,
                                 color = colors.textPrimary,
                             )
                         }
@@ -145,7 +137,7 @@ internal fun PlannedPurchaseList(
             Modifier.semantics { heading() },
         )
         purchases.items.forEach { item -> PurchaseListCard(item, enabled) { delete(item) } }
-        HorizontalDivider(color = colors.divider)
+        PulseHorizontalDivider(color = colors.divider)
         PulseButton(
             stringResource(R.string.pulse_horizon_clear_planned_purchases),
             clear,
@@ -205,7 +197,7 @@ private fun PurchaseListCard(
                         PurchaseBadge()
                         Box(Modifier.weight(1f)) { details() }
                     }
-                    HorizontalDivider(color = colors.divider)
+                    PulseHorizontalDivider(color = colors.divider)
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         PurchaseAmount(currencyText(item.price).asString(), Modifier.weight(1f))
                         DeletePurchaseButton(item, enabled, delete)
@@ -267,7 +259,7 @@ private fun PurchaseAmount(
     PulseText(
         text,
         modifier,
-        style = PulseTheme.typography.heading2.copy(fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),
+        style = PulseTextStyle.Heading2,
         color = PulseTheme.colors.textPrimary,
     )
 }
@@ -280,7 +272,7 @@ private fun PurchaseTitle(
     PulseText(
         text,
         modifier,
-        style = PulseTheme.typography.title3.copy(fontWeight = FontWeight.Bold),
+        style = PulseTextStyle.Title3,
         color = PulseTheme.colors.textPrimary,
     )
 }

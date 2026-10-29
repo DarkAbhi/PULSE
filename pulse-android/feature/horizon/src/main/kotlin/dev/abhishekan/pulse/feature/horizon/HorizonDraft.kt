@@ -66,6 +66,7 @@ data class HorizonDraft(
         }
 
         fun optionalDay() = dueDay.takeIf { it.isNotBlank() }?.toInt()
+        val renewalDate by lazy { LocalDate.parse(date) }
         return when (kind) {
             HorizonForm.Config -> HorizonChange.Config(value, currency.trim())
             HorizonForm.Budget -> HorizonChange.Budget(id, name.trim(), value)
@@ -99,11 +100,8 @@ data class HorizonDraft(
                     name.trim(),
                     value,
                     cycle,
-                    optionalDay(),
-                    date
-                        .takeIf {
-                            it.isNotBlank()
-                        }?.let(LocalDate::parse),
+                    if (cycle == "monthly") dueDay.toInt().also { require(it in 1..31) } else renewalDate.dayOfMonth,
+                    if (cycle == "yearly") renewalDate else null,
                     status,
                     categoryId,
                     budgetId,

@@ -144,18 +144,10 @@ internal fun CompactTodayControl(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    Surface(
+    PulseButton(
+        text = label,
         onClick = onClick,
         enabled = enabled,
-        color = Color.Transparent,
-        contentColor = PulseTheme.colors.action,
-    ) {
-        Box(Modifier.size(PulseTokens.target), contentAlignment = Alignment.Center) {
-            Surface(shape = PulseTokens.controlShape, color = PulseTheme.colors.primarySoft) {
-                Box(Modifier.size(width = 40.dp, height = 32.dp), contentAlignment = Alignment.Center) {
-                    PulseText(label, style = PulseTextStyle.Caption)
-                }
-            }
-        }
-    }
+        style = PulseButtonStyle.Text,
+    )
 }

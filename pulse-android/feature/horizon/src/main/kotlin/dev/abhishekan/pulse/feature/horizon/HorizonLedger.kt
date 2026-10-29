@@ -17,10 +17,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -34,8 +33,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.currencyText
@@ -87,7 +89,7 @@ internal fun HorizonLedger(
                 months.forEach { (month, monthItems) ->
                     val transactions = if (oldestFirst) monthItems.reversed() else monthItems
                     key(month) {
-                        Surface(shape = RoundedCornerShape(20.dp), color = PulseTheme.colors.surface) {
+                        Surface(shape = PulseTheme.shapes.extraLarge, color = PulseTheme.colors.surface) {
                             Column(Modifier.fillMaxWidth().padding(16.dp)) {
                                 PulseText(month.format(DateTimeFormatter.ofPattern("MMMM yyyy")), style = PulseTextStyle.Title)
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -109,7 +111,7 @@ internal fun HorizonLedger(
                                         AnimatedVisibility(entered, enter = fadeIn(tween(220, minOf(index, 8) * 25))) {
                                             LedgerRow(tx, wide) { selectedId = tx.id }
                                         }
-                                        if (index < transactions.lastIndex) HorizontalDivider(color = PulseTheme.colors.divider)
+                                        if (index < transactions.lastIndex) PulseHorizontalDivider(color = PulseTheme.colors.divider)
                                     }
                                 }
                             }
@@ -171,7 +173,7 @@ private fun LedgerRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(Modifier.size(40.dp).background(accent.copy(alpha = 0.12f), RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(40.dp).background(accent.copy(alpha = 0.12f), PulseTheme.shapes.medium), contentAlignment = Alignment.Center) {
             PulseText(tx.name.take(1).uppercase(), style = PulseTextStyle.Title, color = accent)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -190,7 +192,12 @@ private fun LedgerRow(
                 style = PulseTextStyle.Label,
                 color = if (credit) PulseTheme.colors.success else PulseTheme.colors.textPrimary,
             )
-            PulseText("›", color = PulseTheme.colors.textTertiary)
+            Icon(
+                painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_back),
+                contentDescription = null,
+                modifier = Modifier.size(16.dp).rotate(180f),
+                tint = PulseTheme.colors.textTertiary,
+            )
         }
     }
 }
@@ -201,7 +208,7 @@ private fun LedgerBadges(tx: HorizonTransaction) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         PulseText(
             tx.categoryName,
-            Modifier.background(PulseTheme.colors.primarySoft, RoundedCornerShape(8.dp)).padding(horizontal = 8.dp, vertical = 4.dp),
+            Modifier.background(PulseTheme.colors.primarySoft, PulseTheme.shapes.small).padding(horizontal = 8.dp, vertical = 4.dp),
             style = PulseTextStyle.Caption,
             color = PulseTheme.colors.onPrimarySoft,
         )
@@ -216,7 +223,7 @@ private fun LedgerBadges(tx: HorizonTransaction) {
                     } else {
                         PulseTheme.colors.surfaceMuted
                     },
-                    RoundedCornerShape(8.dp),
+                    PulseTheme.shapes.small,
                 ).padding(horizontal = 8.dp, vertical = 4.dp),
             style = PulseTextStyle.Caption,
             color = if (tx.type == "credit") PulseTheme.colors.success else PulseTheme.colors.textSecondary,

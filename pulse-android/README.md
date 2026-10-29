@@ -486,6 +486,9 @@ light/dark colors, typography, shared components, font licenses and debug showca
 The [pre-implementation audit](docs/design-system-audit.md) records the previous
 Material styling dependencies and migration scope. Validation results are recorded
 in [design-system validation](docs/design-system-validation.md).
+The [29 October component-adoption audit](docs/design-system-adoption-audit-2026-10-29.md)
+details the app-wide follow-up, replacements, deliberate primitive exceptions and
+regression checks.
 
 ## Garage vehicle classification
 

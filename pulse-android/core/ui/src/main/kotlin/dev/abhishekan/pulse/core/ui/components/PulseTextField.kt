@@ -34,12 +34,13 @@ fun PulseTextField(
     supportingText: (@Composable () -> Unit)? = null,
     textStyle: TextStyle = PulseTheme.typography.body1,
     labelAbove: Boolean = false,
+    accessibilityLabel: String = label,
 ) {
     val field: @Composable () -> Unit = {
         OutlinedTextField(
             value,
             onValueChange,
-            modifier.semantics { if (labelAbove) contentDescription = label },
+            modifier.semantics { if (labelAbove) contentDescription = accessibilityLabel },
             enabled = enabled,
             singleLine = true,
             label = if (labelAbove) null else ({ PulseText(label) }),

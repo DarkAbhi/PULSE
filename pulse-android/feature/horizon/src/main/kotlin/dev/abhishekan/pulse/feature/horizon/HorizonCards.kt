@@ -3,7 +3,6 @@ package dev.abhishekan.pulse.feature.horizon
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +22,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.components.PulseLinearProgressIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
@@ -64,7 +64,7 @@ import java.time.format.DateTimeFormatter
                 item.usagePercent.toPlainString(),
             ),
         )
-        LinearProgressIndicator(progress = {
+        PulseLinearProgressIndicator(progress = {
             item.usagePercent
                 .divide(
                     BigDecimal(100),

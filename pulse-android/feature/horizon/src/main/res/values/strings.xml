@@ -1,5 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="pulse_horizon_subscription_name_required">Subscription name *</string>
+    <string name="pulse_horizon_billing_day_required">Billing day of month (1–31) *</string>
+    <string name="pulse_horizon_annual_renewal_date_required">Annual renewal date *: %1$s</string>
+    <string name="pulse_horizon_link_to_budget">Link to budget</string>
+    <string name="pulse_horizon_notes_renewal_link_optional">Notes / renewal link (optional)</string>
     <string name="pulse_horizon_starting_pool">"Starting pool"</string>
     <string name="pulse_horizon_budget">"Budget"</string>
     <string name="pulse_horizon_fixed_obligation">"Fixed obligation"</string>
@@ -261,4 +266,5 @@
     </plurals>
     <string name="pulse_horizon_purchase_summary_eyebrow">NEXT MONTH’S PLANNED PURCHASES</string>
     <string name="pulse_horizon_purchase_summary_total">Planned total %1$s</string>
+    <string name="pulse_horizon_percentage">%1$s%%</string>
 </resources>

@@ -20,6 +20,8 @@ fun PulseFilterChip(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     showSelectedIcon: Boolean = true,
+    leadingIcon: (@Composable () -> Unit)? = null,
+    trailingIcon: (@Composable () -> Unit)? = null,
 ) {
     FilterChip(
         selected,
@@ -31,7 +33,20 @@ fun PulseFilterChip(
         enabled = enabled,
         shape = PulseTheme.shapes.pill,
         leadingIcon =
-            if (selected && showSelectedIcon) {
+            leadingIcon ?: if (selected && showSelectedIcon) {
+                {
+                    Icon(
+                        painterResource(R.drawable.pulse_check),
+                        contentDescription = null,
+                        modifier = Modifier.size(PulseTokens.medium),
+                        tint = PulseTheme.colors.onPrimary,
+                    )
+                }
+            } else {
+                null
+            },
+        trailingIcon =
+            trailingIcon ?: if (leadingIcon != null && selected && showSelectedIcon) {
                 {
                     Icon(
                         painterResource(R.drawable.pulse_check),

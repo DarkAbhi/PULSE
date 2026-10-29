@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,6 +28,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.Vehicle
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -53,17 +53,13 @@ internal fun GarageCollectionHeader(
                     stringResource(R.string.pulse_garage_keep_every_journey_running_smoothly),
                     color = colors.textSecondary,
                 )
-                Button(
+                PulseButton(
+                    text = stringResource(R.string.pulse_garage_add_vehicle),
                     onClick = add,
                     enabled = enabled,
-                    shape = RoundedCornerShape(24.dp),
                     modifier = Modifier.heightIn(min = 56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary, contentColor = colors.onPrimary),
-                ) {
-                    Icon(painterResource(R.drawable.garage_add), null, Modifier.size(20.dp))
-                    Spacer(Modifier.size(12.dp))
-                    PulseText(stringResource(R.string.pulse_garage_add_vehicle), style = PulseTextStyle.Label)
-                }
+                    leadingIcon = { Icon(painterResource(R.drawable.garage_add), null, Modifier.size(20.dp)) },
+                )
             }
             if (wide) {
                 Image(painterResource(R.drawable.garage_workshop), null, Modifier.size(300.dp, 208.dp), contentScale = ContentScale.Fit)
@@ -142,21 +138,16 @@ private fun GarageVehicleCard(
                 }
             }
         }
-        Button(
+        PulseButton(
+            text = stringResource(R.string.pulse_garage_view_1_s, vehicle.name),
             onClick = open,
             enabled = enabled,
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-            shape = RoundedCornerShape(20.dp),
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = colors.primarySoft.copy(alpha = 0.5f),
-                    contentColor = colors.action,
-                ),
-        ) {
-            PulseText(stringResource(R.string.pulse_garage_view_1_s, vehicle.name), Modifier.weight(1f), PulseTextStyle.Label)
-            Spacer(Modifier.size(16.dp))
-            Icon(painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_back), null, Modifier.size(24.dp).rotate(180f))
-        }
+            variant = PulseButtonVariant.Soft,
+            trailingIcon = {
+                Icon(painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_back), null, Modifier.size(24.dp).rotate(180f))
+            },
+        )
     }
 }
 

@@ -209,7 +209,7 @@ class GarageDeviceTest {
                             if (request.method == HttpMethod.Get) {
                                 when (path) {
                                     "auth/session" -> """{"username":"garage-fixture"}"""
-                                    "profile" -> """{"has_profile":true,"name":"Asha"}"""
+                                    "profile" -> """{"has_profile":true,"name":"Asha","currency":"INR"}"""
                                     "workout/today" -> """{"visited":false}"""
                                     "notifications" -> "[]"
                                     "horizon" ->

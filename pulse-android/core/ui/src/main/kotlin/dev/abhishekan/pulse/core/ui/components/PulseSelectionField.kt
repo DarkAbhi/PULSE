@@ -28,6 +28,7 @@ fun PulseSelectionField(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    triggerModifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
@@ -39,7 +40,7 @@ fun PulseSelectionField(
                 keyboard?.hide()
                 expanded = true
             },
-            Modifier.fillMaxWidth().heightIn(
+            triggerModifier.fillMaxWidth().heightIn(
                 min = PulseTokens.target,
             ),
             enabled = enabled,

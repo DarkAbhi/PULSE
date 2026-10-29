@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.core.ui.components
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
@@ -20,6 +21,8 @@ fun PulseSwitch(
     label: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    supportingText: String? = null,
+    switchAtEnd: Boolean = false,
 ) {
     Row(
         modifier
@@ -33,21 +36,33 @@ fun PulseSwitch(
             ),
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
     ) {
-        Switch(
-            checked,
-            null,
-            enabled = enabled,
-            colors =
-                SwitchDefaults.colors(
-                    checkedThumbColor = PulseTheme.colors.onPrimary,
-                    checkedTrackColor = PulseTheme.colors.primary,
-                    checkedBorderColor = PulseTheme.colors.action,
-                    uncheckedThumbColor = PulseTheme.colors.textSecondary,
-                    uncheckedTrackColor = PulseTheme.colors.surfaceMuted,
-                    uncheckedBorderColor = PulseTheme.colors.outline,
-                ),
-        )
-        Spacer(Modifier.width(PulseTokens.small))
-        PulseText(label, Modifier.padding(vertical = PulseTokens.small))
+        val control: @Composable () -> Unit = {
+            Switch(
+                checked,
+                null,
+                enabled = enabled,
+                colors =
+                    SwitchDefaults.colors(
+                        checkedThumbColor = PulseTheme.colors.onPrimary,
+                        checkedTrackColor = PulseTheme.colors.primary,
+                        checkedBorderColor = PulseTheme.colors.action,
+                        uncheckedThumbColor = PulseTheme.colors.textSecondary,
+                        uncheckedTrackColor = PulseTheme.colors.surfaceMuted,
+                        uncheckedBorderColor = PulseTheme.colors.outline,
+                    ),
+            )
+        }
+        if (!switchAtEnd) {
+            control()
+            Spacer(Modifier.width(PulseTokens.small))
+        }
+        Column((if (switchAtEnd) Modifier.weight(1f) else Modifier).padding(vertical = PulseTokens.small)) {
+            PulseText(label)
+            supportingText?.let { PulseText(it, color = PulseTheme.colors.textSecondary) }
+        }
+        if (switchAtEnd) {
+            Spacer(Modifier.width(PulseTokens.small))
+            control()
+        }
     }
 }

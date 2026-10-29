@@ -1,7 +1,5 @@
 package dev.abhishekan.pulse.feature.horizon
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -10,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -20,10 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -42,10 +37,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.HorizonCategory
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
+import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -125,7 +121,6 @@ internal fun LedgerFilters(
                     categoryId != null && categories.take(4).none { it.id == categoryId },
                     Modifier.testTag("ledger-category-more"),
                     dropdown = true,
-                    flexLabel = true,
                     enabled = !state.busy,
                     onClick = {
                         categorySearch = ""
@@ -141,7 +136,6 @@ internal fun LedgerFilters(
                             1f,
                         ).testTag("ledger-type-filter"),
                     dropdown = true,
-                    flexLabel = true,
                     enabled = !state.busy,
                     onClick = {
                         sheet =
@@ -156,7 +150,6 @@ internal fun LedgerFilters(
                             1.3f,
                         ).testTag("ledger-category-filter"),
                     dropdown = true,
-                    flexLabel = true,
                     enabled = !state.busy,
                     onClick = {
                         categorySearch =
@@ -269,10 +262,11 @@ private fun ledgerTypeLabel(type: String?): String =
         },
     )
 
+@Composable
 private fun HorizonCategory.filterColor(): Color =
     runCatching {
         Color(android.graphics.Color.parseColor(color))
-    }.getOrDefault(Color(0xFF9A8550))
+    }.getOrDefault(PulseTheme.colors.action)
 
 @Composable
 private fun LedgerFilterPill(
@@ -280,88 +274,73 @@ private fun LedgerFilterPill(
     active: Boolean,
     modifier: Modifier = Modifier,
     dropdown: Boolean = false,
-    flexLabel: Boolean = false,
     sort: Boolean = false,
     color: Color? = null,
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    val background by animateColorAsState(if (active) PulseTheme.colors.primary else PulseTheme.colors.surface, label = "Filter selection")
     val foreground = if (active) PulseTheme.colors.onPrimary else PulseTheme.colors.textPrimary
-    Surface(
+    PulseFilterChip(
+        label = label,
+        selected = active,
         onClick = onClick,
-        modifier = modifier.heightIn(min = 44.dp).semantics { selected = active },
+        modifier = modifier,
         enabled = enabled,
-        shape = RoundedCornerShape(16.dp),
-        color = background,
-        contentColor = foreground,
-        border = BorderStroke(1.dp, if (active) Color.Transparent else PulseTheme.colors.border),
-    ) {
-        Row(
-            Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (color != null) Box(Modifier.size(8.dp).background(color, CircleShape))
-            if (!sort) {
-                PulseText(
-                    label,
-                    if (flexLabel) Modifier.weight(1f, fill = false) else Modifier,
-                    color = foreground,
-                    style = PulseTextStyle.Label2,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+        showSelectedIcon = false,
+        leadingIcon = color?.let { { Box(Modifier.size(8.dp).background(it, CircleShape)) } },
+        trailingIcon =
             if (dropdown || sort) {
-                Canvas(Modifier.size(16.dp)) {
-                    if (sort) {
-                        val x = size.width * 0.3f
-                        val y = size.height * 0.2f
-                        drawLine(foreground, Offset(x, y), Offset(x, size.height - y), 1.5.dp.toPx(), StrokeCap.Round)
-                        drawLine(foreground, Offset(x, y), Offset(x - y, y * 2), 1.5.dp.toPx(), StrokeCap.Round)
-                        drawLine(foreground, Offset(x, y), Offset(x + y, y * 2), 1.5.dp.toPx(), StrokeCap.Round)
-                        drawLine(
-                            foreground,
-                            Offset(size.width - x, y),
-                            Offset(size.width - x, size.height - y),
-                            1.5.dp.toPx(),
-                            StrokeCap.Round,
-                        )
-                        drawLine(
-                            foreground,
-                            Offset(size.width - x, size.height - y),
-                            Offset(size.width - x - y, size.height - y * 2),
-                            1.5.dp.toPx(),
-                            StrokeCap.Round,
-                        )
-                        drawLine(
-                            foreground,
-                            Offset(size.width - x, size.height - y),
-                            Offset(size.width - x + y, size.height - y * 2),
-                            1.5.dp.toPx(),
-                            StrokeCap.Round,
-                        )
-                    } else {
-                        drawLine(
-                            foreground,
-                            Offset(size.width * 0.25f, size.height * 0.4f),
-                            Offset(size.width * 0.5f, size.height * 0.65f),
-                            1.5.dp.toPx(),
-                            StrokeCap.Round,
-                        )
-                        drawLine(
-                            foreground,
-                            Offset(size.width * 0.5f, size.height * 0.65f),
-                            Offset(size.width * 0.75f, size.height * 0.4f),
-                            1.5.dp.toPx(),
-                            StrokeCap.Round,
-                        )
+                {
+                    Canvas(Modifier.size(16.dp)) {
+                        if (sort) {
+                            val x = size.width * 0.3f
+                            val y = size.height * 0.2f
+                            drawLine(foreground, Offset(x, y), Offset(x, size.height - y), 1.5.dp.toPx(), StrokeCap.Round)
+                            drawLine(foreground, Offset(x, y), Offset(x - y, y * 2), 1.5.dp.toPx(), StrokeCap.Round)
+                            drawLine(foreground, Offset(x, y), Offset(x + y, y * 2), 1.5.dp.toPx(), StrokeCap.Round)
+                            drawLine(
+                                foreground,
+                                Offset(size.width - x, y),
+                                Offset(size.width - x, size.height - y),
+                                1.5.dp.toPx(),
+                                StrokeCap.Round,
+                            )
+                            drawLine(
+                                foreground,
+                                Offset(size.width - x, size.height - y),
+                                Offset(size.width - x - y, size.height - y * 2),
+                                1.5.dp.toPx(),
+                                StrokeCap.Round,
+                            )
+                            drawLine(
+                                foreground,
+                                Offset(size.width - x, size.height - y),
+                                Offset(size.width - x + y, size.height - y * 2),
+                                1.5.dp.toPx(),
+                                StrokeCap.Round,
+                            )
+                        } else {
+                            drawLine(
+                                foreground,
+                                Offset(size.width * 0.25f, size.height * 0.4f),
+                                Offset(size.width * 0.5f, size.height * 0.65f),
+                                1.5.dp.toPx(),
+                                StrokeCap.Round,
+                            )
+                            drawLine(
+                                foreground,
+                                Offset(size.width * 0.5f, size.height * 0.65f),
+                                Offset(size.width * 0.75f, size.height * 0.4f),
+                                1.5.dp.toPx(),
+                                StrokeCap.Round,
+                            )
+                        }
                     }
                 }
-            }
-        }
-    }
+            } else {
+                null
+            },
+    )
 }
 
 @Composable
@@ -372,16 +351,8 @@ private fun LedgerSheetOption(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Surface(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth().semantics { selected = active },
-        shape = RoundedCornerShape(16.dp),
-        color = if (active) PulseTheme.colors.primarySoft else PulseTheme.colors.surface,
-    ) {
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (color != null) Box(Modifier.size(12.dp).background(color, CircleShape))
-            PulseText(label, Modifier.weight(1f), style = PulseTextStyle.Body)
-            if (active) PulseText("✓", color = PulseTheme.colors.action) else Spacer(Modifier.size(16.dp))
-        }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        if (color != null) Box(Modifier.padding(start = 16.dp).size(12.dp).background(color, CircleShape))
+        PulseRadioButton(active, onClick, label, modifier.weight(1f))
     }
 }

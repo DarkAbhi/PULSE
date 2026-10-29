@@ -655,6 +655,9 @@ class HorizonDeviceTest {
                 actions.forEach { (label, _) -> compose.onNodeWithText(label).assertIsDisplayed() }
                 screenshot("quick-actions-$layout", tag = "horizon-quick-actions-menu")
                 InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+                compose.waitUntil(5_000) {
+                    compose.onAllNodes(hasTestTag("horizon-quick-actions-menu")).fetchSemanticsNodes().isEmpty()
+                }
                 compose.onNodeWithText("Log a transaction").assertDoesNotExist()
                 actions.forEach { (label, title) ->
                     quickAction(label)
@@ -747,6 +750,9 @@ class HorizonDeviceTest {
         compose.onNode(hasTestTag("obligation-due-day")).performScrollTo().performClick()
         awaitText("Choose due day")
         compose.onNode(hasTestTag("obligation-day-31")).performScrollTo().performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasTestTag("obligation-day-picker")).fetchSemanticsNodes().isEmpty()
+        }
         compose.onNode(hasTestTag("obligation-budget")).performScrollTo().performClick()
         tap("Travel fund")
         tap("Active obligation")
@@ -756,6 +762,14 @@ class HorizonDeviceTest {
         assertEquals("investment", obligation["category"]?.jsonPrimitive?.content)
         assertEquals(false, obligation["is_active"]?.jsonPrimitive?.boolean)
         assertEquals(31, obligation["due_day"]?.jsonPrimitive?.int)
+        assertEquals(
+            backend
+                .items("budgets")
+                .entries
+                .single { it.value["name"]?.jsonPrimitive?.content == "Travel fund" }
+                .key,
+            obligation["budget_id"]?.jsonPrimitive?.long,
+        )
         cardAction("Internet", "Edit")
         awaitText("Edit fixed obligation")
         compose.onNode(hasContentDescription("Name") and hasSetTextAction()).assertTextEquals("Internet")
@@ -775,7 +789,7 @@ class HorizonDeviceTest {
         compose.onNode(hasTestTag("obligation-due-day")).performClick()
         compose.onNode(hasTestTag("obligation-day-31")).performScrollTo().performClick()
         compose.onNode(hasTestTag("obligation-category-investment")).assertIsSelected()
-        compose.onNode(hasTestTag("obligation-budget")).assertTextContains("Travel fund")
+        compose.onNode(hasTestTag("obligation-budget")).assertTextContains("Budget (optional): Travel fund")
         compose.onNodeWithText("Active obligation").assertIsOff()
         screenshot("obligation-edit")
         compose.onNodeWithContentDescription("Obligation actions").performClick()
@@ -929,13 +943,16 @@ class HorizonDeviceTest {
         launchHorizon()
         tap("Subscriptions")
         quickAction("Add subscription")
-        field("Name", "Streaming")
+        field("Subscription name *", "Streaming")
         field("Amount (${UserCurrency.symbol()})", "99.99")
+        compose.onNodeWithText("Date:", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Fixed obligation:", substring = true).assertDoesNotExist()
+        field("Billing day of month (1–31) *", "20")
         pick("Billing cycle", "Monthly", "Yearly")
+        compose.onNodeWithText("Billing day of month (1–31) *").assertDoesNotExist()
+        compose.onNodeWithText("Annual renewal date *:", substring = true).assertExists()
         pick("Status", "Active", "Paused")
-        pick("Budget", "None", "Everyday")
-        pick("Fixed obligation", "None", "Rent")
-        field("Billing day (1–31, optional)", "20")
+        pick("Link to budget", "None", "Everyday")
         tap("Save subscription")
         awaitText("Streaming")
         cardAction("Streaming", "Edit")

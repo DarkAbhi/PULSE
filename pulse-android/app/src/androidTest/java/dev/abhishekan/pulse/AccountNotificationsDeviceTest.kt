@@ -404,7 +404,7 @@ class AccountNotificationsDeviceTest {
     }
 
     private fun openNotifications() {
-        compose.onNodeWithContentDescription("Notifications").performClick()
+        compose.onNodeWithContentDescription("notifications", substring = true, ignoreCase = true).performClick()
         awaitText("Notifications")
     }
 
@@ -558,7 +558,13 @@ class AccountNotificationsDeviceTest {
         assertEquals(1, actionLayouts.single().lineCount)
         if (!rail) {
             compose.onNode(hasText("You") and isSelectable()).assertDoesNotExist()
-            val notifications = compose.onNodeWithContentDescription("Notifications").getUnclippedBoundsInRoot()
+            val notifications =
+                compose
+                    .onNodeWithContentDescription(
+                        "notifications",
+                        substring = true,
+                        ignoreCase = true,
+                    ).getUnclippedBoundsInRoot()
             val profile = compose.onNodeWithContentDescription("Profile").assertIsDisplayed().getUnclippedBoundsInRoot()
             assertEquals(notifications.top.value, profile.top.value, 1f)
             assertTrue(notifications.right <= profile.left)

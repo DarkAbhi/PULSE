@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,7 +24,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -43,6 +40,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
+import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -278,7 +276,7 @@ private fun FuelFillSelector(
     var help by rememberSaveable { mutableStateOf(false) }
     val fill = draft["fill$tank"]
     PulseText(stringResource(R.string.pulse_garage_fill_type_tank_1_s, tank + 1), style = PulseTextStyle.Label)
-    Row(
+    Column(
         Modifier
             .fillMaxWidth()
             .clip(
@@ -289,19 +287,13 @@ private fun FuelFillSelector(
     ) {
         listOf("partial", "full").forEach { value ->
             val selected = fill == value
-            Column(
-                Modifier
-                    .weight(1f)
-                    .clip(PulseTokens.controlShape)
-                    .background(if (selected) PulseTheme.colors.primary else PulseTheme.colors.surfaceMuted)
-                    .selectable(selected, enabled = enabled, role = Role.RadioButton) { change(draft.set("fill$tank", value)) }
-                    .heightIn(min = PulseTokens.target)
-                    .padding(PulseTokens.small),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                PulseText(garageOption(value), color = if (selected) PulseTheme.colors.onPrimary else PulseTheme.colors.textPrimary)
-            }
+            PulseRadioButton(
+                selected = selected,
+                onClick = { change(draft.set("fill$tank", value)) },
+                label = garageOption(value),
+                modifier = Modifier.fillMaxWidth(),
+                enabled = enabled,
+            )
         }
     }
     PulseCheckbox(fill == "missed", {

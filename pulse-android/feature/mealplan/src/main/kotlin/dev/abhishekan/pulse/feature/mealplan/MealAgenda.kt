@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -43,6 +42,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.components.PulseExtendedFloatingActionButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.time.LocalDate
@@ -338,19 +338,15 @@ internal fun AddMealTimeButton(
     onAdd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ExtendedFloatingActionButton(
+    PulseExtendedFloatingActionButton(
         onClick = onAdd,
         modifier = modifier.widthIn(max = 280.dp),
-        containerColor = PulseTheme.colors.primary,
-        contentColor = PulseTheme.colors.onPrimary,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(painterResource(R.drawable.meal_add), null, Modifier.size(24.dp))
+        icon = { Icon(painterResource(R.drawable.meal_add), null, Modifier.size(24.dp)) },
+        text = {
             PulseText(
                 stringResource(R.string.pulse_mealplan_add_custom_meal_time),
-                modifier = Modifier.weight(1f, fill = false),
-                style = PulseTextStyle.Body,
+                style = PulseTextStyle.Label,
             )
-        }
-    }
+        },
+    )
 }

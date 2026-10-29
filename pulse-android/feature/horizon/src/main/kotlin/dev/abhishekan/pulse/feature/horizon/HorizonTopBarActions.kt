@@ -2,9 +2,6 @@ package dev.abhishekan.pulse.feature.horizon
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +22,9 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
+import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenu
+import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenuItem
+import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 
 /** Shares the navigation entry's ViewModel with the screen, including its draft safeguards. */
@@ -51,14 +51,10 @@ fun HorizonTopBarActions(viewModel: HorizonViewModel) {
         ) {
             Icon(painterResource(R.drawable.pulse_horizon_more), contentDescription = null)
         }
-        DropdownMenu(
+        PulseDropdownMenu(
             expanded = expanded && canCreate,
             onDismissRequest = { expanded = false },
             modifier = Modifier.testTag("horizon-quick-actions-menu"),
-            shape = PulseTheme.shapes.medium,
-            containerColor = PulseTheme.colors.surface,
-            tonalElevation = PulseTheme.elevation.none,
-            shadowElevation = PulseTheme.elevation.low,
         ) {
             val actions =
                 listOf(
@@ -70,8 +66,8 @@ fun HorizonTopBarActions(viewModel: HorizonViewModel) {
                     HorizonForm.Category to R.string.pulse_horizon_add_category_tag,
                 )
             actions.forEach { (form, label) ->
-                if (form == HorizonForm.Budget) HorizontalDivider(color = PulseTheme.colors.border)
-                DropdownMenuItem(
+                if (form == HorizonForm.Budget) PulseHorizontalDivider(color = PulseTheme.colors.border)
+                PulseDropdownMenuItem(
                     text = { PulseText(stringResource(label)) },
                     onClick = {
                         expanded = false
@@ -100,8 +96,8 @@ private fun ObligationTopBarActions(
             enabled = enabled,
             style = PulseButtonStyle.Icon,
         ) { Icon(painterResource(R.drawable.pulse_horizon_more), null) }
-        DropdownMenu(expanded && enabled, { expanded = false }, containerColor = PulseTheme.colors.surface) {
-            DropdownMenuItem(
+        PulseDropdownMenu(expanded && enabled, { expanded = false }) {
+            PulseDropdownMenuItem(
                 text = { PulseText(stringResource(R.string.pulse_horizon_obligation_delete), color = PulseTheme.colors.error) },
                 onClick = {
                     expanded = false

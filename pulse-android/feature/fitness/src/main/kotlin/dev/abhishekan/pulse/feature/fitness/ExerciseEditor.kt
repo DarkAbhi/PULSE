@@ -4,8 +4,6 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -13,7 +11,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -47,6 +44,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -161,25 +159,14 @@ internal fun ExerciseEditor(
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .border(PulseTokens.focusWidth, PulseTheme.colors.primary, PulseTheme.shapes.medium)
-                            .background(PulseTheme.colors.surface, PulseTheme.shapes.medium)
-                            .clickable(enabled = !busy, onClick = openSelector)
-                            .heightIn(min = PulseTokens.target)
-                            .padding(PulseTokens.medium),
-                        horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        EditorSearchGlyph()
-                        PulseText(
-                            stringResource(R.string.pulse_fitness_editor_search_placeholder),
-                            Modifier.weight(1f),
-                            color = PulseTheme.colors.textSecondary,
-                        )
-                        PulseText(stringResource(R.string.pulse_fitness_open_search_glyph), style = PulseTextStyle.Title)
-                    }
+                    PulseButton(
+                        text = stringResource(R.string.pulse_fitness_editor_search_placeholder),
+                        onClick = openSelector,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !busy,
+                        variant = PulseButtonVariant.Secondary,
+                        leadingIcon = { EditorSearchGlyph() },
+                    )
                     PulseCard(Modifier.fillMaxWidth()) {
                         Column(
                             Modifier.fillMaxWidth().padding(vertical = PulseTokens.large),

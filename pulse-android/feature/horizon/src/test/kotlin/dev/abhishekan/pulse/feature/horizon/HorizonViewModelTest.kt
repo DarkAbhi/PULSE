@@ -213,6 +213,46 @@ class HorizonViewModelTest {
             assertEquals(2, repo.readCount)
         }
 
+    @Test fun subscriptionBillingFieldsFollowTheSelectedCycle() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            val monthly =
+                HorizonDraft(
+                    HorizonForm.Subscription,
+                    name = "Music",
+                    amount = "299",
+                    dueDay = "29",
+                    date = "2028-02-20",
+                )
+            listOf("", "0", "32", "1.5").forEach { day ->
+                vm.edit(monthly.copy(dueDay = day))
+                vm.save()
+                runCurrent()
+                assertNotNull(vm.uiState.value.formError)
+            }
+            vm.edit(monthly.copy(cycle = "yearly", date = ""))
+            vm.save()
+            runCurrent()
+            assertNotNull(vm.uiState.value.formError)
+            assertTrue(repo.writes.isEmpty())
+
+            vm.edit(monthly)
+            vm.save()
+            runCurrent()
+            val monthlyChange = repo.writes.last() as HorizonChange.Subscription
+            assertEquals(29, monthlyChange.billingDay)
+            assertNull(monthlyChange.renewalDate)
+            assertNull(monthlyChange.deductionId)
+
+            vm.edit(monthly.copy(cycle = "yearly", dueDay = "invalid"))
+            vm.save()
+            runCurrent()
+            val yearlyChange = repo.writes.last() as HorizonChange.Subscription
+            assertEquals(20, yearlyChange.billingDay)
+            assertEquals(java.time.LocalDate.parse("2028-02-20"), yearlyChange.renewalDate)
+        }
+
     @Test fun uncertainWriteRequiresFreshStateAndReviewEvenAfterProcessRestore() =
         runTest {
             val saved = SavedStateHandle()

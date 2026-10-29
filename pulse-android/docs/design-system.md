@@ -2,6 +2,11 @@
 
 Implementation and standards, 18 October 2026. See [the pre-implementation audit](design-system-audit.md).
 
+The [29 October component-adoption audit](design-system-adoption-audit-2026-10-29.md)
+records the subsequent app-wide migration, retained primitive exceptions and
+validation. Shared APIs now also cover slot-based dialogs, menus, floating actions,
+dividers and determinate progress. Use those Pulse APIs from feature screens.
+
 ## Architecture
 
 `core:ui` remains the single owner. `PulseTheme.colors` exposes an immutable
@@ -165,13 +170,14 @@ medium 4dp, high 8dp. Cards and buttons stay flat; dropdowns use low shadow.
 
 Material 3 remains installed deliberately. All the controls above retain Material
 mechanics behind the existing Pulse abstractions, plus Text and Surface for
-content/semantics. App/login/gallery Scaffold, app Icon, snackbar host/state and
-Horizon's linear indicator are infrastructure primitives still imported directly;
-Scaffold colors are explicit, Icon inherits the enclosing Pulse control's content
-color, and the linear indicator reads the fully specified compatibility scheme.
+content/semantics. App/login/gallery Scaffold, app Icon and snackbar host/state
+remain infrastructure primitives imported directly;
+Scaffold colors are explicit and Icon inherits the enclosing Pulse control's
+content color. Horizon now uses PulseLinearProgressIndicator.
 There are no MaterialTheme reads outside the private bridge. These do not introduce
 a second styling API. No existing bottom sheet, avatar, badge, list-item or tab
-wrapper existed; unused new abstractions were not added.
+wrapper existed at the original migration. Subsequent additions and remaining
+exceptions are documented in the component-adoption audit linked above.
 
 No business logic, ViewModel, repository, API, validation, destination, argument,
 permission, persistence, analytics or dependency-injection behavior was changed.

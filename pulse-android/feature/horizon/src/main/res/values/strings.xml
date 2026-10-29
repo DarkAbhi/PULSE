@@ -107,7 +107,6 @@
     </plurals>
     <string name="pulse_horizon_no_projections">"No projections"</string>
     <string name="pulse_horizon_projections_appear_when_the_server_provides_them">"Projections appear when the server provides them."</string>
-    <string name="pulse_horizon_projected_cumulative_uncommitted_funds_based_on_the_current_monthly">"Projected cumulative uncommitted funds, based on the current monthly plan."</string>
     <string name="pulse_horizon_over_budget">"Over budget"</string>
     <string name="pulse_horizon_available">"Available"</string>
     <string name="pulse_horizon_allocated_1_s_used_2_s">"Allocated: %1$s · Used: %2$s"</string>

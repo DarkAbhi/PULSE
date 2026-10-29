@@ -74,11 +74,6 @@ internal fun ProjectionCard(data: HorizonOverview) {
                         }
                     }
                 }
-                PulseText(
-                    stringResource(R.string.pulse_horizon_projected_cumulative_uncommitted_funds_based_on_the_current_monthly),
-                    style = PulseTextStyle.Caption,
-                    color = PulseTheme.colors.textSecondary,
-                )
             }
         }
     }

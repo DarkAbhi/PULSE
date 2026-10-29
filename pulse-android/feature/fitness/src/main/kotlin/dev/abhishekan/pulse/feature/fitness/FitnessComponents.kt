@@ -20,8 +20,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCalendarDay
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -73,7 +74,7 @@ internal fun CalendarControl(
         )
     }
     if (compact) {
-        PulseIconButton(label, onClick, enabled = enabled) {
+        PulseButton(label, onClick, enabled = enabled, style = PulseButtonStyle.Icon) {
             Surface(
                 modifier = Modifier.size(32.dp),
                 shape = PulseTokens.controlShape,
@@ -90,7 +91,7 @@ internal fun CalendarControl(
             color = PulseTheme.colors.surface,
             border = BorderStroke(1.dp, PulseTheme.colors.divider),
         ) {
-            PulseIconButton(label, onClick, enabled = enabled, icon = glyph)
+            PulseButton(label, onClick, enabled = enabled, icon = glyph, style = PulseButtonStyle.Icon)
         }
     }
 }

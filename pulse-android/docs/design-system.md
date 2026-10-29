@@ -149,7 +149,7 @@ medium 4dp, high 8dp. Cards and buttons stay flat; dropdowns use low shadow.
 | --- | --- | --- |
 | PulseText | Full semantic scale and bundled fonts | Text semantics and scaling |
 | PulseButton | Mustard, pressed mustard, disabled neutral; primary/secondary/tertiary/destructive variants | Click, focus, loading/disabled semantics, >=48dp target |
-| PulseTextButton / IconButton | Action/ink colors, neutral disabled colors | Click, labels, focus and target |
+| PulseButton (Text / Icon styles) | Action/ink colors, transparent disabled background, native text padding / circular icon feedback | Click, accessible icon label, focus and >=48dp target |
 | PulseCard | Flat neutral/soft primary, explicit paired foreground, 16dp corners | Content scope and padding |
 | PulseTextField / PasswordField | DM Sans, neutral surface, focus/error outlines, 8dp corners | Keyboard, selection, password state, validation and autofill |
 | PulseSelectionField | Neutral outlined trigger, 12dp menu, low shadow | Focus/keyboard dismissal and selection callbacks |
@@ -222,3 +222,25 @@ or information groupings were changed here.
 | barlow_condensed_bold.ttf | `e476562ec9c1e16cf16475895b511f08c804f438cc9a9f80a44ea50a0eeb5b65` |
 | dm_sans.ttf | `8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d` |
 | instrument_serif_regular.ttf | `498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88` |
+
+### Unified buttons
+
+Use `PulseButton` for all actions. `PulseButtonStyle.Standard` (the default)
+keeps primary, secondary, tertiary and destructive appearances.
+`style = PulseButtonStyle.Text` retains text-button padding and transparent
+backgrounds, including when disabled. Combine it with
+`variant = PulseButtonVariant.Destructive` for a red text action.
+`style = PulseButtonStyle.Icon` uses `text` as the accessibility label and requires
+an `icon` slot (also accepted as a trailing lambda). It retains circular feedback
+and the ink color of navigation/toolbar actions. `leadingIcon` remains the slot
+for an icon beside visible text. Every style supports `enabled` and `loading`;
+loading blocks clicks and announces its state. Icon loading replaces the glyph
+with a spinner while keeping its accessibility label.
+
+```kotlin
+PulseButton("Save", onSave)
+PulseButton("Cancel", onCancel, style = PulseButtonStyle.Text)
+PulseButton("Back", onBack, style = PulseButtonStyle.Icon) {
+    Icon(painterResource(R.drawable.pulse_back), contentDescription = null)
+}
+```

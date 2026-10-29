@@ -22,8 +22,9 @@ import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.HorizonRecord
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 
 /** Shares the navigation entry's ViewModel with the screen, including its draft safeguards. */
@@ -41,11 +42,12 @@ fun HorizonTopBarActions(viewModel: HorizonViewModel) {
         if (!canCreate) expanded = false
     }
     Box {
-        PulseIconButton(
+        PulseButton(
             stringResource(R.string.pulse_horizon_quick_actions),
             { expanded = true },
             modifier = Modifier.testTag("horizon-quick-actions"),
             enabled = canCreate,
+            style = PulseButtonStyle.Icon,
         ) {
             Icon(painterResource(R.drawable.pulse_horizon_more), contentDescription = null)
         }
@@ -92,10 +94,11 @@ private fun ObligationTopBarActions(
     var confirming by rememberSaveable(id) { mutableStateOf(false) }
     val enabled = !state.busy && !state.reviewRequired && state.overview.value != null
     Box {
-        PulseIconButton(
+        PulseButton(
             stringResource(R.string.pulse_horizon_obligation_more_actions),
             { expanded = true },
             enabled = enabled,
+            style = PulseButtonStyle.Icon,
         ) { Icon(painterResource(R.drawable.pulse_horizon_more), null) }
         DropdownMenu(expanded && enabled, { expanded = false }, containerColor = PulseTheme.colors.surface) {
             DropdownMenuItem(

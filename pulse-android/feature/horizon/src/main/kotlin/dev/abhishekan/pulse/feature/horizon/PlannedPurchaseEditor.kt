@@ -41,9 +41,8 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.uiText
@@ -169,10 +168,11 @@ internal fun PlannedPurchaseEditor(
                     leadingIcon = { PurchaseIcon(if (urlError) R.drawable.pulse_purchase_error else R.drawable.pulse_purchase_link) },
                     trailingIcon = {
                         if (draft.url.isNotEmpty()) {
-                            PulseIconButton(
+                            PulseButton(
                                 stringResource(R.string.pulse_horizon_purchase_clear_link),
                                 { onChange(draft.copy(url = "")) },
                                 enabled = !busy,
+                                style = PulseButtonStyle.Icon,
                             ) {
                                 PurchaseIcon(R.drawable.pulse_purchase_clear)
                             }
@@ -234,7 +234,12 @@ internal fun PlannedPurchaseEditor(
                     enabled = !busy && !blocked && data != null,
                     loading = busy,
                 )
-                PulseTextButton(stringResource(R.string.pulse_horizon_purchase_cancel), onCancel, enabled = !busy)
+                PulseButton(
+                    stringResource(R.string.pulse_horizon_purchase_cancel),
+                    onCancel,
+                    enabled = !busy,
+                    style = PulseButtonStyle.Text,
+                )
             }
         }
     }

@@ -31,11 +31,12 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.asString
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
 import org.koin.androidx.compose.koinViewModel
@@ -118,7 +119,7 @@ fun HomeScreen(
                 when (val profile = state.profile) {
                     is Section.Error -> {
                         PulseText(profile.failure.message.asString())
-                        PulseTextButton(stringResource(R.string.pulse_home_retry_profile), retryProfile)
+                        PulseButton(stringResource(R.string.pulse_home_retry_profile), retryProfile, style = PulseButtonStyle.Text)
                     }
                     Section.Loading -> PulseLoadingState(stringResource(R.string.pulse_home_loading_your_profile))
                     else -> Unit

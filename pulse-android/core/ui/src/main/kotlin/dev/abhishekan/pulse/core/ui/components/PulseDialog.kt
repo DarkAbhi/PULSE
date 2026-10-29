@@ -22,7 +22,7 @@ fun PulseDialog(
     AlertDialog(
         onDismiss,
         confirmButton = {
-            PulseTextButton(confirmLabel, onConfirm)
+            PulseButton(confirmLabel, onConfirm, style = PulseButtonStyle.Text)
         },
         modifier = modifier,
         shape = PulseTheme.shapes.extraLarge,
@@ -31,7 +31,7 @@ fun PulseDialog(
         textContentColor = PulseTheme.colors.textSecondary,
         tonalElevation = PulseTheme.elevation.none,
         dismissButton = {
-            PulseTextButton(dismissLabel, onDismiss)
+            PulseButton(dismissLabel, onDismiss, style = PulseButtonStyle.Text)
         },
         title = {
             PulseText(title, style = PulseTextStyle.Title)

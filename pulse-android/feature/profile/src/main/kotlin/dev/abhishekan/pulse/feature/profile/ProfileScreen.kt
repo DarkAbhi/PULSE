@@ -65,6 +65,7 @@ import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
@@ -75,7 +76,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.label
@@ -279,10 +279,10 @@ internal fun ProfileScreen(
                                 }
                             }
                             state.keysError?.let { PulseErrorState(it.message, vm::refreshKeys) }
-                            PulseTextButton(stringResource(R.string.pulse_profile_review), {
+                            PulseButton(stringResource(R.string.pulse_profile_review), {
                                 vm.refreshProfile()
                                 vm.refreshKeys()
-                            }, enabled = !state.busy)
+                            }, enabled = !state.busy, style = PulseButtonStyle.Text)
                         }
                         PulseButton(
                             stringResource(
@@ -301,7 +301,9 @@ internal fun ProfileScreen(
                 if (state.editor != null) {
                     AccountForm(state, vm, cancel)
                     if (state.editor != AccountEditor.Password) {
-                        PulseTextButton(stringResource(R.string.pulse_profile_logout), { logout = true }, enabled = !state.busy && !loggingOut)
+                        PulseButton(stringResource(R.string.pulse_profile_logout), {
+                            logout = true
+                        }, enabled = !state.busy && !loggingOut, style = PulseButtonStyle.Text)
                     }
                 } else {
                     val identity: @Composable () -> Unit = {
@@ -351,11 +353,12 @@ internal fun ProfileScreen(
                                     Modifier.semantics { heading() },
                                     PulseTextStyle.Title,
                                 )
-                                PulseTextButton(
+                                PulseButton(
                                     stringResource(R.string.pulse_profile_password),
                                     { vm.edit(AccountEditor.Password) },
                                     enabled =
                                         !state.busy && !state.uncertain,
+                                    style = PulseButtonStyle.Text,
                                 )
                             }
                             APIKeysCard(state, vm) { revoke = it }
@@ -578,7 +581,7 @@ private fun AccountForm(
                 !state.busy && !state.uncertain,
             loading = state.busy,
         )
-        PulseTextButton(stringResource(R.string.pulse_profile_cancel), cancel, enabled = !state.busy)
+        PulseButton(stringResource(R.string.pulse_profile_cancel), cancel, enabled = !state.busy, style = PulseButtonStyle.Text)
     }
 }
 
@@ -613,11 +616,12 @@ private fun APIKeysCard(
                     DateTimeFormatter.ofPattern("d MMM yyyy").withZone(UserTimeZone.zone).format(key.createdAt),
                 ),
             )
-            PulseTextButton(
+            PulseButton(
                 stringResource(R.string.pulse_profile_revoke, key.name),
                 { revoke(key) },
                 enabled =
                     !state.busy && !state.uncertain,
+                style = PulseButtonStyle.Text,
             )
         }
         PulseButton(

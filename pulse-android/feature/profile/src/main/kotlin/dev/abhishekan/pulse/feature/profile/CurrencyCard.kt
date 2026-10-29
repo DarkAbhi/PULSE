@@ -17,10 +17,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -37,11 +38,11 @@ internal fun CurrencyCard(
         PulseText(stringResource(R.string.pulse_profile_currency), style = PulseTextStyle.Title)
         PulseText(UserCurrency.label(current))
         PulseText(stringResource(R.string.pulse_profile_currency_explanation))
-        PulseTextButton(stringResource(R.string.pulse_profile_currency_select), {
+        PulseButton(stringResource(R.string.pulse_profile_currency_select), {
             selected = current
             search = ""
             open = true
-        }, enabled = state.profile != null && !state.loading && !state.busy && !state.uncertain)
+        }, enabled = state.profile != null && !state.loading && !state.busy && !state.uncertain, style = PulseButtonStyle.Text)
         state.error?.let { PulseText(it, color = PulseTheme.colors.error) }
     }
     if (open) {
@@ -68,12 +69,12 @@ internal fun CurrencyCard(
                 }
             },
             confirmButton = {
-                PulseTextButton(stringResource(R.string.pulse_profile_save), {
+                PulseButton(stringResource(R.string.pulse_profile_save), {
                     open = false
                     onSave(selected)
-                }, enabled = selected != current)
+                }, enabled = selected != current, style = PulseButtonStyle.Text)
             },
-            dismissButton = { PulseTextButton(stringResource(R.string.pulse_profile_cancel), { open = false }) },
+            dismissButton = { PulseButton(stringResource(R.string.pulse_profile_cancel), { open = false }, style = PulseButtonStyle.Text) },
         )
     }
 }

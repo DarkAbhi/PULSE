@@ -45,10 +45,10 @@ import androidx.compose.ui.window.DialogProperties
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -75,7 +75,7 @@ internal fun ExerciseModal(
             ) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     PulseText(title, Modifier.weight(1f).semantics { heading() }, PulseTextStyle.Title3)
-                    PulseTextButton(stringResource(R.string.pulse_fitness_workout_close), onDismiss)
+                    PulseButton(stringResource(R.string.pulse_fitness_workout_close), onDismiss, style = PulseButtonStyle.Text)
                 }
                 content()
             }
@@ -112,7 +112,11 @@ internal fun ExerciseSelector(
                 }),
             trailingIcon = {
                 if (query.isNotEmpty()) {
-                    PulseIconButton(stringResource(R.string.pulse_fitness_editor_clear_search), { onQuery("") }) {
+                    PulseButton(
+                        stringResource(R.string.pulse_fitness_editor_clear_search),
+                        { onQuery("") },
+                        style = PulseButtonStyle.Icon,
+                    ) {
                         PulseText(stringResource(R.string.pulse_fitness_clear_search_glyph))
                     }
                 }
@@ -129,7 +133,12 @@ internal fun ExerciseSelector(
             if (editor.searching) PulseLoadingState(stringResource(R.string.pulse_fitness_finding_exercises))
             editor.searchError?.let {
                 PulseText(it, color = PulseTheme.colors.error)
-                PulseTextButton(stringResource(R.string.pulse_fitness_retry_catalogue_search), onRetry, enabled = !busy)
+                PulseButton(
+                    stringResource(R.string.pulse_fitness_retry_catalogue_search),
+                    onRetry,
+                    enabled = !busy,
+                    style = PulseButtonStyle.Text,
+                )
             }
             if (!editor.searching && editor.searchError == null && editor.candidates.isEmpty()) {
                 PulseText(
@@ -181,11 +190,12 @@ internal fun ExerciseSelector(
             }
         }
         if (query.isNotBlank()) {
-            PulseTextButton(
+            PulseButton(
                 stringResource(R.string.pulse_fitness_editor_custom_action, query),
                 onCustom,
                 Modifier.fillMaxWidth(),
                 enabled = !busy,
+                style = PulseButtonStyle.Text,
             )
         }
     }

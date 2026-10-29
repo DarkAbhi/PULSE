@@ -51,6 +51,7 @@ import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseBackNavigation
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
@@ -60,7 +61,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
@@ -249,15 +249,16 @@ internal fun GarageScreen(
                                         R.string.pulse_garage_a_previous_save_may_have_reached_the_server_review,
                                     ),
                             )
-                            PulseTextButton(
+                            PulseButton(
                                 stringResource(R.string.pulse_garage_refresh_server_records),
                                 vm::refresh,
                                 enabled = !state.busy,
+                                style = PulseButtonStyle.Text,
                             )
                             if (state.draft !=
                                 null
                             ) {
-                                PulseTextButton(
+                                PulseButton(
                                     if (records) {
                                         stringResource(
                                             R.string.pulse_garage_return_to_draft,
@@ -269,6 +270,7 @@ internal fun GarageScreen(
                                         records =
                                             !records
                                     },
+                                    style = PulseButtonStyle.Text,
                                 )
                             }
                             PulseButton(
@@ -293,7 +295,7 @@ internal fun GarageScreen(
                         if (state.draft !=
                             null
                         ) {
-                            PulseTextButton(
+                            PulseButton(
                                 stringResource(
                                     R.string.pulse_garage_resume_unsaved_edits,
                                 ),
@@ -301,6 +303,7 @@ internal fun GarageScreen(
                                     records =
                                         false
                                 },
+                                style = PulseButtonStyle.Text,
                             )
                         }
                         val collection: @Composable () -> Unit = {
@@ -406,7 +409,7 @@ internal fun GarageScreen(
                                                         },
                                                         enabled = enabled,
                                                     )
-                                                    PulseTextButton(
+                                                    PulseButton(
                                                         stringResource(
                                                             R.string.pulse_garage_add_maintenance,
                                                         ),
@@ -416,12 +419,13 @@ internal fun GarageScreen(
                                                             vm.create(GarageForm.Care)
                                                         },
                                                         enabled = enabled,
+                                                        style = PulseButtonStyle.Text,
                                                     )
                                                 }
                                                 PressureCard(data.pressure, enabled, vm::pressure, {
                                                     vm.mutate(GarageChange.Air(vehicle))
                                                 })
-                                                PulseTextButton(
+                                                PulseButton(
                                                     stringResource(
                                                         R.string.pulse_garage_delete_1_s,
                                                         data.name,
@@ -439,6 +443,7 @@ internal fun GarageScreen(
                                                         )
                                                     },
                                                     enabled = enabled,
+                                                    style = PulseButtonStyle.Text,
                                                 )
                                             }
                                             GarageTab.Fuel -> {
@@ -494,7 +499,7 @@ internal fun GarageScreen(
                                                             garageDate(air.date),
                                                             style = PulseTextStyle.Title,
                                                         )
-                                                        PulseTextButton(
+                                                        PulseButton(
                                                             stringResource(
                                                                 R.string.pulse_garage_delete_air_fill_1_s,
                                                                 air.id,
@@ -512,6 +517,7 @@ internal fun GarageScreen(
                                                                 )
                                                             },
                                                             enabled = enabled,
+                                                            style = PulseButtonStyle.Text,
                                                         )
                                                     }
                                                 }

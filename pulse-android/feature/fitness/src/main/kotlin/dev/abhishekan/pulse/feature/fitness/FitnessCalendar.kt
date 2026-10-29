@@ -31,9 +31,10 @@ import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -84,7 +85,12 @@ internal fun FitnessCalendar(
                     if (compact && inline) {
                         CompactTodayControl(stringResource(R.string.pulse_fitness_today), !state.busy, onToday)
                     } else {
-                        PulseTextButton(stringResource(R.string.pulse_fitness_today), onToday, enabled = !state.busy)
+                        PulseButton(
+                            stringResource(R.string.pulse_fitness_today),
+                            onToday,
+                            enabled = !state.busy,
+                            style = PulseButtonStyle.Text,
+                        )
                     }
                     CalendarControl(
                         stringResource(R.string.pulse_fitness_choose_date),

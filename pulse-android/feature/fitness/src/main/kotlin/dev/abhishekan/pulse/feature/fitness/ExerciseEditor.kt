@@ -46,11 +46,10 @@ import dev.abhishekan.pulse.core.domain.model.ExerciseSetInput
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -152,7 +151,12 @@ internal fun ExerciseEditor(
                         PulseText(stringResource(R.string.pulse_fitness_editor_matched_to, selected.name), style = PulseTextStyle.Body2)
                     }
                     if (editName && draft.catalogId != null) {
-                        PulseTextButton(stringResource(R.string.pulse_fitness_editor_use_custom), onClearMatch, enabled = !busy)
+                        PulseButton(
+                            stringResource(R.string.pulse_fitness_editor_use_custom),
+                            onClearMatch,
+                            enabled = !busy,
+                            style = PulseButtonStyle.Text,
+                        )
                     }
                 }
             } else {
@@ -260,11 +264,16 @@ internal fun ExerciseEditor(
                                     weight(Modifier.weight(1f))
                                 }
                                 if (draft.sets.size > 1) {
-                                    PulseIconButton(stringResource(R.string.pulse_fitness_remove_set_1_s, index + 1), {
+                                    PulseButton(stringResource(R.string.pulse_fitness_remove_set_1_s, index + 1), {
                                         focus.clearFocus()
                                         rowIds = rowIds.filterIndexed { i, _ -> i != index }
                                         onRemoveSet(index)
-                                    }, enabled = !busy) { WorkoutGlyph(WorkoutSymbol.Delete, PulseTheme.colors.error) }
+                                    }, enabled = !busy, style = PulseButtonStyle.Icon) {
+                                        WorkoutGlyph(
+                                            WorkoutSymbol.Delete,
+                                            PulseTheme.colors.error,
+                                        )
+                                    }
                                 }
                             }
                         }

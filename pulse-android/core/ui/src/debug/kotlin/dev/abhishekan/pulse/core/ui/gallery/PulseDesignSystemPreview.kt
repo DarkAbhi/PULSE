@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
@@ -26,7 +27,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseSwitch
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -102,7 +102,7 @@ internal fun PulseTokenShowcase() {
         }
         PulseButton("Disabled", {}, enabled = false)
         PulseButton("Loading", {}, loading = true)
-        PulseTextButton("Text action", {})
+        PulseButton("Text action", {}, style = PulseButtonStyle.Text)
         PulseCard(highlighted = true) {
             PulseText("A little room to breathe", style = PulseTextStyle.Editorial)
             PulseText("08:24", style = PulseTextStyle.DisplayLarge)

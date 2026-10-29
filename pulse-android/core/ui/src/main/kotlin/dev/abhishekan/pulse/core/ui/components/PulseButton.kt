@@ -5,17 +5,22 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -24,6 +29,14 @@ import dev.abhishekan.pulse.core.ui.R
 
 enum class PulseButtonVariant { Primary, Secondary, Tertiary, Destructive }
 
+/** Presentation is independent of the action's visual emphasis ([PulseButtonVariant]). */
+enum class PulseButtonStyle { Standard, Text, Icon }
+
+/**
+ * Shared action component. [text] is the accessibility label for [PulseButtonStyle.Icon].
+ * Text and icon styles retain their native padding, shape, feedback, and disabled colors.
+ * Supply [icon] for icon-only actions, or [leadingIcon] alongside visible text.
+ */
 @Composable
 fun PulseButton(
     text: String,
@@ -33,8 +46,61 @@ fun PulseButton(
     loading: Boolean = false,
     variant: PulseButtonVariant = PulseButtonVariant.Primary,
     leadingIcon: (@Composable () -> Unit)? = null,
+    style: PulseButtonStyle = PulseButtonStyle.Standard,
+    icon: (@Composable () -> Unit)? = null,
 ) {
     val colors = PulseTheme.colors
+    val loadingDescription = stringResource(R.string.pulse_ui_loading)
+    val actionModifier =
+        modifier.semantics {
+            if (loading) stateDescription = loadingDescription
+        }
+    if (style == PulseButtonStyle.Icon) {
+        requireNotNull(icon) { "Icon buttons require an icon" }
+        IconButton(
+            onClick,
+            actionModifier.sizeIn(minWidth = PulseTokens.target, minHeight = PulseTokens.target).semantics {
+                contentDescription = text
+            },
+            enabled = enabled && !loading,
+            colors =
+                IconButtonDefaults.iconButtonColors(
+                    contentColor = colors.textPrimary,
+                    disabledContentColor = colors.textSecondary,
+                ),
+        ) {
+            if (loading) {
+                CircularProgressIndicator(Modifier.size(PulseTokens.medium), color = LocalContentColor.current)
+            } else {
+                icon()
+            }
+        }
+        return
+    }
+    val content: @Composable () -> Unit = {
+        if (loading) {
+            CircularProgressIndicator(Modifier.size(PulseTokens.medium), color = LocalContentColor.current)
+            Spacer(Modifier.width(PulseTokens.small))
+        } else if (leadingIcon != null) {
+            leadingIcon()
+            Spacer(Modifier.width(PulseTokens.small))
+        }
+        PulseText(text, style = PulseTextStyle.Label)
+    }
+    if (style == PulseButtonStyle.Text) {
+        TextButton(
+            onClick,
+            actionModifier.defaultMinSize(minHeight = PulseTokens.target),
+            enabled = enabled && !loading,
+            shape = PulseTheme.shapes.small,
+            colors =
+                ButtonDefaults.textButtonColors(
+                    contentColor = if (variant == PulseButtonVariant.Destructive) colors.error else colors.action,
+                    disabledContentColor = colors.textSecondary,
+                ),
+        ) { content() }
+        return
+    }
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val container =
@@ -50,15 +116,9 @@ fun PulseButton(
             PulseButtonVariant.Destructive -> colors.background
             else -> colors.action
         }
-    val loadingDescription = stringResource(R.string.pulse_ui_loading)
     Button(
         onClick,
-        modifier.defaultMinSize(minHeight = PulseTokens.target).semantics {
-            if (loading) {
-                stateDescription =
-                    loadingDescription
-            }
-        },
+        actionModifier.defaultMinSize(minHeight = PulseTokens.target),
         enabled = enabled && !loading,
         shape = PulseTheme.shapes.small,
         interactionSource = interaction,
@@ -78,17 +138,5 @@ fun PulseButton(
                 hoveredElevation = PulseTheme.elevation.none,
                 disabledElevation = PulseTheme.elevation.none,
             ),
-    ) {
-        if (loading) {
-            CircularProgressIndicator(
-                Modifier.size(PulseTokens.medium),
-                color = LocalContentColor.current,
-            )
-            Spacer(Modifier.width(PulseTokens.small))
-        } else if (leadingIcon != null) {
-            leadingIcon()
-            Spacer(Modifier.width(PulseTokens.small))
-        }
-        PulseText(text, style = PulseTextStyle.Label)
-    }
+    ) { content() }
 }

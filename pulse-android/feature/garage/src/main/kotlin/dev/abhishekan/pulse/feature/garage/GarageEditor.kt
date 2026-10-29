@@ -24,11 +24,11 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
@@ -138,14 +138,14 @@ internal fun GarageEditor(
             field("rearPillion", stringResource(R.string.pulse_garage_rear_pillion_psi), true)
         }
         if (draft.kind in listOf(GarageForm.Fuel, GarageForm.Care)) {
-            PulseTextButton(stringResource(R.string.pulse_garage_date_1_s, draft["date"]), {
+            PulseButton(stringResource(R.string.pulse_garage_date_1_s, draft["date"]), {
                 datePicker =
                     true
-            }, enabled = enabled)
-            PulseTextButton(stringResource(R.string.pulse_garage_time_1_s, draft["time"]), {
+            }, enabled = enabled, style = PulseButtonStyle.Text)
+            PulseButton(stringResource(R.string.pulse_garage_time_1_s, draft["time"]), {
                 timePicker =
                     true
-            }, enabled = enabled)
+            }, enabled = enabled, style = PulseButtonStyle.Text)
         }
         if (draft.kind ==
             GarageForm.Care
@@ -183,10 +183,10 @@ internal fun GarageEditor(
                 !blocked && enabled,
             loading = busy,
         )
-        PulseTextButton(stringResource(R.string.pulse_garage_cancel_editing), {
+        PulseButton(stringResource(R.string.pulse_garage_cancel_editing), {
             focus.clearFocus()
             cancel()
-        }, enabled = enabled)
+        }, enabled = enabled, style = PulseButtonStyle.Text)
     }
     if (datePicker) {
         PulseDatePickerDialog(

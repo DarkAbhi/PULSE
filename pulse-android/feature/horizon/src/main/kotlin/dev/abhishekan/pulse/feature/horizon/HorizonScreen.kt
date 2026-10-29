@@ -35,6 +35,7 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
@@ -44,7 +45,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.currencyText
 import dev.abhishekan.pulse.core.ui.message
@@ -148,14 +148,15 @@ internal fun HorizonScreen(
                                     R.string.pulse_horizon_the_server_may_have_saved_the_last_change_check,
                                 ),
                             )
-                            PulseTextButton(
+                            PulseButton(
                                 stringResource(R.string.pulse_horizon_refresh_server_records),
                                 vm::refresh,
+                                style = PulseButtonStyle.Text,
                             )
                             if (state.draft !=
                                 null
                             ) {
-                                PulseTextButton(
+                                PulseButton(
                                     if (records) {
                                         stringResource(
                                             R.string.pulse_horizon_return_to_draft,
@@ -169,6 +170,7 @@ internal fun HorizonScreen(
                                         records =
                                             !records
                                     },
+                                    style = PulseButtonStyle.Text,
                                 )
                             }
                             PulseButton(
@@ -201,7 +203,7 @@ internal fun HorizonScreen(
                         if (state.draft != null &&
                             !state.reviewRequired
                         ) {
-                            PulseTextButton(
+                            PulseButton(
                                 stringResource(
                                     R.string.pulse_horizon_resume_unsaved_edits,
                                 ),
@@ -209,6 +211,7 @@ internal fun HorizonScreen(
                                     records =
                                         false
                                 },
+                                style = PulseButtonStyle.Text,
                             )
                         }
                         val canMutate =
@@ -491,7 +494,7 @@ internal fun HorizonScreen(
                                                     )
                                                 },
                                             )
-                                            PulseTextButton(
+                                            PulseButton(
                                                 stringResource(
                                                     R.string.pulse_horizon_view_payments_for_1_s,
                                                     item.name,
@@ -500,6 +503,7 @@ internal fun HorizonScreen(
                                                     vm.showPayments(item.id)
                                                 },
                                                 enabled = !state.busy,
+                                                style = PulseButtonStyle.Text,
                                             )
                                         }
                                     }

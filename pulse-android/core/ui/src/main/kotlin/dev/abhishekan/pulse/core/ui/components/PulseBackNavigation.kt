@@ -22,7 +22,7 @@ fun PulseBackNavigation(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        PulseIconButton(label, onBack, enabled = enabled) {
+        PulseButton(label, onBack, enabled = enabled, style = PulseButtonStyle.Icon) {
             Icon(painterResource(R.drawable.pulse_back), null)
         }
         PulseText(label, style = PulseTextStyle.Label)

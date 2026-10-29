@@ -37,10 +37,9 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.currencyText
 
@@ -148,12 +147,13 @@ internal fun PlannedPurchaseList(
         )
         purchases.items.forEach { item -> PurchaseListCard(item, enabled) { delete(item) } }
         HorizontalDivider(color = colors.divider)
-        PulseTextButton(
+        PulseButton(
             stringResource(R.string.pulse_horizon_clear_planned_purchases),
             clear,
             enabled = enabled,
             variant = PulseButtonVariant.Destructive,
             leadingIcon = { PurchaseIcon(R.drawable.pulse_purchase_delete) },
+            style = PulseButtonStyle.Text,
         )
     }
 }
@@ -229,7 +229,12 @@ private fun DeletePurchaseButton(
         color = colors.error.copy(alpha = 0.03f),
         border = BorderStroke(1.dp, colors.error.copy(alpha = if (enabled) 0.24f else 0.10f)),
     ) {
-        PulseIconButton(stringResource(R.string.pulse_horizon_delete_1_s, item.name), delete, enabled = enabled) {
+        PulseButton(
+            stringResource(R.string.pulse_horizon_delete_1_s, item.name),
+            delete,
+            enabled = enabled,
+            style = PulseButtonStyle.Icon,
+        ) {
             Icon(
                 painterResource(R.drawable.pulse_purchase_delete),
                 null,

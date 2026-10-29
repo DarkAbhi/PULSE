@@ -32,7 +32,8 @@ import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.asString
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.currencyText
@@ -145,10 +146,11 @@ private fun HorizonMetricCard(
                 ) { MetricIcon(kind, foreground) }
                 PulseText(title, Modifier.weight(1f), PulseTextStyle.Label, foreground)
                 if (kind == MetricKind.Starting) {
-                    PulseIconButton(
+                    PulseButton(
                         stringResource(R.string.pulse_horizon_configure_starting_pool),
                         configure,
                         enabled = enabled,
+                        style = PulseButtonStyle.Icon,
                     ) { EditPoolIcon(foreground.copy(alpha = if (enabled) 1f else 0.4f)) }
                 }
             }

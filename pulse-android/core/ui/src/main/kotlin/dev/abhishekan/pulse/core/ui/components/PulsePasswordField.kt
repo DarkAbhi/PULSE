@@ -37,7 +37,7 @@ fun PulsePasswordField(
         keyboardActions,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
-            PulseTextButton(
+            PulseButton(
                 if (visible) {
                     stringResource(
                         R.string.pulse_ui_hide,
@@ -50,6 +50,7 @@ fun PulsePasswordField(
                         !visible
                 },
                 enabled = enabled,
+                style = PulseButtonStyle.Text,
             )
         },
     )

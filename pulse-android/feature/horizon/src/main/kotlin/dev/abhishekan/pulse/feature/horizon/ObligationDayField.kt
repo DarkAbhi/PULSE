@@ -41,8 +41,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -136,10 +137,10 @@ internal fun ObligationDayField(
                         }
                     }
                 }
-                PulseTextButton(stringResource(R.string.pulse_horizon_obligation_clear_day), {
+                PulseButton(stringResource(R.string.pulse_horizon_obligation_clear_day), {
                     onChange("")
                     open = false
-                }, Modifier.fillMaxWidth())
+                }, Modifier.fillMaxWidth(), style = PulseButtonStyle.Text)
             }
         }
     }

@@ -16,10 +16,10 @@ import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTransferProgress
 import dev.abhishekan.pulse.core.ui.pulseDescription
@@ -40,17 +40,19 @@ internal fun GarageActions(
     delete: () -> Unit,
 ) {
     // Stack actions so large text and narrow windows retain complete labels and touch targets.
-    PulseTextButton(
+    PulseButton(
         stringResource(R.string.pulse_garage_edit),
         edit,
         Modifier.pulseDescription(stringResource(R.string.pulse_garage_edit_1_s, label)),
         enabled,
+        style = PulseButtonStyle.Text,
     )
-    PulseTextButton(
+    PulseButton(
         stringResource(R.string.pulse_garage_delete),
         delete,
         Modifier.pulseDescription(stringResource(R.string.pulse_garage_delete_1_s, label)),
         enabled,
+        style = PulseButtonStyle.Text,
     )
 }
 
@@ -84,10 +86,11 @@ internal fun PressureCard(
                 decimal(pressure.rearPillion),
             ),
         )
-        PulseTextButton(
+        PulseButton(
             stringResource(R.string.pulse_garage_set_tire_pressure),
             edit,
             enabled = enabled,
+            style = PulseButtonStyle.Text,
         )
         PulseButton(
             stringResource(R.string.pulse_garage_record_air_fill_now),
@@ -292,13 +295,13 @@ internal fun MaintenanceCards(
                         receipt.size,
                     ),
                 )
-                PulseTextButton(stringResource(R.string.pulse_garage_open_1_s, receipt.name), {
+                PulseButton(stringResource(R.string.pulse_garage_open_1_s, receipt.name), {
                     open(item.id, receipt)
-                }, enabled = !busy)
-                PulseTextButton(stringResource(R.string.pulse_garage_download_1_s, receipt.name), {
+                }, enabled = !busy, style = PulseButtonStyle.Text)
+                PulseButton(stringResource(R.string.pulse_garage_download_1_s, receipt.name), {
                     download(item.id, receipt)
-                }, enabled = !busy)
-                PulseTextButton(stringResource(R.string.pulse_garage_remove_1_s, receipt.name), {
+                }, enabled = !busy, style = PulseButtonStyle.Text)
+                PulseButton(stringResource(R.string.pulse_garage_remove_1_s, receipt.name), {
                     remove(
                         GarageChange.Delete(GarageRecord.Receipt, vehicle, receipt.id, item.id),
                         uiText(
@@ -306,9 +309,9 @@ internal fun MaintenanceCards(
                             receipt.name,
                         ),
                     )
-                }, enabled = enabled)
+                }, enabled = enabled, style = PulseButtonStyle.Text)
             }
-            PulseTextButton(
+            PulseButton(
                 stringResource(
                     R.string.pulse_garage_attach_receipt_to_1_s,
                     item.title,
@@ -317,6 +320,7 @@ internal fun MaintenanceCards(
                     upload(item.id)
                 },
                 enabled = enabled,
+                style = PulseButtonStyle.Text,
             )
             if (uploadRecord == item.id && progress != null) PulseTransferProgress(progress)
             PulseText(

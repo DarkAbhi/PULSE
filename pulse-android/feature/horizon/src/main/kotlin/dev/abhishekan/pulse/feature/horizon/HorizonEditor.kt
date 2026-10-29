@@ -20,11 +20,11 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
@@ -130,7 +130,7 @@ internal fun HorizonEditor(
             PulseText(stringResource(R.string.pulse_horizon_debit_credit_explanation))
         }
         if (draft.kind == HorizonForm.Transaction || draft.kind == HorizonForm.Subscription) {
-            PulseTextButton(
+            PulseButton(
                 stringResource(
                     R.string.pulse_horizon_date_1_s,
                     draft.date.ifBlank {
@@ -142,16 +142,17 @@ internal fun HorizonEditor(
                         true
                 },
                 enabled = enabled,
+                style = PulseButtonStyle.Text,
             )
             if (draft.kind == HorizonForm.Transaction) {
-                PulseTextButton(stringResource(R.string.pulse_horizon_time_1_s, draft.time), {
+                PulseButton(stringResource(R.string.pulse_horizon_time_1_s, draft.time), {
                     timePicker =
                         true
-                }, enabled = enabled)
+                }, enabled = enabled, style = PulseButtonStyle.Text)
             } else if (draft.date.isNotBlank()) {
-                PulseTextButton(stringResource(R.string.pulse_horizon_clear_renewal_date), {
+                PulseButton(stringResource(R.string.pulse_horizon_clear_renewal_date), {
                     onChange(draft.copy(date = ""))
-                }, enabled = enabled)
+                }, enabled = enabled, style = PulseButtonStyle.Text)
             }
         }
         if (draft.kind == HorizonForm.Subscription) {
@@ -304,10 +305,11 @@ internal fun HorizonEditor(
                 !blocked && !busy && data != null,
             loading = busy,
         )
-        PulseTextButton(
+        PulseButton(
             stringResource(R.string.pulse_horizon_cancel_editing),
             onCancel,
             enabled = !busy,
+            style = PulseButtonStyle.Text,
         )
     }
     if (datePicker) {

@@ -52,14 +52,14 @@ fun PulseDatePickerDialog(
         tonalElevation = PulseTheme.elevation.none,
         colors = DatePickerDefaults.colors(containerColor = PulseTheme.colors.surface),
         confirmButton = {
-            PulseTextButton(stringResource(R.string.pulse_ui_choose_date), {
+            PulseButton(stringResource(R.string.pulse_ui_choose_date), {
                 state.selectedDateMillis?.let {
                     onSelected(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate())
                 }
-            }, enabled = state.selectedDateMillis != null)
+            }, enabled = state.selectedDateMillis != null, style = PulseButtonStyle.Text)
         },
         dismissButton = {
-            PulseTextButton(stringResource(R.string.pulse_ui_cancel), onDismiss)
+            PulseButton(stringResource(R.string.pulse_ui_cancel), onDismiss, style = PulseButtonStyle.Text)
         },
     ) {
         DatePicker(

@@ -39,12 +39,12 @@ import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -207,20 +207,22 @@ private fun MealIllustratedCard(
                             Modifier.weight(1f).semantics { contentDescription = consumptionLabel },
                             enabled = enabled,
                         )
-                        PulseIconButton(
+                        PulseButton(
                             stringResource(R.string.pulse_mealplan_edit_1_s, item.name),
                             { edit(item) },
                             Modifier
                                 .background(colors.surfaceMuted.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
                                 .border(1.dp, colors.border.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
                             enabled = enabled,
+                            style = PulseButtonStyle.Icon,
                         ) {
                             Icon(painterResource(R.drawable.meal_edit), null)
                         }
-                        PulseIconButton(
+                        PulseButton(
                             stringResource(R.string.pulse_mealplan_delete_1_s, item.name),
                             { delete(item) },
                             enabled = enabled,
+                            style = PulseButtonStyle.Icon,
                         ) {
                             Icon(painterResource(R.drawable.meal_delete), null, tint = colors.error)
                         }
@@ -293,7 +295,7 @@ internal fun MealTimes(
                             style = PulseTextStyle.Label,
                         )
                     } else {
-                        PulseTextButton(
+                        PulseButton(
                             stringResource(
                                 R.string.pulse_mealplan_delete_time_1_s,
                                 time.name,
@@ -302,6 +304,7 @@ internal fun MealTimes(
                                 onDelete(time)
                             },
                             enabled = enabled,
+                            style = PulseButtonStyle.Text,
                         )
                     }
                 }
@@ -320,7 +323,7 @@ internal fun MealTimesHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        PulseIconButton(stringResource(R.string.pulse_mealplan_back_to_planner), onBack, enabled = enabled) {
+        PulseButton(stringResource(R.string.pulse_mealplan_back_to_planner), onBack, enabled = enabled, style = PulseButtonStyle.Icon) {
             Icon(painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_back), null)
         }
         PulseText(

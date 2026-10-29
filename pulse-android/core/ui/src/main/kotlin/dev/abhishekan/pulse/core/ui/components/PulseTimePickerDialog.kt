@@ -25,9 +25,9 @@ fun PulseTimePickerDialog(
     AlertDialog(
         onDismiss,
         confirmButton = {
-            PulseTextButton(stringResource(R.string.pulse_ui_choose_time), {
+            PulseButton(stringResource(R.string.pulse_ui_choose_time), {
                 onSelected(LocalTime.of(state.hour, state.minute))
-            })
+            }, style = PulseButtonStyle.Text)
         },
         modifier = modifier,
         shape = PulseTheme.shapes.extraLarge,
@@ -36,7 +36,7 @@ fun PulseTimePickerDialog(
         textContentColor = PulseTheme.colors.textSecondary,
         tonalElevation = PulseTheme.elevation.none,
         dismissButton = {
-            PulseTextButton(stringResource(R.string.pulse_ui_cancel), onDismiss)
+            PulseButton(stringResource(R.string.pulse_ui_cancel), onDismiss, style = PulseButtonStyle.Text)
         },
         title = { PulseText(stringResource(R.string.pulse_ui_time)) },
         text = {

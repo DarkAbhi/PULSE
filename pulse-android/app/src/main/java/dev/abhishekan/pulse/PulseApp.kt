@@ -57,16 +57,15 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseBottomNavigationBar
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationItem
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationRail
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbar
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarProvider
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTopAppBar
 import dev.abhishekan.pulse.core.ui.message
@@ -178,10 +177,10 @@ private fun SessionUnavailable(
                         color = PulseTheme.colors.textSecondary,
                     )
                     PulseButton(stringResource(R.string.pulse_app_try_again), onRetry, enabled = !busy)
-                    PulseTextButton(stringResource(R.string.pulse_app_forget_this_device_s_session), {
+                    PulseButton(stringResource(R.string.pulse_app_forget_this_device_s_session), {
                         confirm =
                             true
-                    }, enabled = !busy)
+                    }, enabled = !busy, style = PulseButtonStyle.Text)
                 }
             }
         }
@@ -379,10 +378,11 @@ private fun SignedInApp(
                             },
                             navigationIcon = {
                                 if (horizonState?.draft != null) {
-                                    PulseIconButton(
+                                    PulseButton(
                                         stringResource(R.string.pulse_app_back_to_horizon),
                                         { backDispatcher?.onBackPressed() },
                                         enabled = !horizonState.busy,
+                                        style = PulseButtonStyle.Icon,
                                     ) {
                                         Icon(painterResource(UiR.drawable.pulse_back), contentDescription = null)
                                     }
@@ -393,7 +393,7 @@ private fun SignedInApp(
                                     (route == "garage" && hasGarageDetail) ||
                                     route == "workout/{id}"
                                 ) {
-                                    PulseIconButton(
+                                    PulseButton(
                                         if (route == "workout/{id}" && workoutEditorTitle != null) {
                                             stringResource(R.string.pulse_app_back_to_workout)
                                         } else if (nav.previousBackStackEntry?.destination?.route == "notifications") {
@@ -409,6 +409,7 @@ private fun SignedInApp(
                                             }
                                         },
                                         { backDispatcher?.onBackPressed() },
+                                        style = PulseButtonStyle.Icon,
                                     ) {
                                         Icon(
                                             painterResource(UiR.drawable.pulse_back),

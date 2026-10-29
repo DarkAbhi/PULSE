@@ -38,6 +38,7 @@ import dev.abhishekan.pulse.core.ui.R
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseBottomNavigationBar
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCalendarDay
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
@@ -46,7 +47,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationItem
 import dev.abhishekan.pulse.core.ui.components.PulsePasswordField
@@ -55,7 +55,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbar
 import dev.abhishekan.pulse.core.ui.components.PulseSwitch
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
@@ -259,7 +258,7 @@ private fun Controls(onAction: () -> Unit) {
                 enabled = false,
             )
         }
-        PulseTextButton(
+        PulseButton(
             stringResource(
                 R.string.pulse_ui_gallery_choose_sample_date_1_s,
                 selectedDate,
@@ -268,6 +267,7 @@ private fun Controls(onAction: () -> Unit) {
                 showDate =
                     true
             },
+            style = PulseButtonStyle.Text,
         )
         PulseSelectionField(
             stringResource(
@@ -305,10 +305,10 @@ private fun Controls(onAction: () -> Unit) {
             PulseFilterChip(stringResource(R.string.pulse_ui_gallery_disabled), false, {
             }, enabled = false)
         }
-        PulseTextButton(stringResource(R.string.pulse_ui_gallery_choose_sample_time), {
+        PulseButton(stringResource(R.string.pulse_ui_gallery_choose_sample_time), {
             showTime =
                 true
-        })
+        }, style = PulseButtonStyle.Text)
         PulseText(
             stringResource(R.string.pulse_ui_gallery_the_essentials),
             style = PulseTextStyle.Title,
@@ -355,8 +355,8 @@ private fun Controls(onAction: () -> Unit) {
         }, Modifier.fillMaxWidth(), loading = true)
         PulseButton(stringResource(R.string.pulse_ui_gallery_unavailable), {
         }, Modifier.fillMaxWidth(), enabled = false)
-        PulseTextButton(stringResource(R.string.pulse_ui_gallery_a_quieter_action), onAction)
-        PulseIconButton(stringResource(R.string.pulse_ui_gallery_sample_information), onAction) {
+        PulseButton(stringResource(R.string.pulse_ui_gallery_a_quieter_action), onAction, style = PulseButtonStyle.Text)
+        PulseButton(stringResource(R.string.pulse_ui_gallery_sample_information), onAction, style = PulseButtonStyle.Icon) {
             PulseText("i", style = PulseTextStyle.Title)
         }
         PulseCheckbox(checked, {

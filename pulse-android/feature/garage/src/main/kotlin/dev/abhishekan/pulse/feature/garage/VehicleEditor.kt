@@ -41,10 +41,10 @@ import dev.abhishekan.pulse.core.domain.model.garageVehicleTypes
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -189,10 +189,10 @@ internal fun VehicleEditor(
                     enabled = !busy && !blocked,
                     loading = busy,
                 )
-                PulseTextButton(stringResource(R.string.pulse_garage_cancel), {
+                PulseButton(stringResource(R.string.pulse_garage_cancel), {
                     focus.clearFocus()
                     cancel()
-                }, Modifier.align(Alignment.CenterHorizontally), enabled = !busy)
+                }, Modifier.align(Alignment.CenterHorizontally), enabled = !busy, style = PulseButtonStyle.Text)
             }
         }
         PulseCard(Modifier.fillMaxWidth()) {

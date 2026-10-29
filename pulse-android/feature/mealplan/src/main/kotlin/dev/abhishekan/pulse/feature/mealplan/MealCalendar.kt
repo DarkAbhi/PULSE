@@ -41,8 +41,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pulseWindowSize
@@ -131,11 +132,12 @@ internal fun MealCalendar(
                         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        PulseIconButton(
+                        PulseButton(
                             stringResource(R.string.pulse_mealplan_previous_week),
                             previous,
                             Modifier.background(colors.surface, CircleShape).border(1.dp, colors.border, CircleShape),
                             enabled = enabled,
+                            style = PulseButtonStyle.Icon,
                         ) {
                             Icon(painterResource(R.drawable.meal_next), null, Modifier.rotate(180f))
                         }
@@ -161,11 +163,12 @@ internal fun MealCalendar(
                             }
                             if (wide && selected != today) todayButton()
                         }
-                        PulseIconButton(
+                        PulseButton(
                             stringResource(R.string.pulse_mealplan_next_week),
                             next,
                             Modifier.background(colors.surface, CircleShape).border(1.dp, colors.border, CircleShape),
                             enabled = enabled,
+                            style = PulseButtonStyle.Icon,
                         ) {
                             Icon(painterResource(R.drawable.meal_next), null)
                         }

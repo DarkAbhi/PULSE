@@ -51,7 +51,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import kotlinx.coroutines.delay
@@ -106,7 +107,7 @@ internal fun DashboardGreeting(
                     } else {
                         stringResource(R.string.pulse_home_notifications)
                     }
-                PulseIconButton(notificationLabel, onNotifications) {
+                PulseButton(notificationLabel, onNotifications, style = PulseButtonStyle.Icon) {
                     BadgedBox(badge = {
                         if (notificationCount > 0) {
                             Badge(
@@ -122,7 +123,7 @@ internal fun DashboardGreeting(
                     }
                 }
                 if (onProfile != null) {
-                    PulseIconButton(stringResource(R.string.pulse_home_profile), onProfile) {
+                    PulseButton(stringResource(R.string.pulse_home_profile), onProfile, style = PulseButtonStyle.Icon) {
                         Icon(painterResource(UiR.drawable.pulse_person), null, tint = greetingInk)
                     }
                 }

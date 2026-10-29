@@ -19,11 +19,12 @@ import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.asString
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.currencyText
@@ -132,17 +133,19 @@ import java.time.format.DateTimeFormatter
     delete: () -> Unit,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-        PulseTextButton(
+        PulseButton(
             stringResource(R.string.pulse_horizon_edit),
             edit,
             Modifier.pulseDescription(stringResource(R.string.pulse_horizon_edit_1_s, label)),
             enabled = enabled,
+            style = PulseButtonStyle.Text,
         )
-        PulseTextButton(
+        PulseButton(
             stringResource(R.string.pulse_horizon_delete),
             delete,
             Modifier.pulseDescription(stringResource(R.string.pulse_horizon_delete_1_s, label)),
             enabled = enabled,
+            style = PulseButtonStyle.Text,
         )
     }
 }
@@ -180,9 +183,9 @@ import java.time.format.DateTimeFormatter
             Modifier.fillMaxWidth(),
             !state.busy,
         )
-        PulseTextButton(stringResource(R.string.pulse_horizon_apply_search), {
+        PulseButton(stringResource(R.string.pulse_horizon_apply_search), {
             vm.filter(search, state.type)
-        }, enabled = !state.busy)
+        }, enabled = !state.busy, style = PulseButtonStyle.Text)
     }
 }
 
@@ -201,21 +204,23 @@ import java.time.format.DateTimeFormatter
         ),
     )
     Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-        PulseTextButton(
+        PulseButton(
             stringResource(R.string.pulse_horizon_previous_page),
             {
                 onPage(page.page - 1)
             },
             enabled =
                 !busy && page.page > 1,
+            style = PulseButtonStyle.Text,
         )
-        PulseTextButton(
+        PulseButton(
             stringResource(R.string.pulse_horizon_next_page),
             {
                 onPage(page.page + 1)
             },
             enabled =
                 !busy && page.page < page.totalPages,
+            style = PulseButtonStyle.Text,
         )
     }
 }
@@ -239,7 +244,7 @@ import java.time.format.DateTimeFormatter
             ),
             style = PulseTextStyle.Title,
         )
-        PulseTextButton(stringResource(R.string.pulse_horizon_close_payments), vm::hidePayments)
+        PulseButton(stringResource(R.string.pulse_horizon_close_payments), vm::hidePayments, style = PulseButtonStyle.Text)
         SectionState(state.payments, { state.subscriptionId?.let(vm::showPayments) }) { items ->
             if (items.isEmpty()) {
                 PulseEmptyState(
@@ -259,7 +264,7 @@ import java.time.format.DateTimeFormatter
         TransactionFilters(state, vm)
         SectionState(state.transactions, { vm.refreshTransactions() }) { page ->
             page.items.filter { it.type == "debit" && it.subscriptionId == null }.forEach { item ->
-                PulseTextButton(
+                PulseButton(
                     stringResource(
                         R.string.pulse_horizon_link_1_s_2_s,
                         item.name,
@@ -269,6 +274,7 @@ import java.time.format.DateTimeFormatter
                         link(item.id)
                     },
                     enabled = enabled,
+                    style = PulseButtonStyle.Text,
                 )
             }
             if (page.items.none {

@@ -13,8 +13,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
-import dev.abhishekan.pulse.core.ui.components.PulseIconButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 
 @Composable
@@ -25,7 +26,7 @@ fun NotificationsTopBarActions(viewModel: NotificationsViewModel) {
     val canClear = state.items.isNotEmpty() && !state.busy && !state.loading && !state.uncertain
 
     Box {
-        PulseIconButton(stringResource(R.string.pulse_notifications_options), { expanded = true }) {
+        PulseButton(stringResource(R.string.pulse_notifications_options), { expanded = true }, style = PulseButtonStyle.Icon) {
             Icon(painterResource(R.drawable.pulse_notifications_more), contentDescription = null)
         }
         DropdownMenu(

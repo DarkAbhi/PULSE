@@ -29,7 +29,7 @@ fun PulseErrorState(
             style = PulseTextStyle.Title,
         )
         PulseText(message)
-        PulseTextButton(stringResource(R.string.pulse_ui_try_again), onRetry)
+        PulseButton(stringResource(R.string.pulse_ui_try_again), onRetry, style = PulseButtonStyle.Text)
     }
 }
 

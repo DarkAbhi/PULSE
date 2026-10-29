@@ -39,11 +39,11 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
@@ -96,10 +96,14 @@ internal fun FuelEditor(
             FuelSectionTitle(stringResource(R.string.pulse_garage_trip_details))
             BoxWithConstraints {
                 val date: @Composable (Modifier) -> Unit = { modifier ->
-                    PulseTextButton(stringResource(R.string.pulse_garage_date_1_s, draft["date"]), { datePicker = true }, modifier, enabled)
+                    PulseButton(stringResource(R.string.pulse_garage_date_1_s, draft["date"]), {
+                        datePicker = true
+                    }, modifier, enabled, style = PulseButtonStyle.Text)
                 }
                 val time: @Composable (Modifier) -> Unit = { modifier ->
-                    PulseTextButton(stringResource(R.string.pulse_garage_time_1_s, draft["time"]), { timePicker = true }, modifier, enabled)
+                    PulseButton(stringResource(R.string.pulse_garage_time_1_s, draft["time"]), {
+                        timePicker = true
+                    }, modifier, enabled, style = PulseButtonStyle.Text)
                 }
                 if (maxWidth / LocalDensity.current.fontScale >= 320.dp) {
                     Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
@@ -129,10 +133,11 @@ internal fun FuelEditor(
                         FuelSectionTitle(stringResource(R.string.pulse_garage_tank_1_s, tank + 1))
                     }
                     if (tank == 1) {
-                        PulseTextButton(
+                        PulseButton(
                             stringResource(R.string.pulse_garage_remove_second_tank),
                             { change(draft.set("tanks", "1")) },
                             enabled = enabled,
+                            style = PulseButtonStyle.Text,
                         )
                     }
                 }
@@ -209,7 +214,7 @@ internal fun FuelEditor(
         PulseCard(Modifier.fillMaxWidth()) {
             FuelSectionTitle(stringResource(R.string.pulse_garage_additional_information))
             if (tanks < 2) {
-                PulseTextButton(
+                PulseButton(
                     stringResource(R.string.pulse_garage_add_second_fuel_tank),
                     {
                         change(
@@ -223,12 +228,14 @@ internal fun FuelEditor(
                     },
                     Modifier.fillMaxWidth(),
                     enabled,
+                    style = PulseButtonStyle.Text,
                 )
             }
-            PulseTextButton(
+            PulseButton(
                 stringResource(if (notesExpanded) R.string.pulse_garage_hide_notes else R.string.pulse_garage_notes_optional),
                 { notesExpanded = !notesExpanded },
                 enabled = enabled,
+                style = PulseButtonStyle.Text,
             )
             if (notesExpanded) field("notes", stringResource(R.string.pulse_garage_notes_optional))
         }
@@ -300,7 +307,7 @@ private fun FuelFillSelector(
     PulseCheckbox(fill == "missed", {
         change(draft.set("fill$tank", if (it) "missed" else "full"))
     }, stringResource(R.string.pulse_garage_missed_fill), enabled = enabled)
-    PulseTextButton(stringResource(R.string.pulse_garage_fill_help), { help = !help }, enabled = enabled)
+    PulseButton(stringResource(R.string.pulse_garage_fill_help), { help = !help }, enabled = enabled, style = PulseButtonStyle.Text)
     if (help) {
         PulseText(
             stringResource(
@@ -343,9 +350,9 @@ internal fun FuelEditorActions(
                 !busy && !blocked,
             loading = busy,
         )
-        PulseTextButton(stringResource(R.string.pulse_garage_cancel_editing), {
+        PulseButton(stringResource(R.string.pulse_garage_cancel_editing), {
             focus.clearFocus()
             cancel()
-        }, enabled = !busy)
+        }, enabled = !busy, style = PulseButtonStyle.Text)
     }
 }

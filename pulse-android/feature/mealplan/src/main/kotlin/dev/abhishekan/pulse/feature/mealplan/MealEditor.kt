@@ -38,12 +38,12 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
@@ -110,16 +110,16 @@ internal fun MealEditor(
             )
         }
         if (draft.timeForm) {
-            PulseTextButton(stringResource(R.string.pulse_mealplan_start_time_1_s, draft.start), {
+            PulseButton(stringResource(R.string.pulse_mealplan_start_time_1_s, draft.start), {
                 focus.clearFocus()
                 timePicker =
                     "start"
-            }, enabled = !busy)
-            PulseTextButton(stringResource(R.string.pulse_mealplan_end_time_1_s, draft.end), {
+            }, enabled = !busy, style = PulseButtonStyle.Text)
+            PulseButton(stringResource(R.string.pulse_mealplan_end_time_1_s, draft.end), {
                 focus.clearFocus()
                 timePicker =
                     "end"
-            }, enabled = !busy)
+            }, enabled = !busy, style = PulseButtonStyle.Text)
             PulseText(
                 stringResource(R.string.pulse_mealplan_use_24_hour_times_an_end_earlier_than_the),
             )

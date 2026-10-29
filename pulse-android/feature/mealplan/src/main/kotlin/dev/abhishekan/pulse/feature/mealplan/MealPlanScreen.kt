@@ -49,6 +49,7 @@ import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseBackNavigation
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
@@ -56,7 +57,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
@@ -206,15 +206,16 @@ internal fun MealPlanScreen(
                                         R.string.pulse_mealplan_a_previous_update_may_have_reached_the_server_check,
                                     ),
                                 )
-                                PulseTextButton(
+                                PulseButton(
                                     stringResource(R.string.pulse_mealplan_refresh_server_records),
                                     vm::refresh,
                                     enabled = !state.busy,
+                                    style = PulseButtonStyle.Text,
                                 )
                                 if (state.draft !=
                                     null
                                 ) {
-                                    PulseTextButton(
+                                    PulseButton(
                                         if (records) {
                                             stringResource(
                                                 R.string.pulse_mealplan_return_to_draft,
@@ -228,6 +229,7 @@ internal fun MealPlanScreen(
                                             records =
                                                 !records
                                         },
+                                        style = PulseButtonStyle.Text,
                                     )
                                 }
                                 PulseButton(
@@ -278,7 +280,7 @@ internal fun MealPlanScreen(
                             if (state.draft !=
                                 null
                             ) {
-                                PulseTextButton(
+                                PulseButton(
                                     stringResource(
                                         R.string.pulse_mealplan_resume_unsaved_edits,
                                     ),
@@ -286,6 +288,7 @@ internal fun MealPlanScreen(
                                         records =
                                             false
                                     },
+                                    style = PulseButtonStyle.Text,
                                 )
                             }
                             MealCalendar(

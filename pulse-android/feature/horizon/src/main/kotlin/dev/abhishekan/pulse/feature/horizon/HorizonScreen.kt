@@ -89,6 +89,7 @@ internal fun HorizonScreen(
         }
     }
     val currency = dev.abhishekan.pulse.core.domain.model.UserCurrency.code
+    val subscriptionDraft = state.draft?.takeIf { it.kind == HorizonForm.Subscription && !records }
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { width ->
         Column(
             Modifier
@@ -131,6 +132,7 @@ internal fun HorizonScreen(
                 }
                 Column(
                     Modifier
+                        .then(if (subscriptionDraft != null) Modifier.weight(1f) else Modifier)
                         .fillMaxWidth()
                         .verticalScroll(scroll)
                         .padding(bottom = LocalPulseContentPadding.current.calculateBottomPadding())
@@ -189,16 +191,26 @@ internal fun HorizonScreen(
                         ) {
                             PulseErrorState(state.overview.error.message, vm::refreshOverview)
                         }
-                        HorizonEditor(
-                            state.draft,
-                            state.overview.value,
-                            state.busy,
-                            state.formError,
-                            state.reviewRequired,
-                            vm::update,
-                            vm::save,
-                            cancel,
-                        )
+                        if (state.draft.kind == HorizonForm.Subscription) {
+                            SubscriptionEditor(
+                                state.draft,
+                                state.overview.value,
+                                state.busy,
+                                state.formError,
+                                vm::update,
+                            )
+                        } else {
+                            HorizonEditor(
+                                state.draft,
+                                state.overview.value,
+                                state.busy,
+                                state.formError,
+                                state.reviewRequired,
+                                vm::update,
+                                vm::save,
+                                cancel,
+                            )
+                        }
                     } else {
                         if (state.draft != null &&
                             !state.reviewRequired
@@ -543,6 +555,17 @@ internal fun HorizonScreen(
                 key(state.draft.kind, state.draft.id) { content() }
             } else {
                 scrollStates.SaveableStateProvider(state.tab.name) { content() }
+            }
+            if (subscriptionDraft != null) {
+                Column(Modifier.padding(bottom = LocalPulseContentPadding.current.calculateBottomPadding())) {
+                    SubscriptionActions(
+                        subscriptionDraft,
+                        !state.reviewRequired && !state.busy && state.overview.value != null,
+                        state.busy,
+                        vm::save,
+                        cancel,
+                    )
+                }
             }
         }
     }

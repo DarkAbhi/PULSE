@@ -267,4 +267,19 @@
     <string name="pulse_horizon_purchase_summary_eyebrow">NEXT MONTH’S PLANNED PURCHASES</string>
     <string name="pulse_horizon_purchase_summary_total">Planned total %1$s</string>
     <string name="pulse_horizon_percentage">%1$s%%</string>
+    <string name="pulse_subscription_basic">Basic details</string>
+    <string name="pulse_subscription_basic_hint">Name, amount and how often you’re billed.</string>
+    <string name="pulse_subscription_recurring">Recurring details</string>
+    <string name="pulse_subscription_recurring_hint">Choose when your subscription renews.</string>
+    <string name="pulse_subscription_organization">Organization</string>
+    <string name="pulse_subscription_organization_hint">Keep your subscriptions organized. All fields are optional.</string>
+    <string name="pulse_subscription_notes">Notes</string>
+    <string name="pulse_subscription_notes_hint">Add a renewal link, shared plan or payment method. Optional.</string>
+    <string name="pulse_subscription_name_hint">e.g. Netflix, Spotify, AWS, Gym</string>
+    <string name="pulse_subscription_amount">Amount (%1$s) *</string>
+    <string name="pulse_subscription_renewal">Renewal date *</string>
+    <string name="pulse_subscription_how">How it works</string>
+    <string name="pulse_subscription_monthly_help">Your billing day determines the next monthly renewal. In shorter months, billing falls on the last available day.</string>
+    <string name="pulse_subscription_yearly_help">Your renewal date determines when you’re charged each year.</string>
+    <string name="pulse_subscription_notes_placeholder">e.g. Shared plan with family, renewal URL, payment card used…</string>
 </resources>

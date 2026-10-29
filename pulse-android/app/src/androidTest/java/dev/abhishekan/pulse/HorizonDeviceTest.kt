@@ -944,20 +944,57 @@ class HorizonDeviceTest {
         tap("Subscriptions")
         quickAction("Add subscription")
         field("Subscription name *", "Streaming")
-        field("Amount (${UserCurrency.symbol()})", "99.99")
+        field("Amount (${UserCurrency.symbol()}) *", "99.99")
         compose.onNodeWithText("Date:", substring = true).assertDoesNotExist()
-        compose.onNodeWithText("Fixed obligation:", substring = true).assertDoesNotExist()
+        compose.onNode(hasText("Add subscription") and hasClickAction()).assertIsDisplayed()
+        compose.onNodeWithText("Basic details").assertIsDisplayed()
+        screenshot("subscription-basic")
         field("Billing day of month (1–31) *", "20")
-        pick("Billing cycle", "Monthly", "Yearly")
+        tap("Yearly")
         compose.onNodeWithText("Billing day of month (1–31) *").assertDoesNotExist()
-        compose.onNodeWithText("Annual renewal date *:", substring = true).assertExists()
-        pick("Status", "Active", "Paused")
+        compose.onNodeWithText("Renewal date *").assertExists()
+        tap("Paused")
+        compose.onNodeWithContentDescription("Fixed obligation: None").performScrollTo()
+        compose.onNodeWithContentDescription("Fixed obligation: None").assertIsDisplayed()
         pick("Link to budget", "None", "Everyday")
-        tap("Save subscription")
+        pick("Fixed obligation", "None", "Rent")
+        field("Notes (optional)", "Shared family plan\nRenew online")
+        screenshot("subscription-notes")
+        compose
+            .onNode(
+                hasText("Add subscription") and hasClickAction(),
+            ).assertIsDisplayed()
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
+                it()
+            }
+        compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("subscription-editor")).fetchSemanticsNodes().isEmpty() }
         awaitText("Streaming")
+        assertEquals(
+            2L,
+            backend
+                .items("subscriptions")
+                .getValue(100)["deduction_id"]
+                ?.jsonPrimitive
+                ?.long,
+        )
+        assertEquals(
+            "Shared family plan\nRenew online",
+            backend
+                .items("subscriptions")
+                .getValue(100)["notes"]
+                ?.jsonPrimitive
+                ?.content,
+        )
         cardAction("Streaming", "Edit")
-        pick("Status", "Paused", "Active")
-        tap("Save subscription")
+        tap("Active")
+        compose
+            .onNodeWithText(
+                "Save changes",
+            ).assertIsDisplayed()
+            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
+                it()
+            }
+        compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("subscription-editor")).fetchSemanticsNodes().isEmpty() }
         awaitText("Streaming")
         tap("View payments for Streaming")
         awaitText("Link an existing payment")
@@ -988,6 +1025,37 @@ class HorizonDeviceTest {
         assertEquals(21, backend.items("transactions").size)
         assertEquals(JsonNull, backend.items("transactions").getValue(1)["subscription_id"])
         assertTrue(backend.items("deductions").containsKey(2))
+    }
+
+    @Test fun subscriptionFormSectionsStayReachableOnPhoneTabletAndLargeText() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        val fontScale = shell("settings get system font_scale").trim()
+        try {
+            launchHorizon()
+            quickAction("Add subscription")
+            for ((layout, dimensions) in listOf("phone" to "720x1600", "tablet" to "2048x1800", "large-text" to "720x1600")) {
+                shell("wm size $dimensions")
+                shell("wm density 320")
+                shell("settings put system font_scale ${if (layout == "large-text") "1.8" else "1.0"}")
+                compose.waitForIdle()
+                compose.onNode(hasTestTag("subscription-section-menu")).assertDoesNotExist()
+                compose.onNode(hasTestTag("subscription-notes")).performScrollTo()
+                compose.onNode(hasTestTag("subscription-notes")).assertIsDisplayed()
+                compose.onNode(hasText("Add subscription") and hasClickAction()).assertIsDisplayed()
+                screenshot("subscription-$layout-notes")
+                compose.onNode(hasTestTag("subscription-section-menu")).assertDoesNotExist()
+                compose.onNodeWithText("Subscription name *").performScrollTo()
+                compose.onNodeWithText("Subscription name *").assertIsDisplayed()
+                compose.onNodeWithText("Monthly").performScrollTo().assertIsDisplayed()
+                screenshot("subscription-$layout-basic")
+            }
+            assertEquals(0, backend.mutations)
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+            shell("settings put system font_scale ${fontScale.takeUnless { it == "null" || it.isEmpty() } ?: "1.0"}")
+        }
     }
 
     @Test fun plannedPurchasesRequireConfirmationForIndividualAndClear() {

@@ -2,7 +2,7 @@
 
 The form reuses Pulse typography, spacing, colors, fields and actions. A centered 560 dp maximum width adapts to phones, tablets, split-screen and landscape without stretching inputs or adding a redundant summary. The existing screen supplies scrolling and IME insets.
 
-The purchase title lives in the navigation bar beside Back, matching the fixed-obligation editor. The duplicate in-content heading, bag badge and subtitle are removed. The inactive quick-actions overflow is hidden while a purchase draft is open and returns on the Financial Horizon list. The planning period remains as useful form context.
+The purchase title lives in the navigation bar beside Back, matching the fixed-obligation editor. The duplicate in-content heading, bag badge and subtitle are removed. The inactive quick-actions overflow is hidden while a purchase draft is open and returns on the Financial Horizon list. The planning-period card is removed so the form starts directly with the purchase fields.
 
 The amount uses display-only grouping with explicit cursor-offset mapping. INR uses Indian grouping and a rupee prefix; other account currencies retain their configured symbol and standard grouping. Drafts and requests retain unformatted decimal values. Existing zero, maximum-value and precision rules remain intact.
 
@@ -10,7 +10,7 @@ The optional link validates after blur or submission, clears stale errors when c
 
 ## API constraints
 
-`PlannedPurchasesDto` returns only `items` and `total`; purchase items contain `id`, `name`, `price` and `url`. The overview projections contain relative horizons rather than a resolved planning month. The Go purchase service resolves the target month using server time and the account timezone but does not return it. The form therefore displays “Next month” with its forecast meaning instead of calculating a potentially inconsistent month/year on the device.
+`PlannedPurchasesDto` returns only `items` and `total`; purchase items contain `id`, `name`, `price` and `url`. The overview projections contain relative horizons rather than a resolved planning month. The Go purchase service resolves the target month using server time and the account timezone but does not return it. The planning-period card is omitted; the server continues to determine the target month without any client-side date calculation.
 
 The existing purchase routes support list, create, delete and clear, with no update route. The Android purchase change also has no ID. Existing purchase creation and deletion remain available; this redesign does not add an unsupported edit operation or simulate one by deleting and recreating purchases. An actual edit flow and a resolved calendar label require API support outside this UI change.
 
@@ -20,7 +20,9 @@ The existing purchase routes support list, create, delete and clear, with no upd
 
 Verified: 23 Horizon unit tests, all three purchase device scenarios, APK builds, and the Horizon/core UI/app style checks passed. The broader app unit suite passes 13 of 14 tests; its existing localization test flags the unchanged `PulseText("›")` in `HorizonLedger.kt:193`. No tests were removed or weakened.
 
-Screenshots: [phone](phone.png), [tablet](tablet.png), [landscape](landscape.png), [1.8× text](large-text.png). Phone and landscape forms scroll; the device test verifies that all fields and the primary action remain reachable.
+The planning-card removal compiles and passes app/Horizon style checks. Its responsive replay stopped at an emulator PixelCopy screenshot timeout on both attempts, so the saved screenshots below show the preceding iteration with the card still present.
+
+Previous screenshots: [phone](phone.png), [tablet](tablet.png), [landscape](landscape.png), [1.8× text](large-text.png). Phone and landscape forms scroll.
 
 ## Planned purchases tab redesign
 

@@ -282,7 +282,18 @@ class HorizonDeviceTest {
                         Reply(
                             buildJsonObject {
                                 put("items", JsonArray(items("purchases").values.toList()))
-                                put("total", JsonPrimitive(items("purchases").values.fold(BigDecimal.ZERO) { total, item -> total + item.getValue("price").jsonPrimitive.content.toBigDecimal() }))
+                                put(
+                                    "total",
+                                    JsonPrimitive(
+                                        items("purchases").values.fold(BigDecimal.ZERO) { total, item ->
+                                            total +
+                                                item
+                                                    .getValue("price")
+                                                    .jsonPrimitive.content
+                                                    .toBigDecimal()
+                                        },
+                                    ),
+                                )
                             }.toString(),
                         )
                     "horizon/transactions" -> {
@@ -1012,7 +1023,11 @@ class HorizonDeviceTest {
                 shell("settings put system font_scale ${if (layout == "large-text") "1.8" else "1.0"}")
                 awaitText("1 planned purchase")
                 compose.onNodeWithText("Add purchase").performScrollTo().assertIsDisplayed()
-                compose.onNodeWithContentDescription("Delete New monitor").performScrollTo().assertIsDisplayed().assertHasClickAction()
+                compose
+                    .onNodeWithContentDescription("Delete New monitor")
+                    .performScrollTo()
+                    .assertIsDisplayed()
+                    .assertHasClickAction()
                 compose.onNode(hasTestTag("purchase-summary")).performScrollTo()
                 screenshot("purchase-list-$layout")
             }
@@ -1023,6 +1038,7 @@ class HorizonDeviceTest {
             shell("settings put system font_scale ${fontScale.takeUnless { it == "null" || it.isEmpty() } ?: "1.0"}")
         }
     }
+
     @Test fun purchaseFormValidatesRetainsDraftAndAllowsAnEmptyLink() {
         launchHorizon()
         tap("Planned purchases")
@@ -1031,7 +1047,7 @@ class HorizonDeviceTest {
         compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
         compose.onNode(hasText("Add planned purchase") and hasAnyAncestor(hasTestTag("planned-purchase-editor"))).assertDoesNotExist()
         compose.onNodeWithText("Plan a purchase for your upcoming financial forecast.").assertDoesNotExist()
-        compose.onNodeWithText("Planning for").assertIsDisplayed()
+        compose.onNodeWithText("Planning for").assertDoesNotExist()
         tap("Add purchase")
         compose.onNode(hasTestTag("purchase-name")).assertIsFocused()
         awaitText("Enter a purchase name of up to 160 characters.")
@@ -1083,7 +1099,7 @@ class HorizonDeviceTest {
                 compose.onNode(hasTestTag("purchase-amount")).performScrollTo().assertIsDisplayed()
                 compose.onNode(hasTestTag("purchase-url")).performScrollTo().assertIsDisplayed()
                 compose.onNodeWithText("Add purchase").performScrollTo().assertIsDisplayed()
-                compose.onNodeWithText("Planning for").performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText("Planning for").assertDoesNotExist()
                 compose.onNodeWithText("Add planned purchase").assertIsDisplayed()
                 compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
                 screenshot("purchase-$layout")

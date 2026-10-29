@@ -2,14 +2,12 @@ package dev.abhishekan.pulse.feature.horizon
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
@@ -88,32 +86,11 @@ internal fun PlannedPurchaseEditor(
         }
         Unit
     }
-    // A resolved calendar month is not returned by the purchase or overview endpoints.
-    // Keep the server's next-month semantics; never guess a date from the device clock.
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
         Column(
             Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth().testTag("planned-purchase-editor"),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
         ) {
-            Row(
-                Modifier.fillMaxWidth().background(colors.primary.copy(alpha = 0.10f), PulseTokens.cardShape).padding(PulseTokens.medium),
-                horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium),
-            ) {
-                PurchaseIcon(R.drawable.pulse_obligation_calendar)
-                Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
-                    PulseText(
-                        stringResource(R.string.pulse_horizon_purchase_planning_for),
-                        style = PulseTextStyle.Body2,
-                        color = colors.textSecondary,
-                    )
-                    PulseText(stringResource(R.string.pulse_horizon_purchase_next_month), style = PulseTextStyle.Title3)
-                    PulseText(
-                        stringResource(R.string.pulse_horizon_purchase_period_hint),
-                        style = PulseTextStyle.Body2,
-                        color = colors.textSecondary,
-                    )
-                }
-            }
             Column(
                 Modifier.animateContentSize(tween(PulseTokens.MOTION_MILLIS)),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),

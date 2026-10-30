@@ -27,6 +27,8 @@ class SeedExportTest(unittest.TestCase):
         self.assertEqual(transform("vehicles", "name", "character varying", r"\N"), r"\N")
         self.assertEqual(transform("vehicles", "vehicle_type", "text", "two_wheeler"), "two_wheeler")
         self.assertEqual(transform("vehicles", "fuel_types", "ARRAY", "{cng,petrol}"), "{petrol}")
+        self.assertEqual(transform("user_profiles", "timezone", "text", "Asia/Kolkata"), "UTC")
+        self.assertEqual(transform("user_profiles", "currency", "text", "GBP"), "INR")
         with self.assertRaises(ValueError):
             transform("vehicles", "new_numeric_field", "bigint", "123")
 
@@ -52,6 +54,7 @@ class SeedExportTest(unittest.TestCase):
         self.assertIn("seed_environment", sql)
         self.assertIn("version = 23 AND NOT dirty", sql)
         self.assertIn("setval(pg_get_serial_sequence", sql)
+        self.assertIn("'Demo Admin', 'UTC', 'INR'", sql)
 
     def test_schema_changes_require_review(self):
         with patch.object(seed, "query", return_value='[{"table_name":"unexpected","column_name":"id","data_type":"bigint"}]'):

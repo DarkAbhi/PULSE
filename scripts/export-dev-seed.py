@@ -107,6 +107,8 @@ def anonymize(table, column, kind, value, row, offset, admin_id):
         return "{}"
     if column == "currency":
         return "INR"
+    if table == "user_profiles" and column == "timezone":
+        return "UTC"
     if column in ENUMS:
         if value not in ENUMS[column]:
             raise ValueError(f"Unknown enum in {table}.{column}; review anonymization rules")
@@ -222,7 +224,7 @@ END $$;
 TRUNCATE {truncate} RESTART IDENTITY;
 """
     # Ensure the browser account has a profile even if none existed in the snapshot.
-    profile = (f"INSERT INTO user_profiles (user_id, display_name) VALUES ({admin_id}, 'Demo Admin') "
+    profile = (f"INSERT INTO user_profiles (user_id, display_name, timezone, currency) VALUES ({admin_id}, 'Demo Admin', 'UTC', 'INR') "
                "ON CONFLICT (user_id) DO NOTHING;")
     updates = []
     for table in ordered:

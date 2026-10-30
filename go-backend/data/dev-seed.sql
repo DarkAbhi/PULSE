@@ -17,7 +17,7 @@ COMMIT;
 \quit
 \endif
 DO $$ BEGIN
-    IF NOT EXISTS (SELECT FROM schema_migrations WHERE version = 24 AND NOT dirty) THEN
+    IF NOT EXISTS (SELECT FROM schema_migrations WHERE version = 26 AND NOT dirty) THEN
         RAISE EXCEPTION 'Seed schema version mismatch; regenerate the development seed';
     END IF;
 END $$;
@@ -139,8 +139,8 @@ SELECT setval(pg_get_serial_sequence('public.next_month_purchases', 'id'), coale
 COPY public.notifications (id, user_id, source, title, body, target_path, priority, metadata, read_at, dismissed_at, created_at) FROM stdin;
 \.
 SELECT setval(pg_get_serial_sequence('public.notifications', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.notifications;
-COPY public.user_profiles (user_id, display_name, created_at, updated_at) FROM stdin;
-1	Demo display name 1	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30
+COPY public.user_profiles (user_id, display_name, created_at, updated_at, timezone, currency) FROM stdin;
+1	Demo display name 1	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30	UTC	INR
 \.
 COPY public.vehicles (id, name, is_active, created_at, updated_at, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion, user_id, vehicle_type, fuel_types) FROM stdin;
 1	Demo name 1	true	2026-01-28 08:00:00+05:30	2026-01-28 08:00:00+05:30	32	32	32	32	1	two_wheeler	{petrol}
@@ -291,6 +291,6 @@ UPDATE public.vehicle_fuel_items SET created_at = created_at + (CURRENT_DATE - D
 UPDATE public.gym_visit_exercises SET created_at = created_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day', updated_at = updated_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day';
 UPDATE public.financial_horizon_transactions SET transaction_date = transaction_date + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day', created_at = created_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day', updated_at = updated_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day';
 UPDATE public.gym_exercise_sets SET created_at = created_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day';
-INSERT INTO user_profiles (user_id, display_name) VALUES (1, 'Demo Admin') ON CONFLICT (user_id) DO NOTHING;
+INSERT INTO user_profiles (user_id, display_name, timezone, currency) VALUES (1, 'Demo Admin', 'UTC', 'INR') ON CONFLICT (user_id) DO NOTHING;
 \echo Applied anonymized development seed.
 COMMIT;

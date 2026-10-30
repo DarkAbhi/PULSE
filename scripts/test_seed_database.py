@@ -16,9 +16,13 @@ DATABASE_URL = os.environ.get("TEST_SEED_DATABASE_URL")
 @unittest.skipUnless(DATABASE_URL, "Set TEST_SEED_DATABASE_URL to a disposable PostgreSQL server")
 class SeedDatabaseTest(unittest.TestCase):
     def run_psql(self, *args, url=None, check=True):
-        return subprocess.run(["psql", "-XqAt", "-v", "ON_ERROR_STOP=1",
-                               "--dbname", url or self.url, *args],
-                              text=True, capture_output=True, check=check)
+        result = subprocess.run(["psql", "-XqAt", "-v", "ON_ERROR_STOP=1",
+                                 "--dbname", url or self.url, *args],
+                                text=True, capture_output=True)
+        if check and result.returncode:
+            self.fail(f"psql exited with status {result.returncode}\n"
+                      f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}")
+        return result
 
     def setUp(self):
         self.name = "pulse_seed_test_" + uuid.uuid4().hex
@@ -38,6 +42,7 @@ class SeedDatabaseTest(unittest.TestCase):
 
     def test_fresh_restore_repeated_restore_and_sequences(self):
         self.assertIn("Applied anonymized", self.restore().stdout)
+        self.assertEqual(self.run_psql("-c", "SELECT timezone, currency FROM user_profiles WHERE user_id = 1").stdout.strip(), "UTC|INR")
         count = self.run_psql("-c", "SELECT count(*) FROM fitness_activity_rings").stdout
         self.assertGreater(int(count), 0)
         self.assertEqual(self.run_psql("-c", "SELECT max(created_at)::date = CURRENT_DATE FROM gym_visits").stdout.strip(), "t")
@@ -53,9 +58,13 @@ class SeedDatabaseTest(unittest.TestCase):
         self.assertEqual(self.run_psql("-c", "SELECT count(*) FROM fitness_activity_rings").stdout.strip(), "0")
 
     def test_environment_and_schema_mismatch_are_rejected(self):
-        self.assertNotEqual(self.restore("production", check=False).returncode, 0)
+        rejected = self.restore("production", check=False)
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("Development seed requires seed_environment", rejected.stderr)
         self.run_psql("-c", "UPDATE schema_migrations SET version = 999")
-        self.assertNotEqual(self.restore(check=False).returncode, 0)
+        rejected = self.restore(check=False)
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("Seed schema version mismatch", rejected.stderr)
         self.assertEqual(self.run_psql("-c", "SELECT count(*) FROM user_profiles").stdout.strip(), "0")
 
     def test_restore_error_rolls_back_partial_data(self):
@@ -64,7 +73,9 @@ class SeedDatabaseTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "broken-seed.sql"
             path.write_text(sql)
-            self.assertNotEqual(self.restore(check=False, path=path).returncode, 0)
+            failed = self.restore(check=False, path=path)
+            self.assertNotEqual(failed.returncode, 0)
+            self.assertIn("division by zero", failed.stderr)
         self.assertEqual(self.run_psql("-c", "SELECT count(*) FROM fitness_activity_rings").stdout.strip(), "0")
         self.assertEqual(self.run_psql("-c", "SELECT username FROM users").stdout.strip(), "admin")
         self.run_psql("-c", "INSERT INTO users (username, password_hash) VALUES ('Sequence rollback check', 'test')")

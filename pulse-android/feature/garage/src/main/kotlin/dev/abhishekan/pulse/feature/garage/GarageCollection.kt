@@ -33,6 +33,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 internal fun GarageCollectionHeader(
@@ -109,7 +110,7 @@ private fun GarageVehicleCard(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_garage),
+                            painterResource(CoreUiR.drawable.pulse_garage),
                             null,
                             Modifier.size(24.dp),
                             tint = colors.action,
@@ -145,7 +146,7 @@ private fun GarageVehicleCard(
             modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
             variant = PulseButtonVariant.Soft,
             trailingIcon = {
-                Icon(painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_back), null, Modifier.size(24.dp).rotate(180f))
+                Icon(painterResource(CoreUiR.drawable.pulse_back), null, Modifier.size(24.dp).rotate(180f))
             },
         )
     }

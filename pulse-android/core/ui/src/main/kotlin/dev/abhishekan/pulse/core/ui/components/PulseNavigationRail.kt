@@ -39,6 +39,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.Role
@@ -118,10 +119,10 @@ fun PulseNavigationRail(
                             .clip(itemShape)
                             .border(
                                 PulseTokens.focusWidth,
-                                if (focused) colors.outline else androidx.compose.ui.graphics.Color.Transparent,
+                                if (focused) colors.outline else Color.Transparent,
                                 itemShape,
                             ).background(
-                                if (pressed) colors.textPrimary.copy(alpha = 0.08f) else androidx.compose.ui.graphics.Color.Transparent,
+                                if (pressed) colors.textPrimary.copy(alpha = 0.08f) else Color.Transparent,
                             ).selectable(
                                 selected = selected,
                                 interactionSource = interaction,

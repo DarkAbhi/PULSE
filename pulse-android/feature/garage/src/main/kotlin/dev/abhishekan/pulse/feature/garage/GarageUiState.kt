@@ -1,11 +1,12 @@
 package dev.abhishekan.pulse.feature.garage
+import androidx.annotation.StringRes
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Vehicle
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.UiText
 
 enum class GarageTab(
-    @param:androidx.annotation.StringRes val label: Int,
+    @param:StringRes val label: Int,
 ) {
     Overview(
         R.string.pulse_garage_overview,

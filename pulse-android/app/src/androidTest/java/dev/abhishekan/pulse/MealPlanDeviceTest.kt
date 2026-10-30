@@ -1,7 +1,9 @@
 package dev.abhishekan.pulse
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
+import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
@@ -39,10 +41,14 @@ import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
 import dev.abhishekan.pulse.core.data.PulseDashboardRepository
 import dev.abhishekan.pulse.core.data.PulseMealPlanRepository
+import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
+import dev.abhishekan.pulse.core.data.PulseProfileRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
+import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
+import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.network.MealPlanApi
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
@@ -80,8 +86,10 @@ import org.koin.dsl.module
 import java.io.File
 import java.io.IOException
 import java.time.Clock
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /** Isolated HTTP fixtures exercise production network, persistence, repositories and navigation. */
 class MealPlanDeviceTest {
@@ -273,13 +281,11 @@ class MealPlanDeviceTest {
             module {
                 single<AuthRepository> { auth }
                 single<DashboardRepository> { PulseDashboardRepository(api, auth) }
-                single<dev.abhishekan.pulse.core.domain.repository.ProfileRepository> {
-                    dev.abhishekan.pulse.core.data
-                        .PulseProfileRepository(api, auth, PulseDashboardRepository(api, auth))
+                single<ProfileRepository> {
+                    PulseProfileRepository(api, auth, PulseDashboardRepository(api, auth))
                 }
-                single<dev.abhishekan.pulse.core.domain.repository.NotificationsRepository> {
-                    dev.abhishekan.pulse.core.data
-                        .PulseNotificationsRepository(api, auth, PulseDashboardRepository(api, auth))
+                single<NotificationsRepository> {
+                    PulseNotificationsRepository(api, auth, PulseDashboardRepository(api, auth))
                 }
                 single<MealPlanRepository> { repo }
             }
@@ -319,7 +325,7 @@ class MealPlanDeviceTest {
             scenario?.onActivity {
                 it
                     .getSystemService(
-                        android.view.inputmethod.InputMethodManager::class.java,
+                        InputMethodManager::class.java,
                     ).hideSoftInputFromWindow(it.window.decorView.windowToken, 0)
             }
         }
@@ -340,7 +346,7 @@ class MealPlanDeviceTest {
                     performScrollTo()
                 }
             }.assertIsDisplayed()
-            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            .performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
     private fun field(
@@ -497,7 +503,7 @@ class MealPlanDeviceTest {
         val other = if (day.dayOfWeek.value == 1) day.plusDays(1) else day.minusDays(1)
         val description =
             other.format(
-                java.time.format.DateTimeFormatter
+                DateTimeFormatter
                     .ofPattern("EEEE, d MMM yyyy"),
             )
         tap(description)
@@ -506,7 +512,7 @@ class MealPlanDeviceTest {
         compose.onNode(todayAction).assertDoesNotExist()
         tap("Next week")
         awaitText("No meals planned for this day")
-        val week = day.plusWeeks(1).with(java.time.DayOfWeek.MONDAY)
+        val week = day.plusWeeks(1).with(DayOfWeek.MONDAY)
         val range = "${week.format(
             java.time.format.DateTimeFormatter
                 .ofPattern("d MMM"),
@@ -522,7 +528,7 @@ class MealPlanDeviceTest {
             .onNode(
                 hasText(
                     picked.format(
-                        java.time.format.DateTimeFormatter
+                        DateTimeFormatter
                             .ofPattern("EEEE, MMMM d, yyyy"),
                     ),
                     substring = true,
@@ -533,7 +539,7 @@ class MealPlanDeviceTest {
         confirm("Choose date")
         val pickedDescription =
             picked.format(
-                java.time.format.DateTimeFormatter
+                DateTimeFormatter
                     .ofPattern("EEEE, d MMM yyyy"),
             )
         awaitText(pickedDescription)

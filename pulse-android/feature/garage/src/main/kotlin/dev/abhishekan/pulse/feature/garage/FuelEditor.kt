@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.garageFuelTypes
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -168,7 +169,7 @@ internal fun FuelEditor(
                             "price$tank",
                             stringResource(
                                 R.string.pulse_garage_price_per_litre_tank_1_s,
-                                dev.abhishekan.pulse.core.domain.model.UserCurrency
+                                UserCurrency
                                     .symbol(),
                                 tank + 1,
                             ),
@@ -180,7 +181,7 @@ internal fun FuelEditor(
                             "total$tank",
                             stringResource(
                                 R.string.pulse_garage_total_cost_tank_1_s,
-                                dev.abhishekan.pulse.core.domain.model.UserCurrency
+                                UserCurrency
                                     .symbol(),
                                 tank + 1,
                             ),

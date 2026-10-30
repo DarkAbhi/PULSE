@@ -7,6 +7,7 @@ import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
 import dev.abhishekan.pulse.core.domain.usecase.GetNotificationCount
 import dev.abhishekan.pulse.core.domain.usecase.GetProfile
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
+import dev.abhishekan.pulse.core.domain.usecase.ObserveDashboardChanges
 import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
 import dev.abhishekan.pulse.core.domain.usecase.ObserveHorizonChanges
 import kotlinx.coroutines.Job
@@ -22,7 +23,7 @@ class HomeViewModel(
     private val getHorizon: GetHorizon,
     changes: ObserveFitnessChanges,
     horizonChanges: ObserveHorizonChanges,
-    dashboardChanges: dev.abhishekan.pulse.core.domain.usecase.ObserveDashboardChanges,
+    dashboardChanges: ObserveDashboardChanges,
     private val getNotificationCount: GetNotificationCount,
 ) : ViewModel() {
     private val state = MutableStateFlow(HomeUiState())

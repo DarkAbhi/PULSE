@@ -1,8 +1,10 @@
 package dev.abhishekan.pulse.feature.garage
 
+import androidx.annotation.StringRes
+
 internal enum class EditorAction { Add, Edit, Save }
 
-@androidx.annotation.StringRes
+@StringRes
 internal fun GarageForm.editorLabel(action: EditorAction): Int =
     when (this) {
         GarageForm.Vehicle ->

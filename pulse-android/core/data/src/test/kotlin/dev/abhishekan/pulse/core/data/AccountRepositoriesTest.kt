@@ -5,6 +5,8 @@ import dev.abhishekan.pulse.core.domain.model.NotificationTarget
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.domain.model.SessionState
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.Vehicle
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
@@ -142,7 +144,7 @@ class AccountRepositoriesTest {
     @Test fun currencyApiSavesPreferenceAndNameSavePreservesIt() =
         runTest {
             Harness().use { h ->
-                val currency = dev.abhishekan.pulse.core.domain.model.UserCurrency
+                val currency = UserCurrency
                 try {
                     h.body = """{"currency":"INR"}"""
                     assertEquals(Outcome.Success("INR"), h.profile.saveCurrency("INR"))
@@ -186,14 +188,14 @@ class AccountRepositoriesTest {
                             .jsonObject["timezone"]!!
                             .jsonPrimitive.content,
                     )
-                    assertEquals("America/New_York", dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone.id)
+                    assertEquals("America/New_York", UserTimeZone.zone.id)
                     h.body = """{"name":"Asha"}"""
                     assertEquals(Profile("Asha", true, "America/New_York"), (h.profile.saveName("Asha") as Outcome.Success).value)
                     h.status = HttpStatusCode.BadRequest
                     assertEquals(Outcome.Error(Failure.InvalidInput), h.profile.saveTimeZone("Bad/Zone"))
-                    assertEquals("America/New_York", dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone.id)
+                    assertEquals("America/New_York", UserTimeZone.zone.id)
                 } finally {
-                    dev.abhishekan.pulse.core.domain.model.UserTimeZone
+                    UserTimeZone
                         .reset()
                 }
             }

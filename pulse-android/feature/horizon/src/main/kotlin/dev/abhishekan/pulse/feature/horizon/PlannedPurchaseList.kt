@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -286,7 +287,7 @@ private fun PurchaseIcon(
         painterResource(resource),
         null,
         Modifier.size(20.dp),
-        tint = if (secondary) PulseTheme.colors.textSecondary else androidx.compose.material3.LocalContentColor.current,
+        tint = if (secondary) PulseTheme.colors.textSecondary else LocalContentColor.current,
     )
 }
 

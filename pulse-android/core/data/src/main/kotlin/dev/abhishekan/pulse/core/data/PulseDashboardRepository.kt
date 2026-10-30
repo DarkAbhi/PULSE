@@ -8,6 +8,8 @@ import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.network.PulseApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.JsonPrimitive
@@ -18,8 +20,8 @@ class PulseDashboardRepository(
     private val api: PulseApi,
     private val auth: PulseAuthRepository,
 ) : DashboardRepository {
-    private val revision = kotlinx.coroutines.flow.MutableStateFlow(0L)
-    override val changes: kotlinx.coroutines.flow.Flow<Long> = revision.asStateFlow()
+    private val revision = MutableStateFlow(0L)
+    override val changes: Flow<Long> = revision.asStateFlow()
 
     internal fun accountChanged() {
         revision.update { it + 1 }

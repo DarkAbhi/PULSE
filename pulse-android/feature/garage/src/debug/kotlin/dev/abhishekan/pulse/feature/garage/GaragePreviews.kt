@@ -9,19 +9,28 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import dev.abhishekan.pulse.core.domain.model.AirFill
+import dev.abhishekan.pulse.core.domain.model.FuelFill
+import dev.abhishekan.pulse.core.domain.model.FuelItem
+import dev.abhishekan.pulse.core.domain.model.GarageReceipt
+import dev.abhishekan.pulse.core.domain.model.Maintenance
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.Vehicle
+import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
+import dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTransferProgress
+import java.time.Instant
 
 @Preview(name = "Tires and air reference", widthDp = 1280, heightDp = 840, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Preview(name = "Tires and air phone", widthDp = 393, heightDp = 1100)
@@ -32,13 +41,12 @@ private fun TiresAirPreview() {
         Surface(color = PulseTheme.colors.background) {
             Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(PulseTokens.large)) {
                 TiresAirSection(
-                    dev.abhishekan.pulse.core.domain.model.VehicleHistory(
+                    VehicleHistory(
                         name = "Himalaya 411",
                         pressure = TirePressure("27".toBigDecimal(), "34".toBigDecimal(), "29".toBigDecimal(), "36".toBigDecimal()),
                         air =
                             listOf(
-                                dev.abhishekan.pulse.core.domain.model
-                                    .AirFill(1, java.time.Instant.parse("2026-09-27T17:47:00Z")),
+                                AirFill(1, Instant.parse("2026-09-27T17:47:00Z")),
                             ),
                         fuel = emptyList(),
                         maintenance = emptyList(),
@@ -151,7 +159,7 @@ private fun GarageCollectionPreview() {
 private fun FuelEditorPreview() {
     PulseTheme {
         Surface(color = PulseTheme.colors.background) {
-            Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
                     FuelEditor(GarageDraft.new(GarageForm.Fuel, 1), false, null, {})
                 }
@@ -187,21 +195,21 @@ private fun FuelHistoryPreview() {
                 Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(PulseTokens.small),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
             ) {
-                dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs(
+                PulseSegmentedTabs(
                     listOf("Overview", "Fuel", "Maintenance", "Air"),
                     1,
                     {},
                 )
                 FuelHistoryGrid(
                     listOf(
-                        dev.abhishekan.pulse.core.domain.model.FuelFill(
+                        FuelFill(
                             1,
                             "34820".toBigDecimal(),
-                            java.time.Instant.parse("2026-10-04T01:53:00Z"),
+                            Instant.parse("2026-10-04T01:53:00Z"),
                             null,
                             null,
                             listOf(
-                                dev.abhishekan.pulse.core.domain.model.FuelItem(
+                                FuelItem(
                                     "petrol",
                                     "full",
                                     "10".toBigDecimal(),
@@ -210,14 +218,14 @@ private fun FuelHistoryPreview() {
                                 ),
                             ),
                         ),
-                        dev.abhishekan.pulse.core.domain.model.FuelFill(
+                        FuelFill(
                             2,
                             "34599".toBigDecimal(),
-                            java.time.Instant.parse("2026-09-27T23:17:00Z"),
+                            Instant.parse("2026-09-27T23:17:00Z"),
                             null,
                             null,
                             listOf(
-                                dev.abhishekan.pulse.core.domain.model.FuelItem(
+                                FuelItem(
                                     "petrol",
                                     "full",
                                     "10".toBigDecimal(),
@@ -250,17 +258,17 @@ private fun MaintenanceHistoryPreview() {
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
             ) {
                 MaintenanceHistoryCard(
-                    dev.abhishekan.pulse.core.domain.model.Maintenance(
+                    Maintenance(
                         1,
                         "service",
                         "Annual service",
                         "4000.00".toBigDecimal(),
-                        java.time.Instant.parse("2026-09-27T06:30:00Z"),
+                        Instant.parse("2026-09-27T06:30:00Z"),
                         "1000".toBigDecimal(),
                         null,
                         null,
                         listOf(
-                            dev.abhishekan.pulse.core.domain.model.GarageReceipt(
+                            GarageReceipt(
                                 1,
                                 "Sustainable Brands and Products – Brands",
                                 "application/pdf",

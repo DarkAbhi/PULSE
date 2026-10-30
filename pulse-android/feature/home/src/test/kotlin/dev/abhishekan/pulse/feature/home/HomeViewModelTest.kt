@@ -14,6 +14,7 @@ import dev.abhishekan.pulse.core.domain.model.Notification
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.PlannedPurchases
 import dev.abhishekan.pulse.core.domain.model.Profile
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
@@ -24,11 +25,14 @@ import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
 import dev.abhishekan.pulse.core.domain.usecase.GetNotificationCount
 import dev.abhishekan.pulse.core.domain.usecase.GetProfile
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
+import dev.abhishekan.pulse.core.domain.usecase.ObserveDashboardChanges
 import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
 import dev.abhishekan.pulse.core.domain.usecase.ObserveHorizonChanges
+import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.currencyText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -41,9 +45,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
+import java.util.Locale
 
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val models = ViewModelStore()
@@ -152,8 +158,7 @@ class HomeViewModelTest {
                     GetHorizon(repository),
                     ObserveFitnessChanges(fitness),
                     ObserveHorizonChanges(horizon),
-                    dev.abhishekan.pulse.core.domain.usecase
-                        .ObserveDashboardChanges(repository),
+                    ObserveDashboardChanges(repository),
                     GetNotificationCount(notifications),
                 )
             models.put("home", vm)
@@ -212,39 +217,39 @@ class HomeViewModelTest {
     @Test fun dashboardClockUsesUtcByDefault() {
         assertEquals(
             "Saturday, 17 Oct 2026",
-            formatDashboardDate(java.time.Instant.parse("2026-10-17T18:30:00Z"), java.util.Locale.US),
+            formatDashboardDate(Instant.parse("2026-10-17T18:30:00Z"), Locale.US),
         )
         assertEquals(
             "Sunday, 18 Oct 2026",
-            formatDashboardDate(java.time.Instant.parse("2026-10-18T07:35:00Z"), java.util.Locale.US),
+            formatDashboardDate(Instant.parse("2026-10-18T07:35:00Z"), Locale.US),
         )
     }
 
     @Test fun dashboardTimeUsesUtcByDefault() {
-        assertEquals("6:30 PM", formatDashboardTime(java.time.Instant.parse("2026-10-17T18:30:00Z"), java.util.Locale.US))
-        assertEquals("7:35 AM", formatDashboardTime(java.time.Instant.parse("2026-10-18T07:35:00Z"), java.util.Locale.US))
+        assertEquals("6:30 PM", formatDashboardTime(Instant.parse("2026-10-17T18:30:00Z"), Locale.US))
+        assertEquals("7:35 AM", formatDashboardTime(Instant.parse("2026-10-18T07:35:00Z"), Locale.US))
     }
 
     @Test fun currencyFormattingDoesNotRoundBackendPrecision() {
-        val previous = java.util.Locale.getDefault()
+        val previous = Locale.getDefault()
         try {
-            java.util.Locale.setDefault(java.util.Locale.US)
-            dev.abhishekan.pulse.core.domain.model.UserCurrency
+            Locale.setDefault(Locale.US)
+            UserCurrency
                 .select("USD")
             assertEquals(
-                dev.abhishekan.pulse.core.ui.UiText
+                UiText
                     .Literal("\$12.50"),
                 currencyText(BigDecimal("12.5")),
             )
             assertEquals(
-                dev.abhishekan.pulse.core.ui.UiText
+                UiText
                     .Literal("-\$0.000000000000123456789"),
                 currencyText(BigDecimal("-0.000000000000123456789")),
             )
         } finally {
-            dev.abhishekan.pulse.core.domain.model.UserCurrency
+            UserCurrency
                 .reset()
-            java.util.Locale.setDefault(previous)
+            Locale.setDefault(previous)
         }
     }
 }

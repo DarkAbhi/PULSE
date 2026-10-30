@@ -38,6 +38,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 import java.io.Closeable
+import java.net.SocketTimeoutException
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -88,7 +89,7 @@ class GarageRepositoryTest {
                     return@MockEngine respond(
                         """{"has_profile":false,"timezone":"UTC"}""",
                         HttpStatusCode.OK,
-                        io.ktor.http.headersOf(HttpHeaders.ContentType, "application/json"),
+                        headersOf(HttpHeaders.ContentType, "application/json"),
                     )
                 }
                 if (request.url.host == "storage.test") {
@@ -370,7 +371,7 @@ class GarageRepositoryTest {
     @Test fun cancellationPropagatesAndFailedWritesInvalidateObservers() =
         runTest {
             Harness().use { h ->
-                h.writeFailure = java.net.SocketTimeoutException()
+                h.writeFailure = SocketTimeoutException()
                 assertEquals(Outcome.Error(Failure.Timeout), h.repo.apply(GarageChange.Air(1)))
                 assertEquals(1L, h.repo.changes.value)
                 h.writeFailure = CancellationException()

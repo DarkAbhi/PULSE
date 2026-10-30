@@ -12,6 +12,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.feature.fitness.FitnessScreen
@@ -42,7 +43,7 @@ class FitnessLoadingLayoutTest {
         compose.onNodeWithText("Refreshing your activity").assertDoesNotExist()
         compose.onNodeWithText("SELECTED DAY").assertExists()
         compose.runOnIdle {
-            state = state.copy(loading = false, error = dev.abhishekan.pulse.core.domain.model.Failure.Connection)
+            state = state.copy(loading = false, error = Failure.Connection)
         }
         compose.onNodeWithText("Refreshing your activity").assertDoesNotExist()
         compose.onNodeWithText("SELECTED DAY").assertExists()

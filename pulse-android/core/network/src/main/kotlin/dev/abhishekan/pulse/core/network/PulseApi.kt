@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.core.network
 import dev.abhishekan.pulse.core.network.dto.APIKeyDto
+import dev.abhishekan.pulse.core.network.dto.CurrencyDto
 import dev.abhishekan.pulse.core.network.dto.HorizonDto
 import dev.abhishekan.pulse.core.network.dto.LoginRequest
 import dev.abhishekan.pulse.core.network.dto.NameRequest
@@ -8,6 +9,7 @@ import dev.abhishekan.pulse.core.network.dto.PasswordRequest
 import dev.abhishekan.pulse.core.network.dto.ProfileDto
 import dev.abhishekan.pulse.core.network.dto.SavedNameDto
 import dev.abhishekan.pulse.core.network.dto.SessionDto
+import dev.abhishekan.pulse.core.network.dto.TimeZoneDto
 import dev.abhishekan.pulse.core.network.dto.WorkoutDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -39,21 +41,19 @@ class PulseApi(
 
     suspend fun saveProfile(name: String): SavedNameDto = client.put("profile") { setBody(NameRequest(name)) }.body()
 
-    suspend fun saveCurrency(currency: String): dev.abhishekan.pulse.core.network.dto.CurrencyDto =
+    suspend fun saveCurrency(currency: String): CurrencyDto =
         client
             .put("profile/currency") {
                 setBody(
-                    dev.abhishekan.pulse.core.network.dto
-                        .CurrencyDto(currency),
+                    CurrencyDto(currency),
                 )
             }.body()
 
-    suspend fun saveTimeZone(timezone: String): dev.abhishekan.pulse.core.network.dto.TimeZoneDto =
+    suspend fun saveTimeZone(timezone: String): TimeZoneDto =
         client
             .put("profile/timezone") {
                 setBody(
-                    dev.abhishekan.pulse.core.network.dto
-                        .TimeZoneDto(timezone),
+                    TimeZoneDto(timezone),
                 )
             }.body()
 

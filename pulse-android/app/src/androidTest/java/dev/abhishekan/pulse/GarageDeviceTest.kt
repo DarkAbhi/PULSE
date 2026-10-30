@@ -1,11 +1,16 @@
 package dev.abhishekan.pulse
+import android.animation.ValueAnimator
 import android.app.Activity
 import android.app.Instrumentation
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
+import android.text.format.Formatter
+import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
@@ -47,10 +52,14 @@ import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
 import dev.abhishekan.pulse.core.data.PulseDashboardRepository
 import dev.abhishekan.pulse.core.data.PulseGarageRepository
+import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
+import dev.abhishekan.pulse.core.data.PulseProfileRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
+import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
+import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.network.GarageApi
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
@@ -377,13 +386,11 @@ class GarageDeviceTest {
             module {
                 single<AuthRepository> { auth }
                 single<DashboardRepository> { PulseDashboardRepository(api, auth) }
-                single<dev.abhishekan.pulse.core.domain.repository.ProfileRepository> {
-                    dev.abhishekan.pulse.core.data
-                        .PulseProfileRepository(api, auth, PulseDashboardRepository(api, auth))
+                single<ProfileRepository> {
+                    PulseProfileRepository(api, auth, PulseDashboardRepository(api, auth))
                 }
-                single<dev.abhishekan.pulse.core.domain.repository.NotificationsRepository> {
-                    dev.abhishekan.pulse.core.data
-                        .PulseNotificationsRepository(api, auth, PulseDashboardRepository(api, auth))
+                single<NotificationsRepository> {
+                    PulseNotificationsRepository(api, auth, PulseDashboardRepository(api, auth))
                 }
                 single<GarageRepository> { repo }
             }
@@ -420,7 +427,7 @@ class GarageDeviceTest {
             if (text.startsWith("Save ")) activity.window.decorView.clearFocus()
             activity
                 .getSystemService(
-                    android.view.inputmethod.InputMethodManager::class.java,
+                    InputMethodManager::class.java,
                 ).hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
         }
         // Keyboard dismissal changes the scroll viewport asynchronously.
@@ -443,7 +450,7 @@ class GarageDeviceTest {
         compose.waitUntil(15_000) { node.isDisplayed() }
         node
             .assertIsDisplayed()
-            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            .performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
     private fun pick(
@@ -505,7 +512,7 @@ class GarageDeviceTest {
                 hasText(action) and hasAnyAncestor(hasTestTag(tag)),
             ).performScrollTo()
             .assertIsDisplayed()
-            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            .performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
     private fun shell(command: String) =
@@ -622,13 +629,13 @@ class GarageDeviceTest {
         field("Quantity (L) · tank 1", "2.5")
         field("Price per litre (₹) · tank 1", "100")
         val total = compose.onNodeWithText("Total cost (₹) · tank 1")
-        assertEquals("", total.fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.EditableText].text)
+        assertEquals("", total.fetchSemanticsNode().config[SemanticsProperties.EditableText].text)
         compose.onNodeWithText("Price per litre (₹) · tank 1").performScrollTo().performClick()
         compose.onNodeWithText("Save fuel fill-up").assertIsDisplayed()
         screenshot("fuel-cards-keyboard")
         scenario?.onActivity { activity ->
             activity
-                .getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+                .getSystemService(InputMethodManager::class.java)
                 .hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
         }
         tap("Partial")
@@ -651,7 +658,7 @@ class GarageDeviceTest {
                 .onNodeWithText(
                     "Quantity (L) · tank 2",
                 ).fetchSemanticsNode()
-                .config[androidx.compose.ui.semantics.SemanticsProperties.EditableText]
+                .config[SemanticsProperties.EditableText]
                 .text,
         )
         tap("Remove second tank")
@@ -704,7 +711,7 @@ class GarageDeviceTest {
                 configuration.densityDpi == 320 &&
                     configuration.fontScale == 1f &&
                     usesNavigationRail() &&
-                    android.animation.ValueAnimator.areAnimatorsEnabled()
+                    ValueAnimator.areAnimatorsEnabled()
             }
             awaitText("Your garage")
             tap("Add vehicle")
@@ -1121,7 +1128,7 @@ class GarageDeviceTest {
         tap("Attach receipt to Annual service")
         awaitText("receipt.pdf")
         awaitText(
-            android.text.format.Formatter
+            Formatter
                 .formatShortFileSize(context, 16),
         )
         assertEquals(1, upload.hits)
@@ -1162,7 +1169,7 @@ class GarageDeviceTest {
         tap("Attach receipt to Annual service")
         awaitText("receipt.pdf")
         awaitText(
-            android.text.format.Formatter
+            Formatter
                 .formatShortFileSize(context, 16),
         )
         instrumentation.removeMonitor(retry)

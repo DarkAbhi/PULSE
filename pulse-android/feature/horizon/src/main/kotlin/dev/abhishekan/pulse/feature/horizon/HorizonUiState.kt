@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.horizon
+import androidx.annotation.StringRes
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
@@ -7,7 +8,7 @@ import dev.abhishekan.pulse.core.domain.model.PlannedPurchases
 import dev.abhishekan.pulse.core.ui.UiText
 
 enum class HorizonTab(
-    @param:androidx.annotation.StringRes val label: Int,
+    @param:StringRes val label: Int,
 ) {
     Overview(
         R.string.pulse_horizon_overview,

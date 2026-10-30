@@ -5,6 +5,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import dev.abhishekan.pulse.core.ui.PulseTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -21,7 +22,7 @@ fun PulseTopAppBar(
                 title,
                 style = PulseTextStyle.Title,
                 maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                overflow = TextOverflow.Ellipsis,
             )
         },
         modifier = modifier,

@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,21 +41,25 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.GarageRecord
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseBackNavigation
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
+import dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -72,10 +77,10 @@ fun GarageRoute(
     onTitleChanged: (String?) -> Unit = {},
     tabsInAppBar: Boolean = false,
 ) {
-    val currency by dev.abhishekan.pulse.core.domain.model.UserCurrency.changes
+    val currency by UserCurrency.changes
         .collectAsStateWithLifecycle()
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
-    androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refresh() }
+    LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     var initialVehicleOpened by rememberSaveable(initialVehicle) { mutableStateOf(false) }
@@ -156,7 +161,7 @@ fun GarageRoute(
             viewModel.opened()
         }
     }
-    androidx.compose.runtime.key(timeZone, currency) {
+    key(timeZone, currency) {
         GarageScreen(state, viewModel, { record ->
             pickerVehicle = state.vehicle
             pickerRecord = record
@@ -396,14 +401,14 @@ internal fun GarageScreen(
                                                     enabled = enabled,
                                                     modifier =
                                                         Modifier.border(
-                                                            androidx.compose.foundation.BorderStroke(
+                                                            BorderStroke(
                                                                 PulseTokens.focusWidth / 2,
-                                                                dev.abhishekan.pulse.core.ui.PulseTheme.colors.error
+                                                                PulseTheme.colors.error
                                                                     .copy(alpha = .4f),
                                                             ),
-                                                            dev.abhishekan.pulse.core.ui.PulseTheme.shapes.small,
+                                                            PulseTheme.shapes.small,
                                                         ),
-                                                    variant = dev.abhishekan.pulse.core.ui.components.PulseButtonVariant.Destructive,
+                                                    variant = PulseButtonVariant.Destructive,
                                                     style = PulseButtonStyle.Text,
                                                     leadingIcon = { GarageDetailIcon(GarageIcon.Delete) },
                                                 )
@@ -464,7 +469,7 @@ internal fun GarageScreen(
                     }
                 }
                 if (fuelEditor) {
-                    androidx.compose.foundation.layout.Box(Modifier.padding(horizontal = size.pagePadding)) {
+                    Box(Modifier.padding(horizontal = size.pagePadding)) {
                         FuelEditorActions(state.busy, state.reviewRequired, vm::save, cancel)
                     }
                 }
@@ -472,7 +477,7 @@ internal fun GarageScreen(
         }
         Column(Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize()) {
             if (!tabsInAppBar && state.vehicle != null && (state.draft == null || records)) {
-                dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs(
+                PulseSegmentedTabs(
                     labels = GarageTab.entries.map { stringResource(it.label) },
                     compact = true,
                     selectedIndex = state.tab.ordinal,

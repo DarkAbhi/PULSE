@@ -16,6 +16,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -544,7 +545,7 @@ internal fun GalleryFoundations() {
             "Extra large" to shapes.extraLarge,
             "Pill" to shapes.pill,
         ).forEach { (name, shape) ->
-            androidx.compose.material3.Surface(shape = shape, color = c.primarySoft, contentColor = c.onPrimarySoft) {
+            Surface(shape = shape, color = c.primarySoft, contentColor = c.onPrimarySoft) {
                 PulseText(name, Modifier.padding(spacing.cardPadding))
             }
         }
@@ -557,7 +558,7 @@ internal fun GalleryFoundations() {
             "Medium" to elevation.medium,
             "High" to elevation.high,
         ).forEach { (name, value) ->
-            androidx.compose.material3.Surface(
+            Surface(
                 shape = PulseTheme.shapes.medium,
                 color = c.surface,
                 contentColor = c.textPrimary,

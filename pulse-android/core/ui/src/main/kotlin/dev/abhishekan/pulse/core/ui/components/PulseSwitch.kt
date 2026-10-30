@@ -9,6 +9,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -34,7 +35,7 @@ fun PulseSwitch(
                 role = Role.Switch,
                 onValueChange = onCheckedChange,
             ),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         val control: @Composable () -> Unit = {
             Switch(

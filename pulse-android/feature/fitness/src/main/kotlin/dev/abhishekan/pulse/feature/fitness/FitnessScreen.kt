@@ -19,7 +19,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -60,6 +62,7 @@ import dev.abhishekan.pulse.core.ui.pulseDescription
 import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 fun FitnessRoute(
@@ -67,11 +70,11 @@ fun FitnessRoute(
     viewModel: FitnessViewModel = koinViewModel(),
 ) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
-    androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refresh() }
+    LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.needsReview }, viewModel::consumeMessage)
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
-    androidx.compose.runtime.key(timeZone) {
+    key(timeZone) {
         FitnessScreen(
             state,
             viewModel::select,
@@ -321,7 +324,7 @@ private fun WorkoutBadge() {
         color = PulseTheme.colors.primarySoft,
     ) {
         Icon(
-            painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_fitness),
+            painterResource(CoreUiR.drawable.pulse_fitness),
             contentDescription = null,
             modifier = Modifier.padding(PulseTokens.medium),
             tint = PulseTheme.colors.action,

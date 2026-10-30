@@ -15,12 +15,17 @@ import dev.abhishekan.pulse.core.data.PulseMealPlanRepository
 import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
 import dev.abhishekan.pulse.core.data.PulsePreferences
 import dev.abhishekan.pulse.core.data.PulseProfileRepository
+import dev.abhishekan.pulse.core.data.ReceiptFiles
 import dev.abhishekan.pulse.core.data.preferences
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
+import dev.abhishekan.pulse.core.domain.repository.GarageRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
+import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
+import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import dev.abhishekan.pulse.core.domain.repository.PreferencesRepository
+import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.network.SessionMaterialStore
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
@@ -28,13 +33,13 @@ import org.koin.dsl.module
 
 val dataModule =
     module {
-        singleOf(::PulseProfileRepository) bind dev.abhishekan.pulse.core.domain.repository.ProfileRepository::class
-        singleOf(::PulseNotificationsRepository) bind dev.abhishekan.pulse.core.domain.repository.NotificationsRepository::class
+        singleOf(::PulseProfileRepository) bind ProfileRepository::class
+        singleOf(::PulseNotificationsRepository) bind NotificationsRepository::class
         singleOf(::PulseMealPlanRepository) bind
-            dev.abhishekan.pulse.core.domain.repository.MealPlanRepository::class
-        singleOf(::AndroidReceiptFiles) bind dev.abhishekan.pulse.core.data.ReceiptFiles::class
+            MealPlanRepository::class
+        singleOf(::AndroidReceiptFiles) bind ReceiptFiles::class
         singleOf(::PulseGarageRepository) bind
-            dev.abhishekan.pulse.core.domain.repository.GarageRepository::class
+            GarageRepository::class
         singleOf(::PulseHorizonRepository) bind HorizonRepository::class
         singleOf(::PulseFitnessRepository) bind FitnessRepository::class
         single<DataStore<Preferences>> { get<Context>().preferences }

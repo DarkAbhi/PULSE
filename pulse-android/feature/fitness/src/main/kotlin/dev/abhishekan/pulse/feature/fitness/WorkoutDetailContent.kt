@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
@@ -605,7 +607,7 @@ internal fun WorkoutAction(
                 else -> PulseButtonVariant.Secondary
             },
         leadingIcon = {
-            WorkoutGlyph(symbol, androidx.compose.material3.LocalContentColor.current)
+            WorkoutGlyph(symbol, LocalContentColor.current)
         },
     )
 }
@@ -642,7 +644,7 @@ internal fun WorkoutGlyph(
                 h * u,
             ),
             CornerRadius(1.5f * u),
-            style = if (fill) androidx.compose.ui.graphics.drawscope.Fill else Stroke(stroke),
+            style = if (fill) Fill else Stroke(stroke),
         )
         when (symbol) {
             WorkoutSymbol.Add -> {

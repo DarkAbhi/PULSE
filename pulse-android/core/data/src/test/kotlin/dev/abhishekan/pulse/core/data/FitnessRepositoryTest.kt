@@ -18,6 +18,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
+import io.ktor.http.headersOf
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -70,7 +71,7 @@ class FitnessRepositoryTest {
                     return@MockEngine respond(
                         """{"has_profile":false,"timezone":"UTC"}""",
                         HttpStatusCode.OK,
-                        io.ktor.http.headersOf(HttpHeaders.ContentType, "application/json"),
+                        headersOf(HttpHeaders.ContentType, "application/json"),
                     )
                 }
                 val path = request.url.encodedPath

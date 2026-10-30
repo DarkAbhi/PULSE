@@ -67,7 +67,7 @@ class MealPlanRepositoryTest {
                         return@MockEngine respond(
                             """{"has_profile":false,"timezone":"UTC"}""",
                             HttpStatusCode.OK,
-                            io.ktor.http.headersOf(HttpHeaders.ContentType, "application/json"),
+                            headersOf(HttpHeaders.ContentType, "application/json"),
                         )
                     }
                     if (request.url.encodedPath.endsWith("auth/login")) {

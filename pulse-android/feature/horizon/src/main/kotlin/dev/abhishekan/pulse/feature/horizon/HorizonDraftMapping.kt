@@ -3,6 +3,7 @@ package dev.abhishekan.pulse.feature.horizon
 import dev.abhishekan.pulse.core.domain.model.HorizonSubscription
 import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
+import java.time.LocalDate
 
 internal fun HorizonTransaction.draft(currency: String): HorizonDraft {
     val local = date.atZone(UserTimeZone.zone)
@@ -30,7 +31,7 @@ internal fun HorizonSubscription.draft(currency: String) =
         name,
         amount.toPlainString(),
         currency,
-        date = (renewalDate ?: nextRenewal ?: java.time.LocalDate.now(UserTimeZone.zone)).toString(),
+        date = (renewalDate ?: nextRenewal ?: LocalDate.now(UserTimeZone.zone)).toString(),
         cycle = cycle,
         dueDay = (billingDay ?: 1).toString(),
         status = status,

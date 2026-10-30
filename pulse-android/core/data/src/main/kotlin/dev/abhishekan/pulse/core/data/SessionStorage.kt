@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.io.IOException
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -72,7 +73,7 @@ class EncryptedSessionStore(
     context: Context,
     private val key: AndroidSessionKey,
 ) : SessionMaterialStore {
-    private val file = AtomicFile(java.io.File(context.noBackupFilesDir, "session.enc"))
+    private val file = AtomicFile(File(context.noBackupFilesDir, "session.enc"))
     private val mutex = Mutex()
 
     override suspend fun read(): ByteArray? =

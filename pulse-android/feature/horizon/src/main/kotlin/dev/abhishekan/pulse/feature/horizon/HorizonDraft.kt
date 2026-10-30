@@ -1,12 +1,16 @@
 package dev.abhishekan.pulse.feature.horizon
 
+import androidx.annotation.StringRes
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.ZoneId
 
 enum class HorizonForm(
-    @param:androidx.annotation.StringRes val label: Int,
+    @param:StringRes val label: Int,
 ) {
     Config(
         R.string.pulse_horizon_starting_pool,
@@ -32,7 +36,7 @@ data class HorizonDraft(
     val id: Long? = null,
     val name: String = "",
     val amount: String = "",
-    val currency: String = dev.abhishekan.pulse.core.domain.model.UserCurrency.code,
+    val currency: String = UserCurrency.code,
     val date: String = "",
     val time: String = "00:00",
     val type: String = "debit",
@@ -56,10 +60,10 @@ data class HorizonDraft(
     fun change(): HorizonChange {
         val value by lazy { amount.toBigDecimal() }
 
-        fun transactionInstant(): java.time.Instant {
-            val location = java.time.ZoneId.of(zone)
+        fun transactionInstant(): Instant {
+            val location = ZoneId.of(zone)
             val local = LocalDate.parse(date).atTime(LocalTime.parse(time))
-            val original = originalInstant.takeIf(String::isNotBlank)?.let(java.time.Instant::parse)
+            val original = originalInstant.takeIf(String::isNotBlank)?.let(Instant::parse)
             if (original?.atZone(location)?.toLocalDateTime() == local) return original
             require(location.rules.getValidOffsets(local).isNotEmpty())
             return local.atZone(location).toInstant()

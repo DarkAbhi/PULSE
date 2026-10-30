@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
@@ -24,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
@@ -51,23 +54,23 @@ fun HomeRoute(
     onProfile: (() -> Unit)? = null,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
-    val currency by dev.abhishekan.pulse.core.domain.model.UserCurrency.changes
+    val currency by UserCurrency.changes
         .collectAsStateWithLifecycle()
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
-    androidx.compose.runtime.LaunchedEffect(timeZone) {
+    LaunchedEffect(timeZone) {
         viewModel.retryProfile()
         viewModel.retryWorkout()
         viewModel.retryHorizon()
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val profile = (state.profile as? Section.Content)?.value
-    androidx.compose.runtime.LaunchedEffect(profile) { if (profile?.hasProfile == false) onMissingProfile() }
+    LaunchedEffect(profile) { if (profile?.hasProfile == false) onMissingProfile() }
     // Refresh today after returning to the app.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.retryWorkout()
         viewModel.refreshNotificationCount()
     }
-    androidx.compose.runtime.key(timeZone, currency) {
+    key(timeZone, currency) {
         HomeScreen(
             username,
             state,

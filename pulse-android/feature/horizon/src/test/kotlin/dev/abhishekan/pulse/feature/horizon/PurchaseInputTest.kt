@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse.feature.horizon
 
 import androidx.compose.ui.text.AnnotatedString
+import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -69,9 +70,9 @@ class PurchaseInputTest {
                 dirty = true,
             )
         assertEquals(draft, HorizonDraft.restore(draft.saved()))
-        val change = draft.change() as dev.abhishekan.pulse.core.domain.model.HorizonChange.Purchase
+        val change = draft.change() as HorizonChange.Purchase
         assertEquals("125000.50".toBigDecimal(), change.amount)
         assertEquals(draft.url, change.url)
-        assertEquals(null, (draft.copy(url = " ").change() as dev.abhishekan.pulse.core.domain.model.HorizonChange.Purchase).url)
+        assertEquals(null, (draft.copy(url = " ").change() as HorizonChange.Purchase).url)
     }
 }

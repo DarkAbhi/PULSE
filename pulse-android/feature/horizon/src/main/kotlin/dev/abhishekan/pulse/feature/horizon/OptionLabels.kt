@@ -1,8 +1,9 @@
 package dev.abhishekan.pulse.feature.horizon
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 
-@androidx.compose.runtime.Composable
+@Composable
 internal fun horizonOption(value: String): String =
     when (value) {
         "debit" -> stringResource(R.string.pulse_horizon_option_debit)

@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -83,6 +84,7 @@ import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.uiText
 import java.time.format.DateTimeFormatter
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 fun ProfileSetupPrompt(
@@ -115,7 +117,7 @@ fun ProfileRoute(
     debugContent: @Composable () -> Unit = {},
 ) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
-    androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refreshProfile() }
+    LaunchedEffect(timeZone) { viewModel.refreshProfile() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.uncertain }, viewModel::consumeMessage)
     val context = LocalContext.current
@@ -150,7 +152,7 @@ fun ProfileRoute(
             onEditorOpened()
         }
     }
-    androidx.compose.runtime.key(timeZone) {
+    key(timeZone) {
         ProfileScreen(state, username, theme, appearanceError, onTheme, loggingOut, otherEdits, onLogout, viewModel, debugContent)
     }
     state.token?.let { created ->
@@ -365,7 +367,7 @@ internal fun ProfileScreen(
                             PulseCard(Modifier.fillMaxWidth()) {
                                 PulseText(stringResource(R.string.pulse_profile_about), style = PulseTextStyle.Title)
                                 Image(
-                                    painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_logo),
+                                    painterResource(CoreUiR.drawable.pulse_logo),
                                     contentDescription = null,
                                     modifier = Modifier.size(80.dp),
                                 )
@@ -379,7 +381,7 @@ internal fun ProfileScreen(
                         }
                     }
                     if (size == PulseWindowSize.Compact ||
-                        androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f
+                        LocalDensity.current.fontScale > 1.3f
                     ) {
                         identity()
                         account()
@@ -414,7 +416,7 @@ internal fun ProfileScreen(
                 if (otherEdits ||
                     dirty
                 ) {
-                    dev.abhishekan.pulse.core.ui.R.string.pulse_ui_logout_edits_title
+                    CoreUiR.string.pulse_ui_logout_edits_title
                 } else {
                     R.string.pulse_profile_logout_title
                 },

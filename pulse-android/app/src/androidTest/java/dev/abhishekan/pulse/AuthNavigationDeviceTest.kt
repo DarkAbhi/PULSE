@@ -2,11 +2,15 @@ package dev.abhishekan.pulse
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -26,12 +30,16 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
 import dev.abhishekan.pulse.core.data.PulseDashboardRepository
+import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
+import dev.abhishekan.pulse.core.data.PulseProfileRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
+import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
+import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
 import dev.abhishekan.pulse.core.network.PulseApi
@@ -56,6 +64,7 @@ import org.koin.core.context.unloadKoinModules
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import java.io.File
+import java.io.IOException
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
@@ -117,7 +126,7 @@ class AuthNavigationDeviceTest {
                             """{"username":"fixture-user"}"""
                         }
                         "/api/auth/session" -> {
-                            if (offline) throw java.io.IOException("Fixture offline")
+                            if (offline) throw IOException("Fixture offline")
                             """{"username":"fixture-user"}"""
                         }
                         "/api/auth/logout" -> {
@@ -151,13 +160,11 @@ class AuthNavigationDeviceTest {
             module {
                 single<AuthRepository> { auth }
                 single<DashboardRepository> { dashboard }
-                single<dev.abhishekan.pulse.core.domain.repository.ProfileRepository> {
-                    dev.abhishekan.pulse.core.data
-                        .PulseProfileRepository(api, auth, dashboard)
+                single<ProfileRepository> {
+                    PulseProfileRepository(api, auth, dashboard)
                 }
-                single<dev.abhishekan.pulse.core.domain.repository.NotificationsRepository> {
-                    dev.abhishekan.pulse.core.data
-                        .PulseNotificationsRepository(api, auth, dashboard)
+                single<NotificationsRepository> {
+                    PulseNotificationsRepository(api, auth, dashboard)
                 }
             }
         loadKoinModules(overrides)
@@ -230,7 +237,7 @@ class AuthNavigationDeviceTest {
             (target.right - target.left).value >= 48f - 0.001f &&
                 (target.bottom - target.top).value >= 48f - 0.001f,
         )
-        notifications.assertHasClickAction().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+        notifications.assertHasClickAction().performSemanticsAction(SemanticsActions.OnClick) { it() }
         awaitText("Vehicle care update")
         compose.onNodeWithText("Vehicle care update").assertIsDisplayed()
         compose.onNodeWithContentDescription("Back to Home").performClick()
@@ -239,13 +246,10 @@ class AuthNavigationDeviceTest {
         compose.onNodeWithText("Log out").performScrollTo().performClick()
         compose
             .onNode(
-                androidx.compose.ui.test
-                    .hasText("Log out") and
-                    androidx.compose.ui.test
-                        .hasAnyAncestor(
-                            androidx.compose.ui.test
-                                .isDialog(),
-                        ),
+                hasText("Log out") and
+                    hasAnyAncestor(
+                        isDialog(),
+                    ),
             ).performClick()
         awaitText("Welcome back")
         compose.onNodeWithText("Asha").assertDoesNotExist()

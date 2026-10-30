@@ -4,7 +4,11 @@ import android.content.ClipboardManager
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.os.ParcelFileDescriptor
+import android.os.SystemClock
 import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
@@ -38,6 +42,8 @@ import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
@@ -349,7 +355,7 @@ class AccountNotificationsDeviceTest {
         scenario?.onActivity {
             it
                 .getSystemService(
-                    android.view.inputmethod.InputMethodManager::class.java,
+                    InputMethodManager::class.java,
                 ).hideSoftInputFromWindow(it.window.decorView.windowToken, 0)
         }
     }
@@ -368,7 +374,7 @@ class AccountNotificationsDeviceTest {
                 if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) {
                     performScrollTo()
                 }
-            }.performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            }.performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
     private fun field(
@@ -411,7 +417,7 @@ class AccountNotificationsDeviceTest {
     private fun screenshot(name: String) {
         compose.waitForIdle()
         // Let the compositor present the settled Compose frame before capturing.
-        android.os.SystemClock.sleep(300)
+        SystemClock.sleep(300)
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File(context.externalCacheDir, "pulse-phase7-$name.png")
         val bitmap = checkNotNull(InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot())
@@ -551,9 +557,9 @@ class AccountNotificationsDeviceTest {
         }
         compose.onNodeWithText("Spaces").assertDoesNotExist()
         compose.onNode(items.first()).assertIsSelected()
-        val actionLayouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        val actionLayouts = mutableListOf<TextLayoutResult>()
         compose.onNodeWithText("Keep going", useUnmergedTree = true).performSemanticsAction(
-            androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult,
+            SemanticsActions.GetTextLayoutResult,
         ) { it(actionLayouts) }
         assertEquals(1, actionLayouts.single().lineCount)
         if (!rail) {
@@ -658,9 +664,8 @@ class AccountNotificationsDeviceTest {
                 "Current password",
             ).assert(
                 SemanticsMatcher.expectValue(
-                    androidx.compose.ui.semantics.SemanticsProperties.EditableText,
-                    androidx.compose.ui.text
-                        .AnnotatedString(""),
+                    SemanticsProperties.EditableText,
+                    AnnotatedString(""),
                 ),
             )
         field("Current password", "unsaved")

@@ -8,11 +8,13 @@ import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
+import dev.abhishekan.pulse.core.domain.usecase.AccountValidation
 import dev.abhishekan.pulse.core.network.PulseApi
 import dev.abhishekan.pulse.core.network.dto.APIKeyDto
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.statement.bodyAsText
 import java.time.Instant
+import java.time.ZoneId
 
 class PulseProfileRepository(
     private val api: PulseApi,
@@ -59,7 +61,7 @@ class PulseProfileRepository(
             val previousZone = UserTimeZone.zone
             val previousCurrency = UserCurrency.code
             val dto = api.profile()
-            java.time.ZoneId.of(dto.timezone)
+            ZoneId.of(dto.timezone)
             require(UserCurrency.valid(dto.currency))
             if (version == auth.version && previousCurrency == UserCurrency.code) UserCurrency.select(dto.currency)
             if (version == auth.version && previousZone == UserTimeZone.zone) UserTimeZone.select(dto.timezone)
@@ -70,7 +72,7 @@ class PulseProfileRepository(
         request(true) {
             api.saveProfile(name).let {
                 require(
-                    dev.abhishekan.pulse.core.domain.usecase.AccountValidation
+                    AccountValidation
                         .validName(it.name),
                 )
                 Profile(it.name, true, UserTimeZone.zone.id, UserCurrency.code)

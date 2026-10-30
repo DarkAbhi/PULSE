@@ -1,8 +1,9 @@
 package dev.abhishekan.pulse.feature.garage
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 
-@androidx.compose.runtime.Composable
+@Composable
 internal fun garageOption(value: String): String =
     when (value) {
         "" -> stringResource(R.string.pulse_garage_select_option)

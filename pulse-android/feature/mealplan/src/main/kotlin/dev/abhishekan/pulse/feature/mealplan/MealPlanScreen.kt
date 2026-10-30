@@ -19,6 +19,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -67,7 +68,7 @@ fun MealPlanRoute(
     viewModel: MealPlanViewModel = koinViewModel(),
 ) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
-    androidx.compose.runtime.LaunchedEffect(timeZone) {
+    LaunchedEffect(timeZone) {
         viewModel.resume()
         viewModel.refresh()
     }
@@ -75,7 +76,7 @@ fun MealPlanRoute(
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     LaunchedEffect(state.draft?.dirty) { onDraftChanged(state.draft?.dirty == true) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
-    androidx.compose.runtime.key(timeZone) {
+    key(timeZone) {
         MealPlanScreen(state, viewModel)
     }
 }

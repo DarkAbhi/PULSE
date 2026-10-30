@@ -46,6 +46,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 internal val mealDate: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE, d MMM yyyy")
 internal val mealClock: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
@@ -321,7 +322,7 @@ internal fun MealTimesHeader(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         PulseButton(stringResource(R.string.pulse_mealplan_back_to_planner), onBack, enabled = enabled, style = PulseButtonStyle.Icon) {
-            Icon(painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_back), null)
+            Icon(painterResource(CoreUiR.drawable.pulse_back), null)
         }
         PulseText(
             stringResource(R.string.pulse_mealplan_meal_times),

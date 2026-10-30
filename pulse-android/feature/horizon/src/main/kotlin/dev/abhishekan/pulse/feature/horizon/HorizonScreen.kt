@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.HorizonRecord
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
@@ -57,14 +58,14 @@ fun HorizonRoute(
     onDraftChanged: (Boolean) -> Unit,
     viewModel: HorizonViewModel = koinViewModel(),
 ) {
-    val accountCurrency by dev.abhishekan.pulse.core.domain.model.UserCurrency.changes
+    val accountCurrency by UserCurrency.changes
         .collectAsStateWithLifecycle()
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
-    androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refresh() }
+    LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     LaunchedEffect(state.draft?.dirty) { onDraftChanged(state.draft?.dirty == true) }
-    androidx.compose.runtime.key(timeZone, accountCurrency) {
+    key(timeZone, accountCurrency) {
         HorizonScreen(state, viewModel)
     }
 }
@@ -87,7 +88,7 @@ internal fun HorizonScreen(
             else -> vm.hidePayments()
         }
     }
-    val currency = dev.abhishekan.pulse.core.domain.model.UserCurrency.code
+    val currency = UserCurrency.code
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { width ->
         Column(
             Modifier

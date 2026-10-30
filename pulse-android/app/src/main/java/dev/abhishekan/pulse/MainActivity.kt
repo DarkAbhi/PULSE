@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -33,8 +34,8 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(
                     statusBarStyle =
                         SystemBarStyle.auto(
-                            android.graphics.Color.TRANSPARENT,
-                            android.graphics.Color.TRANSPARENT,
+                            Color.TRANSPARENT,
+                            Color.TRANSPARENT,
                         ) {
                             dark
                         },

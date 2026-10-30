@@ -6,12 +6,13 @@ import dev.abhishekan.pulse.core.network.NetworkConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import org.junit.Test
+import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.dsl.module
 import org.koin.test.verify.definition
 import org.koin.test.verify.injectedParameters
 import org.koin.test.verify.verify
 
-@OptIn(org.koin.core.annotation.KoinExperimentalAPI::class)
+@OptIn(KoinExperimentalAPI::class)
 class KoinGraphTest {
     @Test fun completeProductionGraphHasEveryConstructorDependency() {
         module {

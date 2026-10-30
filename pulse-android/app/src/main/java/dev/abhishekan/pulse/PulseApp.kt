@@ -65,6 +65,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationItem
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationRail
+import dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbar
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarProvider
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -76,7 +77,10 @@ import dev.abhishekan.pulse.feature.auth.LoginRoute
 import dev.abhishekan.pulse.feature.fitness.FitnessRoute
 import dev.abhishekan.pulse.feature.fitness.WorkoutRoute
 import dev.abhishekan.pulse.feature.garage.GarageRoute
+import dev.abhishekan.pulse.feature.garage.GarageTab
+import dev.abhishekan.pulse.feature.garage.GarageViewModel
 import dev.abhishekan.pulse.feature.home.HomeRoute
+import dev.abhishekan.pulse.feature.horizon.HorizonForm
 import dev.abhishekan.pulse.feature.horizon.HorizonRoute
 import dev.abhishekan.pulse.feature.horizon.HorizonTopBarActions
 import dev.abhishekan.pulse.feature.horizon.HorizonViewModel
@@ -88,6 +92,8 @@ import dev.abhishekan.pulse.feature.profile.ProfileSetupPrompt
 import dev.abhishekan.pulse.feature.profile.ProfileViewModel
 import org.koin.androidx.compose.koinViewModel
 import dev.abhishekan.pulse.core.ui.R as UiR
+import dev.abhishekan.pulse.feature.horizon.R as FeatureHorizonR
+import dev.abhishekan.pulse.feature.profile.R as FeatureProfileR
 
 @Composable
 fun PulseApp(
@@ -260,7 +266,7 @@ private fun SignedInApp(
         val horizonState = horizonViewModel?.uiState?.collectAsStateWithLifecycle()?.value
         val garageViewModel =
             entry?.takeIf { route in listOf("garage", "vehicle/{id}") }?.let {
-                koinViewModel<dev.abhishekan.pulse.feature.garage.GarageViewModel>(viewModelStoreOwner = it)
+                koinViewModel<GarageViewModel>(viewModelStoreOwner = it)
             }
         val garageState = garageViewModel?.uiState?.collectAsStateWithLifecycle()?.value
         val garageTabsInAppBar =
@@ -357,40 +363,40 @@ private fun SignedInApp(
                                             ?.takeIf {
                                                 it.kind in
                                                     listOf(
-                                                        dev.abhishekan.pulse.feature.horizon.HorizonForm.Deduction,
-                                                        dev.abhishekan.pulse.feature.horizon.HorizonForm.Purchase,
-                                                        dev.abhishekan.pulse.feature.horizon.HorizonForm.Subscription,
-                                                        dev.abhishekan.pulse.feature.horizon.HorizonForm.Budget,
-                                                        dev.abhishekan.pulse.feature.horizon.HorizonForm.Category,
+                                                        HorizonForm.Deduction,
+                                                        HorizonForm.Purchase,
+                                                        HorizonForm.Subscription,
+                                                        HorizonForm.Budget,
+                                                        HorizonForm.Category,
                                                     )
                                             }?.let {
                                                 stringResource(
-                                                    if (it.kind == dev.abhishekan.pulse.feature.horizon.HorizonForm.Category) {
-                                                        dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_add_category
-                                                    } else if (it.kind == dev.abhishekan.pulse.feature.horizon.HorizonForm.Budget) {
+                                                    if (it.kind == HorizonForm.Category) {
+                                                        FeatureHorizonR.string.pulse_horizon_add_category
+                                                    } else if (it.kind == HorizonForm.Budget) {
                                                         if (it.id == null) {
-                                                            dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_add_budget
+                                                            FeatureHorizonR.string.pulse_horizon_add_budget
                                                         } else {
-                                                            dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_edit_budget
+                                                            FeatureHorizonR.string.pulse_horizon_edit_budget
                                                         }
-                                                    } else if (it.kind == dev.abhishekan.pulse.feature.horizon.HorizonForm.Subscription) {
+                                                    } else if (it.kind == HorizonForm.Subscription) {
                                                         if (it.id == null) {
-                                                            dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_add_subscription
+                                                            FeatureHorizonR.string.pulse_horizon_add_subscription
                                                         } else {
-                                                            dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_edit_subscription
+                                                            FeatureHorizonR.string.pulse_horizon_edit_subscription
                                                         }
-                                                    } else if (it.kind == dev.abhishekan.pulse.feature.horizon.HorizonForm.Purchase) {
+                                                    } else if (it.kind == HorizonForm.Purchase) {
                                                         if (it.id == null) {
-                                                            dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_add_purchase
+                                                            FeatureHorizonR.string.pulse_horizon_add_purchase
                                                         } else {
-                                                            dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_edit_purchase
+                                                            FeatureHorizonR.string.pulse_horizon_edit_purchase
                                                         }
                                                     } else if (it.id ==
                                                         null
                                                     ) {
-                                                        dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_add_deduction
+                                                        FeatureHorizonR.string.pulse_horizon_add_deduction
                                                     } else {
-                                                        dev.abhishekan.pulse.feature.horizon.R.string.pulse_horizon_edit_deduction
+                                                        FeatureHorizonR.string.pulse_horizon_edit_deduction
                                                     },
                                                 )
                                             } ?: stringResource(R.string.pulse_app_financial_horizon)
@@ -401,12 +407,12 @@ private fun SignedInApp(
                             },
                             actions = {
                                 if (garageTabsInAppBar) {
-                                    dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs(
+                                    PulseSegmentedTabs(
                                         labels =
-                                            dev.abhishekan.pulse.feature.garage.GarageTab.entries
+                                            GarageTab.entries
                                                 .map { stringResource(it.label) },
                                         selectedIndex = garageState.tab.ordinal,
-                                        onSelect = { garageViewModel.tab(dev.abhishekan.pulse.feature.garage.GarageTab.entries[it]) },
+                                        onSelect = { garageViewModel.tab(GarageTab.entries[it]) },
                                         modifier = Modifier.padding(end = PulseTokens.cardPadding),
                                         enabled = !garageState.busy,
                                     )
@@ -604,9 +610,9 @@ private fun SignedInApp(
     }
     pendingDestination?.let { destination ->
         PulseDialog(
-            stringResource(dev.abhishekan.pulse.feature.profile.R.string.pulse_profile_discard_title),
-            stringResource(dev.abhishekan.pulse.feature.profile.R.string.pulse_profile_discard_body),
-            stringResource(dev.abhishekan.pulse.feature.profile.R.string.pulse_profile_discard),
+            stringResource(FeatureProfileR.string.pulse_profile_discard_title),
+            stringResource(FeatureProfileR.string.pulse_profile_discard_body),
+            stringResource(FeatureProfileR.string.pulse_profile_discard),
             {
                 pendingDestination = null
                 hasPasswordEdits = false

@@ -9,6 +9,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -33,7 +34,7 @@ fun PulseRadioButton(
                 role = Role.RadioButton,
                 onClick = onClick,
             ),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         RadioButton(
             selected,

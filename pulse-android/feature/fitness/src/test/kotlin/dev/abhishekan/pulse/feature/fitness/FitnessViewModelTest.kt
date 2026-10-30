@@ -10,6 +10,7 @@ import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
 import dev.abhishekan.pulse.core.domain.usecase.RecordWorkout
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -28,7 +29,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class FitnessViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val models = ViewModelStore()

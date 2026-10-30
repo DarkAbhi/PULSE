@@ -1,8 +1,10 @@
 package dev.abhishekan.pulse.feature.horizon
 
+import androidx.annotation.StringRes
+
 internal enum class EditorAction { Add, Edit, Save }
 
-@androidx.annotation.StringRes
+@StringRes
 internal fun HorizonForm.editorLabel(action: EditorAction): Int =
     when (this) {
         HorizonForm.Config ->

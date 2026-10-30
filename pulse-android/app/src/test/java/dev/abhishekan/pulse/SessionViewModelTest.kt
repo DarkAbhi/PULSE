@@ -12,6 +12,7 @@ import dev.abhishekan.pulse.core.domain.usecase.RestoreSession
 import dev.abhishekan.pulse.core.ui.message
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -29,7 +30,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class SessionViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val models = ViewModelStore()

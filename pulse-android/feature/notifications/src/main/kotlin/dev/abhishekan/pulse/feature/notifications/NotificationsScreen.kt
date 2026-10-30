@@ -18,6 +18,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,10 +58,10 @@ fun NotificationsRoute(
     viewModel: NotificationsViewModel = koinViewModel(),
 ) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
-    androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refresh() }
+    LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.uncertain }, viewModel::consumeMessage)
-    androidx.compose.runtime.key(timeZone) {
+    key(timeZone) {
         NotificationsScreen(state, viewModel::refresh, viewModel::dismiss, viewModel::acknowledge, onOpen)
     }
 }
@@ -80,7 +81,7 @@ internal fun NotificationsScreen(
             isRefreshing = state.loading && state.loaded,
             onRefresh = { if (!state.busy && !state.loading) refresh() },
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = androidx.compose.ui.Alignment.TopCenter,
+            contentAlignment = Alignment.TopCenter,
         ) {
             LazyColumn(
                 Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize(),

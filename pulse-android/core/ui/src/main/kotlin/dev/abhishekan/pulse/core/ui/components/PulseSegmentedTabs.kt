@@ -12,8 +12,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -38,7 +40,7 @@ fun PulseSegmentedTabs(
             .padding(PulseTokens.tiny)
             .selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         labels.forEachIndexed { index, label ->
             val selected = selectedIndex == index
@@ -46,13 +48,13 @@ fun PulseSegmentedTabs(
                 Modifier
                     .heightIn(min = PulseTokens.target)
                     .clip(PulseTheme.shapes.pill)
-                    .background(if (selected) colors.primary else androidx.compose.ui.graphics.Color.Transparent)
+                    .background(if (selected) colors.primary else Color.Transparent)
                     .selectable(selected = selected, enabled = enabled, role = Role.Tab, onClick = { onSelect(index) })
                     .padding(
                         horizontal = if (compact) PulseTheme.spacing.compact else PulseTokens.cardPadding,
                         vertical = PulseTheme.spacing.compact,
                     ),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 PulseText(
                     label,

@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse
 
 import android.graphics.Bitmap
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -124,7 +125,7 @@ class WorkoutRedesignTest {
         val folder = File(instrumentation.targetContext.getExternalFilesDir(null), "workout-redesign")
         folder.mkdirs()
         // Native dialog/window fades run outside Compose's test clock.
-        android.os.SystemClock.sleep(400)
+        SystemClock.sleep(400)
         instrumentation.uiAutomation.takeScreenshot().let { bitmap ->
             File(folder, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
             bitmap.recycle()

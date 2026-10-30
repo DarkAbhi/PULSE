@@ -4,6 +4,7 @@ import dev.abhishekan.pulse.core.domain.model.Notification
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.domain.model.SessionState
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 import dev.abhishekan.pulse.core.domain.usecase.Login
 import dev.abhishekan.pulse.core.network.NetworkConfig
@@ -19,6 +20,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -176,9 +178,9 @@ class AuthAndDashboardTest {
             Harness().use { h ->
                 h.timezone = "Asia/Tokyo"
                 h.login()
-                assertEquals("Asia/Tokyo", dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone.id)
+                assertEquals("Asia/Tokyo", UserTimeZone.zone.id)
                 h.auth.logout()
-                assertEquals("UTC", dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone.id)
+                assertEquals("UTC", UserTimeZone.zone.id)
             }
         }
 
@@ -254,7 +256,7 @@ class AuthAndDashboardTest {
             }
         }
 
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun localRevocationFinishesWhenTheSessionObserverCancelsItsCaller() =
         runTest {

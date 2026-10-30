@@ -9,6 +9,7 @@ import dev.abhishekan.pulse.core.domain.usecase.Login
 import dev.abhishekan.pulse.core.ui.message
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -23,7 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val models = ViewModelStore()

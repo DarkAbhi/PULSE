@@ -8,6 +8,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -31,7 +32,7 @@ fun PulseCheckbox(
                 role = Role.Checkbox,
                 onValueChange = onCheckedChange,
             ),
-        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(
             checked,

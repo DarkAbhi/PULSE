@@ -44,6 +44,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pulseWindowSize
 import dev.abhishekan.pulse.core.ui.uiText
+import android.graphics.Color as GraphicsColor
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 private data class CategoryIcon(
     val value: String,
@@ -58,7 +60,7 @@ private val categoryIcons =
         CategoryIcon("shopping-cart", R.string.pulse_horizon_category_icon_shopping, R.drawable.pulse_purchase_cart),
         CategoryIcon("wallet", R.string.pulse_horizon_category_icon_wallet, R.drawable.pulse_obligation_wallet),
         CategoryIcon("calendar", R.string.pulse_horizon_category_icon_calendar, R.drawable.pulse_obligation_calendar),
-        CategoryIcon("car", R.string.pulse_horizon_category_icon_transport, dev.abhishekan.pulse.core.ui.R.drawable.pulse_garage),
+        CategoryIcon("car", R.string.pulse_horizon_category_icon_transport, CoreUiR.drawable.pulse_garage),
     )
 
 @Composable
@@ -189,7 +191,7 @@ private fun CategoryAppearance(
         if (palette.any { it.third.equals(originalColor, ignoreCase = true) }) {
             palette
         } else {
-            val current = runCatching { Color(android.graphics.Color.parseColor(originalColor)) }.getOrDefault(colors.action)
+            val current = runCatching { Color(GraphicsColor.parseColor(originalColor)) }.getOrDefault(colors.action)
             listOf(Triple(stringResource(R.string.pulse_horizon_category_color_current), current, originalColor)) + palette
         }
     PulseCard(Modifier.fillMaxWidth()) {

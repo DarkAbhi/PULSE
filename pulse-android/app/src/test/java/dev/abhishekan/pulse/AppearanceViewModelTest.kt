@@ -5,8 +5,10 @@ import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.domain.repository.PreferencesRepository
 import dev.abhishekan.pulse.core.domain.usecase.ObserveTheme
 import dev.abhishekan.pulse.core.domain.usecase.SetTheme
+import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.di.applicationModule
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -23,7 +25,7 @@ import org.junit.Test
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class AppearanceViewModelTest {
     @Before fun setUp() {
         Dispatchers.setMain(StandardTestDispatcher())
@@ -76,7 +78,7 @@ class AppearanceViewModelTest {
             runCurrent()
             assertEquals(ThemePreference.System, vm.uiState.value.theme)
             assertEquals(
-                dev.abhishekan.pulse.core.ui.uiText(
+                uiText(
                     R.string.pulse_app_couldn_t_save_appearance_please_try_again,
                 ),
                 vm.uiState.value.error,

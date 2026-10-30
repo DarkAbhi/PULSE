@@ -2,6 +2,7 @@ package dev.abhishekan.pulse
 import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
@@ -36,11 +37,15 @@ import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
 import dev.abhishekan.pulse.core.data.PulseDashboardRepository
 import dev.abhishekan.pulse.core.data.PulseFitnessRepository
+import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
+import dev.abhishekan.pulse.core.data.PulseProfileRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
 import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
+import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
+import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.network.FitnessApi
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
@@ -88,6 +93,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import kotlin.math.abs
 
 /** Test-only server fixtures exercise the actual HTTP, persistence, repositories, use cases and UI. */
 class FitnessDeviceTest {
@@ -392,13 +398,11 @@ class FitnessDeviceTest {
             module {
                 single<AuthRepository> { auth }
                 single<DashboardRepository> { dashboard }
-                single<dev.abhishekan.pulse.core.domain.repository.ProfileRepository> {
-                    dev.abhishekan.pulse.core.data
-                        .PulseProfileRepository(api, auth, dashboard)
+                single<ProfileRepository> {
+                    PulseProfileRepository(api, auth, dashboard)
                 }
-                single<dev.abhishekan.pulse.core.domain.repository.NotificationsRepository> {
-                    dev.abhishekan.pulse.core.data
-                        .PulseNotificationsRepository(api, auth, dashboard)
+                single<NotificationsRepository> {
+                    PulseNotificationsRepository(api, auth, dashboard)
                 }
                 single<FitnessRepository> { fitness }
             }
@@ -429,7 +433,7 @@ class FitnessDeviceTest {
                 .onNodeWithContentDescription(
                     text,
                 ).performScrollTo()
-                .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
+                .performSemanticsAction(SemanticsActions.OnClick) {
                     it()
                 }
             return
@@ -438,7 +442,7 @@ class FitnessDeviceTest {
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         val node = compose.onAllNodes(button)[0]
         if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) node.performScrollTo()
-        node.assertIsDisplayed().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+        node.assertIsDisplayed().performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
     private fun selectCalendarDate(description: String) {
@@ -452,7 +456,7 @@ class FitnessDeviceTest {
                 InstrumentationRegistry
                     .getInstrumentation()
                     .targetContext.resources.displayMetrics.density
-        content.performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.ScrollBy) {
+        content.performSemanticsAction(SemanticsActions.ScrollBy) {
             it(0f, offset)
         }
         date.performScrollTo().performClick()
@@ -498,7 +502,7 @@ class FitnessDeviceTest {
         compose
             .onNode(custom)
             .assertIsDisplayed()
-            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            .performSemanticsAction(SemanticsActions.OnClick) { it() }
         awaitText("Reps, set 1")
     }
 
@@ -564,7 +568,7 @@ class FitnessDeviceTest {
             val control = compose.onNodeWithContentDescription(description)
             control.assertIsDisplayed()
             val bounds = control.getUnclippedBoundsInRoot()
-            assertTrue(kotlin.math.abs((bounds.top + bounds.bottom).value / 2 - (monthBounds.top + monthBounds.bottom).value / 2) < 2f)
+            assertTrue(abs((bounds.top + bounds.bottom).value / 2 - (monthBounds.top + monthBounds.bottom).value / 2) < 2f)
         }
         val label = "${backend.today.format(
             DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"),

@@ -27,6 +27,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 internal fun MealEditorHeader(
@@ -45,7 +46,7 @@ internal fun MealEditorHeader(
                 Surface(shape = PulseTheme.shapes.large, color = colors.primarySoft) {
                     Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
                         Icon(
-                            painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_meals),
+                            painterResource(CoreUiR.drawable.pulse_meals),
                             null,
                             Modifier.size(24.dp),
                             tint = colors.onPrimarySoft,

@@ -11,7 +11,10 @@ import dev.abhishekan.pulse.core.domain.usecase.CreateAPIKey
 import dev.abhishekan.pulse.core.domain.usecase.GetAPIKeys
 import dev.abhishekan.pulse.core.domain.usecase.GetAccountProfile
 import dev.abhishekan.pulse.core.domain.usecase.RevokeAPIKey
+import dev.abhishekan.pulse.core.domain.usecase.SaveProfileCurrency
 import dev.abhishekan.pulse.core.domain.usecase.SaveProfileName
+import dev.abhishekan.pulse.core.domain.usecase.SaveProfileTimeZone
+import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -120,10 +123,8 @@ class ProfileViewModelTest {
         CreateAPIKey(repo),
         RevokeAPIKey(repo),
         saved,
-        dev.abhishekan.pulse.core.domain.usecase
-            .SaveProfileCurrency(repo),
-        dev.abhishekan.pulse.core.domain.usecase
-            .SaveProfileTimeZone(repo),
+        SaveProfileCurrency(repo),
+        SaveProfileTimeZone(repo),
     )
 
     @Test fun currencySavePreservesProfileAndFailureKeepsPreference() =
@@ -400,14 +401,12 @@ class ProfileViewModelTest {
             runCurrent()
             vm.copied(false)
             assertEquals(
-                dev.abhishekan.pulse.core.ui
-                    .uiText(R.string.pulse_profile_copy_failed),
+                uiText(R.string.pulse_profile_copy_failed),
                 vm.uiState.value.message,
             )
             vm.copied(true)
             assertEquals(
-                dev.abhishekan.pulse.core.ui
-                    .uiText(R.string.pulse_profile_copied),
+                uiText(R.string.pulse_profile_copied),
                 vm.uiState.value.message,
             )
         }

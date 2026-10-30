@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse
 
 import android.graphics.Bitmap
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,6 +10,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -132,7 +134,7 @@ class ExerciseEditorRedesignTest {
             .onNodeWithText("Save exercise")
             .performScrollTo()
             .assertIsEnabled()
-            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            .performSemanticsAction(SemanticsActions.OnClick) { it() }
         compose.runOnIdle {
             check(saved)
             check(editor.value.draft.catalogId == null)
@@ -203,7 +205,7 @@ class ExerciseEditorRedesignTest {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val directory = File(instrumentation.targetContext.getExternalFilesDir(null), "exercise-editor-redesign")
         directory.mkdirs()
-        android.os.SystemClock.sleep(250)
+        SystemClock.sleep(250)
         val bitmap = instrumentation.uiAutomation.takeScreenshot()
         File(directory, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
         bitmap.recycle()

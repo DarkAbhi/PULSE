@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.garageCategories
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -121,7 +122,7 @@ internal fun GarageEditor(
                     "amount",
                     stringResource(
                         R.string.pulse_garage_amount,
-                        dev.abhishekan.pulse.core.domain.model.UserCurrency
+                        UserCurrency
                             .symbol(),
                     ),
                     true,

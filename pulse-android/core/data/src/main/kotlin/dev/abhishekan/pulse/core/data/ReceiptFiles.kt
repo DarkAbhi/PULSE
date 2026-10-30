@@ -11,6 +11,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.IOException
 import java.util.UUID
 
 class ReceiptFileException : Exception("Choose a readable file between 1 byte and 10 MB")
@@ -93,7 +94,7 @@ class AndroidReceiptFiles(
         ) {
             throw error
         } catch (
-            _: java.io.IOException,
+            _: IOException,
         ) {
             throw ReceiptFileException()
         } catch (_: SecurityException) {

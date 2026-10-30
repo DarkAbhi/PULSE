@@ -48,6 +48,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import kotlinx.coroutines.delay
+import android.graphics.Color as GraphicsColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -291,7 +292,7 @@ private fun ledgerTypeLabel(type: String?): String =
 @Composable
 private fun HorizonCategory.filterColor(): Color =
     runCatching {
-        Color(android.graphics.Color.parseColor(color))
+        Color(GraphicsColor.parseColor(color))
     }.getOrDefault(PulseTheme.colors.action)
 
 @Composable

@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.usecase.ApplyHorizonChange
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizonTransactions
@@ -179,7 +180,7 @@ class HorizonViewModel(
         edit(
             HorizonDraft(
                 kind,
-                currency = dev.abhishekan.pulse.core.domain.model.UserCurrency.code,
+                currency = UserCurrency.code,
                 amount =
                     if (kind ==
                         HorizonForm.Config

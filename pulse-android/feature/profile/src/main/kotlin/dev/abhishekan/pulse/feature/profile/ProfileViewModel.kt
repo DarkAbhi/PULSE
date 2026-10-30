@@ -12,7 +12,9 @@ import dev.abhishekan.pulse.core.domain.usecase.CreateAPIKey
 import dev.abhishekan.pulse.core.domain.usecase.GetAPIKeys
 import dev.abhishekan.pulse.core.domain.usecase.GetAccountProfile
 import dev.abhishekan.pulse.core.domain.usecase.RevokeAPIKey
+import dev.abhishekan.pulse.core.domain.usecase.SaveProfileCurrency
 import dev.abhishekan.pulse.core.domain.usecase.SaveProfileName
+import dev.abhishekan.pulse.core.domain.usecase.SaveProfileTimeZone
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.Job
@@ -29,8 +31,8 @@ class ProfileViewModel(
     private val createKey: CreateAPIKey,
     private val revokeKey: RevokeAPIKey,
     private val saved: SavedStateHandle,
-    private val saveCurrency: dev.abhishekan.pulse.core.domain.usecase.SaveProfileCurrency,
-    private val saveTimeZone: dev.abhishekan.pulse.core.domain.usecase.SaveProfileTimeZone,
+    private val saveCurrency: SaveProfileCurrency,
+    private val saveTimeZone: SaveProfileTimeZone,
 ) : ViewModel() {
     private val state =
         MutableStateFlow(

@@ -9,6 +9,7 @@ import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.GarageRecord
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.TirePressure
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.Vehicle
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.domain.model.garageCategories
@@ -361,9 +362,9 @@ class GarageViewModelTest {
     }
 
     @Test fun unchangedAmbiguousTimestampKeepsItsOriginalOffsetAndGapsAreRejected() {
-        val originalZone = dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone.id
+        val originalZone = UserTimeZone.zone.id
         try {
-            dev.abhishekan.pulse.core.domain.model.UserTimeZone
+            UserTimeZone
                 .select("America/New_York")
             val instant = Instant.parse("2026-11-01T06:30:00Z")
             val item = FuelItem("petrol", "full", "1".toBigDecimal(), "100".toBigDecimal(), null)
@@ -378,7 +379,7 @@ class GarageViewModelTest {
             ) {
             }
         } finally {
-            dev.abhishekan.pulse.core.domain.model.UserTimeZone
+            UserTimeZone
                 .select(originalZone)
         }
     }

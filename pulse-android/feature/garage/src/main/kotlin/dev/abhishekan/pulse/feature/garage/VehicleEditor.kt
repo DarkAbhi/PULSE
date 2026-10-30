@@ -44,6 +44,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 internal fun VehicleEditor(
@@ -83,7 +84,7 @@ internal fun VehicleEditor(
                     ).forEach { label ->
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                painterResource(dev.abhishekan.pulse.core.ui.R.drawable.pulse_check),
+                                painterResource(CoreUiR.drawable.pulse_check),
                                 null,
                                 Modifier.size(24.dp),
                                 colors.onPrimarySoft,

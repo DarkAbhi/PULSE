@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -131,7 +132,7 @@ internal fun BudgetCard(
                 modifier = Modifier.fillMaxWidth().height(8.dp),
                 color = accent,
                 trackColor = accent.copy(alpha = 0.1f),
-                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                strokeCap = StrokeCap.Round,
                 gapSize = 0.dp,
                 drawStopIndicator = {},
             )

@@ -58,7 +58,7 @@ fun WorkoutRoute(
     onEditorTitleChanged: (String?) -> Unit = {},
 ) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
-    androidx.compose.runtime.LaunchedEffect(timeZone) { viewModel.refresh() }
+    LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val editorTitle =
         state.editor?.let {
@@ -93,7 +93,7 @@ fun WorkoutRoute(
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
     LaunchedEffect(state.editor?.dirty) { onDraftChanged(state.editor?.dirty == true) }
     LaunchedEffect(state.deleted) { if (state.deleted) onDeleted() }
-    androidx.compose.runtime.key(timeZone) {
+    key(timeZone) {
         WorkoutScreen(
             state,
             {

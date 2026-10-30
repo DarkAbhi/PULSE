@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -107,7 +108,7 @@ internal fun HorizonEditor(
                 { onChange(draft.copy(amount = it)) },
                 stringResource(
                     R.string.pulse_horizon_amount_1_s,
-                    dev.abhishekan.pulse.core.domain.model.UserCurrency
+                    UserCurrency
                         .symbol(),
                 ),
                 Modifier.fillMaxWidth(),

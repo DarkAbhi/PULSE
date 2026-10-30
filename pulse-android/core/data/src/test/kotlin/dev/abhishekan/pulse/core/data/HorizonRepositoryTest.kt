@@ -9,6 +9,7 @@ import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
 import dev.abhishekan.pulse.core.network.PulseApi
 import dev.abhishekan.pulse.core.network.SessionMaterialStore
+import dev.abhishekan.pulse.core.network.dto.HorizonTransactionDto
 import dev.abhishekan.pulse.core.network.pulseHttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -18,6 +19,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.http.content.TextContent
+import io.ktor.http.headersOf
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -79,7 +81,7 @@ class HorizonRepositoryTest {
                     return@MockEngine respond(
                         """{"has_profile":false,"timezone":"UTC"}""",
                         HttpStatusCode.OK,
-                        io.ktor.http.headersOf(HttpHeaders.ContentType, "application/json"),
+                        headersOf(HttpHeaders.ContentType, "application/json"),
                     )
                 }
                 val path = request.url.encodedPath
@@ -207,7 +209,7 @@ class HorizonRepositoryTest {
 
     @Test fun nonPositiveTransactionAmountsAreRejectedAsMalformed() {
         val dto =
-            dev.abhishekan.pulse.core.network.dto.HorizonTransactionDto(
+            HorizonTransactionDto(
                 1,
                 "Invalid",
                 JsonPrimitive(-1),

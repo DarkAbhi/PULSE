@@ -9,6 +9,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 
@@ -18,7 +19,7 @@ fun PulseCard(
     highlighted: Boolean = false,
     border: BorderStroke? = null,
     shape: Shape = PulseTokens.cardShape,
-    contentPadding: androidx.compose.ui.unit.Dp = PulseTokens.cardPadding,
+    contentPadding: Dp = PulseTokens.cardPadding,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(

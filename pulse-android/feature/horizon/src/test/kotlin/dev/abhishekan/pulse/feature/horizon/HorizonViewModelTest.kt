@@ -7,6 +7,7 @@ import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.HorizonRecord
 import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
 import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.usecase.ApplyHorizonChange
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizonTransactions
 import dev.abhishekan.pulse.core.domain.usecase.GetPlannedPurchases
@@ -16,6 +17,7 @@ import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.currencyText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -30,8 +32,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.Instant
+import java.time.LocalDate
+import java.util.Locale
 
-@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class HorizonViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val models = ViewModelStore()
@@ -250,7 +254,7 @@ class HorizonViewModelTest {
             runCurrent()
             val yearlyChange = repo.writes.last() as HorizonChange.Subscription
             assertEquals(20, yearlyChange.billingDay)
-            assertEquals(java.time.LocalDate.parse("2028-02-20"), yearlyChange.renewalDate)
+            assertEquals(LocalDate.parse("2028-02-20"), yearlyChange.renewalDate)
         }
 
     @Test fun uncertainWriteRequiresFreshStateAndReviewEvenAfterProcessRestore() =
@@ -357,17 +361,17 @@ class HorizonViewModelTest {
     }
 
     @Test fun monetaryDisplayUsesAccountCurrencyAndPreservesPrecision() {
-        val previous = java.util.Locale.getDefault()
+        val previous = Locale.getDefault()
         try {
-            java.util.Locale.setDefault(java.util.Locale.US)
-            dev.abhishekan.pulse.core.domain.model.UserCurrency
+            Locale.setDefault(Locale.US)
+            UserCurrency
                 .select("USD")
             assertEquals(UiText.Literal("\$12.50"), currencyText("12.5".toBigDecimal()))
             assertEquals(UiText.Literal("-\$0.000000000000123456789"), currencyText("-0.000000000000123456789".toBigDecimal()))
         } finally {
-            dev.abhishekan.pulse.core.domain.model.UserCurrency
+            UserCurrency
                 .reset()
-            java.util.Locale.setDefault(previous)
+            Locale.setDefault(previous)
         }
     }
 

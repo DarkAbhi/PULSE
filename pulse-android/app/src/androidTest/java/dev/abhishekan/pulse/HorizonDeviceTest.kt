@@ -1,7 +1,11 @@
 package dev.abhishekan.pulse
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.ParcelFileDescriptor
+import android.view.KeyEvent
+import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -32,16 +36,22 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
 import dev.abhishekan.pulse.core.data.PulseDashboardRepository
 import dev.abhishekan.pulse.core.data.PulseHorizonRepository
+import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
+import dev.abhishekan.pulse.core.data.PulseProfileRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
+import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
+import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.network.HorizonApi
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
@@ -87,6 +97,7 @@ import java.io.File
 import java.io.IOException
 import java.math.BigDecimal
 import java.time.Clock
+import java.time.LocalDate
 
 /** Source-derived fixtures exercise the real HTTP/session/repository/navigation path. */
 class HorizonDeviceTest {
@@ -420,7 +431,7 @@ class HorizonDeviceTest {
     }
 
     @Before fun setup() {
-        if (android.os.Build.VERSION.SDK_INT >= 37) {
+        if (Build.VERSION.SDK_INT >= 37) {
             val instrumentation = InstrumentationRegistry.getInstrumentation()
             instrumentation.uiAutomation.grantRuntimePermission(
                 instrumentation.targetContext.packageName,
@@ -462,13 +473,11 @@ class HorizonDeviceTest {
             module {
                 single<AuthRepository> { auth }
                 single<DashboardRepository> { dashboard }
-                single<dev.abhishekan.pulse.core.domain.repository.ProfileRepository> {
-                    dev.abhishekan.pulse.core.data
-                        .PulseProfileRepository(api, auth, dashboard)
+                single<ProfileRepository> {
+                    PulseProfileRepository(api, auth, dashboard)
                 }
-                single<dev.abhishekan.pulse.core.domain.repository.NotificationsRepository> {
-                    dev.abhishekan.pulse.core.data
-                        .PulseNotificationsRepository(api, auth, dashboard)
+                single<NotificationsRepository> {
+                    PulseNotificationsRepository(api, auth, dashboard)
                 }
                 single<HorizonRepository> { horizon }
             }
@@ -496,14 +505,14 @@ class HorizonDeviceTest {
         }
         scenario?.onActivity { activity ->
             activity
-                .getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+                .getSystemService(InputMethodManager::class.java)
                 .hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
         }
         val button = (hasText(text) or hasContentDescription(text)) and hasClickAction() and isEnabled()
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         val node = compose.onAllNodes(button)[0]
         if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) node.performScrollTo()
-        node.assertIsDisplayed().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+        node.assertIsDisplayed().performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
     private fun quickAction(label: String) {
@@ -652,7 +661,7 @@ class HorizonDeviceTest {
                 hasText(action) and hasAnyAncestor(hasTestTag("horizon-record-$id")),
             ).performScrollTo()
             .assertIsDisplayed()
-            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            .performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
     @Test fun budgetCardsAndMenusAdaptToPhoneTabletAndLargeText() {
@@ -689,7 +698,7 @@ class HorizonDeviceTest {
                     compose.onNodeWithContentDescription("Actions for $name").performScrollTo().performClick()
                     compose.onNodeWithContentDescription("Edit $name").assertIsDisplayed()
                     compose.onNodeWithContentDescription("Delete $name").assertIsDisplayed()
-                    androidx.test.espresso.Espresso
+                    Espresso
                         .pressBack()
                 }
             }
@@ -733,7 +742,7 @@ class HorizonDeviceTest {
                         compose.onNode(hasTestTag("obligation-due-day")).performScrollTo().performClick()
                         awaitText("Choose due day")
                         screenshot("obligation-days-$layout", tag = "obligation-day-picker")
-                        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+                        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
                         compose.onNode(hasTestTag("obligation-category-other")).performScrollTo().assertIsDisplayed()
                     }
                     compose.onNodeWithContentDescription("Back to Financial Horizon").assertIsDisplayed().performClick()
@@ -846,7 +855,7 @@ class HorizonDeviceTest {
         compose.onNode(hasTestTag("obligation-due-day")).performClick()
         awaitText("Choose due day")
         compose.waitForIdle()
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
+        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
         compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag("obligation-day-picker")).fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithText("Discard unsaved changes?").assertDoesNotExist()
         compose.onNode(hasTestTag("obligation-due-day")).assertTextContains("Not set")
@@ -1028,7 +1037,7 @@ class HorizonDeviceTest {
                 hasText("Add subscription") and hasClickAction(),
             ).performScrollTo()
             .assertIsDisplayed()
-            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
+            .performSemanticsAction(SemanticsActions.OnClick) {
                 it()
             }
         compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("subscription-editor")).fetchSemanticsNodes().isEmpty() }
@@ -1056,7 +1065,7 @@ class HorizonDeviceTest {
                 "Save changes",
             ).performScrollTo()
             .assertIsDisplayed()
-            .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
+            .performSemanticsAction(SemanticsActions.OnClick) {
                 it()
             }
         compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("subscription-editor")).fetchSemanticsNodes().isEmpty() }
@@ -1153,7 +1162,7 @@ class HorizonDeviceTest {
         val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
         val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
         val fontScale = shell("settings get system font_scale").trim()
-        val today = java.time.LocalDate.now(dev.abhishekan.pulse.core.domain.model.UserTimeZone.zone)
+        val today = LocalDate.now(UserTimeZone.zone)
         backend.items("subscriptions")[4] =
             JsonObject(
                 backend.items("subscriptions").getValue(4) +
@@ -1306,7 +1315,7 @@ class HorizonDeviceTest {
                 .onNodeWithText(
                     "Save budget",
                 ).performScrollTo()
-                .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
+                .performSemanticsAction(SemanticsActions.OnClick) {
                     it()
                 }
             compose.onNode(hasTestTag("budget-name")).assertIsFocused()
@@ -1338,7 +1347,7 @@ class HorizonDeviceTest {
                 .onNodeWithText(
                     "Save budget",
                 ).performScrollTo()
-                .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) {
+                .performSemanticsAction(SemanticsActions.OnClick) {
                     it()
                 }
             compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("budget-editor")).fetchSemanticsNodes().isEmpty() }
@@ -1494,7 +1503,7 @@ class HorizonDeviceTest {
                 compose.onNode(hasTestTag("purchase-amount")).performScrollTo().assertIsDisplayed()
                 scenario?.onActivity { activity ->
                     activity
-                        .getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+                        .getSystemService(InputMethodManager::class.java)
                         .hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
                 }
                 compose.waitForIdle()

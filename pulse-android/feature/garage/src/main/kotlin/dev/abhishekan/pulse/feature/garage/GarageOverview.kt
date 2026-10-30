@@ -15,10 +15,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.platform.LocalDensity
@@ -26,6 +30,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.abhishekan.pulse.core.domain.model.TirePressure
@@ -74,7 +79,7 @@ internal fun GarageOverview(
 @Composable
 internal fun EfficiencyCards(
     data: VehicleHistory,
-    minimumHeight: androidx.compose.ui.unit.Dp = 0.dp,
+    minimumHeight: Dp = 0.dp,
 ) {
     if (data.efficiency.isEmpty()) {
         PulseEmptyState(
@@ -255,7 +260,7 @@ internal fun PressureCard(
     enabled: Boolean,
     edit: () -> Unit,
     fill: () -> Unit,
-    minimumHeight: androidx.compose.ui.unit.Dp = 0.dp,
+    minimumHeight: Dp = 0.dp,
     prominent: Boolean = false,
 ) {
     PulseCard(
@@ -451,7 +456,7 @@ internal enum class GarageIcon { Fuel, Delete }
 @Composable
 internal fun GarageDetailIcon(
     kind: GarageIcon,
-    tint: Color = androidx.compose.material3.LocalContentColor.current,
+    tint: Color = LocalContentColor.current,
 ) {
     Icon(garageIcons.getValue(kind), contentDescription = null, modifier = Modifier.size(16.dp), tint = tint)
 }
@@ -463,12 +468,11 @@ private val garageIcons =
             .apply {
                 path(
                     stroke =
-                        androidx.compose.ui.graphics
-                            .SolidColor(Color.Black),
+                        SolidColor(Color.Black),
                     strokeLineWidth = 1.8f,
                     fill = null,
-                    strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
-                    strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
+                    strokeLineCap = StrokeCap.Round,
+                    strokeLineJoin = StrokeJoin.Round,
                 ) {
                     when (kind) {
                         GarageIcon.Fuel -> {

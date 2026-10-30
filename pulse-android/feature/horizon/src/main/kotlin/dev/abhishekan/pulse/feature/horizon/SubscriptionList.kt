@@ -79,12 +79,12 @@ internal fun SubscriptionList(
             val summaries =
                 listOf(
                     Triple(
-                        R.string.pulse_subscription_monthly_spend,
+                        R.string.pulse_horizon_subscription_monthly_spend,
                         currencyText(data.subscriptionBurn).asString(),
                         R.drawable.pulse_obligation_card,
                     ),
-                    Triple(R.string.pulse_subscription_active_count, active.size.toString(), R.drawable.pulse_obligation_recurring),
-                    Triple(R.string.pulse_subscription_upcoming_count, upcoming.toString(), R.drawable.pulse_obligation_calendar),
+                    Triple(R.string.pulse_horizon_subscription_active_count, active.size.toString(), R.drawable.pulse_obligation_recurring),
+                    Triple(R.string.pulse_horizon_subscription_upcoming_count, upcoming.toString(), R.drawable.pulse_obligation_calendar),
                 )
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 val summaryGroups =
@@ -110,9 +110,9 @@ internal fun SubscriptionList(
                                             verticalArrangement = Arrangement.spacedBy(4.dp),
                                         ) {
                                             PulseText(value, style = PulseTextStyle.Heading2)
-                                            if (label == R.string.pulse_subscription_upcoming_count) {
+                                            if (label == R.string.pulse_horizon_subscription_upcoming_count) {
                                                 PulseText(
-                                                    stringResource(R.string.pulse_subscription_next_seven_days),
+                                                    stringResource(R.string.pulse_horizon_subscription_next_seven_days),
                                                     Modifier.align(Alignment.CenterVertically),
                                                     style = PulseTextStyle.Body2,
                                                     color = colors.warning,
@@ -127,7 +127,7 @@ internal fun SubscriptionList(
                 }
             }
             HorizonSectionAction(
-                R.string.pulse_subscription_your_subscriptions,
+                R.string.pulse_horizon_subscription_your_subscriptions,
                 R.string.pulse_horizon_add_subscription,
                 canMutate,
                 add,
@@ -215,9 +215,9 @@ private fun SubscriptionListCard(
                         if (item.cycle ==
                             "yearly"
                         ) {
-                            R.string.pulse_subscription_per_year
+                            R.string.pulse_horizon_subscription_per_year
                         } else {
-                            R.string.pulse_subscription_per_month
+                            R.string.pulse_horizon_subscription_per_month
                         },
                     ),
                     Modifier.align(Alignment.CenterVertically),
@@ -255,12 +255,16 @@ private fun SubscriptionListCard(
                                 active
                             ) {
                                 stringResource(
-                                    R.string.pulse_subscription_renews_on,
+                                    R.string.pulse_horizon_subscription_renews_on,
                                     renewal.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
                                 )
                             } else {
                                 stringResource(
-                                    if (active) R.string.pulse_subscription_renewal_unknown else R.string.pulse_subscription_not_renewing,
+                                    if (active) {
+                                        R.string.pulse_horizon_subscription_renewal_unknown
+                                    } else {
+                                        R.string.pulse_horizon_subscription_not_renewing
+                                    },
                                 )
                             },
                             style = PulseTextStyle.Body2,
@@ -268,11 +272,11 @@ private fun SubscriptionListCard(
                         if (active && days != null) {
                             PulseText(
                                 when {
-                                    days < 0 -> stringResource(R.string.pulse_subscription_renewal_past)
-                                    days == 0L -> stringResource(R.string.pulse_subscription_renewal_today)
+                                    days < 0 -> stringResource(R.string.pulse_horizon_subscription_renewal_past)
+                                    days == 0L -> stringResource(R.string.pulse_horizon_subscription_renewal_today)
                                     else ->
                                         pluralStringResource(
-                                            R.plurals.pulse_subscription_in_days,
+                                            R.plurals.pulse_horizon_subscription_in_days,
                                             days.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
                                             days,
                                         )
@@ -295,13 +299,13 @@ private fun SubscriptionListCard(
             FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 SubscriptionDetail(
                     R.drawable.pulse_obligation_card,
-                    pluralStringResource(R.plurals.pulse_subscription_payment_count, item.linkedCount, item.linkedCount),
-                    stringResource(R.string.pulse_subscription_total_spent, currencyText(item.totalSpent).asString()),
+                    pluralStringResource(R.plurals.pulse_horizon_subscription_payment_count, item.linkedCount, item.linkedCount),
+                    stringResource(R.string.pulse_horizon_subscription_total_spent, currencyText(item.totalSpent).asString()),
                 )
                 SubscriptionDetail(
                     R.drawable.pulse_budget_chart,
                     currencyText(item.monthlyAmount).asString(),
-                    stringResource(R.string.pulse_subscription_monthly_equivalent),
+                    stringResource(R.string.pulse_horizon_subscription_monthly_equivalent),
                 )
             }
             item.notes?.takeIf { it.isNotBlank() }?.let { PulseText(it, style = PulseTextStyle.Body2, color = colors.textSecondary) }
@@ -314,7 +318,7 @@ private fun SubscriptionListCard(
                     variant = PulseButtonVariant.Soft,
                 )
                 PulseButton(
-                    stringResource(R.string.pulse_subscription_view_payments),
+                    stringResource(R.string.pulse_horizon_subscription_view_payments),
                     payments,
                     Modifier.pulseDescription(stringResource(R.string.pulse_horizon_view_payments_for_1_s, item.name)),
                     enabled = canViewPayments,
@@ -322,7 +326,7 @@ private fun SubscriptionListCard(
                 )
                 Box {
                     var expanded by rememberSaveable(item.id) { mutableStateOf(false) }
-                    PulseButton(stringResource(R.string.pulse_subscription_more_actions, item.name), {
+                    PulseButton(stringResource(R.string.pulse_horizon_subscription_more_actions, item.name), {
                         expanded = true
                     }, enabled = canMutate, style = PulseButtonStyle.Icon) {
                         Icon(painterResource(R.drawable.pulse_horizon_more), null, Modifier.size(24.dp), tint = colors.textSecondary)

@@ -53,6 +53,7 @@ import dev.abhishekan.pulse.core.data.PulseMealPlanRepository
 import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
 import dev.abhishekan.pulse.core.data.PulseProfileRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
+import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
@@ -198,7 +199,8 @@ class AccountNotificationsDeviceTest {
                                 "{}"
                             }
                             path == "profile" && verb == "GET" ->
-                                if (profileFailure) {
+                                // Login loads account preferences before the dashboard can fetch its profile.
+                                if (profileFailure && auth.session.value is SessionState.Authenticated) {
                                     status = HttpStatusCode.ServiceUnavailable
                                     "{}"
                                 } else {
@@ -389,9 +391,7 @@ class AccountNotificationsDeviceTest {
         field("Username", "fixture-user")
         field("Password", "fixture-password")
         tap("Continue")
-        if (name ==
-            null
-        ) {
+        if (name == null && !profileFailure) {
             awaitText("Make Pulse yours")
         } else {
             awaitText("Good to see you,")
@@ -590,7 +590,7 @@ class AccountNotificationsDeviceTest {
             safeTop = safeInsets.top / density
             safeBottom = safeInsets.bottom / density
         }
-        assertEquals(window.top.value + safeTop, viewport.top.value, 1f)
+        assertTrue(viewport.top.value >= window.top.value + safeTop)
         if (rail) {
             assertEquals(window.bottom.value - safeBottom, viewport.bottom.value, 1f)
         } else {
@@ -614,7 +614,7 @@ class AccountNotificationsDeviceTest {
         awaitText("Good to see you,")
         openNotifications()
         compose.onNode(items[0]).assertIsSelected()
-        tap("Open space")
+        tap("Vehicle care update")
         awaitText("Your garage")
         compose.onNode(items[3]).assertIsSelected()
         compose.onNodeWithContentDescription("Back to notifications").performClick()

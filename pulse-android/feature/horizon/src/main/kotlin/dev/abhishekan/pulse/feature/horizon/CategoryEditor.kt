@@ -53,12 +53,12 @@ private data class CategoryIcon(
 
 private val categoryIcons =
     listOf(
-        CategoryIcon("tag", R.string.pulse_category_icon_tag, R.drawable.pulse_obligation_tag),
-        CategoryIcon("home", R.string.pulse_category_icon_home, R.drawable.pulse_obligation_home),
-        CategoryIcon("shopping-cart", R.string.pulse_category_icon_shopping, R.drawable.pulse_purchase_cart),
-        CategoryIcon("wallet", R.string.pulse_category_icon_wallet, R.drawable.pulse_obligation_wallet),
-        CategoryIcon("calendar", R.string.pulse_category_icon_calendar, R.drawable.pulse_obligation_calendar),
-        CategoryIcon("car", R.string.pulse_category_icon_transport, dev.abhishekan.pulse.core.ui.R.drawable.pulse_garage),
+        CategoryIcon("tag", R.string.pulse_horizon_category_icon_tag, R.drawable.pulse_obligation_tag),
+        CategoryIcon("home", R.string.pulse_horizon_category_icon_home, R.drawable.pulse_obligation_home),
+        CategoryIcon("shopping-cart", R.string.pulse_horizon_category_icon_shopping, R.drawable.pulse_purchase_cart),
+        CategoryIcon("wallet", R.string.pulse_horizon_category_icon_wallet, R.drawable.pulse_obligation_wallet),
+        CategoryIcon("calendar", R.string.pulse_horizon_category_icon_calendar, R.drawable.pulse_obligation_calendar),
+        CategoryIcon("car", R.string.pulse_horizon_category_icon_transport, dev.abhishekan.pulse.core.ui.R.drawable.pulse_garage),
     )
 
 @Composable
@@ -101,12 +101,12 @@ internal fun CategoryEditor(
                         }
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(spacing.tiny)) {
                             PulseText(
-                                stringResource(R.string.pulse_category_details),
+                                stringResource(R.string.pulse_horizon_category_details),
                                 Modifier.semantics { heading() },
                                 style = PulseTextStyle.Title3,
                             )
                             PulseText(
-                                stringResource(R.string.pulse_category_details_hint),
+                                stringResource(R.string.pulse_horizon_category_details_hint),
                                 style = PulseTextStyle.Body2,
                                 color = colors.textSecondary,
                             )
@@ -115,13 +115,18 @@ internal fun CategoryEditor(
                     PulseTextField(
                         draft.name,
                         { onChange(draft.copy(name = it)) },
-                        stringResource(R.string.pulse_category_name),
+                        stringResource(R.string.pulse_horizon_category_name),
                         Modifier.fillMaxWidth().focusRequester(nameFocus).testTag("category-name"),
                         enabled = !busy,
                         labelAbove = true,
                         accessibilityLabel = stringResource(R.string.pulse_horizon_name),
-                        error = if (nameError) uiText(R.string.pulse_category_name_error) else null,
-                        placeholder = { PulseText(stringResource(R.string.pulse_category_name_hint), color = colors.textSecondary) },
+                        error = if (nameError) uiText(R.string.pulse_horizon_category_name_error) else null,
+                        placeholder = {
+                            PulseText(
+                                stringResource(R.string.pulse_horizon_category_name_hint),
+                                color = colors.textSecondary,
+                            )
+                        },
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         keyboardActions =
                             KeyboardActions(onDone = {
@@ -174,24 +179,32 @@ private fun CategoryAppearance(
     // Store stable light-palette values so changing the app theme never changes category data.
     val palette =
         listOf(
-            R.string.pulse_category_color_gold to PulseLightColors.primary,
-            R.string.pulse_category_color_coral to PulseLightColors.coral,
-            R.string.pulse_category_color_sage to PulseLightColors.sage,
-            R.string.pulse_category_color_sky to PulseLightColors.sky,
-            R.string.pulse_category_color_lavender to PulseLightColors.lavender,
+            R.string.pulse_horizon_category_color_gold to PulseLightColors.primary,
+            R.string.pulse_horizon_category_color_coral to PulseLightColors.coral,
+            R.string.pulse_horizon_category_color_sage to PulseLightColors.sage,
+            R.string.pulse_horizon_category_color_sky to PulseLightColors.sky,
+            R.string.pulse_horizon_category_color_lavender to PulseLightColors.lavender,
         ).map { (label, color) -> Triple(stringResource(label), color, "#%06x".format(color.toArgb() and 0xFFFFFF)) }
     val choices =
         if (palette.any { it.third.equals(originalColor, ignoreCase = true) }) {
             palette
         } else {
             val current = runCatching { Color(android.graphics.Color.parseColor(originalColor)) }.getOrDefault(colors.action)
-            listOf(Triple(stringResource(R.string.pulse_category_color_current), current, originalColor)) + palette
+            listOf(Triple(stringResource(R.string.pulse_horizon_category_color_current), current, originalColor)) + palette
         }
     PulseCard(Modifier.fillMaxWidth()) {
         Column(verticalArrangement = Arrangement.spacedBy(spacing.medium)) {
-            PulseText(stringResource(R.string.pulse_category_appearance), Modifier.semantics { heading() }, style = PulseTextStyle.Title3)
-            PulseText(stringResource(R.string.pulse_category_appearance_hint), style = PulseTextStyle.Body2, color = colors.textSecondary)
-            PulseText(stringResource(R.string.pulse_category_icon), style = PulseTextStyle.Label)
+            PulseText(
+                stringResource(R.string.pulse_horizon_category_appearance),
+                Modifier.semantics { heading() },
+                style = PulseTextStyle.Title3,
+            )
+            PulseText(
+                stringResource(R.string.pulse_horizon_category_appearance_hint),
+                style = PulseTextStyle.Body2,
+                color = colors.textSecondary,
+            )
+            PulseText(stringResource(R.string.pulse_horizon_category_icon), style = PulseTextStyle.Label)
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
                 verticalArrangement = Arrangement.spacedBy(spacing.small),
@@ -210,7 +223,7 @@ private fun CategoryAppearance(
                     )
                 }
             }
-            PulseText(stringResource(R.string.pulse_category_color), style = PulseTextStyle.Label)
+            PulseText(stringResource(R.string.pulse_horizon_category_color), style = PulseTextStyle.Label)
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
                 verticalArrangement = Arrangement.spacedBy(spacing.small),

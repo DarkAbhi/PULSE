@@ -445,7 +445,7 @@ class FitnessDeviceTest {
         val date = compose.onNodeWithContentDescription(description)
         val content =
             compose.onNode(
-                hasScrollAction() and hasAnyDescendant(hasText("Workouts for this day")),
+                hasScrollAction() and hasAnyDescendant(hasText("SELECTED DAY")),
             )
         val offset =
             (date.getUnclippedBoundsInRoot().top - content.getUnclippedBoundsInRoot().top).value *
@@ -549,7 +549,7 @@ class FitnessDeviceTest {
                         .toInstant(),
                 )
         }
-        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Workouts for this day"))).performTouchInput { swipeDown() }
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("SELECTED DAY"))).performTouchInput { swipeDown() }
         awaitText("Workout")
     }
 

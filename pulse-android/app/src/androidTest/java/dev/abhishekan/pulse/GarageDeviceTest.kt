@@ -434,7 +434,7 @@ class GarageDeviceTest {
             }
             keyboardHidden
         }
-        val button = hasText(text) and hasClickAction() and isEnabled()
+        val button = (hasText(text) or hasContentDescription(text)) and hasClickAction() and isEnabled()
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         val node = compose.onAllNodes(button)[0]
         if (hasAnyAncestor(hasScrollAction()).matches(node.fetchSemanticsNode())) {
@@ -606,7 +606,7 @@ class GarageDeviceTest {
         awaitText("Updated Comet")
         tap("Fuel")
         compose.runOnIdle { vehicles[1] = "Refreshed Comet" }
-        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Updated Comet"))).performTouchInput { swipeDown() }
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Fuel history"))).performTouchInput { swipeDown() }
         awaitText("Refreshed Comet")
     }
 
@@ -676,7 +676,7 @@ class GarageDeviceTest {
         )
     }
 
-    @Test fun tabletVehicleArtworkCyclesWithoutChangingDraft() {
+    @Test fun tabletVehicleArtworkCyclesUntilTypeSelectedWithoutChangingDraft() {
         val originalSize =
             shell("wm size")
                 .lineSequence()
@@ -709,7 +709,6 @@ class GarageDeviceTest {
             awaitText("Your garage")
             tap("Add vehicle")
             field("Vehicle name", "Unsaved scooter")
-            tap("Two-wheeler")
             compose.onNodeWithText("Add a new vehicle").performScrollTo()
             val artwork = hasTestTag("vehicle-editor-artwork")
             compose.onNode(artwork).assertExists()
@@ -724,6 +723,25 @@ class GarageDeviceTest {
                 }
             } finally {
                 first.recycle()
+            }
+            tap("Two-wheeler")
+            compose.onNodeWithText("Add a new vehicle").performScrollTo()
+            compose.mainClock.advanceTimeBy(2_500)
+            compose.waitForIdle()
+            val motorcycle = compose.onNode(artwork).captureToImage().asAndroidBitmap()
+            try {
+                compose.mainClock.advanceTimeBy(10_500)
+                val selected = compose.onNode(artwork).captureToImage().asAndroidBitmap()
+                assertTrue("Selected vehicle artwork should stay fixed", motorcycle.sameAs(selected))
+                selected.recycle()
+                tap("Four-wheeler")
+                compose.onNodeWithText("Add a new vehicle").performScrollTo()
+                compose.mainClock.advanceTimeBy(2_500)
+                val car = compose.onNode(artwork).captureToImage().asAndroidBitmap()
+                assertTrue("Selecting a different vehicle type should change its artwork", !motorcycle.sameAs(car))
+                car.recycle()
+            } finally {
+                motorcycle.recycle()
             }
             compose.onNodeWithText("Unsaved scooter").assertIsDisplayed()
             assertEquals(0, mutations)
@@ -1077,7 +1095,8 @@ class GarageDeviceTest {
         instrumentation.removeMonitor(cancelled)
         val upload = resultMonitor(Intent.ACTION_OPEN_DOCUMENT, Intent().setData(uri))
         tap("Attach receipt to Annual service")
-        awaitText("receipt.pdf · 16 bytes")
+        awaitText("receipt.pdf")
+        awaitText("16 bytes")
         assertEquals(1, upload.hits)
         instrumentation.removeMonitor(upload)
         screenshot("receipts")
@@ -1113,7 +1132,8 @@ class GarageDeviceTest {
         storageError = false
         val retry = resultMonitor(Intent.ACTION_OPEN_DOCUMENT, Intent().setData(uri))
         tap("Attach receipt to Annual service")
-        awaitText("receipt.pdf · 16 bytes")
+        awaitText("receipt.pdf")
+        awaitText("16 bytes")
         instrumentation.removeMonitor(retry)
     }
 

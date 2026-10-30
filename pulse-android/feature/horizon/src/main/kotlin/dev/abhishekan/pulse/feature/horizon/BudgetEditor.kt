@@ -81,12 +81,12 @@ internal fun BudgetEditor(
                         BudgetBadge(R.drawable.pulse_obligation_wallet)
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             PulseText(
-                                stringResource(R.string.pulse_budget_details),
+                                stringResource(R.string.pulse_horizon_budget_details),
                                 Modifier.semantics { heading() },
                                 style = PulseTextStyle.Title3,
                             )
                             PulseText(
-                                stringResource(R.string.pulse_budget_details_hint),
+                                stringResource(R.string.pulse_horizon_budget_details_hint),
                                 style = PulseTextStyle.Body2,
                                 color = colors.textSecondary,
                             )
@@ -95,20 +95,20 @@ internal fun BudgetEditor(
                     PulseTextField(
                         draft.name,
                         { onChange(draft.copy(name = it)) },
-                        stringResource(R.string.pulse_budget_name),
+                        stringResource(R.string.pulse_horizon_budget_name),
                         Modifier.fillMaxWidth().focusRequester(nameFocus).testTag("budget-name"),
                         enabled = !busy,
                         labelAbove = true,
                         accessibilityLabel = stringResource(R.string.pulse_horizon_name),
-                        error = if (nameError) uiText(R.string.pulse_budget_name_error) else null,
-                        placeholder = { PulseText(stringResource(R.string.pulse_budget_name_hint), color = colors.textSecondary) },
+                        error = if (nameError) uiText(R.string.pulse_horizon_budget_name_error) else null,
+                        placeholder = { PulseText(stringResource(R.string.pulse_horizon_budget_name_hint), color = colors.textSecondary) },
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { amountFocus.requestFocus() }),
                     )
                     PulseTextField(
                         draft.amount,
                         { onChange(draft.copy(amount = it)) },
-                        stringResource(R.string.pulse_budget_amount, UserCurrency.symbol()),
+                        stringResource(R.string.pulse_horizon_budget_amount, UserCurrency.symbol()),
                         Modifier.fillMaxWidth().focusRequester(amountFocus).testTag("budget-amount"),
                         enabled = !busy,
                         labelAbove = true,
@@ -116,10 +116,16 @@ internal fun BudgetEditor(
                         error = if (amountError) uiText(R.string.pulse_horizon_purchase_amount_error) else null,
                         textStyle = PulseTheme.typography.heading1,
                         leadingIcon = { PulseText(UserCurrency.symbol(), style = PulseTextStyle.Title3) },
-                        placeholder = { PulseText("0.00", style = PulseTextStyle.Heading1, color = colors.textSecondary) },
+                        placeholder = {
+                            PulseText(
+                                stringResource(R.string.pulse_horizon_purchase_amount_placeholder),
+                                style = PulseTextStyle.Heading1,
+                                color = colors.textSecondary,
+                            )
+                        },
                         supportingText = {
                             PulseText(
-                                stringResource(R.string.pulse_budget_amount_hint),
+                                stringResource(R.string.pulse_horizon_budget_amount_hint),
                                 style = PulseTextStyle.Body2,
                                 color = colors.textSecondary,
                             )
@@ -179,17 +185,21 @@ private fun BudgetPreview() {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 BudgetBadge(R.drawable.pulse_budget_chart)
                 PulseText(
-                    stringResource(R.string.pulse_budget_preview),
+                    stringResource(R.string.pulse_horizon_budget_preview),
                     Modifier.weight(1f).semantics { heading() },
                     style = PulseTextStyle.Title3,
                 )
             }
-            PulseText(stringResource(R.string.pulse_budget_preview_hint), style = PulseTextStyle.Body2, color = colors.textSecondary)
+            PulseText(
+                stringResource(R.string.pulse_horizon_budget_preview_hint),
+                style = PulseTextStyle.Body2,
+                color = colors.textSecondary,
+            )
             PulseHorizontalDivider(color = colors.border)
             listOf(
-                R.drawable.pulse_obligation_document to R.string.pulse_budget_preview_limit,
-                R.drawable.pulse_budget_chart to R.string.pulse_budget_preview_compare,
-                R.drawable.pulse_obligation_calendar to R.string.pulse_budget_preview_organize,
+                R.drawable.pulse_obligation_document to R.string.pulse_horizon_budget_preview_limit,
+                R.drawable.pulse_budget_chart to R.string.pulse_horizon_budget_preview_compare,
+                R.drawable.pulse_obligation_calendar to R.string.pulse_horizon_budget_preview_organize,
             ).forEach { (icon, text) ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     BudgetBadge(icon, muted = true)

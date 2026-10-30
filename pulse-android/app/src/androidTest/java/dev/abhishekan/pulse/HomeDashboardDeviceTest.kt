@@ -23,6 +23,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Horizon
 import dev.abhishekan.pulse.core.domain.model.Profile
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.feature.home.HomeScreen
 import dev.abhishekan.pulse.feature.home.HomeUiState
@@ -170,7 +171,7 @@ class HomeDashboardDeviceTest {
         capture("light")
         compose.onNodeWithContentDescription("Notifications").assertHasClickAction().performClick()
         compose.onNodeWithContentDescription("Profile").assertHasClickAction().performClick()
-        compose.onNodeWithText("₹ 100000.125").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(UserCurrency.format(BigDecimal("100000.125"))).performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("Financial Horizon").performScrollTo().performClick()
         compose.onNodeWithContentDescription("FITNESS · TODAY").performScrollTo().performClick()
         assertEquals(1, horizon)
@@ -217,7 +218,7 @@ class HomeDashboardDeviceTest {
         show(fontScale = 2f)
         compose.onNodeWithText("Abhishek").performScrollTo().assertIsDisplayed()
         capture("large-text-greeting")
-        compose.onNodeWithText("₹ 100000.125").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(UserCurrency.format(BigDecimal("100000.125"))).performScrollTo().assertIsDisplayed()
         assertMatchingCardHeights()
         capture("large-text")
         compose.onNodeWithText("Let’s get moving").performScrollTo().assertIsDisplayed()

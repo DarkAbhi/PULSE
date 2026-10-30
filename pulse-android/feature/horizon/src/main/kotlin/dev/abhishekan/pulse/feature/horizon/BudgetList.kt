@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +38,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenu
 import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenuItem
+import dev.abhishekan.pulse.core.ui.components.PulseLinearProgressIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.currencyText
@@ -104,7 +104,7 @@ internal fun BudgetCard(
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         PulseText(currencyText(item.used).asString(), style = PulseTextStyle.Label)
                         PulseText(
-                            stringResource(R.string.pulse_budget_allocation, currencyText(item.allocated).asString()),
+                            stringResource(R.string.pulse_horizon_budget_allocation, currencyText(item.allocated).asString()),
                             style = PulseTextStyle.Body2,
                         )
                     }
@@ -113,7 +113,7 @@ internal fun BudgetCard(
             }
             PulseText(
                 stringResource(
-                    R.string.pulse_budget_percentage,
+                    R.string.pulse_horizon_budget_percentage,
                     item.usagePercent.setScale(0, RoundingMode.HALF_UP).toPlainString(),
                 ),
                 Modifier.align(Alignment.End),
@@ -121,7 +121,7 @@ internal fun BudgetCard(
                 color = if (item.isOverBudget) colors.error else colors.textPrimary,
             )
             // The label preserves values above 100%; only the painted track is clamped.
-            LinearProgressIndicator(
+            PulseLinearProgressIndicator(
                 progress = {
                     item.usagePercent
                         .divide(BigDecimal(100))
@@ -144,7 +144,7 @@ internal fun BudgetCard(
                 )
                 PulseText(
                     stringResource(
-                        if (item.isOverBudget) R.string.pulse_budget_over_by else R.string.pulse_budget_remaining,
+                        if (item.isOverBudget) R.string.pulse_horizon_budget_over_by else R.string.pulse_horizon_budget_remaining,
                         currencyText(item.available.abs()).asString(),
                     ),
                     style = PulseTextStyle.Body2,
@@ -169,7 +169,7 @@ private fun BudgetMenu(
     LaunchedEffect(enabled) { if (!enabled) expanded = false }
     Box {
         PulseButton(
-            stringResource(R.string.pulse_budget_actions, item.name),
+            stringResource(R.string.pulse_horizon_budget_actions, item.name),
             { expanded = true },
             Modifier.testTag("budget-actions-${item.id}"),
             enabled = enabled,

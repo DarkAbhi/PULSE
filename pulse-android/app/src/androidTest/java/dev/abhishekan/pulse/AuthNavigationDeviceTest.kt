@@ -29,6 +29,7 @@ import dev.abhishekan.pulse.core.data.PulseDashboardRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.SessionState
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.network.NetworkConfig
@@ -55,6 +56,7 @@ import org.koin.core.context.unloadKoinModules
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import java.io.File
+import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -199,7 +201,7 @@ class AuthNavigationDeviceTest {
     @Test fun loginReachesRealDashboardAndLogoutRemovesAuthenticatedNavigation() {
         launch()
         login()
-        compose.onNodeWithText("₹ 32000.125").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(UserCurrency.format(BigDecimal("32000.125"))).performScrollTo().assertIsDisplayed()
         screenshot("home")
         val background = compose.onNodeWithTag("dashboard-background").getUnclippedBoundsInRoot()
         val screen = compose.onRoot().getUnclippedBoundsInRoot()
@@ -221,7 +223,7 @@ class AuthNavigationDeviceTest {
         ) {
             Assert.assertEquals(screen.bottom.value - safeBottom, background.bottom.value, 0.5f)
         }
-        val notifications = compose.onNodeWithContentDescription("Notifications")
+        val notifications = compose.onNodeWithContentDescription("Notifications", substring = true).performScrollTo()
         val target = notifications.getUnclippedBoundsInRoot()
         Assert.assertTrue(
             "Notifications touch target was $target",
@@ -233,7 +235,7 @@ class AuthNavigationDeviceTest {
         compose.onNodeWithText("Vehicle care update").assertIsDisplayed()
         compose.onNodeWithContentDescription("Back to Home").performClick()
         compose.openProfileFromNavigation()
-        compose.onNodeWithText("Appearance").assertIsDisplayed()
+        compose.onNodeWithText("Appearance").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Log out").performScrollTo().performClick()
         compose
             .onNode(
@@ -285,8 +287,8 @@ class AuthNavigationDeviceTest {
         compose.onNodeWithText("Workout recorded").performScrollTo().assertIsDisplayed()
         failHorizon = false
         compose.onNodeWithText("Try again").performScrollTo().performClick()
-        awaitText("₹ 32000.125")
-        compose.onNodeWithText("₹ 32000.125").performScrollTo().assertIsDisplayed()
+        awaitText(UserCurrency.format(BigDecimal("32000.125")))
+        compose.onNodeWithText(UserCurrency.format(BigDecimal("32000.125"))).performScrollTo().assertIsDisplayed()
     }
 
     @Test fun offlineRestorationKeepsTheSessionAndOffersRetry() {

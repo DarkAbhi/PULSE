@@ -73,8 +73,8 @@ class FitnessStatsTest {
 
     @Test fun allEightStatsFollowCalendarAndWorkouts() {
         show()
-        compose.onNodeWithText("Workouts for this day").performScrollTo()
-        val workouts = compose.onNodeWithText("Workouts for this day").getUnclippedBoundsInRoot()
+        compose.onNodeWithText("SELECTED DAY").performScrollTo()
+        val workouts = compose.onNodeWithText("SELECTED DAY").getUnclippedBoundsInRoot()
         val stats = compose.onNodeWithText("Your fitness stats").getUnclippedBoundsInRoot()
         assertTrue(stats.top > workouts.bottom)
         compose.onNodeWithText("Your fitness stats").performScrollTo().assertIsDisplayed()

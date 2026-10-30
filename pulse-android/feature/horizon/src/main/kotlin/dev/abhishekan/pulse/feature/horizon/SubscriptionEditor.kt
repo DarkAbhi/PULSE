@@ -16,11 +16,7 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,10 +59,10 @@ import java.time.LocalDate
 
 internal val subscriptionSections =
     listOf(
-        R.string.pulse_subscription_basic,
-        R.string.pulse_subscription_recurring,
-        R.string.pulse_subscription_organization,
-        R.string.pulse_subscription_notes,
+        R.string.pulse_horizon_subscription_basic,
+        R.string.pulse_horizon_subscription_recurring,
+        R.string.pulse_horizon_subscription_organization,
+        R.string.pulse_horizon_subscription_notes,
     )
 
 @Composable
@@ -94,19 +90,19 @@ internal fun SubscriptionEditor(
                     color = colors.error,
                 )
             }
-            SubscriptionSection(0, R.string.pulse_subscription_basic_hint, R.drawable.pulse_obligation_recurring) {
+            SubscriptionSection(0, R.string.pulse_horizon_subscription_basic_hint, R.drawable.pulse_obligation_recurring) {
                 SubscriptionInput(
                     draft.name,
                     { onChange(draft.copy(name = it)) },
                     stringResource(R.string.pulse_horizon_subscription_name_required),
-                    stringResource(R.string.pulse_subscription_name_hint),
+                    stringResource(R.string.pulse_horizon_subscription_name_hint),
                     !busy,
                 )
                 SubscriptionFieldPair(wide, {
                     SubscriptionInput(
                         draft.amount,
                         { onChange(draft.copy(amount = it)) },
-                        stringResource(R.string.pulse_subscription_amount, UserCurrency.symbol()),
+                        stringResource(R.string.pulse_horizon_subscription_amount, UserCurrency.symbol()),
                         "0.00",
                         !busy,
                         KeyboardType.Decimal,
@@ -127,20 +123,20 @@ internal fun SubscriptionEditor(
                     !busy,
                 ) { onChange(draft.copy(status = it)) }
             }
-            SubscriptionSection(1, R.string.pulse_subscription_recurring_hint, R.drawable.pulse_obligation_calendar) {
+            SubscriptionSection(1, R.string.pulse_horizon_subscription_recurring_hint, R.drawable.pulse_obligation_calendar) {
                 if (draft.cycle == "monthly") {
                     ObligationDayField(
                         value = draft.dueDay,
                         enabled = !busy,
                         labelRes = R.string.pulse_horizon_billing_day_required,
-                        titleRes = R.string.pulse_subscription_choose_billing_day,
-                        helpRes = R.string.pulse_subscription_short_month,
-                        clearRes = R.string.pulse_subscription_clear_billing_day,
+                        titleRes = R.string.pulse_horizon_subscription_choose_billing_day,
+                        helpRes = R.string.pulse_horizon_subscription_short_month,
+                        clearRes = R.string.pulse_horizon_subscription_clear_billing_day,
                         tagPrefix = "subscription",
                     ) { onChange(draft.copy(dueDay = it)) }
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        PulseText(stringResource(R.string.pulse_subscription_renewal), style = PulseTextStyle.Label)
+                        PulseText(stringResource(R.string.pulse_horizon_subscription_renewal), style = PulseTextStyle.Label)
                         PulseButton(
                             draft.date.ifBlank { stringResource(R.string.pulse_horizon_not_set) },
                             {
@@ -156,15 +152,15 @@ internal fun SubscriptionEditor(
                 }
                 Surface(shape = PulseTheme.shapes.medium, color = colors.surfaceMuted) {
                     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        PulseText(stringResource(R.string.pulse_subscription_how), style = PulseTextStyle.Label)
+                        PulseText(stringResource(R.string.pulse_horizon_subscription_how), style = PulseTextStyle.Label)
                         PulseText(
                             stringResource(
                                 if (draft.cycle ==
                                     "monthly"
                                 ) {
-                                    R.string.pulse_subscription_monthly_help
+                                    R.string.pulse_horizon_subscription_monthly_help
                                 } else {
-                                    R.string.pulse_subscription_yearly_help
+                                    R.string.pulse_horizon_subscription_yearly_help
                                 },
                             ),
                             style = PulseTextStyle.Body2,
@@ -173,7 +169,7 @@ internal fun SubscriptionEditor(
                     }
                 }
             }
-            SubscriptionSection(2, R.string.pulse_subscription_organization_hint, R.drawable.pulse_obligation_tag) {
+            SubscriptionSection(2, R.string.pulse_horizon_subscription_organization_hint, R.drawable.pulse_obligation_tag) {
                 SubscriptionFieldPair(wide, {
                     SubscriptionRelation(
                         R.string.pulse_horizon_category,
@@ -196,33 +192,22 @@ internal fun SubscriptionEditor(
                     !busy,
                 ) { onChange(draft.copy(deductionId = it)) }
             }
-            SubscriptionSection(3, R.string.pulse_subscription_notes_hint, R.drawable.pulse_obligation_document) {
-                OutlinedTextField(
+            SubscriptionSection(3, R.string.pulse_horizon_subscription_notes_hint, R.drawable.pulse_obligation_document) {
+                PulseTextField(
                     value = draft.notes,
                     onValueChange = { onChange(draft.copy(notes = it)) },
                     modifier = Modifier.fillMaxWidth().testTag("subscription-notes"),
                     enabled = !busy,
+                    singleLine = false,
                     minLines = 3,
                     maxLines = 6,
-                    label = { PulseText(stringResource(R.string.pulse_horizon_notes_optional)) },
+                    label = stringResource(R.string.pulse_horizon_notes_optional),
                     placeholder = {
                         PulseText(
-                            stringResource(R.string.pulse_subscription_notes_placeholder),
+                            stringResource(R.string.pulse_horizon_subscription_notes_placeholder),
                             color = colors.textSecondary,
                         )
                     },
-                    shape = PulseTokens.controlShape,
-                    textStyle = PulseTheme.typography.body1,
-                    colors =
-                        OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = colors.textPrimary,
-                            unfocusedTextColor = colors.textPrimary,
-                            focusedContainerColor = colors.surface,
-                            unfocusedContainerColor = colors.surface,
-                            focusedBorderColor = colors.action,
-                            unfocusedBorderColor = colors.outline,
-                            cursorColor = colors.action,
-                        ),
                 )
             }
         }
@@ -404,7 +389,8 @@ private fun SubscriptionRelation(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         PulseText(title, style = PulseTextStyle.Label)
         Box {
-            OutlinedButton(
+            PulseButton(
+                text = selected,
                 onClick = {
                     focus.clearFocus()
                     keyboard?.hide()
@@ -412,13 +398,9 @@ private fun SubscriptionRelation(
                 },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics { contentDescription = "$title: $selected" },
                 enabled = enabled,
-                shape = PulseTokens.controlShape,
-                border = BorderStroke(1.dp, colors.outline),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textPrimary, containerColor = colors.surface),
-            ) {
-                PulseText(selected, Modifier.weight(1f))
-                Icon(painterResource(R.drawable.pulse_obligation_chevron), null, Modifier.size(20.dp))
-            }
+                variant = PulseButtonVariant.Secondary,
+                trailingIcon = { Icon(painterResource(R.drawable.pulse_obligation_chevron), null, Modifier.size(20.dp)) },
+            )
             PulseDropdownMenu(expanded && enabled, { expanded = false }) {
                 (listOf(null to none) + options).forEach { (optionId, name) ->
                     PulseDropdownMenuItem(

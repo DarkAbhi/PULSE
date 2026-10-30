@@ -4,6 +4,7 @@ import android.os.ParcelFileDescriptor
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -506,11 +507,25 @@ class HorizonDeviceTest {
     }
 
     private fun quickAction(label: String) {
-        compose.waitUntil(15_000) {
-            compose.onAllNodes(hasTestTag("horizon-quick-actions") and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+        val (tab, action) =
+            when (label) {
+                "Log a transaction" -> "Transactions" to label
+                "Add a category tag" -> "Transactions" to "Add category type"
+                "Add a monthly budget" -> "Budgets" to "Add budget"
+                "Add fixed obligation" -> "Obligations" to "Add obligation"
+                "Add subscription" -> "Subscriptions" to label
+                "Add planned purchase" -> "Planned purchases" to "Add purchase"
+                else -> error("Unknown Horizon action: $label")
+            }
+        tap(tab)
+        if (label == "Add planned purchase") {
+            val create = (hasText("Add purchase") or hasText("Plan your first purchase")) and hasClickAction() and isEnabled()
+            compose.waitUntil(15_000) { compose.onAllNodes(create).fetchSemanticsNodes().isNotEmpty() }
+            val empty = compose.onAllNodes(hasText("Plan your first purchase") and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
+            tap(if (empty) "Plan your first purchase" else action)
+        } else {
+            tap(action)
         }
-        compose.onNodeWithContentDescription("Financial Horizon quick actions").performClick()
-        tap(label)
     }
 
     private fun field(
@@ -519,11 +534,16 @@ class HorizonDeviceTest {
     ) {
         val field = (hasText(label) or hasContentDescription(label)) and hasSetTextAction()
         compose.waitUntil(15_000) { compose.onAllNodes(field).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNode(field).performScrollTo().performTextReplacement(value)
+        compose
+            .onNode(field)
+            .performScrollTo()
+            .performClick()
+            .performTextReplacement(value)
     }
 
     private fun confirm(text: String) {
-        val button = hasText(text) and hasAnyAncestor(isDialog()) and isEnabled()
+        val button =
+            hasText(text) and hasAnyAncestor(isDialog()) and !hasAnyAncestor(hasTestTag("subscription-payments-sheet")) and isEnabled()
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         compose.onNode(button).performClick()
     }
@@ -681,7 +701,7 @@ class HorizonDeviceTest {
         }
     }
 
-    @Test fun quickActionsOpenEveryFormOnPhoneAndTablet() {
+    @Test fun sectionActionsOpenEveryFormOnPhoneAndTablet() {
         val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
         val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
         try {
@@ -703,14 +723,6 @@ class HorizonDeviceTest {
                 awaitText("Add category")
                 compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
                 tap("Cancel editing")
-                compose.onNodeWithContentDescription("Financial Horizon quick actions").performClick()
-                actions.forEach { (label, _) -> compose.onNodeWithText(label).assertIsDisplayed() }
-                screenshot("quick-actions-$layout", tag = "horizon-quick-actions-menu")
-                InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(android.view.KeyEvent.KEYCODE_BACK)
-                compose.waitUntil(5_000) {
-                    compose.onAllNodes(hasTestTag("horizon-quick-actions-menu")).fetchSemanticsNodes().isEmpty()
-                }
-                compose.onNodeWithText("Log a transaction").assertDoesNotExist()
                 actions.forEach { (label, title) ->
                     quickAction(label)
                     awaitText(title)
@@ -999,7 +1011,8 @@ class HorizonDeviceTest {
         compose.onNode(hasText("Add subscription") and hasClickAction()).assertExists()
         compose.onNodeWithText("Basic details").assertIsDisplayed()
         screenshot("subscription-basic")
-        field("Billing day of month (1–31) *", "20")
+        compose.onNode(hasTestTag("subscription-due-day")).performScrollTo().performClick()
+        compose.onNode(hasTestTag("subscription-day-20")).performScrollTo().performClick()
         tap("Yearly")
         compose.onNodeWithText("Billing day of month (1–31) *").assertDoesNotExist()
         compose.onNodeWithText("Renewal date *").assertExists()
@@ -1183,7 +1196,7 @@ class HorizonDeviceTest {
                 compose.onNodeWithText("Monthly subscription spend").performScrollTo().assertIsDisplayed()
                 screenshot("subscription-list-$layout-summary")
                 compose.onNodeWithText("Sort by: Next renewal").assertDoesNotExist()
-                compose.onNode(hasText("Add subscription") and hasClickAction()).assertDoesNotExist()
+                compose.onNode(hasText("Add subscription") and hasClickAction()).performScrollTo().assertIsEnabled()
             }
             assertEquals(0, backend.mutations)
         } finally {
@@ -1299,6 +1312,7 @@ class HorizonDeviceTest {
             compose.onNode(hasTestTag("budget-name")).assertIsFocused()
             field("Name", "Groceries")
             field("Amount (${UserCurrency.symbol()})", "250.50")
+            compose.onNode(hasTestTag("budget-amount")).assertTextContains("250.50")
             for ((layout, dimensions) in listOf(
                 "phone" to "720x1600",
                 "tablet" to "2048x1800",
@@ -1315,6 +1329,7 @@ class HorizonDeviceTest {
                     compose.onNode(hasTestTag("budget-preview")).assertDoesNotExist()
                 }
                 compose.onNode(hasTestTag("budget-amount")).performScrollTo().assertIsDisplayed()
+                compose.onNode(hasTestTag("budget-amount")).assertTextContains("250.50")
                 compose.onNodeWithText("Save budget").performScrollTo().assertIsDisplayed()
                 compose.onNode(hasTestTag("horizon-editor-actions")).performScrollTo().assertIsDisplayed()
                 screenshot("budget-$layout")
@@ -1445,10 +1460,11 @@ class HorizonDeviceTest {
         compose.onNode(hasTestTag("purchase-name")).assertTextContains("Monitor")
         compose.onNodeWithContentDescription("Clear product link").performScrollTo().performClick()
         tap("Add purchase")
+        compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("planned-purchase-editor")).fetchSemanticsNodes().isEmpty() }
         awaitText("Monitor")
         assertEquals(1, backend.items("purchases").size)
         assertEquals(JsonNull, backend.items("purchases").values.single()["url"])
-        compose.onNodeWithContentDescription("Financial Horizon quick actions").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
     }
 
     @Test fun purchaseFormAdaptsToPhoneTabletLandscapeAndLargeText() {
@@ -1476,6 +1492,12 @@ class HorizonDeviceTest {
                 awaitText("Add planned purchase")
                 compose.onNode(hasTestTag("purchase-name")).performScrollTo().assertTextContains("New monitor")
                 compose.onNode(hasTestTag("purchase-amount")).performScrollTo().assertIsDisplayed()
+                scenario?.onActivity { activity ->
+                    activity
+                        .getSystemService(android.view.inputmethod.InputMethodManager::class.java)
+                        .hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
+                }
+                compose.waitForIdle()
                 compose.onNode(hasTestTag("purchase-url")).performScrollTo().assertIsDisplayed()
                 compose.onNodeWithText("Add purchase").performScrollTo().assertIsDisplayed()
                 compose.onNodeWithText("Planning for").assertDoesNotExist()

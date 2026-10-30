@@ -64,7 +64,7 @@ internal fun SubscriptionPaymentsSheet(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    PulseText(stringResource(R.string.pulse_subscription_payment_history), style = PulseTextStyle.Heading2)
+                    PulseText(stringResource(R.string.pulse_horizon_subscription_payment_history), style = PulseTextStyle.Heading2)
                     PulseText(
                         subscription?.name ?: stringResource(R.string.pulse_horizon_subscription),
                         style = PulseTextStyle.Body2,
@@ -86,7 +86,7 @@ internal fun SubscriptionPaymentsSheet(
                 SectionState(state.payments, { state.subscriptionId?.let(vm::showPayments) }) { payments ->
                     PulseCard(Modifier.fillMaxWidth().testTag("subscription-payments-summary"), highlighted = true) {
                         PulseText(
-                            stringResource(R.string.pulse_subscription_total_paid),
+                            stringResource(R.string.pulse_horizon_subscription_total_paid),
                             style = PulseTextStyle.Body2,
                             color = colors.onPrimarySoft,
                         )
@@ -95,7 +95,7 @@ internal fun SubscriptionPaymentsSheet(
                             style = PulseTheme.typography.heading2.copy(fontFeatureSettings = "tnum"),
                         )
                         PulseText(
-                            pluralStringResource(R.plurals.pulse_subscription_payment_count, payments.size, payments.size),
+                            pluralStringResource(R.plurals.pulse_horizon_subscription_payment_count, payments.size, payments.size),
                             style = PulseTextStyle.Body2,
                         )
                     }

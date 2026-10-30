@@ -1,33 +1,33 @@
 package dev.abhishekan.pulse.feature.garage
 
+import android.text.format.Formatter
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -45,6 +45,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenu
+import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenuItem
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTransferProgress
@@ -65,35 +67,37 @@ internal fun MaintenanceHistoryCard(
     uploadRecord: Long?,
     progress: Float?,
 ) {
-    val colors = PulseTheme.colors
-    PulseCard(
-        Modifier.fillMaxWidth().testTag("garage-care-${item.id}"),
-        border = BorderStroke(PulseTokens.focusWidth / 2, colors.divider),
-        shape = PulseTheme.shapes.extraLarge,
-        contentPadding = PulseTheme.spacing.none,
-    ) {
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            // Use the actual card width: split-pane tablets can still have a narrow detail pane.
-            val sideBySide = maxWidth >= 840.dp && LocalDensity.current.fontScale <= 1.3f
-            val summary: @Composable () -> Unit = { MaintenanceSummary(item, vehicle, enabled, edit, remove) }
-            val receipts: @Composable () -> Unit = {
+    BoxWithConstraints(Modifier.fillMaxWidth().testTag("garage-care-${item.id}")) {
+        val sideBySide = maxWidth >= 840.dp && LocalDensity.current.fontScale <= 1.3f
+        val summary: @Composable () -> Unit = {
+            MaintenancePanel { MaintenanceSummary(item, vehicle, enabled, edit, remove) }
+        }
+        val receipts: @Composable () -> Unit = {
+            MaintenancePanel {
                 MaintenanceReceipts(item, vehicle, enabled, busy, remove, upload, open, download, uploadRecord, progress)
             }
-            if (sideBySide) {
-                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-                    Box(Modifier.weight(4f).padding(PulseTokens.cardPadding)) { summary() }
-                    Box(Modifier.fillMaxHeight().width(PulseTokens.focusWidth / 2).background(colors.divider))
-                    Box(Modifier.weight(5f).padding(PulseTokens.cardPadding)) { receipts() }
-                }
-            } else {
-                Column {
-                    Box(Modifier.padding(PulseTokens.cardPadding)) { summary() }
-                    MaintenanceDivider()
-                    Box(Modifier.padding(PulseTokens.cardPadding)) { receipts() }
-                }
+        }
+        if (sideBySide) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
+                Box(Modifier.weight(4f)) { summary() }
+                Box(Modifier.weight(5f)) { receipts() }
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
+                summary()
+                receipts()
             }
         }
     }
+}
+
+@Composable
+private fun MaintenancePanel(content: @Composable () -> Unit) {
+    PulseCard(
+        Modifier.fillMaxWidth(),
+        border = BorderStroke(PulseTokens.focusWidth / 2, PulseTheme.colors.divider),
+        shape = PulseTheme.shapes.extraLarge,
+    ) { content() }
 }
 
 @Composable
@@ -171,8 +175,27 @@ private fun MaintenanceReceipts(
     progress: Float?,
 ) {
     val colors = PulseTheme.colors
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-        PulseText(stringResource(R.string.pulse_garage_receipts), Modifier.semantics { heading() }, PulseTextStyle.Title2)
+    var expanded by rememberSaveable(item.id) { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
+        ) {
+            PulseText(
+                stringResource(R.string.pulse_garage_receipts_count, item.receipts.size),
+                Modifier.semantics { heading() }.padding(vertical = PulseTokens.small),
+                PulseTextStyle.Title2,
+            )
+            PulseButton(
+                stringResource(R.string.pulse_garage_attach),
+                { upload(item.id) },
+                Modifier.pulseDescription(stringResource(R.string.pulse_garage_attach_receipt_to_1_s, item.title)),
+                enabled,
+                variant = PulseButtonVariant.Soft,
+                leadingIcon = { MaintenanceIcon(R.drawable.garage_attach) },
+            )
+        }
         if (item.receipts.isEmpty()) {
             PulseText(
                 stringResource(R.string.pulse_garage_no_receipts_attached),
@@ -180,96 +203,27 @@ private fun MaintenanceReceipts(
                 color = colors.textSecondary,
             )
         }
-        item.receipts.forEach { receipt ->
-            PulseCard(
-                Modifier.fillMaxWidth().testTag("garage-receipt-${receipt.id}"),
-                border = BorderStroke(PulseTokens.focusWidth / 2, colors.divider),
-                contentPadding = PulseTokens.medium,
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium), verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier.size(PulseTokens.target).background(colors.infoSoft, PulseTheme.shapes.pill),
-                        contentAlignment = Alignment.Center,
-                    ) { MaintenanceIcon(R.drawable.garage_document, colors.info) }
-                    Column(Modifier.weight(1f)) {
-                        PulseText(receipt.name, style = PulseTextStyle.Label, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        PulseText(
-                            pluralStringResource(
-                                R.plurals.pulse_garage_receipt_bytes,
-                                receipt.size.coerceIn(0, Int.MAX_VALUE.toLong()).toInt(),
-                                receipt.size,
-                            ),
-                            style = PulseTextStyle.Caption,
-                            color = colors.textSecondary,
-                        )
-                    }
-                }
-                FlowRow(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                ) {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                        verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                    ) {
-                        PulseButton(
-                            stringResource(R.string.pulse_garage_receipt_open),
-                            { open(item.id, receipt) },
-                            Modifier.pulseDescription(stringResource(R.string.pulse_garage_open_1_s, receipt.name)),
-                            !busy,
-                            variant = PulseButtonVariant.Secondary,
-                            leadingIcon = { MaintenanceIcon(R.drawable.garage_open) },
-                        )
-                        PulseButton(
-                            stringResource(R.string.pulse_garage_receipt_download),
-                            { download(item.id, receipt) },
-                            Modifier.pulseDescription(stringResource(R.string.pulse_garage_download_1_s, receipt.name)),
-                            !busy,
-                            variant = PulseButtonVariant.Secondary,
-                            leadingIcon = { MaintenanceIcon(R.drawable.garage_download) },
-                        )
-                    }
-                    PulseButton(
-                        stringResource(R.string.pulse_garage_receipt_remove),
-                        {
-                            remove(
-                                GarageChange.Delete(GarageRecord.Receipt, vehicle, receipt.id, item.id),
-                                uiText(R.string.pulse_garage_permanently_remove_1_s_from_server_storage_and_this, receipt.name),
-                            )
-                        },
-                        Modifier.pulseDescription(stringResource(R.string.pulse_garage_remove_1_s, receipt.name)),
-                        enabled,
-                        variant = PulseButtonVariant.Destructive,
-                        style = PulseButtonStyle.Text,
-                        leadingIcon = { GarageDetailIcon(GarageIcon.Delete) },
-                    )
+        Column {
+            val visibleReceipts = if (expanded) item.receipts else item.receipts.take(3)
+            visibleReceipts.forEachIndexed { index, receipt ->
+                key(receipt.id) {
+                    if (index > 0) MaintenanceDivider()
+                    MaintenanceReceiptRow(receipt, item.id, vehicle, enabled, busy, remove, open, download)
                 }
             }
         }
-        val borderColor = if (enabled) colors.action else colors.divider
-        PulseButton(
-            stringResource(R.string.pulse_garage_attach_receipt),
-            { upload(item.id) },
-            Modifier
-                .fillMaxWidth()
-                .pulseDescription(stringResource(R.string.pulse_garage_attach_receipt_to_1_s, item.title))
-                .drawWithContent {
-                    drawContent()
-                    drawRoundRect(
-                        borderColor,
-                        cornerRadius = CornerRadius(PulseTokens.small.toPx()),
-                        style =
-                            Stroke(
-                                PulseTokens.focusWidth.toPx() / 2,
-                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
-                            ),
-                    )
+        if (item.receipts.size > 3) {
+            PulseButton(
+                if (expanded) {
+                    stringResource(R.string.pulse_garage_show_fewer_documents)
+                } else {
+                    stringResource(R.string.pulse_garage_show_all_documents, item.receipts.size)
                 },
-            enabled,
-            variant = PulseButtonVariant.Soft,
-            leadingIcon = { MaintenanceIcon(R.drawable.garage_attach) },
-        )
+                { expanded = !expanded },
+                variant = PulseButtonVariant.Secondary,
+                style = PulseButtonStyle.Text,
+            )
+        }
         if (uploadRecord == item.id && progress != null) PulseTransferProgress(progress)
         Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
             MaintenanceIcon(R.drawable.garage_info, colors.textSecondary)
@@ -279,6 +233,79 @@ private fun MaintenanceReceipts(
                 PulseTextStyle.Caption,
                 color = colors.textSecondary,
             )
+        }
+    }
+}
+
+@Composable
+private fun MaintenanceReceiptRow(
+    receipt: GarageReceipt,
+    record: Long,
+    vehicle: Long,
+    enabled: Boolean,
+    busy: Boolean,
+    remove: (GarageChange.Delete, UiText) -> Unit,
+    open: (Long, GarageReceipt) -> Unit,
+    download: (Long, GarageReceipt) -> Unit,
+) {
+    val colors = PulseTheme.colors
+    var menuExpanded by rememberSaveable(receipt.id) { mutableStateOf(false) }
+    Row(
+        Modifier.fillMaxWidth().testTag("garage-receipt-${receipt.id}").padding(vertical = PulseTokens.small),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            Modifier
+                .weight(1f)
+                .clickable(enabled = !busy, onClickLabel = stringResource(R.string.pulse_garage_receipt_open)) { open(record, receipt) }
+                .pulseDescription(stringResource(R.string.pulse_garage_open_1_s, receipt.name))
+                .padding(vertical = PulseTokens.small),
+            horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier.size(32.dp).background(colors.infoSoft, PulseTheme.shapes.small),
+                contentAlignment = Alignment.Center,
+            ) { MaintenanceIcon(R.drawable.garage_document, colors.info) }
+            Column(Modifier.weight(1f)) {
+                PulseText(receipt.name, style = PulseTextStyle.Label, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                PulseText(
+                    Formatter.formatShortFileSize(LocalContext.current, receipt.size),
+                    style = PulseTextStyle.Caption,
+                    color = colors.textSecondary,
+                )
+            }
+        }
+        PulseButton(
+            stringResource(R.string.pulse_garage_download_1_s, receipt.name),
+            { download(record, receipt) },
+            enabled = !busy,
+            style = PulseButtonStyle.Icon,
+            icon = { MaintenanceIcon(R.drawable.garage_download) },
+        )
+        Box {
+            PulseButton(
+                stringResource(R.string.pulse_garage_document_options, receipt.name),
+                { menuExpanded = true },
+                enabled = !busy || enabled,
+                style = PulseButtonStyle.Icon,
+                icon = { MaintenanceIcon(R.drawable.garage_more) },
+            )
+            PulseDropdownMenu(menuExpanded, { menuExpanded = false }) {
+                PulseDropdownMenuItem(
+                    text = { PulseText(stringResource(R.string.pulse_garage_receipt_remove), color = colors.error) },
+                    onClick = {
+                        menuExpanded = false
+                        remove(
+                            GarageChange.Delete(GarageRecord.Receipt, vehicle, receipt.id, record),
+                            uiText(R.string.pulse_garage_permanently_remove_1_s_from_server_storage_and_this, receipt.name),
+                        )
+                    },
+                    modifier = Modifier.pulseDescription(stringResource(R.string.pulse_garage_remove_1_s, receipt.name)),
+                    enabled = enabled,
+                    leadingIcon = { GarageDetailIcon(GarageIcon.Delete) },
+                )
+            }
         }
     }
 }

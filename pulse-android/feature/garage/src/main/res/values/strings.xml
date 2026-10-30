@@ -219,4 +219,9 @@
         <item quantity="one">%1$d byte</item>
         <item quantity="other">%1$d bytes</item>
     </plurals>
+    <string name="pulse_garage_attach">Attach</string>
+    <string name="pulse_garage_receipts_count">Receipts (%1$d)</string>
+    <string name="pulse_garage_show_all_documents">Show all %1$d documents</string>
+    <string name="pulse_garage_show_fewer_documents">Show fewer documents</string>
+    <string name="pulse_garage_document_options">Options for %1$s</string>
 </resources>

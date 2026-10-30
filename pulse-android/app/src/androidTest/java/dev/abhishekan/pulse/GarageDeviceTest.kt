@@ -1078,6 +1078,30 @@ class GarageDeviceTest {
         assertEquals(1, mutations)
     }
 
+    @Test fun receiptListExpandsAndCollapses() {
+        (1L..5L).forEach { id ->
+            receipts[id] =
+                buildJsonObject {
+                    put("id", id)
+                    put("file_name", "service-$id.pdf")
+                    put("content_type", "application/pdf")
+                    put("size_bytes", 130257)
+                    put("created_at", "2026-10-17T10:00:00Z")
+                }
+        }
+        launchGarage()
+        select()
+        tap("Maintenance")
+        awaitText("Receipts (5)")
+        compose.onNode(hasTestTag("garage-receipt-3")).assertExists()
+        compose.onNode(hasTestTag("garage-receipt-4")).assertDoesNotExist()
+        screenshot("compact-receipts")
+        tap("Show all 5 documents")
+        compose.onNode(hasTestTag("garage-receipt-5")).assertExists()
+        tap("Show fewer documents")
+        compose.onNode(hasTestTag("garage-receipt-4")).assertDoesNotExist()
+    }
+
     @Test fun receiptPickerUploadDownloadRemovalAndFailureRecovery() {
         launchGarage()
         select()
@@ -1096,7 +1120,10 @@ class GarageDeviceTest {
         val upload = resultMonitor(Intent.ACTION_OPEN_DOCUMENT, Intent().setData(uri))
         tap("Attach receipt to Annual service")
         awaitText("receipt.pdf")
-        awaitText("16 bytes")
+        awaitText(
+            android.text.format.Formatter
+                .formatShortFileSize(context, 16),
+        )
         assertEquals(1, upload.hits)
         instrumentation.removeMonitor(upload)
         screenshot("receipts")
@@ -1118,6 +1145,7 @@ class GarageDeviceTest {
         compose.waitUntil(10_000) { view.hits > 0 }
         instrumentation.removeMonitor(view)
         assertNull(storageCookie)
+        tap("Options for receipt.pdf")
         tap("Remove receipt.pdf")
         confirm("Delete")
         awaitText("No receipts attached.")
@@ -1133,7 +1161,10 @@ class GarageDeviceTest {
         val retry = resultMonitor(Intent.ACTION_OPEN_DOCUMENT, Intent().setData(uri))
         tap("Attach receipt to Annual service")
         awaitText("receipt.pdf")
-        awaitText("16 bytes")
+        awaitText(
+            android.text.format.Formatter
+                .formatShortFileSize(context, 16),
+        )
         instrumentation.removeMonitor(retry)
     }
 

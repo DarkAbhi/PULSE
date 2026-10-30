@@ -24,7 +24,6 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
@@ -48,7 +47,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
-import dev.abhishekan.pulse.core.ui.currencyText
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.uiText
@@ -300,7 +298,10 @@ internal fun HorizonScreen(
                             }
                             HorizonTab.Transactions -> {
                                 LedgerFilters(
-                                    state, vm, ledgerCategory, { ledgerCategory = it },
+                                    state,
+                                    vm,
+                                    ledgerCategory,
+                                    { ledgerCategory = it },
                                     canMutate = canMutate,
                                     addCategory = { create(HorizonForm.Category) },
                                     logTransaction = { create(HorizonForm.Transaction) },
@@ -334,7 +335,11 @@ internal fun HorizonScreen(
                                 }
                             }
                             HorizonTab.Budgets -> {
-                                HorizonSectionAction(R.string.pulse_horizon_budgets_heading, R.string.pulse_horizon_add_budget, canMutate) { create(HorizonForm.Budget) }
+                                HorizonSectionAction(
+                                    R.string.pulse_horizon_budgets_heading,
+                                    R.string.pulse_horizon_add_budget,
+                                    canMutate,
+                                ) { create(HorizonForm.Budget) }
                                 SectionState(state.overview, vm::refreshOverview) { data ->
                                     if (data.budgets.isEmpty()) {
                                         PulseEmptyState(
@@ -375,7 +380,13 @@ internal fun HorizonScreen(
                                 }
                             }
                             HorizonTab.Obligations -> {
-                                HorizonSectionAction(R.string.pulse_horizon_obligations_heading, R.string.pulse_horizon_add_obligation, canMutate) { create(HorizonForm.Deduction) }
+                                HorizonSectionAction(
+                                    R.string.pulse_horizon_obligations_heading,
+                                    R.string.pulse_horizon_add_obligation,
+                                    canMutate,
+                                ) {
+                                    create(HorizonForm.Deduction)
+                                }
                                 SectionState(state.overview, vm::refreshOverview) { data ->
                                     if (data.deductions.isEmpty()) {
                                         PulseEmptyState(
@@ -390,24 +401,35 @@ internal fun HorizonScreen(
                                     ObligationGrid(data.deductions) { item ->
                                         ObligationCard(
                                             item = item,
-                                            budgetName = item.budgetId?.let { id ->
-                                                data.budgets.find { it.id == id }?.name
-                                                    ?: stringResource(R.string.pulse_horizon_unavailable)
-                                            },
+                                            budgetName =
+                                                item.budgetId?.let { id ->
+                                                    data.budgets.find { it.id == id }?.name
+                                                        ?: stringResource(R.string.pulse_horizon_unavailable)
+                                                },
                                             enabled = canMutate,
                                             edit = {
-                                                edit(HorizonDraft(
-                                                    HorizonForm.Deduction, item.id, item.name,
-                                                    item.amount.toPlainString(), currency,
-                                                    category = item.category,
-                                                    dueDay = item.dueDay?.toString().orEmpty(),
-                                                    active = item.active, budgetId = item.budgetId,
-                                                ))
+                                                edit(
+                                                    HorizonDraft(
+                                                        HorizonForm.Deduction,
+                                                        item.id,
+                                                        item.name,
+                                                        item.amount.toPlainString(),
+                                                        currency,
+                                                        category = item.category,
+                                                        dueDay = item.dueDay?.toString().orEmpty(),
+                                                        active = item.active,
+                                                        budgetId = item.budgetId,
+                                                    ),
+                                                )
                                             },
                                             delete = {
                                                 remove(
-                                                    HorizonRecord.Deduction, item.id,
-                                                    uiText(R.string.pulse_horizon_delete_1_s_this_removes_the_fixed_obligation_and, item.name),
+                                                    HorizonRecord.Deduction,
+                                                    item.id,
+                                                    uiText(
+                                                        R.string.pulse_horizon_delete_1_s_this_removes_the_fixed_obligation_and,
+                                                        item.name,
+                                                    ),
                                                 )
                                             },
                                         )
@@ -547,7 +569,12 @@ internal fun <T> SectionState(
 }
 
 @Composable
-internal fun HorizonSectionAction(title: Int, action: Int, enabled: Boolean, onClick: () -> Unit) {
+internal fun HorizonSectionAction(
+    title: Int,
+    action: Int,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
     FlowRow(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,

@@ -49,11 +49,13 @@ fun PulseSelectionField(
                     keyboard?.hide()
                     expanded = true
                 },
-                triggerModifier.fillMaxWidth().then(
-                    if (labelAbove) Modifier.semantics { contentDescription = description } else Modifier,
-                ).heightIn(
-                    min = PulseTokens.target,
-                ),
+                triggerModifier
+                    .fillMaxWidth()
+                    .then(
+                        if (labelAbove) Modifier.semantics { contentDescription = description } else Modifier,
+                    ).heightIn(
+                        min = PulseTokens.target,
+                    ),
                 enabled = enabled,
                 shape = PulseTokens.controlShape,
                 border = BorderStroke(PulseTokens.focusWidth / 2, if (enabled) PulseTheme.colors.outline else PulseTheme.colors.border),

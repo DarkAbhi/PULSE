@@ -4,6 +4,9 @@ import { createContext, ReactNode, useContext, useEffect, useId, useRef, useStat
 import { createPortal } from "react-dom";
 import Button, { type ButtonProps } from "./button";
 
+let openDialogs = 0;
+let previousBodyOverflow = "";
+
 const DialogFooterContext = createContext<HTMLElement | null>(null);
 const DialogFormContext = createContext<string | undefined>(undefined);
 
@@ -36,11 +39,21 @@ export default function Dialog({
 }: DialogProps) {
   const [footer, setFooter] = useState<HTMLElement | null>(null);
 
+  useEffect(() => {
+    if (openDialogs++ === 0) {
+      previousBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      if (--openDialogs === 0) document.body.style.overflow = previousBodyOverflow;
+    };
+  }, []);
+
   return (
     <div
       aria-labelledby={labelledBy}
       aria-modal="true"
-      className="fixed inset-0 z-50 overflow-y-auto bg-overlay-bg p-4 backdrop-blur-xs sm:p-6 lg:p-8"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-overlay-bg p-4 backdrop-blur-xs sm:p-6 lg:p-8"
       role="dialog"
     >
       <div

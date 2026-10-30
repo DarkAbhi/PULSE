@@ -1,5 +1,4 @@
 package dev.abhishekan.pulse.feature.mealplan
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -153,7 +152,6 @@ private fun MealIllustratedCard(
         modifier.testTag("meal-card-${meal.id}"),
         shape = RoundedCornerShape(20.dp),
         color = colors.surface,
-        border = BorderStroke(1.dp, tint.copy(alpha = 0.3f)),
     ) {
         Row(
             Modifier

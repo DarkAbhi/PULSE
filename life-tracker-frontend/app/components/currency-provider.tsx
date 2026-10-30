@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { DEFAULT_CURRENCY, validCurrency } from "../lib/currency.mjs";
+import { DEFAULT_CURRENCY, validCurrency } from "@/app/lib/currency.mjs";
 
 const CurrencyContext = createContext({ currency: DEFAULT_CURRENCY, setCurrency: (_code: string) => {} });
 export const useCurrency = () => useContext(CurrencyContext);

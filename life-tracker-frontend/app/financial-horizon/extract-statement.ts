@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { extractStatementData } from "../../services/credit-card-statement-extractor";
+import { extractStatementData } from "@/services/credit-card-statement-extractor";
 
 export async function extractStatementAction(formData: FormData, categories: string[]) {
   const cookieHeader = (await cookies()).toString();

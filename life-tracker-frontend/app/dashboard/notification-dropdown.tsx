@@ -1,15 +1,15 @@
 "use client";
 
-import Button from "../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, ArrowRight, X } from "lucide-react";
 import {
   AppNotification,
-} from "../components/notification-list";
+} from "@/app/components/notification-list";
 import { dismissNotificationAction } from "./actions";
-import LocalDate from "../components/local-date";
+import LocalDate from "@/app/components/local-date";
 
 interface NotificationDropdownProps {
   initialNotifications: AppNotification[];

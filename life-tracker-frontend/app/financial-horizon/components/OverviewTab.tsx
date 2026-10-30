@@ -1,10 +1,10 @@
 "use client";
 
-import PulseCard from "../../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
-import { formatMoney, currencySymbol } from "../../lib/currency.mjs";
+import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import {
   Target,
@@ -17,7 +17,7 @@ import {
 import {
   HorizonSummary,
   BudgetItem,
-} from "../../dashboard/financial-horizon-card";
+} from "@/app/dashboard/financial-horizon-card";
 
 interface OverviewTabProps {
   summary: HorizonSummary;

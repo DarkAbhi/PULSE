@@ -1,4 +1,4 @@
-import { PulseCardLink } from "../components/design-system/pulse-card";
+import { PulseCardLink } from "@/app/components/design-system/pulse-card";
 import "./dashboard.css";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -9,7 +9,7 @@ import GymVisitCard from "./gym-visit-card";
 import NotificationDropdown from "./notification-dropdown";
 import NamePromptDialog from "./name-prompt-dialog";
 import FinancialHorizonCard, { HorizonSummary } from "./financial-horizon-card";
-import { AppNotification } from "../components/notification-list";
+import { AppNotification } from "@/app/components/notification-list";
 
 export const metadata = {
   title: "Dashboard | PULSE",

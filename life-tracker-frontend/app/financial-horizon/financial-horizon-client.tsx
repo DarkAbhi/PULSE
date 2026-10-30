@@ -1,20 +1,20 @@
 "use client";
 
-import { formatMoney } from "../lib/currency.mjs";
+import { formatMoney } from "@/app/lib/currency.mjs";
 
-import { formatInstant } from "../lib/time-zone.mjs";
+import { formatInstant } from "@/app/lib/time-zone.mjs";
 
-import { useCurrency } from "../components/currency-provider";
-import { useTimeZone } from "../components/time-zone-provider";
+import { useCurrency } from "@/app/components/currency-provider";
+import { useTimeZone } from "@/app/components/time-zone-provider";
 
-import Button from "../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Compass, X } from "lucide-react";
 
-import ConfirmationDialog from "../components/design-system/confirmation-dialog";
-import Dialog, { DialogAction } from "../components/design-system/dialog";
+import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import Dialog, { DialogAction } from "@/app/components/design-system/dialog";
 import TransactionDialog from "./transaction-dialog";
 import LinkSubscriptionPaymentDialog from "./link-subscription-payment-dialog";
 import CategoryDialog from "./category-dialog";
@@ -32,7 +32,7 @@ import SubscriptionsTab from "./components/SubscriptionsTab";
 import FixedObligationsTab from "./components/FixedObligationsTab";
 import PlannedPurchasesTab from "./components/PlannedPurchasesTab";
 
-import { HorizonSummary, DeductionItem, BudgetItem, CategoryItem, TransactionItem, SubscriptionItem } from "../dashboard/financial-horizon-card";
+import { HorizonSummary, DeductionItem, BudgetItem, CategoryItem, TransactionItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
 import {
   updateHorizonConfigAction,
   addDeductionAction,

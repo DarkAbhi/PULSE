@@ -1,13 +1,13 @@
 "use client";
 
-import PulseCard from "../../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
-import { formatMoney, currencySymbol } from "../../lib/currency.mjs";
+import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { Edit2, Sparkles, Wallet, Lock } from "lucide-react";
-import { HorizonSummary } from "../../dashboard/financial-horizon-card";
+import { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
 
 interface HeaderMetricsProps {
   summary: HorizonSummary;

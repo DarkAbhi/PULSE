@@ -1,11 +1,11 @@
 "use client";
 
-import Button from "../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useEffect, useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { addVehicleAction } from "./actions";
-import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 
 const fuelOptions = [
   { value: "petrol", label: "Petrol" },

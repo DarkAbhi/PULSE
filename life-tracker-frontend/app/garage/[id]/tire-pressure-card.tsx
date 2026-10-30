@@ -1,8 +1,8 @@
 "use client";
 
-import PulseCard from "../../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState } from "react";
 import { Gauge, Pencil, User, Users } from "lucide-react";

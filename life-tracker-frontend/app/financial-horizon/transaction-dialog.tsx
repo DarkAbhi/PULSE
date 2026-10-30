@@ -1,15 +1,15 @@
 "use client";
 
-import { currencySymbol } from "../lib/currency.mjs";
-import { useTimeZone } from "../components/time-zone-provider";
-import { toDateTimeInput, fromDateTimeInput } from "../lib/time-zone.mjs";
+import { currencySymbol } from "@/app/lib/currency.mjs";
+import { useTimeZone } from "@/app/components/time-zone-provider";
+import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
 
-import Button from "../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useId } from "react";
 import { X, Receipt, Wallet, ArrowDownRight, ArrowUpRight } from "lucide-react";
-import { TransactionItem, CategoryItem, BudgetItem, SubscriptionItem } from "../dashboard/financial-horizon-card";
-import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
+import { TransactionItem, CategoryItem, BudgetItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
+import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 
 export interface TransactionDialogProps {
   isOpen: boolean;

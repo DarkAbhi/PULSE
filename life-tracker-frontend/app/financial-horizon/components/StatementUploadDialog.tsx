@@ -1,11 +1,11 @@
 "use client";
 
-import { formatMoney } from "../../lib/currency.mjs";
-import { useCurrency } from "../../components/currency-provider";
-import { useTimeZone } from "../../components/time-zone-provider";
-import { statementTransactionInstant } from "../../lib/time-zone.mjs";
+import { formatMoney } from "@/app/lib/currency.mjs";
+import { useCurrency } from "@/app/components/currency-provider";
+import { useTimeZone } from "@/app/components/time-zone-provider";
+import { statementTransactionInstant } from "@/app/lib/time-zone.mjs";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useRef } from "react";
 import {
@@ -25,10 +25,10 @@ import {
 import type {
   StatementExtractionResponse,
   StatementTransaction,
-} from "../../../services/credit-card-statement-extractor";
-import { extractStatementAction } from "../extract-statement";
-import { CategoryItem } from "../../dashboard/financial-horizon-card";
-import Dialog from "../../components/design-system/dialog";
+} from "@/services/credit-card-statement-extractor";
+import { extractStatementAction } from "@/app/financial-horizon/extract-statement";
+import { CategoryItem } from "@/app/dashboard/financial-horizon-card";
+import Dialog from "@/app/components/design-system/dialog";
 
 interface StatementUploadDialogProps {
   isOpen: boolean;

@@ -1,11 +1,11 @@
 "use client";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import ConfirmationDialog from "../../components/design-system/confirmation-dialog";
+import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { deleteVisit } from "./actions";
 
 interface DeleteVisitButtonProps {

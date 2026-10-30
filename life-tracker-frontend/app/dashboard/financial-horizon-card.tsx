@@ -1,6 +1,6 @@
-import { PulseCardLink } from "../components/design-system/pulse-card";
+import { PulseCardLink } from "@/app/components/design-system/pulse-card";
 
-import { formatMoney } from "../lib/currency.mjs";
+import { formatMoney } from "@/app/lib/currency.mjs";
 import { House, ArrowRight } from "lucide-react";
 
 export type BudgetItem = {

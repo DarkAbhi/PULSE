@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import FinancialHorizonClient, { NextMonthPurchaseItem } from "./financial-horizon-client";
-import { HorizonSummary } from "../dashboard/financial-horizon-card";
+import { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
 import type { TransactionPage } from "./actions";
 
 export const metadata = {

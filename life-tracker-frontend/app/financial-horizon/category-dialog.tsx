@@ -1,10 +1,10 @@
 "use client";
 
-import Button from "../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useId } from "react";
 import { X, Tag } from "lucide-react";
-import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 
 export interface CategoryDialogProps {
   isOpen: boolean;

@@ -1,8 +1,8 @@
 "use client";
 
-import { PulseCardLink } from "../components/design-system/pulse-card";
+import { PulseCardLink } from "@/app/components/design-system/pulse-card";
 
-import { useTimeZone } from "../components/time-zone-provider";
+import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import { Dumbbell, ArrowRight } from "lucide-react";
 

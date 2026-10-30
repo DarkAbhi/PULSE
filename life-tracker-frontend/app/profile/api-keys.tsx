@@ -1,16 +1,16 @@
 "use client";
 
-import PulseCard from "../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
-import { formatInstant } from "../lib/time-zone.mjs";
+import { formatInstant } from "@/app/lib/time-zone.mjs";
 
-import { useTimeZone } from "../components/time-zone-provider";
+import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import { useEffect, useRef, useState } from "react";
 import { Copy, KeyRound, Plus, Trash2, X } from "lucide-react";
-import Button from "../components/design-system/button";
-import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
-import ConfirmationDialog from "../components/design-system/confirmation-dialog";
+import Button from "@/app/components/design-system/button";
+import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { copyApiKey } from "./copy-api-key";
 
 type APIKey = {

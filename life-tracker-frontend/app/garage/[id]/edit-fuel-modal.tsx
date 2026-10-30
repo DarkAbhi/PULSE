@@ -1,15 +1,15 @@
 "use client";
-import { useTimeZone } from "../../components/time-zone-provider";
-import { toDateTimeInput, fromDateTimeInput } from "../../lib/time-zone.mjs";
+import { useTimeZone } from "@/app/components/time-zone-provider";
+import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { FuelForm, FuelFormItem } from "../../components/fuel-form";
+import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
 import { FuelFill, FuelItem } from "./types";
 import { saveFuelFill } from "./actions";
-import Dialog from "../../components/design-system/dialog";
+import Dialog from "@/app/components/design-system/dialog";
 
 interface EditFuelModalProps {
   vehicleId: string;

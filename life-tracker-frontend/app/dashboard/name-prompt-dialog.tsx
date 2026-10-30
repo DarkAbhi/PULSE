@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { saveNameAction } from "./actions";
-import Dialog, { DialogAction } from "../components/design-system/dialog";
+import Dialog, { DialogAction } from "@/app/components/design-system/dialog";
 
 interface NamePromptDialogProps {
   initialDisplayName: string;

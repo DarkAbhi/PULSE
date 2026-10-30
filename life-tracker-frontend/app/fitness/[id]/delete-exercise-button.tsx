@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
-import Button from "../../components/design-system/button";
-import ConfirmationDialog from "../../components/design-system/confirmation-dialog";
+import Button from "@/app/components/design-system/button";
+import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { deleteExercise } from "./actions";
 
 export default function DeleteExerciseButton({ visitID, exerciseID, exerciseName }: {

@@ -1,5 +1,5 @@
-import PulseCard from "../../components/design-system/pulse-card";
-import { getUserTimeZone } from "../../lib/user-time-zone";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import { getUserTimeZone } from "@/app/lib/user-time-zone";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";

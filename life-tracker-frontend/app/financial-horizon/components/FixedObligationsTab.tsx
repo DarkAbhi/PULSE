@@ -1,14 +1,14 @@
 "use client";
 
-import PulseCard from "../../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
-import { formatMoney, currencySymbol } from "../../lib/currency.mjs";
+import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
 
-import { formatInstant } from "../../lib/time-zone.mjs";
+import { formatInstant } from "@/app/lib/time-zone.mjs";
 
-import { useTimeZone } from "../../components/time-zone-provider";
+import { useTimeZone } from "@/app/components/time-zone-provider";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useMemo } from "react";
 import {
@@ -28,7 +28,7 @@ import {
   X,
   ExternalLink,
 } from "lucide-react";
-import { HorizonSummary, DeductionItem, SubscriptionItem } from "../../dashboard/financial-horizon-card";
+import { HorizonSummary, DeductionItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
 
 const CATEGORIES = [
   { id: "housing", label: "Housing & Rent", icon: Home, color: "bg-info/10 text-info border-info/20" },

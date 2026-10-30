@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { validTimeZone } from "../lib/time-zone.mjs";
+import { validTimeZone } from "@/app/lib/time-zone.mjs";
 
 export async function saveTimeZoneAction(timezone: string): Promise<{ ok: true; timezone: string } | { ok: false; error: string }> {
   if (!validTimeZone(timezone)) return { ok: false, error: "Choose a valid time zone." };

@@ -1,18 +1,18 @@
 "use client";
 
-import PulseCard from "../../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
-import { formatMoney } from "../../lib/currency.mjs";
+import { formatMoney } from "@/app/lib/currency.mjs";
 
-import { formatInstant } from "../../lib/time-zone.mjs";
+import { formatInstant } from "@/app/lib/time-zone.mjs";
 
-import { useTimeZone } from "../../components/time-zone-provider";
+import { useTimeZone } from "@/app/components/time-zone-provider";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { Receipt, Plus, Tag, Search, Edit2, Trash2, Clock, Wallet, FileUp } from "lucide-react";
-import { HorizonSummary, TransactionItem, CategoryItem } from "../../dashboard/financial-horizon-card";
-import type { TransactionPage } from "../actions";
+import { HorizonSummary, TransactionItem, CategoryItem } from "@/app/dashboard/financial-horizon-card";
+import type { TransactionPage } from "@/app/financial-horizon/actions";
 
 interface TransactionsTabProps {
   summary: HorizonSummary;

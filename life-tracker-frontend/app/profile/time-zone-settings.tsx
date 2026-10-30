@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTimeZone } from "../components/time-zone-provider";
-import { timeZoneChoices } from "../lib/time-zone.mjs";
+import { useTimeZone } from "@/app/components/time-zone-provider";
+import { timeZoneChoices } from "@/app/lib/time-zone.mjs";
 import { saveTimeZoneAction } from "./time-zone-actions";
 import PreferenceSettings from "./preference-settings";
 

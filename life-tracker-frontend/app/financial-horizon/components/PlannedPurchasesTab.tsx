@@ -1,14 +1,14 @@
 "use client";
 
-import PulseCard from "../../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
-import { formatMoney } from "../../lib/currency.mjs";
+import { formatMoney } from "@/app/lib/currency.mjs";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { ShoppingBag, Plus, Trash2, ExternalLink, Wallet, TrendingDown } from "lucide-react";
-import { HorizonSummary } from "../../dashboard/financial-horizon-card";
-import { NextMonthPurchaseItem } from "../financial-horizon-client";
+import { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
+import { NextMonthPurchaseItem } from "@/app/financial-horizon/financial-horizon-client";
 
 interface PlannedPurchasesTabProps {
   summary: HorizonSummary;

@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { DEFAULT_TIME_ZONE, validTimeZone } from "../lib/time-zone.mjs";
+import { DEFAULT_TIME_ZONE, validTimeZone } from "@/app/lib/time-zone.mjs";
 
 const TimeZoneContext = createContext({ timeZone: DEFAULT_TIME_ZONE, setTimeZone: (_zone: string) => {} });
 export const useTimeZone = () => useContext(TimeZoneContext);

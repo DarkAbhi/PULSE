@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { validCurrency } from "../lib/currency.mjs";
+import { validCurrency } from "@/app/lib/currency.mjs";
 
 export async function saveCurrencyAction(currency: string): Promise<{ ok: true; currency: string } | { ok: false; error: string }> {
   if (!validCurrency(currency)) return { ok: false, error: "Choose a valid currency." };

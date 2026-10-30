@@ -1,8 +1,8 @@
 "use client";
 
-import PulseCard from "../../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useEffect, useId, useState, useTransition } from "react";
 import { Plus } from "lucide-react";

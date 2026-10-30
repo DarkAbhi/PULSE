@@ -1,5 +1,5 @@
-import PulseCard from "../components/design-system/pulse-card";
-import LocalDate from "../components/local-date";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import LocalDate from "@/app/components/local-date";
 
 export default function AboutPulse() {
   const releasedAt = process.env.NEXT_PUBLIC_PULSE_RELEASE_DATE;

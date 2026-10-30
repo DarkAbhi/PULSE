@@ -1,12 +1,12 @@
 "use client";
 
-import PulseCard from "../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
-import Button from "../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { AppNotification, NotificationList } from "../components/notification-list";
+import { AppNotification, NotificationList } from "@/app/components/notification-list";
 import { dismissNotification, clearAllNotifications } from "./actions";
 import { ArrowLeft, Trash2 } from "lucide-react";
 

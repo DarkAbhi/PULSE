@@ -1,6 +1,6 @@
-import PulseCard from "../../components/design-system/pulse-card";
-import { currencySymbol } from "../../lib/currency.mjs";
-import { getUserCurrency } from "../../lib/user-currency";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import { currencySymbol } from "@/app/lib/currency.mjs";
+import { getUserCurrency } from "@/app/lib/user-currency";
 import { Fuel } from "lucide-react";
 import { FuelEfficiencyStats } from "./types";
 

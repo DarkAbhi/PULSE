@@ -1,7 +1,7 @@
 
-import { getUserTimeZone } from "../lib/user-time-zone";
+import { getUserTimeZone } from "@/app/lib/user-time-zone";
 
-import { dateKey } from "../lib/time-zone.mjs";
+import { dateKey } from "@/app/lib/time-zone.mjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import MealPlanClient from "./meal-plan-client";

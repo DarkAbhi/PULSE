@@ -1,6 +1,6 @@
 "use client";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useRef, useEffect } from "react";
 import { Plus, ChevronDown, Receipt, Calendar, ShoppingBag, Target, Tag } from "lucide-react";

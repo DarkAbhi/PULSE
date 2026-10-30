@@ -1,7 +1,7 @@
 "use client";
 
-import { useCurrency } from "../components/currency-provider";
-import { CURRENCIES, currencyLabel } from "../lib/currency.mjs";
+import { useCurrency } from "@/app/components/currency-provider";
+import { CURRENCIES, currencyLabel } from "@/app/lib/currency.mjs";
 import { saveCurrencyAction } from "./currency-actions";
 import PreferenceSettings from "./preference-settings";
 

@@ -1,17 +1,17 @@
 "use client";
 
-import { currencySymbol } from "../../lib/currency.mjs";
-import { useCurrency } from "../../components/currency-provider";
-import { useTimeZone } from "../../components/time-zone-provider";
-import { dateKey, fromDateTimeInput, formatInstant } from "../../lib/time-zone.mjs";
+import { currencySymbol } from "@/app/lib/currency.mjs";
+import { useCurrency } from "@/app/components/currency-provider";
+import { useTimeZone } from "@/app/components/time-zone-provider";
+import { dateKey, fromDateTimeInput, formatInstant } from "@/app/lib/time-zone.mjs";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createMaintenanceRecord, SaveMaintenancePayload, updateMaintenanceRecord } from "./actions";
 import { MaintenanceAttachment, MaintenanceRecord } from "./types";
-import Dialog, { DialogAction, DialogActions } from "../../components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
 type Category = (typeof categories)[number];

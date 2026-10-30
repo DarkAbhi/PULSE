@@ -1,10 +1,10 @@
 "use client";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useTransition } from "react";
 import { deleteAirFill, deleteFuelFill } from "./actions";
-import ConfirmationDialog from "../../components/design-system/confirmation-dialog";
+import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { Trash2 } from "lucide-react";
 
 interface DeleteButtonProps {

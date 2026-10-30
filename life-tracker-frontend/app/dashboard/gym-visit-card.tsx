@@ -1,4 +1,4 @@
-import PulseCard from "../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 import Link from "next/link";
 import { Dumbbell, ArrowRight } from "lucide-react";
 

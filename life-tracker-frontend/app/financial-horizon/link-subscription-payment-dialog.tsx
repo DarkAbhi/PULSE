@@ -1,16 +1,16 @@
 "use client";
 
-import { formatMoney } from "../lib/currency.mjs";
+import { formatMoney } from "@/app/lib/currency.mjs";
 
-import { formatInstant } from "../lib/time-zone.mjs";
+import { formatInstant } from "@/app/lib/time-zone.mjs";
 
-import { useTimeZone } from "../components/time-zone-provider";
+import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import { useEffect, useId, useState } from "react";
 import { X } from "lucide-react";
-import Button from "../components/design-system/button";
-import Dialog from "../components/design-system/dialog";
-import type { SubscriptionItem, TransactionItem } from "../dashboard/financial-horizon-card";
+import Button from "@/app/components/design-system/button";
+import Dialog from "@/app/components/design-system/dialog";
+import type { SubscriptionItem, TransactionItem } from "@/app/dashboard/financial-horizon-card";
 import { getTransactionsPageAction } from "./actions";
 
 export default function LinkSubscriptionPaymentDialog({

@@ -1,12 +1,12 @@
 "use client";
 
-import PulseCard from "../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Info } from "lucide-react";
-import Button from "../components/design-system/button";
-import ConfirmationDialog from "../components/design-system/confirmation-dialog";
+import Button from "@/app/components/design-system/button";
+import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import GymVisitsList, { type WorkoutGroup } from "./gym-visits-list";
 import { calendarDays, shiftMonth } from "./calendar-utils.mjs";
 import { markGymVisitAction } from "./actions";

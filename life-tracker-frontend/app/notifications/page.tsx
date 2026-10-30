@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { AppNotification } from "../components/notification-list";
+import { AppNotification } from "@/app/components/notification-list";
 import NotificationsClient from "./notifications-client";
 import { ArrowLeft } from "lucide-react";
 

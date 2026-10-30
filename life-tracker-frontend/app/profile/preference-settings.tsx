@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Button from "../components/design-system/button";
-import PulseCard from "../components/design-system/pulse-card";
-import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
+import Button from "@/app/components/design-system/button";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 
 type PreferenceSettingsProps = {
   id: string;

@@ -1,15 +1,15 @@
 "use client";
 
-import { formatMoney, currencySymbol } from "../lib/currency.mjs";
-import { useTimeZone } from "../components/time-zone-provider";
-import { dateKey } from "../lib/time-zone.mjs";
+import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
+import { useTimeZone } from "@/app/components/time-zone-provider";
+import { dateKey } from "@/app/lib/time-zone.mjs";
 
-import Button from "../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect } from "react";
 import { X, CreditCard, Calendar, AlertCircle } from "lucide-react";
-import { SubscriptionItem, BudgetItem, CategoryItem } from "../dashboard/financial-horizon-card";
-import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
+import { SubscriptionItem, BudgetItem, CategoryItem } from "@/app/dashboard/financial-horizon-card";
+import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 
 interface SubscriptionDialogProps {
   isOpen: boolean;

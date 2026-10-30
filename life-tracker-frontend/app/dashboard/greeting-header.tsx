@@ -1,6 +1,6 @@
 "use client";
 
-import { useTimeZone } from "../components/time-zone-provider";
+import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import { useEffect, useState, type ReactNode } from "react";
 

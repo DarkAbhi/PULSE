@@ -1,10 +1,10 @@
 "use client";
 
-import Button from "../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState } from "react";
 import { Lock, Eye, EyeOff, X, CheckCircle2, KeyRound } from "lucide-react";
-import Dialog, { DialogAction, DialogActions } from "../components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 
 interface ChangePasswordDialogProps {
   isOpen: boolean;

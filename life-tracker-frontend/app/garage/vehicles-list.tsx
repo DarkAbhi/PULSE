@@ -1,17 +1,17 @@
 "use client";
 
-import PulseCard from "../components/design-system/pulse-card";
-import { useTimeZone } from "../components/time-zone-provider";
-import { toDateTimeInput, fromDateTimeInput } from "../lib/time-zone.mjs";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import { useTimeZone } from "@/app/components/time-zone-provider";
+import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
 
-import Button from "../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Car } from "lucide-react";
-import { FuelForm, FuelFormItem } from "../components/fuel-form";
-import ConfirmationDialog from "../components/design-system/confirmation-dialog";
-import Dialog from "../components/design-system/dialog";
+import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
+import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import Dialog from "@/app/components/design-system/dialog";
 import { markAirFillAction, saveFuelAction } from "./actions";
 
 type Vehicle = {

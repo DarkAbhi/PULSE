@@ -1,12 +1,12 @@
 "use client";
 
-import { useTimeZone } from "../components/time-zone-provider";
-import Button from "../components/design-system/button";
+import { useTimeZone } from "@/app/components/time-zone-provider";
+import Button from "@/app/components/design-system/button";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import ConfirmationDialog from "../components/design-system/confirmation-dialog";
+import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 
 const apiBaseURL = "";
 

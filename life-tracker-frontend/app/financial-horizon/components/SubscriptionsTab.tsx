@@ -1,14 +1,14 @@
 "use client";
 
-import PulseCard from "../../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
-import { formatMoney } from "../../lib/currency.mjs";
+import { formatMoney } from "@/app/lib/currency.mjs";
 
-import { formatInstant, formatCalendarDate, dateKey, calendarDayNumber } from "../../lib/time-zone.mjs";
+import { formatInstant, formatCalendarDate, dateKey, calendarDayNumber } from "@/app/lib/time-zone.mjs";
 
-import { useTimeZone } from "../../components/time-zone-provider";
+import { useTimeZone } from "@/app/components/time-zone-provider";
 
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useMemo } from "react";
 import {
@@ -35,7 +35,7 @@ import {
   BudgetItem,
   CategoryItem,
   TransactionItem,
-} from "../../dashboard/financial-horizon-card";
+} from "@/app/dashboard/financial-horizon-card";
 
 interface SubscriptionsTabProps {
   subscriptions: SubscriptionItem[];

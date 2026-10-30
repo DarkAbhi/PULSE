@@ -1,12 +1,12 @@
 "use client";
 
-import PulseCard from "../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
-import { useTimeZone } from "../components/time-zone-provider";
+import { useTimeZone } from "@/app/components/time-zone-provider";
 
-import { dateKey } from "../lib/time-zone.mjs";
+import { dateKey } from "@/app/lib/time-zone.mjs";
 
-import Button from "../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useTransition, useId } from "react";
 import Link from "next/link";
@@ -23,8 +23,8 @@ import {
   Loader2,
   Check,
 } from "lucide-react";
-import Dialog, { DialogActions, DialogAction } from "../components/design-system/dialog";
-import ConfirmationDialog from "../components/design-system/confirmation-dialog";
+import Dialog, { DialogActions, DialogAction } from "@/app/components/design-system/dialog";
+import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import {
   MealPlan,
   MealTime,

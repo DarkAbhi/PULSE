@@ -1,4 +1,4 @@
-import PulseCard from "../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";

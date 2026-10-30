@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Pencil } from "lucide-react";
-import Button from "../../components/design-system/button";
+import Button from "@/app/components/design-system/button";
 import AddExerciseForm from "./add-exercise-form";
 import type { SavedExercise } from "./actions";
 

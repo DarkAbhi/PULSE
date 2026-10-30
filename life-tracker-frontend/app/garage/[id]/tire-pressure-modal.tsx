@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import Dialog, { DialogAction, DialogActions } from "../../components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 import { saveTirePressure } from "./actions";
 import { Gauge, User, Users } from "lucide-react";
 

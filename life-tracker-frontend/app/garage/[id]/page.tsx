@@ -1,6 +1,6 @@
-import PulseCard from "../../components/design-system/pulse-card";
-import { getUserCurrency } from "../../lib/user-currency";
-import { formatMoney } from "../../lib/currency.mjs";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import { getUserCurrency } from "@/app/lib/user-currency";
+import { formatMoney } from "@/app/lib/currency.mjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import MaintenanceRecordModal from "./maintenance-record-modal";
 import MaintenanceRecordActions from "./maintenance-record-actions";
 import FuelEfficiencySection from "./fuel-efficiency-section";
 import TirePressureCard from "./tire-pressure-card";
-import LocalDate from "../../components/local-date";
+import LocalDate from "@/app/components/local-date";
 import { ArrowLeft, Fuel, Plus, ReceiptText, Wind } from "lucide-react";
 
 const apiBaseURL =

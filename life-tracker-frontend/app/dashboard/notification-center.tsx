@@ -1,12 +1,12 @@
 "use client";
 
-import PulseCard from "../components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { useState } from "react";
 import {
   AppNotification,
   NotificationList,
-} from "../components/notification-list";
+} from "@/app/components/notification-list";
 import { dismissNotificationAction } from "./actions";
 
 interface NotificationCenterProps {

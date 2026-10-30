@@ -202,3 +202,50 @@ private fun FuelHistoryPreview() {
         }
     }
 }
+
+@Preview(name = "Maintenance reference tablet", widthDp = 1280, heightDp = 700, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(name = "Maintenance phone", widthDp = 393, heightDp = 1100)
+@Preview(name = "Maintenance tablet light", widthDp = 1024, heightDp = 800)
+@Preview(name = "Maintenance large text", widthDp = 360, heightDp = 1600, fontScale = 2f)
+@Composable
+private fun MaintenanceHistoryPreview() {
+    PulseTheme {
+        Surface(color = PulseTheme.colors.background) {
+            Column(
+                Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(PulseTokens.cardPadding),
+                verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
+            ) {
+                MaintenanceHistoryCard(
+                    dev.abhishekan.pulse.core.domain.model.Maintenance(
+                        1,
+                        "service",
+                        "Annual service",
+                        "4000.00".toBigDecimal(),
+                        java.time.Instant.parse("2026-09-27T06:30:00Z"),
+                        "1000".toBigDecimal(),
+                        null,
+                        null,
+                        listOf(
+                            dev.abhishekan.pulse.core.domain.model.GarageReceipt(
+                                1,
+                                "Sustainable Brands and Products – Brands",
+                                "application/pdf",
+                                16576,
+                            ),
+                        ),
+                    ),
+                    1,
+                    true,
+                    false,
+                    {},
+                    { _, _ -> },
+                    {},
+                    { _, _ -> },
+                    { _, _ -> },
+                    null,
+                    null,
+                )
+            }
+        }
+    }
+}

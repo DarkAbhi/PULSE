@@ -209,4 +209,12 @@
     <string name="pulse_garage_km">km</string>
     <string name="pulse_garage_fuel_history">Fuel history</string>
     <string name="pulse_garage_fuel_cost_caption">total · %1$s/L</string>
+    <string name="pulse_garage_receipt_open">Open</string>
+    <string name="pulse_garage_receipt_download">Download</string>
+    <string name="pulse_garage_receipt_remove">Remove</string>
+    <string name="pulse_garage_attach_receipt">Attach receipt</string>
+    <plurals name="pulse_garage_receipt_bytes">
+        <item quantity="one">%1$d byte</item>
+        <item quantity="other">%1$d bytes</item>
+    </plurals>
 </resources>

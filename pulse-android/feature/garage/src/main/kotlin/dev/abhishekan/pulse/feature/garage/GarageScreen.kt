@@ -435,47 +435,14 @@ internal fun GarageScreen(
                                                 }, download, state.uploadRecord, state.progress)
                                             }
                                             GarageTab.Air -> {
-                                                PressureCard(data.pressure, enabled, vm::pressure, {
-                                                    vm.mutate(GarageChange.Air(vehicle))
-                                                })
-                                                if (data.air.isEmpty()) {
-                                                    PulseEmptyState(
-                                                        stringResource(
-                                                            R.string.pulse_garage_no_air_fills_recorded,
-                                                        ),
-                                                        stringResource(
-                                                            R.string.pulse_garage_record_an_air_fill_after_checking_your_tires,
-                                                        ),
-                                                    )
-                                                }
-                                                data.air.forEach { air ->
-                                                    PulseCard(Modifier.fillMaxWidth()) {
-                                                        PulseText(
-                                                            garageDate(air.date),
-                                                            style = PulseTextStyle.Title,
-                                                        )
-                                                        PulseButton(
-                                                            stringResource(
-                                                                R.string.pulse_garage_delete_air_fill_1_s,
-                                                                air.id,
-                                                            ),
-                                                            {
-                                                                remove(
-                                                                    GarageChange.Delete(
-                                                                        GarageRecord.Air,
-                                                                        vehicle,
-                                                                        air.id,
-                                                                    ),
-                                                                    uiText(
-                                                                        R.string.pulse_garage_delete_air_fill_confirmation,
-                                                                    ),
-                                                                )
-                                                            },
-                                                            enabled = enabled,
-                                                            style = PulseButtonStyle.Text,
-                                                        )
-                                                    }
-                                                }
+                                                TiresAirSection(
+                                                    data,
+                                                    vehicle,
+                                                    enabled,
+                                                    vm::pressure,
+                                                    { vm.mutate(GarageChange.Air(vehicle)) },
+                                                    remove,
+                                                )
                                             }
                                         }
                                     }

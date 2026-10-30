@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -255,6 +256,7 @@ internal fun PressureCard(
     edit: () -> Unit,
     fill: () -> Unit,
     minimumHeight: androidx.compose.ui.unit.Dp = 0.dp,
+    prominent: Boolean = false,
 ) {
     PulseCard(
         Modifier.fillMaxWidth(),
@@ -263,13 +265,13 @@ internal fun PressureCard(
     ) {
         Column(
             Modifier.fillMaxWidth().heightIn(min = (minimumHeight - PulseTokens.cardPadding * 2).coerceAtLeast(0.dp)),
-            verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
+            verticalArrangement = Arrangement.spacedBy(if (prominent) PulseTokens.cardPadding else PulseTokens.medium),
         ) {
             Column {
                 PulseText(
                     stringResource(R.string.pulse_garage_a_little_air_a_smoother_ride),
                     Modifier.semantics { heading() },
-                    PulseTextStyle.Title2,
+                    if (prominent) PulseTextStyle.Heading3 else PulseTextStyle.Title2,
                 )
                 PulseText(
                     stringResource(R.string.pulse_garage_target_tire_pressure_psi),
@@ -286,6 +288,7 @@ internal fun PressureCard(
                             decimal(pressure.rearSolo),
                             Modifier.weight(1f),
                             true,
+                            prominent,
                         )
                         PressureValues(
                             stringResource(R.string.pulse_garage_pillion),
@@ -293,6 +296,7 @@ internal fun PressureCard(
                             decimal(pressure.rearPillion),
                             Modifier.weight(1f),
                             false,
+                            prominent,
                         )
                     }
                 } else {
@@ -303,6 +307,7 @@ internal fun PressureCard(
                             decimal(pressure.rearSolo),
                             Modifier.fillMaxWidth(),
                             true,
+                            prominent,
                         )
                         PressureValues(
                             stringResource(R.string.pulse_garage_pillion),
@@ -310,6 +315,7 @@ internal fun PressureCard(
                             decimal(pressure.rearPillion),
                             Modifier.fillMaxWidth(),
                             false,
+                            prominent,
                         )
                     }
                 }
@@ -333,6 +339,7 @@ private fun PressureValues(
     rear: String,
     modifier: Modifier,
     highlighted: Boolean,
+    prominent: Boolean = false,
 ) {
     PulseCard(
         modifier,
@@ -341,6 +348,30 @@ private fun PressureValues(
         shape = PulseTheme.shapes.medium,
         contentPadding = PulseTheme.spacing.comfortable,
     ) {
+        if (prominent) {
+            Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
+                PulseText(
+                    label,
+                    style = PulseTextStyle.Title3,
+                    color = if (highlighted) PulseTheme.colors.action else PulseTheme.colors.textSecondary,
+                )
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    val values: @Composable () -> Unit = {
+                        PressureMetric(stringResource(R.string.pulse_garage_front), front)
+                        PressureMetric(stringResource(R.string.pulse_garage_rear), rear)
+                    }
+                    if (maxWidth < 200.dp || LocalDensity.current.fontScale > 1.3f) {
+                        Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) { values() }
+                    } else {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
+                            verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
+                        ) { values() }
+                    }
+                }
+            }
+            return@PulseCard
+        }
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val stacked = LocalDensity.current.fontScale > 1.3f || maxWidth < 200.dp
             val values: @Composable () -> Unit = {
@@ -374,6 +405,17 @@ private fun PressureValues(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PressureMetric(
+    label: String,
+    value: String,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
+        PulseText(label, style = PulseTextStyle.Body2, color = PulseTheme.colors.textSecondary)
+        PulseText(value, style = PulseTextStyle.DisplayXL)
     }
 }
 

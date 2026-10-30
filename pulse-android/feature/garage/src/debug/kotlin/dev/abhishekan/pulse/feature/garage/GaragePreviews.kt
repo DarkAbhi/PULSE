@@ -23,6 +23,40 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTransferProgress
 
+@Preview(name = "Tires and air reference", widthDp = 1280, heightDp = 840, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(name = "Tires and air phone", widthDp = 393, heightDp = 1100)
+@Preview(name = "Tires and air large text", widthDp = 360, heightDp = 1600, fontScale = 2f)
+@Composable
+private fun TiresAirPreview() {
+    PulseTheme {
+        Surface(color = PulseTheme.colors.background) {
+            Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(PulseTokens.large)) {
+                TiresAirSection(
+                    dev.abhishekan.pulse.core.domain.model.VehicleHistory(
+                        name = "Himalaya 411",
+                        pressure = TirePressure("27".toBigDecimal(), "34".toBigDecimal(), "29".toBigDecimal(), "36".toBigDecimal()),
+                        air =
+                            listOf(
+                                dev.abhishekan.pulse.core.domain.model
+                                    .AirFill(1, java.time.Instant.parse("2026-09-27T17:47:00Z")),
+                            ),
+                        fuel = emptyList(),
+                        maintenance = emptyList(),
+                        efficiency = emptyMap(),
+                        vehicleType = "two_wheeler",
+                        fuelTypes = listOf("petrol"),
+                    ),
+                    1,
+                    true,
+                    {},
+                    {},
+                    { _, _ -> },
+                )
+            }
+        }
+    }
+}
+
 @Preview(name = "Garage phone", widthDp = 393, heightDp = 850)
 @Preview(
     name = "Garage tablet dark",

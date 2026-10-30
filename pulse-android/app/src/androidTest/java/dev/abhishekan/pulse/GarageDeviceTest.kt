@@ -849,6 +849,33 @@ class GarageDeviceTest {
         awaitText("Save tire pressure")
     }
 
+    @Test fun redesignedTiresAirKeepsPressureHistoryAndActionsAccessible() {
+        pressure =
+            obj(
+                """{"front_tire_pressure_solo":27,"rear_tire_pressure_solo":34,"front_tire_pressure_pillion":29,"rear_tire_pressure_pillion":36}""",
+            )
+        air[41] = obj("""{"id":41,"filled_at":"2026-09-27T17:47:00Z"}""")
+        launchGarage()
+        select()
+        tap("Tires & air")
+        compose.onNodeWithText("Solo").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("27").assertExists()
+        compose.onNodeWithText("34").assertExists()
+        compose.onNodeWithText("Pillion").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("29").assertExists()
+        compose.onNodeWithText("36").assertExists()
+        compose.onNodeWithText("Air fill 41").performScrollTo().assertIsDisplayed()
+        screenshot("tires-air-history")
+        tap("Delete air fill 41")
+        confirm("Delete")
+        compose.waitUntil(10_000) { air.isEmpty() }
+        compose.onNodeWithText("No air fills recorded").performScrollTo().assertIsDisplayed()
+        tap("Record air fill now")
+        compose.waitUntil(10_000) { air.size == 1 }
+        tap("Set tire pressure")
+        awaitText("Save tire pressure")
+    }
+
     @Test fun redesignedFuelHistoryKeepsBadgesAndActionsAccessible() {
         fuel[41] =
             obj(

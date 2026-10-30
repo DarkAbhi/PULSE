@@ -21,10 +21,16 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 
 @Composable
-internal fun VehicleEditorArtwork(modifier: Modifier = Modifier) {
+internal fun VehicleEditorArtwork(vehicleType: String, modifier: Modifier = Modifier) {
     val artwork = listOf(R.drawable.garage_scooter, R.drawable.garage_motorcycle, R.drawable.garage_car)
+    val selectedArtwork = when (vehicleType) {
+        "two_wheeler" -> R.drawable.garage_motorcycle
+        "four_wheeler" -> R.drawable.garage_car
+        else -> null
+    }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val index by produceState(0, lifecycle) {
+    val index by produceState(0, lifecycle, selectedArtwork) {
+        if (selectedArtwork != null) return@produceState
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             if (ValueAnimator.areAnimatorsEnabled()) {
                 while (true) {
@@ -35,7 +41,7 @@ internal fun VehicleEditorArtwork(modifier: Modifier = Modifier) {
         }
     }
     Crossfade(
-        targetState = artwork[index],
+        targetState = selectedArtwork ?: artwork[index],
         modifier = modifier.height(280.dp).testTag("vehicle-editor-artwork"),
         animationSpec = tween(2_400, easing = LinearEasing),
         label = "Vehicle artwork",

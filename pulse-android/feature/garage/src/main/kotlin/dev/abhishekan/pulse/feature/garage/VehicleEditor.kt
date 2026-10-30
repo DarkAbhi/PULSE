@@ -72,7 +72,10 @@ internal fun VehicleEditor(
                 )
                 PulseText(stringResource(R.string.pulse_garage_vehicle_intro), color = colors.onPrimarySoft)
                 if (wide) {
-                    VehicleEditorArtwork(Modifier.fillMaxWidth().heightIn(min = 240.dp))
+                    VehicleEditorArtwork(
+                        vehicleType = draft["vehicleType"],
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp),
+                    )
                     listOf(
                         R.string.pulse_garage_vehicle_benefit_care,
                         R.string.pulse_garage_vehicle_benefit_fuel,

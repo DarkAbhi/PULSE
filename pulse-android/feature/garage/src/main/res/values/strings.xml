@@ -1,5 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+    <string name="pulse_garage_last">Last</string>
+    <string name="pulse_garage_best">Best</string>
+    <string name="pulse_garage_lowest">Lowest</string>
+    <string name="pulse_garage_solo">Solo</string>
+    <string name="pulse_garage_pillion">Pillion</string>
+    <string name="pulse_garage_front">Front</string>
+    <string name="pulse_garage_rear">Rear</string>
     <string name="pulse_garage_overview">"Overview"</string>
     <string name="pulse_garage_fuel">"Fuel"</string>
     <string name="pulse_garage_maintenance">"Maintenance"</string>
@@ -183,4 +190,23 @@
     <string name="pulse_garage_vehicle_pressure_title">Target tire pressures (PSI)</string>
     <string name="pulse_garage_vehicle_pressure_hint">Optional. Leave blank if you are unsure.</string>
     <string name="pulse_garage_cancel">Cancel</string>
+    <string name="pulse_garage_km_per_litre">km/L</string>
+    <string name="pulse_garage_recorded_volume">Recorded volume</string>
+    <string name="pulse_garage_recorded_cost">Recorded cost</string>
+    <string name="pulse_garage_volume_litres">%1$s L</string>
+    <plurals name="pulse_garage_fuel_label">
+        <item quantity="one">fuel fill-up</item>
+        <item quantity="other">fuel fill-ups</item>
+    </plurals>
+    <plurals name="pulse_garage_maintenance_label">
+        <item quantity="one">maintenance record</item>
+        <item quantity="other">maintenance records</item>
+    </plurals>
+    <plurals name="pulse_garage_air_label">
+        <item quantity="one">air fill</item>
+        <item quantity="other">air fills</item>
+    </plurals>
+    <string name="pulse_garage_km">km</string>
+    <string name="pulse_garage_fuel_history">Fuel history</string>
+    <string name="pulse_garage_fuel_cost_caption">total · %1$s/L</string>
 </resources>

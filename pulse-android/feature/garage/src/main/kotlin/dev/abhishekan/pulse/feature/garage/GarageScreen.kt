@@ -5,11 +5,10 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -32,11 +31,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,7 +53,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
-import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
@@ -73,6 +69,8 @@ fun GarageRoute(
     viewModel: GarageViewModel = koinViewModel(),
     initialVehicle: Long? = null,
     onDetailChanged: (Boolean) -> Unit = {},
+    onTitleChanged: (String?) -> Unit = {},
+    tabsInAppBar: Boolean = false,
 ) {
     val currency by dev.abhishekan.pulse.core.domain.model.UserCurrency.changes
         .collectAsStateWithLifecycle()
@@ -125,6 +123,15 @@ fun GarageRoute(
         }
     LaunchedEffect(state.draft?.dirty) { onDraftChanged(state.draft?.dirty == true) }
     LaunchedEffect(state.vehicle) { onDetailChanged(state.vehicle != null) }
+    val vehicleTitle =
+        if (state.vehicle != null) {
+            state.history.value?.name ?: state.vehicles.value
+                ?.firstOrNull { it.id == state.vehicle }
+                ?.name
+        } else {
+            null
+        }
+    LaunchedEffect(vehicleTitle) { onTitleChanged(vehicleTitle) }
     LaunchedEffect(state.openUri) {
         state.openUri?.let { uri ->
             try {
@@ -181,7 +188,7 @@ fun GarageRoute(
                     uiText(R.string.pulse_garage_a_system_document_picker_is_unavailable_on_this_device),
                 )
             }
-        })
+        }, tabsInAppBar = tabsInAppBar)
     }
 }
 
@@ -191,6 +198,7 @@ internal fun GarageScreen(
     vm: GarageViewModel,
     upload: (Long) -> Unit,
     download: (Long, GarageReceipt) -> Unit,
+    tabsInAppBar: Boolean = false,
 ) {
     var discard by rememberSaveable { mutableStateOf(false) }
     var records by rememberSaveable { mutableStateOf(false) }
@@ -339,13 +347,6 @@ internal fun GarageScreen(
                                 if (state.vehicle != null) {
                                     GarageSection(state.history, vm::refreshHistory) { data ->
                                         val vehicle = checkNotNull(state.vehicle)
-                                        PulseText(
-                                            data.name,
-                                            Modifier.semantics {
-                                                heading()
-                                            },
-                                            PulseTextStyle.Display,
-                                        )
                                         val remove: (
                                             GarageChange.Delete,
                                             UiText,
@@ -361,70 +362,20 @@ internal fun GarageScreen(
                                         }
                                         when (state.tab) {
                                             GarageTab.Overview -> {
-                                                EfficiencyCards(data)
-                                                PulseCard(Modifier.fillMaxWidth()) {
-                                                    PulseText(
-                                                        stringResource(
-                                                            R.string.pulse_garage_care_at_a_glance,
-                                                        ),
-                                                        style = PulseTextStyle.Title,
-                                                    )
-                                                    PulseText(
-                                                        stringResource(
-                                                            R.string.pulse_garage_history_counts,
-                                                            pluralStringResource(
-                                                                R.plurals.pulse_garage_fuel_count,
-                                                                data.fuel.size,
-                                                                data.fuel.size,
-                                                            ),
-                                                            pluralStringResource(
-                                                                R.plurals.pulse_garage_maintenance_count,
-                                                                data.maintenance.size,
-                                                                data.maintenance.size,
-                                                            ),
-                                                            pluralStringResource(
-                                                                R.plurals.pulse_garage_air_count,
-                                                                data.air.size,
-                                                                data.air.size,
-                                                            ),
-                                                        ),
-                                                    )
-                                                    data.maintenance.firstOrNull()?.let {
-                                                        PulseText(
-                                                            stringResource(
-                                                                R.string.pulse_garage_latest_care_1_s_2_s,
-                                                                it.title,
-                                                                garageDate(it.date),
-                                                            ),
-                                                        )
-                                                    }
-                                                    PulseButton(
-                                                        stringResource(
-                                                            R.string.pulse_garage_add_fuel_fill_up,
-                                                        ),
-                                                        {
-                                                            records =
-                                                                false
-                                                            vm.create(GarageForm.Fuel)
-                                                        },
-                                                        enabled = enabled,
-                                                    )
-                                                    PulseButton(
-                                                        stringResource(
-                                                            R.string.pulse_garage_add_maintenance,
-                                                        ),
-                                                        {
-                                                            records =
-                                                                false
-                                                            vm.create(GarageForm.Care)
-                                                        },
-                                                        enabled = enabled,
-                                                        style = PulseButtonStyle.Text,
-                                                    )
-                                                }
-                                                PressureCard(data.pressure, enabled, vm::pressure, {
-                                                    vm.mutate(GarageChange.Air(vehicle))
-                                                })
+                                                GarageOverview(
+                                                    data,
+                                                    enabled,
+                                                    {
+                                                        records = false
+                                                        vm.create(GarageForm.Fuel)
+                                                    },
+                                                    {
+                                                        records = false
+                                                        vm.create(GarageForm.Care)
+                                                    },
+                                                    vm::pressure,
+                                                    { vm.mutate(GarageChange.Air(vehicle)) },
+                                                )
                                                 PulseButton(
                                                     stringResource(
                                                         R.string.pulse_garage_delete_1_s,
@@ -443,21 +394,25 @@ internal fun GarageScreen(
                                                         )
                                                     },
                                                     enabled = enabled,
+                                                    modifier =
+                                                        Modifier.border(
+                                                            androidx.compose.foundation.BorderStroke(
+                                                                PulseTokens.focusWidth / 2,
+                                                                dev.abhishekan.pulse.core.ui.PulseTheme.colors.error
+                                                                    .copy(alpha = .4f),
+                                                            ),
+                                                            dev.abhishekan.pulse.core.ui.PulseTheme.shapes.small,
+                                                        ),
+                                                    variant = dev.abhishekan.pulse.core.ui.components.PulseButtonVariant.Destructive,
                                                     style = PulseButtonStyle.Text,
+                                                    leadingIcon = { GarageDetailIcon(GarageIcon.Delete) },
                                                 )
                                             }
                                             GarageTab.Fuel -> {
-                                                PulseButton(
-                                                    stringResource(
-                                                        R.string.pulse_garage_add_fuel_fill_up,
-                                                    ),
-                                                    {
-                                                        records =
-                                                            false
-                                                        vm.create(GarageForm.Fuel)
-                                                    },
-                                                    enabled = enabled,
-                                                )
+                                                FuelHistoryHeader(data.fuel.size, enabled) {
+                                                    records = false
+                                                    vm.create(GarageForm.Fuel)
+                                                }
                                                 FuelCards(data, vehicle, enabled, edit, remove)
                                             }
                                             GarageTab.Care -> {
@@ -549,25 +504,15 @@ internal fun GarageScreen(
             }
         }
         Column(Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize()) {
-            if (state.vehicle != null && (state.draft == null || records)) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(
-                            rememberScrollState(),
-                        ).padding(start = size.pagePadding, top = size.pagePadding, end = size.pagePadding),
-                    horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                ) {
-                    GarageTab.entries.forEach { tab ->
-                        PulseFilterChip(
-                            stringResource(tab.label),
-                            state.tab == tab,
-                            { vm.tab(tab) },
-                            enabled = !state.busy,
-                            showSelectedIcon = false,
-                        )
-                    }
-                }
+            if (!tabsInAppBar && state.vehicle != null && (state.draft == null || records)) {
+                dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs(
+                    labels = GarageTab.entries.map { stringResource(it.label) },
+                    compact = true,
+                    selectedIndex = state.tab.ordinal,
+                    onSelect = { vm.tab(GarageTab.entries[it]) },
+                    modifier = Modifier.padding(start = size.pagePadding, top = size.pagePadding, end = size.pagePadding),
+                    enabled = !state.busy,
+                )
             }
             Box(
                 Modifier

@@ -34,8 +34,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -220,6 +222,7 @@ private fun SignedInApp(
     var hasMealDraft by rememberSaveable { mutableStateOf(false) }
     var hasGarageDraft by rememberSaveable { mutableStateOf(false) }
     var hasGarageDetail by rememberSaveable { mutableStateOf(false) }
+    var garageVehicleTitle by remember { mutableStateOf<String?>(null) }
     var hasHorizonDraft by rememberSaveable { mutableStateOf(false) }
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route
@@ -250,10 +253,22 @@ private fun SignedInApp(
         // Some keyboards resize the root before IME insets arrive; preserve space for the form.
         val showBars = maxHeight >= PulseTokens.minimumNavigationHeight
         val isTab = route in listOf("fitness", "horizon", "garage", "mealplan", "you")
-        val horizonViewModel = entry?.takeIf { route == "horizon" }?.let {
-            koinViewModel<HorizonViewModel>(viewModelStoreOwner = it)
-        }
+        val horizonViewModel =
+            entry?.takeIf { route == "horizon" }?.let {
+                koinViewModel<HorizonViewModel>(viewModelStoreOwner = it)
+            }
         val horizonState = horizonViewModel?.uiState?.collectAsStateWithLifecycle()?.value
+        val garageViewModel =
+            entry?.takeIf { route in listOf("garage", "vehicle/{id}") }?.let {
+                koinViewModel<dev.abhishekan.pulse.feature.garage.GarageViewModel>(viewModelStoreOwner = it)
+            }
+        val garageState = garageViewModel?.uiState?.collectAsStateWithLifecycle()?.value
+        val garageTabsInAppBar =
+            maxWidth >= 1100.dp &&
+                LocalDensity.current.fontScale <= 1.3f &&
+                garageState?.vehicle != null &&
+                garageState.draft == null
+
         val showTopBar =
             route != "gallery" &&
                 route != "home" &&
@@ -325,7 +340,9 @@ private fun SignedInApp(
                 topBar = {
                     if (showTopBar) {
                         PulseTopAppBar(
-                            if (isTab && route != "horizon") {
+                            if (route in listOf("garage", "vehicle/{id}") && garageVehicleTitle != null) {
+                                checkNotNull(garageVehicleTitle)
+                            } else if (isTab && route != "horizon") {
                                 ""
                             } else {
                                 when (route) {
@@ -383,6 +400,17 @@ private fun SignedInApp(
                                 }
                             },
                             actions = {
+                                if (garageTabsInAppBar) {
+                                    dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs(
+                                        labels =
+                                            dev.abhishekan.pulse.feature.garage.GarageTab.entries
+                                                .map { stringResource(it.label) },
+                                        selectedIndex = garageState.tab.ordinal,
+                                        onSelect = { garageViewModel.tab(dev.abhishekan.pulse.feature.garage.GarageTab.entries[it]) },
+                                        modifier = Modifier.padding(end = PulseTokens.cardPadding),
+                                        enabled = !garageState.busy,
+                                    )
+                                }
                                 horizonViewModel?.let {
                                     HorizonTopBarActions(it)
                                 }
@@ -500,10 +528,17 @@ private fun SignedInApp(
                             GarageRoute(
                                 onDraftChanged = { hasGarageDraft = it },
                                 onDetailChanged = { hasGarageDetail = it },
+                                onTitleChanged = { garageVehicleTitle = it },
+                                tabsInAppBar = garageTabsInAppBar,
                             )
                         }
                         composable("vehicle/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { destination ->
-                            GarageRoute(onDraftChanged = { hasGarageDraft = it }, initialVehicle = destination.arguments?.getLong("id"))
+                            GarageRoute(
+                                onDraftChanged = { hasGarageDraft = it },
+                                initialVehicle = destination.arguments?.getLong("id"),
+                                onTitleChanged = { garageVehicleTitle = it },
+                                tabsInAppBar = garageTabsInAppBar,
+                            )
                         }
                         composable("horizon") {
                             HorizonRoute(onDraftChanged = { hasHorizonDraft = it })

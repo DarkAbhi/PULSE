@@ -141,3 +141,64 @@ private fun VehicleEditorPreview() {
         }
     }
 }
+
+@Preview(name = "Fuel history reference", widthDp = 900, heightDp = 380, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(name = "Fuel history phone", widthDp = 393, heightDp = 850)
+@Preview(name = "Fuel history large text", widthDp = 360, heightDp = 1100, fontScale = 2f)
+@Composable
+private fun FuelHistoryPreview() {
+    PulseTheme {
+        Surface(color = PulseTheme.colors.background) {
+            Column(
+                Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(PulseTokens.small),
+                verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
+            ) {
+                dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs(
+                    listOf("Overview", "Fuel", "Maintenance", "Air"),
+                    1,
+                    {},
+                )
+                FuelHistoryGrid(
+                    listOf(
+                        dev.abhishekan.pulse.core.domain.model.FuelFill(
+                            1,
+                            "34820".toBigDecimal(),
+                            java.time.Instant.parse("2026-10-04T01:53:00Z"),
+                            null,
+                            null,
+                            listOf(
+                                dev.abhishekan.pulse.core.domain.model.FuelItem(
+                                    "petrol",
+                                    "full",
+                                    "10".toBigDecimal(),
+                                    "100".toBigDecimal(),
+                                    "1000".toBigDecimal(),
+                                ),
+                            ),
+                        ),
+                        dev.abhishekan.pulse.core.domain.model.FuelFill(
+                            2,
+                            "34599".toBigDecimal(),
+                            java.time.Instant.parse("2026-09-27T23:17:00Z"),
+                            null,
+                            null,
+                            listOf(
+                                dev.abhishekan.pulse.core.domain.model.FuelItem(
+                                    "petrol",
+                                    "full",
+                                    "10".toBigDecimal(),
+                                    "100".toBigDecimal(),
+                                    "1000".toBigDecimal(),
+                                ),
+                            ),
+                        ),
+                    ),
+                    1,
+                    true,
+                    {},
+                    { _, _ -> },
+                )
+            }
+        }
+    }
+}

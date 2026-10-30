@@ -16,7 +16,7 @@ fun PulseTopAppBar(
     navigationIcon: @Composable () -> Unit = {},
 ) {
     TopAppBar(
-        title = { PulseText(title, style = PulseTextStyle.Title) },
+        title = { PulseText(title, style = PulseTextStyle.Title, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
         modifier = modifier,
         colors =
             TopAppBarDefaults.topAppBarColors(

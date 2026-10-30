@@ -11,6 +11,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
@@ -109,6 +110,8 @@ class GarageDeviceTest {
             put("front_tire_pressure_solo", 28)
             put("rear_tire_pressure_solo", 32)
         }
+    private var efficiencyFixture =
+        """{"petrol":{"total_cost":250.25,"total_volume":2.5,"average_km_per_litre":null}}"""
     private var next = 100L
 
     @Volatile private var offline = false
@@ -143,7 +146,7 @@ class GarageDeviceTest {
             put(
                 "fuel_efficiency",
                 obj(
-                    """{"petrol":{"total_cost":250.25,"total_volume":2.5,"average_km_per_litre":null}}""",
+                    efficiencyFixture,
                 ),
             )
         }.toString()
@@ -663,7 +666,7 @@ class GarageDeviceTest {
         compose.onNodeWithText("Evening pit stop").performScrollTo().assertIsDisplayed()
         screenshot("fuel-cards-notes")
         tap("Save fuel fill-up")
-        awaitText("1500 km")
+        awaitText("1500")
         assertEquals(
             "Evening pit stop",
             fuel.values
@@ -817,6 +820,57 @@ class GarageDeviceTest {
         assertEquals(1, mutations)
     }
 
+    @Test fun redesignedOverviewKeepsTitleActionsAndPressureAccessible() {
+        efficiencyFixture =
+            """{"petrol":{"total_cost":2000,"total_volume":20,"average_km_per_litre":22.1,"last_km_per_litre":22.1,"min_km_per_litre":22.1,"max_km_per_litre":22.1}}"""
+        pressure =
+            obj(
+                """{"front_tire_pressure_solo":27,"rear_tire_pressure_solo":34,"front_tire_pressure_pillion":29,"rear_tire_pressure_pillion":36}""",
+            )
+        launchGarage()
+        select()
+        compose.onNodeWithText("Latest care").assertDoesNotExist()
+        compose.onNodeWithText("Air fills are recorded at the server’s current time.").assertDoesNotExist()
+        compose.onAllNodesWithText("Comet").assertCountEquals(1)
+        compose.onNodeWithText("Comet").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Back to Garage").assertIsDisplayed()
+        val titleBounds = compose.onNodeWithText("Comet").getUnclippedBoundsInRoot()
+        val backBounds = compose.onNodeWithContentDescription("Back to Garage").getUnclippedBoundsInRoot()
+        assertTrue(titleBounds.left >= backBounds.right)
+        assertTrue(titleBounds.top < backBounds.bottom)
+        compose.onAllNodesWithText("22.1").assertCountEquals(4)
+        compose.onNodeWithText("km/L").assertExists()
+        screenshot("detail-redesign-top")
+        compose.onNodeWithText("Record air fill now").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Solo").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Pillion").performScrollTo().assertIsDisplayed()
+        screenshot("detail-redesign-pressure")
+        tap("Set tire pressure")
+        awaitText("Save tire pressure")
+    }
+
+    @Test fun redesignedFuelHistoryKeepsBadgesAndActionsAccessible() {
+        fuel[41] =
+            obj(
+                """{"id":41,"odometer_km":34820,"filled_at":"2026-10-04T01:53:00Z","items":[{"fuel_type":"petrol","fill_type":"full","quantity":10,"unit_price":100,"total_cost":1000}]}""",
+            )
+        launchGarage()
+        select()
+        tap("Fuel")
+        awaitText("34820")
+        compose.onNodeWithText("Petrol").assertExists()
+        compose.onNodeWithText("Full").assertExists()
+        compose.onNodeWithText("10 L").assertExists()
+        screenshot("fuel-redesign")
+        action("garage-fuel-41", "Edit")
+        awaitText("Save fuel fill-up")
+        tap("Cancel editing")
+        action("garage-fuel-41", "Delete")
+        confirm("Delete")
+        awaitText("No fuel fill-ups")
+        assertTrue(fuel.isEmpty())
+    }
+
     @Test fun vehicleFuelPressureAirAndMaintenanceCrud() {
         launchGarage()
         screenshot("collection")
@@ -866,7 +920,7 @@ class GarageDeviceTest {
         pick("Fuel type · tank 1", "Petrol", "Diesel")
         screenshot("fuel-editor")
         tap("Save fuel fill-up")
-        awaitText("1234.5 km")
+        awaitText("1234.5")
         assertEquals(
             "diesel",
             fuel.values

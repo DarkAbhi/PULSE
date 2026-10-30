@@ -11,7 +11,6 @@ import androidx.compose.ui.semantics.semantics
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.GarageRecord
-import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.UiText
@@ -57,116 +56,6 @@ internal fun GarageActions(
 }
 
 @Composable
-internal fun PressureCard(
-    pressure: TirePressure,
-    enabled: Boolean,
-    edit: () -> Unit,
-    fill: () -> Unit,
-) {
-    PulseCard(Modifier.fillMaxWidth()) {
-        PulseText(
-            stringResource(R.string.pulse_garage_a_little_air_a_smoother_ride),
-            style = PulseTextStyle.Title,
-        )
-        PulseText(
-            stringResource(R.string.pulse_garage_target_tire_pressure_psi),
-            style = PulseTextStyle.Label,
-        )
-        PulseText(
-            stringResource(
-                R.string.pulse_garage_solo_front_1_s_rear_2_s,
-                decimal(pressure.frontSolo),
-                decimal(pressure.rearSolo),
-            ),
-        )
-        PulseText(
-            stringResource(
-                R.string.pulse_garage_pillion_front_1_s_rear_2_s,
-                decimal(pressure.frontPillion),
-                decimal(pressure.rearPillion),
-            ),
-        )
-        PulseButton(
-            stringResource(R.string.pulse_garage_set_tire_pressure),
-            edit,
-            enabled = enabled,
-            style = PulseButtonStyle.Text,
-        )
-        PulseButton(
-            stringResource(R.string.pulse_garage_record_air_fill_now),
-            fill,
-            enabled = enabled,
-        )
-        PulseText(
-            stringResource(R.string.pulse_garage_air_fills_are_recorded_at_the_server_s_current),
-            style = PulseTextStyle.Label,
-        )
-    }
-}
-
-@Composable
-internal fun EfficiencyCards(data: VehicleHistory) {
-    if (data.efficiency.isEmpty()) {
-        PulseEmptyState(
-            stringResource(R.string.pulse_garage_your_story_starts_here),
-            stringResource(R.string.pulse_garage_add_fuel_fill_ups_to_build_an_efficiency_history),
-        )
-    }
-    data.efficiency.forEach { (type, stat) ->
-        PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-            PulseText(
-                stringResource(R.string.pulse_garage_fuel_efficiency_title, garageOption(type)),
-                style = PulseTextStyle.Title,
-            )
-            PulseText(
-                stat.average?.let {
-                    stringResource(R.string.pulse_garage_efficiency_km_per_litre, decimal(it))
-                }
-                    ?: stringResource(R.string.pulse_garage_not_enough_history),
-                style =
-                    if (stat.average ==
-                        null
-                    ) {
-                        PulseTextStyle.Title
-                    } else {
-                        PulseTextStyle.Metric
-                    },
-            )
-            if (stat.average ==
-                null
-            ) {
-                PulseText(
-                    stringResource(
-                        R.string.pulse_garage_record_another_full_fill_after_a_full_tank_to,
-                    ),
-                )
-            }
-            PulseText(
-                stringResource(
-                    R.string.pulse_garage_last_1_s_best_2_s_lowest_3_s,
-                    decimal(stat.last),
-                    decimal(stat.max),
-                    decimal(stat.min),
-                ),
-            )
-            PulseText(
-                stringResource(
-                    R.string.pulse_garage_recorded_volume_1_s_l,
-                    decimal(stat.totalVolume),
-                ),
-            )
-            PulseText(
-                stringResource(
-                    R.string.pulse_garage_recorded_cost_1_s,
-                    dev.abhishekan.pulse.core.domain.model.UserCurrency
-                        .format(stat.totalCost),
-                ),
-            )
-        }
-    }
-}
-
-@Composable
 internal fun FuelCards(
     data: VehicleHistory,
     vehicle: Long,
@@ -182,40 +71,7 @@ internal fun FuelCards(
             ),
         )
     }
-    data.fuel.forEach { item ->
-        PulseCard(Modifier.fillMaxWidth().testTag("garage-fuel-${item.id}")) {
-            val label = stringResource(R.string.pulse_garage_fuel_fill_up_1_s, item.id)
-            PulseText(garageDate(item.date), style = PulseTextStyle.Title)
-            PulseText(
-                stringResource(R.string.pulse_garage_distance_km, decimal(item.odometer)),
-                style = PulseTextStyle.Metric,
-            )
-            item.station?.let { PulseText(it) }
-            item.notes?.let { PulseText(it) }
-            item.items.forEach { tank ->
-                PulseText(
-                    stringResource(
-                        R.string.pulse_garage_fuel_tank_summary,
-                        garageOption(tank.type),
-                        garageOption(tank.fill),
-                        decimal(tank.quantity),
-                        dev.abhishekan.pulse.core.domain.model.UserCurrency
-                            .format(tank.price),
-                        dev.abhishekan.pulse.core.domain.model.UserCurrency
-                            .format(tank.total),
-                    ),
-                )
-            }
-            GarageActions(label, enabled, {
-                edit(item.draft(vehicle))
-            }, {
-                remove(
-                    GarageChange.Delete(GarageRecord.Fuel, vehicle, item.id),
-                    uiText(R.string.pulse_garage_permanently_remove_this_fill_up_and_all_of_its),
-                )
-            })
-        }
-    }
+    FuelHistoryGrid(data.fuel, vehicle, enabled, edit, remove)
 }
 
 @Composable

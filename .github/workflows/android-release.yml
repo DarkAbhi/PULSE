@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: android-release-${{ github.sha }}
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   release:

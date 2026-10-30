@@ -4,6 +4,8 @@ PROD_COMPOSE = docker compose --env-file .env --project-name life-prod -f docker
 DEV_COMPOSE = docker compose --env-file .env.dev --project-name life-dev -f docker-compose.yml -f docker-compose.dev.yml --profile dev
 
 .PHONY: dev-seed dev-seed-export dev-web
+.PHONY: dev-web-logs dev-backend-logs dev-rust-backend-logs dev-cloudflared-logs
+.PHONY: dev-prometheus-logs dev-grafana-logs dev-jaeger-logs dev-loki-logs dev-alloy-logs
 
 dev-seed:
 	$(DEV_COMPOSE) run --rm seed-dev
@@ -72,6 +74,18 @@ dev-web:
 dev-logs:
 	$(DEV_COMPOSE) logs -f --tail=200 backend-dev rust-backend-dev web-dev
 
+dev-web-logs:
+	$(DEV_COMPOSE) logs -f --tail=200 web-dev
+
+dev-backend-logs:
+	$(DEV_COMPOSE) logs -f --tail=200 backend-dev
+
+dev-rust-backend-logs:
+	$(DEV_COMPOSE) logs -f --tail=200 rust-backend-dev
+
+dev-cloudflared-logs:
+	$(DEV_COMPOSE) logs -f --tail=200 cloudflared-dev
+
 dev-tunnel-url:
 	@$(DEV_COMPOSE) logs --no-log-prefix cloudflared-dev | grep -Eo 'https://[a-z0-9-]+[.]trycloudflare[.]com' | tail -1
 
@@ -100,6 +114,21 @@ monitoring-logs:
 
 dev-monitoring-logs:
 	@$(DEV_COMPOSE) logs -f --tail=100 prometheus grafana jaeger loki alloy
+
+dev-prometheus-logs:
+	@$(DEV_COMPOSE) logs -f --tail=100 prometheus
+
+dev-grafana-logs:
+	@$(DEV_COMPOSE) logs -f --tail=100 grafana
+
+dev-jaeger-logs:
+	@$(DEV_COMPOSE) logs -f --tail=100 jaeger
+
+dev-loki-logs:
+	@$(DEV_COMPOSE) logs -f --tail=100 loki
+
+dev-alloy-logs:
+	@$(DEV_COMPOSE) logs -f --tail=100 alloy
 
 # ----- Module tests -----
 .PHONY: test test-report go-test rust-test frontend-test mcp-test seed-test

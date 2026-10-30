@@ -382,8 +382,17 @@ and database configuration.
 | `make dev` | Build and start the Go and Rust APIs, web app, Rust tunnel, and monitoring in the background; remove orphaned containers. |
 | `make dev-down` | Stop and remove development containers, including orphaned containers. |
 | `make dev-logs` | Follow the last 200 log lines from the development Go and Rust APIs and web app. |
+| `make dev-web-logs` | Follow the last 200 log lines from the development web app. |
+| `make dev-backend-logs` | Follow the last 200 log lines from the development Go API. |
+| `make dev-rust-backend-logs` | Follow the last 200 log lines from the development Rust API. |
+| `make dev-cloudflared-logs` | Follow the last 200 log lines from the development Cloudflare tunnel. |
 | `make dev-tunnel-url` | Show the active Cloudflare tunnel URL for the development Rust API. |
 | `make dev-monitoring-logs` | Follow the last 100 log lines from development Prometheus, Grafana, Jaeger, Loki, and Alloy. |
+| `make dev-prometheus-logs` | Follow the last 100 log lines from development Prometheus. |
+| `make dev-grafana-logs` | Follow the last 100 log lines from development Grafana. |
+| `make dev-jaeger-logs` | Follow the last 100 log lines from development Jaeger. |
+| `make dev-loki-logs` | Follow the last 100 log lines from development Loki. |
+| `make dev-alloy-logs` | Follow the last 100 log lines from development Alloy. |
 
 ### Development migrations
 

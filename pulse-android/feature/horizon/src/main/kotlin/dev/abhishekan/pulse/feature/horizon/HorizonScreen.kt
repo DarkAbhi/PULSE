@@ -121,13 +121,6 @@ internal fun HorizonScreen(
             }
             val content: @Composable () -> Unit = {
                 val scroll = rememberScrollState()
-                LaunchedEffect(state.subscriptionId) {
-                    if (state.subscriptionId !=
-                        null
-                    ) {
-                        scroll.scrollTo(0)
-                    }
-                }
                 Column(
                     Modifier
                         .fillMaxWidth()
@@ -437,17 +430,6 @@ internal fun HorizonScreen(
                                 }
                             }
                             HorizonTab.Subscriptions -> {
-                                if (state.subscriptionId !=
-                                    null
-                                ) {
-                                    SubscriptionPayments(state, vm, canMutate, currency) { id ->
-                                        deletion =
-                                            HorizonChange.LinkPayment(state.subscriptionId, id) to
-                                            uiText(
-                                                R.string.pulse_horizon_link_this_debit_to_the_subscription_the_transaction_remains,
-                                            )
-                                    }
-                                }
                                 SectionState(state.overview, vm::refreshOverview) { data ->
                                     SubscriptionList(
                                         data = data,
@@ -504,6 +486,12 @@ internal fun HorizonScreen(
             } else {
                 scrollStates.SaveableStateProvider(state.tab.name) { content() }
             }
+        }
+    }
+    if (state.tab == HorizonTab.Subscriptions && state.subscriptionId != null && state.draft == null) {
+        SubscriptionPaymentsSheet(state, vm, !state.busy && !state.reviewRequired && state.overview.value != null) { id ->
+            deletion = HorizonChange.LinkPayment(state.subscriptionId, id) to
+                uiText(R.string.pulse_horizon_link_this_debit_to_the_subscription_the_transaction_remains)
         }
     }
     if (discard) {

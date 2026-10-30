@@ -1080,6 +1080,62 @@ class HorizonDeviceTest {
         assertTrue(backend.items("deductions").containsKey(2))
     }
 
+    @Test fun subscriptionPaymentsOpenInSheetAndLinkDebits() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        backend.items("transactions")[1] =
+            JsonObject(backend.items("transactions").getValue(1) + ("subscription_id" to JsonPrimitive(4)))
+        backend.items("transactions")[2] =
+            JsonObject(backend.items("transactions").getValue(2) + ("type" to JsonPrimitive("credit")))
+        backend.items("transactions")[3] =
+            JsonObject(backend.items("transactions").getValue(3) + ("subscription_id" to JsonPrimitive(99)))
+        try {
+            shell("wm size 720x1600")
+            shell("wm density 320")
+            launchHorizon()
+            tap("Subscriptions")
+            tap("View payments for Music")
+            awaitText("Payment history")
+            val sheet = hasTestTag("subscription-payments-sheet")
+            compose.onNode(sheet).assertIsDisplayed()
+            compose.onNode(hasText("Ledger payment 1") and hasAnyAncestor(sheet)).assertExists()
+            listOf(1, 2, 3).forEach { id ->
+                compose
+                    .onNodeWithContentDescription("Link Ledger payment $id · ${UserCurrency.format(BigDecimal("2.50"))}")
+                    .assertDoesNotExist()
+            }
+            tap("Link Ledger payment 4 · ${UserCurrency.format(BigDecimal("2.50"))}")
+            awaitText("Link payment?")
+            compose.onNode(hasText("Link payment") and hasAnyAncestor(isDialog()) and !hasAnyAncestor(sheet)).performClick()
+            compose.waitUntil(15_000) {
+                compose.onAllNodes(hasText("2 linked payments") and hasAnyAncestor(sheet)).fetchSemanticsNodes().isNotEmpty()
+            }
+            assertEquals(
+                4L,
+                backend
+                    .items("transactions")
+                    .getValue(4)["subscription_id"]
+                    ?.jsonPrimitive
+                    ?.long,
+            )
+            compose.onNode(hasTestTag("subscription-payments-summary")).performScrollTo().assertIsDisplayed()
+            screenshot("subscription-payments-phone", tag = "subscription-payments-sheet")
+            shell("wm size 2400x1800")
+            shell("wm density 320")
+            compose.onNode(sheet).assertIsDisplayed()
+            screenshot("subscription-payments-tablet", tag = "subscription-payments-sheet")
+            shell("input keyevent KEYCODE_BACK")
+            compose.waitUntil(5_000) { compose.onAllNodes(sheet).fetchSemanticsNodes().isEmpty() }
+            tap("View payments for Music")
+            awaitText("Payment history")
+            compose.onNodeWithContentDescription("Close payments").performClick()
+            compose.onNode(sheet).assertDoesNotExist()
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+        }
+    }
+
     @Test fun subscriptionListAdaptsAndUsesExistingApiData() {
         val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
         val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")

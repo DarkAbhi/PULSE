@@ -20,7 +20,6 @@ import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
@@ -176,68 +175,5 @@ import java.time.format.DateTimeFormatter
                 !busy && page.page < page.totalPages,
             style = PulseButtonStyle.Text,
         )
-    }
-}
-
-@Composable internal fun SubscriptionPayments(
-    state: HorizonUiState,
-    vm: HorizonViewModel,
-    enabled: Boolean,
-    currency: String,
-    link: (Long) -> Unit,
-) {
-    PulseCard(Modifier.fillMaxWidth()) {
-        PulseText(
-            stringResource(
-                R.string.pulse_horizon_payments_1_s,
-                state.overview.value
-                    ?.subscriptions
-                    ?.find { it.id == state.subscriptionId }
-                    ?.name
-                    ?: stringResource(R.string.pulse_horizon_subscription),
-            ),
-            style = PulseTextStyle.Title,
-        )
-        PulseButton(stringResource(R.string.pulse_horizon_close_payments), vm::hidePayments, style = PulseButtonStyle.Text)
-        SectionState(state.payments, { state.subscriptionId?.let(vm::showPayments) }) { items ->
-            if (items.isEmpty()) {
-                PulseEmptyState(
-                    stringResource(R.string.pulse_horizon_no_linked_payments),
-                    stringResource(R.string.pulse_horizon_link_an_existing_unassigned_debit_below),
-                )
-            }
-            items.forEach { TransactionCard(it, currency, false) }
-        }
-        PulseText(
-            stringResource(R.string.pulse_horizon_link_an_existing_payment),
-            style = PulseTextStyle.Title,
-        )
-        PulseText(
-            stringResource(R.string.pulse_horizon_only_unlinked_debits_can_be_linked_use_the_search),
-        )
-        TransactionFilters(state, vm)
-        SectionState(state.transactions, { vm.refreshTransactions() }) { page ->
-            page.items.filter { it.type == "debit" && it.subscriptionId == null }.forEach { item ->
-                PulseButton(
-                    stringResource(
-                        R.string.pulse_horizon_link_1_s_2_s,
-                        item.name,
-                        currencyText(item.amount).asString(),
-                    ),
-                    {
-                        link(item.id)
-                    },
-                    enabled = enabled,
-                    style = PulseButtonStyle.Text,
-                )
-            }
-            if (page.items.none {
-                    it.type == "debit" && it.subscriptionId == null
-                }
-            ) {
-                PulseText(stringResource(R.string.pulse_horizon_no_eligible_payments_on_this_page))
-            }
-            PageControls(page, state.busy, { vm.refreshTransactions(it) })
-        }
     }
 }

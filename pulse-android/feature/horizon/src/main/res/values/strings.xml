@@ -326,6 +326,8 @@
     <string name="pulse_subscription_total_spent">%1$s total spent</string>
     <string name="pulse_subscription_monthly_equivalent">monthly equivalent</string>
     <string name="pulse_subscription_view_payments">View payments</string>
+    <string name="pulse_subscription_payment_history">Payment history</string>
+    <string name="pulse_subscription_total_paid">Total paid</string>
     <string name="pulse_subscription_more_actions">More actions for %1$s</string>
     <plurals name="pulse_subscription_payment_count">
         <item quantity="one">%1$d linked payment</item>

@@ -125,10 +125,10 @@ internal fun HorizonLedger(
 }
 
 @Composable
-private fun LedgerRow(
+internal fun LedgerRow(
     tx: HorizonTransaction,
     wide: Boolean,
-    open: () -> Unit,
+    open: (() -> Unit)? = null,
 ) {
     val credit = tx.type == "credit"
     val accent = if (credit) PulseTheme.colors.success else PulseTheme.colors.action
@@ -136,7 +136,7 @@ private fun LedgerRow(
         Modifier
             .fillMaxWidth()
             .testTag("horizon-record-${tx.id}")
-            .clickable(onClick = open)
+            .then(if (open != null) Modifier.clickable(onClick = open) else Modifier)
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),

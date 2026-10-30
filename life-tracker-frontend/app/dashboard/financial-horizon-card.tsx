@@ -1,6 +1,6 @@
+import { PulseCardLink } from "../components/design-system/pulse-card";
 
 import { formatMoney } from "../lib/currency.mjs";
-import Link from "next/link";
 import { House, ArrowRight } from "lucide-react";
 
 export type BudgetItem = {
@@ -103,7 +103,7 @@ export default function FinancialHorizonCard({
 }: FinancialHorizonCardProps) {
   const unavailable = error || !summary;
   return (
-    <Link href="/financial-horizon" className="pulse-summary-card pulse-horizon-card">
+    <PulseCardLink href="/financial-horizon" className="pulse-summary-card pulse-horizon-card">
       <span className="pulse-card-icon" aria-hidden="true"><House className="h-6 w-6" fill="currentColor" /></span>
       <h2>Your room to move</h2>
       {unavailable ? (
@@ -115,6 +115,6 @@ export default function FinancialHorizonCard({
         <span className="pulse-card-cta">{unavailable ? "Set up horizon" : "Keep going"}<ArrowRight className="h-4 w-4" /></span>
         <img src="/dashboard/cat.webp" width="240" height="160" alt="" className="pulse-card-art" />
       </div>
-    </Link>
+    </PulseCardLink>
   );
 }

@@ -1,3 +1,4 @@
+import PulseCard from "../../components/design-system/pulse-card";
 import { getUserCurrency } from "../../lib/user-currency";
 import { formatMoney } from "../../lib/currency.mjs";
 import { cookies } from "next/headers";
@@ -53,7 +54,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
     return (
       <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
         <div className="mx-auto max-w-6xl">
-          <div className="rounded-2xl border border-border bg-card p-8 text-center">
+          <PulseCard className="p-8 text-center">
             <h2 className="text-xl font-semibold text-foreground">
               Vehicle not found
             </h2>
@@ -66,7 +67,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
             >
               <ArrowLeft className="h-4 w-4" /> Back to Garage
             </Link>
-          </div>
+          </PulseCard>
         </div>
       </main>
     );
@@ -121,8 +122,8 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
                 <p className="text-sm text-muted-foreground">No fuel entries yet.</p>
               ) : (
                 data.fuel_fillups.map((fill) => (
-                  <article
-                    className="rounded-2xl bg-card border border-border p-5 shadow-sm"
+                  <PulseCard as="article"
+                    className="p-5"
                     key={fill.id}
                   >
                     <div className="flex justify-between gap-3">
@@ -155,7 +156,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
                         · {formatMoney(item.total_cost, currency)}
                       </p>
                     ))}
-                  </article>
+                  </PulseCard>
                 ))
               )}
             </div>
@@ -176,8 +177,8 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
                 <p className="text-sm text-muted-foreground">No air fill records yet.</p>
               ) : (
                 data.air_fills.map((fill) => (
-                  <article
-                    className="flex items-center justify-between gap-3 rounded-2xl bg-card border border-border p-5 shadow-sm"
+                  <PulseCard as="article"
+                    className="flex items-center justify-between gap-3 p-5"
                     key={fill.id}
                   >
                     <span>
@@ -188,7 +189,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
                       recordId={fill.id}
                       kind="air-fills"
                     />
-                  </article>
+                  </PulseCard>
                 ))
               )}
             </div>
@@ -206,9 +207,9 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
           </div>
           <div className="mt-4 space-y-3">
             {data.maintenance_records.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">No maintenance or expense records yet.</p>
+              <PulseCard as="p" className="p-5 text-sm text-muted-foreground">No maintenance or expense records yet.</PulseCard>
             ) : data.maintenance_records.map((record) => (
-              <article className="rounded-2xl border border-border bg-card p-5 shadow-sm" key={record.id}>
+              <PulseCard as="article" className="p-5" key={record.id}>
                 <div className="flex flex-wrap justify-between gap-3">
                   <div>
                     <p className="font-semibold">{record.title}</p>
@@ -218,7 +219,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
                 </div>
                 {record.provider_name && <p className="mt-2 text-sm text-muted-foreground">{record.provider_name}</p>}
                 {record.notes && <p className="mt-2 text-sm text-muted-foreground">{record.notes}</p>}
-              </article>
+              </PulseCard>
             ))}
           </div>
         </section>

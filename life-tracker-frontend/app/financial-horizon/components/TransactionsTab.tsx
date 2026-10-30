@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../../components/design-system/pulse-card";
+
 import { formatMoney } from "../../lib/currency.mjs";
 
 import { formatInstant } from "../../lib/time-zone.mjs";
@@ -166,7 +168,7 @@ export default function TransactionsTab({
 
       {/* Transactions List */}
       {filteredTransactions.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
+        <PulseCard className="p-10 text-center">
           <Receipt className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
           <h3 className="mt-3 text-base font-semibold text-foreground">
             {transactions.length === 0 ? "No transactions recorded yet" : "No matching transactions found"}
@@ -184,7 +186,7 @@ export default function TransactionsTab({
               <Plus className="h-4 w-4" /> Log First Transaction
             </Button>
           )}
-        </div>
+        </PulseCard>
       ) : (
         <div className="space-y-3">
           {filteredTransactions.map((tx) => {
@@ -200,9 +202,9 @@ export default function TransactionsTab({
               : "N/A";
 
             return (
-              <div
+              <PulseCard
                 key={tx.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4"
               >
                 <div className="flex items-start gap-3.5 min-w-0">
                   <div
@@ -273,7 +275,7 @@ export default function TransactionsTab({
                     </Button>
                   </div>
                 </div>
-              </div>
+              </PulseCard>
             );
           })}
 

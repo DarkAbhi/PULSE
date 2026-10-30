@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../components/design-system/pulse-card";
+
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Button from "../components/design-system/button";
@@ -23,7 +25,7 @@ export default function CurrencySettings() {
   const normalize = (value: string) => value.replaceAll("_", " ").toLowerCase();
   const matches = zones.filter(zone => normalize(currencyLabel(zone)).includes(normalize(search.trim())));
 
-  return <section aria-labelledby="currency-heading" className="mt-6 w-full rounded-2xl border border-border bg-card p-6 text-left shadow-sm sm:p-8">
+  return <PulseCard as="section" aria-labelledby="currency-heading" className="mt-6 w-full p-6 text-left sm:p-8">
     <h2 id="currency-heading" className="text-lg font-semibold">Currency</h2>
     <p className="mt-2 text-sm text-muted-foreground">{currencyLabel(currency)}</p>
     <p className="mt-2 text-sm text-muted-foreground">One currency applies to all amounts. Changing it relabels existing amounts; it does not convert them.</p>
@@ -47,5 +49,5 @@ export default function CurrencySettings() {
       {message && <p role="status" className="text-sm text-success">{message}</p>}
       <Button type="submit" disabled={pending || draft === currency || !matches.includes(draft)}>{pending ? "Saving…" : "Save currency"}</Button>
     </form>
-  </section>;
+  </PulseCard>;
 }

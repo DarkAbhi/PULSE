@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../../components/design-system/pulse-card";
+
 import { formatMoney, currencySymbol } from "../../lib/currency.mjs";
 
 import { formatInstant } from "../../lib/time-zone.mjs";
@@ -198,7 +200,7 @@ export default function FixedObligationsTab({
 
       {/* Add / Edit Form Block */}
       {(isAddingDeduction || editingDeductionId !== null) && (
-        <section className="rounded-2xl border border-primary/30 bg-card p-6 shadow-md transition duration-200">
+        <PulseCard as="section" className="p-6 transition duration-200">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-foreground">
               {editingDeductionId !== null ? "Edit Fixed Obligation" : "Add Fixed Obligation"}
@@ -298,12 +300,12 @@ export default function FixedObligationsTab({
               </Button>
             </div>
           </form>
-        </section>
+        </PulseCard>
       )}
 
       {/* Cards Grid */}
       {filteredDeductions.length === 0 && filteredSubscriptions.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
+        <PulseCard className="p-10 text-center">
           <Receipt className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
           <h3 className="mt-3 text-base font-semibold text-foreground">No fixed obligations found</h3>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -315,7 +317,7 @@ export default function FixedObligationsTab({
           >
             <Plus className="h-4 w-4" /> Add Obligation
           </Button>
-        </div>
+        </PulseCard>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {/* Render Manual Fixed Obligations */}
@@ -325,10 +327,10 @@ export default function FixedObligationsTab({
             const linkedBudget = summary.budgets?.find((b) => b.id === item.budget_id);
 
             return (
-              <div
+              <PulseCard
                 key={`deduction-${item.id}`}
-                className={`group relative rounded-2xl border bg-card p-5 shadow-xs ${
-                  item.is_active ? "border-border" : "border-border/50 opacity-60 bg-secondary/20"
+                className={`group relative p-5 ${
+                  item.is_active ? "" : "opacity-60 bg-secondary/20"
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -395,7 +397,7 @@ export default function FixedObligationsTab({
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
+              </PulseCard>
             );
           })}
 
@@ -404,9 +406,9 @@ export default function FixedObligationsTab({
             const monthlyAmount = sub.monthly_equivalent_amount || sub.amount;
 
             return (
-              <div
+              <PulseCard
                 key={`subscription-${sub.id}`}
-                className="group relative flex flex-col justify-between rounded-2xl border border-lavender/30 bg-gradient-to-br from-card via-card to-lavender/5 p-5 shadow-xs"
+                className="group relative flex flex-col justify-between bg-gradient-to-br from-card via-card to-lavender/5 p-5"
               >
                 <div>
                   <div className="flex items-start justify-between">
@@ -481,7 +483,7 @@ export default function FixedObligationsTab({
                     <ExternalLink className="h-3 w-3" />
                   </Button>
                 </div>
-              </div>
+              </PulseCard>
             );
           })}
         </div>

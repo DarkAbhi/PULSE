@@ -65,6 +65,17 @@ The Node tests cover frontend utility behavior and need no database or running
 backend. Browser flows are separate; see [Running tests locally](../README.md#running-tests-locally)
 for Maestro setup and commands.
 
+## Cards
+
+Use `PulseCard` from `app/components/design-system/pulse-card` for card surfaces,
+including empty states. It shares the dashboard's themed background, soft corners,
+and borderless treatment. Pass `as="section"`, `as="article"`, or `as="aside"`
+when the content needs those semantics, and supply padding and layout with
+`className`. Use the named `PulseCardLink` export for cards that navigate.
+Keep the shared surface styling in `globals.css` rather than adding per-page
+card outlines, backgrounds, or corner radii. Status colors and artwork may be
+applied where needed.
+
 
 ## Account time zones
 

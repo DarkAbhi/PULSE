@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../components/design-system/pulse-card";
+
 import { useState } from "react";
 import {
   AppNotification,
@@ -35,12 +37,12 @@ export default function NotificationCenter({
 
   if (notifications.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-border bg-card/70 p-7 text-center">
+      <PulseCard className="p-7 text-center">
         <p className="font-semibold text-foreground">You&apos;re all caught up.</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Updates from your spaces will appear here.
         </p>
-      </div>
+      </PulseCard>
     );
   }
 

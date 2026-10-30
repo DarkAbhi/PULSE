@@ -1,3 +1,4 @@
+import { PulseCardLink } from "../components/design-system/pulse-card";
 import "./dashboard.css";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -102,16 +103,16 @@ export default async function DashboardPage() {
           <GymVisitCard visited={gymVisited} />
         </section>
         <nav className="pulse-spaces" aria-label="Your spaces">
-          <Link className="pulse-space-link" href="/garage">
+          <PulseCardLink className="pulse-space-link" href="/garage">
             <span className="pulse-space-icon"><Car className="h-5 w-5" /></span>
             <span><strong>Garage</strong><span>Vehicles, fuel & maintenance</span></span>
             <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link className="pulse-space-link" href="/meal-plan">
+          </PulseCardLink>
+          <PulseCardLink className="pulse-space-link" href="/meal-plan">
             <span className="pulse-space-icon"><Utensils className="h-5 w-5" /></span>
             <span><strong>Meal Plan</strong><span>Weekly meals</span></span>
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </PulseCardLink>
         </nav>
       </div>
 

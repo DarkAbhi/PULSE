@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "./design-system/pulse-card";
+
 import Button from "./design-system/button";
 
 import { useRef, useState } from "react";
@@ -46,12 +48,12 @@ function NotificationCard({ notification, onDismiss }: { notification: AppNotifi
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-destructive">
+    <PulseCard className="relative overflow-hidden bg-destructive">
       <div className="absolute inset-y-0 right-0 flex w-28 items-center justify-center text-sm font-semibold text-destructive-foreground">
         Dismiss
       </div>
-      <article
-        className="relative rounded-2xl border border-border bg-card p-5 shadow-sm transition-transform"
+      <PulseCard as="article"
+        className="relative p-5 transition-transform"
         onPointerDown={(event) => {
           startX.current = event.clientX;
           event.currentTarget.setPointerCapture(event.pointerId);
@@ -102,7 +104,7 @@ function NotificationCard({ notification, onDismiss }: { notification: AppNotifi
           />{" "}
           · Swipe left to dismiss
         </p>
-      </article>
-    </div>
+      </PulseCard>
+    </PulseCard>
   );
 }

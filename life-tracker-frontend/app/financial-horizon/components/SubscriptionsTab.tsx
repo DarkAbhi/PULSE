@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../../components/design-system/pulse-card";
+
 import { formatMoney } from "../../lib/currency.mjs";
 
 import { formatInstant, formatCalendarDate, dateKey, calendarDayNumber } from "../../lib/time-zone.mjs";
@@ -166,7 +168,7 @@ export default function SubscriptionsTab({
       {/* 1. Header Metrics Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Metric 1: Monthly Burn Rate */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs">
+        <PulseCard className="relative overflow-hidden p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Monthly Subscription Burn
@@ -184,10 +186,10 @@ export default function SubscriptionsTab({
           <p className="mt-1 text-xs text-muted-foreground">
             Normalized cost across all active subscriptions
           </p>
-        </div>
+        </PulseCard>
 
         {/* Metric 2: Annual Outlay */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs">
+        <PulseCard className="relative overflow-hidden p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Annual Outlay
@@ -205,10 +207,10 @@ export default function SubscriptionsTab({
           <p className="mt-1 text-xs text-muted-foreground">
             Total projected yearly commitment
           </p>
-        </div>
+        </PulseCard>
 
         {/* Metric 3: Active Subscriptions */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs">
+        <PulseCard className="relative overflow-hidden p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Active Subscriptions
@@ -228,10 +230,10 @@ export default function SubscriptionsTab({
           <p className="mt-1 text-xs text-muted-foreground">
             {subscriptions.length - activeSubs.length} paused or cancelled
           </p>
-        </div>
+        </PulseCard>
 
         {/* Metric 4: Next Renewal */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-xs">
+        <PulseCard className="relative overflow-hidden p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
               Next Upcoming Renewal
@@ -263,7 +265,7 @@ export default function SubscriptionsTab({
               </span>
             </div>
           )}
-        </div>
+        </PulseCard>
       </div>
 
       {/* 2. Control & Search Bar */}
@@ -316,7 +318,7 @@ export default function SubscriptionsTab({
 
       {/* 3. Subscriptions Grid */}
       {filteredSubscriptions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border p-12 text-center bg-card/50">
+        <PulseCard className="flex flex-col items-center justify-center p-12 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-muted-foreground mb-3">
             <CreditCard className="h-6 w-6" />
           </div>
@@ -336,21 +338,21 @@ export default function SubscriptionsTab({
               <Plus className="h-4 w-4" /> Add Your First Subscription
             </Button>
           )}
-        </div>
+        </PulseCard>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredSubscriptions.map((sub) => {
             const daysLeft = getDaysUntilRenewal(sub.next_renewal_date);
 
             return (
-              <div
+              <PulseCard
                 key={sub.id}
-                className={`relative flex flex-col justify-between rounded-2xl border bg-card p-5 shadow-xs ${
+                className={`relative flex flex-col justify-between p-5 ${
                   sub.status === "cancelled"
-                    ? "border-border/50 opacity-60"
+                    ? "opacity-60"
                     : sub.status === "paused"
-                    ? "border-warning/30 bg-warning/5"
-                    : "border-border/80"
+                    ? "bg-warning/5"
+                    : ""
                 }`}
               >
                 <div>
@@ -489,7 +491,7 @@ export default function SubscriptionsTab({
                     </Button>
                   </div>
                 </div>
-              </div>
+              </PulseCard>
             );
           })}
         </div>

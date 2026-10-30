@@ -1,3 +1,4 @@
+import PulseCard from "../../components/design-system/pulse-card";
 import { currencySymbol } from "../../lib/currency.mjs";
 import { getUserCurrency } from "../../lib/user-currency";
 import { Fuel } from "lucide-react";
@@ -53,7 +54,7 @@ export default async function FuelEfficiencySection({
             )}
             <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {cards.map((card) => (
-                <div className="rounded-2xl border border-border bg-card px-4 py-6 text-center shadow-sm" key={card.label}>
+                <PulseCard className="px-4 py-6 text-center" key={card.label}>
                   <dt className="text-sm text-foreground">{card.label}</dt>
                   <dd className="mt-3 text-3xl font-bold tabular-nums tracking-tight">
                     {formatNumber(card.value, card.decimals)}
@@ -61,7 +62,7 @@ export default async function FuelEfficiencySection({
                       {card.unit}
                     </span>
                   </dd>
-                </div>
+                </PulseCard>
               ))}
             </dl>
             {summary.average_km_per_litre === null && (

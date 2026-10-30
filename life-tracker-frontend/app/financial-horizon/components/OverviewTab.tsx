@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../../components/design-system/pulse-card";
+
 import { formatMoney, currencySymbol } from "../../lib/currency.mjs";
 
 import Button from "../../components/design-system/button";
@@ -66,7 +68,7 @@ export default function OverviewTab({
         </div>
 
         {(summary.budgets ?? []).length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center">
+          <PulseCard className="p-10 text-center">
             <Target className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
             <h3 className="mt-3 text-base font-semibold text-foreground">
               No monthly budgets configured
@@ -81,7 +83,7 @@ export default function OverviewTab({
             >
               <Plus className="h-4 w-4" /> Add Your First Budget
             </Button>
-          </div>
+          </PulseCard>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {(summary.budgets ?? []).map((b) => {
@@ -92,9 +94,9 @@ export default function OverviewTab({
               const pct = Math.min(100, Math.max(0, b.usage_percentage));
 
               return (
-                <div
+                <PulseCard
                   key={b.id}
-                  className="group relative rounded-2xl border border-border bg-card p-5 shadow-sm flex flex-col justify-between"
+                  className="group relative p-5 flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-start justify-between">
@@ -204,7 +206,7 @@ export default function OverviewTab({
                       </div>
                     </div>
                   )}
-                </div>
+                </PulseCard>
               );
             })}
           </div>
@@ -212,7 +214,7 @@ export default function OverviewTab({
       </section>
 
       {/* Future Horizon Projections Section */}
-      <section className="rounded-3xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-8 shadow-sm">
+      <PulseCard as="section" className="bg-gradient-to-br from-card via-card to-primary/5 p-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-action">
             <ArrowUpRight className="h-5 w-5" />
@@ -235,9 +237,9 @@ export default function OverviewTab({
             const projectedReserve = Math.max(0, uncommittedPool * months);
 
             return (
-              <div
+              <PulseCard
                 key={months}
-                className="rounded-2xl border border-border bg-card/80 p-6 shadow-sm backdrop-blur-xs"
+                className="p-6 backdrop-blur-xs"
               >
                 <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <span>{label} Horizon</span>
@@ -254,11 +256,11 @@ export default function OverviewTab({
                   Estimated net uncommitted reserve pool accumulated over{" "}
                   {months} months.
                 </p>
-              </div>
+              </PulseCard>
             );
           })}
         </div>
-      </section>
+      </PulseCard>
     </div>
   );
 }

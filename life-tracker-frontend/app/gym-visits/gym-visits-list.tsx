@@ -1,8 +1,9 @@
 "use client";
 
+import { PulseCardLink } from "../components/design-system/pulse-card";
+
 import { useTimeZone } from "../components/time-zone-provider";
 
-import Link from "next/link";
 import { Dumbbell, ArrowRight } from "lucide-react";
 
 export type GymVisit = {
@@ -43,8 +44,8 @@ export default function GymVisitsList({ visits }: GymVisitsListProps) {
           </h2>
           <div className="space-y-3">
             {dateVisits.map((visit) => (
-              <Link
-                className="flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-sm"
+              <PulseCardLink
+                className="flex items-center justify-between p-5"
                 href={`/fitness/${visit.id}`}
                 key={visit.id}
               >
@@ -65,7 +66,7 @@ export default function GymVisitsList({ visits }: GymVisitsListProps) {
                 <span className="flex items-center gap-1 text-sm font-semibold text-action">
                   Open <ArrowRight className="h-4 w-4" />
                 </span>
-              </Link>
+              </PulseCardLink>
             ))}
           </div>
         </section>

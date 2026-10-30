@@ -1,3 +1,4 @@
+import PulseCard from "../components/design-system/pulse-card";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -68,10 +69,7 @@ export default async function GaragePage() {
             >
               <ArrowLeft className="h-4 w-4" /> Dashboard
             </Link>
-            <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-action uppercase">
-              PULSE
-            </p>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <h1 className="mt-5 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Garage
             </h1>
             <p className="mt-3 text-base text-muted-foreground">
@@ -89,14 +87,14 @@ export default async function GaragePage() {
             {error}
           </p>
         ) : vehicles.length === 0 ? (
-          <section className="rounded-2xl border border-dashed border-border bg-card/70 p-10 text-center">
+          <PulseCard as="section" className="p-10 text-center">
             <p className="text-lg font-semibold text-foreground">
               Your garage is ready for its first vehicle.
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
               Add one whenever you&apos;re ready.
             </p>
-          </section>
+          </PulseCard>
         ) : (
           <VehiclesList vehicles={vehicles} />
         )}

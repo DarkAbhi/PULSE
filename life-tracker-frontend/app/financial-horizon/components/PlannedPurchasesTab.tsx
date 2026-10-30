@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../../components/design-system/pulse-card";
+
 import { formatMoney } from "../../lib/currency.mjs";
 
 import Button from "../../components/design-system/button";
@@ -40,7 +42,7 @@ export default function PlannedPurchasesTab({
       {/* Pool Impact Summary */}
       <section className="grid gap-4 sm:grid-cols-2">
         {/* Pool Before Purchases */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <PulseCard className="p-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-action">
               <Wallet className="h-4 w-4" />
@@ -55,15 +57,15 @@ export default function PlannedPurchasesTab({
           <p className="mt-1 text-xs text-muted-foreground">
             Uncommitted cash after fixed obligations &amp; subscriptions
           </p>
-        </div>
+        </PulseCard>
 
         {/* Pool After Purchases */}
-        <div className={`rounded-2xl border p-5 shadow-sm ${
+        <PulseCard className={`p-5 ${
           !hasPurchases
-            ? "border-border bg-card"
+            ? ""
             : netRemainingPool >= 0
-            ? "border-success/30 bg-gradient-to-br from-card via-card to-success/10"
-            : "border-destructive/30 bg-gradient-to-br from-card via-card to-destructive/10"
+            ? "bg-gradient-to-br from-card via-card to-success/10"
+            : "bg-gradient-to-br from-card via-card to-destructive/10"
         }`}>
           <div className="flex items-center gap-2 mb-3">
             <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${
@@ -102,12 +104,12 @@ export default function PlannedPurchasesTab({
               ? `After deducting ${formatMoney(purchasesTotal, summary.currency)} in planned purchases`
               : "Add planned purchases below to see the impact"}
           </p>
-        </div>
+        </PulseCard>
       </section>
 
       <div className="space-y-10">
       {/* Planned Purchases Section */}
-      <section className="rounded-3xl border border-border bg-card p-6 shadow-sm space-y-6">
+      <PulseCard as="section" className="p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
           <div>
             <div className="flex items-center gap-2">
@@ -145,7 +147,7 @@ export default function PlannedPurchasesTab({
 
         {/* List of Next Month Purchases */}
         {purchases.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-background/50 p-10 text-center">
+          <PulseCard className="bg-background/50 p-10 text-center">
             <ShoppingBag className="mx-auto h-10 w-10 text-warning/50" />
             <h3 className="mt-3 text-base font-semibold text-foreground">No planned purchases added</h3>
             <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
@@ -157,13 +159,13 @@ export default function PlannedPurchasesTab({
             >
               <Plus className="h-4 w-4" /> Add Next Month Purchase
             </Button>
-          </div>
+          </PulseCard>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {purchases.map((item) => (
-              <div
+              <PulseCard
                 key={item.id}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background p-4 shadow-xs transition hover:shadow-md"
+                className="flex items-center justify-between gap-3 bg-background p-4 transition hover:shadow-md"
               >
                 <div className="min-w-0 flex-1">
                   <h4 className="font-semibold text-foreground text-sm truncate">{item.name}</h4>
@@ -189,11 +191,11 @@ export default function PlannedPurchasesTab({
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
+              </PulseCard>
             ))}
           </div>
         )}
-      </section>
+      </PulseCard>
       </div>
     </div>
   );

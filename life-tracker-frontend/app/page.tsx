@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "./components/design-system/pulse-card";
+
 import Button from "./components/design-system/button";
 
 import { SubmitEvent, useEffect, useState } from "react";
@@ -73,7 +75,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6 py-12 text-foreground">
-      <section className="w-full max-w-md rounded-2xl bg-card border border-border p-8 shadow-xl sm:p-10">
+      <PulseCard as="section" className="w-full max-w-md p-8 shadow-xl sm:p-10">
         <div className="mb-8">
           <p className="mb-2 text-sm font-semibold tracking-wide text-action">
             PULSE
@@ -131,7 +133,7 @@ export default function Home() {
           </Button>
           {error && <p className="text-center text-sm text-destructive" role="alert">{error}</p>}
         </form>
-      </section>
+      </PulseCard>
     </main>
   );
 }

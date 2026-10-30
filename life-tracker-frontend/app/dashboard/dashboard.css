@@ -1,6 +1,5 @@
 /* Dashboard surfaces share the site theme; hero and finance artwork retain their own colors. */
 .pulse-dashboard {
-  --dashboard-surface: var(--card);
   --dashboard-ink: var(--foreground);
   --dashboard-muted: var(--muted-foreground);
   --dashboard-green: var(--success-soft);
@@ -34,7 +33,7 @@
 .pulse-hero h1 { margin-block: 12px 28px; font-weight: 700; font-size: clamp(48px, 6vw, 72px); line-height: 1.05; letter-spacing: -.035em; overflow-wrap: anywhere; }
 .pulse-greeting-note { font-size: 15px; max-width: 36ch; }
 .pulse-dashboard-cards { display: grid; gap: 24px; align-items: stretch; }
-.pulse-summary-card { min-width: 0; min-height: 320px; border-radius: 28px; padding: 24px; background: var(--dashboard-surface); display: flex; flex-direction: column; gap: 8px; }
+.pulse-summary-card { min-height: 320px; padding: 24px; display: flex; flex-direction: column; gap: 8px; }
 .pulse-horizon-card { background: #ffe58c; color: #20211b; }
 .pulse-card-icon { width: 48px; height: 48px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; background: var(--dashboard-green); flex-shrink: 0; }
 .pulse-horizon-card .pulse-card-icon, .pulse-horizon-card .pulse-card-cta { background: #fff5ce; }
@@ -46,7 +45,7 @@
 .pulse-card-cta { display: inline-flex; flex-shrink: 0; justify-content: center; align-items: center; gap: 8px; border-radius: 999px; background: var(--dashboard-green); padding: 12px 16px; min-height: 44px; font-size: 14px; font-weight: 500; }
 .pulse-card-art { width: 52%; max-width: 240px; height: 120px; object-fit: contain; }
 .pulse-spaces { display: grid; gap: 16px; }
-.pulse-space-link { display: flex; align-items: center; gap: 16px; border-radius: 24px; background: var(--dashboard-surface); padding: 20px 24px; }
+.pulse-space-link { display: flex; align-items: center; gap: 16px; padding: 20px 24px; }
 .pulse-space-icon { display: inline-flex; padding: 12px; border-radius: 16px; background: var(--dashboard-green); }
 .pulse-space-link > span:nth-child(2) { flex: 1; min-width: 0; }
 .pulse-space-link strong { display: block; font-weight: 600; }

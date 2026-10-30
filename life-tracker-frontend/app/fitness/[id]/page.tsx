@@ -1,3 +1,4 @@
+import PulseCard from "../../components/design-system/pulse-card";
 import { getUserTimeZone } from "../../lib/user-time-zone";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -151,7 +152,7 @@ export default async function GymVisitPage({ params }: PageProps) {
             Capture what you did, one exercise and set at a time.
           </p>
 
-          {hasWorkoutDetails && <section aria-labelledby="workout-details-heading" className="mt-8 rounded-2xl border border-border bg-card p-6 shadow-sm">
+          {hasWorkoutDetails && <PulseCard as="section" aria-labelledby="workout-details-heading" className="mt-8 p-6">
             <h2 id="workout-details-heading" className="text-xl font-semibold">Workout details</h2>
             {detailsError ? (
               <p className="mt-4 text-sm text-destructive" role="alert">{detailsError}</p>
@@ -175,7 +176,7 @@ export default async function GymVisitPage({ params }: PageProps) {
                 )}
               </>
             )}
-          </section>}
+          </PulseCard>}
 
           <div className="mt-8 space-y-4">
             {error ? (
@@ -183,18 +184,18 @@ export default async function GymVisitPage({ params }: PageProps) {
                 {error}
               </p>
             ) : exercises.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border bg-card p-8">
+              <PulseCard className="p-8">
                 <p className="font-semibold text-foreground">
                   No exercises saved yet.
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Add your first exercise using the form.
                 </p>
-              </div>
+              </PulseCard>
             ) : (
               exercises.map((exercise) => (
-                <article
-                  className="rounded-2xl border border-border bg-card p-6 shadow-sm"
+                <PulseCard as="article"
+                  className="p-6"
                   key={exercise.id}
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -241,7 +242,7 @@ export default async function GymVisitPage({ params }: PageProps) {
                       </tbody>
                     </table>
                   </div>
-                </article>
+                </PulseCard>
               ))
             )}
           </div>

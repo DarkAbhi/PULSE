@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../components/design-system/pulse-card";
+
 import Button from "../components/design-system/button";
 
 import Link from "next/link";
@@ -68,10 +70,10 @@ export default function NotificationsClient({ notifications }: NotificationsClie
           ) : null}
 
           {notifications.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
+            <PulseCard className="p-10 text-center">
               <p className="text-lg font-semibold text-foreground">You&apos;re all caught up.</p>
               <p className="mt-2 text-sm text-muted-foreground">New updates from your life spaces will appear here.</p>
-            </div>
+            </PulseCard>
           ) : (
             <NotificationList
               notifications={notifications}

@@ -188,6 +188,37 @@
   animation: dropdown-in 0.15s ease-out both;
 }
 
+@layer components {
+  /* Shared with the dashboard: soft corners and a solid themed surface, without an outline. */
+  .pulse-card {
+    min-width: 0;
+    border: 0;
+    border-radius: 28px;
+    background-color: var(--card);
+  }
+
+  .pulse-card[href] {
+    transition: box-shadow 0.2s;
+  }
+
+  .pulse-card[href]:focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 4px;
+  }
+
+  @media (hover: hover) {
+    .pulse-card[href]:hover {
+      box-shadow: 0 8px 24px #00000012;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pulse-card[href] {
+      transition: none;
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

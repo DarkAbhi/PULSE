@@ -1,3 +1,4 @@
+import PulseCard from "../components/design-system/pulse-card";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -84,7 +85,7 @@ export default async function ProfilePage() {
             @{username}
           </p>
 
-          <div className="mt-10 w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8 text-left">
+          <PulseCard className="mt-10 w-full p-6 sm:p-8 text-left">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <h2 className="text-lg font-semibold text-foreground">Account Information</h2>
               <ChangePasswordButton />
@@ -99,7 +100,7 @@ export default async function ProfilePage() {
                 <span className="font-medium text-foreground">{username}</span>
               </div>
             </div>
-          </div>
+          </PulseCard>
 
           <TimeZoneSettings />
           <CurrencySettings />

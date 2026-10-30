@@ -1,9 +1,12 @@
 "use client";
 
+import PulseCard from "../components/design-system/pulse-card";
+
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Info } from "lucide-react";
 import Button from "../components/design-system/button";
+import ConfirmationDialog from "../components/design-system/confirmation-dialog";
 import GymVisitsList, { type WorkoutGroup } from "./gym-visits-list";
 import { calendarDays, shiftMonth } from "./calendar-utils.mjs";
 import { markGymVisitAction } from "./actions";
@@ -28,6 +31,7 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
   const [selectedDate, setSelectedDate] = useState(today);
   const [isMarking, startMarking] = useTransition();
   const [markError, setMarkError] = useState("");
+  const [dateToMark, setDateToMark] = useState<string | null>(null);
   const router = useRouter();
   const selectedGroup = workoutsByDate[selectedDate];
 
@@ -45,7 +49,7 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
   return (
     <div className="space-y-10">
       <div className="grid items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
-        <section aria-label="Workout calendar" className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
+        <PulseCard as="section" aria-label="Workout calendar" className="p-4 sm:p-6">
           <div className="flex items-center justify-between gap-3 border-b border-border pb-5">
             <h2 aria-live="polite" className="text-xl font-semibold sm:text-2xl">
               {monthFormatter.format(new Date(`${month}-01T00:00:00Z`))}
@@ -89,12 +93,12 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
             <span aria-hidden="true" className="h-2 w-2 rounded-full bg-success" />
             Workout completed
           </p>
-        </section>
+        </PulseCard>
         <section aria-label="Selected day's workouts" className="space-y-4">
           <h2 className="text-xl font-semibold">Workouts for this day</h2>
           <div aria-live="polite">
             {selectedGroup ? <GymVisitsList groups={[selectedGroup]} /> : (
-              <div className="rounded-2xl border border-dashed border-border bg-card p-6">
+              <PulseCard className="p-6">
                 <p className="text-sm font-semibold">{dayFormatter.format(new Date(`${selectedDate}T00:00:00Z`))}</p>
                 <p className="mt-2 text-sm text-muted-foreground">No workouts recorded for this day.</p>
                 <Button
@@ -104,20 +108,12 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
                   disabled={isMarking}
                   onClick={() => {
                     setMarkError("");
-                    startMarking(async () => {
-                      const result = await markGymVisitAction(selectedDate);
-                      if (!result.ok) {
-                        setMarkError(result.error ?? "We couldn't save your workout.");
-                        return;
-                      }
-                      router.refresh();
-                    });
+                    setDateToMark(selectedDate);
                   }}
                 >
                   {isMarking ? "Marking…" : "Mark workout"}
                 </Button>
-                {markError && <p className="mt-3 text-sm text-destructive" role="alert">{markError}</p>}
-              </div>
+              </PulseCard>
             )}
           </div>
         </section>
@@ -127,7 +123,7 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
           <h2 id="fitness-stats-heading" className="text-xl font-semibold">Your fitness stats</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {cards.map((card) => (
-              <div key={card.id} className="flex min-h-44 flex-col items-center justify-center rounded-2xl border border-border bg-card px-4 py-6 text-center shadow-sm">
+              <PulseCard key={card.id} className="flex min-h-44 flex-col items-center justify-center px-4 py-6 text-center">
                 <h3 className="text-base font-medium">{card.label}</h3>
                 <p className="my-3 max-w-full break-words text-3xl font-bold tracking-tight sm:text-4xl">{card.value}</p>
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -143,20 +139,44 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
                     </span>
                   )}
                 </div>
-              </div>
+              </PulseCard>
             ))}
           </div>
         </section>
         <section aria-labelledby="recent-workouts-heading" className="space-y-4">
           <h2 id="recent-workouts-heading" className="text-xl font-semibold">Recent workouts</h2>
           {recentWorkouts.length ? <GymVisitsList groups={recentWorkouts} /> : (
-            <div className="rounded-2xl border border-dashed border-border bg-card p-6">
+            <PulseCard className="p-6">
               <p className="font-semibold">No workouts yet.</p>
               <p className="mt-2 text-sm text-muted-foreground">Mark a workout completed when you&apos;re ready.</p>
-            </div>
+            </PulseCard>
           )}
         </section>
       </div>
+      <ConfirmationDialog
+        isOpen={dateToMark !== null}
+        onClose={() => { setDateToMark(null); setMarkError(""); }}
+        onConfirm={() => {
+          if (!dateToMark) return;
+          setMarkError("");
+          startMarking(async () => {
+            const result = await markGymVisitAction(dateToMark);
+            if (!result.ok) {
+              setMarkError(result.error ?? "We couldn't save your workout.");
+              return;
+            }
+            setDateToMark(null);
+            router.refresh();
+          });
+        }}
+        title="Mark workout?"
+        description={dateToMark ? `Mark a workout as completed for ${dayFormatter.format(new Date(`${dateToMark}T00:00:00Z`))}?` : ""}
+        confirmText="Mark workout"
+        confirmLoadingText="Marking…"
+        isLoading={isMarking}
+        error={markError}
+        variant="positive"
+      />
     </div>
   );
 }

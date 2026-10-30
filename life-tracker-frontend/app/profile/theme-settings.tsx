@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../components/design-system/pulse-card";
+
 import Button from "../components/design-system/button";
 
 import { useTheme } from "next-themes";
@@ -22,7 +24,7 @@ export default function ThemeSettings() {
   ] as const;
 
   return (
-    <div className="mt-6 w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8 text-left">
+    <PulseCard className="mt-6 w-full p-6 sm:p-8 text-left">
       <h2 className="text-lg font-semibold text-foreground mb-1">Theme Settings</h2>
       <p className="text-xs text-muted-foreground mb-6">
         Choose how PULSE looks on your device.
@@ -40,6 +42,6 @@ export default function ThemeSettings() {
           </Button>
         ))}
       </div>
-    </div>
+    </PulseCard>
   );
 }

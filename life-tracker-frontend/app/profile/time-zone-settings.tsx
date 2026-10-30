@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../components/design-system/pulse-card";
+
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Button from "../components/design-system/button";
@@ -23,7 +25,7 @@ export default function TimeZoneSettings() {
   const normalize = (value: string) => value.replaceAll("_", " ").toLowerCase();
   const matches = zones.filter(zone => normalize(zone).includes(normalize(search.trim())));
 
-  return <section aria-labelledby="time-zone-heading" className="mt-6 w-full rounded-2xl border border-border bg-card p-6 text-left shadow-sm sm:p-8">
+  return <PulseCard as="section" aria-labelledby="time-zone-heading" className="mt-6 w-full p-6 text-left sm:p-8">
     <h2 id="time-zone-heading" className="text-lg font-semibold">Time zone</h2>
     <p className="mt-2 text-sm text-muted-foreground">{timeZone.replaceAll("_", " ")}</p>
     <form className="mt-5 space-y-4" onSubmit={event => {
@@ -46,5 +48,5 @@ export default function TimeZoneSettings() {
       {message && <p role="status" className="text-sm text-success">{message}</p>}
       <Button type="submit" disabled={pending || draft === timeZone || !matches.includes(draft)}>{pending ? "Saving…" : "Save time zone"}</Button>
     </form>
-  </section>;
+  </PulseCard>;
 }

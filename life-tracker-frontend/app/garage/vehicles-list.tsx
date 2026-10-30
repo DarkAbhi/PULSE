@@ -1,4 +1,6 @@
 "use client";
+
+import PulseCard from "../components/design-system/pulse-card";
 import { useTimeZone } from "../components/time-zone-provider";
 import { toDateTimeInput, fromDateTimeInput } from "../lib/time-zone.mjs";
 
@@ -115,8 +117,8 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
         aria-label="Vehicles"
       >
         {vehicles.map((vehicle) => (
-          <article
-            className="cursor-pointer rounded-2xl border border-border bg-card p-6 shadow-sm"
+          <PulseCard as="article"
+            className="cursor-pointer p-6"
             key={vehicle.id}
             onClick={() => router.push(`/garage/${vehicle.id}`)}
           >
@@ -157,7 +159,7 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
             >
               Add fuel
             </Button>
-          </article>
+          </PulseCard>
         ))}
       </section>
 

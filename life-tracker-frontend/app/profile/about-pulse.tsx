@@ -1,3 +1,4 @@
+import PulseCard from "../components/design-system/pulse-card";
 import LocalDate from "../components/local-date";
 
 export default function AboutPulse() {
@@ -5,7 +6,7 @@ export default function AboutPulse() {
   const builtAt = process.env.NEXT_PUBLIC_PULSE_BUILD_DATE;
 
   return (
-    <section aria-labelledby="about-pulse-title" className="mt-8 w-full rounded-2xl border border-border bg-card p-6 text-left shadow-sm sm:p-8">
+    <PulseCard as="section" aria-labelledby="about-pulse-title" className="mt-8 w-full p-6 text-left sm:p-8">
       <h2 id="about-pulse-title" className="text-lg font-semibold">About Pulse</h2>
       <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
@@ -34,6 +35,6 @@ export default function AboutPulse() {
           )}
         </dl>
       </div>
-    </section>
+    </PulseCard>
   );
 }

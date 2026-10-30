@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../components/design-system/pulse-card";
+
 import { useTimeZone } from "../components/time-zone-provider";
 
 import { dateKey } from "../lib/time-zone.mjs";
@@ -324,10 +326,7 @@ export default function MealPlanClient({
             >
               <ArrowLeft className="h-4 w-4" /> Dashboard
             </Link>
-            <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-action uppercase">
-              PULSE
-            </p>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <h1 className="mt-5 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               Meal Plan
             </h1>
             <p className="mt-3 text-base text-muted-foreground">
@@ -351,7 +350,7 @@ export default function MealPlanClient({
         </header>
 
         {/* Week Navigator & Calendar Bar */}
-        <section className="rounded-2xl border border-border bg-card p-5 sm:p-6 mb-10 shadow-sm">
+        <PulseCard as="section" className="p-5 sm:p-6 mb-10">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2.5">
               <span className="text-base font-semibold text-foreground" suppressHydrationWarning>
@@ -417,7 +416,7 @@ export default function MealPlanClient({
               );
             })}
           </div>
-        </section>
+        </PulseCard>
 
         {/* Selected Day Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
@@ -453,7 +452,7 @@ export default function MealPlanClient({
 
         {/* Meal Times Sections or Empty State */}
         {dayMeals.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-card/60 p-12 sm:p-16 text-center">
+          <PulseCard className="p-12 sm:p-16 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-secondary-foreground mb-4">
               <Utensils className="h-7 w-7 text-muted-foreground" />
             </div>
@@ -471,16 +470,16 @@ export default function MealPlanClient({
                 Add meal
               </Button>
             </div>
-          </div>
+          </PulseCard>
         ) : (
           <>
             <div className="grid gap-5 sm:grid-cols-2">
               {mealTimes.map((mt) => {
                 const slotMeals = dayMeals.filter((m) => m.meal_time_id === mt.id);
                 return (
-                  <div
+                  <PulseCard
                     key={mt.id}
-                    className="flex flex-col justify-between rounded-2xl border border-border bg-card p-6 shadow-xs"
+                    className="flex flex-col justify-between p-6"
                   >
                     <div>
                       <div className="flex items-center justify-between gap-2 border-b border-border/70 pb-3 mb-3">
@@ -553,14 +552,14 @@ export default function MealPlanClient({
                         </ul>
                       )}
                     </div>
-                  </div>
+                  </PulseCard>
                 );
               })}
             </div>
 
             {/* Unassigned meals if any */}
             {unassignedMeals.length > 0 && (
-              <div className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-xs">
+              <PulseCard className="mt-6 p-5">
                 <h3 className="font-semibold text-foreground text-base mb-3 border-b border-border/70 pb-2">
                   Other Meals
                 </h3>
@@ -606,7 +605,7 @@ export default function MealPlanClient({
                     </li>
                   ))}
                 </ul>
-              </div>
+              </PulseCard>
             )}
           </>
         )}

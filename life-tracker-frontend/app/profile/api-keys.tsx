@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../components/design-system/pulse-card";
+
 import { formatInstant } from "../lib/time-zone.mjs";
 
 import { useTimeZone } from "../components/time-zone-provider";
@@ -99,7 +101,7 @@ export default function APIKeys() {
   }
 
   return (
-    <section className="mt-6 w-full rounded-2xl border border-border bg-card p-6 text-left shadow-sm sm:p-8">
+    <PulseCard as="section" className="mt-6 w-full p-6 text-left sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground"><KeyRound className="h-5 w-5" /> API Keys</h2>
@@ -164,6 +166,6 @@ export default function APIKeys() {
         isLoading={busy}
         error={revokeKey ? error : undefined}
       />
-    </section>
+    </PulseCard>
   );
 }

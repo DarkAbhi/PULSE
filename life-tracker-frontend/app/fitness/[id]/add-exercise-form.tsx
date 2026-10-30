@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../../components/design-system/pulse-card";
+
 import Button from "../../components/design-system/button";
 
 import { useEffect, useId, useState, useTransition } from "react";
@@ -107,7 +109,7 @@ export default function AddExerciseForm({ visitID, exercise, onSaved, onCancel }
   }
 
   return (
-    <aside className="h-fit rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+    <PulseCard as="aside" className="h-fit p-6 sm:p-8">
       <h2 className="text-xl font-semibold text-foreground">{exercise ? "Edit exercise" : "Add an exercise"}</h2>
       <form className="mt-6 space-y-5" onSubmit={handleSave}>
         <div>
@@ -242,6 +244,6 @@ export default function AddExerciseForm({ visitID, exercise, onSaved, onCancel }
         {onCancel && <Button type="button" variant="secondary" size="lg" className="w-full"
           disabled={isPending} onClick={onCancel}>Cancel</Button>}
       </form>
-    </aside>
+    </PulseCard>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import PulseCard from "../../components/design-system/pulse-card";
+
 import { formatMoney, currencySymbol } from "../../lib/currency.mjs";
 
 import Button from "../../components/design-system/button";
@@ -35,7 +37,7 @@ export default function HeaderMetrics({
   return (
     <section className="grid gap-5 sm:grid-cols-3">
       {/* Card 1: Starting Pool (Base Income) */}
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <PulseCard className="relative overflow-hidden p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-action">
@@ -91,10 +93,10 @@ export default function HeaderMetrics({
             <p className="mt-1 text-xs text-muted-foreground">Baseline monthly revenue stream</p>
           </div>
         )}
-      </div>
+      </PulseCard>
 
       {/* Card 2: Total Committed */}
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <PulseCard className="p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-warning/10 text-warning">
@@ -122,10 +124,10 @@ export default function HeaderMetrics({
             )}
           </p>
         </div>
-      </div>
+      </PulseCard>
 
       {/* Card 3: Net Available Pool (Primary visual focus) */}
-      <div className="rounded-2xl border border-success/30 bg-gradient-to-br from-card via-card to-success/10 p-5 shadow-md relative overflow-hidden">
+      <PulseCard className="bg-gradient-to-br from-card via-card to-success/10 p-5 relative overflow-hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-success/20 text-success">
@@ -159,7 +161,7 @@ export default function HeaderMetrics({
             Uncommitted cash remaining after fixed obligations &amp; subscriptions
           </p>
         </div>
-      </div>
+      </PulseCard>
     </section>
   );
 }

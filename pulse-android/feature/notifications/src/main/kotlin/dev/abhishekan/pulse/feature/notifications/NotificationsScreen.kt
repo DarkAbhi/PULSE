@@ -15,7 +15,6 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
-import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,11 +43,13 @@ import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
@@ -57,13 +58,20 @@ import java.time.format.DateTimeFormatter
 fun NotificationsRoute(
     onOpen: (NotificationTarget) -> Unit,
     viewModel: NotificationsViewModel = koinViewModel(),
+    backLabel: String? = null,
 ) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.uncertain }, viewModel::consumeMessage)
-    key(timeZone) {
-        NotificationsScreen(state, viewModel::refresh, viewModel::dismiss, viewModel::acknowledge, onOpen)
+    PulseScreenScaffold(
+        title = stringResource(R.string.pulse_notifications_screen_title),
+        backLabel = backLabel,
+        actions = { NotificationsTopBarActions(state, viewModel::clearAll) },
+    ) {
+        key(timeZone) {
+            NotificationsScreen(state, viewModel::refresh, viewModel::dismiss, viewModel::acknowledge, onOpen)
+        }
     }
 }
 

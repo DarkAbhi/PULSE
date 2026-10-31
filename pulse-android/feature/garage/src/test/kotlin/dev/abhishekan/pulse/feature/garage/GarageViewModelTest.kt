@@ -20,7 +20,6 @@ import dev.abhishekan.pulse.core.domain.repository.VehicleCatalogRepository
 import dev.abhishekan.pulse.core.domain.usecase.ApplyGarageChange
 import dev.abhishekan.pulse.core.domain.usecase.DownloadGarageReceipt
 import dev.abhishekan.pulse.core.domain.usecase.GetVehicleHistory
-import dev.abhishekan.pulse.core.domain.usecase.GetVehicles
 import dev.abhishekan.pulse.core.domain.usecase.SearchVehicleCatalog
 import dev.abhishekan.pulse.core.domain.usecase.UploadGarageReceipt
 import dev.abhishekan.pulse.core.ui.message
@@ -332,7 +331,7 @@ class GarageViewModelTest {
 
     private fun vm(saved: SavedStateHandle = SavedStateHandle()) =
         GarageViewModel(
-            GetVehicles(repo),
+            repo,
             GetVehicleHistory(repo),
             ApplyGarageChange(repo),
             UploadGarageReceipt(repo),

@@ -7,6 +7,7 @@ import dev.abhishekan.pulse.core.domain.model.Horizon
 import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import java.math.BigDecimal
+import java.time.Instant
 
 private val preview =
     HomeUiState(
@@ -23,7 +24,9 @@ private val preview =
 @Preview(name = "Large text", widthDp = 360, heightDp = 800, fontScale = 2f)
 @Composable
 private fun HomeLightPreview() {
-    PulseTheme(false) { HomeScreen("preview", preview, {}, {}, {}, {}, {}, {}, onProfile = {}) }
+    PulseTheme(
+        false,
+    ) { HomeScreen("preview", preview, {}, {}, {}, {}, {}, {}, onProfile = {}, now = Instant.parse("2026-10-16T12:00:00Z")) }
 }
 
 @Preview(name = "Dark phone", widthDp = 360, heightDp = 800)
@@ -33,6 +36,6 @@ private fun HomeLightPreview() {
 private fun HomeDarkPreview() {
     PulseTheme(true) {
         HomeScreen("preview", preview.copy(horizon = Section.Error(Failure.Connection)), {
-        }, {}, {}, {}, {}, {})
+        }, {}, {}, {}, {}, {}, now = Instant.parse("2026-10-16T12:00:00Z"))
     }
 }

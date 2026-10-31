@@ -26,11 +26,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -76,6 +74,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulsePasswordField
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
+import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
@@ -83,7 +82,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.label
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import dev.abhishekan.pulse.core.ui.uiText
+import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
 import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
@@ -112,9 +113,8 @@ fun ProfileRoute(
     otherEdits: Boolean,
     onLogout: () -> Unit,
     initialNameEditor: Boolean,
-    onEditorOpened: () -> Unit,
-    viewModel: ProfileViewModel,
-    onSensitiveEditsChanged: (Boolean) -> Unit = {},
+    viewModel: ProfileViewModel = koinViewModel(),
+    backLabel: String? = null,
     debugContent: @Composable () -> Unit = {},
 ) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
@@ -123,17 +123,12 @@ fun ProfileRoute(
     PulseSnackbarEffect(state.message.takeUnless { state.uncertain }, viewModel::consumeMessage)
     val context = LocalContext.current
     val activity = context as? Activity
-    val hasPasswordEdits =
-        state.editor == AccountEditor.Password &&
-            listOf(state.passwords.current, state.passwords.next, state.passwords.confirmation).any(String::isNotEmpty)
-    SideEffect { onSensitiveEditsChanged(hasPasswordEdits) }
     DisposableEffect(viewModel, activity) {
         onDispose {
             if (activity?.isChangingConfigurations !=
                 true
             ) {
                 viewModel.clearSecrets()
-                onSensitiveEditsChanged(false)
             }
         }
     }
@@ -149,12 +144,13 @@ fun ProfileRoute(
     }
     LaunchedEffect(initialNameEditor) {
         if (initialNameEditor) {
-            viewModel.edit(AccountEditor.Name)
-            onEditorOpened()
+            viewModel.openInitialNameEditor()
         }
     }
-    key(timeZone) {
-        ProfileScreen(state, username, theme, appearanceError, onTheme, loggingOut, otherEdits, onLogout, viewModel, debugContent)
+    PulseScreenScaffold(title = "", showTopBar = backLabel != null, backLabel = backLabel) {
+        key(timeZone) {
+            ProfileScreen(state, username, theme, appearanceError, onTheme, loggingOut, otherEdits, onLogout, viewModel, debugContent)
+        }
     }
     state.token?.let { created ->
         PulseDialog(

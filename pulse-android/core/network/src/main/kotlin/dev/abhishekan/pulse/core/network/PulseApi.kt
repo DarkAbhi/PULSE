@@ -81,6 +81,4 @@ class PulseApi(
     suspend fun clearNotifications() {
         client.delete("notifications")
     }
-
-    suspend fun notifications(): List<NotificationDto> = client.get("notifications?limit=5").body()
 }

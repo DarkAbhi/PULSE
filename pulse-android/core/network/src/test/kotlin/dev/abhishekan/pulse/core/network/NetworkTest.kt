@@ -23,7 +23,7 @@ import org.junit.Test
 import java.util.concurrent.CopyOnWriteArrayList
 
 class NetworkTest {
-    @Test fun debugLogsHeadersAndBodiesButRedactsCredentialAndSignedLocationHeaders() =
+    @Test fun debugLogsRequestStatusWithoutHeadersOrBodies() =
         runTest {
             val messages = CopyOnWriteArrayList<String>()
             val logger: (String) -> Unit = { messages += it }
@@ -53,16 +53,16 @@ class NetworkTest {
             assertTrue(logs, logs.contains("POST"))
             assertTrue(logs, logs.contains("https://example.com/api/auth/login"))
             assertTrue(logs, logs.contains("200"))
-            assertTrue(logs, logs.contains("request-header-value"))
-            assertTrue(logs, logs.contains("response-header-value"))
-            assertTrue(logs, logs.contains("password-secret"))
-            assertTrue(logs, logs.contains("response-secret"))
+            assertTrue(logs, !logs.contains("request-header-value"))
+            assertTrue(logs, !logs.contains("response-header-value"))
+            assertTrue(logs, !logs.contains("password-secret"))
+            assertTrue(logs, !logs.contains("response-secret"))
             listOf("auth-secret", "cookie-secret", "signature=secret").forEach {
                 assertTrue(logs, !logs.contains(it))
             }
         }
 
-    @Test fun releaseAndExternalOriginsProduceNoLogs() =
+    @Test fun releaseAndNonApiDestinationsProduceNoLogs() =
         runTest {
             val messages = CopyOnWriteArrayList<String>()
             val logger: (String) -> Unit = { messages += it }
@@ -70,9 +70,13 @@ class NetworkTest {
                 val engine = MockEngine { respond("{}") }
                 pulseHttpClient(NetworkConfig("https://example.com/api/", debug), engine, logger = logger).use { client ->
                     if (!debug) client.get("profile")
+                    client.get("https://example.com/file?signature=secret")
                     client.get("https://storage.test/file?signature=secret")
                     client.get("https://example.com:8443/file?signature=secret")
                     client.get("http://example.com/file?signature=secret")
+                    client.get("https://example.com/api/storage?signature=secret") {
+                        attributes.put(SkipHttpLogging, Unit)
+                    }
                 }
             }
             assertTrue(messages.toString(), messages.isEmpty())

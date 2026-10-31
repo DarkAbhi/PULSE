@@ -5,8 +5,6 @@ import dev.abhishekan.pulse.core.data.AndroidSessionKey
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.domain.repository.PreferencesRepository
-import dev.abhishekan.pulse.core.domain.usecase.ObserveTheme
-import dev.abhishekan.pulse.core.domain.usecase.SetTheme
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.flow.first
@@ -32,8 +30,6 @@ class FoundationDeviceTest {
         assertNotNull(koin.get<PreferencesRepository>())
         assertNotNull(koin.get<AndroidSessionKey>())
         assertNotNull(koin.get<EncryptedSessionStore>())
-        assertNotNull(koin.get<ObserveTheme>())
-        assertNotNull(koin.get<SetTheme>())
         assertNotNull(koin.get<AppearanceViewModel>())
         assertTrue(koin.get<NetworkConfig>().debug)
     }
@@ -68,7 +64,7 @@ class FoundationDeviceTest {
             val initial = repository.theme.first()
             try {
                 repository.setTheme(ThemePreference.Dark)
-                assertEquals(ThemePreference.Dark, GlobalContext.get().get<ObserveTheme>()().first())
+                assertEquals(ThemePreference.Dark, repository.theme.first())
             } finally {
                 repository.setTheme(initial)
             }

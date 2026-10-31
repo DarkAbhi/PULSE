@@ -4,30 +4,33 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
+import dev.abhishekan.pulse.core.domain.model.HorizonRecord
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
+import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
 import dev.abhishekan.pulse.core.domain.usecase.ApplyHorizonChange
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizonTransactions
-import dev.abhishekan.pulse.core.domain.usecase.GetPlannedPurchases
 import dev.abhishekan.pulse.core.domain.usecase.GetSubscriptionPayments
-import dev.abhishekan.pulse.core.domain.usecase.LoadHorizon
+import dev.abhishekan.pulse.core.ui.DraftSource
+import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.DateTimeException
 import java.time.ZonedDateTime
 
 class HorizonViewModel(
-    private val load: LoadHorizon,
+    private val horizon: HorizonRepository,
     private val getTransactions: GetHorizonTransactions,
-    private val getPurchases: GetPlannedPurchases,
     private val getPayments: GetSubscriptionPayments,
     private val apply: ApplyHorizonChange,
     private val saved: SavedStateHandle,
+    unsavedChanges: UnsavedChanges = UnsavedChanges(),
 ) : ViewModel() {
     private val state =
         MutableStateFlow(
@@ -42,6 +45,12 @@ class HorizonViewModel(
             ),
         )
     val uiState = state.asStateFlow()
+
+    init {
+        unsavedChanges.track(DraftSource.Horizon, state.map { it.draft?.dirty == true }, viewModelScope)
+    }
+
+    fun deleteObligation(id: Long) = mutate(HorizonChange.Delete(HorizonRecord.Deduction, id), closeDraft = true)
 
     fun consumeMessage() {
         state.update { it.copy(message = null) }
@@ -80,7 +89,7 @@ class HorizonViewModel(
     }
 
     fun refreshOverview() =
-        fetch("overview", { load() }, { it.overview }) { s, v ->
+        fetch("overview", { horizon.overview() }, { it.overview }) { s, v ->
             if (v.value != null &&
                 s.subscriptionId != null &&
                 v.value.subscriptions.none { it.id == s.subscriptionId }
@@ -94,7 +103,7 @@ class HorizonViewModel(
 
     fun refreshPurchases() =
         fetch("purchases", {
-            getPurchases()
+            horizon.purchases()
         }, { it.purchases }) { s, v -> s.copy(purchases = v) }
 
     fun refreshTransactions(page: Int = saved["page"] ?: 1) {

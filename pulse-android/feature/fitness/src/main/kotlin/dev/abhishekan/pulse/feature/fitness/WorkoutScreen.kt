@@ -14,9 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -45,18 +43,19 @@ import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
+import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pagePadding
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun WorkoutRoute(
     onDeleted: () -> Unit,
-    onDraftChanged: (Boolean) -> Unit,
     viewModel: WorkoutViewModel = koinViewModel(),
-    onEditorTitleChanged: (String?) -> Unit = {},
+    backLabel: String? = null,
 ) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) { viewModel.refresh() }
@@ -73,10 +72,6 @@ fun WorkoutRoute(
                 },
             )
         }
-    LaunchedEffect(editorTitle) { onEditorTitleChanged(editorTitle) }
-    DisposableEffect(Unit) {
-        onDispose { onEditorTitleChanged(null) }
-    }
     PulseSnackbarEffect(state.message.takeUnless { state.needsReview }, viewModel::consumeMessage)
     var discard by rememberSaveable { mutableStateOf(false) }
     val close = {
@@ -92,30 +87,34 @@ fun WorkoutRoute(
     }
     BackHandler(enabled = state.editor != null || state.busy) { close() }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
-    LaunchedEffect(state.editor?.dirty) { onDraftChanged(state.editor?.dirty == true) }
     LaunchedEffect(state.deleted) { if (state.deleted) onDeleted() }
-    key(timeZone) {
-        WorkoutScreen(
-            state,
-            {
-                viewModel.refresh()
-            },
-            viewModel::edit,
-            viewModel::removeWorkout,
-            viewModel::removeExercise,
-            viewModel::acknowledgeReview,
-            viewModel::nameChanged,
-            viewModel::setChanged,
-            viewModel::addSet,
-            viewModel::removeSet,
-            viewModel::choose,
-            viewModel::clearMatch,
-            viewModel::findMatches,
-            viewModel::rememberAlias,
-            viewModel::save,
-            close,
-            onSearchQuery = viewModel::searchCatalogue,
-        )
+    PulseScreenScaffold(
+        title = editorTitle ?: stringResource(R.string.pulse_fitness_workout_title),
+        backLabel = if (state.editor != null) stringResource(R.string.pulse_fitness_back_to_workout) else backLabel,
+    ) {
+        key(timeZone) {
+            WorkoutScreen(
+                state,
+                {
+                    viewModel.refresh()
+                },
+                viewModel::edit,
+                viewModel::removeWorkout,
+                viewModel::removeExercise,
+                viewModel::acknowledgeReview,
+                viewModel::nameChanged,
+                viewModel::setChanged,
+                viewModel::addSet,
+                viewModel::removeSet,
+                viewModel::choose,
+                viewModel::clearMatch,
+                viewModel::findMatches,
+                viewModel::rememberAlias,
+                viewModel::save,
+                close,
+                onSearchQuery = viewModel::searchCatalogue,
+            )
+        }
     }
     if (discard) {
         PulseDialog(

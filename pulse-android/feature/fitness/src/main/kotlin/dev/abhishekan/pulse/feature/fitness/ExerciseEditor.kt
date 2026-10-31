@@ -38,8 +38,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
-import dev.abhishekan.pulse.core.domain.model.ExerciseInput
-import dev.abhishekan.pulse.core.domain.model.ExerciseSetInput
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -87,16 +85,7 @@ internal fun ExerciseEditor(
         onSearchQuery(query)
         selector = true
     }
-    val valid =
-        draft.sets.none { it.weight.isNotBlank() && it.weight.trim().toBigDecimalOrNull() == null } &&
-            ExerciseInput(
-                draft.name,
-                draft.sets.map {
-                    ExerciseSetInput(it.reps.toIntOrNull() ?: 0, it.weight.trim().toBigDecimalOrNull())
-                },
-                draft.catalogId,
-                draft.rememberAlias,
-            ).issue == null
+    val valid = draft.issue == null
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
         Crossfade(

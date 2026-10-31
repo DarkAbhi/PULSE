@@ -3,8 +3,6 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.domain.repository.PreferencesRepository
-import dev.abhishekan.pulse.core.domain.usecase.ObserveTheme
-import dev.abhishekan.pulse.core.domain.usecase.SetTheme
 import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.di.applicationModule
 import kotlinx.coroutines.Dispatchers
@@ -72,7 +70,10 @@ class AppearanceViewModelTest {
 
                     override suspend fun setTheme(theme: ThemePreference) = Outcome.Error(Failure.Storage)
                 }
-            val vm = AppearanceViewModel(ObserveTheme(preferences), SetTheme(preferences))
+            val vm =
+                AppearanceViewModel(
+                    preferences,
+                )
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.collect {} }
             vm.selectTheme(ThemePreference.Dark)
             runCurrent()

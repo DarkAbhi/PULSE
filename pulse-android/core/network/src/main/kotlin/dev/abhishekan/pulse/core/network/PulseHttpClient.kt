@@ -15,11 +15,14 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.http.ContentType
-import io.ktor.http.HttpHeaders
 import io.ktor.http.Url
 import io.ktor.http.contentType
+import io.ktor.http.encodedPath
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.util.AttributeKey
 import kotlinx.serialization.json.Json
+
+internal val SkipHttpLogging = AttributeKey<Unit>("PulseSkipHttpLogging")
 
 fun pulseHttpClient(
     config: NetworkConfig,
@@ -50,19 +53,15 @@ fun pulseHttpClient(
                             logger(message)
                         }
                     }
-                level = LogLevel.ALL
+                level = LogLevel.INFO
                 val api = Url(config.baseUrl)
                 // Signed storage URLs must never appear in logs.
                 filter {
-                    it.url.protocol == api.protocol &&
+                    !it.attributes.contains(SkipHttpLogging) &&
+                        it.url.protocol == api.protocol &&
                         it.url.host == api.host &&
-                        it.url.port == api.port
-                }
-                sanitizeHeader {
-                    it.equals(HttpHeaders.Authorization, ignoreCase = true) ||
-                        it.equals(HttpHeaders.Cookie, ignoreCase = true) ||
-                        it.equals(HttpHeaders.SetCookie, ignoreCase = true) ||
-                        it.equals(HttpHeaders.Location, ignoreCase = true)
+                        it.url.port == api.port &&
+                        it.url.encodedPath.startsWith(api.encodedPath)
                 }
             }
         }

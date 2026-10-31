@@ -4,9 +4,7 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Notification
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
-import dev.abhishekan.pulse.core.domain.usecase.ClearNotifications
 import dev.abhishekan.pulse.core.domain.usecase.DismissNotification
-import dev.abhishekan.pulse.core.domain.usecase.GetNotificationCenter
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -58,7 +56,11 @@ class NotificationsViewModelTest {
     private fun vm(
         repo: Repo,
         saved: SavedStateHandle = SavedStateHandle(),
-    ) = NotificationsViewModel(GetNotificationCenter(repo), DismissNotification(repo), ClearNotifications(repo), saved)
+    ) = NotificationsViewModel(
+        repo,
+        DismissNotification(repo),
+        saved,
+    )
 
     @Test fun loadingFailureAndRetryDoNotInventAnEmptyHistory() =
         runTest {

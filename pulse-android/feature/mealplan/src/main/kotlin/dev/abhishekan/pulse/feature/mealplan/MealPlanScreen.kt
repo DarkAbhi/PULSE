@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,18 +54,20 @@ import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseFloatingActionButton
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
+import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MealPlanRoute(
-    onDraftChanged: (Boolean) -> Unit,
     viewModel: MealPlanViewModel = koinViewModel(),
+    backLabel: String? = null,
 ) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) {
@@ -75,10 +76,11 @@ fun MealPlanRoute(
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
-    LaunchedEffect(state.draft?.dirty) { onDraftChanged(state.draft?.dirty == true) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
-    key(timeZone) {
-        MealPlanScreen(state, viewModel)
+    PulseScreenScaffold(title = "", showTopBar = backLabel != null, backLabel = backLabel) {
+        key(timeZone) {
+            MealPlanScreen(state, viewModel)
+        }
     }
 }
 
@@ -354,9 +356,12 @@ internal fun MealPlanScreen(
                     )
                 }
             }
-            if (state.times.loading && state.times.value == null &&
-                ((state.managing && (state.draft == null || records)) ||
-                    (state.draft != null && !records && !state.draft.timeForm))
+            if (state.times.loading &&
+                state.times.value == null &&
+                (
+                    (state.managing && (state.draft == null || records)) ||
+                        (state.draft != null && !records && !state.draft.timeForm)
+                )
             ) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     PulseLoadingState(

@@ -8,8 +8,6 @@ import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.domain.usecase.ChangePassword
 import dev.abhishekan.pulse.core.domain.usecase.CreateAPIKey
-import dev.abhishekan.pulse.core.domain.usecase.GetAPIKeys
-import dev.abhishekan.pulse.core.domain.usecase.GetAccountProfile
 import dev.abhishekan.pulse.core.domain.usecase.RevokeAPIKey
 import dev.abhishekan.pulse.core.domain.usecase.SaveProfileCurrency
 import dev.abhishekan.pulse.core.domain.usecase.SaveProfileName
@@ -116,16 +114,30 @@ class ProfileViewModelTest {
         repo: Repo,
         saved: SavedStateHandle = SavedStateHandle(),
     ) = ProfileViewModel(
-        GetAccountProfile(repo),
+        repo,
         SaveProfileName(repo),
         ChangePassword(repo),
-        GetAPIKeys(repo),
         CreateAPIKey(repo),
         RevokeAPIKey(repo),
         saved,
         SaveProfileCurrency(repo),
         SaveProfileTimeZone(repo),
     )
+
+    @Test fun navigationRequestDoesNotReopenTheNameEditorAfterRecreation() =
+        runTest {
+            val repo = Repo()
+            val saved = SavedStateHandle()
+            val first = vm(repo, saved)
+            runCurrent()
+            first.openInitialNameEditor()
+            assertEquals(AccountEditor.Name, first.uiState.value.editor)
+            first.closeEditor()
+            val recreated = vm(repo, saved)
+            runCurrent()
+            recreated.openInitialNameEditor()
+            assertNull(recreated.uiState.value.editor)
+        }
 
     @Test fun currencySavePreservesProfileAndFailureKeepsPreference() =
         runTest {

@@ -5,8 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.model.Outcome
-import dev.abhishekan.pulse.core.domain.usecase.GetFitnessOverview
-import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
+import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.usecase.RecordWorkout
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.Job
@@ -20,9 +19,8 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 class FitnessViewModel(
-    private val getOverview: GetFitnessOverview,
+    private val fitness: FitnessRepository,
     private val record: RecordWorkout,
-    changes: ObserveFitnessChanges,
     private val saved: SavedStateHandle,
     private val clock: Clock,
 ) : ViewModel() {
@@ -51,7 +49,7 @@ class FitnessViewModel(
     init {
         refresh()
         viewModelScope.launch {
-            changes().drop(1).collect { if (!state.value.busy) refresh(force = true) }
+            fitness.changes.drop(1).collect { if (!state.value.busy) refresh(force = true) }
         }
     }
 
@@ -103,7 +101,7 @@ class FitnessViewModel(
 
     private suspend fun load(): Boolean {
         state.update { it.copy(loading = true, error = null, reviewReady = false) }
-        return when (val result = getOverview()) {
+        return when (val result = fitness.overview()) {
             is Outcome.Success -> {
                 state.update {
                     it.copy(overview = result.value, loading = false, reviewReady = it.needsReview)

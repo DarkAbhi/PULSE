@@ -8,7 +8,6 @@ import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
 import dev.abhishekan.pulse.core.domain.usecase.ApplyMealChange
-import dev.abhishekan.pulse.core.domain.usecase.GetMealTimes
 import dev.abhishekan.pulse.core.domain.usecase.GetMealWeek
 import dev.abhishekan.pulse.core.domain.usecase.MealCalendar
 import dev.abhishekan.pulse.core.domain.usecase.SetMealConsumed
@@ -111,7 +110,7 @@ class MealPlanViewModelTest {
     private fun vm(saved: SavedStateHandle = SavedStateHandle()) =
         MealPlanViewModel(
             GetMealWeek(repo),
-            GetMealTimes(repo),
+            repo,
             ApplyMealChange(repo),
             SetMealConsumed(repo),
             calendar,

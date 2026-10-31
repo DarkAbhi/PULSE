@@ -9,7 +9,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
@@ -18,8 +17,10 @@ import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenuItem
 import dev.abhishekan.pulse.core.ui.components.PulseText
 
 @Composable
-fun NotificationsTopBarActions(viewModel: NotificationsViewModel) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+internal fun NotificationsTopBarActions(
+    state: NotificationsUiState,
+    onClear: () -> Unit,
+) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     var confirmation by rememberSaveable { mutableStateOf(false) }
     val canClear = state.items.isNotEmpty() && !state.busy && !state.loading && !state.uncertain
@@ -49,7 +50,7 @@ fun NotificationsTopBarActions(viewModel: NotificationsViewModel) {
             stringResource(R.string.pulse_notifications_clear),
             {
                 confirmation = false
-                if (canClear) viewModel.clearAll()
+                if (canClear) onClear()
             },
             { confirmation = false },
         )

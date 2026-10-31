@@ -6,33 +6,35 @@ import dev.abhishekan.pulse.core.domain.model.CreatedAPIKey
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.Profile
+import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.domain.usecase.AccountValidation
 import dev.abhishekan.pulse.core.domain.usecase.ChangePassword
 import dev.abhishekan.pulse.core.domain.usecase.CreateAPIKey
-import dev.abhishekan.pulse.core.domain.usecase.GetAPIKeys
-import dev.abhishekan.pulse.core.domain.usecase.GetAccountProfile
 import dev.abhishekan.pulse.core.domain.usecase.RevokeAPIKey
 import dev.abhishekan.pulse.core.domain.usecase.SaveProfileCurrency
 import dev.abhishekan.pulse.core.domain.usecase.SaveProfileName
 import dev.abhishekan.pulse.core.domain.usecase.SaveProfileTimeZone
+import dev.abhishekan.pulse.core.ui.DraftSource
+import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ProfileViewModel(
-    private val getProfile: GetAccountProfile,
+    private val profile: ProfileRepository,
     private val saveName: SaveProfileName,
     private val password: ChangePassword,
-    private val getKeys: GetAPIKeys,
     private val createKey: CreateAPIKey,
     private val revokeKey: RevokeAPIKey,
     private val saved: SavedStateHandle,
     private val saveCurrency: SaveProfileCurrency,
     private val saveTimeZone: SaveProfileTimeZone,
+    unsavedChanges: UnsavedChanges = UnsavedChanges(),
 ) : ViewModel() {
     private val state =
         MutableStateFlow(
@@ -67,6 +69,17 @@ class ProfileViewModel(
         )
     val uiState = state.asStateFlow()
 
+    init {
+        unsavedChanges.track(
+            DraftSource.Profile,
+            state.map {
+                it.editor == AccountEditor.Password &&
+                    listOf(it.passwords.current, it.passwords.next, it.passwords.confirmation).any(String::isNotEmpty)
+            },
+            viewModelScope,
+        )
+    }
+
     fun consumeMessage() {
         state.update { it.copy(message = null) }
     }
@@ -85,7 +98,7 @@ class ProfileViewModel(
         state.update { it.copy(loading = true, profileError = null) }
         profileJob =
             viewModelScope.launch {
-                when (val result = getProfile()) {
+                when (val result = profile.profile()) {
                     is Outcome.Success -> state.update { it.copy(profile = result.value, loading = false) }
                     is Outcome.Error -> state.update { it.copy(profileError = result.failure, loading = false) }
                 }
@@ -98,7 +111,7 @@ class ProfileViewModel(
         state.update { it.copy(keysLoading = true, keysError = null) }
         keysJob =
             viewModelScope.launch {
-                when (val result = getKeys()) {
+                when (val result = profile.keys()) {
                     is Outcome.Success -> state.update { it.copy(keys = result.value, keysLoading = false, keysLoaded = true) }
                     is Outcome.Error -> state.update { it.copy(keysLoading = false, keysError = result.failure) }
                 }
@@ -135,6 +148,12 @@ class ProfileViewModel(
         saved.remove<String>("pending")
         saved.remove<Boolean>("tokenNeedsReview")
         state.update { it.copy(uncertain = false, passwordUncertain = false, message = null, error = null) }
+    }
+
+    fun openInitialNameEditor() {
+        if (saved.get<Boolean>("initialNameEditorConsumed") == true) return
+        saved["initialNameEditorConsumed"] = true
+        edit(AccountEditor.Name)
     }
 
     fun edit(editor: AccountEditor) {

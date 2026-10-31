@@ -345,4 +345,6 @@
     <string name="pulse_horizon_category_type_action">Add category type</string>
     <string name="pulse_horizon_budgets_heading">Budgets</string>
     <string name="pulse_horizon_obligations_heading">Obligations</string>
+    <string name="pulse_horizon_screen_title">"Financial Horizon"</string>
+    <string name="pulse_horizon_back_to_horizon">Back to Financial Horizon</string>
 </resources>

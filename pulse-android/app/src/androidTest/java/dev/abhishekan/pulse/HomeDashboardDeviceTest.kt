@@ -34,6 +34,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.math.BigDecimal
+import java.time.Instant
 
 class HomeDashboardDeviceTest {
     @get:Rule val compose = createComposeRule()
@@ -67,6 +68,7 @@ class HomeDashboardDeviceTest {
                         {},
                         {},
                         {},
+                        now = Instant.parse("2026-10-16T12:00:00Z"),
                     )
                 }
             }
@@ -94,7 +96,7 @@ class HomeDashboardDeviceTest {
         val current = mutableStateOf(state)
         compose.setContent {
             PulseTheme(false) {
-                HomeScreen("fixture", current.value, {}, {}, {}, {}, {}, {})
+                HomeScreen("fixture", current.value, {}, {}, {}, {}, {}, {}, now = Instant.parse("2026-10-16T12:00:00Z"))
             }
         }
         compose.runOnIdle { current.value = state.copy(refreshing = setOf("workout", "horizon")) }
@@ -113,7 +115,7 @@ class HomeDashboardDeviceTest {
         var opened = 0
         compose.setContent {
             PulseTheme(false) {
-                HomeScreen("fixture", current.value, {}, {}, {}, {}, {}, { opened++ })
+                HomeScreen("fixture", current.value, {}, {}, {}, {}, {}, { opened++ }, now = Instant.parse("2026-10-16T12:00:00Z"))
             }
         }
         compose.onNodeWithTag("dashboard-notification-badge", useUnmergedTree = true).assertDoesNotExist()
@@ -136,7 +138,7 @@ class HomeDashboardDeviceTest {
         compose.setContent {
             PulseTheme(false) {
                 Box(Modifier.requiredWidth(width.value).fillMaxHeight()) {
-                    HomeScreen("fixture", state, {}, {}, {}, {}, {}, {})
+                    HomeScreen("fixture", state, {}, {}, {}, {}, {}, {}, now = Instant.parse("2026-10-16T12:00:00Z"))
                 }
             }
         }
@@ -160,7 +162,22 @@ class HomeDashboardDeviceTest {
         var profile = 0
         compose.setContent {
             PulseTheme(false) {
-                HomeScreen("fixture", state, {}, {}, {}, { horizon++ }, { fitness++ }, { notifications++ }, { profile++ })
+                HomeScreen(
+                    "fixture",
+                    state,
+                    {
+                    },
+                    {},
+                    {},
+                    { horizon++ },
+                    { fitness++ },
+                    { notifications++ },
+                    { profile++ },
+                    now =
+                        Instant.parse(
+                            "2026-10-16T12:00:00Z",
+                        ),
+                )
             }
         }
         compose.onNodeWithTag("dashboard-greeting").assertIsDisplayed()

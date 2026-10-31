@@ -21,7 +21,9 @@ class PullRefreshTracker {
         action()
     }
 
-    internal fun finish() { requested = false }
+    internal fun finish() {
+        requested = false
+    }
 }
 
 @Composable

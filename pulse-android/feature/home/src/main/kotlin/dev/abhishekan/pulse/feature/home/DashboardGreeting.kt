@@ -24,7 +24,6 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,9 +43,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.repeatOnLifecycle
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -54,7 +50,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
-import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -69,19 +64,11 @@ internal fun DashboardGreeting(
     onNotifications: () -> Unit,
     onProfile: (() -> Unit)?,
     notificationCount: Int = 0,
+    now: Instant,
 ) {
     val darkTheme = PulseTheme.isDark
     val greetingInk = if (darkTheme) Color.White else Color(0xFF191633)
     val greetingMuted = if (darkTheme) Color.White.copy(alpha = 0.85f) else Color(0xFF605C78)
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val now by produceState(Instant.now(), lifecycle) {
-        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            while (true) {
-                value = Instant.now()
-                delay(60_000 - value.toEpochMilli() % 60_000)
-            }
-        }
-    }
     Box(
         Modifier
             .fillMaxWidth()

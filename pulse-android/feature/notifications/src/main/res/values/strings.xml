@@ -15,4 +15,5 @@
     <string name="pulse_notifications_loading">"Loading notifications"</string>
     <string name="pulse_notifications_uncertain">"We couldn’t confirm the change. The last confirmed list is preserved until refresh succeeds. Review server notifications before another change."</string>
     <string name="pulse_notifications_reviewed">"I reviewed the server notifications"</string>
+    <string name="pulse_notifications_screen_title">"Notifications"</string>
 </resources>

@@ -43,6 +43,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
 import org.koin.androidx.compose.koinViewModel
+import java.time.Instant
 
 @Composable
 fun HomeRoute(
@@ -63,6 +64,7 @@ fun HomeRoute(
         viewModel.retryHorizon()
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val now by viewModel.now.collectAsStateWithLifecycle()
     val profile = (state.profile as? Section.Content)?.value
     LaunchedEffect(profile) { if (profile?.hasProfile == false) onMissingProfile() }
     // Refresh today after returning to the app.
@@ -81,6 +83,7 @@ fun HomeRoute(
             onFitness,
             onNotifications,
             onProfile,
+            now = now,
         )
     }
 }
@@ -96,6 +99,7 @@ fun HomeScreen(
     onFitness: () -> Unit,
     onNotifications: () -> Unit,
     onProfile: (() -> Unit)? = null,
+    now: Instant,
 ) {
     val colors = PulseTheme.colors
     Box(Modifier.fillMaxSize().background(colors.background).testTag("dashboard-background")) {
@@ -118,6 +122,7 @@ fun HomeScreen(
                     onNotifications = onNotifications,
                     onProfile = onProfile,
                     notificationCount = state.notificationCount,
+                    now = now,
                 )
                 when (val profile = state.profile) {
                     is Section.Error -> {

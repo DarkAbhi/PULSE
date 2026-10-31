@@ -7,31 +7,35 @@ import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.garageVehicleKinds
+import dev.abhishekan.pulse.core.domain.repository.GarageRepository
 import dev.abhishekan.pulse.core.domain.usecase.ApplyGarageChange
 import dev.abhishekan.pulse.core.domain.usecase.DownloadGarageReceipt
 import dev.abhishekan.pulse.core.domain.usecase.GetVehicleHistory
-import dev.abhishekan.pulse.core.domain.usecase.GetVehicles
 import dev.abhishekan.pulse.core.domain.usecase.SearchVehicleCatalog
 import dev.abhishekan.pulse.core.domain.usecase.UploadGarageReceipt
+import dev.abhishekan.pulse.core.ui.DraftSource
 import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.DateTimeException
 
 class GarageViewModel(
-    private val getVehicles: GetVehicles,
+    private val garage: GarageRepository,
     private val getHistory: GetVehicleHistory,
     private val apply: ApplyGarageChange,
     private val uploadReceipt: UploadGarageReceipt,
     private val downloadReceipt: DownloadGarageReceipt,
     private val saved: SavedStateHandle,
     private val searchCatalog: SearchVehicleCatalog,
+    unsavedChanges: UnsavedChanges = UnsavedChanges(),
 ) : ViewModel() {
     private val state =
         MutableStateFlow(
@@ -47,6 +51,10 @@ class GarageViewModel(
             ),
         )
     val uiState = state.asStateFlow()
+
+    init {
+        unsavedChanges.track(DraftSource.Garage, state.map { it.draft?.dirty == true }, viewModelScope)
+    }
 
     fun consumeMessage() {
         state.update { it.copy(message = null) }
@@ -76,7 +84,7 @@ class GarageViewModel(
         state.update { it.copy(vehicles = it.vehicles.copy(loading = true, error = null)) }
         listJob =
             viewModelScope.launch {
-                when (val result = getVehicles()) {
+                when (val result = garage.vehicles()) {
                     is Outcome.Error ->
                         state.update {
                             it.copy(vehicles = it.vehicles.copy(loading = false, error = result.failure))

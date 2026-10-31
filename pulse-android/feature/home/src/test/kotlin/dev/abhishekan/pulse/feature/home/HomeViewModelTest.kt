@@ -21,13 +21,6 @@ import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
-import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
-import dev.abhishekan.pulse.core.domain.usecase.GetNotificationCount
-import dev.abhishekan.pulse.core.domain.usecase.GetProfile
-import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
-import dev.abhishekan.pulse.core.domain.usecase.ObserveDashboardChanges
-import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
-import dev.abhishekan.pulse.core.domain.usecase.ObserveHorizonChanges
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.currencyText
 import kotlinx.coroutines.CompletableDeferred
@@ -45,8 +38,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -123,7 +118,6 @@ class HomeViewModelTest {
             var profileCalls = 0
             var workoutCalls = 0
             var workoutRecorded = false
-            var notificationCalls = 0
             var horizonFails = true
             val repository =
                 object : DashboardRepository {
@@ -145,23 +139,17 @@ class HomeViewModelTest {
                                 Horizon("₹", BigDecimal("100.00"), BigDecimal("12.50"), BigDecimal("87.50")),
                             )
                         }
-
-                    override suspend fun notifications(): Outcome<List<Notification>> {
-                        notificationCalls++
-                        return Outcome.Success(listOf(Notification(1, "An update", null, null)))
-                    }
                 }
             val vm =
                 HomeViewModel(
-                    GetProfile(repository),
-                    GetWorkoutToday(repository),
-                    GetHorizon(repository),
-                    ObserveFitnessChanges(fitness),
-                    ObserveHorizonChanges(horizon),
-                    ObserveDashboardChanges(repository),
-                    GetNotificationCount(notifications),
+                    repository,
+                    fitness,
+                    horizon,
+                    notifications,
+                    clock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
                 )
             models.put("home", vm)
+            assertEquals(Instant.EPOCH, vm.now.value)
             runCurrent()
             assertEquals(Section.Loading, vm.uiState.value.profile)
             assertEquals(Section.Empty, vm.uiState.value.workout)
@@ -173,7 +161,6 @@ class HomeViewModelTest {
             vm.retryHorizon()
             runCurrent()
             assertTrue(vm.uiState.value.horizon is Section.Content)
-            assertEquals(0, notificationCalls)
             // The badge uses the complete notification center, not the five-item dashboard preview.
             notificationResult = Outcome.Success(List(12) { Notification(it.toLong() + 1, "Update", null, null) })
             vm.refreshNotificationCount()
@@ -211,7 +198,6 @@ class HomeViewModelTest {
             runCurrent()
             assertTrue("workout" !in vm.uiState.value.refreshing)
             assertEquals(3, workoutCalls)
-            assertEquals(0, notificationCalls)
         }
 
     @Test fun dashboardClockUsesUtcByDefault() {

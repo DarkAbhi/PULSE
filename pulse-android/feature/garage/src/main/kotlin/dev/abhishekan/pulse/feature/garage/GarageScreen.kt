@@ -9,6 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,10 +33,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.GarageChange
@@ -60,23 +62,22 @@ import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
+import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun GarageRoute(
-    onDraftChanged: (Boolean) -> Unit,
     viewModel: GarageViewModel = koinViewModel(),
     initialVehicle: Long? = null,
-    onDetailChanged: (Boolean) -> Unit = {},
-    onTitleChanged: (String?) -> Unit = {},
-    tabsInAppBar: Boolean = false,
+    backLabel: String? = null,
 ) {
     val currency by UserCurrency.changes
         .collectAsStateWithLifecycle()
@@ -127,8 +128,6 @@ fun GarageRoute(
             downloadRecord = null
             downloadReceipt = null
         }
-    LaunchedEffect(state.draft?.dirty) { onDraftChanged(state.draft?.dirty == true) }
-    LaunchedEffect(state.vehicle) { onDetailChanged(state.vehicle != null) }
     val vehicleTitle =
         if (state.vehicle != null) {
             state.history.value?.name ?: state.vehicles.value
@@ -137,7 +136,6 @@ fun GarageRoute(
         } else {
             null
         }
-    LaunchedEffect(vehicleTitle) { onTitleChanged(vehicleTitle) }
     LaunchedEffect(state.openUri) {
         state.openUri?.let { uri ->
             try {
@@ -162,39 +160,59 @@ fun GarageRoute(
             viewModel.opened()
         }
     }
-    key(timeZone, currency) {
-        GarageScreen(state, viewModel, { record ->
-            pickerVehicle = state.vehicle
-            pickerRecord = record
-            try {
-                pick.launch(arrayOf("*/*"))
-            } catch (
-                _: ActivityNotFoundException,
-            ) {
-                viewModel.fileMessage(
-                    uiText(R.string.pulse_garage_a_system_file_picker_is_unavailable_on_this_device),
-                )
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val tabsInAppBar = maxWidth >= 1100.dp && LocalDensity.current.fontScale <= 1.3f && state.vehicle != null && state.draft == null
+        PulseScreenScaffold(
+            title = vehicleTitle ?: if (backLabel != null) "" else stringResource(R.string.pulse_garage_screen_title),
+            showTopBar = state.draft?.kind != GarageForm.Vehicle && (state.vehicle != null || backLabel != null),
+            backLabel = backLabel ?: stringResource(R.string.pulse_garage_back_to_collection),
+            actions = {
+                if (tabsInAppBar) {
+                    PulseSegmentedTabs(
+                        labels = GarageTab.entries.map { stringResource(it.label) },
+                        selectedIndex = state.tab.ordinal,
+                        onSelect = { viewModel.tab(GarageTab.entries[it]) },
+                        modifier = Modifier.padding(end = PulseTokens.cardPadding),
+                        enabled = !state.busy,
+                    )
+                }
+            },
+        ) {
+            key(timeZone, currency) {
+                GarageScreen(state, viewModel, { record ->
+                    pickerVehicle = state.vehicle
+                    pickerRecord = record
+                    try {
+                        pick.launch(arrayOf("*/*"))
+                    } catch (
+                        _: ActivityNotFoundException,
+                    ) {
+                        viewModel.fileMessage(
+                            uiText(R.string.pulse_garage_a_system_file_picker_is_unavailable_on_this_device),
+                        )
+                    }
+                }, { record, receipt ->
+                    downloadVehicle = state.vehicle
+                    downloadRecord = record
+                    downloadReceipt =
+                        arrayListOf(
+                            receipt.id.toString(),
+                            receipt.name,
+                            receipt.contentType,
+                            receipt.size.toString(),
+                        )
+                    try {
+                        download.launch(receipt.name)
+                    } catch (
+                        _: ActivityNotFoundException,
+                    ) {
+                        viewModel.fileMessage(
+                            uiText(R.string.pulse_garage_a_system_document_picker_is_unavailable_on_this_device),
+                        )
+                    }
+                }, tabsInAppBar = tabsInAppBar)
             }
-        }, { record, receipt ->
-            downloadVehicle = state.vehicle
-            downloadRecord = record
-            downloadReceipt =
-                arrayListOf(
-                    receipt.id.toString(),
-                    receipt.name,
-                    receipt.contentType,
-                    receipt.size.toString(),
-                )
-            try {
-                download.launch(receipt.name)
-            } catch (
-                _: ActivityNotFoundException,
-            ) {
-                viewModel.fileMessage(
-                    uiText(R.string.pulse_garage_a_system_document_picker_is_unavailable_on_this_device),
-                )
-            }
-        }, tabsInAppBar = tabsInAppBar)
+        }
     }
 }
 

@@ -113,9 +113,8 @@ class PersistentSessionCookies(
         cookie: Cookie,
     ) = mutex.withLock {
         if (cookie.name != "life_session" || origin(requestUrl) != origin) return@withLock
-        if (cookie.domain != null &&
-            cookie.domain!!.removePrefix(".").lowercase() != host
-        ) {
+        val domain = cookie.domain
+        if (domain != null && domain.removePrefix(".").lowercase() != host) {
             return@withLock
         }
         if (cookie.secure && requestUrl.protocol.name != "https") return@withLock

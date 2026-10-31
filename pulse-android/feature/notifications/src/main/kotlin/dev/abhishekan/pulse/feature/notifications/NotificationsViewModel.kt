@@ -5,9 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Notification
 import dev.abhishekan.pulse.core.domain.model.Outcome
-import dev.abhishekan.pulse.core.domain.usecase.ClearNotifications
+import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import dev.abhishekan.pulse.core.domain.usecase.DismissNotification
-import dev.abhishekan.pulse.core.domain.usecase.GetNotificationCenter
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
@@ -29,9 +28,8 @@ data class NotificationsUiState(
 )
 
 class NotificationsViewModel(
-    private val get: GetNotificationCenter,
+    private val notifications: NotificationsRepository,
     private val dismiss: DismissNotification,
-    private val clear: ClearNotifications,
     private val saved: SavedStateHandle,
 ) : ViewModel() {
     private val state =
@@ -58,7 +56,7 @@ class NotificationsViewModel(
         state.update { it.copy(loading = true, failure = null, reviewed = false) }
         load =
             viewModelScope.launch {
-                when (val result = get()) {
+                when (val result = notifications.list()) {
                     is Outcome.Success -> state.update { it.copy(items = result.value, loading = false, loaded = true, reviewed = true) }
                     is Outcome.Error -> state.update { it.copy(loading = false, failure = result.failure) }
                 }
@@ -80,7 +78,7 @@ class NotificationsViewModel(
         state.update { it.copy(busy = true, message = null) }
         saved["pending"] = true
         viewModelScope.launch {
-            val result = if (id == null) clear() else dismiss.invoke(id)
+            val result = if (id == null) notifications.clear() else dismiss.invoke(id)
             when (result) {
                 is Outcome.Success -> {
                     saved.remove<Boolean>("pending")

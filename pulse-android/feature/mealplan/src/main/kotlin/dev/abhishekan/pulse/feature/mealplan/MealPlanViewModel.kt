@@ -5,18 +5,21 @@ import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.MealChange
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
+import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
 import dev.abhishekan.pulse.core.domain.usecase.ApplyMealChange
-import dev.abhishekan.pulse.core.domain.usecase.GetMealTimes
 import dev.abhishekan.pulse.core.domain.usecase.GetMealWeek
 import dev.abhishekan.pulse.core.domain.usecase.MealCalendar
 import dev.abhishekan.pulse.core.domain.usecase.SetMealConsumed
+import dev.abhishekan.pulse.core.ui.DraftSource
 import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.DateTimeException
@@ -24,11 +27,12 @@ import java.time.LocalDate
 
 class MealPlanViewModel(
     private val getWeek: GetMealWeek,
-    private val getTimes: GetMealTimes,
+    private val mealPlan: MealPlanRepository,
     private val apply: ApplyMealChange,
     private val setConsumed: SetMealConsumed,
     private val calendar: MealCalendar,
     private val saved: SavedStateHandle,
+    unsavedChanges: UnsavedChanges = UnsavedChanges(),
 ) : ViewModel() {
     private val initialDay =
         saved.get<String>("selected")?.let(LocalDate::parse) ?: calendar.today()
@@ -45,6 +49,10 @@ class MealPlanViewModel(
             ),
         )
     val uiState = state.asStateFlow()
+
+    init {
+        unsavedChanges.track(DraftSource.MealPlan, state.map { it.draft?.dirty == true }, viewModelScope)
+    }
 
     fun consumeMessage() {
         state.update { it.copy(message = null) }
@@ -93,7 +101,7 @@ class MealPlanViewModel(
         state.update { it.copy(times = it.times.copy(loading = true, error = null)) }
         timesJob =
             viewModelScope.launch {
-                when (val result = getTimes()) {
+                when (val result = mealPlan.times()) {
                     is Outcome.Success ->
                         state.update {
                             it.copy(times = MealSection(result.value, false))

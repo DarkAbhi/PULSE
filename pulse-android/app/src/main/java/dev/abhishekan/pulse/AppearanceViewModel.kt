@@ -4,8 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
-import dev.abhishekan.pulse.core.domain.usecase.ObserveTheme
-import dev.abhishekan.pulse.core.domain.usecase.SetTheme
+import dev.abhishekan.pulse.core.domain.repository.PreferencesRepository
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,19 +19,18 @@ data class AppearanceUiState(
 )
 
 class AppearanceViewModel(
-    observeTheme: ObserveTheme,
-    private val setTheme: SetTheme,
+    private val preferences: PreferencesRepository,
 ) : ViewModel() {
     private val error = MutableStateFlow<UiText?>(null)
     val uiState =
-        combine(observeTheme(), error) { theme, message ->
+        combine(preferences.theme, error) { theme, message ->
             AppearanceUiState(theme, message)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppearanceUiState())
 
     fun selectTheme(theme: ThemePreference) {
         viewModelScope.launch {
             error.value =
-                when (setTheme(theme)) {
+                when (preferences.setTheme(theme)) {
                     is Outcome.Success -> null
                     is Outcome.Error ->
                         uiText(

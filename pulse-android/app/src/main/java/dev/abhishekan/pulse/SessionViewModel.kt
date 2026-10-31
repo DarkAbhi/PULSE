@@ -4,18 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.SessionState
-import dev.abhishekan.pulse.core.domain.usecase.CheckSessionExpiry
-import dev.abhishekan.pulse.core.domain.usecase.ForgetSession
-import dev.abhishekan.pulse.core.domain.usecase.Logout
-import dev.abhishekan.pulse.core.domain.usecase.ObserveSession
-import dev.abhishekan.pulse.core.domain.usecase.RestoreSession
+import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.message
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
 
@@ -25,14 +24,12 @@ data class SessionOperation(
 )
 
 class SessionViewModel(
-    observe: ObserveSession,
-    private val restore: RestoreSession,
-    private val logout: Logout,
-    private val forget: ForgetSession,
-    private val checkExpiry: CheckSessionExpiry,
+    private val auth: AuthRepository,
     private val clock: Clock,
+    unsavedChanges: UnsavedChanges = UnsavedChanges(),
 ) : ViewModel() {
-    val session = observe()
+    val unsavedChanges = unsavedChanges.sources.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+    val session = auth.session
     private val mutableOperation = MutableStateFlow(SessionOperation())
     val operation = mutableOperation.asStateFlow()
     private var restoreJob: Job? = null
@@ -43,7 +40,7 @@ class SessionViewModel(
             session.collectLatest { state ->
                 if (state is SessionState.Authenticated) {
                     delay(maxOf(0, state.expiresAtMillis - clock.millis()))
-                    checkExpiry()
+                    auth.checkExpiry()
                 }
             }
         }
@@ -53,17 +50,17 @@ class SessionViewModel(
         if (restoreJob?.isActive !=
             true
         ) {
-            restoreJob = viewModelScope.launch { restore() }
+            restoreJob = viewModelScope.launch { auth.restore() }
         }
     }
 
     fun checkCurrentExpiry() {
-        viewModelScope.launch { checkExpiry() }
+        viewModelScope.launch { auth.checkExpiry() }
     }
 
-    fun logOut() = perform { logout() }
+    fun logOut() = perform { auth.logout() }
 
-    fun forgetSession() = perform { forget() }
+    fun forgetSession() = perform { auth.forget() }
 
     fun clearError() {
         mutableOperation.value = mutableOperation.value.copy(error = null)

@@ -2,7 +2,6 @@ package dev.abhishekan.pulse.core.data
 
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Horizon
-import dev.abhishekan.pulse.core.domain.model.Notification
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
@@ -14,7 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.JsonPrimitive
 import java.math.BigDecimal
-import java.time.Instant
 
 class PulseDashboardRepository(
     private val api: PulseApi,
@@ -59,22 +57,6 @@ class PulseDashboardRepository(
                 dto.remainingAmount.decimal(),
                 dto.deductions.decimal(),
             )
-        }
-
-    override suspend fun notifications(): Outcome<List<Notification>> =
-        fetch {
-            api.notifications().map {
-                require(it.id > 0 && it.title.isNotBlank())
-                Notification(
-                    it.id,
-                    it.title,
-                    it.body?.takeIf(String::isNotBlank),
-                    it.createdAt?.let(Instant::parse),
-                    it.source,
-                    it.priority,
-                    it.targetPath,
-                )
-            }
         }
 
     private fun JsonPrimitive.decimal(): BigDecimal {

@@ -18,7 +18,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,11 +54,13 @@ import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.pulseDescription
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -69,23 +70,26 @@ import dev.abhishekan.pulse.core.ui.R as CoreUiR
 fun FitnessRoute(
     onWorkout: (Long) -> Unit,
     viewModel: FitnessViewModel = koinViewModel(),
+    backLabel: String? = null,
 ) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.needsReview }, viewModel::consumeMessage)
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
-    key(timeZone) {
-        FitnessScreen(
-            state,
-            viewModel::select,
-            viewModel::shiftMonth,
-            viewModel::selectToday,
-            { viewModel.refresh() },
-            viewModel::recordSelected,
-            viewModel::acknowledgeReview,
-            onWorkout,
-        )
+    PulseScreenScaffold(title = "", showTopBar = backLabel != null, backLabel = backLabel) {
+        key(timeZone) {
+            FitnessScreen(
+                state,
+                viewModel::select,
+                viewModel::shiftMonth,
+                viewModel::selectToday,
+                { viewModel.refresh() },
+                viewModel::recordSelected,
+                viewModel::acknowledgeReview,
+                onWorkout,
+            )
+        }
     }
 }
 

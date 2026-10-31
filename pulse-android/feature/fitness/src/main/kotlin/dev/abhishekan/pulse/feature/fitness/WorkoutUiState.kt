@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.feature.fitness
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
+import dev.abhishekan.pulse.core.domain.model.ExerciseInput
+import dev.abhishekan.pulse.core.domain.model.ExerciseIssue
+import dev.abhishekan.pulse.core.domain.model.ExerciseSetInput
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
 import dev.abhishekan.pulse.core.ui.UiText
@@ -15,7 +18,21 @@ data class ExerciseDraft(
     val sets: List<SetDraft> = listOf(SetDraft()),
     val catalogId: String? = null,
     val rememberAlias: Boolean = false,
-)
+) {
+    val input get() =
+        ExerciseInput(
+            name,
+            sets.map { ExerciseSetInput(it.reps.toIntOrNull() ?: 0, it.weight.trim().toBigDecimalOrNull()) },
+            catalogId,
+            rememberAlias,
+        )
+    val issue get() =
+        if (sets.any { it.weight.isNotBlank() && it.weight.trim().toBigDecimalOrNull() == null }) {
+            ExerciseIssue.Weight
+        } else {
+            input.issue
+        }
+}
 
 data class ExerciseEditorState(
     val draft: ExerciseDraft,

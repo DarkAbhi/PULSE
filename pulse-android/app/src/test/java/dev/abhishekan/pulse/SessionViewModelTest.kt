@@ -4,11 +4,6 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
-import dev.abhishekan.pulse.core.domain.usecase.CheckSessionExpiry
-import dev.abhishekan.pulse.core.domain.usecase.ForgetSession
-import dev.abhishekan.pulse.core.domain.usecase.Logout
-import dev.abhishekan.pulse.core.domain.usecase.ObserveSession
-import dev.abhishekan.pulse.core.domain.usecase.RestoreSession
 import dev.abhishekan.pulse.core.ui.message
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -77,11 +72,7 @@ class SessionViewModelTest {
 
     private fun model(auth: Auth) =
         SessionViewModel(
-            ObserveSession(auth),
-            RestoreSession(auth),
-            Logout(auth),
-            ForgetSession(auth),
-            CheckSessionExpiry(auth),
+            auth,
             Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
         ).also {
             models.put("session", it)

@@ -10,9 +10,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.abhishekan.pulse.core.domain.model.HorizonChange
-import dev.abhishekan.pulse.core.domain.model.HorizonRecord
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
@@ -21,19 +18,20 @@ import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenu
 import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenuItem
 import dev.abhishekan.pulse.core.ui.components.PulseText
 
-/** Shares the navigation entry's ViewModel with the screen, including its draft safeguards. */
 @Composable
-fun HorizonTopBarActions(viewModel: HorizonViewModel) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
+internal fun HorizonTopBarActions(
+    state: HorizonUiState,
+    onDelete: (Long) -> Unit,
+) {
     if (state.draft?.kind == HorizonForm.Deduction) {
-        state.draft?.id?.let { ObligationTopBarActions(state, viewModel, it) }
+        state.draft.id?.let { ObligationTopBarActions(state, onDelete, it) }
     }
 }
 
 @Composable
 private fun ObligationTopBarActions(
     state: HorizonUiState,
-    viewModel: HorizonViewModel,
+    onDelete: (Long) -> Unit,
     id: Long,
 ) {
     var expanded by remember(id) { mutableStateOf(false) }
@@ -69,7 +67,7 @@ private fun ObligationTopBarActions(
             stringResource(R.string.pulse_horizon_delete),
             {
                 confirming = false
-                if (enabled) viewModel.mutate(HorizonChange.Delete(HorizonRecord.Deduction, id), closeDraft = true)
+                if (enabled) onDelete(id)
             },
             { confirming = false },
         )

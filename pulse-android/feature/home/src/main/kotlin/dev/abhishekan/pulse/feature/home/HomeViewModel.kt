@@ -3,36 +3,46 @@ package dev.abhishekan.pulse.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Outcome
-import dev.abhishekan.pulse.core.domain.usecase.GetHorizon
-import dev.abhishekan.pulse.core.domain.usecase.GetNotificationCount
-import dev.abhishekan.pulse.core.domain.usecase.GetProfile
-import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutToday
-import dev.abhishekan.pulse.core.domain.usecase.ObserveDashboardChanges
-import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
-import dev.abhishekan.pulse.core.domain.usecase.ObserveHorizonChanges
+import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
+import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
+import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
+import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Clock
 
 class HomeViewModel(
-    private val getProfile: GetProfile,
-    private val getWorkout: GetWorkoutToday,
-    private val getHorizon: GetHorizon,
-    changes: ObserveFitnessChanges,
-    horizonChanges: ObserveHorizonChanges,
-    dashboardChanges: ObserveDashboardChanges,
-    private val getNotificationCount: GetNotificationCount,
+    private val dashboard: DashboardRepository,
+    private val fitness: FitnessRepository,
+    private val horizon: HorizonRepository,
+    private val notifications: NotificationsRepository,
+    private val clock: Clock = Clock.systemUTC(),
 ) : ViewModel() {
+    // Align the header to each minute; stop ticking when the route has no collectors.
+    val now =
+        flow {
+            while (true) {
+                val instant = clock.instant()
+                emit(instant)
+                delay(60_000 - instant.toEpochMilli() % 60_000)
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), clock.instant())
+
     private val state = MutableStateFlow(HomeUiState())
     val uiState = state.asStateFlow()
     private val jobs = mutableMapOf<String, Job>()
 
     init {
         viewModelScope.launch {
-            dashboardChanges().drop(1).collect {
+            dashboard.changes.drop(1).collect {
                 jobs["profile"]?.cancel()
                 retryProfile()
             }
@@ -42,13 +52,13 @@ class HomeViewModel(
         retryHorizon()
         refreshNotificationCount()
         viewModelScope.launch {
-            horizonChanges().drop(1).collect {
+            horizon.changes.drop(1).collect {
                 jobs["horizon"]?.cancel()
                 retryHorizon()
             }
         }
         viewModelScope.launch {
-            changes().drop(1).collect {
+            fitness.changes.drop(1).collect {
                 jobs["workout"]?.cancel()
                 retryWorkout()
             }
@@ -59,8 +69,8 @@ class HomeViewModel(
         if (jobs["notifications"]?.isActive == true) return
         jobs["notifications"] =
             viewModelScope.launch {
-                when (val result = getNotificationCount()) {
-                    is Outcome.Success -> state.update { it.copy(notificationCount = result.value) }
+                when (val result = notifications.list()) {
+                    is Outcome.Success -> state.update { it.copy(notificationCount = result.value.size) }
                     is Outcome.Error -> Unit // Keep the last known count when a refresh fails.
                 }
             }
@@ -114,16 +124,16 @@ class HomeViewModel(
 
     fun retryProfile() =
         load("profile", {
-            getProfile()
+            dashboard.profile()
         }, { it.name == null && it.hasProfile }, { it.profile }) { state, value -> state.copy(profile = value) }
 
     fun retryWorkout() =
         load("workout", {
-            getWorkout()
+            dashboard.workout()
         }, { !it.visited }, { it.workout }) { state, value -> state.copy(workout = value) }
 
     fun retryHorizon() =
         load("horizon", {
-            getHorizon()
+            dashboard.horizon()
         }, { false }, { it.horizon }) { state, value -> state.copy(horizon = value) }
 }

@@ -1,7 +1,6 @@
 package dev.abhishekan.pulse.feature.fitness.di
 import dev.abhishekan.pulse.core.domain.usecase.DeleteExercise
 import dev.abhishekan.pulse.core.domain.usecase.DeleteWorkout
-import dev.abhishekan.pulse.core.domain.usecase.GetFitnessOverview
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutDetail
 import dev.abhishekan.pulse.core.domain.usecase.RecordWorkout
 import dev.abhishekan.pulse.core.domain.usecase.SaveExercise
@@ -14,7 +13,7 @@ import org.koin.dsl.module
 
 val fitnessModule =
     module {
-        factoryOf(::GetFitnessOverview)
+
         factoryOf(::GetWorkoutDetail)
         factoryOf(::RecordWorkout)
         factoryOf(::SearchExercises)

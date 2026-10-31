@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse.core.data
 import dev.abhishekan.pulse.core.domain.model.Failure
-import dev.abhishekan.pulse.core.domain.model.Notification
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.domain.model.SessionState
@@ -319,7 +318,6 @@ class AuthAndDashboardTest {
                 assertEquals("12345678901234567890.123456789", horizon.baseAmount.toPlainString())
                 assertEquals("0.000000000000123456789", horizon.remainingAmount.toPlainString())
                 assertEquals(Outcome.Success(Profile(null)), h.dashboard.profile())
-                assertEquals(Outcome.Success(emptyList<Notification>()), h.dashboard.notifications())
                 assertEquals(Outcome.Success(WorkoutToday(false)), h.dashboard.workout())
                 h.badHorizon = true
                 assertEquals(Outcome.Error(Failure.Malformed), h.dashboard.horizon())

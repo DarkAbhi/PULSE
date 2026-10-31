@@ -5,8 +5,6 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.WorkoutSummary
-import dev.abhishekan.pulse.core.domain.usecase.GetFitnessOverview
-import dev.abhishekan.pulse.core.domain.usecase.ObserveFitnessChanges
 import dev.abhishekan.pulse.core.domain.usecase.RecordWorkout
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -50,9 +48,8 @@ class FitnessViewModelTest {
         saved: SavedStateHandle = SavedStateHandle(),
         clock: Clock = this.clock,
     ) = FitnessViewModel(
-        GetFitnessOverview(repo),
+        repo,
         RecordWorkout(repo),
-        ObserveFitnessChanges(repo),
         saved,
         clock,
     ).also { models.put("overview", it) }

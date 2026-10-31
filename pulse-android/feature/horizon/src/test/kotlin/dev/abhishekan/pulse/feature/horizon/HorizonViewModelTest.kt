@@ -10,9 +10,7 @@ import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.usecase.ApplyHorizonChange
 import dev.abhishekan.pulse.core.domain.usecase.GetHorizonTransactions
-import dev.abhishekan.pulse.core.domain.usecase.GetPlannedPurchases
 import dev.abhishekan.pulse.core.domain.usecase.GetSubscriptionPayments
-import dev.abhishekan.pulse.core.domain.usecase.LoadHorizon
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.currencyText
 import kotlinx.coroutines.CompletableDeferred
@@ -53,9 +51,8 @@ class HorizonViewModelTest {
 
     private fun vm(saved: SavedStateHandle = SavedStateHandle()) =
         HorizonViewModel(
-            LoadHorizon(repo),
+            repo,
             GetHorizonTransactions(repo),
-            GetPlannedPurchases(repo),
             GetSubscriptionPayments(repo),
             ApplyHorizonChange(repo),
             saved,

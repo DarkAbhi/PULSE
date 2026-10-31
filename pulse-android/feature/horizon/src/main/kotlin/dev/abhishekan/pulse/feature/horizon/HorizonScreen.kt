@@ -47,6 +47,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
+import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -57,8 +58,8 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun HorizonRoute(
-    onDraftChanged: (Boolean) -> Unit,
     viewModel: HorizonViewModel = koinViewModel(),
+    backLabel: String? = null,
 ) {
     val accountCurrency by UserCurrency.changes
         .collectAsStateWithLifecycle()
@@ -66,9 +67,16 @@ fun HorizonRoute(
     LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
-    LaunchedEffect(state.draft?.dirty) { onDraftChanged(state.draft?.dirty == true) }
-    key(timeZone, accountCurrency) {
-        HorizonScreen(state, viewModel)
+    PulseScreenScaffold(
+        title = stringResource(state.draft.topBarTitle()),
+        showTopBar = state.draft != null || backLabel != null,
+        backLabel = if (state.draft != null) stringResource(R.string.pulse_horizon_back_to_horizon) else backLabel,
+        backEnabled = !state.busy || state.draft == null,
+        actions = { HorizonTopBarActions(state, viewModel::deleteObligation) },
+    ) {
+        key(timeZone, accountCurrency) {
+            HorizonScreen(state, viewModel)
+        }
     }
 }
 
@@ -484,13 +492,15 @@ internal fun HorizonScreen(
                     }
                 }
             }
-            val sectionLoading = when (state.tab) {
-                HorizonTab.Transactions -> state.transactions.loading && state.transactions.value == null
-                HorizonTab.Purchases -> state.purchases.loading && state.purchases.value == null
-                else -> state.overview.loading && state.overview.value == null
-            }
+            val sectionLoading =
+                when (state.tab) {
+                    HorizonTab.Transactions -> state.transactions.loading && state.transactions.value == null
+                    HorizonTab.Purchases -> state.purchases.loading && state.purchases.value == null
+                    else -> state.overview.loading && state.overview.value == null
+                }
             if (sectionLoading &&
-                state.draft == null && !state.reviewRequired
+                state.draft == null &&
+                !state.reviewRequired
             ) {
                 Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
                     PulseLoadingState(

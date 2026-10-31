@@ -3,9 +3,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
-import dev.abhishekan.pulse.core.domain.model.ExerciseInput
-import dev.abhishekan.pulse.core.domain.model.ExerciseIssue
-import dev.abhishekan.pulse.core.domain.model.ExerciseSetInput
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
@@ -14,11 +11,14 @@ import dev.abhishekan.pulse.core.domain.usecase.DeleteWorkout
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutDetail
 import dev.abhishekan.pulse.core.domain.usecase.SaveExercise
 import dev.abhishekan.pulse.core.domain.usecase.SearchExercises
+import dev.abhishekan.pulse.core.ui.DraftSource
+import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -29,6 +29,7 @@ class WorkoutViewModel(
     private val deleteWorkout: DeleteWorkout,
     private val deleteExercise: DeleteExercise,
     private val saved: SavedStateHandle,
+    unsavedChanges: UnsavedChanges = UnsavedChanges(),
 ) : ViewModel() {
     private val id = checkNotNull(saved.get<Long>("id"))
     private val state =
@@ -39,6 +40,10 @@ class WorkoutViewModel(
             ),
         )
     val uiState = state.asStateFlow()
+
+    init {
+        unsavedChanges.track(DraftSource.Fitness, state.map { it.editor?.dirty == true }, viewModelScope)
+    }
 
     fun consumeMessage() {
         state.update { it.copy(message = null) }
@@ -330,22 +335,8 @@ class WorkoutViewModel(
         val editor = state.value.editor ?: return
         if (state.value.busy || state.value.needsReview || state.value.loading) return
         val draft = editor.draft
-        val sets =
-            draft.sets.map {
-                ExerciseSetInput(
-                    it.reps.toIntOrNull() ?: 0,
-                    if (it.weight.isBlank()) null else it.weight.trim().toBigDecimalOrNull(),
-                )
-            }
-        val input = ExerciseInput(draft.name, sets, draft.catalogId, draft.rememberAlias)
-        val error =
-            when {
-                draft.sets.any {
-                    it.weight.isNotBlank() && it.weight.trim().toBigDecimalOrNull() == null
-                } -> ExerciseIssue.Weight.message()
-                input.issue != null -> checkNotNull(input.issue).message()
-                else -> null
-            }
+        val input = draft.input
+        val error = draft.issue?.message()
         if (error != null) {
             state.update { it.copy(editor = editor.copy(error = error)) }
             return

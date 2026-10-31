@@ -192,4 +192,5 @@
     <string name="pulse_fitness_editor_edit_name">Edit name</string>
     <string name="pulse_fitness_clear_search_glyph" translatable="false">×</string>
     <string name="pulse_fitness_open_search_glyph" translatable="false">›</string>
+    <string name="pulse_fitness_back_to_workout">Back to workout</string>
 </resources>

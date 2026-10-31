@@ -19,8 +19,11 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.activity.compose)
     implementation(project(":core:domain"))
     testImplementation(libs.junit)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.coroutines.test)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)

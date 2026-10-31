@@ -50,3 +50,12 @@ internal fun HorizonForm.editorLabel(action: EditorAction): Int =
                 EditorAction.Save -> R.string.pulse_horizon_save_purchase
             }
     }
+
+@StringRes
+internal fun HorizonDraft?.topBarTitle(): Int =
+    when (this?.kind) {
+        null, HorizonForm.Config, HorizonForm.Transaction -> R.string.pulse_horizon_screen_title
+        HorizonForm.Category -> R.string.pulse_horizon_add_category
+        HorizonForm.Budget, HorizonForm.Deduction, HorizonForm.Subscription, HorizonForm.Purchase ->
+            kind.editorLabel(if (id == null) EditorAction.Add else EditorAction.Edit)
+    }

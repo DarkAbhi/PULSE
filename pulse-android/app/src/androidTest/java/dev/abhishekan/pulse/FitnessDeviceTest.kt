@@ -41,6 +41,7 @@ import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
 import dev.abhishekan.pulse.core.data.PulseProfileRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
 import dev.abhishekan.pulse.core.domain.model.FitnessDates
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
@@ -365,6 +366,8 @@ class FitnessDeviceTest {
     @Before fun setup() {
         store = GlobalContext.get().get()
         runBlocking { store.clear() }
+        // The fixture profile uses UTC; do not inherit the previous test account's date boundary.
+        UserTimeZone.reset()
         backend = Backend()
         val config = NetworkConfig("https://fitness-fixture.example.test/api/", false)
         val clock = Clock.systemUTC()

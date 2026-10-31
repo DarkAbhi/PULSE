@@ -163,6 +163,7 @@ class GarageApi(
                 }
                 client
                     .prepareGet(target) {
+                        attributes.put(SkipHttpLogging, Unit)
                         expectSuccess = false
                         timeout { requestTimeoutMillis = 120_000 }
                     }.execute { file ->

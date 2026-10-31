@@ -239,7 +239,16 @@ internal fun GarageScreen(
             ) {
                 if (state.draft?.kind == GarageForm.Vehicle && !records) {
                     PulseBackNavigation(
-                        stringResource(R.string.pulse_garage_back_to_garage),
+                        if (state.draft.id != null) {
+                            (
+                                state.history.value?.name ?: state.vehicles.value
+                                    ?.firstOrNull { it.id == state.vehicle }
+                                    ?.name
+                            )?.takeIf(String::isNotBlank)
+                                ?: state.draft["name"].ifBlank { stringResource(R.string.pulse_garage_back_to_garage) }
+                        } else {
+                            stringResource(R.string.pulse_garage_back_to_garage)
+                        },
                         cancel,
                         Modifier.fillMaxWidth().padding(horizontal = size.pagePadding),
                         enabled = !state.busy,
@@ -375,7 +384,7 @@ internal fun GarageScreen(
                                         }
                                         when (state.tab) {
                                             GarageTab.Overview -> {
-                                                VehicleIdentityCard(data, enabled) { edit(data.draft(vehicle)) }
+                                                VehicleIdentityHeader(data, enabled) { edit(data.draft(vehicle)) }
                                                 GarageOverview(
                                                     data,
                                                     enabled,
@@ -421,6 +430,7 @@ internal fun GarageScreen(
                                                     style = PulseButtonStyle.Text,
                                                     leadingIcon = { GarageDetailIcon(GarageIcon.Delete) },
                                                 )
+                                                VehicleDataCredits()
                                             }
                                             GarageTab.Fuel -> {
                                                 FuelHistoryHeader(data.fuel.size, enabled) {

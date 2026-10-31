@@ -923,6 +923,8 @@ class GarageDeviceTest {
         tap("View Weekend Civic")
         awaitText("Edit vehicle")
         tap("Edit vehicle")
+        compose.onNodeWithContentDescription("Back to Garage").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Weekend Civic").assertIsDisplayed()
         field("Vehicle name", "Daily Civic")
         tap("Continue to fuel")
         tap("Continue to tyres")
@@ -1138,6 +1140,12 @@ class GarageDeviceTest {
         compose.waitUntil(10_000) { air.isEmpty() }
         compose.onNodeWithText("No air fills recorded").performScrollTo().assertIsDisplayed()
         tap("Record air fill now")
+        awaitText("Record air fill?")
+        assertTrue(air.isEmpty())
+        confirm("Cancel")
+        assertTrue(air.isEmpty())
+        tap("Record air fill now")
+        confirm("Record air fill")
         compose.waitUntil(10_000) { air.size == 1 }
         tap("Set tire pressure")
         awaitText("Save tire pressure")
@@ -1202,6 +1210,7 @@ class GarageDeviceTest {
         awaitText("Care, at a glance")
         assertEquals("34.5", pressure["rear_tire_pressure_solo"]?.jsonPrimitive?.content)
         tap("Record air fill now")
+        confirm("Record air fill")
         awaitText("Saved. Your garage is up to date.")
         tap("Tires & air")
         tap("Delete air fill 101")
@@ -1396,7 +1405,6 @@ class GarageDeviceTest {
         compose.waitUntil(10_000) { view.hits > 0 }
         instrumentation.removeMonitor(view)
         assertNull(storageCookie)
-        tap("Options for receipt.pdf")
         tap("Remove receipt.pdf")
         confirm("Delete")
         awaitText("No receipts attached.")

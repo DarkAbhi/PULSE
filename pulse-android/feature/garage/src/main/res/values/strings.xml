@@ -21,6 +21,9 @@
     <string name="pulse_garage_pillion_front_1_s_rear_2_s">"Pillion · Front %1$s · Rear %2$s"</string>
     <string name="pulse_garage_set_tire_pressure">"Set tire pressure"</string>
     <string name="pulse_garage_record_air_fill_now">"Record air fill now"</string>
+    <string name="pulse_garage_confirm_air_fill_title">Record air fill?</string>
+    <string name="pulse_garage_confirm_air_fill_message">Record an air fill at the current time?</string>
+    <string name="pulse_garage_confirm_air_fill_action">Record air fill</string>
     <string name="pulse_garage_air_fills_are_recorded_at_the_server_s_current">"Air fills are recorded at the server’s current time."</string>
     <string name="pulse_garage_your_story_starts_here">"Your story starts here"</string>
     <string name="pulse_garage_add_fuel_fill_ups_to_build_an_efficiency_history">"Add fuel fill-ups to build an efficiency history. A complete full-to-full interval is needed for mileage."</string>

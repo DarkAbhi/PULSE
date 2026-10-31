@@ -47,8 +47,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenu
-import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenuItem
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTransferProgress
@@ -251,7 +249,6 @@ private fun MaintenanceReceiptRow(
     download: (Long, GarageReceipt) -> Unit,
 ) {
     val colors = PulseTheme.colors
-    var menuExpanded by rememberSaveable(receipt.id) { mutableStateOf(false) }
     Row(
         Modifier.fillMaxWidth().testTag("garage-receipt-${receipt.id}").padding(vertical = PulseTokens.small),
         verticalAlignment = Alignment.CenterVertically,
@@ -285,30 +282,18 @@ private fun MaintenanceReceiptRow(
             style = PulseButtonStyle.Icon,
             icon = { MaintenanceIcon(R.drawable.garage_download) },
         )
-        Box {
-            PulseButton(
-                stringResource(R.string.pulse_garage_document_options, receipt.name),
-                { menuExpanded = true },
-                enabled = !busy || enabled,
-                style = PulseButtonStyle.Icon,
-                icon = { MaintenanceIcon(R.drawable.garage_more) },
-            )
-            PulseDropdownMenu(menuExpanded, { menuExpanded = false }) {
-                PulseDropdownMenuItem(
-                    text = { PulseText(stringResource(R.string.pulse_garage_receipt_remove), color = colors.error) },
-                    onClick = {
-                        menuExpanded = false
-                        remove(
-                            GarageChange.Delete(GarageRecord.Receipt, vehicle, receipt.id, record),
-                            uiText(R.string.pulse_garage_permanently_remove_1_s_from_server_storage_and_this, receipt.name),
-                        )
-                    },
-                    modifier = Modifier.pulseDescription(stringResource(R.string.pulse_garage_remove_1_s, receipt.name)),
-                    enabled = enabled,
-                    leadingIcon = { GarageDetailIcon(GarageIcon.Delete) },
+        PulseButton(
+            stringResource(R.string.pulse_garage_remove_1_s, receipt.name),
+            {
+                remove(
+                    GarageChange.Delete(GarageRecord.Receipt, vehicle, receipt.id, record),
+                    uiText(R.string.pulse_garage_permanently_remove_1_s_from_server_storage_and_this, receipt.name),
                 )
-            }
-        }
+            },
+            enabled = enabled,
+            style = PulseButtonStyle.Icon,
+            icon = { GarageDetailIcon(GarageIcon.Delete) },
+        )
     }
 }
 

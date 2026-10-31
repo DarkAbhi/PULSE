@@ -17,6 +17,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,6 +45,7 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -263,6 +268,7 @@ internal fun PressureCard(
     minimumHeight: Dp = 0.dp,
     prominent: Boolean = false,
 ) {
+    var confirmFill by remember { mutableStateOf(false) }
     PulseCard(
         Modifier.fillMaxWidth(),
         border = BorderStroke(1.dp, PulseTheme.colors.divider),
@@ -330,10 +336,22 @@ internal fun PressureCard(
                 stringResource(R.string.pulse_garage_set_tire_pressure),
                 edit,
                 stringResource(R.string.pulse_garage_record_air_fill_now),
-                fill,
+                { confirmFill = true },
                 enabled,
             )
         }
+    }
+    if (confirmFill) {
+        PulseDialog(
+            stringResource(R.string.pulse_garage_confirm_air_fill_title),
+            stringResource(R.string.pulse_garage_confirm_air_fill_message),
+            stringResource(R.string.pulse_garage_confirm_air_fill_action),
+            {
+                confirmFill = false
+                fill()
+            },
+            { confirmFill = false },
+        )
     }
 }
 

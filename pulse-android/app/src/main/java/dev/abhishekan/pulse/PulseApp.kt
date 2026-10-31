@@ -76,6 +76,7 @@ import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.feature.auth.LoginRoute
 import dev.abhishekan.pulse.feature.fitness.FitnessRoute
 import dev.abhishekan.pulse.feature.fitness.WorkoutRoute
+import dev.abhishekan.pulse.feature.garage.GarageForm
 import dev.abhishekan.pulse.feature.garage.GarageRoute
 import dev.abhishekan.pulse.feature.garage.GarageTab
 import dev.abhishekan.pulse.feature.garage.GarageViewModel
@@ -278,6 +279,7 @@ private fun SignedInApp(
         val showTopBar =
             route != "gallery" &&
                 route != "home" &&
+                !(route in listOf("garage", "vehicle/{id}") && garageState?.draft?.kind == GarageForm.Vehicle) &&
                 showBars &&
                 (
                     !isTab ||

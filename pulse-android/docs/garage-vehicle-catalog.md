@@ -46,8 +46,9 @@ Activity recreation. Loading, retry, and no-results states keep manual entry
 available. Catalog selection is
 required before saving in catalog mode.
 
-Vehicle cards show make/model information. The overview includes a full-width
-vehicle identity card and **Edit vehicle**. Existing `kind: "unknown"` vehicles
+Vehicle cards show make/model information. The overview shows a compact,
+unboxed make/model and vehicle type header above the efficiency section, with
+**Edit vehicle** alongside it. Existing `kind: "unknown"` vehicles
 still load and retain their names/history; editing lets the user classify them.
 Switching to manual entry clears the catalog reference explicitly on save.
 
@@ -79,7 +80,7 @@ catalog membership and canonical make/model names.
 
 ## Data credits
 
-The editor and identity card visibly credit VehiclesDB. **Sources and credits**
+The editor and overview footer visibly credit VehiclesDB. **Sources and credits**
 opens the bundled release attribution notices without a network request. The
 snapshot version is 2026.10.4, licensed under CC BY 4.0. The notices are copied
 from `go-backend/data/vehiclesdb/ATTRIBUTION.md` into the garage raw resources.

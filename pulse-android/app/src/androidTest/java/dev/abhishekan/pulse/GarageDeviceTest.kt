@@ -539,7 +539,7 @@ class GarageDeviceTest {
         label: String,
         value: String,
     ) {
-        val field = hasText(label) and hasSetTextAction()
+        val field = (hasText(label) or hasContentDescription(label)) and hasSetTextAction()
         compose.waitUntil(15_000) { compose.onAllNodes(field).fetchSemanticsNodes().isNotEmpty() }
         val node = compose.onNode(field)
         if (hasAnyAncestor(hasScrollAction()).matches(node.fetchSemanticsNode())) node.performScrollTo()
@@ -1171,6 +1171,39 @@ class GarageDeviceTest {
         confirm("Delete")
         awaitText("No fuel fill-ups")
         assertTrue(fuel.isEmpty())
+    }
+
+    @Test fun maintenancePickersPreserveDraftAndSaveSelection() {
+        launchGarage()
+        select()
+        tap("Maintenance")
+        tap("Add maintenance")
+        field("Title", "Brake service")
+        field("Amount (₹)", "1250")
+        compose.onNode(hasTestTag("maintenance-category")).performScrollTo().performClick()
+        awaitText("Choose maintenance category")
+        screenshot("maintenance-category-sheet")
+        compose.onNode(hasTestTag("maintenance-category-repair")).performClick()
+        compose.onNode(hasTestTag("maintenance-category")).assertExists()
+        compose.onNode(hasTestTag("maintenance-category")).performClick()
+        tap("Close")
+        compose.onNode(hasTestTag("maintenance-date")).performScrollTo().performClick()
+        awaitText("Choose date")
+        screenshot("maintenance-date-sheet")
+        tap("Close")
+        compose.onNode(hasTestTag("maintenance-time")).performScrollTo().performClick()
+        awaitText("Choose time")
+        confirm("Cancel")
+        scenario?.recreate()
+        compose.onNode(hasContentDescription("Title") and hasSetTextAction()).assertExists()
+        compose.onNode(hasTestTag("maintenance-category")).performScrollTo()
+        compose.onNode(hasTestTag("maintenance-category")).assertExists()
+        screenshot("maintenance-form")
+        tap("Save maintenance")
+        awaitText("Brake service")
+        val saved = care.values.single { it["title"]?.jsonPrimitive?.content == "Brake service" }
+        assertEquals("repair", saved["category"]?.jsonPrimitive?.content)
+        assertEquals("1250", saved["amount"]?.jsonPrimitive?.content)
     }
 
     @Test fun vehicleFuelPressureAirAndMaintenanceCrud() {

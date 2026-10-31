@@ -283,4 +283,18 @@
         <item quantity="one">%1$d match</item>
         <item quantity="other">%1$d matches</item>
     </plurals>
+    <string name="pulse_garage_care_subtitle">Keep the service, cost and details together.</string>
+    <string name="pulse_garage_care_service_details">Service details</string>
+    <string name="pulse_garage_care_service_hint">What was done and how much it cost.</string>
+    <string name="pulse_garage_care_title_hint">e.g. Annual service or oil change</string>
+    <string name="pulse_garage_care_when">Date &amp; time</string>
+    <string name="pulse_garage_care_when_hint">When did this maintenance take place?</string>
+    <string name="pulse_garage_care_date">Date</string>
+    <string name="pulse_garage_care_time">Time</string>
+    <string name="pulse_garage_care_extra">Additional details</string>
+    <string name="pulse_garage_care_extra_hint">Optional context for your next visit.</string>
+    <string name="pulse_garage_care_provider_hint">e.g. Service centre or workshop</string>
+    <string name="pulse_garage_care_notes_hint">Work carried out, parts replaced or anything to remember</string>
+    <string name="pulse_garage_care_choose_category">Choose maintenance category</string>
+    <string name="pulse_garage_care_choose_date">Choose date</string>
 </resources>

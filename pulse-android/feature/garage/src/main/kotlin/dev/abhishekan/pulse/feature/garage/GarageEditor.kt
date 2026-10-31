@@ -60,6 +60,10 @@ internal fun GarageEditor(
         FuelEditor(draft, busy, error, change)
         return
     }
+    if (draft.kind == GarageForm.Care) {
+        MaintenanceEditor(draft, busy, blocked, error, change, save, cancel)
+        return
+    }
     var datePicker by remember { mutableStateOf(false) }
     var timePicker by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current

@@ -17,7 +17,9 @@ const apiBaseURL =
 type Vehicle = {
   id: number;
   name: string;
-  vehicle_type: "two_wheeler" | "four_wheeler";
+  kind: string;
+  make_name: string;
+  model_name: string;
   fuel_types: string[];
 };
 
@@ -79,6 +81,7 @@ export default async function GaragePage() {
           <AddVehicleButton />
         </header>
 
+        <p className="mb-6 text-xs text-muted-foreground">Vehicle data by <a className="text-action underline" href="https://vehiclesdb.com">VehiclesDB</a> · <Link className="text-action underline" href="/vehicle-data">Sources and credits</Link></p>
         {error ? (
           <p
             className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive"

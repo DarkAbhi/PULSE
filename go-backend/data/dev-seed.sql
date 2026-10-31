@@ -17,7 +17,7 @@ COMMIT;
 \quit
 \endif
 DO $$ BEGIN
-    IF NOT EXISTS (SELECT FROM schema_migrations WHERE version = 26 AND NOT dirty) THEN
+    IF NOT EXISTS (SELECT FROM schema_migrations WHERE version = 28 AND NOT dirty) THEN
         RAISE EXCEPTION 'Seed schema version mismatch; regenerate the development seed';
     END IF;
 END $$;

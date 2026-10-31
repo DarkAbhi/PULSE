@@ -14,6 +14,10 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{queries: query.New(db)}
 }
 
+func (r *Repository) Catalog(ctx context.Context, id string) (query.VehicleCatalog, error) {
+	return r.queries.GetCatalogModel(ctx, id)
+}
+
 func (r *Repository) List(ctx context.Context, userID int64) ([]query.ListVehiclesRow, error) {
 	return r.queries.ListVehicles(ctx, userID)
 }

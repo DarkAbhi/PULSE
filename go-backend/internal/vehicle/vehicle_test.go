@@ -45,7 +45,7 @@ func TestVehicleRoutesRequireOwnership(t *testing.T) {
 	if err := db.QueryRow(`INSERT INTO users (username,password_hash) VALUES ('other-vehicle-user','test') RETURNING id`).Scan(&otherUserID); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.QueryRow(`INSERT INTO vehicles (name,user_id,vehicle_type,fuel_types) VALUES ('mine',1,'two_wheeler',ARRAY['petrol']) RETURNING id`).Scan(&vehicleID); err != nil {
+	if err := db.QueryRow(`INSERT INTO vehicles (name,user_id,kind,fuel_types) VALUES ('mine',1,'motorcycle',ARRAY['petrol']) RETURNING id`).Scan(&vehicleID); err != nil {
 		t.Fatal(err)
 	}
 	h := NewHandler(pool, NewService(NewRepository(pool)), func(r *http.Request) (auth.SessionUser, error) {
@@ -84,7 +84,7 @@ func TestVehicleRoutesRequireOwnership(t *testing.T) {
 	if body := request(http.MethodGet, "/vehicles", "other", nil, http.StatusOK).Body.String(); body != "[]\n" {
 		t.Fatalf("other user saw vehicles: %s", body)
 	}
-	request(http.MethodPost, "/vehicles", "other", []byte(`{"name":"theirs","vehicle_type":"two_wheeler","fuel_types":["petrol"]}`), http.StatusCreated)
+	request(http.MethodPost, "/vehicles", "other", []byte(`{"name":"theirs","kind":"motorcycle","fuel_types":["petrol"]}`), http.StatusCreated)
 	var count int
 	if err := db.QueryRow(`SELECT COUNT(*) FROM vehicles WHERE name='theirs' AND user_id=$1`, otherUserID).Scan(&count); err != nil || count != 1 {
 		t.Fatalf("new vehicle owner: count=%d err=%v", count, err)
@@ -136,7 +136,7 @@ func TestCRUD(t *testing.T) {
 	{
 		rec := httptest.NewRecorder()
 		name := "Tesla Model 3"
-		body, _ := json.Marshal(map[string]any{"name": name, "vehicle_type": "four_wheeler", "fuel_types": []string{"petrol", "cng"}})
+		body, _ := json.Marshal(map[string]any{"name": name, "kind": "car", "fuel_types": []string{"petrol", "cng"}})
 		req := httptest.NewRequest(http.MethodPost, "/vehicles", bytes.NewReader(body))
 		req.AddCookie(cookie)
 		h.Create(rec, req)
@@ -147,7 +147,7 @@ func TestCRUD(t *testing.T) {
 
 		var out DTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
-		if out.Name != "Tesla Model 3" || !out.IsActive || out.VehicleType != "four_wheeler" || len(out.FuelTypes) != 2 || out.FuelTypes[1] != "cng" {
+		if out.Name != "Tesla Model 3" || !out.IsActive || out.Kind != "car" || len(out.FuelTypes) != 2 || out.FuelTypes[1] != "cng" {
 			t.Errorf("unexpected vehicle response: %+v", out)
 		}
 		vehicleID = out.ID
@@ -191,7 +191,7 @@ func TestCRUD(t *testing.T) {
 
 		var out DTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
-		if out.ID != vehicleID || out.Name != "Tesla Model 3" || out.VehicleType != "four_wheeler" || len(out.FuelTypes) != 2 {
+		if out.ID != vehicleID || out.Name != "Tesla Model 3" || out.Kind != "car" || len(out.FuelTypes) != 2 {
 			t.Errorf("unexpected vehicle details: %+v", out)
 		}
 	}
@@ -216,7 +216,7 @@ func TestCRUD(t *testing.T) {
 
 		var out DTO
 		_ = json.NewDecoder(rec.Body).Decode(&out)
-		if out.Name != "Tesla Model S" || out.IsActive || out.VehicleType != "four_wheeler" || len(out.FuelTypes) != 2 {
+		if out.Name != "Tesla Model S" || out.IsActive || out.Kind != "car" || len(out.FuelTypes) != 2 {
 			t.Errorf("unexpected updated response: %+v", out)
 		}
 	}
@@ -346,7 +346,7 @@ func TestFuelFillupsAndEconomy(t *testing.T) {
 
 	// Seed vehicle
 	var vehicleID int64
-	err := db.QueryRow(`INSERT INTO vehicles (name, user_id, vehicle_type, fuel_types) VALUES ('Tesla', 1, 'four_wheeler', ARRAY['petrol']) RETURNING id`).Scan(&vehicleID)
+	err := db.QueryRow(`INSERT INTO vehicles (name, user_id, kind, fuel_types) VALUES ('Tesla', 1, 'car', ARRAY['petrol']) RETURNING id`).Scan(&vehicleID)
 	if err != nil {
 		t.Fatalf("failed to seed: %v", err)
 	}
@@ -457,7 +457,7 @@ func TestAirFillsAndReminders(t *testing.T) {
 
 	// Seed vehicle
 	var vehicleID int64
-	err := db.QueryRow(`INSERT INTO vehicles (name, user_id, vehicle_type, fuel_types) VALUES ('Honda City', 1, 'four_wheeler', ARRAY['petrol']) RETURNING id`).Scan(&vehicleID)
+	err := db.QueryRow(`INSERT INTO vehicles (name, user_id, kind, fuel_types) VALUES ('Honda City', 1, 'car', ARRAY['petrol']) RETURNING id`).Scan(&vehicleID)
 	if err != nil {
 		t.Fatalf("failed to seed: %v", err)
 	}
@@ -521,7 +521,7 @@ func TestHistoryAndDeleteLogs(t *testing.T) {
 
 	// Seed vehicle
 	var vehicleID int64
-	err := db.QueryRow(`INSERT INTO vehicles (name, user_id, vehicle_type, fuel_types) VALUES ('Honda City', 1, 'four_wheeler', ARRAY['petrol']) RETURNING id`).Scan(&vehicleID)
+	err := db.QueryRow(`INSERT INTO vehicles (name, user_id, kind, fuel_types) VALUES ('Honda City', 1, 'car', ARRAY['petrol']) RETURNING id`).Scan(&vehicleID)
 	if err != nil {
 		t.Fatalf("failed to seed: %v", err)
 	}
@@ -634,7 +634,7 @@ func TestMaintenanceRecords(t *testing.T) {
 	cookie := loginUser(t, db)
 
 	var vehicleID int64
-	if err := db.QueryRow(`INSERT INTO vehicles (name, user_id, vehicle_type, fuel_types) VALUES ('Honda City', 1, 'four_wheeler', ARRAY['petrol']) RETURNING id`).Scan(&vehicleID); err != nil {
+	if err := db.QueryRow(`INSERT INTO vehicles (name, user_id, kind, fuel_types) VALUES ('Honda City', 1, 'car', ARRAY['petrol']) RETURNING id`).Scan(&vehicleID); err != nil {
 		t.Fatalf("failed to seed vehicle: %v", err)
 	}
 

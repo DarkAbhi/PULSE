@@ -13,9 +13,9 @@ import (
 )
 
 const createVehicle = `-- name: CreateVehicle :one
-INSERT INTO vehicles (name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion, user_id, vehicle_type, fuel_types)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, name, vehicle_type, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion
+INSERT INTO vehicles (name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion, user_id, kind, fuel_types, catalog_id, make_name, model_name)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+RETURNING id, name, kind, catalog_id, make_name, model_name, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion
 `
 
 type CreateVehicleParams struct {
@@ -26,14 +26,20 @@ type CreateVehicleParams struct {
 	FrontTirePressurePillion *float64
 	RearTirePressurePillion  *float64
 	UserID                   int64
-	VehicleType              string
+	Kind                     string
 	FuelTypes                []string
+	CatalogID                *string
+	MakeName                 string
+	ModelName                string
 }
 
 type CreateVehicleRow struct {
 	ID                       int64
 	Name                     string
-	VehicleType              string
+	Kind                     string
+	CatalogID                *string
+	MakeName                 string
+	ModelName                string
 	FuelTypes                []string
 	IsActive                 bool
 	FrontTirePressureSolo    *float64
@@ -51,14 +57,20 @@ func (q *Queries) CreateVehicle(ctx context.Context, arg CreateVehicleParams) (C
 		arg.FrontTirePressurePillion,
 		arg.RearTirePressurePillion,
 		arg.UserID,
-		arg.VehicleType,
+		arg.Kind,
 		arg.FuelTypes,
+		arg.CatalogID,
+		arg.MakeName,
+		arg.ModelName,
 	)
 	var i CreateVehicleRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.VehicleType,
+		&i.Kind,
+		&i.CatalogID,
+		&i.MakeName,
+		&i.ModelName,
 		&i.FuelTypes,
 		&i.IsActive,
 		&i.FrontTirePressureSolo,
@@ -123,7 +135,7 @@ func (q *Queries) DeleteVehicleFuelFillup(ctx context.Context, arg DeleteVehicle
 }
 
 const getVehicle = `-- name: GetVehicle :one
-SELECT id, name, vehicle_type, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
+SELECT id, name, kind, catalog_id, make_name, model_name, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1 AND user_id=$2
 `
 
@@ -135,7 +147,10 @@ type GetVehicleParams struct {
 type GetVehicleRow struct {
 	ID                       int64
 	Name                     string
-	VehicleType              string
+	Kind                     string
+	CatalogID                *string
+	MakeName                 string
+	ModelName                string
 	FuelTypes                []string
 	IsActive                 bool
 	FrontTirePressureSolo    *float64
@@ -150,7 +165,10 @@ func (q *Queries) GetVehicle(ctx context.Context, arg GetVehicleParams) (GetVehi
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.VehicleType,
+		&i.Kind,
+		&i.CatalogID,
+		&i.MakeName,
+		&i.ModelName,
 		&i.FuelTypes,
 		&i.IsActive,
 		&i.FrontTirePressureSolo,
@@ -162,7 +180,7 @@ func (q *Queries) GetVehicle(ctx context.Context, arg GetVehicleParams) (GetVehi
 }
 
 const getVehicleForUpdate = `-- name: GetVehicleForUpdate :one
-SELECT name, vehicle_type, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
+SELECT name, kind, catalog_id, make_name, model_name, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1 AND user_id=$2
 `
 
@@ -173,7 +191,10 @@ type GetVehicleForUpdateParams struct {
 
 type GetVehicleForUpdateRow struct {
 	Name                     string
-	VehicleType              string
+	Kind                     string
+	CatalogID                *string
+	MakeName                 string
+	ModelName                string
 	FuelTypes                []string
 	IsActive                 bool
 	FrontTirePressureSolo    *float64
@@ -187,7 +208,10 @@ func (q *Queries) GetVehicleForUpdate(ctx context.Context, arg GetVehicleForUpda
 	var i GetVehicleForUpdateRow
 	err := row.Scan(
 		&i.Name,
-		&i.VehicleType,
+		&i.Kind,
+		&i.CatalogID,
+		&i.MakeName,
+		&i.ModelName,
 		&i.FuelTypes,
 		&i.IsActive,
 		&i.FrontTirePressureSolo,
@@ -199,7 +223,7 @@ func (q *Queries) GetVehicleForUpdate(ctx context.Context, arg GetVehicleForUpda
 }
 
 const getVehicleHistoryHeader = `-- name: GetVehicleHistoryHeader :one
-SELECT name, vehicle_type, fuel_types, front_tire_pressure_solo, rear_tire_pressure_solo,
+SELECT name, kind, catalog_id, make_name, model_name, fuel_types, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1 AND user_id=$2
 `
 
@@ -210,7 +234,10 @@ type GetVehicleHistoryHeaderParams struct {
 
 type GetVehicleHistoryHeaderRow struct {
 	Name                     string
-	VehicleType              string
+	Kind                     string
+	CatalogID                *string
+	MakeName                 string
+	ModelName                string
 	FuelTypes                []string
 	FrontTirePressureSolo    *float64
 	RearTirePressureSolo     *float64
@@ -223,7 +250,10 @@ func (q *Queries) GetVehicleHistoryHeader(ctx context.Context, arg GetVehicleHis
 	var i GetVehicleHistoryHeaderRow
 	err := row.Scan(
 		&i.Name,
-		&i.VehicleType,
+		&i.Kind,
+		&i.CatalogID,
+		&i.MakeName,
+		&i.ModelName,
 		&i.FuelTypes,
 		&i.FrontTirePressureSolo,
 		&i.RearTirePressureSolo,
@@ -444,14 +474,17 @@ func (q *Queries) ListVehicleMaintenanceRecords(ctx context.Context, arg ListVeh
 }
 
 const listVehicles = `-- name: ListVehicles :many
-SELECT id, name, vehicle_type, fuel_types FROM vehicles WHERE user_id=$1 ORDER BY id ASC
+SELECT id, name, kind, catalog_id, make_name, model_name, fuel_types FROM vehicles WHERE user_id=$1 ORDER BY id ASC
 `
 
 type ListVehiclesRow struct {
-	ID          int64
-	Name        string
-	VehicleType string
-	FuelTypes   []string
+	ID        int64
+	Name      string
+	Kind      string
+	CatalogID *string
+	MakeName  string
+	ModelName string
+	FuelTypes []string
 }
 
 func (q *Queries) ListVehicles(ctx context.Context, userID int64) ([]ListVehiclesRow, error) {
@@ -466,7 +499,10 @@ func (q *Queries) ListVehicles(ctx context.Context, userID int64) ([]ListVehicle
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
-			&i.VehicleType,
+			&i.Kind,
+			&i.CatalogID,
+			&i.MakeName,
+			&i.ModelName,
 			&i.FuelTypes,
 		); err != nil {
 			return nil, err
@@ -481,8 +517,8 @@ func (q *Queries) ListVehicles(ctx context.Context, userID int64) ([]ListVehicle
 
 const updateVehicle = `-- name: UpdateVehicle :one
 UPDATE vehicles SET name=$1, is_active=$2, front_tire_pressure_solo=$3, rear_tire_pressure_solo=$4,
-front_tire_pressure_pillion=$5, rear_tire_pressure_pillion=$6, vehicle_type=$9, fuel_types=$10, updated_at=now()
-WHERE id=$7 AND user_id=$8 RETURNING id, name, vehicle_type, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
+front_tire_pressure_pillion=$5, rear_tire_pressure_pillion=$6, kind=$9, fuel_types=$10, catalog_id=$11, make_name=$12, model_name=$13, updated_at=now()
+WHERE id=$7 AND user_id=$8 RETURNING id, name, kind, catalog_id, make_name, model_name, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion
 `
 
@@ -495,14 +531,20 @@ type UpdateVehicleParams struct {
 	RearTirePressurePillion  *float64
 	ID                       int64
 	UserID                   int64
-	VehicleType              string
+	Kind                     string
 	FuelTypes                []string
+	CatalogID                *string
+	MakeName                 string
+	ModelName                string
 }
 
 type UpdateVehicleRow struct {
 	ID                       int64
 	Name                     string
-	VehicleType              string
+	Kind                     string
+	CatalogID                *string
+	MakeName                 string
+	ModelName                string
 	FuelTypes                []string
 	IsActive                 bool
 	FrontTirePressureSolo    *float64
@@ -521,14 +563,20 @@ func (q *Queries) UpdateVehicle(ctx context.Context, arg UpdateVehicleParams) (U
 		arg.RearTirePressurePillion,
 		arg.ID,
 		arg.UserID,
-		arg.VehicleType,
+		arg.Kind,
 		arg.FuelTypes,
+		arg.CatalogID,
+		arg.MakeName,
+		arg.ModelName,
 	)
 	var i UpdateVehicleRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.VehicleType,
+		&i.Kind,
+		&i.CatalogID,
+		&i.MakeName,
+		&i.ModelName,
 		&i.FuelTypes,
 		&i.IsActive,
 		&i.FrontTirePressureSolo,
@@ -542,7 +590,7 @@ func (q *Queries) UpdateVehicle(ctx context.Context, arg UpdateVehicleParams) (U
 const updateVehicleTirePressure = `-- name: UpdateVehicleTirePressure :one
 UPDATE vehicles SET front_tire_pressure_solo=$1, rear_tire_pressure_solo=$2,
 front_tire_pressure_pillion=$3, rear_tire_pressure_pillion=$4, updated_at=now()
-WHERE id=$5 AND user_id=$6 RETURNING id, name, vehicle_type, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
+WHERE id=$5 AND user_id=$6 RETURNING id, name, kind, catalog_id, make_name, model_name, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion
 `
 
@@ -558,7 +606,10 @@ type UpdateVehicleTirePressureParams struct {
 type UpdateVehicleTirePressureRow struct {
 	ID                       int64
 	Name                     string
-	VehicleType              string
+	Kind                     string
+	CatalogID                *string
+	MakeName                 string
+	ModelName                string
 	FuelTypes                []string
 	IsActive                 bool
 	FrontTirePressureSolo    *float64
@@ -580,7 +631,10 @@ func (q *Queries) UpdateVehicleTirePressure(ctx context.Context, arg UpdateVehic
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
-		&i.VehicleType,
+		&i.Kind,
+		&i.CatalogID,
+		&i.MakeName,
+		&i.ModelName,
 		&i.FuelTypes,
 		&i.IsActive,
 		&i.FrontTirePressureSolo,

@@ -3,33 +3,86 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-const apiBaseURL =
-  process.env.INTERNAL_API_BASE_URL ??
-  "http://localhost:8080";
+const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
 
-export async function addVehicleAction(data: { name: string; vehicle_type: string; fuel_types: string[] }) {
+export async function saveVehicleAction(
+  id: number | string | undefined,
+  data: {
+    name: string;
+    kind: string;
+    catalog_id: string;
+    make_name: string;
+    model_name: string;
+    fuel_types: string[];
+  },
+) {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
 
   try {
-    const response = await fetch(`${apiBaseURL}/api/vehicles`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Cookie: cookieHeader,
+    const response = await fetch(
+      `${apiBaseURL}/api/vehicles${id ? `/${id}` : ""}`,
+      {
+        method: id ? "PATCH" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Cookie: cookieHeader,
+        },
+        body: JSON.stringify(data),
       },
-      body: JSON.stringify(data),
-    });
+    );
 
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
-      return { ok: false, error: body.error ?? "We couldn't add that vehicle." };
+      return {
+        ok: false,
+        error: body.error ?? "We couldn't save that vehicle.",
+      };
     }
 
     revalidatePath("/garage");
+    if (id) revalidatePath(`/garage/${id}`);
     return { ok: true, vehicle: body };
   } catch {
-    return { ok: false, error: "We couldn't reach the server. Please try again." };
+    return {
+      ok: false,
+      error: "We couldn't reach the server. Please try again.",
+    };
+  }
+}
+
+export async function catalogOptionsAction(
+  resource: "makes" | "models",
+  kind: string,
+  make: string,
+  q: string,
+): Promise<
+  | { ok: true; options: { id: string; name: string }[] }
+  | { ok: false; error: string }
+> {
+  if (resource !== "makes" && resource !== "models")
+    return { ok: false, error: "Invalid catalog request." };
+  const params = new URLSearchParams({ kind, make_slug: make, q });
+  try {
+    const response = await fetch(
+      `${apiBaseURL}/api/vehicle-catalog/${resource}?${params}`,
+      {
+        headers: { Cookie: (await cookies()).toString() },
+        signal: AbortSignal.timeout(10_000),
+        cache: "no-store",
+      },
+    );
+    if (!response.ok)
+      return {
+        ok: false,
+        error: "We couldn't load the vehicle catalog. Please try again.",
+      };
+    return { ok: true, options: await response.json() };
+  } catch {
+    return {
+      ok: false,
+      error: "We couldn't reach the server. Please try again.",
+    };
   }
 }
 
@@ -46,13 +99,19 @@ export async function deleteVehicleAction(vehicleID: number | string) {
     });
 
     if (!response.ok) {
-      return { ok: false, error: "We couldn't delete this vehicle. Please try again." };
+      return {
+        ok: false,
+        error: "We couldn't delete this vehicle. Please try again.",
+      };
     }
 
     revalidatePath("/garage");
     return { ok: true };
   } catch {
-    return { ok: false, error: "We couldn't reach the server. Please try again." };
+    return {
+      ok: false,
+      error: "We couldn't reach the server. Please try again.",
+    };
   }
 }
 
@@ -68,21 +127,25 @@ export async function markAirFillAction(vehicleID: number) {
         headers: {
           Cookie: cookieHeader,
         },
-      }
+      },
     );
 
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
       return {
         ok: false,
-        error: body.error ?? "We couldn't record the air fill. Please try again.",
+        error:
+          body.error ?? "We couldn't record the air fill. Please try again.",
       };
     }
 
     revalidatePath("/garage");
     return { ok: true };
   } catch {
-    return { ok: false, error: "We couldn't reach the server. Please try again." };
+    return {
+      ok: false,
+      error: "We couldn't reach the server. Please try again.",
+    };
   }
 }
 
@@ -100,7 +163,7 @@ export async function saveFuelAction(
       unit_price: number | null;
       total_cost: number | null;
     }>;
-  }
+  },
 ) {
   const cookieStore = await cookies();
   const cookieHeader = cookieStore.toString();
@@ -115,18 +178,24 @@ export async function saveFuelAction(
           Cookie: cookieHeader,
         },
         body: JSON.stringify(data),
-      }
+      },
     );
 
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
-      return { ok: false, error: body.error ?? "We couldn't save this fuel entry." };
+      return {
+        ok: false,
+        error: body.error ?? "We couldn't save this fuel entry.",
+      };
     }
 
     revalidatePath("/garage");
     revalidatePath(`/garage/${vehicleID}`);
     return { ok: true };
   } catch {
-    return { ok: false, error: "We couldn't reach the server. Please try again." };
+    return {
+      ok: false,
+      error: "We couldn't reach the server. Please try again.",
+    };
   }
 }

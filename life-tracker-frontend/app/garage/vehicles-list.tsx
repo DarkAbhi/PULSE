@@ -8,7 +8,8 @@ import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Car } from "lucide-react";
+import Link from "next/link";
+import { Bike, Bus, Car, Truck } from "lucide-react";
 import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import Dialog from "@/app/components/design-system/dialog";
@@ -17,7 +18,9 @@ import { markAirFillAction, saveFuelAction } from "./actions";
 type Vehicle = {
   id: number;
   name: string;
-  vehicle_type: "two_wheeler" | "four_wheeler";
+  kind: string;
+  make_name: string;
+  model_name: string;
   fuel_types: string[];
 };
 
@@ -126,13 +129,14 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
               className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-secondary-foreground"
               aria-hidden="true"
             >
-              <Car className="h-5 w-5" />
+              {vehicle.kind === "motorcycle" || vehicle.kind === "moped" ? <Bike className="h-5 w-5" /> : vehicle.kind === "bus" ? <Bus className="h-5 w-5" /> : vehicle.kind === "truck" || vehicle.kind === "van" ? <Truck className="h-5 w-5" /> : <Car className="h-5 w-5" />}
             </div>
             <h2 className="mt-4 text-lg font-semibold text-foreground">
-              {vehicle.name}
+              <Link href={`/garage/${vehicle.id}`}>{vehicle.name}</Link>
             </h2>
+            {(vehicle.make_name || vehicle.model_name) && <p className="mt-1 text-sm text-muted-foreground">{vehicle.make_name} {vehicle.model_name}</p>}
             <p className="mt-1 text-sm text-muted-foreground">
-              {vehicle.vehicle_type === "two_wheeler" ? "Two-wheeler" : "Four-wheeler"}
+              {vehicle.kind === "unknown" ? "Kind not selected" : vehicle.kind.charAt(0).toUpperCase() + vehicle.kind.slice(1)}
               {" · "}{vehicle.fuel_types.join(" + ").toUpperCase()}
             </p>
             <Button variant="secondary" size="lg"

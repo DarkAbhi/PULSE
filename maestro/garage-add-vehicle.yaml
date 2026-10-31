@@ -36,25 +36,26 @@ url: http://localhost:3000
     css: "#add-vehicle-button:not(:disabled)"
     retryTapIfNoChange: true
 - assertVisible: Add a vehicle
-- assertVisible: Add its name, vehicle type, and fuel details.
+- assertVisible: Choose your vehicle from the catalog or enter its details manually.
+- tapOn: Enter manually
 
 # 5. Fill vehicle details
 - tapOn:
-    css: "#vehicle-name"
+    css: "input[id$='-name']"
 - inputText: "Honda Civic"
 
 - tapOn:
-    css: "#vehicle-type"
-- inputText: "f"
+    css: "select[id$='-kind']"
+- inputText: "c"
 - pressKey: Enter
 - assertVisible:
-    css: "#vehicle-type:has(option[value='four_wheeler']:checked)"
+    css: "select[id$='-kind']:has(option[value='car']:checked)"
 - tapOn:
-    css: "#vehicle-fuel-type"
+    css: "select[id$='-fuel']"
 - inputText: "p"
 - pressKey: Enter
 - assertVisible:
-    css: "#vehicle-fuel-type:has(option[value='petrol']:checked)"
+    css: "select[id$='-fuel']:has(option[value='petrol']:checked)"
 
 # 6. Submit Add vehicle form
 - tapOn:

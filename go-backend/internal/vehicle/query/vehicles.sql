@@ -1,36 +1,36 @@
 -- name: ListVehicles :many
-SELECT id, name, vehicle_type, fuel_types FROM vehicles WHERE user_id=$1 ORDER BY id ASC;
+SELECT id, name, kind, catalog_id, make_name, model_name, fuel_types FROM vehicles WHERE user_id=$1 ORDER BY id ASC;
 
 -- name: CreateVehicle :one
-INSERT INTO vehicles (name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion, user_id, vehicle_type, fuel_types)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, name, vehicle_type, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion;
+INSERT INTO vehicles (name, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion, user_id, kind, fuel_types, catalog_id, make_name, model_name)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+RETURNING id, name, kind, catalog_id, make_name, model_name, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo, front_tire_pressure_pillion, rear_tire_pressure_pillion;
 
 -- name: GetVehicle :one
-SELECT id, name, vehicle_type, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
+SELECT id, name, kind, catalog_id, make_name, model_name, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1 AND user_id=$2;
 
 -- name: GetVehicleForUpdate :one
-SELECT name, vehicle_type, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
+SELECT name, kind, catalog_id, make_name, model_name, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1 AND user_id=$2;
 
 -- name: UpdateVehicle :one
 UPDATE vehicles SET name=$1, is_active=$2, front_tire_pressure_solo=$3, rear_tire_pressure_solo=$4,
-front_tire_pressure_pillion=$5, rear_tire_pressure_pillion=$6, vehicle_type=$9, fuel_types=$10, updated_at=now()
-WHERE id=$7 AND user_id=$8 RETURNING id, name, vehicle_type, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
+front_tire_pressure_pillion=$5, rear_tire_pressure_pillion=$6, kind=$9, fuel_types=$10, catalog_id=$11, make_name=$12, model_name=$13, updated_at=now()
+WHERE id=$7 AND user_id=$8 RETURNING id, name, kind, catalog_id, make_name, model_name, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion;
 
 -- name: UpdateVehicleTirePressure :one
 UPDATE vehicles SET front_tire_pressure_solo=$1, rear_tire_pressure_solo=$2,
 front_tire_pressure_pillion=$3, rear_tire_pressure_pillion=$4, updated_at=now()
-WHERE id=$5 AND user_id=$6 RETURNING id, name, vehicle_type, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
+WHERE id=$5 AND user_id=$6 RETURNING id, name, kind, catalog_id, make_name, model_name, fuel_types, is_active, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion;
 
 -- name: DeleteVehicle :execrows
 DELETE FROM vehicles WHERE id=$1 AND user_id=$2;
 
 -- name: GetVehicleHistoryHeader :one
-SELECT name, vehicle_type, fuel_types, front_tire_pressure_solo, rear_tire_pressure_solo,
+SELECT name, kind, catalog_id, make_name, model_name, fuel_types, front_tire_pressure_solo, rear_tire_pressure_solo,
 front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1 AND user_id=$2;
 
 -- name: ListVehicleAirFills :many

@@ -26,6 +26,8 @@ class SeedExportTest(unittest.TestCase):
         self.assertEqual(transform("exercise_aliases", "normalized_alias", "text", "private alias"), "demo alias 3")
         self.assertEqual(transform("vehicles", "name", "character varying", r"\N"), r"\N")
         self.assertEqual(transform("vehicles", "vehicle_type", "text", "two_wheeler"), "two_wheeler")
+        self.assertEqual(transform("vehicles", "kind", "text", "car"), "car")
+        self.assertEqual(transform("vehicles", "catalog_id", "text", "car/honda/civic"), "car/honda/civic")
         self.assertEqual(transform("vehicles", "fuel_types", "ARRAY", "{cng,petrol}"), "{petrol}")
         self.assertEqual(transform("user_profiles", "timezone", "text", "Asia/Kolkata"), "UTC")
         self.assertEqual(transform("user_profiles", "currency", "text", "GBP"), "INR")

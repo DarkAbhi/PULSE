@@ -169,15 +169,22 @@ type LinkTransactionInput struct {
 	TransactionID int64 `json:"transaction_id"`
 }
 type VehicleName struct {
-	VehicleType string   `json:"vehicle_type" enums:"two_wheeler,four_wheeler"`
-	FuelTypes   []string `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
+	CatalogID *string  `json:"catalog_id"`
+	MakeName  string   `json:"make_name"`
+	ModelName string   `json:"model_name"`
+	Kind      string   `json:"kind" enums:"unknown,car,motorcycle,moped,van,truck,bus"`
+	FuelTypes []string `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
 
 	ID   int64  `json:"id"`
 	Name string `json:"name"`
 }
 type VehicleInput struct {
-	VehicleType *string   `json:"vehicle_type" enums:"two_wheeler,four_wheeler"`
-	FuelTypes   *[]string `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
+	// Omit to preserve a catalog selection; send an empty string to clear it.
+	CatalogID *string   `json:"catalog_id"`
+	MakeName  *string   `json:"make_name" maxLength:"200"`
+	ModelName *string   `json:"model_name" maxLength:"200"`
+	Kind      *string   `json:"kind" enums:"car,motorcycle,moped,van,truck,bus"`
+	FuelTypes *[]string `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
 
 	Name                     *string  `json:"name"`
 	IsActive                 *bool    `json:"is_active"`
@@ -190,9 +197,9 @@ type VehicleInput struct {
 }
 type CreateVehicleInput struct {
 	VehicleInput
-	Name        string   `json:"name" binding:"required"`
-	VehicleType string   `json:"vehicle_type" binding:"required" enums:"two_wheeler,four_wheeler"`
-	FuelTypes   []string `json:"fuel_types" binding:"required" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
+	Name      string   `json:"name" binding:"required"`
+	Kind      string   `json:"kind" binding:"required" enums:"car,motorcycle,moped,van,truck,bus"`
+	FuelTypes []string `json:"fuel_types" binding:"required" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
 }
 
 type TirePressureInput struct {
@@ -272,8 +279,11 @@ type MaintenanceRecord struct {
 	Attachments  []Attachment `json:"attachments"`
 }
 type VehicleHistory struct {
-	VehicleType string   `json:"vehicle_type" enums:"two_wheeler,four_wheeler"`
-	FuelTypes   []string `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
+	CatalogID *string  `json:"catalog_id"`
+	MakeName  string   `json:"make_name"`
+	ModelName string   `json:"model_name"`
+	Kind      string   `json:"kind" enums:"unknown,car,motorcycle,moped,van,truck,bus"`
+	FuelTypes []string `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
 
 	VehicleName              string              `json:"vehicle_name"`
 	FrontTirePressureSolo    *float64            `json:"front_tire_pressure_solo"`

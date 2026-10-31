@@ -75,6 +75,10 @@ definitions:
     type: object
   apidoc.CreateVehicleInput:
     properties:
+      catalog_id:
+        description: Omit to preserve a catalog selection; send an empty string to
+          clear it.
+        type: string
       front_tire_pressure:
         type: number
       front_tire_pressure_pillion:
@@ -93,6 +97,21 @@ definitions:
         type: array
       is_active:
         type: boolean
+      kind:
+        enum:
+        - car
+        - motorcycle
+        - moped
+        - van
+        - truck
+        - bus
+        type: string
+      make_name:
+        maxLength: 200
+        type: string
+      model_name:
+        maxLength: 200
+        type: string
       name:
         type: string
       rear_tire_pressure:
@@ -101,15 +120,10 @@ definitions:
         type: number
       rear_tire_pressure_solo:
         type: number
-      vehicle_type:
-        enum:
-        - two_wheeler
-        - four_wheeler
-        type: string
     required:
     - fuel_types
+    - kind
     - name
-    - vehicle_type
     type: object
   apidoc.CreatedID:
     properties:
@@ -506,6 +520,8 @@ definitions:
           format: float64
           type: number
         type: object
+      catalog_id:
+        type: string
       front_tire_pressure:
         type: number
       front_tire_pressure_pillion:
@@ -526,10 +542,24 @@ definitions:
           - electric
           type: string
         type: array
+      kind:
+        enum:
+        - unknown
+        - car
+        - motorcycle
+        - moped
+        - van
+        - truck
+        - bus
+        type: string
       maintenance_records:
         items:
           $ref: '#/definitions/apidoc.MaintenanceRecord'
         type: array
+      make_name:
+        type: string
+      model_name:
+        type: string
       rear_tire_pressure:
         type: number
       rear_tire_pressure_pillion:
@@ -538,14 +568,13 @@ definitions:
         type: number
       vehicle_name:
         type: string
-      vehicle_type:
-        enum:
-        - two_wheeler
-        - four_wheeler
-        type: string
     type: object
   apidoc.VehicleInput:
     properties:
+      catalog_id:
+        description: Omit to preserve a catalog selection; send an empty string to
+          clear it.
+        type: string
       front_tire_pressure:
         type: number
       front_tire_pressure_pillion:
@@ -564,6 +593,21 @@ definitions:
         type: array
       is_active:
         type: boolean
+      kind:
+        enum:
+        - car
+        - motorcycle
+        - moped
+        - van
+        - truck
+        - bus
+        type: string
+      make_name:
+        maxLength: 200
+        type: string
+      model_name:
+        maxLength: 200
+        type: string
       name:
         type: string
       rear_tire_pressure:
@@ -572,14 +616,11 @@ definitions:
         type: number
       rear_tire_pressure_solo:
         type: number
-      vehicle_type:
-        enum:
-        - two_wheeler
-        - four_wheeler
-        type: string
     type: object
   apidoc.VehicleName:
     properties:
+      catalog_id:
+        type: string
       fuel_types:
         items:
           enum:
@@ -592,12 +633,21 @@ definitions:
         type: array
       id:
         type: integer
-      name:
-        type: string
-      vehicle_type:
+      kind:
         enum:
-        - two_wheeler
-        - four_wheeler
+        - unknown
+        - car
+        - motorcycle
+        - moped
+        - van
+        - truck
+        - bus
+        type: string
+      make_name:
+        type: string
+      model_name:
+        type: string
+      name:
         type: string
     type: object
   apidoc.Visited:
@@ -973,8 +1023,17 @@ definitions:
       name:
         type: string
     type: object
+  vehicle.CatalogOption:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   vehicle.DTO:
     properties:
+      catalog_id:
+        type: string
       front_tire_pressure:
         type: number
       front_tire_pressure_pillion:
@@ -989,6 +1048,12 @@ definitions:
         type: integer
       is_active:
         type: boolean
+      kind:
+        type: string
+      make_name:
+        type: string
+      model_name:
+        type: string
       name:
         type: string
       rear_tire_pressure:
@@ -997,8 +1062,6 @@ definitions:
         type: number
       rear_tire_pressure_solo:
         type: number
-      vehicle_type:
-        type: string
     type: object
 info:
   contact: {}
@@ -2921,6 +2984,123 @@ paths:
       summary: Save profile time zone
       tags:
       - profile
+  /api/vehicle-catalog/kinds:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/vehicle.CatalogOption'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List vehicle kinds
+      tags:
+      - vehicles
+  /api/vehicle-catalog/makes:
+    get:
+      description: Returns up to 100 matches in name order. Use q to narrow the list.
+      parameters:
+      - description: Vehicle kind
+        enum:
+        - car
+        - motorcycle
+        - moped
+        - van
+        - truck
+        - bus
+        in: query
+        name: kind
+        required: true
+        type: string
+      - description: Literal search text, at most 100 characters
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/vehicle.CatalogOption'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Search vehicle makes
+      tags:
+      - vehicles
+  /api/vehicle-catalog/models:
+    get:
+      description: Returns up to 100 matches in name order. Model option IDs are kind/make_slug/model_slug.
+      parameters:
+      - description: Vehicle kind
+        enum:
+        - car
+        - motorcycle
+        - moped
+        - van
+        - truck
+        - bus
+        in: query
+        name: kind
+        required: true
+        type: string
+      - description: Make ID returned by the makes endpoint
+        in: query
+        name: make_slug
+        required: true
+        type: string
+      - description: Literal search text, at most 100 characters; includes model aliases
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/vehicle.CatalogOption'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Search vehicle models
+      tags:
+      - vehicles
   /api/vehicles:
     get:
       produces:

@@ -13,21 +13,22 @@ import uuid
 
 ROOT = Path(__file__).resolve().parent.parent
 PASSWORD_HASH = "$2y$12$bB7WwVq7nGJ4cfNTCX6kQODcNRLQvMjRhIFuH4Qv2.GAxlqNac4/S"
-EXCLUDED = {"schema_migrations", "exercise_catalog", "api_keys", "user_sessions",
+EXCLUDED = {"schema_migrations", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports", "api_keys", "user_sessions",
             "vehicle_maintenance_attachments"}
-TABLES = set("""api_keys credit_cards exercise_aliases exercise_catalog
+TABLES = set("""vehicle_catalog vehicle_catalog_imports api_keys credit_cards exercise_aliases exercise_catalog
 financial_horizon_budgets financial_horizon_categories financial_horizon_configs
 financial_horizon_deductions financial_horizon_subscriptions financial_horizon_transactions
 fitness_activity_rings fitness_workouts gym_exercise_sets gym_visit_exercises gym_visits
 meal_plans meal_times meditations next_month_purchases notifications schema_migrations
 sports users user_profiles user_sessions vehicle_air_fills vehicle_fuel_fillups vehicle_fuel_items
 vehicle_maintenance_attachments vehicle_maintenance_records vehicles workout_activity_types""".split())
-BASELINE = {"users", "exercise_catalog", "schema_migrations",
+BASELINE = {"users", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports", "schema_migrations",
             "financial_horizon_categories", "meal_times"}
 ENUMS = {
     "billing_cycle": {"monthly", "yearly"}, "status": {"active", "paused", "cancelled"},
     "type": {"debit", "credit"}, "fuel_type": {"petrol", "diesel", "lpg", "cng", "electric"},
     "vehicle_type": {"two_wheeler", "four_wheeler"},
+    "kind": {"unknown", "car", "motorcycle", "moped", "van", "truck", "bus"},
     "fill_type": {"full", "partial", "missed"},
 }
 NUMBERS = {
@@ -73,6 +74,8 @@ def anonymize(table, column, kind, value, row, offset, admin_id):
     number = int(row_id) if row_id.isdigit() else 1
     if table == "vehicles" and column == "fuel_types":
         return "{petrol}"
+    if table == "vehicles" and column == "catalog_id":
+        return value  # Public reference identity, not personal data.
     if column == "password_hash":
         return PASSWORD_HASH
     if column == "username":
@@ -197,7 +200,7 @@ def export(env):
               f"'{PASSWORD_HASH}') AND (SELECT count(*) FROM users) = 1"
               " AND NOT EXISTS (SELECT FROM financial_horizon_categories WHERE user_id IS NOT NULL)"
               " AND NOT EXISTS (SELECT FROM meal_times WHERE user_id IS NOT NULL)")
-    truncate = ", ".join(f"public.{table}" for table in sorted(TABLES - {"schema_migrations", "exercise_catalog"}))
+    truncate = ", ".join(f"public.{table}" for table in sorted(TABLES - {"schema_migrations", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports"}))
     header = f"""-- Anonymized development snapshot; regenerate with make dev-seed-export.
 -- Data values are fictional. Relationships and relative dates follow the source.
 \\set ON_ERROR_STOP on

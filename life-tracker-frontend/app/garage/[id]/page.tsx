@@ -13,7 +13,10 @@ import MaintenanceRecordActions from "./maintenance-record-actions";
 import FuelEfficiencySection from "./fuel-efficiency-section";
 import TirePressureCard from "./tire-pressure-card";
 import LocalDate from "@/app/components/local-date";
+import VehicleEditor from "../vehicle-editor";
 import { ArrowLeft, Fuel, Plus, ReceiptText, Wind } from "lucide-react";
+
+export const metadata = { title: "Vehicle details | PULSE" };
 
 const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
@@ -112,6 +115,22 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
         <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           {data.vehicle_name}
         </h1>
+        <PulseCard as="section" className="mt-6 p-6" aria-label="Vehicle details">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold">Vehicle details</h2>
+              <dl className="mt-3 grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                <dt className="text-muted-foreground">Kind</dt><dd className="capitalize">{data.kind === "unknown" ? "Not selected" : data.kind}</dd>
+                <dt className="text-muted-foreground">Make</dt><dd>{data.make_name || "Not selected"}</dd>
+                <dt className="text-muted-foreground">Model</dt><dd>{data.model_name || "Not selected"}</dd>
+                <dt className="text-muted-foreground">Fuel</dt><dd className="capitalize">{data.fuel_types.join(" + ")}</dd>
+              </dl>
+            </div>
+            <VehicleEditor key={`${data.catalog_id}/${data.vehicle_name}/${data.kind}/${data.make_name}/${data.model_name}/${data.fuel_types.join()}`} vehicle={{ id, name: data.vehicle_name, kind: data.kind, catalog_id: data.catalog_id, make_name: data.make_name, model_name: data.model_name, fuel_types: data.fuel_types }} />
+          </div>
+          {data.kind === "unknown" && <p className="mt-4 text-sm text-muted-foreground">Select a kind or link this vehicle to a catalog model using Edit vehicle.</p>}
+          <p className="mt-4 text-xs text-muted-foreground">Vehicle data by <a className="text-action underline" href="https://vehiclesdb.com">VehiclesDB</a> · <Link className="text-action underline" href="/vehicle-data">Sources and credits</Link></p>
+        </PulseCard>
         <div className="mt-8 grid gap-8 lg:grid-cols-2">
           <section>
             <h2 className="flex items-center gap-2 text-xl font-semibold">

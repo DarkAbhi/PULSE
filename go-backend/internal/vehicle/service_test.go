@@ -2,6 +2,7 @@ package vehicle
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -23,13 +24,17 @@ type stubVehicleStore struct {
 	deleteErr    error
 }
 
+func (s *stubVehicleStore) Catalog(context.Context, string) (query.VehicleCatalog, error) {
+	return query.VehicleCatalog{}, sql.ErrNoRows
+}
+
 func (s *stubVehicleStore) List(context.Context, int64) ([]query.ListVehiclesRow, error) {
 	return nil, nil
 }
 
 func (s *stubVehicleStore) Create(_ context.Context, arg query.CreateVehicleParams) (query.CreateVehicleRow, error) {
 	s.created = arg
-	return query.CreateVehicleRow{ID: 42, Name: arg.Name, VehicleType: arg.VehicleType, FuelTypes: arg.FuelTypes}, nil
+	return query.CreateVehicleRow{ID: 42, Name: arg.Name, Kind: arg.Kind, FuelTypes: arg.FuelTypes}, nil
 }
 
 func (s *stubVehicleStore) Fetch(context.Context, int64, int64) (query.GetVehicleRow, error) {
@@ -37,12 +42,12 @@ func (s *stubVehicleStore) Fetch(context.Context, int64, int64) (query.GetVehicl
 }
 
 func (s *stubVehicleStore) FetchForUpdate(context.Context, int64, int64) (query.GetVehicleForUpdateRow, error) {
-	return query.GetVehicleForUpdateRow{Name: "Scooter", VehicleType: "two_wheeler", FuelTypes: []string{"petrol"}}, nil
+	return query.GetVehicleForUpdateRow{Name: "Scooter", Kind: "motorcycle", FuelTypes: []string{"petrol"}}, nil
 }
 
 func (s *stubVehicleStore) Update(_ context.Context, arg query.UpdateVehicleParams) (query.UpdateVehicleRow, error) {
 	s.updated = arg
-	return query.UpdateVehicleRow{VehicleType: arg.VehicleType, FuelTypes: arg.FuelTypes}, nil
+	return query.UpdateVehicleRow{Kind: arg.Kind, FuelTypes: arg.FuelTypes}, nil
 }
 
 func (s *stubVehicleStore) UpdateTirePressure(context.Context, query.UpdateVehicleTirePressureParams) (query.UpdateVehicleTirePressureRow, error) {
@@ -131,15 +136,15 @@ func TestCreateVehicleDetails(t *testing.T) {
 		status     int
 	}{
 		{"missing details", `{"name":"Scooter"}`, 400},
-		{"null details", `{"name":"Scooter","vehicle_type":null,"fuel_types":null}`, 400},
-		{"missing fuels", `{"name":"Scooter","vehicle_type":"two_wheeler"}`, 400},
-		{"invalid vehicle", `{"name":"Scooter","vehicle_type":"truck","fuel_types":["petrol"]}`, 400},
-		{"empty fuels", `{"name":"Scooter","vehicle_type":"two_wheeler","fuel_types":[]}`, 400},
-		{"invalid fuel", `{"name":"Scooter","vehicle_type":"two_wheeler","fuel_types":["water"]}`, 400},
-		{"duplicate fuels", `{"name":"Car","vehicle_type":"four_wheeler","fuel_types":["petrol","petrol"]}`, 400},
-		{"too many fuels", `{"name":"Car","vehicle_type":"four_wheeler","fuel_types":["petrol","cng","lpg"]}`, 400},
-		{"single tank", `{"name":"Scooter","vehicle_type":"two_wheeler","fuel_types":["petrol"]}`, 201},
-		{"dual tank", `{"name":"Car","vehicle_type":"four_wheeler","fuel_types":["petrol","cng"]}`, 201},
+		{"null details", `{"name":"Scooter","kind":null,"fuel_types":null}`, 400},
+		{"missing fuels", `{"name":"Scooter","kind":"motorcycle"}`, 400},
+		{"invalid vehicle", `{"name":"Scooter","kind":"spaceship","fuel_types":["petrol"]}`, 400},
+		{"empty fuels", `{"name":"Scooter","kind":"motorcycle","fuel_types":[]}`, 400},
+		{"invalid fuel", `{"name":"Scooter","kind":"motorcycle","fuel_types":["water"]}`, 400},
+		{"duplicate fuels", `{"name":"Car","kind":"car","fuel_types":["petrol","petrol"]}`, 400},
+		{"too many fuels", `{"name":"Car","kind":"car","fuel_types":["petrol","cng","lpg"]}`, 400},
+		{"single tank", `{"name":"Scooter","kind":"motorcycle","fuel_types":["petrol"]}`, 201},
+		{"dual tank", `{"name":"Car","kind":"car","fuel_types":["petrol","cng"]}`, 201},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			store := &stubVehicleStore{}
@@ -154,7 +159,7 @@ func TestCreateVehicleDetails(t *testing.T) {
 				if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
 					t.Fatal(err)
 				}
-				if out.VehicleType != store.created.VehicleType || !reflect.DeepEqual(out.FuelTypes, store.created.FuelTypes) || store.created.UserID != 7 {
+				if out.Kind != store.created.Kind || !reflect.DeepEqual(out.FuelTypes, store.created.FuelTypes) || store.created.UserID != 7 {
 					t.Fatalf("details not preserved: %+v, %+v", out, store.created)
 				}
 			} else if store.created.Name != "" {
@@ -171,14 +176,14 @@ func TestUpdateVehicleDetails(t *testing.T) {
 	if _, err := service.Update(context.Background(), 42, 7, Changes{}); err != nil {
 		t.Fatal(err)
 	}
-	if store.updated.VehicleType != "two_wheeler" || !reflect.DeepEqual(store.updated.FuelTypes, []string{"petrol"}) {
+	if store.updated.Kind != "motorcycle" || !reflect.DeepEqual(store.updated.FuelTypes, []string{"petrol"}) {
 		t.Fatalf("details lost: %+v", store.updated)
 	}
-	vehicleType, fuels := "four_wheeler", []string{"petrol", "cng"}
-	if _, err := service.Update(context.Background(), 42, 7, Changes{VehicleType: &vehicleType, FuelTypes: &fuels}); err != nil {
+	kind, fuels := "car", []string{"petrol", "cng"}
+	if _, err := service.Update(context.Background(), 42, 7, Changes{Kind: &kind, FuelTypes: &fuels}); err != nil {
 		t.Fatal(err)
 	}
-	if store.updated.VehicleType != vehicleType || !reflect.DeepEqual(store.updated.FuelTypes, fuels) {
+	if store.updated.Kind != kind || !reflect.DeepEqual(store.updated.FuelTypes, fuels) {
 		t.Fatalf("details not updated: %+v", store.updated)
 	}
 	empty := []string{}

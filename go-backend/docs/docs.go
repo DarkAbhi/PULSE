@@ -3016,6 +3016,184 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/vehicle-catalog/kinds": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vehicles"
+                ],
+                "summary": "List vehicle kinds",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/vehicle.CatalogOption"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/vehicle-catalog/makes": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Returns up to 100 matches in name order. Use q to narrow the list.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vehicles"
+                ],
+                "summary": "Search vehicle makes",
+                "parameters": [
+                    {
+                        "enum": [
+                            "car",
+                            "motorcycle",
+                            "moped",
+                            "van",
+                            "truck",
+                            "bus"
+                        ],
+                        "type": "string",
+                        "description": "Vehicle kind",
+                        "name": "kind",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Literal search text, at most 100 characters",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/vehicle.CatalogOption"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/vehicle-catalog/models": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Returns up to 100 matches in name order. Model option IDs are kind/make_slug/model_slug.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vehicles"
+                ],
+                "summary": "Search vehicle models",
+                "parameters": [
+                    {
+                        "enum": [
+                            "car",
+                            "motorcycle",
+                            "moped",
+                            "van",
+                            "truck",
+                            "bus"
+                        ],
+                        "type": "string",
+                        "description": "Vehicle kind",
+                        "name": "kind",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Make ID returned by the makes endpoint",
+                        "name": "make_slug",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Literal search text, at most 100 characters; includes model aliases",
+                        "name": "q",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/vehicle.CatalogOption"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/vehicles": {
             "get": {
                 "security": [
@@ -4923,10 +5101,14 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "fuel_types",
-                "name",
-                "vehicle_type"
+                "kind",
+                "name"
             ],
             "properties": {
+                "catalog_id": {
+                    "description": "Omit to preserve a catalog selection; send an empty string to clear it.",
+                    "type": "string"
+                },
                 "front_tire_pressure": {
                     "type": "number"
                 },
@@ -4952,6 +5134,25 @@ const docTemplate = `{
                 "is_active": {
                     "type": "boolean"
                 },
+                "kind": {
+                    "type": "string",
+                    "enum": [
+                        "car",
+                        "motorcycle",
+                        "moped",
+                        "van",
+                        "truck",
+                        "bus"
+                    ]
+                },
+                "make_name": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "model_name": {
+                    "type": "string",
+                    "maxLength": 200
+                },
                 "name": {
                     "type": "string"
                 },
@@ -4963,13 +5164,6 @@ const docTemplate = `{
                 },
                 "rear_tire_pressure_solo": {
                     "type": "number"
-                },
-                "vehicle_type": {
-                    "type": "string",
-                    "enum": [
-                        "two_wheeler",
-                        "four_wheeler"
-                    ]
                 }
             }
         },
@@ -5575,6 +5769,9 @@ const docTemplate = `{
                         "format": "float64"
                     }
                 },
+                "catalog_id": {
+                    "type": "string"
+                },
                 "front_tire_pressure": {
                     "type": "number"
                 },
@@ -5603,11 +5800,29 @@ const docTemplate = `{
                         ]
                     }
                 },
+                "kind": {
+                    "type": "string",
+                    "enum": [
+                        "unknown",
+                        "car",
+                        "motorcycle",
+                        "moped",
+                        "van",
+                        "truck",
+                        "bus"
+                    ]
+                },
                 "maintenance_records": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/apidoc.MaintenanceRecord"
                     }
+                },
+                "make_name": {
+                    "type": "string"
+                },
+                "model_name": {
+                    "type": "string"
                 },
                 "rear_tire_pressure": {
                     "type": "number"
@@ -5620,19 +5835,16 @@ const docTemplate = `{
                 },
                 "vehicle_name": {
                     "type": "string"
-                },
-                "vehicle_type": {
-                    "type": "string",
-                    "enum": [
-                        "two_wheeler",
-                        "four_wheeler"
-                    ]
                 }
             }
         },
         "apidoc.VehicleInput": {
             "type": "object",
             "properties": {
+                "catalog_id": {
+                    "description": "Omit to preserve a catalog selection; send an empty string to clear it.",
+                    "type": "string"
+                },
                 "front_tire_pressure": {
                     "type": "number"
                 },
@@ -5658,6 +5870,25 @@ const docTemplate = `{
                 "is_active": {
                     "type": "boolean"
                 },
+                "kind": {
+                    "type": "string",
+                    "enum": [
+                        "car",
+                        "motorcycle",
+                        "moped",
+                        "van",
+                        "truck",
+                        "bus"
+                    ]
+                },
+                "make_name": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "model_name": {
+                    "type": "string",
+                    "maxLength": 200
+                },
                 "name": {
                     "type": "string"
                 },
@@ -5669,19 +5900,15 @@ const docTemplate = `{
                 },
                 "rear_tire_pressure_solo": {
                     "type": "number"
-                },
-                "vehicle_type": {
-                    "type": "string",
-                    "enum": [
-                        "two_wheeler",
-                        "four_wheeler"
-                    ]
                 }
             }
         },
         "apidoc.VehicleName": {
             "type": "object",
             "properties": {
+                "catalog_id": {
+                    "type": "string"
+                },
                 "fuel_types": {
                     "type": "array",
                     "items": {
@@ -5698,15 +5925,26 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
-                "name": {
-                    "type": "string"
-                },
-                "vehicle_type": {
+                "kind": {
                     "type": "string",
                     "enum": [
-                        "two_wheeler",
-                        "four_wheeler"
+                        "unknown",
+                        "car",
+                        "motorcycle",
+                        "moped",
+                        "van",
+                        "truck",
+                        "bus"
                     ]
+                },
+                "make_name": {
+                    "type": "string"
+                },
+                "model_name": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },
@@ -6277,9 +6515,23 @@ const docTemplate = `{
                 }
             }
         },
+        "vehicle.CatalogOption": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "vehicle.DTO": {
             "type": "object",
             "properties": {
+                "catalog_id": {
+                    "type": "string"
+                },
                 "front_tire_pressure": {
                     "type": "number"
                 },
@@ -6301,6 +6553,15 @@ const docTemplate = `{
                 "is_active": {
                     "type": "boolean"
                 },
+                "kind": {
+                    "type": "string"
+                },
+                "make_name": {
+                    "type": "string"
+                },
+                "model_name": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -6312,9 +6573,6 @@ const docTemplate = `{
                 },
                 "rear_tire_pressure_solo": {
                     "type": "number"
-                },
-                "vehicle_type": {
-                    "type": "string"
                 }
             }
         }

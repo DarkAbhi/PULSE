@@ -2,9 +2,15 @@
 package db
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
+
+	"github.com/DarkAbhi/life-backend/data/vehiclesdb"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -38,6 +44,17 @@ func RunMigrations(dsn string) error {
 	defer closeSilently(m)
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return err
+	}
+	// Also repair missing reference rows when all migrations were already applied.
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+	conn, err := pgx.Connect(ctx, dsn)
+	if err != nil {
+		return fmt.Errorf("connect for vehicle catalog seed: %w", err)
+	}
+	defer conn.Close(ctx)
+	if _, err := conn.Exec(ctx, vehiclesdb.Seed); err != nil {
+		return fmt.Errorf("seed vehicle catalog: %w", err)
 	}
 	log.Println("✅ migrations up applied")
 	return nil

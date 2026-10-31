@@ -5,12 +5,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/DarkAbhi/life-backend/internal/vehicle/query"
 )
 
 type Changes struct {
-	VehicleType              *string
+	CatalogID                *string
+	MakeName                 *string
+	ModelName                *string
+	Kind                     *string
 	FuelTypes                *[]string
 	Name                     *string
 	IsActive                 *bool
@@ -38,6 +42,7 @@ type ValidationError struct{ Message string }
 func (e ValidationError) Error() string { return e.Message }
 
 type store interface {
+	Catalog(context.Context, string) (query.VehicleCatalog, error)
 	List(context.Context, int64) ([]query.ListVehiclesRow, error)
 	Create(context.Context, query.CreateVehicleParams) (query.CreateVehicleRow, error)
 	Fetch(context.Context, int64, int64) (query.GetVehicleRow, error)
@@ -58,13 +63,20 @@ func (s *Service) List(ctx context.Context, userID int64) ([]query.ListVehiclesR
 	return rows, nil
 }
 func (s *Service) Create(ctx context.Context, userID int64, p Changes) (query.CreateVehicleRow, error) {
-	if p.Name == nil || *p.Name == "" {
+	if p.Name == nil || strings.TrimSpace(*p.Name) == "" {
 		return query.CreateVehicleRow{}, ValidationError{"name is required"}
 	}
-	if p.VehicleType == nil || p.FuelTypes == nil {
-		return query.CreateVehicleRow{}, ValidationError{"vehicle_type and fuel_types are required"}
+	if len([]rune(strings.TrimSpace(*p.Name))) > 48 {
+		return query.CreateVehicleRow{}, ValidationError{"name must be at most 48 characters"}
 	}
-	if err := validateVehicleDetails(*p.VehicleType, *p.FuelTypes); err != nil {
+	if p.Kind == nil || p.FuelTypes == nil {
+		return query.CreateVehicleRow{}, ValidationError{"kind and fuel_types are required"}
+	}
+	if err := validateVehicleDetails(*p.Kind, *p.FuelTypes); err != nil {
+		return query.CreateVehicleRow{}, err
+	}
+	catalogID, makeName, modelName, err := s.identity(ctx, *p.Kind, nil, "", "", p)
+	if err != nil {
 		return query.CreateVehicleRow{}, err
 	}
 	isActive := true
@@ -75,7 +87,7 @@ func (s *Service) Create(ctx context.Context, userID int64, p Changes) (query.Cr
 	if err := validatePressures(frontSolo, rearSolo, p.FrontTirePressurePillion, p.RearTirePressurePillion); err != nil {
 		return query.CreateVehicleRow{}, err
 	}
-	row, err := s.store.Create(ctx, query.CreateVehicleParams{VehicleType: *p.VehicleType, FuelTypes: *p.FuelTypes, Name: *p.Name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion, UserID: userID})
+	row, err := s.store.Create(ctx, query.CreateVehicleParams{CatalogID: catalogID, MakeName: makeName, ModelName: modelName, Kind: *p.Kind, FuelTypes: *p.FuelTypes, Name: strings.TrimSpace(*p.Name), IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: p.FrontTirePressurePillion, RearTirePressurePillion: p.RearTirePressurePillion, UserID: userID})
 	if err != nil {
 		return query.CreateVehicleRow{}, fmt.Errorf("create vehicle: %w", err)
 	}
@@ -99,19 +111,32 @@ func (s *Service) Update(ctx context.Context, id, userID int64, p Changes) (quer
 	if err != nil {
 		return query.UpdateVehicleRow{}, fmt.Errorf("get vehicle for update: %w", err)
 	}
-	vehicleType, fuelTypes := current.VehicleType, current.FuelTypes
-	if p.VehicleType != nil {
-		vehicleType = *p.VehicleType
+	kind, fuelTypes := current.Kind, current.FuelTypes
+	if p.Kind != nil {
+		kind = *p.Kind
 	}
 	if p.FuelTypes != nil {
 		fuelTypes = *p.FuelTypes
 	}
-	if err := validateVehicleDetails(vehicleType, fuelTypes); err != nil {
+	if p.Kind != nil && !validKind(kind) {
+		return query.UpdateVehicleRow{}, ValidationError{"choose a valid vehicle kind"}
+	}
+	if err := validateFuelTypes(fuelTypes); err != nil {
+		return query.UpdateVehicleRow{}, err
+	}
+	catalogID, makeName, modelName, err := s.identity(ctx, kind, current.CatalogID, current.MakeName, current.ModelName, p)
+	if err != nil {
 		return query.UpdateVehicleRow{}, err
 	}
 	name, isActive := current.Name, current.IsActive
 	if p.Name != nil {
-		name = *p.Name
+		name = strings.TrimSpace(*p.Name)
+		if name == "" {
+			return query.UpdateVehicleRow{}, ValidationError{"name is required"}
+		}
+		if len([]rune(name)) > 48 {
+			return query.UpdateVehicleRow{}, ValidationError{"name must be at most 48 characters"}
+		}
 	}
 	if p.IsActive != nil {
 		isActive = *p.IsActive
@@ -133,7 +158,7 @@ func (s *Service) Update(ctx context.Context, id, userID int64, p Changes) (quer
 	if err := validatePressures(frontSolo, rearSolo, frontPillion, rearPillion); err != nil {
 		return query.UpdateVehicleRow{}, err
 	}
-	row, err := s.store.Update(ctx, query.UpdateVehicleParams{VehicleType: vehicleType, FuelTypes: fuelTypes, Name: name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, ID: id, UserID: userID})
+	row, err := s.store.Update(ctx, query.UpdateVehicleParams{CatalogID: catalogID, MakeName: makeName, ModelName: modelName, Kind: kind, FuelTypes: fuelTypes, Name: name, IsActive: isActive, FrontTirePressureSolo: frontSolo, RearTirePressureSolo: rearSolo, FrontTirePressurePillion: frontPillion, RearTirePressurePillion: rearPillion, ID: id, UserID: userID})
 	if errors.Is(err, sql.ErrNoRows) {
 		return query.UpdateVehicleRow{}, ErrNotFound
 	}
@@ -189,10 +214,14 @@ func validatePressures(frontSolo, rearSolo, frontPillion, rearPillion *float64) 
 	return nil
 }
 
-func validateVehicleDetails(vehicleType string, fuelTypes []string) error {
-	if vehicleType != "two_wheeler" && vehicleType != "four_wheeler" {
-		return ValidationError{"vehicle_type must be two_wheeler or four_wheeler"}
+func validateVehicleDetails(kind string, fuelTypes []string) error {
+	if !validKind(kind) {
+		return ValidationError{"choose a valid vehicle kind"}
 	}
+	return validateFuelTypes(fuelTypes)
+}
+
+func validateFuelTypes(fuelTypes []string) error {
 	if len(fuelTypes) < 1 || len(fuelTypes) > 2 {
 		return ValidationError{"fuel_types must contain one or two fuel types"}
 	}
@@ -207,4 +236,48 @@ func validateVehicleDetails(vehicleType string, fuelTypes []string) error {
 		return ValidationError{"fuel types must be distinct"}
 	}
 	return nil
+}
+
+func validKind(kind string) bool {
+	switch kind {
+	case "car", "motorcycle", "moped", "van", "truck", "bus":
+		return true
+	}
+	return false
+}
+
+// An omitted catalog_id preserves the selection; an empty string clears it.
+func (s *Service) identity(ctx context.Context, kind string, id *string, makeName, modelName string, p Changes) (*string, string, string, error) {
+	if p.CatalogID != nil {
+		if *p.CatalogID == "" {
+			id = nil
+			makeName = ""
+			modelName = ""
+		} else {
+			id = p.CatalogID
+		}
+	}
+	if id != nil {
+		entry, err := s.store.Catalog(ctx, *id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, "", "", ValidationError{"choose an available catalog model"}
+		}
+		if err != nil {
+			return nil, "", "", fmt.Errorf("resolve vehicle catalog: %w", err)
+		}
+		if entry.Kind != kind {
+			return nil, "", "", ValidationError{"model does not belong to the selected kind"}
+		}
+		return &entry.ID, entry.MakeName, entry.ModelName, nil
+	}
+	if p.MakeName != nil {
+		makeName = strings.TrimSpace(*p.MakeName)
+	}
+	if p.ModelName != nil {
+		modelName = strings.TrimSpace(*p.ModelName)
+	}
+	if len([]rune(makeName)) > 200 || len([]rune(modelName)) > 200 {
+		return nil, "", "", ValidationError{"make and model must be at most 200 characters"}
+	}
+	return nil, makeName, modelName, nil
 }

@@ -3,3 +3,14 @@
 //   sqlc v1.31.1
 
 package query
+
+type VehicleCatalog struct {
+	ID        string
+	Kind      string
+	MakeSlug  string
+	MakeName  string
+	ModelSlug string
+	ModelName string
+	Aliases   string
+	FormerIds string
+}

@@ -5,6 +5,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -33,6 +34,7 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
@@ -49,11 +51,13 @@ import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
+import dev.abhishekan.pulse.core.domain.usecase.MealCalendar
 import dev.abhishekan.pulse.core.network.MealPlanApi
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
 import dev.abhishekan.pulse.core.network.PulseApi
 import dev.abhishekan.pulse.core.network.pulseHttpClient
+import dev.abhishekan.pulse.feature.mealplan.di.mealPlanModule
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -87,6 +91,7 @@ import java.io.File
 import java.io.IOException
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -100,7 +105,11 @@ class MealPlanDeviceTest {
     private lateinit var store: EncryptedSessionStore
     private val times = linkedMapOf<Long, JsonObject>()
     private val meals = linkedMapOf<Long, JsonObject>()
-    private val day = LocalDate.now(ZoneId.of("Asia/Kolkata"))
+    private val plannerZone = ZoneId.of("Asia/Kolkata")
+
+    // Deliberately crosses the UTC date boundary: the account zone must drive the planner.
+    private val plannerClock = Clock.fixed(Instant.parse("2026-05-11T20:00:00Z"), plannerZone)
+    private val day = LocalDate.now(plannerClock)
     private var next = 100L
 
     @Volatile private var offline = false
@@ -172,7 +181,7 @@ class MealPlanDeviceTest {
                             if (request.method == HttpMethod.Get) {
                                 when (path) {
                                     "auth/session" -> """{"username":"meal-fixture"}"""
-                                    "profile" -> """{"has_profile":true,"name":"Asha"}"""
+                                    "profile" -> """{"has_profile":true,"name":"Asha","timezone":"${plannerZone.id}"}"""
                                     "workout/today" -> """{"visited":false}"""
                                     "notifications" -> "[]"
                                     "horizon" ->
@@ -288,6 +297,7 @@ class MealPlanDeviceTest {
                     PulseNotificationsRepository(api, auth, PulseDashboardRepository(api, auth))
                 }
                 single<MealPlanRepository> { repo }
+                factory { MealCalendar(plannerClock) }
             }
         loadKoinModules(overrides)
     }
@@ -296,6 +306,7 @@ class MealPlanDeviceTest {
         scenario?.close()
         unloadKoinModules(overrides)
         loadKoinModules(dataModule)
+        loadKoinModules(mealPlanModule)
         client.close()
         runBlocking { store.clear() }
     }
@@ -308,9 +319,10 @@ class MealPlanDeviceTest {
                 }.getOrDefault(false)
             }
         } catch (
-            error: AssertionError,
+            error: ComposeTimeoutException,
         ) {
-            throw AssertionError("Missing text: $text", error)
+            val tree = runCatching { compose.onRoot().printToString() }.getOrElse { "No Compose root: $it" }
+            throw AssertionError("Missing text: $text\n$tree", error)
         }
     }
 

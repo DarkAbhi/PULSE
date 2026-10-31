@@ -1,0 +1,221 @@
+"use client";
+
+import PulseCard from "@/app/components/design-system/pulse-card";
+import { useTimeZone } from "@/app/components/time-zone-provider";
+import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
+
+import Button from "@/app/components/design-system/button";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Bike, Bus, Car, Truck } from "lucide-react";
+import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
+import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import Dialog from "@/app/components/design-system/dialog";
+import { markAirFillAction, saveFuelAction } from "./actions";
+
+type Vehicle = {
+  id: number;
+  name: string;
+  kind: string;
+  make_name: string;
+  model_name: string;
+  fuel_types: string[];
+};
+
+type FuelItem = FuelFormItem;
+
+const newFuelItem = (): FuelItem => ({
+  fuelType: "petrol",
+  fillType: "full",
+  quantity: "",
+  unitPrice: "",
+  totalCost: "",
+});
+
+interface VehiclesListProps {
+  vehicles: Vehicle[];
+}
+
+export default function VehiclesList({ vehicles }: VehiclesListProps) {
+  const { timeZone } = useTimeZone();
+  const router = useRouter();
+  const [entryTimeZone, setEntryTimeZone] = useState(timeZone);
+  const localDateTime = () => toDateTimeInput(new Date(), timeZone);
+  const [pendingAirFillVehicle, setPendingAirFillVehicle] =
+    useState<Vehicle | null>(null);
+  const [isMarkingAirFill, startMarkingAirFill] = useTransition();
+  const [airFillError, setAirFillError] = useState("");
+
+  const [fuelVehicle, setFuelVehicle] = useState<Vehicle | null>(null);
+  const [fuelOdometer, setFuelOdometer] = useState("");
+  const [fuelDateTime, setFuelDateTime] = useState(localDateTime());
+  const [stationName, setStationName] = useState("");
+  const [fuelNotes, setFuelNotes] = useState("");
+  const [fuelItems, setFuelItems] = useState<FuelItem[]>([newFuelItem()]);
+  const [isSavingFuel, startSavingFuel] = useTransition();
+  const [fuelError, setFuelError] = useState("");
+
+  function handleMarkAirFill() {
+    if (!pendingAirFillVehicle) return;
+    setAirFillError("");
+
+    startMarkingAirFill(async () => {
+      const res = await markAirFillAction(pendingAirFillVehicle.id);
+      if (!res.ok) {
+        setAirFillError(
+          res.error ?? "We couldn't record the air fill. Please try again.",
+        );
+      } else {
+        setPendingAirFillVehicle(null);
+      }
+    });
+  }
+
+  function handleSaveFuel(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!fuelVehicle) return;
+    setFuelError("");
+
+    const numberOrNull = (value: string) =>
+      value === "" ? null : Number(value);
+
+    let filledAt: string;
+    try { filledAt = fromDateTimeInput(fuelDateTime, entryTimeZone); }
+    catch (error) { setFuelError(error instanceof Error ? error.message : "Choose a valid date and time."); return; }
+    const payload = {
+      odometer_km: Number(fuelOdometer),
+      filled_at: filledAt,
+      station_name: stationName || null,
+      notes: fuelNotes || null,
+      items: fuelItems.map((item) => ({
+        fuel_type: item.fuelType,
+        fill_type: item.fillType,
+        quantity: numberOrNull(item.quantity),
+        unit_price: numberOrNull(item.unitPrice),
+        total_cost: numberOrNull(item.totalCost),
+      })),
+    };
+
+    startSavingFuel(async () => {
+      const res = await saveFuelAction(fuelVehicle.id, payload);
+      if (!res.ok) {
+        setFuelError(res.error ?? "We couldn't save this fuel entry.");
+      } else {
+        setFuelVehicle(null);
+        setFuelOdometer("");
+        setFuelDateTime(localDateTime());
+        setStationName("");
+        setFuelNotes("");
+        setFuelItems([newFuelItem()]);
+      }
+    });
+  }
+
+  return (
+    <>
+      <section
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        aria-label="Vehicles"
+      >
+        {vehicles.map((vehicle) => (
+          <PulseCard as="article"
+            className="cursor-pointer p-6"
+            key={vehicle.id}
+            onClick={() => router.push(`/garage/${vehicle.id}`)}
+          >
+            <div
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-secondary-foreground"
+              aria-hidden="true"
+            >
+              {vehicle.kind === "motorcycle" || vehicle.kind === "moped" ? <Bike className="h-5 w-5" /> : vehicle.kind === "bus" ? <Bus className="h-5 w-5" /> : vehicle.kind === "truck" || vehicle.kind === "van" ? <Truck className="h-5 w-5" /> : <Car className="h-5 w-5" />}
+            </div>
+            <h2 className="mt-4 text-lg font-semibold text-foreground">
+              <Link href={`/garage/${vehicle.id}`}>{vehicle.name}</Link>
+            </h2>
+            {(vehicle.make_name || vehicle.model_name) && <p className="mt-1 text-sm text-muted-foreground">{vehicle.make_name} {vehicle.model_name}</p>}
+            <p className="mt-1 text-sm text-muted-foreground">
+              {vehicle.kind === "unknown" ? "Kind not selected" : vehicle.kind.charAt(0).toUpperCase() + vehicle.kind.slice(1)}
+              {" · "}{vehicle.fuel_types.join(" + ").toUpperCase()}
+            </p>
+            <Button variant="secondary" size="lg"
+              onClick={(event) => {
+                event.stopPropagation();
+                setAirFillError("");
+                setPendingAirFillVehicle(vehicle);
+              }}
+              type="button"
+              className="mt-4 w-full"
+            >
+              Mark air filled now
+            </Button>
+            <Button variant="primary" size="lg"
+              className="mt-3 w-full"
+              onClick={(event) => {
+                event.stopPropagation();
+                setFuelError("");
+                setEntryTimeZone(timeZone);
+                setFuelDateTime(localDateTime());
+                setFuelVehicle(vehicle);
+              }}
+              type="button"
+            >
+              Add fuel
+            </Button>
+          </PulseCard>
+        ))}
+      </section>
+
+      <ConfirmationDialog
+        isOpen={!!pendingAirFillVehicle}
+        onClose={() => setPendingAirFillVehicle(null)}
+        onConfirm={handleMarkAirFill}
+        title="Mark air filled?"
+        description={
+          pendingAirFillVehicle
+            ? `Record that you filled air in ${pendingAirFillVehicle.name} right now. We'll remind you again in 30 days.`
+            : ""
+        }
+        confirmText="Yes, mark air filled"
+        confirmLoadingText="Marking…"
+        isLoading={isMarkingAirFill}
+        error={airFillError}
+        variant="amber"
+      />
+
+      {fuelVehicle && (
+        <Dialog labelledBy="fuel-title" size="lg">
+            <h2
+              className="text-2xl font-bold tracking-tight text-foreground"
+              id="fuel-title"
+            >
+              Add fuel for {fuelVehicle.name}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Enter any two fuel-cost values; the third is calculated
+              automatically when saved.
+            </p>
+            <FuelForm
+              error={fuelError}
+              filledAt={fuelDateTime}
+              isSaving={isSavingFuel}
+              items={fuelItems}
+              notes={fuelNotes}
+              odometer={fuelOdometer}
+              onCancel={() => setFuelVehicle(null)}
+              onFilledAtChange={setFuelDateTime}
+              onItemsChange={setFuelItems}
+              onNotesChange={setFuelNotes}
+              onOdometerChange={setFuelOdometer}
+              onStationNameChange={setStationName}
+              onSubmit={handleSaveFuel}
+              savingLabel="Saving…"
+              stationName={stationName}
+              submitLabel="Save fuel entry"
+            />
+        </Dialog>
+      )}
+    </>
+  );
+}

@@ -1,0 +1,29 @@
+*.iml
+.gradle
+.gradle-local
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Android source sets are not Rust build output.
+!**/src/debug/
+!**/src/debug/**
+
+.kotlin/
+.signing/
+
+# Generated Android packages and release workflow downloads
+*.apk
+*.aab
+*.apks
+/release-output/

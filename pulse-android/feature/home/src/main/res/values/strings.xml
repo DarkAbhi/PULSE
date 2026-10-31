@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="pulse_home_financial_horizon">Financial Horizon</string>
+    <string name="pulse_home_good_to_see_you">"Good to see you,"</string>
+    <string name="pulse_home_a_little_perspective_on_your_everyday">"A little perspective on your everyday."</string>
+    <string name="pulse_home_retry_profile">"Retry profile"</string>
+    <string name="pulse_home_loading_your_profile">"Loading your profile"</string>
+    <string name="pulse_home_loading_your_horizon">"Loading your horizon"</string>
+    <string name="pulse_home_no_summary_yet">"No summary yet"</string>
+    <string name="pulse_home_your_financial_summary_will_appear_here_when_available">"Your financial summary will appear here when available."</string>
+    <string name="pulse_home_your_room_to_move">"Your room to move"</string>
+    <string name="pulse_home_fitness_today">"FITNESS · TODAY"</string>
+    <string name="pulse_home_loading_today_s_workout">"Loading today’s workout"</string>
+    <string name="pulse_home_no_workout_recorded_today">"No workout recorded today."</string>
+    <string name="pulse_home_workout_recorded">"Workout recorded"</string>
+    <string name="pulse_home_money">"%1$s %2$s"</string>
+    <string name="pulse_home_notifications">Notifications</string>
+    <plurals name="pulse_home_notification_count">
+        <item quantity="one">Notifications, %1$d notification</item>
+        <item quantity="other">Notifications, %1$d notifications</item>
+    </plurals>
+    <string name="pulse_home_keep_going">Keep going</string>
+    <string name="pulse_home_get_moving">Let’s get moving</string>
+    <string name="pulse_home_view_fitness">View fitness</string>
+    <string name="pulse_home_profile">Profile</string>
+</resources>

@@ -1,6 +1,0 @@
-# Ignore generated files
-**/*.pyc
-.handler-saves
-.venv
-.git
-.gitignore

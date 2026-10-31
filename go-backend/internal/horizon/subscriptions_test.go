@@ -1,0 +1,316 @@
+package horizon
+
+import (
+	"bytes"
+	"context"
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"testing"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+
+	"github.com/DarkAbhi/life-backend/internal/testhelper"
+)
+
+func subscriptionsLoginUser(t *testing.T, db *sql.DB) *http.Cookie {
+	t.Helper()
+	token := "subscriptionstesttoken"
+	hash := sha256.Sum256([]byte(token))
+	hashStr := hex.EncodeToString(hash[:])
+	expiresAt := time.Now().Add(24 * time.Hour)
+	_, err := db.Exec(`
+		INSERT INTO user_sessions (user_id, token_hash, expires_at)
+		VALUES (1, $1, $2)
+	`, hashStr, expiresAt)
+	if err != nil {
+		t.Fatalf("failed to insert session: %v", err)
+	}
+	return &http.Cookie{
+		Name:  "life_session",
+		Value: token,
+	}
+}
+
+func TestLinkSubscriptionTransaction(t *testing.T) {
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
+	defer shutdown()
+	pool := testPool(t, dsn)
+	defer pool.Close()
+	h := NewSubscriptionsHandler(pool, testSessionLookup(db))
+	cookie := subscriptionsLoginUser(t, db)
+
+	var subID, txID, creditID int64
+	if err := db.QueryRow(`INSERT INTO financial_horizon_subscriptions (user_id, name, amount, billing_cycle, status) VALUES (1, 'Netflix', 649, 'monthly', 'active') RETURNING id`).Scan(&subID); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`INSERT INTO financial_horizon_transactions (user_id, name, amount, type, transaction_date, category_name) VALUES (1, 'Imported payment', 649, 'debit', NOW(), 'Other') RETURNING id`).Scan(&txID); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`INSERT INTO financial_horizon_transactions (user_id, name, amount, type, transaction_date, category_name) VALUES (1, 'Refund', 649, 'credit', NOW(), 'Other') RETURNING id`).Scan(&creditID); err != nil {
+		t.Fatal(err)
+	}
+
+	link := func(transactionID int64) *httptest.ResponseRecorder {
+		t.Helper()
+		body, _ := json.Marshal(map[string]int64{"transaction_id": transactionID})
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, "/api/horizon/subscriptions/{id}/transactions", bytes.NewReader(body))
+		req.AddCookie(cookie)
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", strconv.FormatInt(subID, 10))
+		h.LinkSubscriptionTransaction(rec, req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx)))
+		return rec
+	}
+
+	if rec := link(txID); rec.Code != http.StatusOK {
+		t.Fatalf("link failed: %d %s", rec.Code, rec.Body.String())
+	}
+	if rec := link(txID); rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected duplicate link rejection, got %d", rec.Code)
+	}
+	if rec := link(creditID); rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected credit rejection, got %d", rec.Code)
+	}
+	var count int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM financial_horizon_transactions WHERE user_id = 1`).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != 2 {
+		t.Fatalf("link created a transaction: count=%d", count)
+	}
+	var linkedID sql.NullInt64
+	var name, txType string
+	var amount float64
+	if err := db.QueryRow(`SELECT subscription_id, name, amount, type FROM financial_horizon_transactions WHERE id = $1`, txID).Scan(&linkedID, &name, &amount, &txType); err != nil || !linkedID.Valid || linkedID.Int64 != subID || name != "Imported payment" || amount != 649 || txType != "debit" {
+		t.Fatalf("transaction not linked: id=%v err=%v", linkedID, err)
+	}
+}
+
+func TestCalculateMonthlyEquivalent(t *testing.T) {
+	tests := []struct {
+		amount   float64
+		cycle    string
+		expected float64
+	}{
+		{amount: 100, cycle: "monthly", expected: 100},
+		{amount: 1200, cycle: "yearly", expected: 100},
+	}
+
+	for _, tt := range tests {
+		got := CalculateMonthlyEquivalent(tt.amount, tt.cycle)
+		if got != tt.expected {
+			t.Errorf("CalculateMonthlyEquivalent(%f, %q) = %f, want %f", tt.amount, tt.cycle, got, tt.expected)
+		}
+	}
+}
+
+func TestCalculateNextRenewalAllCadences(t *testing.T) {
+	refTime := time.Date(2026, 8, 2, 0, 0, 0, 0, time.UTC) // Aug 2, 2026
+
+	renDateDec15 := time.Date(2026, 12, 15, 0, 0, 0, 0, time.UTC)
+	renDateJan15 := time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC)
+	renDateAug2 := time.Date(2026, 8, 2, 0, 0, 0, 0, time.UTC)
+
+	bDay1 := 1
+	bDay2 := 2
+	bDay15 := 15
+	bDay31 := 31
+
+	tests := []struct {
+		name        string
+		billingDay  *int
+		renewalDate *time.Time
+		cycle       string
+		refTime     time.Time
+		expected    time.Time
+	}{
+		// --- MONTHLY ---
+		{
+			name:       "monthly: day 1 on aug 2 -> aug 1 passed -> sept 1 (30 days away)",
+			billingDay: &bDay1,
+			cycle:      "monthly",
+			refTime:    refTime,
+			expected:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:       "monthly: day 2 on aug 2 -> due today (aug 2)",
+			billingDay: &bDay2,
+			cycle:      "monthly",
+			refTime:    refTime,
+			expected:   time.Date(2026, 8, 2, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:       "monthly: day 15 on aug 2 -> in future (aug 15)",
+			billingDay: &bDay15,
+			cycle:      "monthly",
+			refTime:    refTime,
+			expected:   time.Date(2026, 8, 15, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:       "monthly: day 31 in april (30-day month) -> clamps to april 30",
+			billingDay: &bDay31,
+			cycle:      "monthly",
+			refTime:    time.Date(2026, 4, 10, 0, 0, 0, 0, time.UTC),
+			expected:   time.Date(2026, 4, 30, 0, 0, 0, 0, time.UTC),
+		},
+
+		// --- YEARLY ---
+		{
+			name:        "yearly: dec 15 renewal date evaluated on aug 2 -> dec 15, 2026",
+			renewalDate: &renDateDec15,
+			cycle:       "yearly",
+			refTime:     refTime,
+			expected:    time.Date(2026, 12, 15, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:        "yearly: jan 15 renewal date evaluated on aug 2 -> jan 15, 2027 (next year)",
+			renewalDate: &renDateJan15,
+			cycle:       "yearly",
+			refTime:     refTime,
+			expected:    time.Date(2027, 1, 15, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:        "yearly: aug 2 renewal date evaluated on aug 2 -> aug 2, 2026 (due today)",
+			renewalDate: &renDateAug2,
+			cycle:       "yearly",
+			refTime:     refTime,
+			expected:    time.Date(2026, 8, 2, 0, 0, 0, 0, time.UTC),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := CalculateNextRenewal(tt.billingDay, tt.renewalDate, tt.cycle, tt.refTime)
+			if !got.Equal(tt.expected) {
+				t.Errorf("CalculateNextRenewal(%v, %v, %q, %v) = %v, want %v", tt.billingDay, tt.renewalDate, tt.cycle, tt.refTime, got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSubscriptionsCRUD(t *testing.T) {
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
+	defer shutdown()
+	pool := testPool(t, dsn)
+	defer pool.Close()
+
+	h := NewSubscriptionsHandler(pool, testSessionLookup(db))
+	cookie := subscriptionsLoginUser(t, db)
+
+	var subID int64
+	{
+		billingDay := 15
+		notes := "Family plan"
+		body, _ := json.Marshal(SubscriptionInput{
+			Name:         "Netflix Premium",
+			Amount:       649.0,
+			BillingCycle: "monthly",
+			BillingDay:   &billingDay,
+			Notes:        &notes,
+		})
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, "/api/horizon/subscriptions", bytes.NewReader(body))
+		req.AddCookie(cookie)
+		h.CreateSubscription(rec, req)
+
+		if rec.Code != http.StatusCreated {
+			t.Fatalf("expected 201 Created, got %d", rec.Code)
+		}
+
+		var sub SubscriptionDTO
+		if err := json.NewDecoder(rec.Body).Decode(&sub); err != nil {
+			t.Fatalf("failed to decode response: %v", err)
+		}
+		if sub.Name != "Netflix Premium" || sub.Amount != 649.0 || sub.Status != "active" {
+			t.Errorf("unexpected subscription DTO: %+v", sub)
+		}
+		subID = sub.ID
+	}
+
+	{
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/api/horizon/subscriptions", nil)
+		req.AddCookie(cookie)
+		h.ListSubscriptions(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK, got %d", rec.Code)
+		}
+
+		var summary SubscriptionSummaryDTO
+		_ = json.NewDecoder(rec.Body).Decode(&summary)
+		if summary.ActiveSubscriptionsCount != 1 || summary.TotalMonthlyBurn != 649.0 {
+			t.Errorf("unexpected summary DTO: %+v", summary)
+		}
+	}
+
+	{
+		paused := "paused"
+		billingDay := 15
+		body, _ := json.Marshal(SubscriptionInput{
+			Name:         "Netflix Premium",
+			Amount:       649.0,
+			BillingCycle: "monthly",
+			BillingDay:   &billingDay,
+			Status:       &paused,
+		})
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPut, "/api/horizon/subscriptions/{id}", bytes.NewReader(body))
+		req.AddCookie(cookie)
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", strconv.FormatInt(subID, 10))
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		h.UpdateSubscription(rec, req)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK, got %d", rec.Code)
+		}
+	}
+
+	{
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodDelete, "/api/horizon/subscriptions/{id}", nil)
+		req.AddCookie(cookie)
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", strconv.FormatInt(subID, 10))
+		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+
+		h.DeleteSubscription(rec, req)
+		if rec.Code != http.StatusNoContent {
+			t.Fatalf("expected 204 No Content, got %d", rec.Code)
+		}
+	}
+}
+
+func TestSubscriptionRenewalUsesProfileCalendar(t *testing.T) {
+	db, dsn, shutdown := testhelper.StartPostgresWithDSN(t)
+	defer shutdown()
+	pool := testPool(t, dsn)
+	defer pool.Close()
+	handler := NewSubscriptionsHandler(pool, testSessionLookup(db))
+	location, err := handler.userLocation(context.Background(), 1)
+	if err != nil || location.String() != "UTC" {
+		t.Fatalf("default zone %v, %v", location, err)
+	}
+	if _, err := db.Exec(`INSERT INTO user_profiles (user_id, display_name, timezone) VALUES (1, 'Test', 'America/Los_Angeles')`); err != nil {
+		t.Fatal(err)
+	}
+	location, err = handler.userLocation(context.Background(), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 11, 1, 0, 30, 0, 0, time.UTC)
+	billingDay := 31
+	next := CalculateNextRenewal(&billingDay, nil, "monthly", now.In(location))
+	if next.Format("2006-01-02") != "2026-10-31" {
+		t.Fatalf("renewal date %v should remain October 31 in the profile zone", next)
+	}
+}

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="pulse_auth_enter_your_username">"Enter your username."</string>
+    <string name="pulse_auth_enter_your_password">"Enter your password."</string>
+    <string name="pulse_auth_pulse">"PULSE"</string>
+    <string name="pulse_auth_your_everyday_in_one_place">"Your everyday,\nin one place."</string>
+    <string name="pulse_auth_your_everyday_considered">"Your everyday, considered."</string>
+    <string name="pulse_auth_a_private_space_for_your_fitness_finances_meals_and">"A private space for your fitness, finances, meals, and vehicle care."</string>
+    <string name="pulse_auth_welcome_back">"Welcome back"</string>
+    <string name="pulse_auth_sign_in_to_pick_up_where_you_left_off">"Sign in to pick up where you left off."</string>
+    <string name="pulse_auth_username">"Username"</string>
+    <string name="pulse_auth_password">"Password"</string>
+    <string name="pulse_auth_continue">"Continue"</string>
+    <string name="pulse_auth_your_account_your_own_quiet_corner">"Your account. Your own quiet corner."</string>
+</resources>

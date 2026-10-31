@@ -1,0 +1,117 @@
+import java.util.Properties
+
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
+}
+
+val releaseApiUrl =
+    providers
+        .gradleProperty(
+            "pulse.releaseApiUrl",
+        ).orElse("http://100.115.134.90:3100/api/")
+val debugApiUrl = providers.gradleProperty("pulse.debugApiUrl").orElse("http://10.0.2.2:18081/api/")
+val releaseSigningFile = rootProject.file(".signing/release.properties")
+val releaseSigning = Properties()
+if (releaseSigningFile.exists()) {
+    releaseSigningFile.inputStream().use { releaseSigning.load(it) }
+}
+
+fun quoted(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+android {
+    namespace = "dev.abhishekan.pulse"
+    compileSdk {
+        version = release(37)
+    }
+
+    defaultConfig {
+        applicationId = "dev.abhishekan.pulse"
+        minSdk = 28
+        targetSdk = 37
+        versionCode = 2
+        versionName = "1.0.1"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (releaseSigningFile.exists()) {
+            create("release") {
+                storeFile = rootProject.file(releaseSigning.getProperty("storeFile"))
+                storePassword = releaseSigning.getProperty("storePassword")
+                keyAlias = releaseSigning.getProperty("keyAlias")
+                keyPassword = releaseSigning.getProperty("keyPassword")
+            }
+        }
+    }
+
+    buildTypes {
+        debug { buildConfigField("String", "API_BASE_URL", quoted(debugApiUrl.get())) }
+        release {
+            if (releaseSigningFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+            buildConfigField("String", "API_BASE_URL", quoted(releaseApiUrl.get()))
+            optimization {
+                enable = true
+                packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
+            }
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    testOptions {
+        unitTests.all { it.systemProperty("pulse.root", rootProject.projectDir.absolutePath) }
+    }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+}
+
+dependencies {
+    implementation(project(":feature:profile"))
+    implementation(project(":feature:notifications"))
+    implementation(project(":core:domain"))
+    implementation(project(":core:data"))
+    implementation(project(":core:network"))
+    implementation(project(":core:ui"))
+    implementation(project(":feature:auth"))
+    implementation(project(":feature:home"))
+    implementation(project(":feature:fitness"))
+    implementation(project(":feature:horizon"))
+    implementation(project(":feature:garage"))
+    implementation(project(":feature:mealplan"))
+    implementation(libs.koin.android)
+    implementation(libs.koin.compose)
+    implementation(libs.coroutines.android)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
+    testImplementation(libs.koin.test)
+    testImplementation(libs.ktor.core)
+    testImplementation(libs.coroutines.test)
+    androidTestImplementation(libs.ktor.core)
+    androidTestImplementation(libs.ktor.mock)
+    androidTestImplementation(libs.serialization.json)
+    androidTestImplementation(libs.coroutines.test)
+
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    testImplementation(libs.junit)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.junit)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+}

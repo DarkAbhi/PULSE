@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name" translatable="false">Pulse</string>
+    <string name="pulse_app_couldn_t_save_appearance_please_try_again">"Couldn’t save appearance. Please try again."</string>
+    <string name="pulse_app_checking_your_session">"Checking your session"</string>
+    <string name="pulse_app_you_re_signed_out_secure_storage_needs_attention_retry">"You’re signed out. Secure storage needs attention; retry signing in or restart Pulse."</string>
+    <string name="pulse_app_your_session_has_expired_welcome_back_please_sign_in">"Your session has expired. Welcome back — please sign in again."</string>
+    <string name="pulse_app_we_couldn_t_open_your_session">"We couldn’t open your session"</string>
+    <string name="pulse_app_we_couldn_t_validate_your_session_1_s">"We couldn’t validate your session. %1$s"</string>
+    <string name="pulse_app_your_saved_session_has_been_kept_on_this_device">"Your saved session has been kept on this device."</string>
+    <string name="pulse_app_try_again">"Try again"</string>
+    <string name="pulse_app_forget_this_device_s_session">"Forget this device’s session"</string>
+    <string name="pulse_app_forget_this_session">"Forget this session?"</string>
+    <string name="pulse_app_this_removes_this_device_s_saved_session_it_won">"This removes this device’s saved session. It won’t sign out your other devices."</string>
+    <string name="pulse_app_forget_session">"Forget session"</string>
+    <string name="pulse_app_you">"You"</string>
+    <string name="pulse_app_notifications">"Notifications"</string>
+    <string name="pulse_app_spaces">"Spaces"</string>
+    <string name="pulse_app_fitness">"Fitness"</string>
+    <string name="pulse_app_workout">"Workout"</string>
+    <string name="pulse_app_financial_horizon">"Financial Horizon"</string>
+    <string name="pulse_app_garage">"Garage"</string>
+    <string name="pulse_app_meal_plan">"Meal Plan"</string>
+    <string name="pulse_app_pulse">"Pulse"</string>
+    <string name="pulse_app_back_to_home">"Back to Home"</string>
+    <string name="pulse_app_back_to_spaces">"Back to Spaces"</string>
+    <string name="pulse_app_back_to_fitness">"Back to Fitness"</string>
+    <string name="pulse_app_home">"Home"</string>
+    <string name="pulse_app_make_room_for_your_everyday">"Make room for your everyday."</string>
+    <string name="pulse_app_find_your_rhythm_record_workouts_revisit_your_activity_and">"Find your rhythm. Record workouts, revisit your activity, and keep track of every set."</string>
+    <string name="pulse_app_open_fitness">"Open Fitness"</string>
+    <string name="pulse_app_your_room_to_move_review_commitments_track_transactions_and">"Your room to move. Review commitments, track transactions, and plan what’s next."</string>
+    <string name="pulse_app_open_financial_horizon">"Open Financial Horizon"</string>
+    <string name="pulse_app_care_for_every_journey_track_fuel_tire_pressure_maintenance">"Care for every journey. Track fuel, tire pressure, maintenance and receipts."</string>
+    <string name="pulse_app_open_garage">"Open Garage"</string>
+    <string name="pulse_app_a_little_care_for_your_day_plan_the_week">"A little care for your day. Plan the week and keep track of meals enjoyed."</string>
+    <string name="pulse_app_open_meal_plan">"Open Meal Plan"</string>
+    <string name="pulse_app_component_gallery">"Component gallery"</string>
+    <string name="pulse_app_back_to_notifications">Back to notifications</string>
+    <string name="pulse_app_horizon">Horizon</string>
+    <string name="pulse_app_meals">Meals</string>
+    <string name="pulse_app_back_to_garage">Back to Garage</string>
+    <string name="pulse_app_back_to_workout">Back to workout</string>
+    <string name="pulse_app_back_to_horizon">Back to Financial Horizon</string>
+</resources>

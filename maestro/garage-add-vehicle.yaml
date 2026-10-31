@@ -1,0 +1,66 @@
+url: http://localhost:3000
+---
+- launchApp:
+    clearState: true
+
+# 1. Login
+- assertVisible: Welcome back
+- tapOn:
+    css: "#username"
+- eraseText
+- inputText: admin
+- tapOn:
+    css: "#password"
+- inputText: password
+- tapOn: Continue
+
+# 2. Dashboard -> Navigate to Garage
+- assertVisible: "Good to see you,"
+- assertVisible:
+    css: "section[aria-label='Welcome'] h1"
+- scrollUntilVisible:
+    element:
+      css: "nav[aria-label='Your spaces'] a[href='/garage']"
+    direction: DOWN
+- tapOn:
+    css: "nav[aria-label='Your spaces'] a[href='/garage']"
+
+# 3. Garage page verification
+- assertVisible: Garage
+- assertVisible: A simple home for every vehicle in your life.
+- assertVisible: Add vehicle
+
+# 4. Open Add Vehicle modal
+- tapOn:
+    # Maestro's web hierarchy does not expose the native `enabled` property.
+    css: "#add-vehicle-button:not(:disabled)"
+    retryTapIfNoChange: true
+- assertVisible: Add a vehicle
+- assertVisible: Choose your vehicle from the catalog or enter its details manually.
+- tapOn: Enter manually
+
+# 5. Fill vehicle details
+- tapOn:
+    css: "input[id$='-name']"
+- inputText: "Honda Civic"
+
+- tapOn:
+    css: "select[id$='-kind']"
+- inputText: "c"
+- pressKey: Enter
+- assertVisible:
+    css: "select[id$='-kind']:has(option[value='car']:checked)"
+- tapOn:
+    css: "select[id$='-fuel']"
+- inputText: "p"
+- pressKey: Enter
+- assertVisible:
+    css: "select[id$='-fuel']:has(option[value='petrol']:checked)"
+
+# 6. Submit Add vehicle form
+- tapOn:
+    css: "#add-vehicle-submit"
+
+# 7. Assert dialog closed and newly added vehicle appears in the list
+- assertNotVisible: "Add a vehicle"
+- assertVisible: "Honda Civic"

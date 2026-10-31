@@ -297,4 +297,7 @@
     <string name="pulse_garage_care_notes_hint">Work carried out, parts replaced or anything to remember</string>
     <string name="pulse_garage_care_choose_category">Choose maintenance category</string>
     <string name="pulse_garage_care_choose_date">Choose date</string>
+    <string name="pulse_garage_care_amount_hint">0.00</string>
+    <string name="pulse_garage_pressure_minus">−</string>
+    <string name="pulse_garage_pressure_plus">+</string>
 </resources>

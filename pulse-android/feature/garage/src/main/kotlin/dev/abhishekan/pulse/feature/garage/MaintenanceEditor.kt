@@ -13,20 +13,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,7 +36,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
@@ -59,14 +52,14 @@ import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
+import dev.abhishekan.pulse.core.ui.components.PulseDatePickerSheet
+import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -146,7 +139,13 @@ internal fun MaintenanceEditor(
                 labelAbove = true,
                 textStyle = PulseTheme.typography.heading1,
                 leadingIcon = { PulseText(UserCurrency.symbol(), style = PulseTextStyle.Title3) },
-                placeholder = { PulseText("0.00", style = PulseTextStyle.Heading1, color = colors.textSecondary) },
+                placeholder = {
+                    PulseText(
+                        stringResource(R.string.pulse_garage_care_amount_hint),
+                        style = PulseTextStyle.Heading1,
+                        color = colors.textSecondary,
+                    )
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Next) }),
             )
@@ -246,11 +245,17 @@ internal fun MaintenanceEditor(
                     picker = null
                 }, { picker = null })
             "date" ->
-                MaintenanceDateSheet(runCatching { LocalDate.parse(draft["date"]) }.getOrDefault(LocalDate.now(UserTimeZone.zone)), {
-                    change(draft.set("date", it.toString()))
-                    picker =
-                        null
-                }, { picker = null })
+                PulseDatePickerSheet(
+                    runCatching { LocalDate.parse(draft["date"]) }.getOrDefault(LocalDate.now(UserTimeZone.zone)),
+                    {
+                        change(draft.set("date", it.toString()))
+                        picker =
+                            null
+                    },
+                    { picker = null },
+                    title = stringResource(R.string.pulse_garage_care_choose_date),
+                    dismissLabel = stringResource(R.string.pulse_garage_close_picker),
+                )
             "time" ->
                 PulseTimePickerDialog(runCatching { LocalTime.parse(draft["time"]) }.getOrDefault(LocalTime.MIDNIGHT), {
                     change(draft.set("time", it.toString()))
@@ -340,13 +345,7 @@ private fun MaintenanceCategorySheet(
                 garageCategories.forEach { category ->
                     val active = selected == category
                     Surface(
-                        Modifier
-                            .fillMaxWidth()
-                            .selectable(active, role = Role.RadioButton) {
-                                select(category)
-                            }.testTag(
-                                "maintenance-category-$category",
-                            ),
+                        Modifier.fillMaxWidth(),
                         shape = PulseTokens.controlShape,
                         color = if (active) colors.primarySoft else colors.surfaceMuted,
                         border =
@@ -355,83 +354,15 @@ private fun MaintenanceCategorySheet(
                                 if (active) colors.action else colors.border,
                             ),
                     ) {
-                        Row(
-                            Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            PulseText(garageOption(category), Modifier.weight(1f), PulseTextStyle.Label)
-                            RadioButton(
-                                selected = active,
-                                onClick = null,
-                                colors = RadioButtonDefaults.colors(selectedColor = colors.action),
-                            )
-                        }
+                        PulseRadioButton(
+                            selected = active,
+                            onClick = { select(category) },
+                            label = garageOption(category),
+                            modifier = Modifier.fillMaxWidth().padding(16.dp).testTag("maintenance-category-$category"),
+                        )
                     }
                 }
             }
-            PulseButton(stringResource(R.string.pulse_garage_close_picker), dismiss, Modifier.fillMaxWidth(), style = PulseButtonStyle.Text)
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun MaintenanceDateSheet(
-    selected: LocalDate,
-    select: (LocalDate) -> Unit,
-    dismiss: () -> Unit,
-) {
-    val colors = PulseTheme.colors
-    val state =
-        rememberDatePickerState(
-            initialSelectedDateMillis = selected.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
-            yearRange =
-                0..9999,
-        )
-    ModalBottomSheet(
-        onDismissRequest = dismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        sheetMaxWidth = 640.dp,
-        containerColor = colors.surface,
-    ) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp)
-                .testTag("maintenance-date-sheet"),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            PulseText(
-                stringResource(R.string.pulse_garage_care_choose_date),
-                Modifier.padding(horizontal = 24.dp).semantics {
-                    heading()
-                },
-                PulseTextStyle.Title3,
-            )
-            DatePicker(
-                state,
-                colors =
-                    DatePickerDefaults.colors(
-                        containerColor = colors.surface,
-                        selectedDayContainerColor = colors.primary,
-                        selectedDayContentColor = colors.onPrimary,
-                        todayContentColor = colors.action,
-                        todayDateBorderColor = colors.action,
-                    ),
-            )
-            PulseButton(
-                stringResource(R.string.pulse_garage_care_choose_date),
-                {
-                    state.selectedDateMillis?.let {
-                        select(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate())
-                    }
-                },
-                Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                enabled =
-                    state.selectedDateMillis != null,
-            )
             PulseButton(stringResource(R.string.pulse_garage_close_picker), dismiss, Modifier.fillMaxWidth(), style = PulseButtonStyle.Text)
         }
     }

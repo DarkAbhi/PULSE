@@ -1135,7 +1135,7 @@ class GarageDeviceTest {
         compose.onNodeWithText("36").assertExists()
         compose.onNodeWithText("Air fill 41").performScrollTo().assertIsDisplayed()
         screenshot("tires-air-history")
-        compose.onNodeWithContentDescription("Delete air fill 41").performScrollTo().performClick()
+        tap("Delete air fill 41")
         confirm("Delete")
         compose.waitUntil(10_000) { air.isEmpty() }
         compose.onNodeWithText("No air fills recorded").performScrollTo().assertIsDisplayed()
@@ -1246,7 +1246,7 @@ class GarageDeviceTest {
         confirm("Record air fill")
         awaitText("Saved. Your garage is up to date.")
         tap("Tires & air")
-        compose.onNodeWithContentDescription("Delete air fill 101").performScrollTo().performClick()
+        tap("Delete air fill 101")
         confirm("Delete")
         compose.waitForIdle()
         assertTrue(air.isEmpty())
@@ -1321,8 +1321,12 @@ class GarageDeviceTest {
         confirm("Cancel")
         tap("Garage")
         awaitText("Unsaved care")
-        compose.onNodeWithText("Title").performScrollTo().performImeAction()
-        compose.onNodeWithText("Amount (₹)").assertIsFocused()
+        compose
+            .onNode(hasTestTag("maintenance-title") and hasSetTextAction())
+            .performScrollTo()
+            .performClick()
+            .performImeAction()
+        compose.onNode(hasTestTag("maintenance-amount") and hasSetTextAction()).assertIsFocused()
         val target =
             48 *
                 InstrumentationRegistry
@@ -1330,7 +1334,7 @@ class GarageDeviceTest {
                     .targetContext.resources.displayMetrics.density
         compose.waitUntil(15_000) {
             compose
-                .onNodeWithText("Amount (₹)")
+                .onNode(hasTestTag("maintenance-amount") and hasSetTextAction())
                 .fetchSemanticsNode()
                 .boundsInRoot.height >=
                 target
@@ -1513,10 +1517,10 @@ class GarageDeviceTest {
             tap("Add maintenance")
             field("Title", "Resized care")
             field("Amount (₹)", "500.25")
-            compose.onNodeWithText("Date:", substring = true).performScrollTo().performClick()
+            compose.onNode(hasTestTag("maintenance-date")).performScrollTo().performClick()
             screenshot("date-picker", true)
-            confirm("Choose date")
-            compose.onNodeWithText("Time:", substring = true).performScrollTo().performClick()
+            tap("Choose date")
+            compose.onNode(hasTestTag("maintenance-time")).performScrollTo().performClick()
             screenshot("time-picker", true)
             confirm("Choose time")
             shell("wm size 2048x1800")

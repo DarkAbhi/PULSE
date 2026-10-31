@@ -69,14 +69,14 @@ internal fun VehiclePressureFields(
                             )
                             Row(horizontalArrangement = Arrangement.spacedBy(PulseTheme.spacing.small)) {
                                 PulseButton(
-                                    "−",
+                                    stringResource(R.string.pulse_garage_pressure_minus),
                                     { change(draft.adjustPressure(key, -1)) },
                                     Modifier.weight(1f).semantics { contentDescription = decrease },
                                     enabled = enabled && valid && draft[key].toBigDecimalOrNull()?.signum() == 1,
                                     variant = PulseButtonVariant.Secondary,
                                 )
                                 PulseButton(
-                                    "+",
+                                    stringResource(R.string.pulse_garage_pressure_plus),
                                     { change(draft.adjustPressure(key, 1)) },
                                     Modifier.weight(1f).semantics { contentDescription = increase },
                                     enabled =

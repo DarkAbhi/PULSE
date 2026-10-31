@@ -65,24 +65,46 @@ class LocalizationResourcesTest {
                         "Unnumbered placeholder in $module: $value",
                         Regex("(?<!%)%(?:s|d|f)").containsMatchIn(value),
                     )
-                    val arguments =
-                        Regex("%([0-9]+)[$]s")
-                            .findAll(value)
-                            .map {
-                                it.groupValues[1].toInt()
-                            }.toList()
-                    if (arguments.isNotEmpty()) {
-                        String.format(
-                            Locale.ROOT,
-                            value,
-                            *Array(arguments.max()) {
-                                "sample"
-                            },
-                        )
+                    try {
+                        validateFormatString(value)
+                    } catch (error: IllegalArgumentException) {
+                        throw AssertionError("Invalid format in $module: $value", error)
                     }
                 }
             }
         }
+    }
+
+    @Test fun formatValidationSupportsMixedAndNumericOnlyArguments() {
+        validateFormatString("Step %1\$d of 3 · %2\$s")
+        validateFormatString("%1\$d matches")
+        validateFormatString("%1\$.2f · %2\$s · %1\$.1f")
+        validateFormatString("%1\$s · 100%%")
+        validateFormatString("%1\$d · %1\$s")
+    }
+
+    @Test(expected = java.util.IllegalFormatConversionException::class)
+    fun formatValidationRejectsConflictingArgumentTypes() {
+        validateFormatString("%1\$d · %1\$f")
+    }
+
+    private fun validateFormatString(value: String) {
+        // Consume escaped percent signs before collecting typed, numbered arguments.
+        val placeholders =
+            Regex("%%|%([0-9]+)[$][-#+ 0,(]*[0-9]*(?:\\.[0-9]+)?([sdf])")
+                .findAll(value)
+                .filter { it.value != "%%" }
+                .toList()
+        if (placeholders.isEmpty()) return
+        val arguments = Array<Any>(placeholders.maxOf { it.groupValues[1].toInt() }) { "sample" }
+        placeholders.forEach {
+            val index = it.groupValues[1].toInt() - 1
+            when (it.groupValues[2]) {
+                "d" -> arguments[index] = 1L
+                "f" -> arguments[index] = 1.5
+            }
+        }
+        String.format(Locale.ROOT, value, *arguments)
     }
 
     @Test fun productionPulseControlsDoNotEmbedEnglishCopy() {

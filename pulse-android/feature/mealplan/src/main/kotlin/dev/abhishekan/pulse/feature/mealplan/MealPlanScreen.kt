@@ -16,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -108,6 +109,7 @@ internal fun MealPlanScreen(
             !state.meals.loading &&
             state.meals.error == null &&
             state.meals.value != null
+    val tracker = rememberPullRefreshTracker(refreshing)
     val canRefresh = !state.busy && state.draft == null && !refreshing
     val showAddTimeButton =
         state.managing &&
@@ -119,7 +121,7 @@ internal fun MealPlanScreen(
     val timeActionClearance = (80 * LocalDensity.current.fontScale.coerceAtLeast(1f)).dp
     val refresh = {
         if (canRefresh) {
-            if (state.managing) vm.refreshTimes() else vm.refresh()
+            tracker.request { if (state.managing) vm.refreshTimes() else vm.refresh() }
         }
     }
     val refreshLabel = stringResource(R.string.pulse_mealplan_refresh)
@@ -129,7 +131,7 @@ internal fun MealPlanScreen(
                 .fillMaxSize()
                 .padding(LocalPulseContentPadding.current)
                 .pullToRefresh(
-                    isRefreshing = refreshing && state.draft == null,
+                    isRefreshing = tracker.requested && refreshing && state.draft == null,
                     state = pullState,
                     enabled = canRefresh,
                     onRefresh = refresh,
@@ -367,7 +369,7 @@ internal fun MealPlanScreen(
         if (state.draft == null) {
             PullToRefreshDefaults.Indicator(
                 state = pullState,
-                isRefreshing = refreshing,
+                isRefreshing = tracker.requested && refreshing,
                 modifier = Modifier.align(Alignment.TopCenter),
             )
         }

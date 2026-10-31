@@ -18,6 +18,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -102,17 +103,18 @@ fun FitnessScreen(
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         val wide = size == PulseWindowSize.Expanded && LocalDensity.current.fontScale < 1.5f
         val pullState = rememberPullToRefreshState()
+        val tracker = rememberPullRefreshTracker(state.loading)
         val canRefresh = !state.loading && !state.busy
-        val refresh = { if (canRefresh) onRefresh() }
+        val refresh = { if (canRefresh) tracker.request(onRefresh) }
         val refreshLabel = stringResource(R.string.pulse_fitness_refresh_activity)
         PullToRefreshBox(
-            isRefreshing = state.loading,
+            isRefreshing = tracker.requested && state.loading,
             state = pullState,
             indicator = {
                 if (state.overview != null || !state.loading) {
                     PullToRefreshDefaults.Indicator(
                         state = pullState,
-                        isRefreshing = state.loading,
+                        isRefreshing = tracker.requested && state.loading,
                         modifier = Modifier.align(Alignment.TopCenter),
                     )
                 }

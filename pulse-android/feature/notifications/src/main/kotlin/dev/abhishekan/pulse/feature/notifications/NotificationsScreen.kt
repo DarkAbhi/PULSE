@@ -15,6 +15,7 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberSwipeToDismissBoxState
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,12 +75,13 @@ internal fun NotificationsScreen(
     reviewed: () -> Unit,
     open: (NotificationTarget) -> Unit,
 ) {
+    val tracker = rememberPullRefreshTracker(state.loading)
     val enabled = !state.busy && !state.loading && !state.uncertain
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         val padding = size.pagePadding
         PullToRefreshBox(
-            isRefreshing = state.loading && state.loaded,
-            onRefresh = { if (!state.busy && !state.loading) refresh() },
+            isRefreshing = tracker.requested && state.loading,
+            onRefresh = { if (!state.busy && !state.loading) tracker.request(refresh) },
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopCenter,
         ) {

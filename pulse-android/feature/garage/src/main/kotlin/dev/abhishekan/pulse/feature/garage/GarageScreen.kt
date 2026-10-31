@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -219,12 +220,13 @@ internal fun GarageScreen(
     val scrollStates = rememberSaveableStateHolder()
     val enabled = !state.busy && !state.reviewRequired && state.draft == null
     val refreshState = rememberPullToRefreshState()
+    val tracker = rememberPullRefreshTracker(state.history.loading)
     val canRefresh = state.vehicle != null && !state.history.loading && !state.busy && state.draft == null
     val showLoading =
         !state.reviewRequired &&
             (state.draft == null || records) &&
             if (state.vehicle == null) state.vehicles.loading else state.history.loading
-    val refresh = { if (canRefresh) vm.refreshHistory() }
+    val refresh = { if (canRefresh) tracker.request(vm::refreshHistory) }
     val refreshLabel = stringResource(R.string.pulse_garage_refresh_vehicle_history)
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         val content: @Composable () -> Unit = {
@@ -510,7 +512,7 @@ internal fun GarageScreen(
                     .weight(1f)
                     .fillMaxWidth()
                     .pullToRefresh(
-                        isRefreshing = state.vehicle != null && state.history.loading,
+                        isRefreshing = tracker.requested && state.vehicle != null && state.history.loading,
                         state = refreshState,
                         enabled = canRefresh,
                         onRefresh = refresh,
@@ -550,7 +552,7 @@ internal fun GarageScreen(
                 if (state.vehicle != null && state.draft == null) {
                     PullToRefreshDefaults.Indicator(
                         state = refreshState,
-                        isRefreshing = state.history.loading,
+                        isRefreshing = tracker.requested && state.history.loading,
                         modifier = Modifier.align(Alignment.TopCenter),
                     )
                 }

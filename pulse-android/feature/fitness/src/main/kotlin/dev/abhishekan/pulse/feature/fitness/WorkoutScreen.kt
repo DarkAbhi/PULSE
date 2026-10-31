@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -171,6 +172,7 @@ fun WorkoutScreen(
             return@PulseAdaptiveLayout
         }
         val pullState = rememberPullToRefreshState()
+        val tracker = rememberPullRefreshTracker(state.loading)
         val canRefresh = !state.loading && !state.busy && state.editor == null
         val refreshLabel = stringResource(R.string.pulse_fitness_refresh_workout)
         Box(
@@ -179,16 +181,16 @@ fun WorkoutScreen(
                 .padding(LocalPulseContentPadding.current)
                 .testTag("workout-refresh")
                 .pullToRefresh(
-                    isRefreshing = state.loading && state.editor == null,
+                    isRefreshing = tracker.requested && state.loading && state.editor == null,
                     state = pullState,
                     enabled = canRefresh,
-                    onRefresh = onRefresh,
+                    onRefresh = { tracker.request(onRefresh) },
                 ).semantics {
                     customActions =
                         if (canRefresh) {
                             listOf(
                                 CustomAccessibilityAction(refreshLabel) {
-                                    onRefresh()
+                                    tracker.request(onRefresh)
                                     true
                                 },
                             )
@@ -249,7 +251,7 @@ fun WorkoutScreen(
             if (state.editor == null) {
                 PullToRefreshDefaults.Indicator(
                     state = pullState,
-                    isRefreshing = state.loading,
+                    isRefreshing = tracker.requested && state.loading,
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
             }

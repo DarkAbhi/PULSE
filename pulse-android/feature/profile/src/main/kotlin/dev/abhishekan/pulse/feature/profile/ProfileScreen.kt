@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -223,16 +224,19 @@ internal fun ProfileScreen(
         }
     }
     val refreshing = state.loading || state.keysLoading
+    val tracker = rememberPullRefreshTracker(refreshing)
     val canRefresh = !refreshing && !state.busy && state.editor == null && !loggingOut
     val refresh = {
         if (canRefresh) {
-            vm.refreshProfile()
-            vm.refreshKeys()
+            tracker.request {
+                vm.refreshProfile()
+                vm.refreshKeys()
+            }
         }
     }
     val refreshLabel = stringResource(R.string.pulse_profile_refresh)
     PullToRefreshBox(
-        isRefreshing = refreshing,
+        isRefreshing = tracker.requested && refreshing,
         onRefresh = refresh,
         modifier =
             Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).semantics {

@@ -838,22 +838,18 @@ class GarageDeviceTest {
         }
     }
 
-    @Test fun addVehicleCancelIsCenteredAndKeepsDiscardProtection() {
+    @Test fun addVehicleBackKeepsDiscardProtection() {
         launchGarage()
         tap("Add vehicle")
         tap("Enter manually")
         field("Vehicle name", "Unsaved scooter")
-        compose.onNodeWithText("Cancel").performScrollTo()
-        val cancelBounds = compose.onNodeWithText("Cancel").fetchSemanticsNode().boundsInRoot
-        val continueBounds = compose.onNodeWithText("Continue to fuel").fetchSemanticsNode().boundsInRoot
-        assertEquals(continueBounds.center.x, cancelBounds.center.x, 1f)
-        tap("Cancel")
+        compose.onNodeWithText("Cancel").assertDoesNotExist()
+        compose.onNode(hasContentDescription("Back to garage")).assertIsDisplayed().performClick()
         confirm("Discard edits")
         awaitText("Add vehicle")
         tap("Add vehicle")
         tap("Enter manually")
         field("Vehicle name", "Back button draft")
-        compose.onNodeWithText("Cancel").performScrollTo()
         compose.onNode(hasContentDescription("Back to garage")).assertIsDisplayed().performClick()
         confirm("Discard edits")
         awaitText("Add vehicle")

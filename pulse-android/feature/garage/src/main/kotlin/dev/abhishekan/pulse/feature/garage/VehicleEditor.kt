@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.VehicleCatalogMatch
 import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
@@ -192,7 +193,6 @@ internal fun VehicleEditor(
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                             keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Next) }),
                         )
-                        VehicleDataCredits()
                     }
                     1 -> {
                         VehicleOptions(
@@ -271,15 +271,14 @@ internal fun VehicleEditor(
                         enabled = !busy && (if (step == 0) draft.vehicleIdentityValid else draft.vehicleFuelValid),
                     )
                 }
+                if (step == 0) {
+                    VehicleDataCredits(Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+                }
                 if (step > 0) {
                     PulseButton(stringResource(R.string.pulse_garage_step_back), {
                         go(step - 1)
                     }, Modifier.fillMaxWidth(), enabled = !busy, variant = PulseButtonVariant.Secondary)
                 }
-                PulseButton(stringResource(R.string.pulse_garage_cancel), {
-                    focus.clearFocus()
-                    cancel()
-                }, Modifier.align(Alignment.CenterHorizontally), enabled = !busy, style = PulseButtonStyle.Text)
             }
         }
         PulseCard(Modifier.fillMaxWidth()) {

@@ -4,6 +4,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -105,4 +106,16 @@ fun PulseText(
         maxLines = maxLines,
         overflow = overflow,
     )
+}
+
+/** Rich text, including inline links, styled with Pulse typography tokens. */
+@Composable
+fun PulseText(
+    text: AnnotatedString,
+    modifier: Modifier = Modifier,
+    style: TextStyle = PulseTheme.typography.body2,
+    color: Color = Color.Unspecified,
+    textAlign: TextAlign? = null,
+) {
+    Text(text = text, modifier = modifier, style = style, color = color, textAlign = textAlign)
 }

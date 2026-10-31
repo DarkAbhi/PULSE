@@ -24,7 +24,7 @@ private fun JsonPrimitive.decimal(): BigDecimal =
 private fun JsonPrimitive?.optional() = this?.takeUnless { it == JsonNull }?.decimal()
 
 internal fun GarageHistoryDto.domain(): VehicleHistory {
-    require(name.isNotBlank() && validVehicleDetails(vehicleType, fuelTypes))
+    require(name.isNotBlank() && validVehicleDetails(vehicleKind, fuelTypes, allowUnknown = true))
     return VehicleHistory(
         name,
         TirePressure(
@@ -88,7 +88,10 @@ internal fun GarageHistoryDto.domain(): VehicleHistory {
                 s.max.optional(),
             )
         },
-        vehicleType,
+        vehicleKind,
         fuelTypes,
+        catalogId,
+        makeName,
+        modelName,
     )
 }

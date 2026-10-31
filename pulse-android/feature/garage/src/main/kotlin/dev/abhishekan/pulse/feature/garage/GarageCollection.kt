@@ -117,10 +117,16 @@ private fun GarageVehicleCard(
                         )
                     }
                     PulseText(vehicle.name, Modifier.semantics { heading() }, PulseTextStyle.Title)
+                    if (vehicle.makeName.isNotBlank() || vehicle.modelName.isNotBlank()) {
+                        PulseText(
+                            listOf(vehicle.makeName, vehicle.modelName).filter(String::isNotBlank).joinToString(" "),
+                            color = colors.textSecondary,
+                        )
+                    }
                     PulseText(
                         stringResource(
                             R.string.pulse_garage_vehicle_summary,
-                            garageOption(vehicle.vehicleType),
+                            garageOption(vehicle.vehicleKind),
                             vehicle.fuelTypes.map { garageOption(it) }.joinToString(" + "),
                         ),
                         color = colors.textSecondary,

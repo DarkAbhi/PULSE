@@ -8,6 +8,7 @@ import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.garageCategories
 import dev.abhishekan.pulse.core.domain.model.garageFillTypes
 import dev.abhishekan.pulse.core.domain.model.garageFuelTypes
+import dev.abhishekan.pulse.core.domain.model.validCatalogIdentity
 import dev.abhishekan.pulse.core.domain.model.validVehicleDetails
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
 import java.math.BigDecimal
@@ -50,10 +51,14 @@ class ApplyGarageChange(
             max: Int,
         ) = v.toByteArray(Charsets.UTF_8).size <= max
         return when (change) {
-            is GarageChange.CreateVehicle ->
+            is GarageChange.SaveVehicle ->
                 change.name.isNotBlank() &&
                     change.name.trim().codePointCount(0, change.name.trim().length) <= 48 &&
-                    validVehicleDetails(change.vehicleType, change.fuelTypes) &&
+                    validVehicleDetails(change.vehicleKind, change.fuelTypes) &&
+                    id(change.vehicle) &&
+                    change.makeName.codePointCount(0, change.makeName.length) <= 200 &&
+                    change.modelName.codePointCount(0, change.modelName.length) <= 200 &&
+                    validCatalogIdentity(change.vehicleKind, change.catalogId) &&
                     pressure(change.pressure)
             is GarageChange.Pressure -> change.vehicle > 0 && pressure(change.value)
             is GarageChange.Air -> change.vehicle > 0

@@ -51,7 +51,7 @@ private fun TiresAirPreview() {
                         fuel = emptyList(),
                         maintenance = emptyList(),
                         efficiency = emptyMap(),
-                        vehicleType = "two_wheeler",
+                        vehicleKind = "motorcycle",
                         fuelTypes = listOf("petrol"),
                     ),
                     1,
@@ -138,8 +138,8 @@ private fun GarageCollectionPreview() {
                 GarageCollectionHeader(true) {}
                 GarageVehicleGrid(
                     listOf(
-                        Vehicle(1, "Himalayan 411", "two_wheeler", listOf("petrol")),
-                        Vehicle(2, "Suzuki Access 125", "two_wheeler", listOf("petrol")),
+                        Vehicle(1, "Himalayan 411", "motorcycle", listOf("petrol")),
+                        Vehicle(2, "Suzuki Access 125", "motorcycle", listOf("petrol")),
                     ),
                     null,
                     true,

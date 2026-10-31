@@ -2,6 +2,7 @@ package dev.abhishekan.pulse.feature.garage
 import androidx.annotation.StringRes
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Vehicle
+import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.UiText
 
@@ -30,6 +31,8 @@ data class GarageUiState(
     val vehicle: Long? = null,
     val tab: GarageTab = GarageTab.Overview,
     val draft: GarageDraft? = null,
+    val makes: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),
+    val models: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),
     val busy: Boolean = false,
     val progress: Float? = null,
     val uploadRecord: Long? = null,

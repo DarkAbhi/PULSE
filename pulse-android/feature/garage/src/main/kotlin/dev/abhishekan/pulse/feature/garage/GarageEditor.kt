@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
+import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
 import dev.abhishekan.pulse.core.domain.model.garageCategories
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -45,9 +46,12 @@ internal fun GarageEditor(
     change: (GarageDraft) -> Unit,
     save: () -> Unit,
     cancel: () -> Unit,
+    makes: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),
+    models: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),
+    retryCatalog: () -> Unit = {},
 ) {
     if (draft.kind == GarageForm.Vehicle) {
-        VehicleEditor(draft, busy, blocked, error, change, save, cancel)
+        VehicleEditor(draft, busy, blocked, error, change, save, cancel, makes, models, retryCatalog)
         return
     }
     if (draft.kind == GarageForm.Fuel) {

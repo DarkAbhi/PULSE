@@ -22,14 +22,16 @@ import kotlinx.coroutines.delay
 
 @Composable
 internal fun VehicleEditorArtwork(
-    vehicleType: String,
+    vehicleKind: String,
     modifier: Modifier = Modifier,
 ) {
     val artwork = listOf(R.drawable.garage_scooter, R.drawable.garage_motorcycle, R.drawable.garage_car)
     val selectedArtwork =
-        when (vehicleType) {
-            "two_wheeler" -> R.drawable.garage_motorcycle
-            "four_wheeler" -> R.drawable.garage_car
+        when (vehicleKind) {
+            "motorcycle" -> R.drawable.garage_motorcycle
+            "moped" -> R.drawable.garage_scooter
+            "car" -> R.drawable.garage_car
+            "van", "truck", "bus" -> R.drawable.garage_workshop
             else -> null
         }
     val lifecycle = LocalLifecycleOwner.current.lifecycle

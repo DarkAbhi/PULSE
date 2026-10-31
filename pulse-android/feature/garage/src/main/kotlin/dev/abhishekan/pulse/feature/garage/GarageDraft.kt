@@ -6,6 +6,8 @@ import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.Maintenance
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
+import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
+import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -26,7 +28,36 @@ data class GarageDraft(
     fun set(
         key: String,
         value: String,
-    ) = copy(fields = fields + (key to value), dirty = true)
+    ): GarageDraft {
+        if (key in listOf("vehicleKind", "catalogMode") && get(key) == value) return this
+        val cleared =
+            when (key) {
+                "vehicleKind", "catalogMode" -> listOf("catalogId", "makeSlug", "makeName", "modelName", "makeQuery", "modelQuery")
+                else -> emptyList()
+            }
+        return copy(fields = fields - cleared + (key to value), dirty = true)
+    }
+
+    fun chooseMake(option: VehicleCatalogOption) =
+        copy(
+            fields = fields - listOf("catalogId", "modelName", "modelQuery") + mapOf("makeSlug" to option.id, "makeName" to option.name),
+            dirty = true,
+        )
+
+    fun chooseModel(option: VehicleCatalogOption): GarageDraft {
+        val defaultName = listOf(get("makeName"), option.name).filter(String::isNotBlank).joinToString(" ")
+        val previousDefault = listOf(get("makeName"), get("modelName")).filter(String::isNotBlank).joinToString(" ")
+        return copy(
+            fields =
+                fields +
+                    mapOf(
+                        "catalogId" to option.id,
+                        "modelName" to option.name,
+                        "name" to if (get("name").isBlank() || get("name") == previousDefault) defaultName.take(48) else get("name"),
+                    ),
+            dirty = true,
+        )
+    }
 
     fun saved() =
         arrayListOf(
@@ -62,12 +93,16 @@ data class GarageDraft(
         }
         return when (kind) {
             GarageForm.Vehicle ->
-                GarageChange.CreateVehicle(
+                GarageChange.SaveVehicle(
                     get("name"),
                     get("active") != "false",
                     pressure(),
-                    get("vehicleType"),
+                    get("vehicleKind"),
                     if (get("dualTank") == "true") listOf(get("vehicleFuel"), get("vehicleSecondFuel")) else listOf(get("vehicleFuel")),
+                    if (get("catalogMode") != "manual") get("catalogId").also { require(it.isNotBlank()) } else null,
+                    get("makeName"),
+                    get("modelName"),
+                    id,
                 )
             GarageForm.Pressure -> GarageChange.Pressure(vehicle, pressure())
             GarageForm.Fuel ->
@@ -146,10 +181,31 @@ data class GarageDraft(
                     "type1" to "petrol",
                     "fill1" to "full",
                     "active" to "true",
+                    "catalogMode" to "catalog",
                 ),
         )
     }
 }
+
+internal fun VehicleHistory.draft(vehicle: Long) =
+    GarageDraft(
+        GarageForm.Vehicle,
+        vehicle,
+        vehicle,
+        pressure.fields() +
+            mapOf(
+                "name" to name,
+                "vehicleKind" to vehicleKind.takeUnless { it == "unknown" }.orEmpty(),
+                "vehicleFuel" to fuelTypes.first(),
+                "vehicleSecondFuel" to fuelTypes.getOrNull(1).orEmpty(),
+                "dualTank" to (fuelTypes.size == 2).toString(),
+                "catalogMode" to if (catalogId == null) "manual" else "catalog",
+                "catalogId" to catalogId.orEmpty(),
+                "makeSlug" to catalogId?.split('/')?.getOrNull(1).orEmpty(),
+                "makeName" to makeName,
+                "modelName" to modelName,
+            ),
+    )
 
 internal fun TirePressure.fields() =
     mapOf(

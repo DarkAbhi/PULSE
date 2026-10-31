@@ -31,8 +31,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
 import dev.abhishekan.pulse.core.domain.model.garageFuelTypes
-import dev.abhishekan.pulse.core.domain.model.garageVehicleTypes
+import dev.abhishekan.pulse.core.domain.model.garageVehicleKinds
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -55,6 +56,9 @@ internal fun VehicleEditor(
     change: (GarageDraft) -> Unit,
     save: () -> Unit,
     cancel: () -> Unit,
+    makes: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),
+    models: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),
+    retryCatalog: () -> Unit = {},
 ) {
     val colors = PulseTheme.colors
     val focus = LocalFocusManager.current
@@ -66,7 +70,7 @@ internal fun VehicleEditor(
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
                 PulseText(
-                    stringResource(R.string.pulse_garage_new_vehicle_title),
+                    stringResource(if (draft.id == null) R.string.pulse_garage_new_vehicle_title else R.string.pulse_garage_edit_vehicle),
                     Modifier.semantics { heading() },
                     PulseTextStyle.Display,
                     colors.onPrimarySoft,
@@ -74,7 +78,7 @@ internal fun VehicleEditor(
                 PulseText(stringResource(R.string.pulse_garage_vehicle_intro), color = colors.onPrimarySoft)
                 if (wide) {
                     VehicleEditorArtwork(
-                        vehicleType = draft["vehicleType"],
+                        vehicleKind = draft["vehicleKind"],
                         modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp),
                     )
                     listOf(
@@ -98,6 +102,19 @@ internal fun VehicleEditor(
         val form: @Composable (Modifier) -> Unit = { modifier ->
             Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 PulseText(stringResource(R.string.pulse_garage_basic_details), Modifier.semantics { heading() }, PulseTextStyle.Title)
+                VehicleOptions(
+                    stringResource(R.string.pulse_garage_vehicle_source),
+                    draft["catalogMode"].ifBlank {
+                        "catalog"
+                    },
+                    listOf("catalog", "manual"),
+                    !busy,
+                    { change(draft.set("catalogMode", it)) },
+                )
+                VehicleOptions(stringResource(R.string.pulse_garage_kind), draft["vehicleKind"], garageVehicleKinds, !busy, {
+                    change(draft.set("vehicleKind", it))
+                })
+                VehicleCatalogFields(draft, makes, models, !busy, change, retryCatalog)
                 PulseTextField(
                     draft["name"],
                     { change(draft.set("name", it)) },
@@ -106,13 +123,6 @@ internal fun VehicleEditor(
                     enabled = !busy,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Next) }),
-                )
-                VehicleOptions(
-                    stringResource(R.string.pulse_garage_vehicle_type),
-                    draft["vehicleType"],
-                    garageVehicleTypes,
-                    !busy,
-                    { change(draft.set("vehicleType", it)) },
                 )
                 VehicleOptions(
                     stringResource(R.string.pulse_garage_vehicle_fuel),
@@ -177,6 +187,7 @@ internal fun VehicleEditor(
                         }
                     }
                 }
+                VehicleDataCredits()
                 error?.let {
                     PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = colors.error)
                 }
@@ -187,7 +198,7 @@ internal fun VehicleEditor(
                         save()
                     },
                     Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                    enabled = !busy && !blocked,
+                    enabled = !busy && !blocked && (draft["catalogMode"] == "manual" || draft["catalogId"].isNotBlank()),
                     loading = busy,
                 )
                 PulseButton(stringResource(R.string.pulse_garage_cancel), {

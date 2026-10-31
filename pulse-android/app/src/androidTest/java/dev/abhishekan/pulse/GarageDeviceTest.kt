@@ -60,6 +60,7 @@ import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
+import dev.abhishekan.pulse.core.domain.repository.VehicleCatalogRepository
 import dev.abhishekan.pulse.core.network.GarageApi
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
@@ -125,6 +126,9 @@ class GarageDeviceTest {
 
     @Volatile private var offline = false
 
+    @Volatile private var catalogOffline = false
+    private var existingKind = "motorcycle"
+
     @Volatile private var loseSave = false
 
     @Volatile private var storageError = false
@@ -134,11 +138,14 @@ class GarageDeviceTest {
 
     private fun obj(raw: String) = Json.parseToJsonElement(raw).jsonObject
 
-    private fun history() =
+    private fun history(vehicle: Long = 1) =
         buildJsonObject {
-            put("vehicle_name", vehicles.values.firstOrNull() ?: "Comet")
-            put("vehicle_type", "two_wheeler")
-            put("fuel_types", JsonArray(listOf(JsonPrimitive("petrol"))))
+            put("vehicle_name", vehicles[vehicle] ?: "Comet")
+            put("kind", vehicleDetails[vehicle]?.get("kind") ?: JsonPrimitive(existingKind))
+            listOf("catalog_id", "make_name", "model_name", "fuel_types").forEach { key ->
+                vehicleDetails[vehicle]?.get(key)?.let { put(key, it) }
+            }
+            if (vehicleDetails[vehicle]?.get("fuel_types") == null) put("fuel_types", JsonArray(listOf(JsonPrimitive("petrol"))))
             pressure.forEach { (k, v) -> put(k, v) }
             put("fuel_fillups", JsonArray(fuel.values.toList()))
             put("air_fills", JsonArray(air.values.toList()))
@@ -226,15 +233,31 @@ class GarageDeviceTest {
                                     "notifications" -> "[]"
                                     "horizon" ->
                                         """{"currency":"₹","remaining_amount":100,"base_amount":200,"total_deductions":100,"total_transactions":0}"""
+                                    "vehicle-catalog/makes", "vehicle-catalog/models" -> {
+                                        if (catalogOffline) throw IOException("Catalog unavailable")
+                                        if (request.url.parameters["q"]
+                                                .orEmpty()
+                                                .startsWith("zz")
+                                        ) {
+                                            "[]"
+                                        } else if (path.endsWith("makes")) {
+                                            """[{"id":"honda","name":"Honda"}]"""
+                                        } else {
+                                            """[{"id":"car/honda/civic","name":"Civic"}]"""
+                                        }
+                                    }
                                     "vehicles" ->
                                         JsonArray(
                                             vehicles.map { (id, name) ->
                                                 buildJsonObject {
                                                     put("id", id)
                                                     put("name", name)
+                                                    listOf("catalog_id", "make_name", "model_name").forEach { key ->
+                                                        vehicleDetails[id]?.get(key)?.let { put(key, it) }
+                                                    }
                                                     put(
-                                                        "vehicle_type",
-                                                        vehicleDetails[id]?.get("vehicle_type") ?: JsonPrimitive("two_wheeler"),
+                                                        "kind",
+                                                        vehicleDetails[id]?.get("kind") ?: JsonPrimitive(existingKind),
                                                     )
                                                     put(
                                                         "fuel_types",
@@ -248,7 +271,7 @@ class GarageDeviceTest {
                                                 "/history",
                                             )
                                         ) {
-                                            history()
+                                            history(path.split('/')[1].toLong())
                                         } else {
                                             error("Unexpected read $path")
                                         }
@@ -276,11 +299,17 @@ class GarageDeviceTest {
                                 ) {
                                     val details = obj(raw)
                                     assertTrue(
-                                        details.getValue("vehicle_type").jsonPrimitive.content in listOf("two_wheeler", "four_wheeler"),
+                                        details.getValue("kind").jsonPrimitive.content in
+                                            listOf("car", "motorcycle", "moped", "van", "truck", "bus"),
                                     )
                                     val fuels = details.getValue("fuel_types").jsonArray.map { it.jsonPrimitive.content }
                                     assertTrue(fuels.size in 1..2 && fuels.distinct().size == fuels.size)
                                     val id = next++
+                                    vehicles[id] = details.getValue("name").jsonPrimitive.content
+                                    vehicleDetails[id] = details
+                                } else if (parts.size == 2 && request.method == HttpMethod.Put) {
+                                    val id = parts[1].toLong()
+                                    val details = obj(raw)
                                     vehicles[id] = details.getValue("name").jsonPrimitive.content
                                     vehicleDetails[id] = details
                                 } else if (parts.size == 2 &&
@@ -393,6 +422,7 @@ class GarageDeviceTest {
                     PulseNotificationsRepository(api, auth, PulseDashboardRepository(api, auth))
                 }
                 single<GarageRepository> { repo }
+                single<VehicleCatalogRepository> { repo }
             }
         loadKoinModules(overrides)
     }
@@ -460,7 +490,7 @@ class GarageDeviceTest {
     ) {
         tap("$label: $current")
         awaitText(option)
-        compose.onNodeWithText(option).performScrollTo().performClick()
+        compose.onNode(hasText(option) and hasAnyAncestor(isPopup())).performScrollTo().performClick()
     }
 
     private fun field(
@@ -715,6 +745,7 @@ class GarageDeviceTest {
             }
             awaitText("Your garage")
             tap("Add vehicle")
+            tap("Enter manually")
             field("Vehicle name", "Unsaved scooter")
             compose.onNodeWithText("Add a new vehicle").performScrollTo()
             val artwork = hasTestTag("vehicle-editor-artwork")
@@ -731,7 +762,7 @@ class GarageDeviceTest {
             } finally {
                 first.recycle()
             }
-            tap("Two-wheeler")
+            tap("Motorcycle")
             compose.onNodeWithText("Add a new vehicle").performScrollTo()
             compose.mainClock.advanceTimeBy(2_500)
             compose.waitForIdle()
@@ -741,7 +772,7 @@ class GarageDeviceTest {
                 val selected = compose.onNode(artwork).captureToImage().asAndroidBitmap()
                 assertTrue("Selected vehicle artwork should stay fixed", motorcycle.sameAs(selected))
                 selected.recycle()
-                tap("Four-wheeler")
+                tap("Car")
                 compose.onNodeWithText("Add a new vehicle").performScrollTo()
                 compose.mainClock.advanceTimeBy(2_500)
                 val car = compose.onNode(artwork).captureToImage().asAndroidBitmap()
@@ -766,6 +797,7 @@ class GarageDeviceTest {
     @Test fun addVehicleCancelIsCenteredAndKeepsDiscardProtection() {
         launchGarage()
         tap("Add vehicle")
+        tap("Enter manually")
         field("Vehicle name", "Unsaved scooter")
         compose.onNodeWithText("Cancel").performScrollTo()
         val cancelBounds = compose.onNodeWithText("Cancel").fetchSemanticsNode().boundsInRoot
@@ -775,6 +807,7 @@ class GarageDeviceTest {
         confirm("Discard edits")
         awaitText("Add vehicle")
         tap("Add vehicle")
+        tap("Enter manually")
         field("Vehicle name", "Back button draft")
         compose.onNodeWithText("Cancel").performScrollTo()
         compose.onNode(hasContentDescription("Back to garage")).assertIsDisplayed().performClick()
@@ -789,8 +822,9 @@ class GarageDeviceTest {
     @Test fun addVehiclePreservesOptionalPressures() {
         launchGarage()
         tap("Add vehicle")
+        tap("Enter manually")
         field("Vehicle name", "City scooter")
-        tap("Two-wheeler")
+        tap("Motorcycle")
         tap("Electric")
         compose.onNodeWithText("Add a new vehicle").performScrollTo()
         screenshot("add-vehicle-top")
@@ -816,14 +850,93 @@ class GarageDeviceTest {
         assertEquals(listOf("electric"), saved.getValue("fuel_types").jsonArray.map { it.jsonPrimitive.content })
     }
 
+    @Test fun catalogVehicleSelectionSurvivesRecreationAndCanBeEdited() {
+        launchGarage()
+        tap("Add vehicle")
+        tap("Car")
+        field("Search makes", "Honda")
+        pick("Make", "Select an option", "Honda")
+        field("Search models", "Civic")
+        pick("Model", "Select an option", "Civic")
+        field("Vehicle name", "Weekend Civic")
+        tap("Petrol")
+        scenario!!.recreate()
+        awaitText("Weekend Civic")
+        compose.onNodeWithText("Search models").performScrollTo()
+        screenshot("vehicle-catalog-picker")
+        tap("Save vehicle")
+        awaitText("View Weekend Civic")
+        tap("View Weekend Civic")
+        awaitText("Edit vehicle")
+        tap("Edit vehicle")
+        field("Vehicle name", "Daily Civic")
+        tap("Save vehicle")
+        awaitText("Daily Civic")
+        val saved = vehicleDetails.values.single()
+        assertEquals("car/honda/civic", saved.getValue("catalog_id").jsonPrimitive.content)
+        assertEquals("Honda", saved.getValue("make_name").jsonPrimitive.content)
+        assertEquals("Civic", saved.getValue("model_name").jsonPrimitive.content)
+        compose.onNodeWithText("Edit vehicle").performScrollTo()
+        screenshot("vehicle-catalog-details")
+    }
+
+    @Test fun catalogFailureRetryAndNoResultsKeepManualEntryAvailable() {
+        catalogOffline = true
+        launchGarage()
+        tap("Add vehicle")
+        tap("Car")
+        awaitText("Try again")
+        catalogOffline = false
+        tap("Try again")
+        pick("Make", "Select an option", "Honda")
+        tap("Motorcycle")
+        compose.onNodeWithContentDescription("Make: Select an option").assertExists()
+        compose.onNodeWithText("Model: Civic").assertDoesNotExist()
+        field("Search makes", "zz-missing")
+        awaitText("No matches. Try another search or enter your vehicle manually.")
+        tap("Enter manually")
+        tap("Bus")
+        field("Make (optional)", "Local")
+        field("Model (optional)", "City bus")
+        field("Vehicle name", "Our bus")
+        tap("Diesel")
+        tap("Save vehicle")
+        awaitText("View Our bus")
+        val saved = vehicleDetails.values.single()
+        assertEquals("bus", saved.getValue("kind").jsonPrimitive.content)
+        assertEquals("", saved.getValue("catalog_id").jsonPrimitive.content)
+    }
+
+    @Test fun existingUnclassifiedVehicleCanBeClassifiedWithoutLosingItsName() {
+        existingKind = "unknown"
+        launchGarage()
+        select()
+        awaitText("Kind not selected")
+        tap("Edit vehicle")
+        tap("Van")
+        field("Make (optional)", "Custom")
+        field("Model (optional)", "Courier")
+        tap("Save vehicle")
+        awaitText("Edit vehicle")
+        assertEquals("Comet", vehicles[1])
+        assertEquals(
+            "van",
+            vehicleDetails
+                .getValue(1)
+                .getValue("kind")
+                .jsonPrimitive.content,
+        )
+    }
+
     @Test fun vehicleClassificationRequiresSelectionsAndSurvivesRecreation() {
         launchGarage()
         tap("Add vehicle")
+        tap("Enter manually")
         field("Vehicle name", "Dual fuel car")
         tap("Save vehicle")
         compose.waitForIdle()
         assertEquals(0, mutations)
-        tap("Four-wheeler")
+        tap("Car")
         tap("Petrol")
         tap("Dual tank (two fuel types)")
         tap("Second fuel type (required): Select an option")
@@ -841,7 +954,7 @@ class GarageDeviceTest {
         screenshot("vehicle-classification")
         tap("Save vehicle")
         awaitText("Dual fuel car")
-        awaitText("Four-wheeler · CNG + Petrol")
+        awaitText("Car · CNG + Petrol")
         assertEquals(1, mutations)
     }
 
@@ -927,8 +1040,9 @@ class GarageDeviceTest {
         launchGarage()
         screenshot("collection")
         tap("Add vehicle")
+        tap("Enter manually")
         field("Vehicle name", "Tourer")
-        tap("Four-wheeler")
+        tap("Car")
         tap("Petrol")
         tap("Dual tank (two fuel types)")
         tap("Second fuel type (required): Select an option")
@@ -936,10 +1050,10 @@ class GarageDeviceTest {
         tap("Save vehicle")
         awaitText("Tourer")
         assertEquals(
-            "four_wheeler",
+            "car",
             vehicleDetails.values
                 .single()
-                .getValue("vehicle_type")
+                .getValue("kind")
                 .jsonPrimitive.content,
         )
         assertEquals(

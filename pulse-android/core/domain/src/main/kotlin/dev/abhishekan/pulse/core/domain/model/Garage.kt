@@ -4,7 +4,7 @@ import java.math.BigDecimal
 import java.time.Instant
 
 const val RECEIPT_LIMIT = 10 * 1024 * 1024
-val garageVehicleTypes = listOf("two_wheeler", "four_wheeler")
+val garageVehicleKinds = listOf("car", "motorcycle", "moped", "van", "truck", "bus")
 val garageFuelTypes = listOf("petrol", "diesel", "lpg", "cng", "electric")
 val garageFillTypes = listOf("full", "partial", "missed")
 val garageCategories = listOf("service", "repair", "insurance", "washing", "tyres")
@@ -12,8 +12,16 @@ val garageCategories = listOf("service", "repair", "insurance", "washing", "tyre
 data class Vehicle(
     val id: Long,
     val name: String,
-    val vehicleType: String,
+    val vehicleKind: String,
     val fuelTypes: List<String>,
+    val catalogId: String? = null,
+    val makeName: String = "",
+    val modelName: String = "",
+)
+
+data class VehicleCatalogOption(
+    val id: String,
+    val name: String,
 )
 
 data class TirePressure(
@@ -80,19 +88,26 @@ data class VehicleHistory(
     val fuel: List<FuelFill>,
     val maintenance: List<Maintenance>,
     val efficiency: Map<String, FuelEfficiency>,
-    val vehicleType: String,
+    val vehicleKind: String,
     val fuelTypes: List<String>,
+    val catalogId: String? = null,
+    val makeName: String = "",
+    val modelName: String = "",
 )
 
 enum class GarageRecord { Vehicle, Fuel, Air, Maintenance, Receipt }
 
 sealed interface GarageChange {
-    data class CreateVehicle(
+    data class SaveVehicle(
         val name: String,
         val active: Boolean,
         val pressure: TirePressure,
-        val vehicleType: String,
+        val vehicleKind: String,
         val fuelTypes: List<String>,
+        val catalogId: String? = null,
+        val makeName: String = "",
+        val modelName: String = "",
+        val vehicle: Long? = null,
     ) : GarageChange
 
     data class Pressure(
@@ -135,10 +150,20 @@ sealed interface GarageChange {
 }
 
 fun validVehicleDetails(
-    vehicleType: String,
+    vehicleKind: String,
     fuelTypes: List<String>,
+    allowUnknown: Boolean = false,
 ): Boolean =
-    vehicleType in garageVehicleTypes &&
+    (vehicleKind in garageVehicleKinds || (allowUnknown && vehicleKind == "unknown")) &&
         fuelTypes.size in 1..2 &&
         fuelTypes.all { it in garageFuelTypes } &&
         fuelTypes.distinct().size == fuelTypes.size
+
+fun validCatalogIdentity(
+    kind: String,
+    id: String?,
+): Boolean {
+    if (id == null) return true
+    val parts = id.split('/')
+    return parts.size == 3 && parts.first() == kind && parts.all(String::isNotBlank)
+}

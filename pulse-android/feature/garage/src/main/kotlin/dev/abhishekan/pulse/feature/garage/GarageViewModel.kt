@@ -6,15 +6,19 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
+import dev.abhishekan.pulse.core.domain.model.garageVehicleKinds
 import dev.abhishekan.pulse.core.domain.usecase.ApplyGarageChange
 import dev.abhishekan.pulse.core.domain.usecase.DownloadGarageReceipt
 import dev.abhishekan.pulse.core.domain.usecase.GetVehicleHistory
 import dev.abhishekan.pulse.core.domain.usecase.GetVehicles
+import dev.abhishekan.pulse.core.domain.usecase.SearchVehicleCatalog
 import dev.abhishekan.pulse.core.domain.usecase.UploadGarageReceipt
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -28,6 +32,7 @@ class GarageViewModel(
     private val uploadReceipt: UploadGarageReceipt,
     private val downloadReceipt: DownloadGarageReceipt,
     private val saved: SavedStateHandle,
+    private val searchCatalog: SearchVehicleCatalog,
 ) : ViewModel() {
     private val state =
         MutableStateFlow(
@@ -50,9 +55,14 @@ class GarageViewModel(
 
     private var listJob: Job? = null
     private var historyJob: Job? = null
+    private var makesJob: Job? = null
+    private var modelsJob: Job? = null
+    private var makesKey: List<String>? = null
+    private var modelsKey: List<String>? = null
 
     init {
         refresh()
+        refreshCatalog()
     }
 
     fun refresh() {
@@ -156,7 +166,58 @@ class GarageViewModel(
     private fun storeDraft(draft: GarageDraft?) {
         saved["draft"] = draft?.saved()
         state.update { it.copy(draft = draft, error = null, message = null) }
+        refreshCatalog()
     }
+
+    fun retryCatalog() {
+        refreshCatalog(force = true)
+    }
+
+    private fun refreshCatalog(force: Boolean = false) {
+        val draft = state.value.draft
+        val enabled = draft?.kind == GarageForm.Vehicle && draft["catalogMode"] != "manual" && draft["vehicleKind"] in garageVehicleKinds
+        val makeKey = if (enabled) listOf(draft["vehicleKind"], draft["makeQuery"]) else null
+        val modelKey =
+            if (enabled &&
+                !draft["makeSlug"].isBlank()
+            ) {
+                listOf(draft["vehicleKind"], draft["makeSlug"], draft["modelQuery"])
+            } else {
+                null
+            }
+        if (force || makeKey != makesKey) {
+            makesJob?.cancel()
+            makesKey = makeKey
+            state.update { it.copy(makes = GarageSection(loading = makeKey != null)) }
+            if (makeKey != null) {
+                makesJob =
+                    viewModelScope.launch {
+                        delay(250)
+                        val result = searchCatalog(makeKey[0], null, makeKey[1])
+                        if (makesKey == makeKey) state.update { it.copy(makes = result.section()) }
+                    }
+            }
+        }
+        if (force || modelKey != modelsKey) {
+            modelsJob?.cancel()
+            modelsKey = modelKey
+            state.update { it.copy(models = GarageSection(loading = modelKey != null)) }
+            if (modelKey != null) {
+                modelsJob =
+                    viewModelScope.launch {
+                        delay(250)
+                        val result = searchCatalog(modelKey[0], modelKey[1], modelKey[2])
+                        if (modelsKey == modelKey) state.update { it.copy(models = result.section()) }
+                    }
+            }
+        }
+    }
+
+    private fun Outcome<List<VehicleCatalogOption>>.section(): GarageSection<List<VehicleCatalogOption>> =
+        when (this) {
+            is Outcome.Success -> GarageSection(value, loading = false)
+            is Outcome.Error -> GarageSection(loading = false, error = failure)
+        }
 
     fun discard() {
         if (!state.value.busy) storeDraft(null)

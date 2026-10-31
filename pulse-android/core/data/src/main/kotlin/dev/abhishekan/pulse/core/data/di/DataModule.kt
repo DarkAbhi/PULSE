@@ -26,6 +26,7 @@ import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import dev.abhishekan.pulse.core.domain.repository.PreferencesRepository
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
+import dev.abhishekan.pulse.core.domain.repository.VehicleCatalogRepository
 import dev.abhishekan.pulse.core.network.SessionMaterialStore
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
@@ -40,6 +41,7 @@ val dataModule =
         singleOf(::AndroidReceiptFiles) bind ReceiptFiles::class
         singleOf(::PulseGarageRepository) bind
             GarageRepository::class
+        single<VehicleCatalogRepository> { get<PulseGarageRepository>() }
         singleOf(::PulseHorizonRepository) bind HorizonRepository::class
         singleOf(::PulseFitnessRepository) bind FitnessRepository::class
         single<DataStore<Preferences>> { get<Context>().preferences }

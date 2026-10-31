@@ -2,8 +2,8 @@
 
 Pulse bundles VehiclesDB release **2026.10.4**, 15,068 models, for an offline
 Kind → Make → Model picker. The Go API and web client use `kind`: `car`,
-`motorcycle`, `moped`, `van`, `truck`, or `bus`. The Android client must migrate to
-this contract before using vehicle creation again.
+`motorcycle`, `moped`, `van`, `truck`, or `bus`. The Android picker and identity editor use this contract too; see
+[Android vehicle catalog](../pulse-android/docs/garage-vehicle-catalog.md).
 
 ## Install and upgrade
 

@@ -303,6 +303,9 @@ internal fun GarageScreen(
                             vm::update,
                             vm::save,
                             cancel,
+                            state.makes,
+                            state.models,
+                            vm::retryCatalog,
                         )
                     } else {
                         if (state.draft !=
@@ -367,6 +370,7 @@ internal fun GarageScreen(
                                         }
                                         when (state.tab) {
                                             GarageTab.Overview -> {
+                                                VehicleIdentityCard(data, enabled) { edit(data.draft(vehicle)) }
                                                 GarageOverview(
                                                     data,
                                                     enabled,

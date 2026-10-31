@@ -33,6 +33,10 @@ Ktlint is applied to every module and the root Gradle scripts. It checks product
 
 ## API addresses
 
+Garage vehicle selection now uses the backend VehiclesDB catalog and its `kind`
+contract. See [Garage vehicle catalog](docs/garage-vehicle-catalog.md) for the
+picker, identity editing, attribution, migrations, and verification details.
+
 Debug defaults to **`http://10.0.2.2:18081/api/`**, the emulator-accessible address for this repository's Go development container. Start the backend using the repository's development instructions. Android's localhost is the Android device, not the development computer.
 
 On Android 17/API 37 and newer, debug builds declare and request `ACCESS_LOCAL_NETWORK` before starting the app's API requests. Approve the first system prompt; Android remembers the grant. If denied, the development access screen offers retry and app settings, and detects a grant when returning from settings. Older Android versions skip this step. The permission and request implementation live only in the debug source set; release builds include neither. Android's [permission reference](https://developer.android.com/reference/android/Manifest.permission#ACCESS_LOCAL_NETWORK) excludes VPN connections, so the release endpoint routed through Tailscale's Android VPN does not require this permission. A future release endpoint accessed directly over a local Wi-Fi/Ethernet network would need permission handling.

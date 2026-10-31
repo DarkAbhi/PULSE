@@ -71,7 +71,7 @@ class GarageRepositoryTest {
         var multipartType: String? = null
         var multipartHeader = ""
         var body = (
-            """{"vehicle_name":"Ride","vehicle_type":"two_wheeler","fuel_types":["petrol"],""" +
+            """{"vehicle_name":"Ride","kind":"motorcycle","fuel_types":["petrol"],""" +
 """"air_fills":null,""" +
 """"fuel_fillups":null,""" +
 """"maintenance_records":null,""" +
@@ -81,10 +81,16 @@ class GarageRepositoryTest {
         )
         var file = ReceiptBytes("receipt.pdf", "application/pdf", byteArrayOf(1, 2, 3))
         var fileFailure = false
+        var catalogParameters: Map<String, String> = emptyMap()
         var writeFailure: Exception? = null
         val requests = mutableListOf<Pair<String, String>>()
         val engine =
             MockEngine { request ->
+                if (request.url.encodedPath.startsWith("/api/vehicle-catalog/")) {
+                    catalogParameters =
+                        listOf("kind", "make_slug", "q").mapNotNull { key -> request.url.parameters[key]?.let { key to it } }.toMap()
+                    return@MockEngine respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
+                }
                 if (request.url.encodedPath == "/api/profile") {
                     return@MockEngine respond(
                         """{"has_profile":false,"timezone":"UTC"}""",
@@ -134,7 +140,7 @@ class GarageRepositoryTest {
                             if (request.url.encodedPath ==
                                 "/api/vehicles"
                             ) {
-                                """[{"id":1,"name":"Ride","vehicle_type":"two_wheeler","fuel_types":["petrol"]}]"""
+                                """[{"id":1,"name":"Ride","kind":"motorcycle","fuel_types":["petrol"]}]"""
                             } else {
                                 body
                             },
@@ -177,7 +183,7 @@ class GarageRepositoryTest {
         runTest {
             Harness().use { h ->
                 val result = (h.repo.history(1) as Outcome.Success).value
-                assertEquals("two_wheeler", result.vehicleType)
+                assertEquals("motorcycle", result.vehicleKind)
                 assertEquals(listOf("petrol"), result.fuelTypes)
                 assertTrue(result.air.isEmpty())
                 assertTrue(result.fuel.isEmpty())
@@ -189,14 +195,67 @@ class GarageRepositoryTest {
                         .totalCost
                         .toPlainString(),
                 )
-                assertEquals(listOf(Vehicle(1, "Ride", "two_wheeler", listOf("petrol"))), (h.repo.vehicles() as Outcome.Success).value)
+                assertEquals(listOf(Vehicle(1, "Ride", "motorcycle", listOf("petrol"))), (h.repo.vehicles() as Outcome.Success).value)
+            }
+        }
+
+    @Test fun catalogQueriesEncodeFiltersAndUseTheSharedSessionClient() =
+        runTest {
+            Harness().use { h ->
+                h.body = """[{"id":"car/honda/civic","name":"Civic"}]"""
+                val options = (h.repo.search("car", "honda", "Civic & Type R") as Outcome.Success).value
+                assertEquals("car/honda/civic", options.single().id)
+                assertEquals(mapOf("kind" to "car", "make_slug" to "honda", "q" to "Civic & Type R"), h.catalogParameters)
+                h.repo.search("bus", null, "")
+                assertFalse(h.catalogParameters.containsKey("make_slug"))
+            }
+        }
+
+    @Test fun unknownLegacyKindAndCatalogIdentityArePreservedInHistory() =
+        runTest {
+            Harness().use { h ->
+                h.body =
+                    h.body.replace(
+                        "\"kind\":\"motorcycle\"",
+                        "\"kind\":\"unknown\",\"catalog_id\":null,\"make_name\":\"Custom\",\"model_name\":\"Old model\"",
+                    )
+                val history = (h.repo.history(1) as Outcome.Success).value
+                assertEquals("unknown", history.vehicleKind)
+                assertEquals("Custom", history.makeName)
+                assertEquals("Old model", history.modelName)
+                assertNull(history.catalogId)
+            }
+        }
+
+    @Test fun vehicleEditExplicitlyClearsCatalogAndDoesNotReactivateVehicle() =
+        runTest {
+            Harness().use { h ->
+                h.repo.apply(
+                    GarageChange.SaveVehicle(
+                        "My van",
+                        true,
+                        TirePressure(),
+                        "van",
+                        listOf("diesel"),
+                        makeName = "Custom",
+                        modelName = "Van",
+                        vehicle = 42,
+                    ),
+                )
+                val (path, body) = h.requests.last()
+                assertEquals("PUT /api/vehicles/42", path)
+                val json = Json.parseToJsonElement(body).jsonObject
+                assertEquals("", json.getValue("catalog_id").jsonPrimitive.content)
+                assertEquals("van", json.getValue("kind").jsonPrimitive.content)
+                assertFalse(json.containsKey("is_active"))
+                assertFalse(json.containsKey("vehicle_type"))
             }
         }
 
     @Test fun missingHistoryCollectionsDoNotInventAnEmptyGarage() =
         runTest {
             Harness().use { h ->
-                h.body = """{"vehicle_name":"Ride","vehicle_type":"two_wheeler","fuel_types":["petrol"]}"""
+                h.body = """{"vehicle_name":"Ride","kind":"motorcycle","fuel_types":["petrol"]}"""
                 assertEquals(Outcome.Error(Failure.Malformed), h.repo.history(1))
             }
         }
@@ -206,10 +265,10 @@ class GarageRepositoryTest {
             Harness().use { h ->
                 val valid = h.body
                 for (invalid in listOf(
-                    valid.replace("two_wheeler", "truck"),
+                    valid.replace("motorcycle", "spaceship"),
                     valid.replace("[\"petrol\"]", "[]"),
                     valid.replace("[\"petrol\"]", "[\"petrol\",\"petrol\"]"),
-                    valid.replace("\"vehicle_type\":\"two_wheeler\",", ""),
+                    valid.replace("\"kind\":\"motorcycle\",", ""),
                 )) {
                     h.body = invalid
                     assertEquals(Outcome.Error(Failure.Malformed), h.repo.history(1))
@@ -223,11 +282,11 @@ class GarageRepositoryTest {
                 val n = "123.1234567890123456789".toBigDecimal()
                 val date = Instant.parse("2026-12-31T23:59:59Z")
                 listOf(
-                    GarageChange.CreateVehicle(
+                    GarageChange.SaveVehicle(
                         "Ride",
                         true,
                         TirePressure(),
-                        "four_wheeler",
+                        "car",
                         listOf("petrol", "cng"),
                     ),
                     GarageChange.Pressure(1, TirePressure(frontSolo = n)),
@@ -274,7 +333,7 @@ class GarageRepositoryTest {
                     assertEquals(Outcome.Success(Unit), h.repo.apply(it))
                 }
                 val vehicleBody = Json.parseToJsonElement(h.requests.first().second).jsonObject
-                assertEquals("four_wheeler", vehicleBody.getValue("vehicle_type").jsonPrimitive.content)
+                assertEquals("car", vehicleBody.getValue("kind").jsonPrimitive.content)
                 assertEquals(listOf("petrol", "cng"), vehicleBody.getValue("fuel_types").jsonArray.map { it.jsonPrimitive.content })
                 assertEquals(
                     listOf(
@@ -425,7 +484,7 @@ class GarageRepositoryTest {
             Harness().use { h ->
                 h.login()
                 h.body =
-                    """{"vehicle_name":"Ride","vehicle_type":"two_wheeler","fuel_types":["petrol"],"fuel_fillups":[{"id":2,"odometer_km":-1,"filled_at":"bad-date","items":[]}]}"""
+                    """{"vehicle_name":"Ride","kind":"motorcycle","fuel_types":["petrol"],"fuel_fillups":[{"id":2,"odometer_km":-1,"filled_at":"bad-date","items":[]}]}"""
                 assertEquals(Outcome.Error(Failure.Malformed), h.repo.history(1))
                 h.status = HttpStatusCode.Unauthorized
                 assertEquals(Outcome.Error(Failure.Unauthorized), h.repo.download(1, 2, receipt, null))

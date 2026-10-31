@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.core.network
 import dev.abhishekan.pulse.core.network.dto.GarageHistoryDto
+import dev.abhishekan.pulse.core.network.dto.VehicleCatalogOptionDto
 import dev.abhishekan.pulse.core.network.dto.VehicleDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -11,6 +12,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.prepareGet
 import io.ktor.client.request.put
@@ -35,6 +37,18 @@ class GarageApi(
     private val client: HttpClient,
 ) {
     suspend fun vehicles(): List<VehicleDto> = client.get("vehicles").body()
+
+    suspend fun catalog(
+        kind: String,
+        makeSlug: String?,
+        query: String,
+    ): List<VehicleCatalogOptionDto> =
+        client
+            .get("vehicle-catalog/${if (makeSlug == null) "makes" else "models"}") {
+                parameter("kind", kind)
+                parameter("q", query)
+                makeSlug?.let { parameter("make_slug", it) }
+            }.body()
 
     suspend fun history(id: Long): GarageHistoryDto = client.get("vehicles/$id/history").body()
 

@@ -7,8 +7,11 @@ import kotlinx.serialization.json.JsonPrimitive
 @Serializable data class VehicleDto(
     val id: Long,
     val name: String,
-    @SerialName("vehicle_type") val vehicleType: String,
+    @SerialName("kind") val vehicleKind: String,
     @SerialName("fuel_types") val fuelTypes: List<String>,
+    @SerialName("catalog_id") val catalogId: String? = null,
+    @SerialName("make_name") val makeName: String = "",
+    @SerialName("model_name") val modelName: String = "",
 )
 
 @Serializable data class AirDto(
@@ -63,8 +66,11 @@ import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable data class GarageHistoryDto(
     @SerialName("vehicle_name") val name: String,
-    @SerialName("vehicle_type") val vehicleType: String,
+    @SerialName("kind") val vehicleKind: String,
     @SerialName("fuel_types") val fuelTypes: List<String>,
+    @SerialName("catalog_id") val catalogId: String? = null,
+    @SerialName("make_name") val makeName: String = "",
+    @SerialName("model_name") val modelName: String = "",
     @SerialName("front_tire_pressure_solo") val frontSolo: JsonPrimitive? = null,
     @SerialName("rear_tire_pressure_solo") val rearSolo: JsonPrimitive? = null,
     @SerialName("front_tire_pressure_pillion") val frontPillion: JsonPrimitive? = null,
@@ -75,4 +81,9 @@ import kotlinx.serialization.json.JsonPrimitive
     @SerialName("fuel_fillups") val fuel: List<FuelDto>?,
     @SerialName("maintenance_records") val maintenance: List<MaintenanceDto>?,
     @SerialName("fuel_efficiency") val efficiency: Map<String, EfficiencyDto>?,
+)
+
+@Serializable data class VehicleCatalogOptionDto(
+    val id: String,
+    val name: String,
 )

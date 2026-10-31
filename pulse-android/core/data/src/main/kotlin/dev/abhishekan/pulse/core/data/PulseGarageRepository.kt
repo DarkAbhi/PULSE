@@ -6,8 +6,10 @@ import dev.abhishekan.pulse.core.domain.model.GarageRecord
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.Vehicle
+import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
 import dev.abhishekan.pulse.core.domain.model.validVehicleDetails
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
+import dev.abhishekan.pulse.core.domain.repository.VehicleCatalogRepository
 import dev.abhishekan.pulse.core.network.GarageApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +30,8 @@ class PulseGarageRepository(
     private val api: GarageApi,
     private val auth: PulseAuthRepository,
     private val files: ReceiptFiles,
-) : GarageRepository {
+) : GarageRepository,
+    VehicleCatalogRepository {
     private val revision = MutableStateFlow(0L)
     override val changes = revision.asStateFlow()
 
@@ -60,13 +63,24 @@ class PulseGarageRepository(
         request {
             api.vehicles().map {
                 require(
-                    it.id > 0 && it.name.isNotBlank() && validVehicleDetails(it.vehicleType, it.fuelTypes),
+                    it.id > 0 && it.name.isNotBlank() && validVehicleDetails(it.vehicleKind, it.fuelTypes, allowUnknown = true),
                 )
-                Vehicle(it.id, it.name, it.vehicleType, it.fuelTypes)
+                Vehicle(it.id, it.name, it.vehicleKind, it.fuelTypes, it.catalogId, it.makeName, it.modelName)
             }
         }
 
     override suspend fun history(vehicle: Long) = request { api.history(vehicle).domain() }
+
+    override suspend fun search(
+        kind: String,
+        makeSlug: String?,
+        query: String,
+    ) = request {
+        api.catalog(kind, makeSlug, query).map {
+            require(it.id.isNotBlank() && it.name.isNotBlank())
+            VehicleCatalogOption(it.id, it.name)
+        }
+    }
 
     @OptIn(ExperimentalSerializationApi::class)
     override suspend fun apply(change: GarageChange): Outcome<Unit> =
@@ -90,15 +104,18 @@ class PulseGarageRepository(
                 )
             }
             when (change) {
-                is GarageChange.CreateVehicle ->
+                is GarageChange.SaveVehicle ->
                     api.save(
-                        "vehicles",
-                        false,
+                        change.vehicle?.let { "vehicles/$it" } ?: "vehicles",
+                        change.vehicle != null,
                         buildJsonObject {
                             put("name", change.name.trim())
-                            put("vehicle_type", change.vehicleType)
+                            put("kind", change.vehicleKind)
+                            put("catalog_id", change.catalogId.orEmpty())
+                            put("make_name", change.makeName.trim())
+                            put("model_name", change.modelName.trim())
                             putJsonArray("fuel_types") { change.fuelTypes.forEach { add(JsonPrimitive(it)) } }
-                            put("is_active", change.active)
+                            if (change.vehicle == null) put("is_active", change.active)
                             pressure(change.pressure)
                         },
                     )

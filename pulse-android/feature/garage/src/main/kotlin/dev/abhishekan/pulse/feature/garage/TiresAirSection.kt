@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -31,7 +29,6 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
-import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -118,22 +115,13 @@ internal fun AirFillHistoryCard(
                 PulseText(stringResource(R.string.pulse_garage_air_fill_1_s, entry.id), style = PulseTextStyle.Title2)
                 PulseText(garageDate(entry.date), style = PulseTextStyle.Body2, color = colors.textSecondary)
             }
+            PulseButton(
+                stringResource(R.string.pulse_garage_delete_air_fill_1_s, entry.id),
+                delete,
+                enabled = enabled,
+                style = PulseButtonStyle.Icon,
+                icon = { GarageDetailIcon(GarageIcon.Delete) },
+            )
         }
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .padding(top = PulseTokens.small)
-                .height(PulseTokens.focusWidth / 2)
-                .background(colors.divider),
-        )
-        PulseButton(
-            stringResource(R.string.pulse_garage_delete_air_fill_1_s, entry.id),
-            delete,
-            Modifier.align(Alignment.End),
-            enabled,
-            variant = PulseButtonVariant.Destructive,
-            style = PulseButtonStyle.Text,
-            leadingIcon = { GarageDetailIcon(GarageIcon.Delete) },
-        )
     }
 }

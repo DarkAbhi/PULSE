@@ -1135,7 +1135,7 @@ class GarageDeviceTest {
         compose.onNodeWithText("36").assertExists()
         compose.onNodeWithText("Air fill 41").performScrollTo().assertIsDisplayed()
         screenshot("tires-air-history")
-        tap("Delete air fill 41")
+        compose.onNodeWithContentDescription("Delete air fill 41").performScrollTo().performClick()
         confirm("Delete")
         compose.waitUntil(10_000) { air.isEmpty() }
         compose.onNodeWithText("No air fills recorded").performScrollTo().assertIsDisplayed()
@@ -1213,7 +1213,7 @@ class GarageDeviceTest {
         confirm("Record air fill")
         awaitText("Saved. Your garage is up to date.")
         tap("Tires & air")
-        tap("Delete air fill 101")
+        compose.onNodeWithContentDescription("Delete air fill 101").performScrollTo().performClick()
         confirm("Delete")
         compose.waitForIdle()
         assertTrue(air.isEmpty())

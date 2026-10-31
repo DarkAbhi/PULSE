@@ -76,7 +76,7 @@
     <string name="pulse_garage_add_fuel_fill_up">"Add fuel fill-up"</string>
     <string name="pulse_garage_add_maintenance">"Add maintenance"</string>
     <string name="pulse_garage_delete_1_s_this_permanently_deletes_the_vehicle_fuel">"Delete “%1$s”? This permanently deletes the vehicle, fuel items, air fills, maintenance and receipt metadata. The current backend does not remove hosted receipt files during vehicle deletion; those files may remain in server storage."</string>
-    <string name="pulse_garage_air_fills">Air fills</string>
+    <string name="pulse_garage_air_fills">Recent air fills</string>
     <string name="pulse_garage_air_fill_1_s">Air fill %1$s</string>
     <string name="pulse_garage_no_air_fills_recorded">"No air fills recorded"</string>
     <string name="pulse_garage_record_an_air_fill_after_checking_your_tires">"Record an air fill after checking your tires."</string>

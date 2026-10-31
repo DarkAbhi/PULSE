@@ -93,13 +93,6 @@ internal fun VehicleEditor(
                 PulseText(stringResource(R.string.pulse_garage_vehicle_intro), color = colors.onPrimarySoft)
                 if (wide) {
                     VehicleEditorArtwork(draft["vehicleKind"], Modifier.fillMaxWidth())
-                    PulseCard(Modifier.fillMaxWidth()) {
-                        PulseText(
-                            draft["name"].ifBlank { stringResource(R.string.pulse_garage_your_next_vehicle) },
-                            style = PulseTextStyle.Title,
-                        )
-                        VehicleDraftSummary(draft)
-                    }
                 }
             }
         }
@@ -281,18 +274,13 @@ internal fun VehicleEditor(
                 }
             }
         }
-        PulseCard(Modifier.fillMaxWidth()) {
-            if (wide) {
-                Row(horizontalArrangement = Arrangement.spacedBy(spacing.large)) {
-                    intro(Modifier.weight(0.7f))
-                    form(Modifier.weight(1.3f).padding(vertical = spacing.small))
-                }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(spacing.cardPadding)) {
-                    intro(Modifier.fillMaxWidth())
-                    form(Modifier.fillMaxWidth())
-                }
+        if (wide) {
+            Row(horizontalArrangement = Arrangement.spacedBy(spacing.large)) {
+                intro(Modifier.weight(0.7f))
+                form(Modifier.weight(1.3f).padding(vertical = spacing.small))
             }
+        } else {
+            form(Modifier.fillMaxWidth())
         }
     }
 }

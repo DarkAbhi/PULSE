@@ -3,6 +3,7 @@ package dev.abhishekan.pulse.feature.horizon
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -22,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -482,7 +484,16 @@ internal fun HorizonScreen(
                     }
                 }
             }
-            if (state.draft != null && !records) {
+            if (state.tab == HorizonTab.Overview && state.overview.loading && state.overview.value == null &&
+                state.draft == null && !state.reviewRequired
+            ) {
+                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                    PulseLoadingState(
+                        stringResource(R.string.pulse_horizon_loading_your_horizon),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    )
+                }
+            } else if (state.draft != null && !records) {
                 key(state.draft.kind, state.draft.id) { content() }
             } else {
                 scrollStates.SaveableStateProvider(state.tab.name) { content() }

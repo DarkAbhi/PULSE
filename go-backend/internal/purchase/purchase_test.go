@@ -22,11 +22,20 @@ import (
 
 func loginUser(t *testing.T, db *sql.DB) *http.Cookie {
 	t.Helper()
+	// Match the timezone used by NextMonthDate when seeding purchases.
+	_, err := db.Exec(`
+		INSERT INTO user_profiles (user_id, display_name, timezone)
+		VALUES (1, '', $1)
+		ON CONFLICT (user_id) DO UPDATE SET timezone = EXCLUDED.timezone
+	`, timeutil.IndiaTimeZone)
+	if err != nil {
+		t.Fatalf("failed to set purchase test timezone: %v", err)
+	}
 	token := "purchasetesttoken"
 	hash := sha256.Sum256([]byte(token))
 	hashStr := hex.EncodeToString(hash[:])
 	expiresAt := time.Now().Add(24 * time.Hour)
-	_, err := db.Exec(`
+	_, err = db.Exec(`
 		INSERT INTO user_sessions (user_id, token_hash, expires_at)
 		VALUES (1, $1, $2)
 	`, hashStr, expiresAt)

@@ -19,11 +19,9 @@ url: http://localhost:3000
 - assertVisible:
     css: "section[aria-label='Welcome'] h1"
 - scrollUntilVisible:
-    element:
-      css: "nav[aria-label='Your spaces'] a[href='/garage']"
+    element: "Garage"
     direction: DOWN
-- tapOn:
-    css: "nav[aria-label='Your spaces'] a[href='/garage']"
+- tapOn: "Garage"
 
 # 3. Garage page verification
 - assertVisible: Garage
@@ -47,13 +45,11 @@ url: http://localhost:3000
 - tapOn:
     css: "select[id$='-kind']"
 - inputText: "c"
-- pressKey: Enter
 - assertVisible:
     css: "select[id$='-kind']:has(option[value='car']:checked)"
 - tapOn:
     css: "select[id$='-fuel']"
 - inputText: "p"
-- pressKey: Enter
 - assertVisible:
     css: "select[id$='-fuel']:has(option[value='petrol']:checked)"
 

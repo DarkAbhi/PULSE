@@ -511,7 +511,8 @@ run separately because they need additional setup.
 Maestro browser flows require Maestro, the running Go API and frontend, and a
 separate migrated database with the demo account/data. The flows target
 `http://localhost:3000`; start the frontend on that port and point
-`INTERNAL_API_BASE_URL` at the Go API. Run `maestro test --headless maestro/`
+`INTERNAL_API_BASE_URL` at the Go API. Run
+`maestro test --headless --screen-size 1440x1200 maestro/`
 from the root. These flows write data: use a disposable database. See the
 [CI browser job](.github/workflows/tests.yml) for the full migration, demo seed,
 and server startup sequence. Dashboard checks cover the greeting/clock, notification
@@ -519,8 +520,11 @@ panel, illustrated finance and fitness cards, navigation to the other spaces, an
 the absence of inline workout logging controls. Profile checks also verify light
 and dark theme selection carries back to the dashboard. The flows scroll to the
 lower cards and shortcuts rather than assuming everything fits in one viewport.
-Maestro currently uses a preset browser viewport; these flows do not constitute
-a mobile/tablet viewport matrix.
+The suite uses a 1440×1200 desktop browser window so vehicle form fields fit above
+the dialog's fixed footer. These flows do not constitute a mobile/tablet viewport matrix.
+Scroll targets use visible text so Maestro can check its hierarchy between scrolls
+without waiting for CSS selector lookup timeouts.
+Failed runs upload screenshots and logs in the `maestro-browser-failure` artifact.
 
 Seed restore checks separately require `psql`
 and `TEST_SEED_DATABASE_URL`; see [Development seed data](#development-seed-data).

@@ -21,7 +21,7 @@ url: http://localhost:3000
 
 # 3. Tap profile icon in top right corner
 - tapOn:
-    css: "a[href='/profile']"
+    id: "Profile"
 
 # 4. Verify Profile page
 - assertVisible: "Personal Profile"
@@ -33,24 +33,20 @@ url: http://localhost:3000
     direction: DOWN
 - tapOn: "Light"
 - scrollUntilVisible:
-    element:
-      css: "a[href='/dashboard']"
+    element: '\s*Dashboard\s*'
     direction: UP
-- tapOn:
-    css: "a[href='/dashboard']"
+- tapOn: '\s*Dashboard\s*'
 - assertVisible:
     css: "html:not(.dark) section[aria-label='Welcome'] h1"
 - tapOn:
-    css: "a[aria-label='Profile']"
+    id: "Profile"
 - scrollUntilVisible:
     element: "Dark"
     direction: DOWN
 - tapOn: "Dark"
 - scrollUntilVisible:
-    element:
-      css: "a[href='/dashboard']"
+    element: '\s*Dashboard\s*'
     direction: UP
-- tapOn:
-    css: "a[href='/dashboard']"
+- tapOn: '\s*Dashboard\s*'
 - assertVisible:
     css: "html.dark section[aria-label='Welcome'] h1"

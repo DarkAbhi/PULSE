@@ -251,7 +251,17 @@ jobs:
           curl --fail --retry 30 --retry-connrefused --retry-delay 2 --retry-max-time 90 http://localhost:8080/readyz
           curl --fail --retry 30 --retry-connrefused --retry-delay 2 --retry-max-time 90 http://localhost:3000
       - name: Run every Maestro flow
-        run: maestro test --headless maestro/
+        # shortcut: desktop size fits the vehicle dialog; add dialog scrolling for smaller-screen coverage.
+        run: maestro test --headless --screen-size 1440x1200 --debug-output "$RUNNER_TEMP/maestro-results" maestro/
+      - name: Upload Maestro failure screenshots and logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-browser-failure
+          path: |
+            ${{ runner.temp }}/maestro-results/
+            ${{ runner.temp }}/api.log
+            ${{ runner.temp }}/frontend.log
       - name: Print server logs on failure
         if: failure()
         run: |

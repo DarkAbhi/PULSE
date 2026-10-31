@@ -26,6 +26,19 @@ public API. See [monitoring setup](../README.md#backend-and-resource-metrics).
 
 `POST /api/fitness-activity-rings` requires the same bearer API key. It accepts the portfolio's nested activity rings payload, including optional workouts. It upserts workout activity types by `raw_value`, workouts by the API key's user and `uuid`, and rings by the user and `summary_date`. On success it returns HTTP 201 with `{"rings": {...}, "workouts": [{"id": ..., "uuid": ...}], "saved": true}`.
 
+Both import routes reject numbers outside the storage ranges with HTTP 400:
+whole-number counters and activity type values must fit a non-negative PostgreSQL
+integer (at most 2,147,483,647). Calories are at most 999,999.99, workout duration
+9,999,999.999 seconds, and distance 99,999,999.99 meters. Whole floats remain valid;
+the flat route also retains numeric-string and alias support. The nested route
+rejects duplicate workout UUIDs, including case variants, before database writes.
+
+Imports preserve the names of existing shared activity types. Shared types are
+written in ascending raw-value order to avoid conflicting lock orders. Correcting
+a workout's dates updates the workout while retaining its existing gym visit,
+visit date, exercises, and sets. New activity types still take their initial names
+from the import; existing names are not repaired automatically.
+
 To add an endpoint, add a raw SQL function in `src/db/`, a handler that calls it, and register the route in `src/routes/mod.rs`. The models use `sqlx::FromRow` with `query_as`, so compilation does not need a live database.
 
 ## Tests
@@ -38,9 +51,10 @@ cargo test --locked --workspace --all-features
 cargo test summary_selects_latest_strength_run_and_ride
 ```
 
-Install Rust using the stable toolchain in `rust-toolchain.toml`. Start Docker;
+Install Rust using the pinned 1.98.1 toolchain in `rust-toolchain.toml`, matching the
+Docker build. CI checks formatting and Clippy as well as tests. Start Docker;
 no database URL, migrations, or manual seeding are needed. Each database test
-starts a PostgreSQL 17.6 container on a random loopback port, creates temporary
+starts a PostgreSQL 17.6 container on a random loopback port, creates isolated
 tables, and inserts only its own fixtures. The container is removed on normal
 completion or assertion failure. If Docker cannot start PostgreSQL, the test
 fails rather than silently passing. Unit tests without database access do not
@@ -53,6 +67,14 @@ with PostgreSQL through its random loopback port. `docker run --detach --rm
 port with `docker port`, waits up to 60 seconds for a connection, and runs
 `docker rm --force` when the database guard is dropped, including on assertion
 failure. No volume is mounted, so test data disappears with the container.
+
+Docker startup and port discovery run asynchronously with a 30-second command
+timeout. Cleanup runs on a blocking worker, including during test failure, with a
+30-second limit; the test runtime waits for that worker at shutdown. Containers
+carry the `life-backend-rust-tests` label for inspection. Concurrency tests use
+multiple connections and regular tables inside a disposable database. The HTTP
+ownership/bounds test applies the actual baseline, fitness, API-key, and gym
+migrations instead of handwritten table definitions.
 
 A forcibly terminated test process can leave a container behind; remove it
 with `docker rm -f <container-id>`. Running the test process inside another

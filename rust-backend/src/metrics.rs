@@ -14,6 +14,7 @@ use prometheus::{
 };
 use sqlx::PgPool;
 
+#[derive(Debug)]
 pub struct Metrics {
     registry: Registry,
     requests: IntCounterVec,
@@ -105,7 +106,12 @@ pub async fn observe(
     if matches!(path.as_str(), "/healthz" | "/readyz") {
         return next.run(request).await;
     }
-    let method = request.method().as_str().to_owned();
+    let method = match request.method().as_str() {
+        method @ ("GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "CONNECT"
+        | "TRACE") => method,
+        _ => "OTHER",
+    }
+    .to_owned();
     let gauge = metrics.in_flight.with_label_values(&[&method]);
     gauge.inc();
     let _in_flight = InFlight(gauge);
@@ -125,7 +131,10 @@ async fn export(
     State((metrics, pool)): State<(Arc<Metrics>, PgPool)>,
 ) -> Result<([(header::HeaderName, &'static str); 1], Vec<u8>), StatusCode> {
     let total = pool.size();
-    let idle = pool.num_idle() as u32;
+    let idle = u32::try_from(pool.num_idle()).map_err(|error| {
+        tracing::error!(%error, "idle connections exceed pool capacity type");
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
     metrics.total.set(i64::from(total));
     metrics.idle.set(i64::from(idle));
     metrics.acquired.set(i64::from(total.saturating_sub(idle)));
@@ -197,6 +206,11 @@ mod tests {
                 .starts_with("HTTP/1.1 401")
         );
         request(api_address, "/unknown/user-secret").await;
+        for method in ["CUSTOM_ONE", "CUSTOM_TWO"] {
+            let mut stream = TcpStream::connect(api_address).await.unwrap();
+            stream.write_all(format!("{method} /api/version HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n").as_bytes()).await.unwrap();
+            stream.read_to_end(&mut Vec::new()).await.unwrap();
+        }
         let body = request(metrics_address, "/metrics").await;
         assert!(body.starts_with("HTTP/1.1 200"), "{body}");
         assert!(
@@ -217,6 +231,13 @@ mod tests {
         assert!(body.contains("life_db_pool_acquired_connections 0"));
         assert!(!body.contains("/healthz"));
         assert!(!body.contains("user-secret"));
+        assert!(!body.contains("CUSTOM_"), "{body}");
+        assert!(
+            body.contains(
+                "life_http_requests_total{method=\"OTHER\",path=\"/api/version\",status=\"405\"} 2"
+            ),
+            "{body}"
+        );
         api.abort();
         exporter.abort();
     }

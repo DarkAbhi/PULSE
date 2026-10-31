@@ -10,7 +10,7 @@ mod db;
 #[cfg(test)]
 mod testhelper;
 
-use std::{error::Error, io, net::SocketAddr};
+use std::{error::Error, net::SocketAddr};
 
 use sqlx::PgPool;
 use tokio::net::TcpListener;
@@ -28,13 +28,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let pool = PgPool::connect(&config.database_url)
         .await
-        .map_err(|error| io::Error::other(format!("database connection failed: {error}")))?;
+        .inspect_err(|error| tracing::error!(%error, "database connection failed"))?;
     sqlx::query_scalar::<_, i32>("SELECT 1")
         .fetch_one(&pool)
         .await
-        .map_err(|error| {
-            io::Error::other(format!("database connectivity check failed: {error}"))
-        })?;
+        .inspect_err(|error| tracing::error!(%error, "database connectivity check failed"))?;
 
     let address = SocketAddr::from(([0, 0, 0, 0], config.port));
     let metrics = metrics::Metrics::new()?;
@@ -63,7 +61,7 @@ async fn shutdown_signal() {
     let ctrl_c = async {
         tokio::signal::ctrl_c()
             .await
-            .expect("failed to listen for SIGINT")
+            .expect("failed to listen for SIGINT");
     };
 
     #[cfg(unix)]

@@ -9,7 +9,7 @@ use sqlx::PgPool;
 
 use crate::{error::AppError, state::AppState};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ApiKeyUser(pub i64);
 
 pub async fn require_api_key(

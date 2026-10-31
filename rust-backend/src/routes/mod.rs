@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 mod fitness_activity_rings;
+mod fitness_input;
 mod fitness_rings;
 
 use axum::{
@@ -110,7 +111,7 @@ mod tests {
                 router(AppState { pool }, crate::metrics::Metrics::new().unwrap()),
             )
             .await
-            .unwrap()
+            .unwrap();
         });
 
         let release: serde_json::Value =
@@ -147,6 +148,108 @@ mod tests {
             );
             assert!(response.contains(body), "{response}");
         }
+        server.abort();
+    }
+    #[tokio::test]
+    async fn fitness_routes_use_key_ownership_and_real_migration_bounds() {
+        use serde_json::json;
+        use sha2::{Digest, Sha256};
+
+        let database = crate::testhelper::TestDatabase::start().await;
+        let pool = database.pool.clone();
+        for migration in [
+            include_str!("../../../go-backend/migrations/00001_init.up.sql"),
+            include_str!("../../../go-backend/migrations/00017_fitness_workouts.up.sql"),
+            include_str!("../../../go-backend/migrations/00018_api_keys.up.sql"),
+            include_str!("../../../go-backend/migrations/00019_fitness_user_id.up.sql"),
+            include_str!("../../../go-backend/migrations/00020_vehicle_gym_ownership.up.sql"),
+            include_str!(
+                "../../../go-backend/migrations/00021_backfill_gym_visits_from_workouts.up.sql"
+            ),
+        ] {
+            sqlx::raw_sql(migration).execute(&pool).await.unwrap();
+        }
+        let owner: i64 = sqlx::query_scalar("INSERT INTO users (username, password_hash) VALUES ('key-owner', 'unused') RETURNING id")
+            .fetch_one(&pool).await.unwrap();
+        let hash = format!("{:x}", Sha256::digest(b"lt_route_test"));
+        sqlx::query("INSERT INTO api_keys (user_id, name, token_hash, token_prefix) VALUES ($1, 'test', $2, 'lt_route')")
+            .bind(owner).bind(hash).execute(&pool).await.unwrap();
+        let app = router(
+            AppState { pool: pool.clone() },
+            crate::metrics::Metrics::new().unwrap(),
+        );
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
+        });
+
+        let flat = json!({"summary_date": "2026-07-27", "time_zone": "Asia/Kolkata",
+            "move": "999999.99", "move_goal": 999_999.99, "exercise ": 2_147_483_647.0,
+            "exercise_goal": "2147483647", "stand": 2_147_483_647, "stand_goal": 2_147_483_647,
+            "step_count": "2147483647"});
+        let nested = json!({"summary_date": "2026-07-27", "time_zone": "Asia/Kolkata", "captured_at": "2026-07-27T00:00:00Z",
+            "move": {"value": 999_999.99, "goal": 999_999.99, "unit": "kcal"},
+            "exercise": {"value": 2_147_483_647.0, "goal": 2_147_483_647, "unit": "min"},
+            "stand": {"value": 2_147_483_647, "goal": 2_147_483_647, "unit": "hr"}, "step_count": 2_147_483_647,
+            "workouts": [{"uuid": "6b29fc40-ca47-1000-8000-00805f9b34fb", "activity_type_raw": 50,
+                "activity_type_name": "Traditional Strength Training", "start_date": "2026-07-27T00:00:00Z",
+                "end_date": "2026-07-27T00:01:00Z", "duration_seconds": 9_999_999.999,
+                "calories_burned_kcal": 999_999.99, "distance_meters": 99_999_999.99}]});
+        for (path, payload) in [
+            ("/api/shortcut/fitness-rings", flat),
+            ("/api/fitness-activity-rings", nested),
+        ] {
+            let body = payload.to_string();
+            for (authorization, status) in [
+                ("", "401"),
+                ("Authorization: Basic key\r\n", "401"),
+                ("Authorization: Bearer wrong\r\n", "401"),
+                ("Authorization: bEaReR lt_route_test\r\n", "201"),
+            ] {
+                let mut stream = TcpStream::connect(address).await.unwrap();
+                stream.write_all(format!("POST {path} HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/json\r\n{authorization}Content-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).as_bytes()).await.unwrap();
+                let mut response = Vec::new();
+                stream.read_to_end(&mut response).await.unwrap();
+                let response = String::from_utf8(response).unwrap();
+                assert!(
+                    response.starts_with(&format!("HTTP/1.1 {status}")),
+                    "{path}: {response}"
+                );
+                if status == "401" {
+                    assert!(
+                        response
+                            .to_ascii_lowercase()
+                            .contains("www-authenticate: bearer"),
+                        "{response}"
+                    );
+                }
+            }
+            let saved: (i64, i32) =
+                sqlx::query_as("SELECT user_id, steps_count FROM fitness_activity_rings")
+                    .fetch_one(&pool)
+                    .await
+                    .unwrap();
+            assert_eq!(saved, (owner, i32::MAX), "{path} must use the key owner");
+        }
+        let workout_owner: i64 = sqlx::query_scalar("SELECT user_id FROM fitness_workouts")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(workout_owner, owner);
+        sqlx::query("UPDATE api_keys SET revoked_at = NOW()")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let mut stream = TcpStream::connect(address).await.unwrap();
+        stream.write_all(b"POST /api/shortcut/fitness-rings HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer lt_route_test\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}").await.unwrap();
+        let mut response = Vec::new();
+        stream.read_to_end(&mut response).await.unwrap();
+        assert!(
+            String::from_utf8(response)
+                .unwrap()
+                .starts_with("HTTP/1.1 401")
+        );
         server.abort();
     }
 }

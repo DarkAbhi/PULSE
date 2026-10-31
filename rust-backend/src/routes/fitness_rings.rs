@@ -2,6 +2,7 @@ use axum::{Extension, Json, body::Bytes, extract::State, http::StatusCode};
 use chrono::NaiveDate;
 use serde_json::{Map, Value, json};
 
+use super::fitness_input::{self, MAX_CALORIES};
 use crate::{
     auth::ApiKeyUser,
     db::activity_rings::{self, Rings},
@@ -120,7 +121,7 @@ fn parse(payload: Value) -> Result<Rings, &'static str> {
     })
 }
 
-fn integer_alias(values: &Map<String, Value>, first: &str, second: &str) -> Option<i64> {
+fn integer_alias(values: &Map<String, Value>, first: &str, second: &str) -> Option<i32> {
     values
         .get(first)
         .filter(|value| !value.is_null())
@@ -129,22 +130,40 @@ fn integer_alias(values: &Map<String, Value>, first: &str, second: &str) -> Opti
 }
 
 fn non_negative_number(value: &Value) -> Option<f64> {
-    let number = match value {
-        Value::Number(value) => value.as_f64()?,
-        Value::String(value) if !value.trim().is_empty() => value.trim().parse().ok()?,
-        _ => return None,
-    };
-    (number.is_finite() && number >= 0.0).then_some(number)
+    numeric_value(value).and_then(|value| fitness_input::number(value, MAX_CALORIES))
 }
 
-fn non_negative_integer(value: &Value) -> Option<i64> {
-    let number = non_negative_number(value)?;
-    (number.fract() == 0.0 && number <= i64::MAX as f64).then_some(number as i64)
+fn non_negative_integer(value: &Value) -> Option<i32> {
+    numeric_value(value).and_then(fitness_input::integer)
+}
+
+fn numeric_value(value: &Value) -> Option<f64> {
+    match value {
+        Value::Number(value) => value.as_f64(),
+        Value::String(value) => value.trim().parse().ok(),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rejects_numbers_outside_database_ranges() {
+        for value in [
+            json!(2_147_483_648_i64),
+            json!("9223372036854775808"),
+            json!(10.5),
+        ] {
+            assert_eq!(non_negative_integer(&value), None, "input {value}");
+        }
+        assert_eq!(
+            non_negative_integer(&json!(2_147_483_647.0)),
+            Some(i32::MAX)
+        );
+        assert_eq!(non_negative_number(&json!(1_000_000)), None);
+    }
 
     #[test]
     fn flat_payload_matches_shortcut_contract() {
@@ -154,7 +173,7 @@ mod tests {
             "exercise_goal": 40, "move": 38.763, "stand_hours": 2
         });
         let rings = parse(payload).unwrap();
-        assert_eq!(rings.move_calories_goal, 350.0);
+        assert!((rings.move_calories_goal - 350.0).abs() < f64::EPSILON);
         assert_eq!(rings.exercise_minutes, 0);
         assert_eq!(rings.steps_count, 106);
 

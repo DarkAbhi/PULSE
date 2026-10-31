@@ -2,6 +2,10 @@
 name = "pulse-rust-backend"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.98.1"
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
 
 [profile.release]
 strip = true

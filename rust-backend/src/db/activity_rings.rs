@@ -2,15 +2,16 @@ use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
 use sqlx::PgPool;
 
+#[derive(Debug)]
 pub struct Rings {
     pub summary_date: NaiveDate,
     pub move_calories: f64,
     pub move_calories_goal: f64,
-    pub exercise_minutes: i64,
-    pub exercise_minutes_goal: i64,
-    pub stand_hours: i64,
-    pub stand_hours_goal: i64,
-    pub steps_count: i64,
+    pub exercise_minutes: i32,
+    pub exercise_minutes_goal: i32,
+    pub stand_hours: i32,
+    pub stand_hours_goal: i32,
+    pub steps_count: i32,
     pub time_zone: Option<String>,
 }
 

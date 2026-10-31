@@ -8,17 +8,42 @@ copy of the vehicle catalog.
 
 ## Product flow and design
 
-The existing full-page editor retains its compact phone layout, tablet artwork,
-optional tire pressures, fuel selection, and centered cancel action. Users choose
-**Choose a vehicle** or **Enter manually**, then select one of six kinds: car,
-motorcycle, moped, van, truck, or bus. Catalog entry progressively reveals make
-and model searches. Selecting a model suggests a vehicle name; personal nicknames
-remain editable. Manual entry has optional make/model fields.
+The full-page editor guides users through three steps: Vehicle, Fuel, and optional
+Tyre pressure. Each step uses Pulse components and theme tokens. Tablet layouts
+keep the illustrated introduction and live vehicle summary on the left; compact
+and large-text layouts stack the content. Existing scooter/motorcycle/car artwork
+continues cycling until the user explicitly selects a kind. Kind and fuel start
+unselected. New vector icons, a shared `PulseChoiceCard`, and a theme-aware axle
+illustration support the flow without additional raster assets or dependencies.
+
+Users choose **Choose a vehicle** or **Enter manually**, then select one of six
+kinds: car, motorcycle, moped, van, truck, or bus. Catalog selection suggests a
+vehicle name; manual make/model edits also suggest a name while preserving personal
+nicknames. Make and model appear side by side where space permits. The searchable
+picker sheets show monograms, highlighted selection, bounded result counts,
+loading/retry/empty states, and Close. They deliberately omit Popular and the
+alphabet rail.
+
+Step progression requires a kind, a name, and a catalog model in catalog mode.
+Fuel requires one type, or two distinct types when dual fuel is enabled. Pressure
+fields stay blank until entered, support direct decimal entry and +/- controls,
+and show front/rear targets for larger vehicles plus solo/pillion targets for
+motorcycles and mopeds. Existing pillion values remain editable after reclassification.
+The final review links back to vehicle details. Step state survives recreation;
+Back moves to the preceding step, while Cancel and Back to garage retain discard
+protection. Moving between steps never sends a write.
+
+Year is intentionally omitted because the API does not store it.
 
 Changing kind clears the selected make and model. Changing make clears the model.
-Search does not silently change a selection or nickname. Up to 100 matches appear
-in the shared selection menu, with guidance to narrow a full list. Loading,
-retry, and no-results states keep manual entry available. Catalog selection is
+Search does not silently change a selection or nickname. Tapping the Make or
+Model field opens a Pulse-styled bottom sheet with its search input above a
+scrollable list of options. Filtering uses the existing debounced backend search;
+up to 100 matches appear, with guidance to narrow a full list. Selecting a row
+closes the sheet. Close, Back, or scrim dismissal leaves the selection unchanged,
+and search text is retained when reopening. Sheet visibility also survives
+Activity recreation. Loading, retry, and no-results states keep manual entry
+available. Catalog selection is
 required before saving in catalog mode.
 
 Vehicle cards show make/model information. The overview includes a full-width
@@ -80,3 +105,21 @@ Test screenshots use the existing `pulse-phase5-*` naming in device Downloads.
 
 See the repository's `docs/vehicle-catalog.md` for backend seeding, provenance,
 rollback behavior, and API details.
+
+## Manual catalogue matching
+
+`GET /api/vehicle-catalog/match?kind=car&make_name=Honda&model_name=Civic`
+requires the existing authenticated session and returns
+`{"match":{"id":"car/honda/civic","make_slug":"honda","make_name":"Honda","model_name":"Civic"}}`.
+A unique exact match ignores case and surrounding whitespace. No match or ambiguous
+results return `{"match":null}`. Names must contain 1–200 characters; invalid kind
+or inputs return 400. Queries are parameterized, bounded to two candidates, and do
+not change the vehicle. No new database migration is needed.
+
+Android debounces manual matching by 350ms, cancels superseded requests, clears
+stale suggestions, and verifies the request key before accepting results. The
+suggestion changes nothing until **Use match** is tapped; acceptance keeps the
+nickname and links canonical make/model values. Matching failure offers Retry and
+allows manual continuation. Deploy the new Go endpoint with the Android update;
+older APIs still permit manual entry but cannot provide suggestions. Existing
+migrations 27–28 remain prerequisites. OpenAPI files are regenerated from annotations.

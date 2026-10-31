@@ -88,7 +88,13 @@ class GarageRepositoryTest {
             MockEngine { request ->
                 if (request.url.encodedPath.startsWith("/api/vehicle-catalog/")) {
                     catalogParameters =
-                        listOf("kind", "make_slug", "q").mapNotNull { key -> request.url.parameters[key]?.let { key to it } }.toMap()
+                        listOf("kind", "make_slug", "q", "make_name", "model_name")
+                            .mapNotNull { key ->
+                                request.url.parameters[key]?.let {
+                                    key to
+                                        it
+                                }
+                            }.toMap()
                     return@MockEngine respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
                 }
                 if (request.url.encodedPath == "/api/profile") {
@@ -196,6 +202,20 @@ class GarageRepositoryTest {
                         .toPlainString(),
                 )
                 assertEquals(listOf(Vehicle(1, "Ride", "motorcycle", listOf("petrol"))), (h.repo.vehicles() as Outcome.Success).value)
+            }
+        }
+
+    @Test fun manualMatchDecodesCanonicalIdentityAndEncodesNames() =
+        runTest {
+            Harness().use { h ->
+                h.body = """{"match":{"id":"car/honda/civic","make_slug":"honda","make_name":"Honda","model_name":"Civic"}}"""
+                val match = (h.repo.match("car", "Honda & Co", "Civic + Type R") as Outcome.Success).value!!
+                assertEquals("car/honda/civic", match.id)
+                assertEquals(mapOf("kind" to "car", "make_name" to "Honda & Co", "model_name" to "Civic + Type R"), h.catalogParameters)
+                h.body = """{"match":null}"""
+                assertNull((h.repo.match("car", "Unknown", "Unknown") as Outcome.Success).value)
+                h.body = """{"match":{"id":"bus/honda/civic","make_slug":"honda","make_name":"Honda","model_name":"Civic"}}"""
+                assertTrue(h.repo.match("car", "Honda", "Civic") is Outcome.Error)
             }
         }
 

@@ -3115,6 +3115,80 @@
                 }
             }
         },
+        "/api/vehicle-catalog/match": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Returns a unique exact match ignoring case and surrounding whitespace, or {\"match\":null}. No fuzzy guesses or vehicle writes.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vehicles"
+                ],
+                "summary": "Match manually entered vehicle details",
+                "parameters": [
+                    {
+                        "enum": [
+                            "car",
+                            "motorcycle",
+                            "moped",
+                            "van",
+                            "truck",
+                            "bus"
+                        ],
+                        "type": "string",
+                        "description": "Vehicle kind",
+                        "name": "kind",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Make name, 1 to 200 characters",
+                        "name": "make_name",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Model name, 1 to 200 characters",
+                        "name": "model_name",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/vehicle.CatalogMatchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/vehicle-catalog/models": {
             "get": {
                 "security": [
@@ -6509,6 +6583,31 @@
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "vehicle.CatalogMatch": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "make_name": {
+                    "type": "string"
+                },
+                "make_slug": {
+                    "type": "string"
+                },
+                "model_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "vehicle.CatalogMatchResponse": {
+            "type": "object",
+            "properties": {
+                "match": {
+                    "$ref": "#/definitions/vehicle.CatalogMatch"
                 }
             }
         },

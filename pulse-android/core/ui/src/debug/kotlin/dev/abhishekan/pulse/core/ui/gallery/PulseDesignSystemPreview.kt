@@ -12,17 +12,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.R
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
+import dev.abhishekan.pulse.core.ui.components.PulseChoiceCard
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseSwitch
@@ -115,6 +119,14 @@ internal fun PulseTokenShowcase() {
         PulseFilterChip("Selected", true, {})
         PulseCheckbox(true, {}, "Checkbox")
         PulseRadioButton(true, {}, "Radio button")
+        Row(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
+            PulseChoiceCard("Selected choice", true, {}, Modifier.weight(1f)) {
+                Icon(painterResource(R.drawable.pulse_garage), null)
+            }
+            PulseChoiceCard("Unselected choice", false, {}, Modifier.weight(1f)) {
+                Icon(painterResource(R.drawable.pulse_garage), null)
+            }
+        }
         PulseSwitch(true, {}, "Switch")
         Spacer(Modifier.size(spacing.small))
     }

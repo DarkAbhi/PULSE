@@ -250,4 +250,34 @@
     <string name="pulse_garage_data_sources">Sources and credits</string>
     <string name="pulse_garage_data_version">VehiclesDB 2026.10.4 · CC BY 4.0. Pulse adapts this catalog for vehicle selection. Fuel and tire specifications are entered separately.</string>
     <string name="pulse_garage_close_credits">Close</string>
+    <string name="pulse_garage_close_picker">Close</string>
+    <string name="pulse_garage_which_vehicle">Which vehicle?</string>
+    <string name="pulse_garage_step_vehicle">Vehicle</string>
+    <string name="pulse_garage_step_optional">Optional</string>
+    <string name="pulse_garage_what_powers_it">What powers it?</string>
+    <string name="pulse_garage_tyre_pressure">Tyre pressure</string>
+    <string name="pulse_garage_your_next_vehicle">Your next vehicle</string>
+    <string name="pulse_garage_vehicle_step">Step %1$d of 3 · %2$s</string>
+    <string name="pulse_garage_continue_fuel">Continue to fuel</string>
+    <string name="pulse_garage_continue_tyres">Continue to tyres</string>
+    <string name="pulse_garage_step_back">Back</string>
+    <string name="pulse_garage_review">Review</string>
+    <string name="pulse_garage_name_hint">Suggested from make and model. Edit anytime.</string>
+    <string name="pulse_garage_two_fuels_hint">Hybrid, bi-fuel or converted? Add a second fuel.</string>
+    <string name="pulse_garage_checking_match">Checking the catalogue…</string>
+    <string name="pulse_garage_match_unavailable">Catalogue matching is unavailable. You can continue manually.</string>
+    <string name="pulse_garage_retry_match">Retry matching</string>
+    <string name="pulse_garage_catalog_match">Found in the catalogue: %1$s %2$s</string>
+    <string name="pulse_garage_use_match">Use match</string>
+    <string name="pulse_garage_front_axle_psi">Front axle (PSI)</string>
+    <string name="pulse_garage_rear_axle_psi">Rear axle (PSI)</string>
+    <string name="pulse_garage_pressure_invalid">Enter 0–9999.9 PSI, with at most one decimal, or leave blank.</string>
+    <string name="pulse_garage_pressure_decrease">Decrease %1$s</string>
+    <string name="pulse_garage_pressure_increase">Increase %1$s</string>
+    <string name="pulse_garage_choose_make">Choose a make</string>
+    <string name="pulse_garage_choose_model">Choose a model</string>
+    <plurals name="pulse_garage_catalog_count">
+        <item quantity="one">%1$d match</item>
+        <item quantity="other">%1$d matches</item>
+    </plurals>
 </resources>

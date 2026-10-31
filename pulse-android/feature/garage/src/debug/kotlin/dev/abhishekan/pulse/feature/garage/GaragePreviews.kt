@@ -184,6 +184,44 @@ private fun VehicleEditorPreview() {
     }
 }
 
+@Preview(name = "Vehicle fuel tablet", widthDp = 1280, heightDp = 1000)
+@Preview(name = "Vehicle fuel phone", widthDp = 393, heightDp = 1400)
+@Preview(name = "Vehicle fuel dark", widthDp = 1024, heightDp = 1000, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun VehicleFuelStepPreview() = VehicleStepPreview(1)
+
+@Preview(name = "Vehicle tyres tablet", widthDp = 1280, heightDp = 1100)
+@Preview(name = "Vehicle tyres large text", widthDp = 360, heightDp = 1800, fontScale = 2f)
+@Composable
+private fun VehicleTyresStepPreview() = VehicleStepPreview(2)
+
+@Composable
+private fun VehicleStepPreview(step: Int) {
+    PulseTheme {
+        Surface(color = PulseTheme.colors.background) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
+                VehicleEditor(
+                    GarageDraft
+                        .new(GarageForm.Vehicle, 0)
+                        .set("catalogMode", "manual")
+                        .set("vehicleKind", "car")
+                        .set("name", "Honda HR-V")
+                        .set("vehicleFuel", "petrol")
+                        .set("dualTank", "true")
+                        .set("vehicleSecondFuel", "lpg")
+                        .set("vehicleStep", step.toString()),
+                    false,
+                    false,
+                    null,
+                    {},
+                    {},
+                    {},
+                )
+            }
+        }
+    }
+}
+
 @Preview(name = "Fuel history reference", widthDp = 900, heightDp = 380, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Preview(name = "Fuel history phone", widthDp = 393, heightDp = 850)
 @Preview(name = "Fuel history large text", widthDp = 360, heightDp = 1100, fontScale = 2f)

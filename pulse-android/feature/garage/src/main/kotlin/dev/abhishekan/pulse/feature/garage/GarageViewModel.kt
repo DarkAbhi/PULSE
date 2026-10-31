@@ -6,7 +6,6 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.Outcome
-import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
 import dev.abhishekan.pulse.core.domain.model.garageVehicleKinds
 import dev.abhishekan.pulse.core.domain.usecase.ApplyGarageChange
 import dev.abhishekan.pulse.core.domain.usecase.DownloadGarageReceipt
@@ -59,6 +58,8 @@ class GarageViewModel(
     private var modelsJob: Job? = null
     private var makesKey: List<String>? = null
     private var modelsKey: List<String>? = null
+    private var matchJob: Job? = null
+    private var matchKey: List<String>? = null
 
     init {
         refresh()
@@ -175,6 +176,29 @@ class GarageViewModel(
 
     private fun refreshCatalog(force: Boolean = false) {
         val draft = state.value.draft
+        val manualKey =
+            if (draft?.kind == GarageForm.Vehicle &&
+                draft["catalogMode"] == "manual" &&
+                draft["vehicleKind"] in garageVehicleKinds &&
+                listOf("makeName", "modelName").all { draft[it].isNotBlank() && draft[it].codePointCount(0, draft[it].length) <= 200 }
+            ) {
+                listOf(draft["vehicleKind"], draft["makeName"], draft["modelName"])
+            } else {
+                null
+            }
+        if (force || manualKey != matchKey) {
+            matchJob?.cancel()
+            matchKey = manualKey
+            state.update { it.copy(match = GarageSection(loading = manualKey != null)) }
+            if (manualKey != null) {
+                matchJob =
+                    viewModelScope.launch {
+                        delay(350)
+                        val result = searchCatalog.match(manualKey[0], manualKey[1], manualKey[2])
+                        if (matchKey == manualKey) state.update { it.copy(match = result.section()) }
+                    }
+            }
+        }
         val enabled = draft?.kind == GarageForm.Vehicle && draft["catalogMode"] != "manual" && draft["vehicleKind"] in garageVehicleKinds
         val makeKey = if (enabled) listOf(draft["vehicleKind"], draft["makeQuery"]) else null
         val modelKey =
@@ -213,7 +237,7 @@ class GarageViewModel(
         }
     }
 
-    private fun Outcome<List<VehicleCatalogOption>>.section(): GarageSection<List<VehicleCatalogOption>> =
+    private fun <T> Outcome<T>.section(): GarageSection<T> =
         when (this) {
             is Outcome.Success -> GarageSection(value, loading = false)
             is Outcome.Error -> GarageSection(loading = false, error = failure)

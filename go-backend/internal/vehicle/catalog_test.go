@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -67,6 +68,45 @@ func TestCatalogVehicleLifecycle(t *testing.T) {
 		t.Fatalf("wildcard search was not literal: %s", body)
 	}
 	request("POST", "/vehicles", `{"name":"bad","kind":"motorcycle","catalog_id":"car/honda/civic","fuel_types":["petrol"]}`, 400)
+	for _, tc := range []struct {
+		name, kind, makeName, modelName string
+		status                          int
+		wantMatch                       bool
+	}{
+		{"exact", "car", "Honda", "Civic", 200, true},
+		{"case and space", "car", "  HONDA ", " civic ", 200, true},
+		{"no fuzzy guessing", "car", "Honda", "Civi", 200, false},
+		{"literal wildcards", "car", "Honda", "%", 200, false},
+		{"wrong kind", "bus", "Honda", "Civic", 200, false},
+		{"invalid kind", "spaceship", "Honda", "Civic", 400, false},
+		{"blank", "car", "  ", "Civic", 400, false},
+		{"bounded", "car", "Honda", strings.Repeat("a", 201), 400, false},
+	} {
+		t.Run("match/"+tc.name, func(t *testing.T) {
+			path := "/vehicle-catalog/match?" + url.Values{"kind": {tc.kind}, "make_name": {tc.makeName}, "model_name": {tc.modelName}}.Encode()
+			result := request("GET", path, "", tc.status)
+			if tc.status != 200 {
+				return
+			}
+			var body CatalogMatchResponse
+			if err := json.Unmarshal(result.Body.Bytes(), &body); err != nil {
+				t.Fatal(err)
+			}
+			if (body.Match != nil) != tc.wantMatch {
+				t.Fatalf("unexpected match: %s", result.Body.String())
+			}
+			if body.Match != nil && (body.Match.ID != "car/honda/civic" || body.Match.MakeName != "Honda" || body.Match.ModelName != "Civic" || body.Match.MakeSlug != "honda") {
+				t.Fatalf("noncanonical match: %+v", body.Match)
+			}
+		})
+	}
+	if _, err := pool.Exec(t.Context(), `INSERT INTO vehicle_catalog (id,kind,make_slug,make_name,model_slug,model_name,aliases)
+		VALUES ('car/honda/civic-duplicate','car','honda','Honda','civic-duplicate','Civic','')`); err != nil {
+		t.Fatal(err)
+	}
+	if result := request("GET", "/vehicle-catalog/match?kind=car&make_name=Honda&model_name=Civic", "", 200); strings.TrimSpace(result.Body.String()) != `{"match":null}` {
+		t.Fatalf("ambiguous match suggested: %s", result.Body.String())
+	}
 	request("POST", "/vehicles", `{"name":"bad","kind":"car","catalog_id":"car/missing/model","fuel_types":["petrol"]}`, 400)
 	request("POST", "/vehicles", `{"name":"old Android contract","vehicle_type":"four_wheeler","fuel_types":["petrol"]}`, 400)
 	response = request("POST", "/vehicles", `{"name":"My car","kind":"car","catalog_id":"car/honda/civic","make_name":"Forged","model_name":"Forged","fuel_types":["petrol","cng"]}`, 201)
@@ -105,6 +145,11 @@ func TestCatalogVehicleLifecycle(t *testing.T) {
 
 func TestCatalogRequiresSession(t *testing.T) {
 	handler := NewHandler(nil, nil, func(*http.Request) (auth.SessionUser, error) { return auth.SessionUser{}, sql.ErrNoRows })
+	response := httptest.NewRecorder()
+	handler.CatalogMatch(response, httptest.NewRequest("GET", "/vehicle-catalog/match?kind=car&make_name=Honda&model_name=Civic", nil))
+	if response.Code != 401 {
+		t.Fatalf("match without session: %d", response.Code)
+	}
 	for _, path := range []string{"/vehicle-catalog/kinds", "/vehicle-catalog/makes?kind=car", "/vehicle-catalog/models?kind=car&make_slug=honda"} {
 		response := httptest.NewRecorder()
 		handler.CatalogOptions(response, httptest.NewRequest("GET", path, nil))

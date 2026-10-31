@@ -6,8 +6,11 @@ import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.Maintenance
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
+import dev.abhishekan.pulse.core.domain.model.VehicleCatalogMatch
 import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
+import dev.abhishekan.pulse.core.domain.model.garageFuelTypes
+import dev.abhishekan.pulse.core.domain.model.garageVehicleKinds
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -25,6 +28,38 @@ data class GarageDraft(
 ) {
     operator fun get(key: String) = fields[key].orEmpty()
 
+    val vehicleStep get() = get("vehicleStep").toIntOrNull()?.coerceIn(0, 2) ?: 0
+    val vehicleIdentityValid get() =
+        get("vehicleKind") in garageVehicleKinds &&
+            get("name").isNotBlank() &&
+            get("name").trim().codePointCount(0, get("name").trim().length) <= 48 &&
+            (get("catalogMode") == "manual" || get("catalogId").isNotBlank()) &&
+            listOf("makeName", "modelName").all { get(it).codePointCount(0, get(it).length) <= 200 }
+    val vehicleFuelValid get() =
+        get("vehicleFuel") in garageFuelTypes &&
+            (get("dualTank") != "true" || (get("vehicleSecondFuel") in garageFuelTypes && get("vehicleSecondFuel") != get("vehicleFuel")))
+
+    fun validPressure(key: String): Boolean {
+        val value = get(key).toBigDecimalOrNull() ?: return false
+        return value.signum() >= 0 && value < "10000".toBigDecimal() && value.stripTrailingZeros().scale() <= 1
+    }
+
+    fun adjustPressure(
+        key: String,
+        amount: Int,
+    ): GarageDraft {
+        if (get(key).isNotBlank() && !validPressure(key)) return this
+        val value = (get(key).toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO) + amount.toBigDecimal()
+        return set(key, value.coerceIn(java.math.BigDecimal.ZERO, "9999.9".toBigDecimal()).stripTrailingZeros().toPlainString())
+    }
+
+    fun useMatch(match: VehicleCatalogMatch): GarageDraft =
+        copy(
+            fields =
+                fields - listOf("makeQuery", "modelQuery") +
+                    mapOf("catalogMode" to "catalog", "makeSlug" to match.makeSlug, "makeName" to match.makeName),
+        ).chooseModel(VehicleCatalogOption(match.id, match.modelName))
+
     fun set(
         key: String,
         value: String,
@@ -35,7 +70,20 @@ data class GarageDraft(
                 "vehicleKind", "catalogMode" -> listOf("catalogId", "makeSlug", "makeName", "modelName", "makeQuery", "modelQuery")
                 else -> emptyList()
             }
-        return copy(fields = fields - cleared + (key to value), dirty = true)
+        var updated = fields - cleared + (key to value)
+        val previousName = listOf(get("makeName"), get("modelName")).filter(String::isNotBlank).joinToString(" ")
+        if (key in listOf("makeName", "modelName") && (get("name").isBlank() || get("name") == previousName.take(48))) {
+            updated =
+                updated +
+                (
+                    "name" to
+                        listOf(
+                            updated["makeName"].orEmpty(),
+                            updated["modelName"].orEmpty(),
+                        ).filter(String::isNotBlank).joinToString(" ").take(48)
+                )
+        }
+        return copy(fields = updated, dirty = true)
     }
 
     fun chooseMake(option: VehicleCatalogOption) =

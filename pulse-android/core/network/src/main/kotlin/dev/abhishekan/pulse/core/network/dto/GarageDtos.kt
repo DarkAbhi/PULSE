@@ -87,3 +87,14 @@ import kotlinx.serialization.json.JsonPrimitive
     val id: String,
     val name: String,
 )
+
+@Serializable data class VehicleCatalogMatchDto(
+    val id: String,
+    @SerialName("make_slug") val makeSlug: String,
+    @SerialName("make_name") val makeName: String,
+    @SerialName("model_name") val modelName: String,
+)
+
+@Serializable data class VehicleCatalogMatchResponseDto(
+    val match: VehicleCatalogMatchDto? = null,
+)

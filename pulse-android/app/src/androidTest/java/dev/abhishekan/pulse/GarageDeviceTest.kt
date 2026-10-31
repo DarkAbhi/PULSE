@@ -5,6 +5,7 @@ import android.app.Instrumentation
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.text.format.Formatter
 import android.view.inputmethod.InputMethodManager
@@ -168,6 +169,9 @@ class GarageDeviceTest {
         }.toString()
 
     @Before fun setup() {
+        if (Build.VERSION.SDK_INT >= 37) {
+            shell("pm grant dev.abhishekan.pulse android.permission.ACCESS_LOCAL_NETWORK")
+        }
         store = GlobalContext.get().get()
         runBlocking { store.clear() }
         care[10] =
@@ -233,6 +237,22 @@ class GarageDeviceTest {
                                     "notifications" -> "[]"
                                     "horizon" ->
                                         """{"currency":"₹","remaining_amount":100,"base_amount":200,"total_deductions":100,"total_transactions":0}"""
+                                    "vehicle-catalog/match" -> {
+                                        if (catalogOffline) throw IOException("Catalog unavailable")
+                                        if (request.url.parameters["make_name"]
+                                                .orEmpty()
+                                                .trim()
+                                                .equals("Honda", true) &&
+                                            request.url.parameters["model_name"]
+                                                .orEmpty()
+                                                .trim()
+                                                .equals("Civic", true)
+                                        ) {
+                                            """{"match":{"id":"car/honda/civic","make_slug":"honda","make_name":"Honda","model_name":"Civic"}}"""
+                                        } else {
+                                            """{"match":null}"""
+                                        }
+                                    }
                                     "vehicle-catalog/makes", "vehicle-catalog/models" -> {
                                         if (catalogOffline) throw IOException("Catalog unavailable")
                                         if (request.url.parameters["q"]
@@ -439,7 +459,7 @@ class GarageDeviceTest {
     private fun awaitText(text: String) {
         try {
             compose.waitUntil(15_000) {
-                compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+                compose.onAllNodesWithText(text).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
             }
         } catch (failure: Throwable) {
             println("Waiting for text: $text")
@@ -493,13 +513,37 @@ class GarageDeviceTest {
         compose.onNode(hasText(option) and hasAnyAncestor(isPopup())).performScrollTo().performClick()
     }
 
+    private fun closeCatalog(field: String) {
+        compose.onNode(hasText("Close") and hasAnyAncestor(hasTestTag("garage-catalog-$field"))).performClick()
+        compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("garage-catalog-$field")).fetchSemanticsNodes().isEmpty() }
+    }
+
+    private fun chooseCatalog(
+        field: String,
+        option: String,
+    ) {
+        val row = hasText(option) and hasClickAction() and !hasSetTextAction() and hasAnyAncestor(hasTestTag("garage-catalog-$field"))
+        compose.waitUntil(15_000) { compose.onAllNodes(row).fetchSemanticsNodes().size == 1 }
+        compose.onNode(row).performClick()
+        compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("garage-catalog-$field")).fetchSemanticsNodes().isEmpty() }
+    }
+
+    private fun chooseSecondVehicleFuel(fuel: String) {
+        compose
+            .onNode(hasText(fuel) and hasClickAction() and hasAnyAncestor(hasTestTag("vehicle-secondary-fuel")))
+            .performScrollTo()
+            .performClick()
+    }
+
     private fun field(
         label: String,
         value: String,
     ) {
         val field = hasText(label) and hasSetTextAction()
         compose.waitUntil(15_000) { compose.onAllNodes(field).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNode(field).performScrollTo().performTextReplacement(value)
+        val node = compose.onNode(field)
+        if (hasAnyAncestor(hasScrollAction()).matches(node.fetchSemanticsNode())) node.performScrollTo()
+        node.performTextReplacement(value)
     }
 
     private fun confirm(text: String) {
@@ -781,7 +825,7 @@ class GarageDeviceTest {
             } finally {
                 motorcycle.recycle()
             }
-            compose.onNodeWithText("Unsaved scooter").assertIsDisplayed()
+            compose.onNode(hasText("Unsaved scooter") and hasSetTextAction()).assertExists()
             assertEquals(0, mutations)
             screenshot("vehicle-artwork-cycle")
         } finally {
@@ -801,8 +845,8 @@ class GarageDeviceTest {
         field("Vehicle name", "Unsaved scooter")
         compose.onNodeWithText("Cancel").performScrollTo()
         val cancelBounds = compose.onNodeWithText("Cancel").fetchSemanticsNode().boundsInRoot
-        val saveBounds = compose.onNodeWithText("Save vehicle").fetchSemanticsNode().boundsInRoot
-        assertEquals(saveBounds.center.x, cancelBounds.center.x, 1f)
+        val continueBounds = compose.onNodeWithText("Continue to fuel").fetchSemanticsNode().boundsInRoot
+        assertEquals(continueBounds.center.x, cancelBounds.center.x, 1f)
         tap("Cancel")
         confirm("Discard edits")
         awaitText("Add vehicle")
@@ -825,7 +869,9 @@ class GarageDeviceTest {
         tap("Enter manually")
         field("Vehicle name", "City scooter")
         tap("Motorcycle")
+        tap("Continue to fuel")
         tap("Electric")
+        tap("Continue to tyres")
         compose.onNodeWithText("Add a new vehicle").performScrollTo()
         screenshot("add-vehicle-top")
         field("Front · solo (PSI)", "28.5")
@@ -854,22 +900,36 @@ class GarageDeviceTest {
         launchGarage()
         tap("Add vehicle")
         tap("Car")
+        compose.onNodeWithText("Search makes").assertDoesNotExist()
+        tap("Make: Select an option")
+        awaitText("Honda")
+        compose.onNode(hasText("Search makes") and hasSetTextAction()).performClick()
         field("Search makes", "Honda")
-        pick("Make", "Select an option", "Honda")
+        chooseCatalog("make", "Honda")
+        compose.onNodeWithText("Search makes").assertDoesNotExist()
+        tap("Model: Select an option")
         field("Search models", "Civic")
-        pick("Model", "Select an option", "Civic")
+        scenario!!.recreate()
+        awaitText("Search models")
+        chooseCatalog("model", "Civic")
         field("Vehicle name", "Weekend Civic")
-        tap("Petrol")
         scenario!!.recreate()
         awaitText("Weekend Civic")
-        compose.onNodeWithText("Search models").performScrollTo()
+        tap("Model: Civic")
+        awaitText("Search models")
         screenshot("vehicle-catalog-picker")
+        closeCatalog("model")
+        tap("Continue to fuel")
+        tap("Petrol")
+        tap("Continue to tyres")
         tap("Save vehicle")
         awaitText("View Weekend Civic")
         tap("View Weekend Civic")
         awaitText("Edit vehicle")
         tap("Edit vehicle")
         field("Vehicle name", "Daily Civic")
+        tap("Continue to fuel")
+        tap("Continue to tyres")
         tap("Save vehicle")
         awaitText("Daily Civic")
         val saved = vehicleDetails.values.single()
@@ -880,31 +940,77 @@ class GarageDeviceTest {
         screenshot("vehicle-catalog-details")
     }
 
+    @Test fun catalogSheetsKeepSearchAndSelectionAccessibleOnTabletLayout() {
+        val originalSize = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val originalDensity = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        try {
+            shell("wm size 2560x1800")
+            shell("wm density 320")
+            catalogVehicleSelectionSurvivesRecreationAndCanBeEdited()
+        } finally {
+            shell(originalSize?.let { "wm size $it" } ?: "wm size reset")
+            shell(originalDensity?.let { "wm density $it" } ?: "wm density reset")
+        }
+    }
+
     @Test fun catalogFailureRetryAndNoResultsKeepManualEntryAvailable() {
         catalogOffline = true
         launchGarage()
         tap("Add vehicle")
         tap("Car")
+        tap("Make: Select an option")
         awaitText("Try again")
         catalogOffline = false
         tap("Try again")
-        pick("Make", "Select an option", "Honda")
+        chooseCatalog("make", "Honda")
         tap("Motorcycle")
         compose.onNodeWithContentDescription("Make: Select an option").assertExists()
         compose.onNodeWithText("Model: Civic").assertDoesNotExist()
+        tap("Make: Select an option")
         field("Search makes", "zz-missing")
         awaitText("No matches. Try another search or enter your vehicle manually.")
+        closeCatalog("make")
         tap("Enter manually")
         tap("Bus")
         field("Make (optional)", "Local")
         field("Model (optional)", "City bus")
         field("Vehicle name", "Our bus")
+        tap("Continue to fuel")
         tap("Diesel")
+        tap("Continue to tyres")
         tap("Save vehicle")
         awaitText("View Our bus")
         val saved = vehicleDetails.values.single()
         assertEquals("bus", saved.getValue("kind").jsonPrimitive.content)
         assertEquals("", saved.getValue("catalog_id").jsonPrimitive.content)
+    }
+
+    @Test fun catalogSheetsDismissWithoutSelectingAndKeepSearchWhenReopened() {
+        launchGarage()
+        tap("Add vehicle")
+        tap("Car")
+        tap("Make: Select an option")
+        field("Search makes", "zz-missing")
+        awaitText("No matches. Try another search or enter your vehicle manually.")
+        closeCatalog("make")
+        compose.onNodeWithContentDescription("Make: Select an option").assertExists()
+        compose.onNodeWithText("Search makes").assertDoesNotExist()
+        tap("Make: Select an option")
+        awaitText("zz-missing")
+        field("Search makes", "Honda")
+        compose.waitUntil(15_000) {
+            compose
+                .onAllNodes(
+                    hasText("Honda") and hasClickAction() and hasAnyAncestor(hasTestTag("garage-catalog-make")),
+                ).fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        chooseCatalog("make", "Honda")
+        tap("Model: Select an option")
+        field("Search models", "Civic")
+        closeCatalog("model")
+        compose.onNodeWithContentDescription("Model: Select an option").assertExists()
+        assertEquals(0, mutations)
     }
 
     @Test fun existingUnclassifiedVehicleCanBeClassifiedWithoutLosingItsName() {
@@ -916,6 +1022,8 @@ class GarageDeviceTest {
         tap("Van")
         field("Make (optional)", "Custom")
         field("Model (optional)", "Courier")
+        tap("Continue to fuel")
+        tap("Continue to tyres")
         tap("Save vehicle")
         awaitText("Edit vehicle")
         assertEquals("Comet", vehicles[1])
@@ -933,29 +1041,54 @@ class GarageDeviceTest {
         tap("Add vehicle")
         tap("Enter manually")
         field("Vehicle name", "Dual fuel car")
-        tap("Save vehicle")
-        compose.waitForIdle()
-        assertEquals(0, mutations)
+        compose.onNodeWithText("Continue to fuel").assertIsNotEnabled()
         tap("Car")
+        tap("Continue to fuel")
+        compose.onNodeWithText("Continue to tyres").assertIsNotEnabled()
         tap("Petrol")
         tap("Dual tank (two fuel types)")
-        tap("Second fuel type (required): Select an option")
-        compose.onNode(hasText("Petrol") and hasAnyAncestor(isPopup())).assertDoesNotExist()
-        compose.onNode(hasText("CNG") and hasAnyAncestor(isPopup())).performClick()
-        tap("CNG")
-        awaitText("Second fuel type (required): Select an option")
-        tap("Save vehicle")
-        compose.waitForIdle()
-        assertEquals(0, mutations)
-        tap("Second fuel type (required): Select an option")
-        compose.onNode(hasText("Petrol") and hasAnyAncestor(isPopup())).performClick()
+        compose.onNodeWithText("Continue to tyres").assertIsNotEnabled()
+        chooseSecondVehicleFuel("CNG")
         scenario!!.recreate()
-        awaitText("Second fuel type (required): Petrol")
+        awaitText("What powers it?")
         screenshot("vehicle-classification")
+        tap("Continue to tyres")
+        tap("Back")
+        awaitText("What powers it?")
+        tap("Continue to tyres")
         tap("Save vehicle")
         awaitText("Dual fuel car")
-        awaitText("Car · CNG + Petrol")
+        awaitText("Car · Petrol + CNG")
         assertEquals(1, mutations)
+    }
+
+    @Test fun manualMatchRequiresExplicitAcceptanceAndKeepsNickname() {
+        launchGarage()
+        tap("Add vehicle")
+        tap("Enter manually")
+        tap("Car")
+        field("Make (optional)", "Honda")
+        field("Model (optional)", "Civic")
+        field("Vehicle name", "My Civic")
+        awaitText("Use match")
+        assertEquals(0, mutations)
+        screenshot("vehicle-manual-match")
+        tap("Use match")
+        compose.onNodeWithContentDescription("Make: Honda").assertExists()
+        field("Vehicle name", "My Civic")
+        tap("Continue to fuel")
+        tap("Petrol")
+        tap("Continue to tyres")
+        screenshot("vehicle-review")
+        tap("Save vehicle")
+        awaitText("View My Civic")
+        assertEquals(
+            "car/honda/civic",
+            vehicleDetails.values
+                .single()
+                .getValue("catalog_id")
+                .jsonPrimitive.content,
+        )
     }
 
     @Test fun redesignedOverviewKeepsTitleActionsAndPressureAccessible() {
@@ -1043,10 +1176,11 @@ class GarageDeviceTest {
         tap("Enter manually")
         field("Vehicle name", "Tourer")
         tap("Car")
+        tap("Continue to fuel")
         tap("Petrol")
         tap("Dual tank (two fuel types)")
-        tap("Second fuel type (required): Select an option")
-        compose.onNode(hasText("CNG") and hasAnyAncestor(isPopup())).performClick()
+        chooseSecondVehicleFuel("CNG")
+        tap("Continue to tyres")
         tap("Save vehicle")
         awaitText("Tourer")
         assertEquals(

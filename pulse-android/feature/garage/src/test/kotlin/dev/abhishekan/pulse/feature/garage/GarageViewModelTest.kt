@@ -11,6 +11,7 @@ import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.Vehicle
+import dev.abhishekan.pulse.core.domain.model.VehicleCatalogMatch
 import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.domain.model.garageCategories
@@ -121,8 +122,26 @@ class GarageViewModelTest {
 
     private val catalogCalls = mutableListOf<Triple<String, String?, String>>()
     private var catalogFailure: Failure? = null
+    private val matchCalls = mutableListOf<Triple<String, String, String>>()
     private val catalog =
         object : VehicleCatalogRepository {
+            override suspend fun match(
+                kind: String,
+                makeName: String,
+                modelName: String,
+            ): Outcome<VehicleCatalogMatch?> {
+                matchCalls += Triple(kind, makeName, modelName)
+                return catalogFailure?.let { Outcome.Error(it) } ?: Outcome.Success(
+                    if (makeName == "Honda" &&
+                        modelName == "Civic"
+                    ) {
+                        VehicleCatalogMatch("car/honda/civic", "honda", "Honda", "Civic")
+                    } else {
+                        null
+                    },
+                )
+            }
+
             override suspend fun search(
                 kind: String,
                 makeSlug: String?,
@@ -142,6 +161,63 @@ class GarageViewModelTest {
                 )
             }
         }
+
+    @Test fun manualMatchDebouncesDoesNotSelectAndClearsOnInputChange() =
+        runTest {
+            val vm = vm()
+            vm.create(GarageForm.Vehicle)
+            vm.update(
+                vm.uiState.value.draft!!
+                    .set(
+                        "catalogMode",
+                        "manual",
+                    ).set("vehicleKind", "car")
+                    .set("makeName", "Honda")
+                    .set("modelName", "Civi"),
+            )
+            advanceTimeBy(200)
+            vm.update(
+                vm.uiState.value.draft!!
+                    .set("modelName", "Civic"),
+            )
+            advanceUntilIdle()
+            assertEquals(listOf(Triple("car", "Honda", "Civic")), matchCalls)
+            val draft = vm.uiState.value.draft!!
+            assertEquals("manual", draft["catalogMode"])
+            assertEquals("", draft["catalogId"])
+            assertEquals("Honda Civic", draft["name"])
+            assertTrue(repo.writes.isEmpty())
+            val match = vm.uiState.value.match.value!!
+            val accepted = draft.set("name", "My car").useMatch(match)
+            assertEquals("car/honda/civic", accepted["catalogId"])
+            assertEquals("My car", accepted["name"])
+            vm.update(draft.set("modelName", "Other"))
+            assertNull(vm.uiState.value.match.value)
+            advanceUntilIdle()
+            assertNull(vm.uiState.value.match.value)
+        }
+
+    @Test fun vehicleWizardRestoresStepAndValidatesRequiredChoices() {
+        val empty = GarageDraft.new(GarageForm.Vehicle, 0)
+        assertEquals("", empty["vehicleKind"])
+        assertEquals("", empty["vehicleFuel"])
+        assertFalse(empty.vehicleIdentityValid)
+        val named = empty.set("catalogMode", "manual").set("vehicleKind", "car").set("name", "Comet")
+        assertTrue(named.vehicleIdentityValid)
+        assertFalse(named.vehicleFuelValid)
+        val fuel = named.set("vehicleFuel", "petrol").set("dualTank", "true")
+        assertFalse(fuel.vehicleFuelValid)
+        assertFalse(fuel.set("vehicleSecondFuel", "petrol").vehicleFuelValid)
+        val ready = fuel.set("vehicleSecondFuel", "cng").set("vehicleStep", "2")
+        assertTrue(ready.vehicleFuelValid)
+        assertEquals(2, GarageDraft.restore(ready.saved()).vehicleStep)
+        assertEquals("", ready["frontSolo"])
+        assertEquals("1", ready.adjustPressure("frontSolo", 1)["frontSolo"])
+        assertEquals("0", ready.set("frontSolo", "0.5").adjustPressure("frontSolo", -1)["frontSolo"])
+        assertEquals("9999.9", ready.set("frontSolo", "9999.5").adjustPressure("frontSolo", 1)["frontSolo"])
+        assertFalse(ready.set("frontSolo", "28.25").validPressure("frontSolo"))
+        assertEquals("28.25", ready.set("frontSolo", "28.25").adjustPressure("frontSolo", 1)["frontSolo"])
+    }
 
     @Test fun catalogSearchDebouncesAndKindChangeClearsDependentIdentity() =
         runTest {

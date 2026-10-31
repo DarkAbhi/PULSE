@@ -1023,6 +1023,22 @@ definitions:
       name:
         type: string
     type: object
+  vehicle.CatalogMatch:
+    properties:
+      id:
+        type: string
+      make_name:
+        type: string
+      make_slug:
+        type: string
+      model_name:
+        type: string
+    type: object
+  vehicle.CatalogMatchResponse:
+    properties:
+      match:
+        $ref: '#/definitions/vehicle.CatalogMatch'
+    type: object
   vehicle.CatalogOption:
     properties:
       id:
@@ -3048,6 +3064,57 @@ paths:
       security:
       - SessionBearer: []
       summary: Search vehicle makes
+      tags:
+      - vehicles
+  /api/vehicle-catalog/match:
+    get:
+      description: Returns a unique exact match ignoring case and surrounding whitespace,
+        or {"match":null}. No fuzzy guesses or vehicle writes.
+      parameters:
+      - description: Vehicle kind
+        enum:
+        - car
+        - motorcycle
+        - moped
+        - van
+        - truck
+        - bus
+        in: query
+        name: kind
+        required: true
+        type: string
+      - description: Make name, 1 to 200 characters
+        in: query
+        name: make_name
+        required: true
+        type: string
+      - description: Model name, 1 to 200 characters
+        in: query
+        name: model_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/vehicle.CatalogMatchResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Match manually entered vehicle details
       tags:
       - vehicles
   /api/vehicle-catalog/models:

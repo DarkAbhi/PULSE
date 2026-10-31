@@ -37,3 +37,18 @@ func catalogMakes() {}
 // @Failure 500 {object} Error
 // @Router /api/vehicle-catalog/models [get]
 func catalogModels() {}
+
+// @Summary Match manually entered vehicle details
+// @Description Returns a unique exact match ignoring case and surrounding whitespace, or {"match":null}. No fuzzy guesses or vehicle writes.
+// @Tags vehicles
+// @Produce json
+// @Param kind query string true "Vehicle kind" Enums(car,motorcycle,moped,van,truck,bus)
+// @Param make_name query string true "Make name, 1 to 200 characters"
+// @Param model_name query string true "Model name, 1 to 200 characters"
+// @Security SessionBearer
+// @Success 200 {object} vehicle.CatalogMatchResponse
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 500 {object} Error
+// @Router /api/vehicle-catalog/match [get]
+func catalogMatch() {}

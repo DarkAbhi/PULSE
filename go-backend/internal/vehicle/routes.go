@@ -6,6 +6,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/vehicle-catalog/kinds", h.CatalogOptions)
 	r.Get("/vehicle-catalog/makes", h.CatalogOptions)
 	r.Get("/vehicle-catalog/models", h.CatalogOptions)
+	r.Get("/vehicle-catalog/match", h.CatalogMatch)
 	r.Get("/vehicles", h.List)
 	r.Post("/vehicles", h.Create)
 	r.Route("/vehicles/{id}", func(v chi.Router) {

@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.core.network
 import dev.abhishekan.pulse.core.network.dto.GarageHistoryDto
+import dev.abhishekan.pulse.core.network.dto.VehicleCatalogMatchResponseDto
 import dev.abhishekan.pulse.core.network.dto.VehicleCatalogOptionDto
 import dev.abhishekan.pulse.core.network.dto.VehicleDto
 import io.ktor.client.HttpClient
@@ -37,6 +38,18 @@ class GarageApi(
     private val client: HttpClient,
 ) {
     suspend fun vehicles(): List<VehicleDto> = client.get("vehicles").body()
+
+    suspend fun catalogMatch(
+        kind: String,
+        makeName: String,
+        modelName: String,
+    ): VehicleCatalogMatchResponseDto =
+        client
+            .get("vehicle-catalog/match") {
+                parameter("kind", kind)
+                parameter("make_name", makeName)
+                parameter("model_name", modelName)
+            }.body()
 
     suspend fun catalog(
         kind: String,

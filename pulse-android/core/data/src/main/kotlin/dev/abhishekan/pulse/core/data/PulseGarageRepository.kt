@@ -6,7 +6,9 @@ import dev.abhishekan.pulse.core.domain.model.GarageRecord
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.Vehicle
+import dev.abhishekan.pulse.core.domain.model.VehicleCatalogMatch
 import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
+import dev.abhishekan.pulse.core.domain.model.validCatalogIdentity
 import dev.abhishekan.pulse.core.domain.model.validVehicleDetails
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
 import dev.abhishekan.pulse.core.domain.repository.VehicleCatalogRepository
@@ -70,6 +72,22 @@ class PulseGarageRepository(
         }
 
     override suspend fun history(vehicle: Long) = request { api.history(vehicle).domain() }
+
+    override suspend fun match(
+        kind: String,
+        makeName: String,
+        modelName: String,
+    ) = request {
+        api.catalogMatch(kind, makeName, modelName).match?.let {
+            require(
+                validCatalogIdentity(kind, it.id) &&
+                    it.makeSlug == it.id.split('/')[1] &&
+                    it.makeName.isNotBlank() &&
+                    it.modelName.isNotBlank(),
+            )
+            VehicleCatalogMatch(it.id, it.makeSlug, it.makeName, it.modelName)
+        }
+    }
 
     override suspend fun search(
         kind: String,

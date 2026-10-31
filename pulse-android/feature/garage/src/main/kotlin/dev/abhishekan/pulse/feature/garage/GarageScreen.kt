@@ -229,6 +229,10 @@ internal fun GarageScreen(
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         val content: @Composable () -> Unit = {
             val fuelEditor = state.draft?.kind == GarageForm.Fuel && !records
+            val editorScroll = rememberScrollState()
+            LaunchedEffect(state.draft?.kind, state.draft?.vehicleStep) {
+                if (state.draft?.kind == GarageForm.Vehicle) editorScroll.scrollTo(0)
+            }
             Column(
                 Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).imePadding(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -245,7 +249,7 @@ internal fun GarageScreen(
                     Modifier
                         .weight(1f)
                         .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
+                        .verticalScroll(editorScroll)
                         .padding(size.pagePadding),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                     horizontalAlignment = if (fuelEditor) Alignment.CenterHorizontally else Alignment.Start,
@@ -306,6 +310,7 @@ internal fun GarageScreen(
                             state.makes,
                             state.models,
                             vm::retryCatalog,
+                            state.match,
                         )
                     } else {
                         if (state.draft !=

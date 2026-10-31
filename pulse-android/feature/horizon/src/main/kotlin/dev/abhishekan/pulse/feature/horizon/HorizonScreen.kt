@@ -484,7 +484,12 @@ internal fun HorizonScreen(
                     }
                 }
             }
-            if (state.tab == HorizonTab.Overview && state.overview.loading && state.overview.value == null &&
+            val sectionLoading = when (state.tab) {
+                HorizonTab.Transactions -> state.transactions.loading && state.transactions.value == null
+                HorizonTab.Purchases -> state.purchases.loading && state.purchases.value == null
+                else -> state.overview.loading && state.overview.value == null
+            }
+            if (sectionLoading &&
                 state.draft == null && !state.reviewRequired
             ) {
                 Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {

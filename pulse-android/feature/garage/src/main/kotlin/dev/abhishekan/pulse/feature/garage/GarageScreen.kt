@@ -599,9 +599,7 @@ private fun <T> GarageSection(
     content: @Composable (T) -> Unit,
 ) {
     if (section.loading) {
-        if (section.value == null) {
-            PulseLoadingState(stringResource(R.string.pulse_garage_loading_your_garage))
-        } else {
+        if (section.value != null) {
             PulseRefreshIndicator()
         }
     }

@@ -241,11 +241,6 @@ internal fun MealPlanScreen(
                         }
                         if (state.draft != null && !records) {
                             if (!state.draft.timeForm) {
-                                if (state.times.loading && state.times.value == null) {
-                                    PulseLoadingState(
-                                        stringResource(R.string.pulse_mealplan_loading_meal_times),
-                                    )
-                                }
                                 state.times.error?.let { PulseErrorState(it.message, vm::refreshTimes) }
                             }
                             MealEditor(
@@ -261,7 +256,8 @@ internal fun MealPlanScreen(
                             )
                         } else if (state.managing) {
                             MealTimesHeader({ vm.manage(false) }, enabled = !state.busy && state.draft == null)
-                            MealSectionContent(state.times, vm::refreshTimes) { times ->
+                            if (state.times.loading && state.times.value != null) PulseRefreshIndicator()
+                            MealSectionContent(state.times, vm::refreshTimes, showLoading = false) { times ->
                                 MealTimes(
                                     times,
                                     state.canWrite && state.draft == null,
@@ -352,6 +348,17 @@ internal fun MealPlanScreen(
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     PulseLoadingState(
                         stringResource(R.string.pulse_mealplan_refreshing_meal_plan),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    )
+                }
+            }
+            if (state.times.loading && state.times.value == null &&
+                ((state.managing && (state.draft == null || records)) ||
+                    (state.draft != null && !records && !state.draft.timeForm))
+            ) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    PulseLoadingState(
+                        stringResource(R.string.pulse_mealplan_loading_meal_times),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     )
                 }

@@ -113,9 +113,7 @@ internal fun NotificationsScreen(
                         }
                     }
                 }
-                if ((state.loading && !state.loaded) ||
-                    state.busy
-                ) {
+                if (state.busy) {
                     item { PulseLoadingState(stringResource(R.string.pulse_notifications_loading)) }
                 }
                 state.failure?.let { failure -> item { PulseErrorState(failure.message, refresh) } }
@@ -206,6 +204,14 @@ internal fun NotificationsScreen(
                             }
                         }
                     }
+                }
+            }
+            if (state.loading && !state.loaded && !state.uncertain) {
+                Box(Modifier.fillMaxSize().padding(LocalPulseContentPadding.current), contentAlignment = Alignment.Center) {
+                    PulseLoadingState(
+                        stringResource(R.string.pulse_notifications_loading),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    )
                 }
             }
         }

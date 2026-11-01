@@ -17,11 +17,8 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +46,7 @@ import dev.abhishekan.pulse.core.domain.model.garageCategories
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
@@ -318,7 +316,6 @@ private fun MaintenancePickerField(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MaintenanceCategorySheet(
     selected: String,
@@ -326,11 +323,9 @@ private fun MaintenanceCategorySheet(
     dismiss: () -> Unit,
 ) {
     val colors = PulseTheme.colors
-    ModalBottomSheet(
+    PulseBottomSheet(
+        title = stringResource(R.string.pulse_garage_care_choose_category),
         onDismissRequest = dismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        sheetMaxWidth = 640.dp,
-        containerColor = colors.surface,
     ) {
         Column(
             Modifier
@@ -340,7 +335,6 @@ private fun MaintenanceCategorySheet(
                 .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            PulseText(stringResource(R.string.pulse_garage_care_choose_category), Modifier.semantics { heading() }, PulseTextStyle.Title3)
             Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 garageCategories.forEach { category ->
                     val active = selected == category
@@ -363,7 +357,6 @@ private fun MaintenanceCategorySheet(
                     }
                 }
             }
-            PulseButton(stringResource(R.string.pulse_garage_close_picker), dismiss, Modifier.fillMaxWidth(), style = PulseButtonStyle.Text)
         }
     }
 }

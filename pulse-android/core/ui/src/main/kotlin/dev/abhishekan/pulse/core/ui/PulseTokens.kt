@@ -45,6 +45,7 @@ object PulseTokens {
     val target = PulseSpacing.target
     val formColumnsWidth = 480.dp
     val minimumNavigationHeight = 240.dp
+    val bottomSheetMaxWidth = 640.dp
     val readingWidth = 560.dp
     val contentWidth = 1280.dp
     val cardShape = PulseShapes.large

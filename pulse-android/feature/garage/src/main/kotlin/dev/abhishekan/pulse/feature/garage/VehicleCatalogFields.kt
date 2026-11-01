@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
@@ -19,9 +18,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,15 +34,14 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.VehicleCatalogOption
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
@@ -126,7 +121,6 @@ internal fun VehicleCatalogFields(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CatalogPicker(
     fieldKey: String,
@@ -169,11 +163,9 @@ private fun CatalogPicker(
     if (open && enabled) {
         val listState = rememberLazyListState()
         LaunchedEffect(query) { listState.scrollToItem(0) }
-        ModalBottomSheet(
+        PulseBottomSheet(
+            title = stringResource(if (fieldKey == "make") R.string.pulse_garage_choose_make else R.string.pulse_garage_choose_model),
             onDismissRequest = dismiss,
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            sheetMaxWidth = 640.dp,
-            containerColor = PulseTheme.colors.surface,
         ) {
             val sheetFocus = LocalFocusManager.current
             val sheetKeyboard = LocalSoftwareKeyboardController.current
@@ -185,30 +177,12 @@ private fun CatalogPicker(
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 640.dp)
-                    .fillMaxHeight(0.85f)
                     .imePadding()
                     .padding(horizontal = PulseTheme.spacing.medium)
                     .padding(bottom = PulseTheme.spacing.cardPadding)
                     .testTag("garage-catalog-$fieldKey"),
                 verticalArrangement = Arrangement.spacedBy(PulseTheme.spacing.medium),
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    PulseText(
-                        stringResource(
-                            if (fieldKey ==
-                                "make"
-                            ) {
-                                R.string.pulse_garage_choose_make
-                            } else {
-                                R.string.pulse_garage_choose_model
-                            },
-                        ),
-                        Modifier.weight(1f).semantics { heading() },
-                        PulseTextStyle.Title,
-                    )
-                    PulseButton(stringResource(R.string.pulse_garage_close_picker), dismissSheet, style = PulseButtonStyle.Text)
-                }
                 PulseTextField(
                     query,
                     { if (it.codePointCount(0, it.length) <= 100) search(it) },

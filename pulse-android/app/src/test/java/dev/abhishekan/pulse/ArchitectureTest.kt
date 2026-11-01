@@ -70,8 +70,6 @@ class ArchitectureTest {
                 "Badge",
                 "BadgedBox",
                 "ExperimentalMaterial3Api",
-                "ModalBottomSheet",
-                "rememberModalBottomSheetState",
                 "LocalMinimumInteractiveComponentSize",
                 "LocalContentColor",
                 "SwipeToDismissBox",

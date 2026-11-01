@@ -16,10 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +37,7 @@ import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.asString
+import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -51,7 +49,6 @@ import java.time.format.DateTimeFormatter
 internal fun ledgerMonths(items: List<HorizonTransaction>) =
     items.sortedByDescending { it.date }.groupBy { YearMonth.from(it.date.atZone(UserTimeZone.zone)) }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HorizonLedger(
     page: HorizonTransactionPage,
@@ -101,9 +98,9 @@ internal fun HorizonLedger(
         ledger(Modifier.fillMaxWidth())
     }
     page.items.find { it.id == selectedId }?.let { tx ->
-        ModalBottomSheet(onDismissRequest = {
+        PulseBottomSheet(title = tx.name, onDismissRequest = {
             selectedId = null
-        }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = PulseTheme.colors.background) {
+        }) {
             Column(
                 Modifier
                     .fillMaxWidth()

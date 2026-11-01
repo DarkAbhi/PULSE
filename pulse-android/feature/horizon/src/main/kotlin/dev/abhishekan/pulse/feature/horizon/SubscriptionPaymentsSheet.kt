@@ -8,25 +8,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.asString
+import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
@@ -39,7 +33,6 @@ import dev.abhishekan.pulse.core.ui.pulseDescription
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SubscriptionPaymentsSheet(
     state: HorizonUiState,
@@ -52,29 +45,18 @@ internal fun SubscriptionPaymentsSheet(
         state.overview.value
             ?.subscriptions
             ?.find { it.id == state.subscriptionId }
-    ModalBottomSheet(
+    PulseBottomSheet(
+        title = stringResource(R.string.pulse_horizon_subscription_payment_history),
+        fullScreen = true,
         onDismissRequest = vm::hidePayments,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = colors.background,
     ) {
         Column(Modifier.fillMaxWidth().testTag("subscription-payments-sheet")) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    PulseText(stringResource(R.string.pulse_horizon_subscription_payment_history), style = PulseTextStyle.Heading2)
-                    PulseText(
-                        subscription?.name ?: stringResource(R.string.pulse_horizon_subscription),
-                        style = PulseTextStyle.Body2,
-                        color = colors.textSecondary,
-                    )
-                }
-                PulseButton(stringResource(R.string.pulse_horizon_close_payments), vm::hidePayments, style = PulseButtonStyle.Icon) {
-                    Icon(painterResource(R.drawable.pulse_purchase_clear), null, Modifier.size(24.dp), tint = colors.textSecondary)
-                }
-            }
+            PulseText(
+                subscription?.name ?: stringResource(R.string.pulse_horizon_subscription),
+                Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                style = PulseTextStyle.Body2,
+                color = colors.textSecondary,
+            )
             Column(
                 Modifier
                     .weight(1f, fill = false)

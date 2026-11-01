@@ -15,11 +15,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,13 +35,13 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ObligationDayField(
     value: String,
@@ -84,23 +81,19 @@ internal fun ObligationDayField(
         )
     }
     if (open && enabled) {
-        ModalBottomSheet(
+        PulseBottomSheet(
+            title = stringResource(titleRes),
             onDismissRequest = { open = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            sheetMaxWidth = 520.dp,
-            containerColor = colors.surface,
         ) {
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 640.dp)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 24.dp)
                     .testTag("$tagPrefix-day-picker"),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                PulseText(stringResource(titleRes), style = PulseTextStyle.Title3)
                 PulseText(
                     stringResource(helpRes),
                     style = PulseTextStyle.Body2,

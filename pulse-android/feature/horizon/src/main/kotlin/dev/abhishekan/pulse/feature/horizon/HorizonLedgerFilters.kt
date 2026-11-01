@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,9 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.HorizonCategory
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
@@ -46,11 +43,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
-import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import kotlinx.coroutines.delay
 import android.graphics.Color as GraphicsColor
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun LedgerFilters(
     state: HorizonUiState,
@@ -206,30 +201,29 @@ internal fun LedgerFilters(
         }
     }
     if (sheet != null) {
-        ModalBottomSheet(onDismissRequest = {
-            sheet = null
-        }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = PulseTheme.colors.surface) {
+        PulseBottomSheet(
+            title =
+                stringResource(
+                    if (sheet ==
+                        "category"
+                    ) {
+                        R.string.pulse_horizon_filter_categories
+                    } else {
+                        R.string.pulse_horizon_filter_type
+                    },
+                ),
+            onDismissRequest = {
+                sheet = null
+            },
+        ) {
             Column(
                 Modifier
                     .fillMaxWidth()
                     .testTag("ledger-category-sheet")
-                    .heightIn(max = 640.dp)
                     .padding(horizontal = 20.dp)
                     .padding(bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                PulseText(
-                    stringResource(
-                        if (sheet ==
-                            "category"
-                        ) {
-                            R.string.pulse_horizon_filter_categories
-                        } else {
-                            R.string.pulse_horizon_filter_type
-                        },
-                    ),
-                    style = PulseTextStyle.Title,
-                )
                 if (sheet == "category") {
                     PulseTextField(categorySearch, {
                         categorySearch = it

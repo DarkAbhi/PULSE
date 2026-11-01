@@ -9,14 +9,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import java.time.Instant
@@ -40,12 +36,11 @@ fun PulseDatePickerSheet(
             yearRange =
                 0..9999,
         )
-    ModalBottomSheet(
+    PulseBottomSheet(
+        title = title,
+        fullScreen = true,
         onDismissRequest = dismiss,
         modifier = modifier,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        sheetMaxWidth = 640.dp,
-        containerColor = colors.surface,
     ) {
         Column(
             Modifier
@@ -55,13 +50,6 @@ fun PulseDatePickerSheet(
                 .testTag("pulse-date-sheet"),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            PulseText(
-                title,
-                Modifier.padding(horizontal = 24.dp).semantics {
-                    heading()
-                },
-                PulseTextStyle.Title3,
-            )
             DatePicker(
                 state,
                 colors =

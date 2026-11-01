@@ -1096,7 +1096,7 @@ class HorizonDeviceTest {
         tap("Delete Streaming")
         confirm("Delete")
         awaitText("Music")
-        compose.onNodeWithText("Close payments").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Close bottom sheet").assertDoesNotExist()
         assertEquals(21, backend.items("transactions").size)
         assertEquals(JsonNull, backend.items("transactions").getValue(1)["subscription_id"])
         assertTrue(backend.items("deductions").containsKey(2))
@@ -1150,7 +1150,7 @@ class HorizonDeviceTest {
             compose.waitUntil(5_000) { compose.onAllNodes(sheet).fetchSemanticsNodes().isEmpty() }
             tap("View payments for Music")
             awaitText("Payment history")
-            compose.onNodeWithContentDescription("Close payments").performClick()
+            compose.onNodeWithContentDescription("Close bottom sheet").performClick()
             compose.onNode(sheet).assertDoesNotExist()
         } finally {
             shell("wm size ${size ?: "reset"}")

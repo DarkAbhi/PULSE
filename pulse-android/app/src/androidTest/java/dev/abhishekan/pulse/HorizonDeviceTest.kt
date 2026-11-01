@@ -18,6 +18,7 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
@@ -735,6 +736,7 @@ class HorizonDeviceTest {
                 actions.forEach { (label, title) ->
                     quickAction(label)
                     awaitText(title)
+                    compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText(title))).assertIsDisplayed()
                     if (label == "Add fixed obligation") {
                         compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
                         compose.onNodeWithContentDescription("Obligation actions").assertDoesNotExist()
@@ -748,6 +750,7 @@ class HorizonDeviceTest {
                     compose.onNodeWithContentDescription("Back to Financial Horizon").assertIsDisplayed().performClick()
                     awaitText("Overview")
                     compose.onNodeWithContentDescription("Back to Financial Horizon").assertDoesNotExist()
+                    compose.onNode(hasTestTag("pulse-top-app-bar")).assertDoesNotExist()
                 }
                 compose.onNodeWithText("Your room to move").assertDoesNotExist()
                 screenshot("clean-overview-$layout")

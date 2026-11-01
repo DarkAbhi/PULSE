@@ -33,7 +33,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
-import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import java.time.LocalDate
 import java.time.LocalTime
@@ -99,20 +98,6 @@ internal fun GarageEditor(
         GarageChoice(label, draft[key], options, { change(draft.set(key, it)) }, enabled)
     }
     PulseCard(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()) {
-        PulseText(
-            stringResource(
-                draft.kind.editorLabel(
-                    if (draft.id == null &&
-                        draft.kind != GarageForm.Pressure
-                    ) {
-                        EditorAction.Add
-                    } else {
-                        EditorAction.Edit
-                    },
-                ),
-            ),
-            style = PulseTextStyle.Title,
-        )
         when (draft.kind) {
             GarageForm.Vehicle -> Unit
             GarageForm.Pressure ->

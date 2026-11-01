@@ -18,6 +18,7 @@ import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -128,7 +129,7 @@ private fun MealTimesDarkPreview() {
 
 @Composable
 private fun MealTimesPreviewContent() {
-    Surface {
+    PulseScreenScaffold("Meal times", backLabel = "Back to planner") {
         Box(Modifier.fillMaxSize()) {
             Column(
                 Modifier
@@ -138,7 +139,6 @@ private fun MealTimesPreviewContent() {
                     .padding(bottom = 160.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                MealTimesHeader({}, true)
                 MealTimes(
                     fixtures.map { MealTime(it.timeId!!, it.timeName!!, it.start!!, it.end!!, true) }.distinctBy { it.id } +
                         MealTime(6, "After workout", LocalTime.of(21, 0), LocalTime.of(22, 0), false),

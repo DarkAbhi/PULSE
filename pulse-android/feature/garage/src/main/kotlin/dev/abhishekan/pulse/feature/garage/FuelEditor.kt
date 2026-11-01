@@ -85,11 +85,6 @@ internal fun FuelEditor(
         Modifier.widthIn(max = 760.dp).fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
     ) {
-        PulseText(
-            stringResource(if (draft.id == null) R.string.pulse_garage_add_fuel_fill_up else R.string.pulse_garage_edit_fuel),
-            Modifier.semantics { heading() },
-            PulseTextStyle.Display,
-        )
         PulseText(stringResource(R.string.pulse_garage_fuel_subtitle), color = PulseTheme.colors.textSecondary)
         PulseCard(Modifier.fillMaxWidth()) {
             FuelSectionTitle(stringResource(R.string.pulse_garage_trip_details))

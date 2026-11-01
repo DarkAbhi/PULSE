@@ -28,7 +28,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
-import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import java.time.LocalDate
 import java.time.LocalTime
@@ -57,20 +56,6 @@ internal fun HorizonEditor(
     val keyboard = LocalSoftwareKeyboardController.current
     val enabled = !busy
     PulseCard(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()) {
-        PulseText(
-            stringResource(
-                draft.kind.editorLabel(
-                    if (draft.id ==
-                        null
-                    ) {
-                        EditorAction.Add
-                    } else {
-                        EditorAction.Edit
-                    },
-                ),
-            ),
-            style = PulseTextStyle.Title,
-        )
         if (draft.kind ==
             HorizonForm.Config
         ) {

@@ -316,14 +316,10 @@ private fun SignedInApp(
                                 )
                             }
                             composable(AppDestination.MealPlan.route) {
-                                MealPlanRoute(
-                                    backLabel = backToNotifications,
-                                )
+                                MealPlanRoute()
                             }
                             composable(AppDestination.Garage.route) {
-                                GarageRoute(
-                                    backLabel = backToNotifications,
-                                )
+                                GarageRoute()
                             }
                             composable(
                                 AppDestination.Vehicle.route,
@@ -335,14 +331,11 @@ private fun SignedInApp(
                                 )
                             }
                             composable(AppDestination.Horizon.route) {
-                                HorizonRoute(
-                                    backLabel = backToNotifications,
-                                )
+                                HorizonRoute()
                             }
                             composable(AppDestination.Fitness.route) {
                                 FitnessRoute(
                                     onWorkout = { id -> nav.navigateSingleTop(AppDestination.Workout.withId(id)) },
-                                    backLabel = backToNotifications,
                                 )
                             }
                             composable(AppDestination.Workout.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) {
@@ -416,7 +409,10 @@ private fun SpacesScreen(
     onGarage: () -> Unit,
     onMealPlan: () -> Unit,
 ) {
-    PulseScreenScaffold(stringResource(R.string.pulse_app_spaces)) {
+    PulseScreenScaffold(
+        stringResource(R.string.pulse_app_spaces),
+        backLabel = stringResource(R.string.pulse_app_back_to_home),
+    ) {
         PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
             Column(
                 Modifier

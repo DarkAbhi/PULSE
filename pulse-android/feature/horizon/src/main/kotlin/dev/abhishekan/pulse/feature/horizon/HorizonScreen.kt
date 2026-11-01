@@ -58,10 +58,7 @@ import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun HorizonRoute(
-    viewModel: HorizonViewModel = koinViewModel(),
-    backLabel: String? = null,
-) {
+fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
     val accountCurrency by UserCurrency.changes
         .collectAsStateWithLifecycle()
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
@@ -71,8 +68,8 @@ fun HorizonRoute(
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     PulseScreenScaffold(
         title = stringResource(state.draft.topBarTitle()),
-        showTopBar = state.draft != null || backLabel != null,
-        backLabel = if (state.draft != null) stringResource(R.string.pulse_horizon_back_to_horizon) else backLabel,
+        showTopBar = state.draft != null,
+        backLabel = stringResource(R.string.pulse_horizon_back_to_horizon),
         backEnabled = !state.busy || state.draft == null,
         actions = { HorizonTopBarActions(state, viewModel::deleteObligation) },
     ) {

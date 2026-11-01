@@ -149,7 +149,20 @@ fun ProfileRoute(
             viewModel.openInitialNameEditor()
         }
     }
-    PulseScreenScaffold(title = "", showTopBar = backLabel != null, backLabel = backLabel) {
+    PulseScreenScaffold(
+        title =
+            stringResource(
+                when (state.editor) {
+                    AccountEditor.Name -> R.string.pulse_profile_edit_name
+                    AccountEditor.Password -> R.string.pulse_profile_password
+                    AccountEditor.Key -> R.string.pulse_profile_create_key
+                    null -> R.string.pulse_profile_screen_title
+                },
+            ),
+        showTopBar = state.editor != null || backLabel != null,
+        backLabel = if (state.editor != null) stringResource(R.string.pulse_profile_back_to_you) else backLabel,
+        backEnabled = !state.busy,
+    ) {
         key(timeZone) {
             ProfileScreen(state, username, theme, appearanceError, onTheme, loggingOut, otherEdits, onLogout, viewModel, debugContent)
         }
@@ -467,16 +480,6 @@ private fun AccountForm(
     val editor = checkNotNull(state.editor)
     val focus = LocalFocusManager.current
     PulseCard(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()) {
-        PulseText(
-            stringResource(
-                when (editor) {
-                    AccountEditor.Name -> R.string.pulse_profile_edit_name
-                    AccountEditor.Password -> R.string.pulse_profile_password
-                    AccountEditor.Key -> R.string.pulse_profile_create_key
-                },
-            ),
-            style = PulseTextStyle.Title,
-        )
         when (editor) {
             AccountEditor.Name ->
                 PulseTextField(

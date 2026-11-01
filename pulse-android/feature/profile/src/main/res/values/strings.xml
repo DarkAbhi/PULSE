@@ -69,4 +69,6 @@
     <string name="pulse_profile_currency_search">Search currencies</string>
     <string name="pulse_profile_currency_empty">No matching currencies</string>
     <string name="pulse_profile_currency_explanation">One currency applies to all amounts. Changing it relabels existing amounts; it does not convert them.</string>
+    <string name="pulse_profile_screen_title">You</string>
+    <string name="pulse_profile_back_to_you">Back to You</string>
 </resources>

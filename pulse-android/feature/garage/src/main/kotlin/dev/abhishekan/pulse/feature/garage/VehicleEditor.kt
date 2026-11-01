@@ -84,12 +84,6 @@ internal fun VehicleEditor(
                 modifier.background(colors.primarySoft, PulseTheme.shapes.extraLarge).padding(spacing.cardPadding),
                 verticalArrangement = Arrangement.spacedBy(spacing.cardPadding),
             ) {
-                PulseText(
-                    stringResource(if (draft.id == null) R.string.pulse_garage_new_vehicle_title else R.string.pulse_garage_edit_vehicle),
-                    Modifier.semantics { heading() },
-                    PulseTextStyle.Display,
-                    colors.onPrimarySoft,
-                )
                 PulseText(stringResource(R.string.pulse_garage_vehicle_intro), color = colors.onPrimarySoft)
                 if (wide) {
                     VehicleEditorArtwork(draft["vehicleKind"], Modifier.fillMaxWidth())

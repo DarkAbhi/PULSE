@@ -70,14 +70,13 @@ import dev.abhishekan.pulse.core.ui.R as CoreUiR
 fun FitnessRoute(
     onWorkout: (Long) -> Unit,
     viewModel: FitnessViewModel = koinViewModel(),
-    backLabel: String? = null,
 ) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseSnackbarEffect(state.message.takeUnless { state.needsReview }, viewModel::consumeMessage)
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
-    PulseScreenScaffold(title = "", showTopBar = backLabel != null, backLabel = backLabel) {
+    PulseScreenScaffold(title = "", showTopBar = false) {
         key(timeZone) {
             FitnessScreen(
                 state,

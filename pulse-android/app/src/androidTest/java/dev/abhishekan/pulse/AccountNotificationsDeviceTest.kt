@@ -21,6 +21,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
@@ -48,6 +49,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
@@ -448,6 +450,22 @@ class AccountNotificationsDeviceTest {
         awaitText("Your API key")
     }
 
+    @Test fun profileEditorsHaveTitlesAndReturnToTheAdaptiveProfileRoot() {
+        launch()
+        openProfile()
+        if (usesNavigationRail()) {
+            compose.onNode(hasTestTag("pulse-top-app-bar")).assertDoesNotExist()
+        } else {
+            compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("You"))).assertIsDisplayed()
+        }
+        for (title in listOf("Edit display name", "Change password", "Create API key")) {
+            tap(title)
+            compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText(title))).assertIsDisplayed()
+            compose.onNodeWithContentDescription("Back to You").performClick()
+            awaitText("Account information")
+        }
+    }
+
     @Test fun profileCurrencyIsSearchableSavedAndRestored() {
         launch()
         openProfile()
@@ -627,7 +645,8 @@ class AccountNotificationsDeviceTest {
         tap("Vehicle care update")
         awaitText("Your garage")
         compose.onNode(items[3]).assertIsSelected()
-        compose.onNodeWithContentDescription("Back to notifications").performClick()
+        compose.onNodeWithContentDescription("Back to notifications").assertDoesNotExist()
+        Espresso.pressBack()
         awaitText("Notifications")
         compose.onNodeWithContentDescription("Back to Home").performClick()
         compose.onNode(items[0]).assertIsSelected()
@@ -814,7 +833,8 @@ class AccountNotificationsDeviceTest {
                 hasText("Garage") and isSelected(),
             ).assertExists()
         assertEquals(2, notifications.size)
-        compose.onNodeWithContentDescription("Back to notifications").performClick()
+        compose.onNodeWithContentDescription("Back to notifications").assertDoesNotExist()
+        Espresso.pressBack()
         awaitText("Notifications")
         compose.onNodeWithText("Vehicle care update").assert(hasClickAction())
         compose.onNodeWithText("Open space").assertDoesNotExist()

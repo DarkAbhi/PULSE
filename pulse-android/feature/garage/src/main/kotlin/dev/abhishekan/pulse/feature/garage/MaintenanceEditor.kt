@@ -103,19 +103,6 @@ internal fun MaintenanceEditor(
         )
     }
     Column(Modifier.widthIn(max = 760.dp).fillMaxWidth().testTag("maintenance-editor"), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        PulseText(
-            stringResource(
-                if (draft.id ==
-                    null
-                ) {
-                    R.string.pulse_garage_add_care
-                } else {
-                    R.string.pulse_garage_edit_care
-                },
-            ),
-            Modifier.semantics { heading() },
-            PulseTextStyle.Display,
-        )
         PulseText(stringResource(R.string.pulse_garage_care_subtitle), color = colors.textSecondary)
         MaintenanceSection(R.string.pulse_garage_care_service_details, R.string.pulse_garage_care_service_hint, R.drawable.garage_service) {
             MaintenancePickerField(

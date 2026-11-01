@@ -18,6 +18,7 @@ import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
@@ -416,6 +417,23 @@ class MealPlanDeviceTest {
         awaitText(firstMeal)
     }
 
+    @Test fun nestedMealPagesHaveOneTitledBarAndBackReturnsToTheirParent() {
+        launchPlanner()
+        compose.onNode(hasTestTag("pulse-top-app-bar")).assertDoesNotExist()
+        tap("Meal times")
+        compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("Meal times"))).assertIsDisplayed()
+        tap("Add custom meal time")
+        compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("New meal time"))).assertIsDisplayed()
+        compose.onNode(hasContentDescription("Back to meal times")).performClick()
+        compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("Meal times"))).assertIsDisplayed()
+        compose.onNode(hasContentDescription("Back to planner")).performClick()
+        compose.onNode(hasTestTag("pulse-top-app-bar")).assertDoesNotExist()
+        tap("Add meal")
+        compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("Plan a meal"))).assertIsDisplayed()
+        compose.onNode(hasContentDescription("Back to planner")).performClick()
+        compose.onNode(hasTestTag("pulse-top-app-bar")).assertDoesNotExist()
+    }
+
     @Test fun pullToRefreshLoadsUpdatedMeals() {
         launchPlanner()
         compose.onNodeWithText("Refresh").assertDoesNotExist()
@@ -736,7 +754,7 @@ class MealPlanDeviceTest {
             compose.onAllNodesWithText("Saved. Your meal plan is up to date.").fetchSemanticsNodes().isEmpty()
         }
         screenshot("times")
-        compose.onNode(hasContentDescription("Back to planner")).performScrollTo().performClick()
+        compose.onNode(hasContentDescription("Back to planner")).assertIsDisplayed().performClick()
         tap("Add meal")
         field("Meal name", "Oats")
         tap("Evening bowl")
@@ -745,7 +763,7 @@ class MealPlanDeviceTest {
         tap("Meal times")
         tap("Delete time Evening bowl")
         confirm("Delete")
-        compose.onNode(hasContentDescription("Back to planner")).performScrollTo().performClick()
+        compose.onNode(hasContentDescription("Back to planner")).assertIsDisplayed().performClick()
         awaitText("Other meals")
         awaitText("Oats")
         assertEquals(2, meals.size)

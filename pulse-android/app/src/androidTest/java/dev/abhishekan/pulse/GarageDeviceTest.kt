@@ -16,6 +16,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
@@ -30,6 +31,7 @@ import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isPopup
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -646,6 +648,40 @@ class GarageDeviceTest {
                 InstrumentationRegistry.getInstrumentation().addMonitor(it)
             }
 
+    @Test fun vehicleTabsStayBelowTheAppBar() {
+        launchGarage()
+        select()
+        val bar = compose.onNode(hasTestTag("pulse-top-app-bar"))
+        bar.assertIsDisplayed()
+        val barBounds = bar.getUnclippedBoundsInRoot()
+        for (title in listOf("Overview", "Fuel", "Maintenance", "Tires & air")) {
+            val tab = compose.onNode(hasText(title) and isSelectable())
+            tab.performScrollTo().assertIsDisplayed()
+            assertTrue(tab.getUnclippedBoundsInRoot().top >= barBounds.bottom)
+        }
+        tap("Fuel")
+        compose.onNode(hasText("Fuel") and isSelectable()).assertIsSelected()
+        compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("Comet"))).assertIsDisplayed()
+    }
+
+    @Test fun vehicleWizardAppBarBackMatchesSystemBack() {
+        launchGarage()
+        compose.onNode(hasTestTag("pulse-top-app-bar")).assertDoesNotExist()
+        tap("Add vehicle")
+        compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("Add vehicle"))).assertIsDisplayed()
+        tap("Enter manually")
+        field("Vehicle name", "Draft scooter")
+        tap("Motorcycle")
+        tap("Continue to fuel")
+        compose.onNode(hasContentDescription("Back to garage")).assertIsDisplayed().performClick()
+        awaitText("Which vehicle?")
+        compose.onNode(hasText("Draft scooter") and hasSetTextAction()).assertExists()
+        compose.onNode(hasContentDescription("Back to garage")).performClick()
+        confirm("Discard edits")
+        compose.onNode(hasTestTag("pulse-top-app-bar")).assertDoesNotExist()
+        assertEquals(0, mutations)
+    }
+
     @Test fun collectionArtworkAndLongNamesKeepVehicleActionsAccessible() {
         vehicles[2] = "Weekend adventure motorcycle with a long name"
         launchGarage()
@@ -791,7 +827,7 @@ class GarageDeviceTest {
             tap("Add vehicle")
             tap("Enter manually")
             field("Vehicle name", "Unsaved scooter")
-            compose.onNodeWithText("Add a new vehicle").performScrollTo()
+            compose.onNodeWithText("Add vehicle").assertIsDisplayed()
             val artwork = hasTestTag("vehicle-editor-artwork")
             compose.onNode(artwork).assertExists()
             val first = compose.onNode(artwork).captureToImage().asAndroidBitmap()
@@ -807,7 +843,7 @@ class GarageDeviceTest {
                 first.recycle()
             }
             tap("Motorcycle")
-            compose.onNodeWithText("Add a new vehicle").performScrollTo()
+            compose.onNodeWithText("Add vehicle").assertIsDisplayed()
             compose.mainClock.advanceTimeBy(2_500)
             compose.waitForIdle()
             val motorcycle = compose.onNode(artwork).captureToImage().asAndroidBitmap()
@@ -817,7 +853,7 @@ class GarageDeviceTest {
                 assertTrue("Selected vehicle artwork should stay fixed", motorcycle.sameAs(selected))
                 selected.recycle()
                 tap("Car")
-                compose.onNodeWithText("Add a new vehicle").performScrollTo()
+                compose.onNodeWithText("Add vehicle").assertIsDisplayed()
                 compose.mainClock.advanceTimeBy(2_500)
                 val car = compose.onNode(artwork).captureToImage().asAndroidBitmap()
                 assertTrue("Selecting a different vehicle type should change its artwork", !motorcycle.sameAs(car))

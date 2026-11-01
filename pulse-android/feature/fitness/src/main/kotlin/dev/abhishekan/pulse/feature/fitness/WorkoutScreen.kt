@@ -90,6 +90,7 @@ fun WorkoutRoute(
     LaunchedEffect(state.deleted) { if (state.deleted) onDeleted() }
     PulseScreenScaffold(
         title = editorTitle ?: stringResource(R.string.pulse_fitness_workout_title),
+        backEnabled = !state.busy,
         backLabel = if (state.editor != null) stringResource(R.string.pulse_fitness_back_to_workout) else backLabel,
     ) {
         key(timeZone) {

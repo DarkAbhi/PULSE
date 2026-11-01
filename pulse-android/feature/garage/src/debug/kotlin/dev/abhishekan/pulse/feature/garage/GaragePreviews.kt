@@ -26,6 +26,7 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
+import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -158,7 +159,7 @@ private fun GarageCollectionPreview() {
 @Composable
 private fun FuelEditorPreview() {
     PulseTheme {
-        Surface(color = PulseTheme.colors.background) {
+        PulseScreenScaffold("Add fuel fill-up", backLabel = "Back to garage") {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
                     FuelEditor(GarageDraft.new(GarageForm.Fuel, 1), false, null, {})
@@ -176,7 +177,7 @@ private fun FuelEditorPreview() {
 @Composable
 private fun VehicleEditorPreview() {
     PulseTheme {
-        Surface(color = PulseTheme.colors.background) {
+        PulseScreenScaffold("Add vehicle", backLabel = "Back to garage") {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
                 VehicleEditor(GarageDraft.new(GarageForm.Vehicle, 0), false, false, null, {}, {}, {})
             }
@@ -198,7 +199,7 @@ private fun VehicleTyresStepPreview() = VehicleStepPreview(2)
 @Composable
 private fun VehicleStepPreview(step: Int) {
     PulseTheme {
-        Surface(color = PulseTheme.colors.background) {
+        PulseScreenScaffold("Add vehicle", backLabel = "Back to garage") {
             Column(Modifier.verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
                 VehicleEditor(
                     GarageDraft

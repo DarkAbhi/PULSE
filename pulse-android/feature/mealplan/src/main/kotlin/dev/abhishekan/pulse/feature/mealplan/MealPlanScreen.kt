@@ -46,7 +46,6 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
-import dev.abhishekan.pulse.core.ui.components.PulseBackNavigation
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
@@ -66,10 +65,7 @@ import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun MealPlanRoute(
-    viewModel: MealPlanViewModel = koinViewModel(),
-    backLabel: String? = null,
-) {
+fun MealPlanRoute(viewModel: MealPlanViewModel = koinViewModel()) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) {
         viewModel.resume()
@@ -79,7 +75,29 @@ fun MealPlanRoute(
     PulseHideNavigation(state.draft != null || state.managing)
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
-    PulseScreenScaffold(title = "", showTopBar = backLabel != null, backLabel = backLabel) {
+    PulseScreenScaffold(
+        title =
+            stringResource(
+                when {
+                    state.draft?.timeForm == true -> R.string.pulse_mealplan_new_meal_time
+                    state.draft != null ->
+                        if (state.draft?.id ==
+                            null
+                        ) {
+                            R.string.pulse_mealplan_plan_a_meal
+                        } else {
+                            R.string.pulse_mealplan_edit_meal
+                        }
+                    else -> R.string.pulse_mealplan_meal_times
+                },
+            ),
+        showTopBar = state.draft != null || state.managing,
+        backLabel =
+            stringResource(
+                if (state.draft?.timeForm == true) R.string.pulse_mealplan_back_to_meal_times else R.string.pulse_mealplan_back_to_planner,
+            ),
+        backEnabled = !state.busy,
+    ) {
         key(timeZone) {
             MealPlanScreen(state, viewModel)
         }
@@ -166,20 +184,6 @@ internal fun MealPlanScreen(
                 },
             ) {
                 Column(Modifier.fillMaxSize()) {
-                    if (state.draft != null && !records) {
-                        PulseBackNavigation(
-                            stringResource(
-                                if (state.draft.timeForm) {
-                                    R.string.pulse_mealplan_back_to_meal_times
-                                } else {
-                                    R.string.pulse_mealplan_back_to_planner
-                                },
-                            ),
-                            cancel,
-                            Modifier.fillMaxWidth().padding(horizontal = size.pagePadding),
-                            enabled = !state.busy,
-                        )
-                    }
                     Column(
                         Modifier
                             .weight(1f)
@@ -261,7 +265,6 @@ internal fun MealPlanScreen(
                                 flat = size != PulseWindowSize.Compact,
                             )
                         } else if (state.managing) {
-                            MealTimesHeader({ vm.manage(false) }, enabled = !state.busy && state.draft == null)
                             if (state.times.loading && state.times.value != null) PulseRefreshIndicator()
                             MealSectionContent(state.times, vm::refreshTimes, showLoading = false) { times ->
                                 MealTimes(

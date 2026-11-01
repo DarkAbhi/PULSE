@@ -19,21 +19,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
-internal fun MealEditorHeader(
-    title: String,
-    illustrated: Boolean,
-) {
+internal fun MealEditorHeader(illustrated: Boolean) {
     val colors = PulseTheme.colors
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val showArt = illustrated && LocalDensity.current.fontScale <= 1.3f
@@ -53,7 +47,6 @@ internal fun MealEditorHeader(
                         )
                     }
                 }
-                PulseText(title, Modifier.semantics { heading() }, PulseTextStyle.Heading2)
                 if (illustrated) {
                     PulseText(
                         stringResource(R.string.pulse_mealplan_editor_subtitle),

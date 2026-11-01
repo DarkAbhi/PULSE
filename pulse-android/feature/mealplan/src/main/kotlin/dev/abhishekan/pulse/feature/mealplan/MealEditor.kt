@@ -59,18 +59,7 @@ internal fun MealEditor(
     var timePicker by rememberSaveable { mutableStateOf<String?>(null) }
     val focus = LocalFocusManager.current
     val content: @Composable ColumnScope.() -> Unit = {
-        MealEditorHeader(
-            if (draft.timeForm) {
-                stringResource(R.string.pulse_mealplan_new_meal_time)
-            } else if (draft.id ==
-                null
-            ) {
-                stringResource(R.string.pulse_mealplan_plan_a_meal)
-            } else {
-                stringResource(R.string.pulse_mealplan_edit_meal)
-            },
-            illustrated = !draft.timeForm,
-        )
+        MealEditorHeader(illustrated = !draft.timeForm)
         Spacer(Modifier.height(8.dp))
         PulseTextField(
             draft.name,

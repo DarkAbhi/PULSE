@@ -75,7 +75,7 @@ class NetworkTest {
                     client.get("https://example.com:8443/file?signature=secret")
                     client.get("http://example.com/file?signature=secret")
                     client.get("https://example.com/api/storage?signature=secret") {
-                        attributes.put(SkipHttpLogging, Unit)
+                        attributes.put(SignedStorageRequest, Unit)
                     }
                 }
             }

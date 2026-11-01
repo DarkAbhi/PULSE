@@ -49,7 +49,13 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @Composable
-internal fun TransactionEditor(draft: HorizonDraft, data: HorizonOverview?, busy: Boolean, error: UiText?, onChange: (HorizonDraft) -> Unit) {
+internal fun TransactionEditor(
+    draft: HorizonDraft,
+    data: HorizonOverview?,
+    busy: Boolean,
+    error: UiText?,
+    onChange: (HorizonDraft) -> Unit,
+) {
     var picker by remember { mutableStateOf<String?>(null) }
     val focus = LocalFocusManager.current
     BoxWithConstraints(Modifier.fillMaxWidth().testTag("transaction-editor")) {
@@ -57,52 +63,163 @@ internal fun TransactionEditor(draft: HorizonDraft, data: HorizonOverview?, busy
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             error?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = PulseTheme.colors.error) }
             TransactionSection(R.string.transaction_details, R.string.transaction_details_hint, R.drawable.pulse_obligation_card) {
-                SubscriptionInput(draft.name, { onChange(draft.copy(name = it)) }, stringResource(R.string.pulse_horizon_name), stringResource(R.string.transaction_name_hint), !busy)
-                SubscriptionInput(draft.amount, { onChange(draft.copy(amount = it)) }, stringResource(R.string.pulse_horizon_amount_1_s, UserCurrency.symbol()), "0.00", !busy, KeyboardType.Decimal, leadingIcon = { PulseText(UserCurrency.symbol()) })
-                SubscriptionSegments(stringResource(R.string.pulse_horizon_type), draft.type, listOf("debit", "credit"), !busy) { onChange(draft.copy(type = it)) }
-                PulseText(stringResource(R.string.pulse_horizon_debit_credit_explanation), style = PulseTextStyle.Body2, color = PulseTheme.colors.textSecondary)
+                SubscriptionInput(draft.name, {
+                    onChange(draft.copy(name = it))
+                }, stringResource(R.string.pulse_horizon_name), stringResource(R.string.transaction_name_hint), !busy)
+                SubscriptionInput(
+                    draft.amount,
+                    {
+                        onChange(draft.copy(amount = it))
+                    },
+                    stringResource(
+                        R.string.pulse_horizon_amount_1_s,
+                        UserCurrency.symbol(),
+                    ),
+                    "0.00",
+                    !busy,
+                    KeyboardType.Decimal,
+                    leadingIcon = {
+                        PulseText(UserCurrency.symbol())
+                    },
+                )
+                SubscriptionSegments(stringResource(R.string.pulse_horizon_type), draft.type, listOf("debit", "credit"), !busy) {
+                    onChange(draft.copy(type = it))
+                }
+                PulseText(
+                    stringResource(R.string.pulse_horizon_debit_credit_explanation),
+                    style = PulseTextStyle.Body2,
+                    color = PulseTheme.colors.textSecondary,
+                )
             }
             TransactionSection(R.string.transaction_when, R.string.transaction_when_hint, R.drawable.pulse_obligation_calendar) {
                 SubscriptionFieldPair(wide, {
-                    TransactionPickerField(R.string.transaction_date, draft.date.ifBlank { stringResource(R.string.pulse_horizon_not_set) }, !busy) { focus.clearFocus(); picker = "date" }
+                    TransactionPickerField(
+                        R.string.transaction_date,
+                        draft.date.ifBlank { stringResource(R.string.pulse_horizon_not_set) },
+                        !busy,
+                    ) {
+                        focus.clearFocus()
+                        picker =
+                            "date"
+                    }
                 }, {
-                    TransactionPickerField(R.string.transaction_time, draft.time, !busy) { focus.clearFocus(); picker = "time" }
+                    TransactionPickerField(R.string.transaction_time, draft.time, !busy) {
+                        focus.clearFocus()
+                        picker = "time"
+                    }
                 })
             }
             TransactionSection(R.string.transaction_organize, R.string.transaction_organize_hint, R.drawable.pulse_obligation_tag) {
                 SubscriptionFieldPair(wide, {
-                    SubscriptionRelation(R.string.pulse_horizon_category, draft.categoryId, data?.categories.orEmpty().map { it.id to it.name }, !busy) { onChange(draft.copy(categoryId = it)) }
+                    SubscriptionRelation(
+                        R.string.pulse_horizon_category,
+                        draft.categoryId,
+                        data?.categories.orEmpty().map {
+                            it.id to
+                                it.name
+                        },
+                        !busy,
+                    ) { onChange(draft.copy(categoryId = it)) }
                 }, {
-                    SubscriptionRelation(R.string.pulse_horizon_budget, draft.budgetId, data?.budgets.orEmpty().map { it.id to it.name }, !busy) { onChange(draft.copy(budgetId = it)) }
+                    SubscriptionRelation(
+                        R.string.pulse_horizon_budget,
+                        draft.budgetId,
+                        data?.budgets.orEmpty().map {
+                            it.id to it.name
+                        },
+                        !busy,
+                    ) { onChange(draft.copy(budgetId = it)) }
                 })
-                SubscriptionRelation(R.string.pulse_horizon_subscription, draft.subscriptionId, data?.subscriptions.orEmpty().map { it.id to it.name }, !busy) { onChange(draft.copy(subscriptionId = it)) }
+                SubscriptionRelation(
+                    R.string.pulse_horizon_subscription,
+                    draft.subscriptionId,
+                    data?.subscriptions.orEmpty().map {
+                        it.id to
+                            it.name
+                    },
+                    !busy,
+                ) { onChange(draft.copy(subscriptionId = it)) }
             }
-            TransactionSection(R.string.pulse_horizon_notes_optional, R.string.transaction_notes_hint, R.drawable.pulse_obligation_document) {
-                PulseTextField(value = draft.notes, onValueChange = { onChange(draft.copy(notes = it)) }, modifier = Modifier.fillMaxWidth(), enabled = !busy, singleLine = false, minLines = 3, maxLines = 6, label = stringResource(R.string.pulse_horizon_notes_optional))
+            TransactionSection(
+                R.string.pulse_horizon_notes_optional,
+                R.string.transaction_notes_hint,
+                R.drawable.pulse_obligation_document,
+            ) {
+                PulseTextField(
+                    value = draft.notes,
+                    onValueChange = {
+                        onChange(draft.copy(notes = it))
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !busy,
+                    singleLine = false,
+                    minLines = 3,
+                    maxLines = 6,
+                    label =
+                        stringResource(
+                            R.string.pulse_horizon_notes_optional,
+                        ),
+                )
             }
         }
     }
-    if (picker == "date") PulseDatePickerDialog(runCatching { LocalDate.parse(draft.date) }.getOrDefault(LocalDate.now(UserTimeZone.zone)), { onChange(draft.copy(date = it.toString())); picker = null }, { picker = null })
-    if (picker == "time") PulseTimePickerDialog(runCatching { LocalTime.parse(draft.time) }.getOrDefault(LocalTime.MIDNIGHT), { onChange(draft.copy(time = it.toString())); picker = null }, { picker = null })
-}
-
-@Composable
-private fun TransactionPickerField(label: Int, value: String, enabled: Boolean, onClick: () -> Unit) {
-    val title = stringResource(label)
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        PulseText(title, style = PulseTextStyle.Label)
-        PulseButton(value, onClick, Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics { contentDescription = "$title: $value" }, enabled = enabled, variant = PulseButtonVariant.Secondary)
+    if (picker ==
+        "date"
+    ) {
+        PulseDatePickerDialog(runCatching { LocalDate.parse(draft.date) }.getOrDefault(LocalDate.now(UserTimeZone.zone)), {
+            onChange(draft.copy(date = it.toString()))
+            picker =
+                null
+        }, { picker = null })
+    }
+    if (picker ==
+        "time"
+    ) {
+        PulseTimePickerDialog(runCatching { LocalTime.parse(draft.time) }.getOrDefault(LocalTime.MIDNIGHT), {
+            onChange(draft.copy(time = it.toString()))
+            picker =
+                null
+        }, { picker = null })
     }
 }
 
 @Composable
-private fun TransactionSection(title: Int, hint: Int, icon: Int, content: @Composable ColumnScope.() -> Unit) {
+private fun TransactionPickerField(
+    label: Int,
+    value: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val title = stringResource(label)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        PulseText(title, style = PulseTextStyle.Label)
+        PulseButton(
+            value,
+            onClick,
+            Modifier.fillMaxWidth().heightIn(min = 56.dp).semantics {
+                contentDescription = "$title: $value"
+            },
+            enabled = enabled,
+            variant = PulseButtonVariant.Secondary,
+        )
+    }
+}
+
+@Composable
+private fun TransactionSection(
+    title: Int,
+    hint: Int,
+    icon: Int,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     val colors = PulseTheme.colors
     Surface(Modifier.fillMaxWidth(), shape = PulseTokens.cardShape, color = colors.surface, border = BorderStroke(1.dp, colors.border)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Surface(shape = PulseTheme.shapes.medium, color = colors.primarySoft) {
-                    Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) { Icon(painterResource(icon), null, Modifier.size(20.dp), tint = colors.onPrimarySoft) }
+                    Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                        Icon(painterResource(icon), null, Modifier.size(20.dp), tint = colors.onPrimarySoft)
+                    }
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     PulseText(stringResource(title), Modifier.semantics { heading() }, style = PulseTextStyle.Title3)

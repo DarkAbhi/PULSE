@@ -104,6 +104,7 @@ class AuthAndDashboardTest {
                         }
                     }
                     "/api/auth/session" -> {
+                        assertEquals("Bearer fixture-secret", request.headers[HttpHeaders.Authorization])
                         sessionError?.let { throw it }
                         assertTrue(
                             request.headers[HttpHeaders.Cookie].orEmpty().contains(

@@ -153,7 +153,7 @@ class GarageApi(
                     ) {
                         throw ReceiptTransferException()
                     }
-                // Signed storage links must be absolute HTTPS URLs. Cookies are origin-scoped by PersistentSessionCookies.
+                // Signed storage links must be absolute HTTPS URLs. Session credentials are stripped from storage requests.
                 if (target.protocol != URLProtocol.HTTPS ||
                     target.host.isBlank() ||
                     !target.user.isNullOrEmpty() ||
@@ -163,7 +163,7 @@ class GarageApi(
                 }
                 client
                     .prepareGet(target) {
-                        attributes.put(SkipHttpLogging, Unit)
+                        attributes.put(SignedStorageRequest, Unit)
                         expectSuccess = false
                         timeout { requestTimeoutMillis = 120_000 }
                     }.execute { file ->

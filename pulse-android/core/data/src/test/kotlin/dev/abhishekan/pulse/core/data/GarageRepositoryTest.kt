@@ -66,6 +66,7 @@ class GarageRepositoryTest {
         var redirect = "https://storage.test/receipt?signature=test"
         var storageStatus = HttpStatusCode.OK
         var storageCookie: String? = null
+        var storageAuthorization: String? = null
         var downloadBytes = byteArrayOf(1, 2, 3)
         var declaredLength: String? = null
         var multipartType: String? = null
@@ -106,6 +107,7 @@ class GarageRepositoryTest {
                 }
                 if (request.url.host == "storage.test") {
                     storageCookie = request.headers[HttpHeaders.Cookie]
+                    storageAuthorization = request.headers[HttpHeaders.Authorization]
                     respond(
                         downloadBytes,
                         storageStatus,
@@ -401,6 +403,7 @@ class GarageRepositoryTest {
                 assertTrue(h.cookies.get(Url(h.config.baseUrl)).isNotEmpty())
                 assertTrue(h.repo.download(1, 2, receipt, null) is Outcome.Success)
                 assertNull(h.storageCookie)
+                assertNull(h.storageAuthorization)
                 h.storageStatus = HttpStatusCode.Unauthorized
                 assertEquals(Outcome.Error(Failure.Server), h.repo.download(1, 2, receipt, null))
                 assertTrue(h.cookies.get(Url(h.config.baseUrl)).isNotEmpty())

@@ -23,12 +23,16 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalFocusManager
@@ -96,7 +100,9 @@ internal fun ExerciseSelector(
 ) {
     val keyboard = LocalSoftwareKeyboardController.current
     val focus = LocalFocusManager.current
-    PulseBottomSheet(stringResource(R.string.pulse_fitness_editor_search_title), onDismiss) {
+    PulseBottomSheet(stringResource(R.string.pulse_fitness_editor_search_title), onDismiss, fullScreen = true) {
+        val searchFocus = remember { FocusRequester() }
+        LaunchedEffect(Unit) { searchFocus.requestFocus() }
         Column(
             Modifier
                 .fillMaxSize()
@@ -109,7 +115,7 @@ internal fun ExerciseSelector(
                 query,
                 onQuery,
                 stringResource(R.string.pulse_fitness_editor_search_placeholder),
-                Modifier.fillMaxWidth(),
+                Modifier.fillMaxWidth().focusRequester(searchFocus),
                 enabled = !busy,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions =

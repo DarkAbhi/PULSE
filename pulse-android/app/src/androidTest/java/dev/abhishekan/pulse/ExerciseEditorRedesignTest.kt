@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -126,6 +127,7 @@ class ExerciseEditorRedesignTest {
         screenshot("empty")
         compose.onNodeWithText("Save exercise").performScrollTo().assertIsNotEnabled()
         compose.onNodeWithText("Search for an exercise").performScrollTo().performClick()
+        compose.onNode(hasSetTextAction() and hasText("Search for an exercise")).assertIsFocused()
         compose.onNode(hasSetTextAction() and hasText("Search for an exercise")).performTextInput("My custom exercise")
         compose.onNodeWithText("Use My custom exercise as a custom exercise").performClick()
         compose.onNodeWithText("Custom exercise").assertExists()

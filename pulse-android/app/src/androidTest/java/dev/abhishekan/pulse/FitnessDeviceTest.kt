@@ -493,10 +493,10 @@ class FitnessDeviceTest {
     }
 
     private fun chooseCustomName(name: String) {
-        tap("Search for an exercise…")
+        tap("Search for an exercise")
         compose
             .onNode(
-                hasText("Search for an exercise…") and
+                hasText("Search for an exercise") and
                     androidx.compose.ui.test
                         .hasSetTextAction(),
             ).performTextInput(name)
@@ -602,7 +602,7 @@ class FitnessDeviceTest {
         tap("Change")
         compose
             .onNode(
-                hasText("Search for an exercise…") and
+                hasText("Search for an exercise") and
                     androidx.compose.ui.test
                         .hasSetTextAction(),
             ).performTextReplacement("Squat")

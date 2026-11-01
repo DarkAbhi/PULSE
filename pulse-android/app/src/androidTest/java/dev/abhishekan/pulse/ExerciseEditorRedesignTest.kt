@@ -125,8 +125,8 @@ class ExerciseEditorRedesignTest {
         compose.onNodeWithText("Your sets").assertDoesNotExist()
         screenshot("empty")
         compose.onNodeWithText("Save exercise").performScrollTo().assertIsNotEnabled()
-        compose.onNodeWithText("Search for an exercise…").performScrollTo().performClick()
-        compose.onNode(hasSetTextAction() and hasText("Search for an exercise…")).performTextInput("My custom exercise")
+        compose.onNodeWithText("Search for an exercise").performScrollTo().performClick()
+        compose.onNode(hasSetTextAction() and hasText("Search for an exercise")).performTextInput("My custom exercise")
         compose.onNodeWithText("Use My custom exercise as a custom exercise").performClick()
         compose.onNodeWithText("Custom exercise").assertExists()
         compose.onNodeWithText("Reps, set 1").performScrollTo().performTextInput("12")
@@ -150,8 +150,8 @@ class ExerciseEditorRedesignTest {
             )
         show(ExerciseEditorState(draft, selectedCatalog = catalogue))
         compose.onNodeWithText("Change").performScrollTo().performClick()
-        compose.onNode(hasSetTextAction() and hasText("Search for an exercise…")).performTextReplacement("Another exercise")
-        compose.onNodeWithText("Close").performClick()
+        compose.onNode(hasSetTextAction() and hasText("Search for an exercise")).performTextReplacement("Another exercise")
+        compose.onNodeWithContentDescription("Close bottom sheet").performClick()
         compose.runOnIdle { check(editor.value.draft == draft) }
         compose.onNodeWithText("View instructions").performScrollTo().performClick()
         compose.onNodeWithText("1. Curl with control.").assertIsDisplayed()
@@ -163,8 +163,8 @@ class ExerciseEditorRedesignTest {
 
     @Test fun immediateCatalogueSelectionAndSetControls() {
         show()
-        compose.onNodeWithText("Search for an exercise…").performClick()
-        compose.onNode(hasSetTextAction() and hasText("Search for an exercise…")).performTextInput("curl")
+        compose.onNodeWithText("Search for an exercise").performClick()
+        compose.onNode(hasSetTextAction() and hasText("Search for an exercise")).performTextInput("curl")
         compose.onNodeWithText("Dumbbell • Biceps").assertIsDisplayed()
         screenshot("search")
         compose.onNodeWithText("Dumbbell curl").performClick()

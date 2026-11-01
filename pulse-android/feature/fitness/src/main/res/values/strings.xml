@@ -176,7 +176,7 @@
     <string name="pulse_fitness_editor_custom">Custom exercise</string>
     <string name="pulse_fitness_editor_matched_to">Catalogue match: %1$s</string>
     <string name="pulse_fitness_editor_use_custom">Use without catalogue match</string>
-    <string name="pulse_fitness_editor_search_placeholder">Search for an exercise…</string>
+    <string name="pulse_fitness_editor_search_placeholder">Search for an exercise</string>
     <string name="pulse_fitness_editor_search_title">Choose an exercise</string>
     <string name="pulse_fitness_editor_search_hint">Search the catalogue or enter your own exercise name.</string>
     <string name="pulse_fitness_editor_clear_search">Clear search</string>

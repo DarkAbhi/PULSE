@@ -365,6 +365,8 @@ the Homelab.
 
 ### Production migrations
 
+For the user ownership rollout, run the read-only audit and follow the [ownership migration guide](docs/user-ownership.md) before applying migrations 29–30.
+
 These commands run the one-shot migration service using the production Go image
 and database configuration.
 

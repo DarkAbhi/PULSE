@@ -99,12 +99,12 @@ func (r *Repository) UpdateExercise(
 	}); err != nil {
 		return err
 	}
-	if err := q.DeleteExerciseSets(ctx, exerciseID); err != nil {
+	if err := q.DeleteExerciseSets(ctx, query.DeleteExerciseSetsParams{GymVisitExerciseID: exerciseID, UserID: userID}); err != nil {
 		return err
 	}
 	for i, set := range body.Sets {
 		if _, err := q.CreateSet(ctx, query.CreateSetParams{
-			GymVisitExerciseID: exerciseID, SetNumber: int16(i + 1), Reps: int16(set.Reps), Weight: set.Weight,
+			ID: exerciseID, UserID: userID, SetNumber: int16(i + 1), Reps: int16(set.Reps), Weight: set.Weight,
 		}); err != nil {
 			return err
 		}
@@ -118,14 +118,14 @@ func (r *Repository) UpdateExercise(
 	}
 	return tx.Commit(ctx)
 }
-func (r *Repository) ListExercises(ctx context.Context, visitID int64) ([]exerciseDTO, error) {
-	rows, err := r.queries.ListExercises(ctx, visitID)
+func (r *Repository) ListExercises(ctx context.Context, userID, visitID int64) ([]exerciseDTO, error) {
+	rows, err := r.queries.ListExercises(ctx, query.ListExercisesParams{GymVisitID: visitID, UserID: userID})
 	if err != nil {
 		return nil, err
 	}
 	items := make([]exerciseDTO, 0, len(rows))
 	for _, row := range rows {
-		sets, err := r.queries.ListSets(ctx, row.ID)
+		sets, err := r.queries.ListSets(ctx, query.ListSetsParams{GymVisitExerciseID: row.ID, UserID: userID})
 		if err != nil {
 			return nil, err
 		}
@@ -159,7 +159,7 @@ func (r *Repository) CreateExercises(
 	items := make([]exerciseDTO, 0, len(bodies))
 	for _, body := range bodies {
 		row, err := q.CreateExercise(ctx, query.CreateExerciseParams{
-			GymVisitID: visitID, Name: body.Name, ExerciseCatalogID: body.ExerciseCatalogID,
+			ID: visitID, UserID: userID, Name: body.Name, ExerciseCatalogID: body.ExerciseCatalogID,
 		})
 		if err != nil {
 			return nil, err
@@ -186,7 +186,7 @@ func (r *Repository) CreateExercises(
 		}
 		for i, set := range body.Sets {
 			saved, err := q.CreateSet(ctx, query.CreateSetParams{
-				GymVisitExerciseID: row.ID, SetNumber: int16(i + 1), Reps: int16(set.Reps), Weight: set.Weight,
+				ID: row.ID, UserID: userID, SetNumber: int16(i + 1), Reps: int16(set.Reps), Weight: set.Weight,
 			})
 			if err != nil {
 				return nil, err

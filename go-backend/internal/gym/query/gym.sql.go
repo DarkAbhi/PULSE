@@ -40,13 +40,14 @@ func (q *Queries) AddVisitOnDate(ctx context.Context, arg AddVisitOnDateParams) 
 
 const createExercise = `-- name: CreateExercise :one
 INSERT INTO gym_visit_exercises (gym_visit_id,name,exercise_catalog_id)
-VALUES ($1,$2,$3) RETURNING id,name,exercise_catalog_id
+SELECT v.id,$2,$3 FROM gym_visits v WHERE v.id=$1 AND v.user_id=$4 RETURNING id,name,exercise_catalog_id
 `
 
 type CreateExerciseParams struct {
-	GymVisitID        int64
+	ID                int64
 	Name              string
 	ExerciseCatalogID *string
+	UserID            int64
 }
 
 type CreateExerciseRow struct {
@@ -56,7 +57,12 @@ type CreateExerciseRow struct {
 }
 
 func (q *Queries) CreateExercise(ctx context.Context, arg CreateExerciseParams) (CreateExerciseRow, error) {
-	row := q.db.QueryRow(ctx, createExercise, arg.GymVisitID, arg.Name, arg.ExerciseCatalogID)
+	row := q.db.QueryRow(ctx, createExercise,
+		arg.ID,
+		arg.Name,
+		arg.ExerciseCatalogID,
+		arg.UserID,
+	)
 	var i CreateExerciseRow
 	err := row.Scan(&i.ID, &i.Name, &i.ExerciseCatalogID)
 	return i, err
@@ -64,14 +70,17 @@ func (q *Queries) CreateExercise(ctx context.Context, arg CreateExerciseParams) 
 
 const createSet = `-- name: CreateSet :one
 INSERT INTO gym_exercise_sets (gym_visit_exercise_id,set_number,reps,weight)
-VALUES ($1,$2,$3,$4) RETURNING id,set_number,reps,weight
+SELECT e.id,$2,$3,$4 FROM gym_visit_exercises e
+JOIN gym_visits v ON v.id=e.gym_visit_id
+WHERE e.id=$1 AND v.user_id=$5 RETURNING id,set_number,reps,weight
 `
 
 type CreateSetParams struct {
-	GymVisitExerciseID int64
-	SetNumber          int16
-	Reps               int16
-	Weight             *float64
+	ID        int64
+	SetNumber int16
+	Reps      int16
+	Weight    *float64
+	UserID    int64
 }
 
 type CreateSetRow struct {
@@ -83,10 +92,11 @@ type CreateSetRow struct {
 
 func (q *Queries) CreateSet(ctx context.Context, arg CreateSetParams) (CreateSetRow, error) {
 	row := q.db.QueryRow(ctx, createSet,
-		arg.GymVisitExerciseID,
+		arg.ID,
 		arg.SetNumber,
 		arg.Reps,
 		arg.Weight,
+		arg.UserID,
 	)
 	var i CreateSetRow
 	err := row.Scan(
@@ -122,11 +132,18 @@ func (q *Queries) DeleteExercise(ctx context.Context, arg DeleteExerciseParams) 
 }
 
 const deleteExerciseSets = `-- name: DeleteExerciseSets :exec
-DELETE FROM gym_exercise_sets WHERE gym_visit_exercise_id=$1
+DELETE FROM gym_exercise_sets s USING gym_visit_exercises e, gym_visits v
+WHERE s.gym_visit_exercise_id=$1 AND e.id=s.gym_visit_exercise_id
+  AND v.id=e.gym_visit_id AND v.user_id=$2
 `
 
-func (q *Queries) DeleteExerciseSets(ctx context.Context, gymVisitExerciseID int64) error {
-	_, err := q.db.Exec(ctx, deleteExerciseSets, gymVisitExerciseID)
+type DeleteExerciseSetsParams struct {
+	GymVisitExerciseID int64
+	UserID             int64
+}
+
+func (q *Queries) DeleteExerciseSets(ctx context.Context, arg DeleteExerciseSetsParams) error {
+	_, err := q.db.Exec(ctx, deleteExerciseSets, arg.GymVisitExerciseID, arg.UserID)
 	return err
 }
 
@@ -213,8 +230,14 @@ const listExercises = `-- name: ListExercises :many
 SELECT e.id, e.name, e.exercise_catalog_id, c.name AS catalog_name, c.equipment, c.data
 FROM gym_visit_exercises e
 LEFT JOIN exercise_catalog c ON c.id = e.exercise_catalog_id
-WHERE e.gym_visit_id=$1 ORDER BY e.id ASC
+JOIN gym_visits v ON v.id=e.gym_visit_id
+WHERE e.gym_visit_id=$1 AND v.user_id=$2 ORDER BY e.id ASC
 `
+
+type ListExercisesParams struct {
+	GymVisitID int64
+	UserID     int64
+}
 
 type ListExercisesRow struct {
 	ID                int64
@@ -225,8 +248,8 @@ type ListExercisesRow struct {
 	Data              []byte
 }
 
-func (q *Queries) ListExercises(ctx context.Context, gymVisitID int64) ([]ListExercisesRow, error) {
-	rows, err := q.db.Query(ctx, listExercises, gymVisitID)
+func (q *Queries) ListExercises(ctx context.Context, arg ListExercisesParams) ([]ListExercisesRow, error) {
+	rows, err := q.db.Query(ctx, listExercises, arg.GymVisitID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -253,8 +276,16 @@ func (q *Queries) ListExercises(ctx context.Context, gymVisitID int64) ([]ListEx
 }
 
 const listSets = `-- name: ListSets :many
-SELECT id,set_number,reps,weight FROM gym_exercise_sets WHERE gym_visit_exercise_id=$1 ORDER BY set_number ASC
+SELECT s.id,s.set_number,s.reps,s.weight FROM gym_exercise_sets s
+JOIN gym_visit_exercises e ON e.id=s.gym_visit_exercise_id
+JOIN gym_visits v ON v.id=e.gym_visit_id
+WHERE s.gym_visit_exercise_id=$1 AND v.user_id=$2 ORDER BY s.set_number ASC
 `
+
+type ListSetsParams struct {
+	GymVisitExerciseID int64
+	UserID             int64
+}
 
 type ListSetsRow struct {
 	ID        int64
@@ -263,8 +294,8 @@ type ListSetsRow struct {
 	Weight    *float64
 }
 
-func (q *Queries) ListSets(ctx context.Context, gymVisitExerciseID int64) ([]ListSetsRow, error) {
-	rows, err := q.db.Query(ctx, listSets, gymVisitExerciseID)
+func (q *Queries) ListSets(ctx context.Context, arg ListSetsParams) ([]ListSetsRow, error) {
+	rows, err := q.db.Query(ctx, listSets, arg.GymVisitExerciseID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}

@@ -45,36 +45,43 @@ func (q *Queries) CreateFuelFillup(ctx context.Context, arg CreateFuelFillupPara
 
 const createFuelItem = `-- name: CreateFuelItem :exec
 INSERT INTO vehicle_fuel_items (fillup_id,fuel_type,fill_type,quantity,unit_price,total_cost)
-VALUES ($1,$2,$3,$4,$5,$6)
+SELECT f.id,$2,$3,$4,$5,$6 FROM vehicle_fuel_fillups f WHERE f.id=$1 AND f.user_id=$7
 `
 
 type CreateFuelItemParams struct {
-	FillupID  int64
+	ID        int64
 	FuelType  string
 	FillType  string
 	Quantity  float64
 	UnitPrice float64
 	TotalCost float64
+	UserID    int64
 }
 
 func (q *Queries) CreateFuelItem(ctx context.Context, arg CreateFuelItemParams) error {
 	_, err := q.db.Exec(ctx, createFuelItem,
-		arg.FillupID,
+		arg.ID,
 		arg.FuelType,
 		arg.FillType,
 		arg.Quantity,
 		arg.UnitPrice,
 		arg.TotalCost,
+		arg.UserID,
 	)
 	return err
 }
 
 const deleteFuelItems = `-- name: DeleteFuelItems :exec
-DELETE FROM vehicle_fuel_items WHERE fillup_id=$1
+DELETE FROM vehicle_fuel_items i USING vehicle_fuel_fillups f WHERE i.fillup_id=$1 AND f.id=i.fillup_id AND f.user_id=$2
 `
 
-func (q *Queries) DeleteFuelItems(ctx context.Context, fillupID int64) error {
-	_, err := q.db.Exec(ctx, deleteFuelItems, fillupID)
+type DeleteFuelItemsParams struct {
+	FillupID int64
+	UserID   int64
+}
+
+func (q *Queries) DeleteFuelItems(ctx context.Context, arg DeleteFuelItemsParams) error {
+	_, err := q.db.Exec(ctx, deleteFuelItems, arg.FillupID, arg.UserID)
 	return err
 }
 
@@ -193,7 +200,7 @@ func (q *Queries) LockFuelFillup(ctx context.Context, arg LockFuelFillupParams) 
 }
 
 const updateFuelFillup = `-- name: UpdateFuelFillup :exec
-UPDATE vehicle_fuel_fillups SET odometer_km=$1,filled_at=$2,station_name=$3,notes=$4 WHERE id=$5
+UPDATE vehicle_fuel_fillups SET odometer_km=$1,filled_at=$2,station_name=$3,notes=$4 WHERE id=$5 AND user_id=$6
 `
 
 type UpdateFuelFillupParams struct {
@@ -202,6 +209,7 @@ type UpdateFuelFillupParams struct {
 	StationName sql.NullString
 	Notes       pgtype.Text
 	ID          int64
+	UserID      int64
 }
 
 func (q *Queries) UpdateFuelFillup(ctx context.Context, arg UpdateFuelFillupParams) error {
@@ -211,6 +219,7 @@ func (q *Queries) UpdateFuelFillup(ctx context.Context, arg UpdateFuelFillupPara
 		arg.StationName,
 		arg.Notes,
 		arg.ID,
+		arg.UserID,
 	)
 	return err
 }

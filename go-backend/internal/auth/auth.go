@@ -22,6 +22,7 @@ func ExtractSessionToken(r *http.Request) string {
 		if strings.HasPrefix(strings.ToLower(authHeader), "bearer ") {
 			return strings.TrimSpace(authHeader[7:])
 		}
+		return ""
 	}
 	if token := r.Header.Get("X-Session-Token"); token != "" {
 		return strings.TrimSpace(token)

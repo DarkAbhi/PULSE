@@ -1,25 +1,16 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { apiFetch } from "@/app/lib/server-api";
 import { revalidatePath } from "next/cache";
 
 const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
   "http://localhost:8080";
 
-async function getAuthHeader() {
-  const cookieStore = await cookies();
-  return {
-    Cookie: cookieStore.toString(),
-  };
-}
-
 export async function dismissNotification(notificationID: number) {
   try {
-    const headers = await getAuthHeader();
-    const response = await fetch(`${apiBaseURL}/api/notifications/${notificationID}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/notifications/${notificationID}`, {
       method: "DELETE",
-      headers,
     });
     if (!response.ok) {
       return { ok: false, error: "We couldn't dismiss that notification. Please try again." };
@@ -34,10 +25,8 @@ export async function dismissNotification(notificationID: number) {
 
 export async function clearAllNotifications() {
   try {
-    const headers = await getAuthHeader();
-    const response = await fetch(`${apiBaseURL}/api/notifications`, {
+    const response = await apiFetch(`${apiBaseURL}/api/notifications`, {
       method: "DELETE",
-      headers,
     });
     if (!response.ok) {
       return { ok: false, error: "We couldn't clear your notifications. Please try again." };

@@ -29,7 +29,7 @@ type store interface {
 	DeleteExercise(context.Context, int64, int64, int64) (bool, error)
 	UpdateExercise(context.Context, int64, int64, int64, createExerciseBody) error
 	HasVisit(context.Context, int64, int64) (bool, error)
-	ListExercises(context.Context, int64) ([]exerciseDTO, error)
+	ListExercises(context.Context, int64, int64) ([]exerciseDTO, error)
 	CreateExercises(context.Context, int64, int64, []createExerciseBody) ([]exerciseDTO, error)
 	SearchCatalog(context.Context, int64, string) ([]catalogCandidate, error)
 	GetCatalogExercise(context.Context, string) (catalogExercise, error)
@@ -153,7 +153,7 @@ func (s *Service) ListExercises(ctx context.Context, userID, visitID int64) ([]e
 	if !hasVisit {
 		return nil, ErrVisitNotFound
 	}
-	items, err := s.store.ListExercises(ctx, visitID)
+	items, err := s.store.ListExercises(ctx, userID, visitID)
 	if err != nil {
 		return nil, fmt.Errorf("list gym exercises: %w", err)
 	}

@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { apiFetch } from "@/app/lib/server-api";
 import { revalidatePath } from "next/cache";
 
 const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
@@ -31,19 +31,10 @@ export interface SaveMaintenancePayload {
 
 import { SaveTirePressurePayload } from "./types";
 
-async function getAuthHeader() {
-  const cookieStore = await cookies();
-  return {
-    Cookie: cookieStore.toString(),
-  };
-}
-
 export async function deleteVehicle(vehicleId: string) {
   try {
-    const headers = await getAuthHeader();
-    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/vehicles/${vehicleId}`, {
       method: "DELETE",
-      headers,
     });
     if (!response.ok) {
       return { ok: false, error: "We couldn't delete this vehicle. Please try again." };
@@ -57,10 +48,8 @@ export async function deleteVehicle(vehicleId: string) {
 
 export async function deleteFuelFill(vehicleId: string, recordId: number) {
   try {
-    const headers = await getAuthHeader();
-    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}/fuel-fillups/${recordId}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/vehicles/${vehicleId}/fuel-fillups/${recordId}`, {
       method: "DELETE",
-      headers,
     });
     if (!response.ok) {
       return { ok: false, error: "We couldn't delete that record." };
@@ -74,10 +63,8 @@ export async function deleteFuelFill(vehicleId: string, recordId: number) {
 
 export async function deleteAirFill(vehicleId: string, recordId: number) {
   try {
-    const headers = await getAuthHeader();
-    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}/air-fills/${recordId}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/vehicles/${vehicleId}/air-fills/${recordId}`, {
       method: "DELETE",
-      headers,
     });
     if (!response.ok) {
       return { ok: false, error: "We couldn't delete that record." };
@@ -91,16 +78,14 @@ export async function deleteAirFill(vehicleId: string, recordId: number) {
 
 export async function saveFuelFill(vehicleId: string, fuelFillId: number, payload: SaveFuelPayload) {
   try {
-    const headers = await getAuthHeader();
-    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}/fuel-fillups/${fuelFillId}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/vehicles/${vehicleId}/fuel-fillups/${fuelFillId}`, {
       method: "PUT",
       headers: {
-        ...headers,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     });
-    
+
     if (!response.ok) {
       const body = await response.json() as { error?: string };
       return { ok: false, error: body.error ?? "We couldn't save this fuel entry." };
@@ -122,11 +107,10 @@ export async function updateMaintenanceRecord(vehicleId: string, recordId: numbe
 
 async function saveMaintenanceRecord(vehicleId: string, payload: SaveMaintenancePayload, method: "POST" | "PUT", recordId?: number) {
   try {
-    const headers = await getAuthHeader();
     const suffix = recordId ? `/${recordId}` : "";
-    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records${suffix}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records${suffix}`, {
       method,
-      headers: { ...headers, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     const body = await response.json().catch(() => ({}));
@@ -140,8 +124,7 @@ async function saveMaintenanceRecord(vehicleId: string, payload: SaveMaintenance
 
 export async function deleteMaintenanceRecord(vehicleId: string, recordId: number) {
   try {
-    const headers = await getAuthHeader();
-    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${recordId}`, { method: "DELETE", headers });
+    const response = await apiFetch(`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${recordId}`, { method: "DELETE" });
     if (!response.ok) return { ok: false, error: "We couldn't delete that record." };
     revalidatePath(`/garage/${vehicleId}`);
     return { ok: true };
@@ -155,11 +138,9 @@ export async function saveTirePressure(
   payload: SaveTirePressurePayload
 ) {
   try {
-    const headers = await getAuthHeader();
-    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleId}/tire-pressure`, {
+    const response = await apiFetch(`${apiBaseURL}/api/vehicles/${vehicleId}/tire-pressure`, {
       method: "PUT",
       headers: {
-        ...headers,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),

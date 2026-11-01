@@ -3,9 +3,9 @@ SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
        t.subscription_id, s.name AS subscription_name, t.notes, t.created_at
 FROM financial_horizon_transactions t
-LEFT JOIN financial_horizon_categories c ON t.category_id = c.id
-LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id
-LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id
+LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
+LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
+LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id AND s.user_id = t.user_id
 WHERE t.user_id = $1
 ORDER BY t.transaction_date DESC, t.id DESC LIMIT $2;
 
@@ -14,8 +14,8 @@ SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
        NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at
 FROM financial_horizon_transactions t
-LEFT JOIN financial_horizon_categories c ON t.category_id = c.id
-LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id
+LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
+LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
 WHERE t.user_id = $1
 ORDER BY t.transaction_date DESC, t.id DESC LIMIT $2;
 
@@ -30,9 +30,9 @@ SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
        t.subscription_id, s.name AS subscription_name, t.notes, t.created_at
 FROM financial_horizon_transactions t
-LEFT JOIN financial_horizon_categories c ON t.category_id = c.id
-LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id
-LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id
+LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
+LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
+LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id AND s.user_id = t.user_id
 WHERE t.user_id = $1
   AND ($2::text = '' OR t.type = $2)
   AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3)
@@ -43,15 +43,15 @@ SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
        NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at
 FROM financial_horizon_transactions t
-LEFT JOIN financial_horizon_categories c ON t.category_id = c.id
-LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id
+LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
+LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
 WHERE t.user_id = $1
   AND ($2::text = '' OR t.type = $2)
   AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3)
 ORDER BY t.transaction_date DESC, t.id DESC LIMIT $4 OFFSET $5;
 
 -- name: GetUserCategoryName :one
-SELECT name FROM financial_horizon_categories WHERE id = $1 AND (user_id IS NULL OR user_id = $2);
+SELECT name FROM financial_horizon_categories WHERE id = $1 AND ((user_id IS NULL AND is_default) OR user_id = $2);
 
 -- name: CreateTransaction :one
 INSERT INTO financial_horizon_transactions (user_id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes)

@@ -1,5 +1,5 @@
+import { apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -24,15 +24,12 @@ type Vehicle = {
 };
 
 export default async function GaragePage() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   // Validate session on the server
   let sessionResponse: Response | null = null;
   let error = "";
   try {
-    sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
-      headers: { Cookie: cookieHeader }, signal: AbortSignal.timeout(10_000),
+    sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`, {
+      signal: AbortSignal.timeout(10_000),
     });
   } catch {
     error = "We couldn't reach the server. Please try again.";
@@ -44,11 +41,8 @@ export default async function GaragePage() {
   let vehicles: Vehicle[] = [];
   if (!error) {
     try {
-      const vehiclesResponse = await fetch(`${apiBaseURL}/api/vehicles`, {
-        headers: {
-          Cookie: cookieHeader,
-        },
-        signal: AbortSignal.timeout(10_000),
+      const vehiclesResponse = await apiFetch(`${apiBaseURL}/api/vehicles`, {
+       signal: AbortSignal.timeout(10_000),
       });
       if (!vehiclesResponse.ok) {
         error = "We couldn't load your vehicles. Please try again.";

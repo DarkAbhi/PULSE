@@ -85,13 +85,12 @@ func TestGetWorkoutDetails(t *testing.T) {
 			t.Fatalf("unexpected nullable calories: %+v", detail)
 		}
 	})
-	t.Run("other user's linked workout is hidden", func(t *testing.T) {
-		if _, err := db.Exec(`UPDATE fitness_workouts SET user_id=$1 WHERE id=$2`, otherUserID, workoutID); err != nil {
-			t.Fatal(err)
+	t.Run("linked workout cannot change owners", func(t *testing.T) {
+		if _, err := db.Exec(`UPDATE fitness_workouts SET user_id=$1 WHERE id=$2`, otherUserID, workoutID); err == nil {
+			t.Fatal("cross-user workout link was accepted")
 		}
-		detail := decode(linkedVisitID)
-		if detail.StartTime != nil || detail.EndTime != nil || detail.DurationSeconds != nil || detail.CaloriesBurned != nil || detail.SyncedFromAppleWatch {
-			t.Fatalf("other user's metrics exposed: %+v", detail)
+		if detail := decode(linkedVisitID); !detail.SyncedFromAppleWatch {
+			t.Fatal("rejected owner change modified the workout link")
 		}
 	})
 	t.Run("other user's visit is not found", func(t *testing.T) {

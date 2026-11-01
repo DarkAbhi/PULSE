@@ -28,13 +28,14 @@ pub struct FitnessSnapshot {
     pub steps_count: i32,
 }
 
-pub async fn latest(pool: &PgPool) -> Result<Option<FitnessSnapshot>, sqlx::Error> {
+pub async fn latest(pool: &PgPool, user_id: i64) -> Result<Option<FitnessSnapshot>, sqlx::Error> {
     sqlx::query_as(
         "SELECT summary_date, updated_at, move_calories::double precision AS move_calories, \
          move_calories_goal::double precision AS move_calories_goal, exercise_minutes, \
          exercise_minutes_goal, stand_hours, stand_hours_goal, steps_count \
-         FROM fitness_activity_rings ORDER BY summary_date DESC LIMIT 1",
+         FROM fitness_activity_rings WHERE user_id = $1 ORDER BY summary_date DESC LIMIT 1",
     )
+    .bind(user_id)
     .fetch_optional(pool)
     .await
 }

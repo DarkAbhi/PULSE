@@ -103,6 +103,10 @@ func (h *DeductionsHandler) CreateDeduction(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	if !referencesAccessible(w, r, query.New(h.DB), user.ID, nil, in.BudgetID, nil, nil) {
+		return
+	}
+
 	in.Name = strings.TrimSpace(in.Name)
 	if in.Name == "" || len([]rune(in.Name)) > 160 {
 		webutil.BadRequest(w, "name is required and must be under 160 characters")
@@ -178,6 +182,10 @@ func (h *DeductionsHandler) UpdateDeduction(w http.ResponseWriter, r *http.Reque
 	var in DeductionInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
 		webutil.BadRequest(w, "invalid json")
+		return
+	}
+
+	if !referencesAccessible(w, r, query.New(h.DB), user.ID, nil, in.BudgetID, nil, nil) {
 		return
 	}
 

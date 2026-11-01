@@ -317,7 +317,7 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 		if row.Notes.Valid {
 			fill.Notes = &row.Notes.String
 		}
-		rows, err := q.ListFuelItems(r.Context(), fill.ID)
+		rows, err := q.ListFuelItems(r.Context(), query.ListFuelItemsParams{FillupID: fill.ID, UserID: user.ID})
 		if err != nil {
 			webutil.ServerError(w, err)
 			return

@@ -1,6 +1,6 @@
+import { apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { getUserTimeZone } from "@/app/lib/user-time-zone";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Watch } from "lucide-react";
@@ -60,15 +60,8 @@ export default async function GymVisitPage({ params }: PageProps) {
 
   const { id: visitID } = await params;
 
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   // Validate session on the server
-  const sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
+  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
   if (!sessionResponse.ok) {
     redirect("/");
   }
@@ -82,16 +75,8 @@ export default async function GymVisitPage({ params }: PageProps) {
 
   try {
     const [exercisesResponse, visitResponse] = await Promise.all([
-      fetch(`${apiBaseURL}/api/gym-visits/${visitID}/exercises`, {
-        headers: {
-          Cookie: cookieHeader,
-        },
-      }),
-      fetch(`${apiBaseURL}/api/fitness-workouts/${visitID}`, {
-        headers: {
-          Cookie: cookieHeader,
-        },
-      }),
+      apiFetch(`${apiBaseURL}/api/gym-visits/${visitID}/exercises`),
+      apiFetch(`${apiBaseURL}/api/fitness-workouts/${visitID}`),
     ]);
     visitNotFound = exercisesResponse.status === 404 || visitResponse.status === 404;
     if (!exercisesResponse.ok) {

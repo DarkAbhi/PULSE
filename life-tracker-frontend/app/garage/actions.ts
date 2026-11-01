@@ -1,7 +1,7 @@
 "use server";
 
+import { apiFetch } from "@/app/lib/server-api";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 
 const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
 
@@ -16,17 +16,13 @@ export async function saveVehicleAction(
     fuel_types: string[];
   },
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${apiBaseURL}/api/vehicles${id ? `/${id}` : ""}`,
       {
         method: id ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
-          Cookie: cookieHeader,
         },
         body: JSON.stringify(data),
       },
@@ -64,11 +60,10 @@ export async function catalogOptionsAction(
     return { ok: false, error: "Invalid catalog request." };
   const params = new URLSearchParams({ kind, make_slug: make, q });
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${apiBaseURL}/api/vehicle-catalog/${resource}?${params}`,
       {
-        headers: { Cookie: (await cookies()).toString() },
-        signal: AbortSignal.timeout(10_000),
+       signal: AbortSignal.timeout(10_000),
         cache: "no-store",
       },
     );
@@ -87,15 +82,9 @@ export async function catalogOptionsAction(
 }
 
 export async function deleteVehicleAction(vehicleID: number | string) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/vehicles/${vehicleID}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/vehicles/${vehicleID}`, {
       method: "DELETE",
-      headers: {
-        Cookie: cookieHeader,
-      },
     });
 
     if (!response.ok) {
@@ -116,17 +105,11 @@ export async function deleteVehicleAction(vehicleID: number | string) {
 }
 
 export async function markAirFillAction(vehicleID: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${apiBaseURL}/api/vehicles/${vehicleID}/air-fills`,
       {
         method: "POST",
-        headers: {
-          Cookie: cookieHeader,
-        },
       },
     );
 
@@ -165,17 +148,13 @@ export async function saveFuelAction(
     }>;
   },
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${apiBaseURL}/api/vehicles/${vehicleID}/fuel-fillups`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Cookie: cookieHeader,
         },
         body: JSON.stringify(data),
       },

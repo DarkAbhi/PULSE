@@ -5,7 +5,7 @@ mod fitness_input;
 mod fitness_rings;
 
 use axum::{
-    Json, Router,
+    Extension, Json, Router,
     extract::State,
     http::StatusCode,
     middleware,
@@ -30,7 +30,8 @@ struct FitnessData {
 }
 
 pub fn router(state: AppState, metrics: std::sync::Arc<Metrics>) -> Router {
-    let fitness_writes = Router::<AppState>::new()
+    let fitness_routes = Router::<AppState>::new()
+        .route("/api/fitness-summary", get(fitness_summary))
         .route("/api/shortcut/fitness-rings", post(fitness_rings::create))
         .route(
             "/api/fitness-activity-rings",
@@ -45,8 +46,7 @@ pub fn router(state: AppState, metrics: std::sync::Arc<Metrics>) -> Router {
         .route("/healthz", get(liveness))
         .route("/api/version", get(pulse_version))
         .route("/readyz", get(readyz))
-        .route("/api/fitness-summary", get(fitness_summary))
-        .merge(fitness_writes)
+        .merge(fitness_routes)
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .layer(middleware::from_fn_with_state(metrics, metrics::observe))
@@ -64,10 +64,13 @@ async fn liveness() -> Json<Value> {
     Json(json!({ "status": "ok" }))
 }
 
-async fn fitness_summary(State(state): State<AppState>) -> Result<Json<FitnessData>, AppError> {
+async fn fitness_summary(
+    State(state): State<AppState>,
+    Extension(auth::ApiKeyUser(user_id)): Extension<auth::ApiKeyUser>,
+) -> Result<Json<FitnessData>, AppError> {
     let (snapshot, workouts) = tokio::try_join!(
-        activity_rings::latest(&state.pool),
-        workouts::latest_relevant(&state.pool),
+        activity_rings::latest(&state.pool, user_id),
+        workouts::latest_relevant(&state.pool, user_id),
     )?;
     Ok(Json(FitnessData { snapshot, workouts }))
 }
@@ -127,8 +130,8 @@ mod tests {
             ),
             (
                 "/api/fitness-summary",
-                "500 Internal Server Error",
-                "{\"error\":\"internal server error\"}",
+                "401 Unauthorized",
+                "{\"error\":\"unauthorized\"}",
             ),
         ] {
             let mut stream = TcpStream::connect(address).await.unwrap();
@@ -237,10 +240,45 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(workout_owner, owner);
+        let other_owner: i64 = sqlx::query_scalar("INSERT INTO users (username, password_hash) VALUES ('summary-other-owner', 'unused') RETURNING id")
+            .fetch_one(&pool).await.unwrap();
+        let other_hash = format!("{:x}", Sha256::digest(b"lt_summary_other"));
+        sqlx::query("INSERT INTO api_keys (user_id, name, token_hash, token_prefix) VALUES ($1, 'other', $2, 'lt_summary')")
+            .bind(other_owner).bind(other_hash).execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO fitness_activity_rings (user_id, summary_date, steps_count) VALUES ($1, '2027-01-01', 123)")
+            .bind(other_owner).execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO fitness_workouts (user_id, uuid, activity_type_id, start_time, end_time, duration_seconds) SELECT $1, '00000000-0000-0000-0000-000000000001', activity_type_id, '2027-01-01T00:00:00Z', '2027-01-01T00:01:00Z', 60 FROM fitness_workouts LIMIT 1")
+            .bind(other_owner).execute(&pool).await.unwrap();
+        for (token, date, steps, duration) in [
+            ("lt_route_test", "2026-07-27", i32::MAX, 9_999_999.999),
+            ("lt_summary_other", "2027-01-01", 123, 60.0),
+        ] {
+            let mut stream = TcpStream::connect(address).await.unwrap();
+            stream.write_all(format!("GET /api/fitness-summary HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer {token}\r\nConnection: close\r\n\r\n").as_bytes()).await.unwrap();
+            let mut response = Vec::new();
+            stream.read_to_end(&mut response).await.unwrap();
+            let response = String::from_utf8(response).unwrap();
+            assert!(response.starts_with("HTTP/1.1 200"), "{response}");
+            let (_, body) = response.split_once("\r\n\r\n").unwrap();
+            let body: serde_json::Value = serde_json::from_str(body).unwrap();
+            assert_eq!(body["snapshot"]["summary_date"], date);
+            assert_eq!(body["snapshot"]["steps_count"], steps);
+            assert_eq!(body["workouts"].as_array().unwrap().len(), 1);
+            assert_eq!(body["workouts"][0]["duration_seconds"], duration);
+        }
         sqlx::query("UPDATE api_keys SET revoked_at = NOW()")
             .execute(&pool)
             .await
             .unwrap();
+        let mut stream = TcpStream::connect(address).await.unwrap();
+        stream.write_all(b"GET /api/fitness-summary HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer lt_route_test\r\nConnection: close\r\n\r\n").await.unwrap();
+        let mut response = Vec::new();
+        stream.read_to_end(&mut response).await.unwrap();
+        assert!(
+            String::from_utf8(response)
+                .unwrap()
+                .starts_with("HTTP/1.1 401")
+        );
         let mut stream = TcpStream::connect(address).await.unwrap();
         stream.write_all(b"POST /api/shortcut/fitness-rings HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer lt_route_test\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{}").await.unwrap();
         let mut response = Vec::new();

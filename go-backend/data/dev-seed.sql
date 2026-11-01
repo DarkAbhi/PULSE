@@ -17,18 +17,18 @@ COMMIT;
 \quit
 \endif
 DO $$ BEGIN
-    IF NOT EXISTS (SELECT FROM schema_migrations WHERE version = 28 AND NOT dirty) THEN
+    IF NOT EXISTS (SELECT FROM schema_migrations WHERE version = 30 AND NOT dirty) THEN
         RAISE EXCEPTION 'Seed schema version mismatch; regenerate the development seed';
     END IF;
 END $$;
 TRUNCATE public.api_keys, public.credit_cards, public.exercise_aliases, public.financial_horizon_budgets, public.financial_horizon_categories, public.financial_horizon_configs, public.financial_horizon_deductions, public.financial_horizon_subscriptions, public.financial_horizon_transactions, public.fitness_activity_rings, public.fitness_workouts, public.gym_exercise_sets, public.gym_visit_exercises, public.gym_visits, public.meal_plans, public.meal_times, public.meditations, public.next_month_purchases, public.notifications, public.sports, public.user_profiles, public.user_sessions, public.users, public.vehicle_air_fills, public.vehicle_fuel_fillups, public.vehicle_fuel_items, public.vehicle_maintenance_attachments, public.vehicle_maintenance_records, public.vehicles, public.workout_activity_types RESTART IDENTITY;
-COPY public.credit_cards (id, name, link, created_at, updated_at) FROM stdin;
-\.
-SELECT setval(pg_get_serial_sequence('public.credit_cards', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.credit_cards;
 COPY public.users (id, username, password_hash, created_at, updated_at) FROM stdin;
 1	admin	$2y$12$bB7WwVq7nGJ4cfNTCX6kQODcNRLQvMjRhIFuH4Qv2.GAxlqNac4/S	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30
 \.
 SELECT setval(pg_get_serial_sequence('public.users', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.users;
+COPY public.credit_cards (id, name, link, created_at, updated_at, user_id) FROM stdin;
+\.
+SELECT setval(pg_get_serial_sequence('public.credit_cards', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.credit_cards;
 COPY public.workout_activity_types (id, raw_value, name, created_at) FROM stdin;
 1	52	Walking	2025-11-26 08:00:00+05:30
 2	37	Running	2025-11-26 08:00:00+05:30
@@ -36,14 +36,14 @@ COPY public.workout_activity_types (id, raw_value, name, created_at) FROM stdin;
 3	50	Traditional Strength Training	2025-11-26 08:00:00+05:30
 \.
 SELECT setval(pg_get_serial_sequence('public.workout_activity_types', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.workout_activity_types;
-COPY public.meditations (id, created_at, updated_at) FROM stdin;
-1	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30
+COPY public.meditations (id, created_at, updated_at, user_id) FROM stdin;
+1	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30	1
 \.
 SELECT setval(pg_get_serial_sequence('public.meditations', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.meditations;
-COPY public.sports (id, name, created_at, updated_at) FROM stdin;
-1	cricket	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30
-2	football	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30
-3	badminton	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30
+COPY public.sports (id, name, created_at, updated_at, user_id) FROM stdin;
+1	cricket	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30	1
+2	football	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30	1
+3	badminton	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30	1
 \.
 SELECT setval(pg_get_serial_sequence('public.sports', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.sports;
 COPY public.exercise_aliases (user_id, normalized_alias, exercise_catalog_id) FROM stdin;

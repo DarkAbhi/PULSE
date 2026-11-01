@@ -1,20 +1,16 @@
 "use server";
 
+import { apiFetch } from "@/app/lib/server-api";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 
 const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
 
 export async function saveNameAction(name: string) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/profile`, {
+    const response = await apiFetch(`${apiBaseURL}/api/profile`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({ name }),
     });
@@ -36,17 +32,11 @@ export async function saveNameAction(name: string) {
 }
 
 export async function dismissNotificationAction(notificationID: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${apiBaseURL}/api/notifications/${notificationID}`,
       {
         method: "DELETE",
-        headers: {
-          Cookie: cookieHeader,
-        },
       },
     );
 

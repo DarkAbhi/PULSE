@@ -268,6 +268,10 @@ func (h *TransactionsHandler) CreateTransaction(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	if !referencesAccessible(w, r, query.New(h.DB), user.ID, in.CategoryID, in.BudgetID, nil, in.SubscriptionID) {
+		return
+	}
+
 	in.Name = strings.TrimSpace(in.Name)
 	if in.Name == "" || len([]rune(in.Name)) > 255 {
 		webutil.BadRequest(w, "transaction name is required and must be under 255 characters")
@@ -377,6 +381,9 @@ func (h *TransactionsHandler) BulkCreateTransactions(w http.ResponseWriter, r *h
 	createdItems := make([]TransactionDTO, 0, len(inputs))
 
 	for _, in := range inputs {
+		if !referencesAccessible(w, r, q, user.ID, in.CategoryID, in.BudgetID, nil, in.SubscriptionID) {
+			return
+		}
 		in.Name = strings.TrimSpace(in.Name)
 		if in.Name == "" || len([]rune(in.Name)) > 255 {
 			webutil.BadRequest(w, "transaction name is required and must be under 255 characters")
@@ -466,6 +473,10 @@ func (h *TransactionsHandler) UpdateTransaction(w http.ResponseWriter, r *http.R
 	var in TransactionInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
 		webutil.BadRequest(w, "invalid json")
+		return
+	}
+
+	if !referencesAccessible(w, r, query.New(h.DB), user.ID, in.CategoryID, in.BudgetID, nil, in.SubscriptionID) {
 		return
 	}
 

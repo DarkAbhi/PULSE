@@ -18,11 +18,17 @@ func TestVehicleCatalogUpgradeAndRepair(t *testing.T) {
 	defer stop()
 	// The disposable database starts at the current version. Return to the
 	// pre-catalog schema and insert a vehicle exactly as an old installation did.
-	if err := db.RollbackMigration(dsn); err != nil {
-		t.Fatal(err)
-	}
-	if err := db.RollbackMigration(dsn); err != nil {
-		t.Fatal(err)
+	for {
+		var version int
+		if err := database.QueryRow(`SELECT version FROM schema_migrations`).Scan(&version); err != nil {
+			t.Fatal(err)
+		}
+		if version == 26 {
+			break
+		}
+		if err := db.RollbackMigration(dsn); err != nil {
+			t.Fatal(err)
+		}
 	}
 	if _, err := database.Exec(`INSERT INTO vehicles (name,user_id,vehicle_type,fuel_types)
         VALUES ('Existing nickname',1,'four_wheeler',ARRAY['diesel'])`); err != nil {

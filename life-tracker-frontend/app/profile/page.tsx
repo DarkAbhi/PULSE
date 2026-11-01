@@ -1,5 +1,5 @@
+import { apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -27,27 +27,15 @@ type ProfileResponse = {
 };
 
 export default async function ProfilePage() {
-  // Forward cookies from incoming request to backend for auth/session validation
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   // Validate session on the server
-  const sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
+  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
   if (!sessionResponse.ok) {
     redirect("/");
   }
   const session = (await sessionResponse.json()) as { username: string };
 
   // Fetch profile on the server
-  const profileResponse = await fetch(`${apiBaseURL}/api/profile`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
+  const profileResponse = await apiFetch(`${apiBaseURL}/api/profile`);
   if (!profileResponse.ok) {
     redirect("/");
   }

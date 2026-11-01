@@ -93,7 +93,7 @@ func (h *Handler) CreateFuelFillup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, item := range in.Items {
-		if err := q.CreateFuelItem(r.Context(), query.CreateFuelItemParams{FillupID: fillupID, FuelType: item.FuelType, FillType: item.FillType, Quantity: *item.Quantity, UnitPrice: *item.UnitPrice, TotalCost: *item.TotalCost}); err != nil {
+		if err := q.CreateFuelItem(r.Context(), query.CreateFuelItemParams{ID: fillupID, UserID: user.ID, FuelType: item.FuelType, FillType: item.FillType, Quantity: *item.Quantity, UnitPrice: *item.UnitPrice, TotalCost: *item.TotalCost}); err != nil {
 			webutil.ServerError(w, err)
 			return
 		}
@@ -162,16 +162,16 @@ func (h *Handler) UpdateFuelFillup(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
-	if err := q.UpdateFuelFillup(r.Context(), query.UpdateFuelFillupParams{OdometerKm: in.OdometerKM, FilledAt: pgtype.Timestamptz{Time: filledAt, Valid: true}, StationName: nullableString(in.StationName), Notes: nullableText(in.Notes), ID: fillupID}); err != nil {
+	if err := q.UpdateFuelFillup(r.Context(), query.UpdateFuelFillupParams{OdometerKm: in.OdometerKM, FilledAt: pgtype.Timestamptz{Time: filledAt, Valid: true}, StationName: nullableString(in.StationName), Notes: nullableText(in.Notes), ID: fillupID, UserID: user.ID}); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
-	if err := q.DeleteFuelItems(r.Context(), fillupID); err != nil {
+	if err := q.DeleteFuelItems(r.Context(), query.DeleteFuelItemsParams{FillupID: fillupID, UserID: user.ID}); err != nil {
 		webutil.ServerError(w, err)
 		return
 	}
 	for _, item := range in.Items {
-		if err := q.CreateFuelItem(r.Context(), query.CreateFuelItemParams{FillupID: fillupID, FuelType: item.FuelType, FillType: item.FillType, Quantity: *item.Quantity, UnitPrice: *item.UnitPrice, TotalCost: *item.TotalCost}); err != nil {
+		if err := q.CreateFuelItem(r.Context(), query.CreateFuelItemParams{ID: fillupID, UserID: user.ID, FuelType: item.FuelType, FillType: item.FillType, Quantity: *item.Quantity, UnitPrice: *item.UnitPrice, TotalCost: *item.TotalCost}); err != nil {
 			webutil.ServerError(w, err)
 			return
 		}

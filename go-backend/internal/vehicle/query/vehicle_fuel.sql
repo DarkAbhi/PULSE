@@ -10,16 +10,16 @@ FROM vehicles v WHERE v.id=sqlc.arg(vehicle_id)::bigint AND v.user_id=sqlc.arg(u
 
 -- name: CreateFuelItem :exec
 INSERT INTO vehicle_fuel_items (fillup_id,fuel_type,fill_type,quantity,unit_price,total_cost)
-VALUES ($1,$2,$3,$4,$5,$6);
+SELECT f.id,$2,$3,$4,$5,$6 FROM vehicle_fuel_fillups f WHERE f.id=$1 AND f.user_id=$7;
 
 -- name: LockFuelFillup :one
 SELECT 1 FROM vehicle_fuel_fillups WHERE id=$1 AND vehicle_id=$2 AND user_id=$3 FOR UPDATE;
 
 -- name: UpdateFuelFillup :exec
-UPDATE vehicle_fuel_fillups SET odometer_km=$1,filled_at=$2,station_name=$3,notes=$4 WHERE id=$5;
+UPDATE vehicle_fuel_fillups SET odometer_km=$1,filled_at=$2,station_name=$3,notes=$4 WHERE id=$5 AND user_id=$6;
 
 -- name: DeleteFuelItems :exec
-DELETE FROM vehicle_fuel_items WHERE fillup_id=$1;
+DELETE FROM vehicle_fuel_items i USING vehicle_fuel_fillups f WHERE i.fillup_id=$1 AND f.id=i.fillup_id AND f.user_id=$2;
 
 -- name: ListFuelEconomyEntries :many
 SELECT f.odometer_km, i.fill_type, i.quantity FROM vehicle_fuel_fillups f

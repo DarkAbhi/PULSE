@@ -264,8 +264,15 @@ func (q *Queries) GetVehicleHistoryHeader(ctx context.Context, arg GetVehicleHis
 }
 
 const listFuelItems = `-- name: ListFuelItems :many
-SELECT fuel_type,fill_type,quantity,unit_price,total_cost FROM vehicle_fuel_items WHERE fillup_id=$1 ORDER BY id
+SELECT i.fuel_type,i.fill_type,i.quantity,i.unit_price,i.total_cost FROM vehicle_fuel_items i
+JOIN vehicle_fuel_fillups f ON f.id=i.fillup_id
+WHERE i.fillup_id=$1 AND f.user_id=$2 ORDER BY i.id
 `
+
+type ListFuelItemsParams struct {
+	FillupID int64
+	UserID   int64
+}
 
 type ListFuelItemsRow struct {
 	FuelType  string
@@ -275,8 +282,8 @@ type ListFuelItemsRow struct {
 	TotalCost float64
 }
 
-func (q *Queries) ListFuelItems(ctx context.Context, fillupID int64) ([]ListFuelItemsRow, error) {
-	rows, err := q.db.Query(ctx, listFuelItems, fillupID)
+func (q *Queries) ListFuelItems(ctx context.Context, arg ListFuelItemsParams) ([]ListFuelItemsRow, error) {
+	rows, err := q.db.Query(ctx, listFuelItems, arg.FillupID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}

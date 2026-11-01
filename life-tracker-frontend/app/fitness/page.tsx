@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -13,15 +13,8 @@ const apiBaseURL =
   "http://localhost:8080";
 
 export default async function GymVisitsPage() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   // Validate session on the server
-  const sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
+  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
   if (!sessionResponse.ok) {
     redirect("/");
   }
@@ -30,11 +23,8 @@ export default async function GymVisitsPage() {
   let error = "";
 
   try {
-    const response = await fetch(`${apiBaseURL}/api/fitness/overview`, {
+    const response = await apiFetch(`${apiBaseURL}/api/fitness/overview`, {
       cache: "no-store",
-      headers: {
-        Cookie: cookieHeader,
-      },
     });
     if (!response.ok) {
       error = "We couldn't load your workouts. Please try again.";

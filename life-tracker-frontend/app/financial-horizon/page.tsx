@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -15,9 +15,6 @@ const apiBaseURL =
   "http://localhost:8080";
 
 export default async function FinancialHorizonPage() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   const unavailable = (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10">
       <div className="mx-auto max-w-4xl">
@@ -33,8 +30,7 @@ export default async function FinancialHorizonPage() {
   // Validate session on server
   let sessionResponse: Response;
   try {
-    sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
-      headers: { Cookie: cookieHeader },
+    sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`, {
       signal: AbortSignal.timeout(10_000),
     });
   } catch {
@@ -48,14 +44,14 @@ export default async function FinancialHorizonPage() {
   let horizonRes: Response, purchasesRes: Response, transactionsRes: Response;
   try {
     [horizonRes, purchasesRes, transactionsRes] = await Promise.all([
-      fetch(`${apiBaseURL}/api/horizon`, {
-        headers: { Cookie: cookieHeader }, signal: AbortSignal.timeout(10_000),
+      apiFetch(`${apiBaseURL}/api/horizon`, {
+        signal: AbortSignal.timeout(10_000),
       }),
-      fetch(`${apiBaseURL}/api/next-month-purchases`, {
-        headers: { Cookie: cookieHeader }, signal: AbortSignal.timeout(10_000),
+      apiFetch(`${apiBaseURL}/api/next-month-purchases`, {
+        signal: AbortSignal.timeout(10_000),
       }),
-      fetch(`${apiBaseURL}/api/horizon/transactions?page=1&page_size=10`, {
-        headers: { Cookie: cookieHeader }, signal: AbortSignal.timeout(10_000),
+      apiFetch(`${apiBaseURL}/api/horizon/transactions?page=1&page_size=10`, {
+        signal: AbortSignal.timeout(10_000),
       }),
     ]);
   } catch {

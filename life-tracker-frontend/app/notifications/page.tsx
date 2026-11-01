@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { AppNotification } from "@/app/components/notification-list";
@@ -10,25 +10,14 @@ const apiBaseURL =
   "http://localhost:8080";
 
 export default async function NotificationsPage() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   // Validate session on the server
-  const sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
+  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
   if (!sessionResponse.ok) {
     redirect("/");
   }
 
   // Load notifications on the server
-  const response = await fetch(`${apiBaseURL}/api/notifications`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
+  const response = await apiFetch(`${apiBaseURL}/api/notifications`);
 
   if (!response.ok) {
     return (

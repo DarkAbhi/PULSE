@@ -1,7 +1,7 @@
 "use server";
 
+import { apiFetch } from "@/app/lib/server-api";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 
 const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
@@ -29,14 +29,8 @@ export type MealPlan = {
 };
 
 export async function getMealTimesAction() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const res = await fetch(`${apiBaseURL}/api/meal-times`, {
-      headers: {
-        Cookie: cookieHeader,
-      },
+    const res = await apiFetch(`${apiBaseURL}/api/meal-times`, {
       cache: "no-store",
     });
 
@@ -53,15 +47,11 @@ export async function getMealTimesAction() {
 }
 
 export async function createMealTimeAction(name: string, startTime: string, endTime: string) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const res = await fetch(`${apiBaseURL}/api/meal-times`, {
+    const res = await apiFetch(`${apiBaseURL}/api/meal-times`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({ name, start_time: startTime, end_time: endTime }),
     });
@@ -79,15 +69,9 @@ export async function createMealTimeAction(name: string, startTime: string, endT
 }
 
 export async function deleteMealTimeAction(id: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const res = await fetch(`${apiBaseURL}/api/meal-times/${id}`, {
+    const res = await apiFetch(`${apiBaseURL}/api/meal-times/${id}`, {
       method: "DELETE",
-      headers: {
-        Cookie: cookieHeader,
-      },
     });
 
     if (!res.ok) {
@@ -103,19 +87,13 @@ export async function deleteMealTimeAction(id: number) {
 }
 
 export async function getMealPlansAction(startDate?: string, endDate?: string, date?: string) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   const query = new URLSearchParams();
   if (date) query.set("date", date);
   if (startDate) query.set("start_date", startDate);
   if (endDate) query.set("end_date", endDate);
 
   try {
-    const res = await fetch(`${apiBaseURL}/api/meal-plans?${query.toString()}`, {
-      headers: {
-        Cookie: cookieHeader,
-      },
+    const res = await apiFetch(`${apiBaseURL}/api/meal-plans?${query.toString()}`, {
       cache: "no-store",
     });
 
@@ -132,15 +110,11 @@ export async function getMealPlansAction(startDate?: string, endDate?: string, d
 }
 
 export async function addMealPlanAction(date: string, name: string, mealTimeID?: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const res = await fetch(`${apiBaseURL}/api/meal-plans`, {
+    const res = await apiFetch(`${apiBaseURL}/api/meal-plans`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({ date, name, meal_time_id: mealTimeID ?? null }),
     });
@@ -158,15 +132,9 @@ export async function addMealPlanAction(date: string, name: string, mealTimeID?:
 }
 
 export async function deleteMealPlanAction(id: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const res = await fetch(`${apiBaseURL}/api/meal-plans/${id}`, {
+    const res = await apiFetch(`${apiBaseURL}/api/meal-plans/${id}`, {
       method: "DELETE",
-      headers: {
-        Cookie: cookieHeader,
-      },
     });
 
     if (!res.ok) {
@@ -182,15 +150,11 @@ export async function deleteMealPlanAction(id: number) {
 }
 
 export async function updateMealPlanConsumedAction(id: number, isConsumed: boolean) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const res = await fetch(`${apiBaseURL}/api/meal-plans/${id}/consumed`, {
+    const res = await apiFetch(`${apiBaseURL}/api/meal-plans/${id}/consumed`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({ is_consumed: isConsumed }),
     });
@@ -211,15 +175,11 @@ export async function updateMealPlanAction(
   id: number,
   input: { name?: string; date?: string; meal_time_id?: number; is_consumed?: boolean }
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const res = await fetch(`${apiBaseURL}/api/meal-plans/${id}`, {
+    const res = await apiFetch(`${apiBaseURL}/api/meal-plans/${id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify(input),
     });

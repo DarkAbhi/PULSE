@@ -4,9 +4,9 @@ SELECT s.id, s.name, s.amount, s.billing_cycle, s.billing_day, s.renewal_date, s
        COALESCE(COUNT(t.id), 0)::bigint AS linked_count,
        COALESCE(SUM(t.amount), 0)::double precision AS total_spent
 FROM financial_horizon_subscriptions s
-LEFT JOIN financial_horizon_categories c ON s.category_id = c.id
-LEFT JOIN financial_horizon_budgets b ON s.budget_id = b.id
-LEFT JOIN financial_horizon_transactions t ON t.subscription_id = s.id
+LEFT JOIN financial_horizon_categories c ON s.category_id = c.id AND (c.user_id = s.user_id OR (c.user_id IS NULL AND c.is_default))
+LEFT JOIN financial_horizon_budgets b ON s.budget_id = b.id AND b.user_id = s.user_id
+LEFT JOIN financial_horizon_transactions t ON t.subscription_id = s.id AND s.user_id = t.user_id
 WHERE s.user_id = $1
 GROUP BY s.id, c.name, b.name
 ORDER BY CASE WHEN s.status = 'active' THEN 1 WHEN s.status = 'paused' THEN 2 ELSE 3 END, s.created_at DESC, s.id DESC;
@@ -41,8 +41,8 @@ SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
        t.subscription_id, s.name AS subscription_name, t.notes, t.created_at
 FROM financial_horizon_transactions t
-LEFT JOIN financial_horizon_categories c ON t.category_id = c.id
-LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id
-LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id
+LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
+LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
+LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id AND s.user_id = t.user_id
 WHERE t.user_id = $1 AND t.subscription_id = $2
 ORDER BY t.transaction_date DESC, t.id DESC;

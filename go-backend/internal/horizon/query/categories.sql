@@ -1,7 +1,7 @@
 -- name: ListCategories :many
 SELECT id, name, icon, color, is_default, user_id
 FROM financial_horizon_categories
-WHERE user_id IS NULL OR user_id = $1
+WHERE (user_id IS NULL AND is_default) OR user_id = $1
 ORDER BY is_default DESC, name ASC;
 
 -- name: CreateCategory :one

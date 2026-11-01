@@ -23,23 +23,26 @@ struct WorkoutRow {
     activity_type_name: String,
 }
 
-pub async fn latest_relevant(pool: &PgPool) -> Result<Vec<FitnessWorkout>, sqlx::Error> {
+pub async fn latest_relevant(
+    pool: &PgPool,
+    user_id: i64,
+) -> Result<Vec<FitnessWorkout>, sqlx::Error> {
     let rows: Vec<WorkoutRow> = sqlx::query_as(
         "WITH selected AS ( \
            (SELECT w.id FROM fitness_workouts w \
             JOIN workout_activity_types a ON a.id = w.activity_type_id \
-            WHERE a.name ILIKE '%run%' AND w.distance_meters > 0 \
+            WHERE w.user_id = $1 AND a.name ILIKE '%run%' AND w.distance_meters > 0 \
             ORDER BY w.start_time DESC, w.id DESC LIMIT 1) \
            UNION \
            (SELECT w.id FROM fitness_workouts w \
             JOIN workout_activity_types a ON a.id = w.activity_type_id \
-            WHERE a.name ILIKE '%cycling%' AND w.distance_meters > 0 \
+            WHERE w.user_id = $1 AND a.name ILIKE '%cycling%' AND w.distance_meters > 0 \
             ORDER BY w.start_time DESC, w.id DESC LIMIT 1) \
            UNION \
            (SELECT w.id FROM fitness_workouts w \
             JOIN workout_activity_types a ON a.id = w.activity_type_id \
-            WHERE a.name ILIKE 'traditional strength training' \
-               OR a.name ILIKE 'functional strength training' \
+            WHERE w.user_id = $1 AND (a.name ILIKE 'traditional strength training' \
+               OR a.name ILIKE 'functional strength training') \
             ORDER BY w.start_time DESC, w.id DESC LIMIT 1) \
          ) \
          SELECT w.start_time, w.duration_seconds::double precision AS duration_seconds, \
@@ -52,6 +55,7 @@ pub async fn latest_relevant(pool: &PgPool) -> Result<Vec<FitnessWorkout>, sqlx:
                          OR a.name ILIKE 'functional strength training' \
                        THEN 0 ELSE 1 END, w.start_time DESC, w.id DESC",
     )
+    .bind(user_id)
     .fetch_all(pool)
     .await?;
 
@@ -81,7 +85,7 @@ mod tests {
         sqlx::query(
             "CREATE TEMP TABLE fitness_activity_rings (summary_date date, updated_at timestamptz, \
              move_calories numeric, move_calories_goal numeric, exercise_minutes int, \
-             exercise_minutes_goal int, stand_hours int, stand_hours_goal int, steps_count int)",
+             exercise_minutes_goal int, stand_hours int, stand_hours_goal int, steps_count int, user_id bigint NOT NULL DEFAULT 1)",
         )
         .execute(&pool)
         .await
@@ -92,25 +96,25 @@ mod tests {
             .unwrap();
         sqlx::query(
             "CREATE TEMP TABLE fitness_workouts (id int, activity_type_id int, start_time timestamptz, \
-             duration_seconds numeric, distance_meters numeric)",
+             duration_seconds numeric, distance_meters numeric, user_id bigint NOT NULL DEFAULT 1)",
         )
         .execute(&pool)
         .await
         .unwrap();
         sqlx::raw_sql(
-            "INSERT INTO fitness_activity_rings VALUES \
+            "INSERT INTO fitness_activity_rings (summary_date, updated_at, move_calories, move_calories_goal, exercise_minutes, exercise_minutes_goal, stand_hours, stand_hours_goal, steps_count) VALUES \
              ('2026-07-25', '2026-07-25T18:00:00Z', 100.25, 350, 20, 40, 8, 12, 5000), \
              ('2026-07-26', '2026-07-26T18:00:00Z', 180.45, 350, 35, 40, 9, 12, 7500); \
              INSERT INTO workout_activity_types VALUES \
              (1, 'Functional Strength Training'), (2, 'Running'), (3, 'Cycling'), \
              (4, 'Traditional Strength Training'), (5, 'Walking'); \
-             INSERT INTO fitness_workouts VALUES \
+             INSERT INTO fitness_workouts (id, activity_type_id, start_time, duration_seconds, distance_meters) VALUES \
              (1, 2, '2026-01-01T00:00:00Z', 1800, 5000), \
              (2, 3, '2026-01-02T00:00:00Z', 3600, 20000), \
              (3, 2, '2026-01-03T00:00:00Z', 300, 0), \
              (4, 1, '2026-01-04T00:00:00Z', 1200, NULL), \
              (5, 4, '2026-01-05T00:00:00Z', 1800, NULL); \
-             INSERT INTO fitness_workouts \
+             INSERT INTO fitness_workouts (id, activity_type_id, start_time, duration_seconds, distance_meters) \
              SELECT n + 5, 5, '2026-02-01T00:00:00Z'::timestamptz + n * interval '1 day', 1200, NULL \
              FROM generate_series(1, 101) AS n",
         )
@@ -118,8 +122,31 @@ mod tests {
         .await
         .unwrap();
 
-        let snapshot = activity_rings::latest(&pool).await.unwrap().unwrap();
-        let workouts = latest_relevant(&pool).await.unwrap();
+        sqlx::raw_sql(
+            "INSERT INTO fitness_activity_rings VALUES \
+             ('2027-01-01', '2027-01-01T18:00:00Z', 999, 999, 99, 99, 9, 9, 9999, 2); \
+             INSERT INTO fitness_workouts VALUES \
+             (200, 2, '2027-01-01T00:00:00Z', 999, 99999, 2), \
+             (201, 3, '2027-01-01T00:00:00Z', 999, 99999, 2), \
+             (202, 4, '2027-01-01T00:00:00Z', 999, NULL, 2)",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        let other_snapshot = activity_rings::latest(&pool, 2).await.unwrap().unwrap();
+        assert_eq!(other_snapshot.move_calories, 999.0);
+        let other_workouts = latest_relevant(&pool, 2).await.unwrap();
+        assert_eq!(other_workouts.len(), 3);
+        assert!(
+            other_workouts
+                .iter()
+                .all(|workout| workout.duration_seconds == 999.0)
+        );
+        assert!(activity_rings::latest(&pool, 3).await.unwrap().is_none());
+        assert!(latest_relevant(&pool, 3).await.unwrap().is_empty());
+
+        let snapshot = activity_rings::latest(&pool, 1).await.unwrap().unwrap();
+        let workouts = latest_relevant(&pool, 1).await.unwrap();
         let response = serde_json::json!({ "snapshot": snapshot, "workouts": workouts });
 
         assert_eq!(response["snapshot"]["summary_date"], "2026-07-26");
@@ -137,20 +164,20 @@ mod tests {
             .execute(&pool)
             .await
             .unwrap();
-        let workouts = latest_relevant(&pool).await.unwrap();
+        let workouts = latest_relevant(&pool, 1).await.unwrap();
         assert_eq!(
             workouts[0].activity_type.name,
             "Functional Strength Training"
         );
 
         sqlx::query(
-            "INSERT INTO fitness_workouts VALUES \
+            "INSERT INTO fitness_workouts (id, activity_type_id, start_time, duration_seconds, distance_meters) VALUES \
              (107, 3, '2026-07-26T00:00:00Z', 600, 1000)",
         )
         .execute(&pool)
         .await
         .unwrap();
-        let workouts = latest_relevant(&pool).await.unwrap();
+        let workouts = latest_relevant(&pool, 1).await.unwrap();
         assert_eq!(workouts.len(), 3);
         assert_eq!(
             workouts[0].activity_type.name,
@@ -163,7 +190,7 @@ mod tests {
             .execute(&pool)
             .await
             .unwrap();
-        assert!(activity_rings::latest(&pool).await.unwrap().is_none());
-        assert!(latest_relevant(&pool).await.unwrap().is_empty());
+        assert!(activity_rings::latest(&pool, 1).await.unwrap().is_none());
+        assert!(latest_relevant(&pool, 1).await.unwrap().is_empty());
     }
 }

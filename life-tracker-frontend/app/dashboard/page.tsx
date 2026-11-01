@@ -1,6 +1,6 @@
+import { apiFetch } from "@/app/lib/server-api";
 import { PulseCardLink } from "@/app/components/design-system/pulse-card";
 import "./dashboard.css";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Car, ArrowRight, Utensils, UserRound } from "lucide-react";
@@ -25,15 +25,8 @@ type ProfileResponse = {
 };
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   // Validate session on the server
-  const sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
+  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
   if (!sessionResponse.ok) {
     redirect("/");
   }
@@ -48,18 +41,10 @@ export default async function DashboardPage() {
   try {
     const [profileRes, gymRes, notificationsRes, horizonRes] =
       await Promise.all([
-        fetch(`${apiBaseURL}/api/profile`, {
-          headers: { Cookie: cookieHeader },
-        }),
-        fetch(`${apiBaseURL}/api/workout/today`, {
-          headers: { Cookie: cookieHeader },
-        }),
-        fetch(`${apiBaseURL}/api/notifications?limit=5`, {
-          headers: { Cookie: cookieHeader },
-        }),
-        fetch(`${apiBaseURL}/api/horizon`, {
-          headers: { Cookie: cookieHeader },
-        }),
+        apiFetch(`${apiBaseURL}/api/profile`),
+        apiFetch(`${apiBaseURL}/api/workout/today`),
+        apiFetch(`${apiBaseURL}/api/notifications?limit=5`),
+        apiFetch(`${apiBaseURL}/api/horizon`),
       ]);
 
     if (!profileRes.ok) {

@@ -271,6 +271,10 @@ func (h *SubscriptionsHandler) CreateSubscription(w http.ResponseWriter, r *http
 		return
 	}
 
+	if !referencesAccessible(w, r, query.New(h.DB), user.ID, in.CategoryID, in.BudgetID, in.DeductionID, nil) {
+		return
+	}
+
 	in.Name = strings.TrimSpace(in.Name)
 	if in.Name == "" || len([]rune(in.Name)) > 255 {
 		webutil.BadRequest(w, "subscription name is required and must be under 255 characters")
@@ -349,7 +353,7 @@ func (h *SubscriptionsHandler) CreateSubscription(w http.ResponseWriter, r *http
 	if row.CategoryID.Valid {
 		id := row.CategoryID.Int64
 		s.CategoryID = &id
-		if name, err := q.GetCategoryName(r.Context(), id); err == nil {
+		if name, err := q.GetUserCategoryName(r.Context(), query.GetUserCategoryNameParams{ID: id, UserID: sql.NullInt64{Int64: user.ID, Valid: true}}); err == nil {
 			s.CategoryName = &name
 		}
 	}
@@ -402,6 +406,10 @@ func (h *SubscriptionsHandler) UpdateSubscription(w http.ResponseWriter, r *http
 	var in SubscriptionInput
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&in); err != nil {
 		webutil.BadRequest(w, "invalid json")
+		return
+	}
+
+	if !referencesAccessible(w, r, query.New(h.DB), user.ID, in.CategoryID, in.BudgetID, in.DeductionID, nil) {
 		return
 	}
 
@@ -487,7 +495,7 @@ func (h *SubscriptionsHandler) UpdateSubscription(w http.ResponseWriter, r *http
 	if row.CategoryID.Valid {
 		id := row.CategoryID.Int64
 		s.CategoryID = &id
-		if name, err := q.GetCategoryName(r.Context(), id); err == nil {
+		if name, err := q.GetUserCategoryName(r.Context(), query.GetUserCategoryNameParams{ID: id, UserID: sql.NullInt64{Int64: user.ID, Valid: true}}); err == nil {
 			s.CategoryName = &name
 		}
 	}

@@ -1,7 +1,7 @@
+import { apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { getUserCurrency } from "@/app/lib/user-currency";
 import { formatMoney } from "@/app/lib/currency.mjs";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { VehicleHistoryData } from "./types";
@@ -31,28 +31,16 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
   const currency = await getUserCurrency();
   const { id } = await params;
   const { edit, maintenance, "edit-maintenance": editMaintenance } = await searchParams;
-  
-  // Forward cookies from incoming request to backend for auth/session validation
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
 
   // Validate session on the server
-  const sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
+  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
   if (!sessionResponse.ok) {
     redirect("/");
   }
 
   // Load history on the server
-  const response = await fetch(`${apiBaseURL}/api/vehicles/${id}/history`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
-  
+  const response = await apiFetch(`${apiBaseURL}/api/vehicles/${id}/history`);
+
   if (response.status === 404) {
     return (
       <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">

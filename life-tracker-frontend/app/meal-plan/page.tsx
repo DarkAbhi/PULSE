@@ -1,8 +1,7 @@
-
+import { apiFetch } from "@/app/lib/server-api";
 import { getUserTimeZone } from "@/app/lib/user-time-zone";
 
 import { dateKey } from "@/app/lib/time-zone.mjs";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import MealPlanClient from "./meal-plan-client";
 import { MealPlan, MealTime } from "./actions";
@@ -15,17 +14,9 @@ const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
   "http://localhost:8080";
 
-
 export default async function MealPlanPage() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   // Validate session on the server
-  const sessionResponse = await fetch(`${apiBaseURL}/api/auth/session`, {
-    headers: {
-      Cookie: cookieHeader,
-    },
-  });
+  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
   if (!sessionResponse.ok) {
     redirect("/");
   }
@@ -35,12 +26,10 @@ export default async function MealPlanPage() {
 
   try {
     const [mealsRes, mealTimesRes] = await Promise.all([
-      fetch(`${apiBaseURL}/api/meal-plans`, {
-        headers: { Cookie: cookieHeader },
+      apiFetch(`${apiBaseURL}/api/meal-plans`, {
         cache: "no-store",
       }),
-      fetch(`${apiBaseURL}/api/meal-times`, {
-        headers: { Cookie: cookieHeader },
+      apiFetch(`${apiBaseURL}/api/meal-times`, {
         cache: "no-store",
       }),
     ]);

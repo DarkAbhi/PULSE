@@ -1,7 +1,7 @@
 "use server";
 
+import { apiFetch } from "@/app/lib/server-api";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 
 const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
@@ -21,9 +21,6 @@ export async function getTransactionsPageAction(
   txType?: "debit" | "credit" | "all",
   search?: string
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
     const params = new URLSearchParams({
       page: String(page),
@@ -32,9 +29,9 @@ export async function getTransactionsPageAction(
     if (txType && txType !== "all") params.set("type", txType);
     if (search && search.trim()) params.set("search", search.trim());
 
-    const response = await fetch(
+    const response = await apiFetch(
       `${apiBaseURL}/api/horizon/transactions?${params.toString()}`,
-      { headers: { Cookie: cookieHeader }, signal: AbortSignal.timeout(10_000) }
+      {  signal: AbortSignal.timeout(10_000) }
     );
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -47,15 +44,11 @@ export async function getTransactionsPageAction(
 }
 
 export async function updateHorizonConfigAction(baseAmount: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/config`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/config`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({ base_amount: baseAmount }),
     });
@@ -74,15 +67,11 @@ export async function updateHorizonConfigAction(baseAmount: number) {
 }
 
 export async function addBudgetAction(name: string, allocatedAmount: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/budgets`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/budgets`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({ name, allocated_amount: allocatedAmount }),
     });
@@ -101,15 +90,11 @@ export async function addBudgetAction(name: string, allocatedAmount: number) {
 }
 
 export async function updateBudgetAction(id: number, name: string, allocatedAmount: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/budgets/${id}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/budgets/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({ name, allocated_amount: allocatedAmount }),
     });
@@ -128,15 +113,9 @@ export async function updateBudgetAction(id: number, name: string, allocatedAmou
 }
 
 export async function deleteBudgetAction(id: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/budgets/${id}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/budgets/${id}`, {
       method: "DELETE",
-      headers: {
-        Cookie: cookieHeader,
-      },
     });
 
     if (!response.ok) {
@@ -158,15 +137,11 @@ export async function addDeductionAction(
   dueDay?: number | null,
   budgetId?: number | null
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/deductions`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/deductions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({
         name,
@@ -199,15 +174,11 @@ export async function updateDeductionAction(
   isActive: boolean = true,
   budgetId?: number | null
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/deductions/${id}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/deductions/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({
         name,
@@ -233,15 +204,9 @@ export async function updateDeductionAction(
 }
 
 export async function deleteDeductionAction(id: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/deductions/${id}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/deductions/${id}`, {
       method: "DELETE",
-      headers: {
-        Cookie: cookieHeader,
-      },
     });
 
     if (!response.ok) {
@@ -262,15 +227,11 @@ export async function addNextMonthPurchaseHorizonAction(
   price: number,
   url: string | null
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/next-month-purchases`, {
+    const response = await apiFetch(`${apiBaseURL}/api/next-month-purchases`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({ name, price, url }),
     });
@@ -289,15 +250,9 @@ export async function addNextMonthPurchaseHorizonAction(
 }
 
 export async function deleteNextMonthPurchaseAction(itemID: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/next-month-purchases/${itemID}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/next-month-purchases/${itemID}`, {
       method: "DELETE",
-      headers: {
-        Cookie: cookieHeader,
-      },
     });
 
     if (!response.ok) {
@@ -313,15 +268,9 @@ export async function deleteNextMonthPurchaseAction(itemID: number) {
 }
 
 export async function clearAllNextMonthPurchasesAction() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/next-month-purchases`, {
+    const response = await apiFetch(`${apiBaseURL}/api/next-month-purchases`, {
       method: "DELETE",
-      headers: {
-        Cookie: cookieHeader,
-      },
     });
 
     if (!response.ok) {
@@ -338,12 +287,8 @@ export async function clearAllNextMonthPurchasesAction() {
 
 // Category Actions
 export async function getHorizonCategoriesAction() {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/categories`, {
-      headers: { Cookie: cookieHeader },
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/categories`, {
       cache: "no-store",
     });
     const body = await response.json().catch(() => ([]));
@@ -357,15 +302,11 @@ export async function getHorizonCategoriesAction() {
 }
 
 export async function addHorizonCategoryAction(name: string, icon?: string, color?: string) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/categories`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/categories`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({ name, icon, color }),
     });
@@ -394,15 +335,11 @@ export async function addTransactionAction(
   subscriptionId?: number | null,
   notes?: string | null
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/transactions`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/transactions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({
         name,
@@ -441,9 +378,6 @@ export async function bulkAddTransactionsAction(
     notes?: string | null;
   }[]
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
     const payload = items.map((item) => ({
       name: item.name,
@@ -456,11 +390,10 @@ export async function bulkAddTransactionsAction(
       notes: item.notes ?? null,
     }));
 
-    const response = await fetch(`${apiBaseURL}/api/horizon/transactions/bulk`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/transactions/bulk`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify(payload),
     });
@@ -489,15 +422,11 @@ export async function updateTransactionAction(
   subscriptionId?: number | null,
   notes?: string | null
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/transactions/${id}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/transactions/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify({
         name,
@@ -525,13 +454,9 @@ export async function updateTransactionAction(
 }
 
 export async function deleteTransactionAction(id: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/transactions/${id}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/transactions/${id}`, {
       method: "DELETE",
-      headers: { Cookie: cookieHeader },
     });
 
     if (!response.ok) {
@@ -558,15 +483,11 @@ export async function addSubscriptionAction(data: {
   budget_id?: number | null;
   notes?: string | null;
 }) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/subscriptions`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/subscriptions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify(data),
     });
@@ -598,15 +519,11 @@ export async function updateSubscriptionAction(
     notes?: string | null;
   }
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/subscriptions/${id}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/subscriptions/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Cookie: cookieHeader,
       },
       body: JSON.stringify(data),
     });
@@ -625,13 +542,9 @@ export async function updateSubscriptionAction(
 }
 
 export async function deleteSubscriptionAction(id: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/subscriptions/${id}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/subscriptions/${id}`, {
       method: "DELETE",
-      headers: { Cookie: cookieHeader },
     });
 
     if (!response.ok) {
@@ -647,11 +560,10 @@ export async function deleteSubscriptionAction(id: number) {
 }
 
 export async function linkSubscriptionTransactionAction(subscriptionId: number, transactionId: number) {
-  const cookieStore = await cookies();
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/subscriptions/${subscriptionId}/transactions`, {
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/subscriptions/${subscriptionId}/transactions`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Cookie: cookieStore.toString() },
+      headers: { "Content-Type": "application/json",  },
       body: JSON.stringify({ transaction_id: transactionId }),
     });
     const body = await response.json().catch(() => ({}));
@@ -667,12 +579,8 @@ export async function linkSubscriptionTransactionAction(subscriptionId: number, 
 }
 
 export async function getSubscriptionTransactionsAction(subscriptionId: number) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/horizon/subscriptions/${subscriptionId}/transactions`, {
-      headers: { Cookie: cookieHeader },
+    const response = await apiFetch(`${apiBaseURL}/api/horizon/subscriptions/${subscriptionId}/transactions`, {
       cache: "no-store",
     });
 

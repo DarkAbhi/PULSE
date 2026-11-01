@@ -41,7 +41,9 @@ SELECT id,odometer_km,filled_at,station_name,notes FROM vehicle_fuel_fillups
 WHERE vehicle_id=$1 AND user_id=$2 ORDER BY filled_at DESC,id DESC;
 
 -- name: ListFuelItems :many
-SELECT fuel_type,fill_type,quantity,unit_price,total_cost FROM vehicle_fuel_items WHERE fillup_id=$1 ORDER BY id;
+SELECT i.fuel_type,i.fill_type,i.quantity,i.unit_price,i.total_cost FROM vehicle_fuel_items i
+JOIN vehicle_fuel_fillups f ON f.id=i.fillup_id
+WHERE i.fillup_id=$1 AND f.user_id=$2 ORDER BY i.id;
 
 -- name: ListVehicleMaintenanceRecords :many
 SELECT id,category,title,amount,occurred_at,odometer_km,provider_name,notes

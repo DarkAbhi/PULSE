@@ -1,13 +1,11 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { apiFetch } from "@/app/lib/server-api";
 import { extractStatementData } from "@/services/credit-card-statement-extractor";
 
 export async function extractStatementAction(formData: FormData, categories: string[]) {
-  const cookieHeader = (await cookies()).toString();
   const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
-  const session = await fetch(`${apiBaseURL}/api/auth/session`, {
-    headers: { Cookie: cookieHeader },
+  const session = await apiFetch(`${apiBaseURL}/api/auth/session`, {
     cache: "no-store",
     signal: AbortSignal.timeout(10_000),
   });

@@ -1,7 +1,7 @@
 "use server";
 
+import { apiFetch } from "@/app/lib/server-api";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 
 const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
@@ -41,11 +41,10 @@ export async function updateExercise(
   sets: { reps: number; weight: number | null }[],
   exerciseCatalogID: string | null, rememberAlias: boolean
 ) {
-  const cookieStore = await cookies();
   try {
-    const response = await fetch(`${apiBaseURL}/api/gym-visits/${visitID}/exercises/${exerciseID}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/gym-visits/${visitID}/exercises/${exerciseID}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json", Cookie: cookieStore.toString() },
+      headers: { "Content-Type": "application/json",  },
       body: JSON.stringify({ name, sets, exercise_catalog_id: exerciseCatalogID, remember_alias: rememberAlias }),
     });
     if (!response.ok) {
@@ -64,10 +63,8 @@ export async function searchExercises(name: string): Promise<{
   result?: CatalogSearch;
   error?: string;
 }> {
-  const cookieStore = await cookies();
   try {
-    const response = await fetch(`${apiBaseURL}/api/exercise-catalog?${new URLSearchParams({ q: name })}`, {
-      headers: { Cookie: cookieStore.toString() },
+    const response = await apiFetch(`${apiBaseURL}/api/exercise-catalog?${new URLSearchParams({ q: name })}`, {
       cache: "no-store",
     });
     if (!response.ok) return { error: "We couldn't search exercises. You can still save your own name." };
@@ -84,17 +81,13 @@ export async function addExercise(
   exerciseCatalogID: string | null = null,
   rememberAlias: boolean = false
 ) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${apiBaseURL}/api/gym-visits/${visitID}/exercises`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Cookie: cookieHeader,
         },
         body: JSON.stringify({ name, sets, exercise_catalog_id: exerciseCatalogID, remember_alias: rememberAlias }),
       }
@@ -114,11 +107,9 @@ export async function addExercise(
 }
 
 export async function deleteExercise(visitID: string, exerciseID: number) {
-  const cookieStore = await cookies();
   try {
-    const response = await fetch(`${apiBaseURL}/api/gym-visits/${visitID}/exercises/${exerciseID}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/gym-visits/${visitID}/exercises/${exerciseID}`, {
       method: "DELETE",
-      headers: { Cookie: cookieStore.toString() },
     });
     if (!response.ok) {
       return { ok: false, error: "We couldn't delete this exercise. Please try again." };
@@ -132,15 +123,9 @@ export async function deleteExercise(visitID: string, exerciseID: number) {
 }
 
 export async function deleteVisit(visitID: string) {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore.toString();
-
   try {
-    const response = await fetch(`${apiBaseURL}/api/gym-visits/${visitID}`, {
+    const response = await apiFetch(`${apiBaseURL}/api/gym-visits/${visitID}`, {
       method: "DELETE",
-      headers: {
-        Cookie: cookieHeader,
-      },
     });
 
     if (!response.ok) {

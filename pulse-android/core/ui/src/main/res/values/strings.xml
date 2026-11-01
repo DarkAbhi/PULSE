@@ -24,5 +24,4 @@
     <string name="pulse_ui_theme_light">"Light"</string>
     <string name="pulse_ui_theme_dark">"Dark"</string>
     <string name="pulse_ui_logout_edits_title">Log out and discard edits?</string>
-    <string name="pulse_ui_close_sheet">Close bottom sheet</string>
 </resources>

@@ -161,7 +161,7 @@ medium 4dp, high 8dp. Cards and buttons stay flat; dropdowns use low shadow.
 | PulseFilterChip | Mustard selection, checkmark cue, ink labels, pill | Selection, disabled state and target |
 | PulseCheckbox / RadioButton / Switch | Semantic selected/unselected colors | Parent toggle/select semantics and single callback |
 | PulseCalendarDay | Centered 40dp circles: mustard selection, soft green workout fill/green outline, outer action ring for today; green workout dot overlaid below the date | Date semantics, enabled/selected states, 44dp minimum column width and 56dp tap height; fitness calendar uses the shared component |
-| PulseBottomSheet | Neutral surface, title heading, trailing 48dp close button, gray drag handle; capped at 640dp on tablets | Half-expanded by default, swipe up to expand, swipe down/back/scrim/close to dismiss; `fullScreen = true` opens at full available height; content owns scrolling |
+| PulseBottomSheet | Neutral surface, centered title heading, native gray drag handle; capped at 640dp on tablets | Half-expanded by default, swipe up to expand, swipe down/back/scrim to dismiss; `fullScreen = true` opens at full available height; content owns scrolling |
 | PulseTopAppBar | Flat canvas and ink | Navigation/actions and insets |
 | Bottom navigation / rail | Mustard indicator, ink selected, neutral supporting content | Destination selection, scroll and insets |
 | PulseDialog / date/time dialogs | Neutral flat surfaces, 20dp corners; explicit picker selected colors | Dismissal, scroll, time/date state and accessibility input modes |
@@ -252,6 +252,6 @@ PulseButton("Back", onBack, style = PulseButtonStyle.Icon) {
 }
 ```
 
-All seven bottom sheet implementations use `PulseBottomSheet`: vehicle make/model selection, maintenance category selection, transaction details, ledger filters, obligation due days, subscription payments, and the shared date picker. Date and payment sheets open fully expanded; other sheets open halfway. Direct Material sheet imports in features are rejected by `ArchitectureTest`.
+Bottom sheet implementations use `PulseBottomSheet`: exercise catalog selection, vehicle make/model selection, maintenance category selection, transaction details, ledger filters, obligation due days, subscription payments, and the shared date picker. Exercise catalog, date, and payment sheets open fully expanded; other sheets open halfway. Direct Material sheet imports in features are rejected by `ArchitectureTest`.
 
-Bottom sheet verification (2 November 2026): debug app/test APKs build, Android lint reports zero errors, formatting and architecture checks pass. All three shared-sheet gesture/close tests and four Garage/Horizon integration tests pass on API 35, including phone/tablet resizing; light/dark sheet screenshots were reviewed. The unit suite has 213 passes and one pre-existing failure for unprefixed Horizon strings (`transaction_details` / `transaction_details_hint`). Full device regression and physical devices were not checked.
+Bottom sheet verification (2 November 2026): debug app/test APKs build, Android lint reports zero errors, formatting and architecture checks pass. All three shared-sheet gesture/dismissal tests and four Garage/Horizon integration tests pass on API 35, including phone/tablet resizing; light/dark sheet screenshots were reviewed. The unit suite has 213 passes and one pre-existing failure for unprefixed Horizon strings (`transaction_details` / `transaction_details_hint`). Full device regression and physical devices were not checked.

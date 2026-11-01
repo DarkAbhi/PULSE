@@ -153,7 +153,7 @@ class ExerciseEditorRedesignTest {
         show(ExerciseEditorState(draft, selectedCatalog = catalogue))
         compose.onNodeWithText("Change").performScrollTo().performClick()
         compose.onNode(hasSetTextAction() and hasText("Search for an exercise")).performTextReplacement("Another exercise")
-        compose.onNodeWithContentDescription("Close bottom sheet").performClick()
+        compose.onNodeWithContentDescription("Close sheet").performClick()
         compose.runOnIdle { check(editor.value.draft == draft) }
         compose.onNodeWithText("View instructions").performScrollTo().performClick()
         compose.onNodeWithText("1. Curl with control.").assertIsDisplayed()

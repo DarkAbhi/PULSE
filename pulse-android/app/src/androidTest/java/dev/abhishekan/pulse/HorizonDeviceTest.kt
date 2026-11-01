@@ -1487,6 +1487,13 @@ class HorizonDeviceTest {
             quickAction("Add planned purchase")
             field("Purchase name *", "New monitor")
             field("Estimated purchase amount *", "125000.50")
+            scenario?.onActivity { activity ->
+                activity.currentFocus?.clearFocus()
+                activity
+                    .getSystemService(InputMethodManager::class.java)
+                    .hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
+            }
+            compose.waitForIdle()
             val layouts =
                 listOf(
                     "phone" to "720x1600",

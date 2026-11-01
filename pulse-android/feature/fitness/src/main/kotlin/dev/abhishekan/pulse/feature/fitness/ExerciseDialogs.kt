@@ -163,7 +163,7 @@ internal fun ExerciseSelector(
                     selected = selected,
                     onClick = { onChoose(candidate) },
                     label = candidate.name,
-                    supportingText = metadata.takeIf { it.isNotEmpty() }?.joinToString(" � "),
+                    supportingText = metadata.takeIf { it.isNotEmpty() }?.joinToString(" • "),
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !busy,
                 )

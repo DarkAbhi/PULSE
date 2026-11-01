@@ -165,6 +165,7 @@ class ExerciseEditorRedesignTest {
         show()
         compose.onNodeWithText("Search for an exercise…").performClick()
         compose.onNode(hasSetTextAction() and hasText("Search for an exercise…")).performTextInput("curl")
+        compose.onNodeWithText("Dumbbell • Biceps").assertIsDisplayed()
         screenshot("search")
         compose.onNodeWithText("Dumbbell curl").performClick()
         compose.onNodeWithText("Choose an exercise").assertDoesNotExist()

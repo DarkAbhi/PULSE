@@ -136,12 +136,12 @@ private fun GarageVehicleCard(
             if (wide) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     title(Modifier.weight(1f))
-                    GarageVehicleArtwork(Modifier.weight(1.2f).height(208.dp))
+                    GarageVehicleArtwork(vehicle.vehicleKind, Modifier.weight(1.2f).height(208.dp))
                 }
             } else {
                 Column {
                     title(Modifier.fillMaxWidth())
-                    GarageVehicleArtwork(Modifier.fillMaxWidth().height(184.dp))
+                    GarageVehicleArtwork(vehicle.vehicleKind, Modifier.fillMaxWidth().height(184.dp))
                 }
             }
         }
@@ -159,7 +159,7 @@ private fun GarageVehicleCard(
 }
 
 @Composable
-private fun GarageVehicleArtwork(modifier: Modifier) {
+private fun GarageVehicleArtwork(vehicleKind: String, modifier: Modifier) {
     Box(modifier, contentAlignment = Alignment.Center) {
         Box(
             Modifier
@@ -167,7 +167,6 @@ private fun GarageVehicleArtwork(modifier: Modifier) {
                 .rotate(-12f)
                 .background(PulseTheme.colors.primarySoft.copy(alpha = 0.4f), RoundedCornerShape(48)),
         )
-        // shortcut: shared artwork for all vehicles, replace when vehicle photos are supported.
-        Image(painterResource(R.drawable.garage_vehicle), null, Modifier.matchParentSize().padding(8.dp), contentScale = ContentScale.Fit)
+        Image(painterResource(vehicleArtwork(vehicleKind) ?: R.drawable.garage_workshop), null, Modifier.matchParentSize().padding(8.dp), contentScale = ContentScale.Fit)
     }
 }

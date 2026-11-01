@@ -20,20 +20,22 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 
+internal fun vehicleArtwork(vehicleKind: String): Int? =
+    when (vehicleKind) {
+        "motorcycle" -> R.drawable.garage_motorcycle
+        "moped" -> R.drawable.garage_scooter
+        "car" -> R.drawable.garage_car
+        "van", "truck", "bus" -> R.drawable.garage_workshop
+        else -> null
+    }
+
 @Composable
 internal fun VehicleEditorArtwork(
     vehicleKind: String,
     modifier: Modifier = Modifier,
 ) {
     val artwork = listOf(R.drawable.garage_scooter, R.drawable.garage_motorcycle, R.drawable.garage_car)
-    val selectedArtwork =
-        when (vehicleKind) {
-            "motorcycle" -> R.drawable.garage_motorcycle
-            "moped" -> R.drawable.garage_scooter
-            "car" -> R.drawable.garage_car
-            "van", "truck", "bus" -> R.drawable.garage_workshop
-            else -> null
-        }
+    val selectedArtwork = vehicleArtwork(vehicleKind)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val index by produceState(0, lifecycle, selectedArtwork) {
         if (selectedArtwork != null) return@produceState

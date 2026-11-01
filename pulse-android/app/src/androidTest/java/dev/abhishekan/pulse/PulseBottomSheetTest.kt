@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
@@ -16,12 +15,10 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.text.TextLayoutResult
-import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -29,7 +26,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 
 class PulseBottomSheetTest {
     @get:Rule val compose = createComposeRule()
@@ -41,21 +37,18 @@ class PulseBottomSheetTest {
 
     @Test fun fullScreenShowsCenteredTitleAndScrimDismisses() {
         showSheet(fullScreen = true)
-        capture("full")
         assertTrue(titleY() < windowHeight * 0.25f)
-        compose.onNodeWithContentDescription("Close sheet").assertIsDisplayed().performClick()
+        compose.onNodeWithContentDescription("Close sheet").assertIsDisplayed().performSemanticsAction(SemanticsActions.OnClick) { it() }
         compose.onNodeWithText("Sheet title").assertDoesNotExist()
     }
 
     private fun verifyGestures(dark: Boolean) {
         showSheet(dark = dark)
-        capture("half-$dark")
         assertTrue("Default sheet opens halfway: ${titleY()} / $windowHeight", titleY() in windowHeight * 0.45f..windowHeight * 0.75f)
         compose.onNodeWithText("Sheet title").performTouchInput {
             swipe(center, Offset(center.x, center.y - windowHeight * 0.6f), 500)
         }
         compose.waitForIdle()
-        capture("expanded-$dark")
         assertTrue("Upward drag expands sheet", titleY() < windowHeight * 0.25f)
         // One downward drag may stop at the half-height anchor; the next dismisses.
         repeat(2) {
@@ -74,17 +67,6 @@ class PulseBottomSheetTest {
         compose.onNodeWithText("Sheet title").performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
         val layout = layouts.single()
         assertEquals(layout.size.width / 2f, (layout.getLineLeft(0) + layout.getLineRight(0)) / 2f, 1f)
-    }
-
-    private fun capture(name: String) {
-        val instrumentation = InstrumentationRegistry.getInstrumentation()
-        File(
-            InstrumentationRegistry.getArguments().getString("additionalTestOutputDir")
-                ?: requireNotNull(instrumentation.targetContext.externalCacheDir).path,
-            "pulse-sheet-$name.png",
-        ).outputStream().use {
-            instrumentation.uiAutomation.takeScreenshot().compress(Bitmap.CompressFormat.PNG, 100, it)
-        }
     }
 
     private fun titleY() =

@@ -1150,7 +1150,7 @@ class HorizonDeviceTest {
             compose.waitUntil(5_000) { compose.onAllNodes(sheet).fetchSemanticsNodes().isEmpty() }
             tap("View payments for Music")
             awaitText("Payment history")
-            compose.onNodeWithContentDescription("Close sheet").performClick()
+            compose.onNodeWithContentDescription("Close sheet").performSemanticsAction(SemanticsActions.OnClick) { it() }
             compose.onNode(sheet).assertDoesNotExist()
         } finally {
             shell("wm size ${size ?: "reset"}")

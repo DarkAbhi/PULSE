@@ -514,7 +514,7 @@ class GarageDeviceTest {
     }
 
     private fun closeCatalog(field: String) {
-        compose.onNodeWithContentDescription("Close sheet").performClick()
+        compose.onNodeWithContentDescription("Close sheet").performSemanticsAction(SemanticsActions.OnClick) { it() }
         compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("garage-catalog-$field")).fetchSemanticsNodes().isEmpty() }
     }
 
@@ -1187,7 +1187,7 @@ class GarageDeviceTest {
         compose.onNode(hasTestTag("maintenance-category-repair")).performClick()
         compose.onNode(hasTestTag("maintenance-category")).assertExists()
         compose.onNode(hasTestTag("maintenance-category")).performClick()
-        compose.onNodeWithContentDescription("Close sheet").performClick()
+        compose.onNodeWithContentDescription("Close sheet").performSemanticsAction(SemanticsActions.OnClick) { it() }
         compose.onNode(hasTestTag("maintenance-date")).performScrollTo().performClick()
         awaitText("Choose date")
         screenshot("maintenance-date-sheet")

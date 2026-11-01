@@ -721,13 +721,9 @@ class FitnessDeviceTest {
         )}, 1 workout recorded"
         selectCalendarDate(label)
         tap("Workout")
-        awaitText("Linked Apple Watch workout")
+        awaitText("Linked Fitness Watch workout")
         compose.onNodeWithText("420.5 kcal").performScrollTo().assertIsDisplayed()
-        compose
-            .onNodeWithText(
-                "Imported timing and energy are read-only.",
-            ).performScrollTo()
-            .assertIsDisplayed()
+        compose.onNodeWithText("Imported timing and energy are read-only.").assertDoesNotExist()
         screenshot("imported")
         tap("Delete workout")
         confirm("Delete workout")

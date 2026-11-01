@@ -59,7 +59,7 @@
     <string name="pulse_fitness_this_permanently_removes_this_exercise_and_all_its_sets">"This permanently removes this exercise and all its sets from this workout. Catalogue entries and saved aliases are kept."</string>
     <string name="pulse_fitness_delete_exercise">"Delete exercise"</string>
     <string name="pulse_fitness_your_workout">"YOUR WORKOUT"</string>
-    <string name="pulse_fitness_linked_apple_watch_workout">"Linked Apple Watch workout"</string>
+    <string name="pulse_fitness_linked_fitness_watch_workout">Linked Fitness Watch workout</string>
     <string name="pulse_fitness_recorded_gym_visit">"Recorded gym visit"</string>
     <string name="pulse_fitness_started_1_s">"Started · %1$s"</string>
     <string name="pulse_fitness_finished_1_s">"Finished · %1$s"</string>
@@ -159,7 +159,6 @@
     <string name="pulse_fitness_workout_duration">Duration</string>
     <string name="pulse_fitness_workout_energy">Energy</string>
     <string name="pulse_fitness_workout_kcal">%1$s kcal</string>
-    <string name="pulse_fitness_workout_imported_read_only">Imported timing and energy are read-only.</string>
     <string name="pulse_fitness_workout_equipment">Equipment</string>
     <string name="pulse_fitness_workout_muscles">Muscles</string>
     <string name="pulse_fitness_workout_sets">SETS</string>

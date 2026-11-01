@@ -204,15 +204,9 @@ private fun WorkoutInformation(info: WorkoutInfo) {
             },
             PulseTextStyle.Heading2,
         )
-        PulseText(
-            stringResource(
-                if (info.imported) {
-                    R.string.pulse_fitness_linked_apple_watch_workout
-                } else {
-                    R.string.pulse_fitness_recorded_gym_visit
-                },
-            ),
-        )
+        if (!info.imported) {
+            PulseText(stringResource(R.string.pulse_fitness_recorded_gym_visit))
+        }
         if (hasMetrics) {
             val formatter = DateTimeFormatter.ofPattern("d MMM · HH:mm").withZone(FitnessDates.zone)
             BoxWithConstraints(Modifier.padding(vertical = 8.dp)) {
@@ -275,7 +269,7 @@ private fun WorkoutInformation(info: WorkoutInfo) {
                     }
                     if (info.imported) {
                         PulseText(
-                            stringResource(R.string.pulse_fitness_workout_imported_read_only),
+                            stringResource(R.string.pulse_fitness_linked_fitness_watch_workout),
                             style = PulseTextStyle.Body2,
                             color = PulseTheme.colors.textSecondary,
                         )

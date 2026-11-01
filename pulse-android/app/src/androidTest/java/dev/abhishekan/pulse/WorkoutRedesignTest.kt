@@ -50,7 +50,8 @@ class WorkoutRedesignTest {
     @Test fun linkedEmptyWorkoutShowsImportedMetricsAndAddAction() {
         val info = WorkoutInfo(1, instant, instant, instant.plusSeconds(1800), BigDecimal("1800"), BigDecimal("169.9"), true)
         compose.setContent { Content(WorkoutDetail(info, emptyList())) }
-        compose.onNodeWithText("Linked Apple Watch workout").assertIsDisplayed()
+        compose.onNodeWithText("Linked Fitness Watch workout").assertIsDisplayed()
+        compose.onNodeWithText("Imported timing and energy are read-only.").assertDoesNotExist()
         compose.onNodeWithText("Times shown in India time (IST).").assertDoesNotExist()
         compose.onNodeWithText("Refresh workout").assertDoesNotExist()
         compose.onNodeWithText("169.9 kcal").assertIsDisplayed()

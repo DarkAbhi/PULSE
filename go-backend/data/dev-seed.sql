@@ -8,8 +8,8 @@ DO $$ BEGIN RAISE EXCEPTION 'Development seed requires seed_environment=developm
 \endif
 BEGIN;
 SET LOCAL lock_timeout = '10s';
-LOCK TABLE public.api_keys, public.credit_cards, public.exercise_aliases, public.exercise_catalog, public.financial_horizon_budgets, public.financial_horizon_categories, public.financial_horizon_configs, public.financial_horizon_deductions, public.financial_horizon_subscriptions, public.financial_horizon_transactions, public.fitness_activity_rings, public.fitness_workouts, public.gym_exercise_sets, public.gym_visit_exercises, public.gym_visits, public.meal_plans, public.meal_times, public.meditations, public.next_month_purchases, public.notifications, public.sports, public.user_profiles, public.user_sessions, public.users, public.vehicle_air_fills, public.vehicle_fuel_fillups, public.vehicle_fuel_items, public.vehicle_maintenance_attachments, public.vehicle_maintenance_records, public.vehicles, public.workout_activity_types IN SHARE ROW EXCLUSIVE MODE;
-SELECT NOT EXISTS (SELECT FROM public.api_keys) AND NOT EXISTS (SELECT FROM public.credit_cards) AND NOT EXISTS (SELECT FROM public.exercise_aliases) AND NOT EXISTS (SELECT FROM public.financial_horizon_budgets) AND NOT EXISTS (SELECT FROM public.financial_horizon_configs) AND NOT EXISTS (SELECT FROM public.financial_horizon_deductions) AND NOT EXISTS (SELECT FROM public.financial_horizon_subscriptions) AND NOT EXISTS (SELECT FROM public.financial_horizon_transactions) AND NOT EXISTS (SELECT FROM public.fitness_activity_rings) AND NOT EXISTS (SELECT FROM public.fitness_workouts) AND NOT EXISTS (SELECT FROM public.gym_exercise_sets) AND NOT EXISTS (SELECT FROM public.gym_visit_exercises) AND NOT EXISTS (SELECT FROM public.gym_visits) AND NOT EXISTS (SELECT FROM public.meal_plans) AND NOT EXISTS (SELECT FROM public.meditations) AND NOT EXISTS (SELECT FROM public.next_month_purchases) AND NOT EXISTS (SELECT FROM public.notifications) AND NOT EXISTS (SELECT FROM public.sports) AND NOT EXISTS (SELECT FROM public.user_profiles) AND NOT EXISTS (SELECT FROM public.user_sessions) AND NOT EXISTS (SELECT FROM public.vehicle_air_fills) AND NOT EXISTS (SELECT FROM public.vehicle_fuel_fillups) AND NOT EXISTS (SELECT FROM public.vehicle_fuel_items) AND NOT EXISTS (SELECT FROM public.vehicle_maintenance_attachments) AND NOT EXISTS (SELECT FROM public.vehicle_maintenance_records) AND NOT EXISTS (SELECT FROM public.vehicles) AND NOT EXISTS (SELECT FROM public.workout_activity_types) AND NOT EXISTS (SELECT FROM users WHERE username <> 'admin' OR password_hash <> '$2y$12$bB7WwVq7nGJ4cfNTCX6kQODcNRLQvMjRhIFuH4Qv2.GAxlqNac4/S') AND (SELECT count(*) FROM users) = 1 AND NOT EXISTS (SELECT FROM financial_horizon_categories WHERE user_id IS NOT NULL) AND NOT EXISTS (SELECT FROM meal_times WHERE user_id IS NOT NULL) AS seed_empty \gset
+LOCK TABLE public.api_keys, public.exercise_aliases, public.exercise_catalog, public.financial_horizon_budgets, public.financial_horizon_categories, public.financial_horizon_configs, public.financial_horizon_deductions, public.financial_horizon_subscriptions, public.financial_horizon_transactions, public.fitness_activity_rings, public.fitness_workouts, public.gym_exercise_sets, public.gym_visit_exercises, public.gym_visits, public.meal_plans, public.meal_times, public.next_month_purchases, public.notifications, public.user_profiles, public.user_sessions, public.users, public.vehicle_air_fills, public.vehicle_fuel_fillups, public.vehicle_fuel_items, public.vehicle_maintenance_attachments, public.vehicle_maintenance_records, public.vehicles, public.workout_activity_types IN SHARE ROW EXCLUSIVE MODE;
+SELECT NOT EXISTS (SELECT FROM public.api_keys) AND NOT EXISTS (SELECT FROM public.exercise_aliases) AND NOT EXISTS (SELECT FROM public.financial_horizon_budgets) AND NOT EXISTS (SELECT FROM public.financial_horizon_configs) AND NOT EXISTS (SELECT FROM public.financial_horizon_deductions) AND NOT EXISTS (SELECT FROM public.financial_horizon_subscriptions) AND NOT EXISTS (SELECT FROM public.financial_horizon_transactions) AND NOT EXISTS (SELECT FROM public.fitness_activity_rings) AND NOT EXISTS (SELECT FROM public.fitness_workouts) AND NOT EXISTS (SELECT FROM public.gym_exercise_sets) AND NOT EXISTS (SELECT FROM public.gym_visit_exercises) AND NOT EXISTS (SELECT FROM public.gym_visits) AND NOT EXISTS (SELECT FROM public.meal_plans) AND NOT EXISTS (SELECT FROM public.next_month_purchases) AND NOT EXISTS (SELECT FROM public.notifications) AND NOT EXISTS (SELECT FROM public.user_profiles) AND NOT EXISTS (SELECT FROM public.user_sessions) AND NOT EXISTS (SELECT FROM public.vehicle_air_fills) AND NOT EXISTS (SELECT FROM public.vehicle_fuel_fillups) AND NOT EXISTS (SELECT FROM public.vehicle_fuel_items) AND NOT EXISTS (SELECT FROM public.vehicle_maintenance_attachments) AND NOT EXISTS (SELECT FROM public.vehicle_maintenance_records) AND NOT EXISTS (SELECT FROM public.vehicles) AND NOT EXISTS (SELECT FROM public.workout_activity_types) AND NOT EXISTS (SELECT FROM users WHERE username <> 'admin' OR password_hash <> '$2y$12$bB7WwVq7nGJ4cfNTCX6kQODcNRLQvMjRhIFuH4Qv2.GAxlqNac4/S') AND (SELECT count(*) FROM users) = 1 AND NOT EXISTS (SELECT FROM financial_horizon_categories WHERE user_id IS NOT NULL) AND NOT EXISTS (SELECT FROM meal_times WHERE user_id IS NOT NULL) AS seed_empty \gset
 \if :seed_empty
 \else
 \echo Database already populated; development seed skipped.
@@ -17,18 +17,15 @@ COMMIT;
 \quit
 \endif
 DO $$ BEGIN
-    IF NOT EXISTS (SELECT FROM schema_migrations WHERE version = 30 AND NOT dirty) THEN
+    IF NOT EXISTS (SELECT FROM schema_migrations WHERE version = 31 AND NOT dirty) THEN
         RAISE EXCEPTION 'Seed schema version mismatch; regenerate the development seed';
     END IF;
 END $$;
-TRUNCATE public.api_keys, public.credit_cards, public.exercise_aliases, public.financial_horizon_budgets, public.financial_horizon_categories, public.financial_horizon_configs, public.financial_horizon_deductions, public.financial_horizon_subscriptions, public.financial_horizon_transactions, public.fitness_activity_rings, public.fitness_workouts, public.gym_exercise_sets, public.gym_visit_exercises, public.gym_visits, public.meal_plans, public.meal_times, public.meditations, public.next_month_purchases, public.notifications, public.sports, public.user_profiles, public.user_sessions, public.users, public.vehicle_air_fills, public.vehicle_fuel_fillups, public.vehicle_fuel_items, public.vehicle_maintenance_attachments, public.vehicle_maintenance_records, public.vehicles, public.workout_activity_types RESTART IDENTITY;
+TRUNCATE public.api_keys, public.exercise_aliases, public.financial_horizon_budgets, public.financial_horizon_categories, public.financial_horizon_configs, public.financial_horizon_deductions, public.financial_horizon_subscriptions, public.financial_horizon_transactions, public.fitness_activity_rings, public.fitness_workouts, public.gym_exercise_sets, public.gym_visit_exercises, public.gym_visits, public.meal_plans, public.meal_times, public.next_month_purchases, public.notifications, public.user_profiles, public.user_sessions, public.users, public.vehicle_air_fills, public.vehicle_fuel_fillups, public.vehicle_fuel_items, public.vehicle_maintenance_attachments, public.vehicle_maintenance_records, public.vehicles, public.workout_activity_types RESTART IDENTITY;
 COPY public.users (id, username, password_hash, created_at, updated_at) FROM stdin;
 1	admin	$2y$12$bB7WwVq7nGJ4cfNTCX6kQODcNRLQvMjRhIFuH4Qv2.GAxlqNac4/S	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30
 \.
 SELECT setval(pg_get_serial_sequence('public.users', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.users;
-COPY public.credit_cards (id, name, link, created_at, updated_at, user_id) FROM stdin;
-\.
-SELECT setval(pg_get_serial_sequence('public.credit_cards', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.credit_cards;
 COPY public.workout_activity_types (id, raw_value, name, created_at) FROM stdin;
 1	52	Walking	2025-11-26 08:00:00+05:30
 2	37	Running	2025-11-26 08:00:00+05:30
@@ -36,16 +33,6 @@ COPY public.workout_activity_types (id, raw_value, name, created_at) FROM stdin;
 3	50	Traditional Strength Training	2025-11-26 08:00:00+05:30
 \.
 SELECT setval(pg_get_serial_sequence('public.workout_activity_types', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.workout_activity_types;
-COPY public.meditations (id, created_at, updated_at, user_id) FROM stdin;
-1	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30	1
-\.
-SELECT setval(pg_get_serial_sequence('public.meditations', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.meditations;
-COPY public.sports (id, name, created_at, updated_at, user_id) FROM stdin;
-1	cricket	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30	1
-2	football	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30	1
-3	badminton	2026-01-27 08:00:00+05:30	2026-01-27 08:00:00+05:30	1
-\.
-SELECT setval(pg_get_serial_sequence('public.sports', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.sports;
 COPY public.exercise_aliases (user_id, normalized_alias, exercise_catalog_id) FROM stdin;
 \.
 COPY public.financial_horizon_budgets (id, user_id, name, allocated_amount, created_at, updated_at) FROM stdin;
@@ -265,11 +252,8 @@ COPY public.gym_exercise_sets (id, gym_visit_exercise_id, set_number, reps, weig
 6	3	1	10	11	2026-02-03 08:00:00+05:30
 \.
 SELECT setval(pg_get_serial_sequence('public.gym_exercise_sets', 'id'), coalesce(max(id), 1), max(id) IS NOT NULL) FROM public.gym_exercise_sets;
-UPDATE public.credit_cards SET created_at = created_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day', updated_at = updated_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day';
 UPDATE public.users SET created_at = created_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day', updated_at = updated_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day';
 UPDATE public.workout_activity_types SET created_at = created_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day';
-UPDATE public.meditations SET created_at = created_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day', updated_at = updated_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day';
-UPDATE public.sports SET created_at = created_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day', updated_at = updated_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day';
 UPDATE public.financial_horizon_budgets SET created_at = created_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day', updated_at = updated_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day';
 UPDATE public.financial_horizon_categories SET created_at = created_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day', updated_at = updated_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day';
 UPDATE public.financial_horizon_configs SET created_at = created_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day', updated_at = updated_at + (CURRENT_DATE - DATE '2026-01-31') * interval '1 day';

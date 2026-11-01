@@ -19,7 +19,7 @@ and returns an error to the startup dependency. Running the API directly still
 requires running migrations first, as before.
 
 The production reference catalog is independent of the development demo seed.
-The latter accepts schema version 28 and leaves the reference catalog intact.
+The latter accepts schema version 31 and leaves the reference catalog intact.
 
 Existing vehicles keep their nickname, fuel choices, pressures, and history. They
 receive `kind: "unknown"` and no catalog selection, because a two/four-wheeler

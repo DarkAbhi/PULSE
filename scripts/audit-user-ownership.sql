@@ -6,12 +6,10 @@ SELECT count(*) AS user_count FROM users;
 SELECT table_name, column_name, is_nullable FROM information_schema.columns
 WHERE table_schema='public' AND column_name='user_id' ORDER BY table_name;
 
--- to_jsonb also works before these three tables have an owner column.
-SELECT 'meditations' AS table_name, count(*) AS unowned_rows FROM meditations r WHERE to_jsonb(r)->>'user_id' IS NULL
-UNION ALL
-SELECT 'credit_cards' AS table_name, count(*) AS unowned_rows FROM credit_cards r WHERE to_jsonb(r)->>'user_id' IS NULL
-UNION ALL
-SELECT 'sports' AS table_name, count(*) AS unowned_rows FROM sports r WHERE to_jsonb(r)->>'user_id' IS NULL;
+-- Audit legacy ownership before migration 29; migration 31 removes these tables.
+SELECT format('SELECT %L AS table_name, count(*) AS unowned_rows FROM public.%I r WHERE to_jsonb(r)->>''user_id'' IS NULL', tablename, tablename)
+FROM pg_tables WHERE schemaname='public' AND tablename IN ('meditations', 'credit_cards', 'sports')
+\gexec
 
 SELECT 'vehicle_air_fills.vehicle_id' AS relationship, count(*) AS mismatches
 FROM vehicle_air_fills child JOIN vehicles parent ON parent.id=child.vehicle_id

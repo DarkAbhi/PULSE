@@ -13,7 +13,7 @@ func TestPersonalOwnershipUpgrade(t *testing.T) {
 	t.Chdir("../..")
 	database, dsn, stop := testhelper.StartPostgresWithDSN(t)
 	defer stop()
-	if err := db.RunMigrationSteps(dsn, -2); err != nil {
+	if err := db.RunMigrationSteps(dsn, -3); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := database.Exec(`INSERT INTO meditations DEFAULT VALUES;
@@ -21,7 +21,7 @@ func TestPersonalOwnershipUpgrade(t *testing.T) {
         INSERT INTO sports (name) VALUES ('cricket')`); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.RunMigrations(dsn); err != nil {
+	if err := db.RunMigrationSteps(dsn, 1); err != nil {
 		t.Fatal(err)
 	}
 	for _, table := range []string{"meditations", "credit_cards", "sports"} {
@@ -42,7 +42,7 @@ func TestAmbiguousPersonalOwnershipStopsAndCanBeMapped(t *testing.T) {
 	t.Chdir("../..")
 	database, dsn, stop := testhelper.StartPostgresWithDSN(t)
 	defer stop()
-	if err := db.RunMigrationSteps(dsn, -2); err != nil {
+	if err := db.RunMigrationSteps(dsn, -3); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := database.Exec(`INSERT INTO users (username,password_hash) VALUES ('second','test');
@@ -62,7 +62,7 @@ func TestAmbiguousPersonalOwnershipStopsAndCanBeMapped(t *testing.T) {
         UPDATE schema_migrations SET version=28,dirty=false`); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.RunMigrations(dsn); err != nil {
+	if err := db.RunMigrationSteps(dsn, 1); err != nil {
 		t.Fatal(err)
 	}
 	if err := database.QueryRow(`SELECT count(*) FROM sports s JOIN users u ON s.user_id=u.id WHERE u.username='second'`).Scan(&count); err != nil || count != 1 {

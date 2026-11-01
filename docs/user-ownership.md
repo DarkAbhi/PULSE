@@ -8,6 +8,7 @@ Rust fitness imports and `GET /api/fitness-summary` use active profile-generated
 
 - Migration 29 assigns ownership to meditations, credit cards, and sports. It infers an owner only when exactly one user exists. Empty tables can migrate with any user count. Explicitly pre-mapped owner columns are preserved.
 - Migration 30 rejects cross-owner private relationships between vehicles, expenses, attachments, notifications, workouts, and Financial Horizon records. Original cascade and optional-reference deletion behavior is retained.
+- Migration 31 drops the unused `meditations`, `credit_cards`, and `sports` tables and their data. Apply earlier pending migrations in order, including 29 and 30; do not drop the tables manually before migration 29. Its down migration restores empty schema only, so retain a backup if those records are needed.
 - Shared meal times and financial categories must have `user_id IS NULL` and `is_default=true`; private entries must have an owner and `is_default=false`. API validation and scoped joins enforce access to these mixed shared/private references.
 - Exercise sets, visit exercises, and fuel items inherit ownership through their parent. Exercise/vehicle/workout-type catalogs and catalog import metadata remain shared.
 
@@ -19,7 +20,7 @@ No live database has been migrated by this change. Production owner mappings and
 2. Back up the database and verify restoring the backup into a disposable database. Capture record counts and financial totals by user before and after a rehearsal.
 3. If multiple accounts exist and any of the three legacy tables contains unowned rows, explicitly map each record from known ownership evidence. In a reviewed transaction, add nullable BIGINT `user_id` columns to those legacy tables and populate them from the mapping. Migration 29 accepts existing columns and preserves assigned values. Do not choose the first/minimum user or duplicate data into every account.
 4. Resolve existing cross-owner links and invalid shared defaults through reviewed data corrections. Preserve an audit of the original values; the migrations do not invent a repair policy.
-5. Rehearse both migrations and seed restoration against the restored database. The supplied development seed is anonymized, requires schema 30, and is never a production migration.
+5. Rehearse all pending migrations and seed restoration against the restored database. The supplied development seed is anonymized, requires schema 31, and is never a production migration. The ownership audit skips the three retired tables once migration 31 has removed them.
 
 ## Deployment order
 

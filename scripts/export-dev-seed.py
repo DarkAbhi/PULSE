@@ -15,12 +15,12 @@ ROOT = Path(__file__).resolve().parent.parent
 PASSWORD_HASH = "$2y$12$bB7WwVq7nGJ4cfNTCX6kQODcNRLQvMjRhIFuH4Qv2.GAxlqNac4/S"
 EXCLUDED = {"schema_migrations", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports", "api_keys", "user_sessions",
             "vehicle_maintenance_attachments"}
-TABLES = set("""vehicle_catalog vehicle_catalog_imports api_keys credit_cards exercise_aliases exercise_catalog
+TABLES = set("""vehicle_catalog vehicle_catalog_imports api_keys exercise_aliases exercise_catalog
 financial_horizon_budgets financial_horizon_categories financial_horizon_configs
 financial_horizon_deductions financial_horizon_subscriptions financial_horizon_transactions
 fitness_activity_rings fitness_workouts gym_exercise_sets gym_visit_exercises gym_visits
-meal_plans meal_times meditations next_month_purchases notifications schema_migrations
-sports users user_profiles user_sessions vehicle_air_fills vehicle_fuel_fillups vehicle_fuel_items
+meal_plans meal_times next_month_purchases notifications schema_migrations
+users user_profiles user_sessions vehicle_air_fills vehicle_fuel_fillups vehicle_fuel_items
 vehicle_maintenance_attachments vehicle_maintenance_records vehicles workout_activity_types""".split())
 BASELINE = {"users", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports", "schema_migrations",
             "financial_horizon_categories", "meal_times"}
@@ -115,10 +115,6 @@ def anonymize(table, column, kind, value, row, offset, admin_id):
     if column in ENUMS:
         if value not in ENUMS[column]:
             raise ValueError(f"Unknown enum in {table}.{column}; review anonymization rules")
-        return value
-    if table == "sports" and column == "name":
-        if value not in {"cricket", "football", "badminton"}:
-            raise ValueError("Unknown sport")
         return value
     if table == "vehicle_maintenance_records" and column == "category":
         if value not in {"service", "repair", "insurance", "washing", "tyres"}:

@@ -12,6 +12,45 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
 )
 
+func TestRetiredPersonalTablesUpgradeAndRollback(t *testing.T) {
+	t.Chdir("../..")
+	database, dsn, stop := testhelper.StartPostgresWithDSN(t)
+	defer stop()
+	if err := db.RollbackMigration(dsn); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := database.Exec(`INSERT INTO meditations (user_id) VALUES (1);
+        INSERT INTO credit_cards (user_id,name,link) VALUES (1,'Old card','https://example.com');
+        INSERT INTO sports (user_id,name) VALUES (1,'cricket');
+        INSERT INTO vehicles (user_id,name,fuel_types) VALUES (1,'Keep vehicle',ARRAY['petrol'])`); err != nil {
+		t.Fatal(err)
+	}
+	for _, step := range []int{1, -1, 1} {
+		if err := db.RunMigrationSteps(dsn, step); err != nil {
+			t.Fatal(err)
+		}
+		for _, table := range []string{"meditations", "credit_cards", "sports"} {
+			var exists bool
+			if err := database.QueryRow(`SELECT to_regclass($1) IS NOT NULL`, "public."+table).Scan(&exists); err != nil {
+				t.Fatal(err)
+			}
+			if exists != (step == -1) {
+				t.Fatalf("%s exists=%v after step %d", table, exists, step)
+			}
+			if exists {
+				var count int
+				if err := database.QueryRow(`SELECT count(*) FROM ` + table).Scan(&count); err != nil || count != 0 {
+					t.Fatalf("%s rollback should restore an empty table: count=%d, error=%v", table, count, err)
+				}
+			}
+		}
+	}
+	var count int
+	if err := database.QueryRow(`SELECT count(*) FROM vehicles WHERE name='Keep vehicle' AND user_id=1`).Scan(&count); err != nil || count != 1 {
+		t.Fatalf("unrelated vehicle lost: count=%d, error=%v", count, err)
+	}
+}
+
 func TestVehicleCatalogUpgradeAndRepair(t *testing.T) {
 	t.Chdir("../..")
 	database, dsn, stop := testhelper.StartPostgresWithDSN(t)

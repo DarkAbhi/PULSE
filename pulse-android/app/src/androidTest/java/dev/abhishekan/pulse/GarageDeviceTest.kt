@@ -1303,7 +1303,7 @@ class GarageDeviceTest {
         assertTrue(care.isEmpty())
     }
 
-    @Test fun draftRotationTabsLargeTextKeyboardAndDiscard() {
+    @Test fun draftRotationLargeTextKeyboardAndDiscardHideNavigation() {
         launchGarage()
         select()
         tap("Add maintenance")
@@ -1313,15 +1313,7 @@ class GarageDeviceTest {
         assertEquals(0, mutations)
         scenario!!.recreate()
         awaitText("Unsaved care")
-        tap("Home")
-        tap("Garage")
-        awaitText("Unsaved care")
-        tap("You")
-        tap("Log out")
-        awaitText("Log out and discard edits?")
-        confirm("Cancel")
-        tap("Garage")
-        awaitText("Unsaved care")
+        compose.assertTabNavigationHidden()
         compose
             .onNode(hasTestTag("maintenance-title") and hasSetTextAction())
             .performScrollTo()

@@ -41,6 +41,7 @@ import dev.abhishekan.pulse.core.domain.model.MealChange
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
+import dev.abhishekan.pulse.core.ui.PulseHideNavigation
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
@@ -75,6 +76,7 @@ fun MealPlanRoute(
         viewModel.refresh()
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    PulseHideNavigation(state.draft != null || state.managing)
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
     PulseScreenScaffold(title = "", showTopBar = backLabel != null, backLabel = backLabel) {

@@ -34,6 +34,7 @@ import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
+import dev.abhishekan.pulse.core.ui.PulseHideNavigation
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
@@ -66,6 +67,7 @@ fun HorizonRoute(
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    PulseHideNavigation(state.draft != null || state.subscriptionId != null)
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     PulseScreenScaffold(
         title = stringResource(state.draft.topBarTitle()),

@@ -497,7 +497,7 @@ class AccountNotificationsDeviceTest {
         assertEquals(1, profileWrites)
         compose.onNodeWithText("Create API key").performScrollTo()
         screenshot("profile-integrations")
-        tap("Home")
+        compose.returnHomeFromProfile()
         awaitText("😀 Asha")
     }
 
@@ -507,14 +507,14 @@ class AccountNotificationsDeviceTest {
         awaitText("Make Pulse yours")
         confirm("Not now")
         tap("You")
-        tap("Home")
+        compose.returnHomeFromProfile()
         compose.onNodeWithText("Make Pulse yours").assertDoesNotExist()
         openProfile()
         tap("Edit display name")
         field("Display name", "New rhythm")
         tap("Save changes")
         awaitText("New rhythm")
-        tap("Home")
+        compose.returnHomeFromProfile()
         awaitText("New rhythm")
     }
 
@@ -533,7 +533,7 @@ class AccountNotificationsDeviceTest {
         awaitText("Asha")
     }
 
-    @Test fun adaptiveNavigationOpensFeaturesAndGuardsUnsavedPassword() {
+    @Test fun adaptiveNavigationHidesOnNestedScreensAndGuardsUnsavedPassword() {
         launch()
         val rail = usesNavigationRail()
         val labels = listOf("Home", "Fitness", "Horizon", "Garage", "Meals") + if (rail) listOf("You") else emptyList()
@@ -600,18 +600,22 @@ class AccountNotificationsDeviceTest {
         if (rail) {
             assertEquals(window.bottom.value - safeBottom, viewport.bottom.value, 1f)
         } else {
-            assertTrue(viewport.bottom <= bounds.first().top)
+            compose.assertTabNavigationHidden()
+            assertEquals(window.bottom.value - safeBottom, viewport.bottom.value, 1f)
         }
         screenshot("profile-safe-area")
         tap("Change password")
         field("Current password", "unsaved")
         hideKeyboard()
-        compose.onNode(items[4]).apply { if (rail) performScrollTo() }.performClick()
+        compose.assertTabNavigationHidden()
+        tap("Cancel")
         awaitText("Discard unsaved changes?")
         confirm("Cancel")
         compose.onNodeWithText("Current password").assertExists()
-        compose.onNode(items[3]).apply { if (rail) performScrollTo() }.performClick()
+        tap("Cancel")
         confirm("Discard changes")
+        compose.returnHomeFromProfile()
+        compose.onNode(items[3]).apply { if (rail) performScrollTo() }.performClick()
         compose.onNode(items[3]).assertIsSelected()
         assertEquals(0, passwordWrites)
         scenario!!.recreate()
@@ -619,7 +623,7 @@ class AccountNotificationsDeviceTest {
         compose.onNode(items[0]).apply { if (rail) performScrollTo() }.performClick()
         awaitText("Good to see you,")
         openNotifications()
-        compose.onNode(items[0]).assertIsSelected()
+        compose.assertTabNavigationHidden()
         tap("Vehicle care update")
         awaitText("Your garage")
         compose.onNode(items[3]).assertIsSelected()
@@ -628,7 +632,8 @@ class AccountNotificationsDeviceTest {
         compose.onNodeWithContentDescription("Back to Home").performClick()
         compose.onNode(items[0]).assertIsSelected()
         openNotifications()
-        compose.onNode(items[0]).apply { if (rail) performScrollTo() }.performClick()
+        compose.assertTabNavigationHidden()
+        compose.onNodeWithContentDescription("Back to Home").performClick()
         awaitText("Good to see you,")
         compose.onNodeWithContentDescription("Back to Home").assertDoesNotExist()
     }
@@ -669,7 +674,8 @@ class AccountNotificationsDeviceTest {
                 ),
             )
         field("Current password", "unsaved")
-        tap("Home")
+        compose.assertTabNavigationHidden()
+        tap("Cancel")
         awaitText("Discard unsaved changes?")
         confirm("Cancel")
         assertSecure(true)
@@ -877,7 +883,7 @@ class AccountNotificationsDeviceTest {
             screenshot("large-text-editor")
             tap("Save changes")
             awaitText("Resized name")
-            tap("Home")
+            compose.returnHomeFromProfile()
             openNotifications()
             screenshot("large-text-notifications")
             compose.onNode(hasScrollAction()).performTouchInput { swipeDown(startY = height * 0.25f, endY = height * 0.75f) }
@@ -900,7 +906,7 @@ class AccountNotificationsDeviceTest {
         field("Display name", "Morning rhythm")
         tap("Save changes")
         awaitText("Morning rhythm")
-        tap("Home")
+        compose.returnHomeFromProfile()
         awaitText("Morning rhythm")
         assertEquals(1, profileWrites)
     }

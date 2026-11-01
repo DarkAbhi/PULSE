@@ -490,6 +490,7 @@ class FitnessDeviceTest {
         }
         tap("Workout")
         awaitText("Add exercise")
+        compose.assertTabNavigationHidden()
     }
 
     private fun chooseCustomName(name: String) {
@@ -658,7 +659,32 @@ class FitnessDeviceTest {
         awaitText("Add workout")
     }
 
-    @Test fun editorSurvivesRotationTabsAndKeyboardAndWarnsBeforeDiscard() {
+    @Test fun tabNavigationReturnsOnlyAfterLeavingWorkoutAndExerciseEditor() {
+        launchFitness()
+        compose
+            .onNode(
+                hasText("Fitness") and
+                    androidx.compose.ui.test
+                        .isSelectable(),
+            ).assertIsDisplayed()
+        recordAndOpen()
+        tap("Add exercise")
+        awaitText("Save exercise")
+        compose.assertTabNavigationHidden()
+        compose.onNodeWithContentDescription("Back to workout").performClick()
+        awaitText("Add exercise")
+        compose.assertTabNavigationHidden()
+        compose.onNodeWithContentDescription("Back to Fitness").performClick()
+        awaitText("Add workout")
+        compose
+            .onNode(
+                hasText("Fitness") and
+                    androidx.compose.ui.test
+                        .isSelectable(),
+            ).assertIsDisplayed()
+    }
+
+    @Test fun editorSurvivesRotationAndKeyboardAndHidesNavigationUntilDiscard() {
         launchFitness()
         recordAndOpen()
         tap("Add exercise")
@@ -672,15 +698,7 @@ class FitnessDeviceTest {
         awaitText("Add exercise")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
         screenshot("editor")
-        tap("Home")
-        awaitText("Asha")
-        tap("You")
-        tap("Log out")
-        awaitText("Log out and discard edits?")
-        screenshot("logout-dialog", dialog = true)
-        confirm("Cancel")
-        tap("Fitness")
-        awaitText("Add exercise")
+        compose.assertTabNavigationHidden()
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("Back to workout").performClick()
         awaitText("Discard exercise edits?")

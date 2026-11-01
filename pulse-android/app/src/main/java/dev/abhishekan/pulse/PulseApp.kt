@@ -23,9 +23,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -50,6 +52,7 @@ import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.ui.DraftSource
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
+import dev.abhishekan.pulse.core.ui.LocalPulseNavigationHidingScreens
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -209,6 +212,7 @@ private fun SignedInApp(
     val nav = rememberNavController()
     val shell = rememberSaveable(saver = ShellState.Saver) { ShellState() }
     val isTablet = LocalConfiguration.current.smallestScreenWidthDp >= 600
+    val hidingScreens = remember { mutableStateMapOf<Any, Unit>() }
     val entry by nav.currentBackStackEntryAsState()
     val destination = AppDestination.fromRoute(entry?.destination?.route)
     val selectDestination: (AppDestination) -> Unit = { target ->
@@ -235,7 +239,8 @@ private fun SignedInApp(
     BoxWithConstraints(Modifier.fillMaxSize()) {
         // Some keyboards resize the root before IME insets arrive; preserve space for the form.
         val showBars = maxHeight >= PulseTokens.minimumNavigationHeight
-        val showNavigation = destination != AppDestination.Gallery && showBars
+        val visibleTabs = if (isTablet) AppDestination.tabs else AppDestination.tabs.take(5)
+        val showNavigation = destination in visibleTabs && hidingScreens.isEmpty() && showBars
         val navigationItems =
             AppDestination.tabs.map { tab ->
                 PulseNavigationItem(stringResource(tab.label)) {
@@ -279,113 +284,115 @@ private fun SignedInApp(
                 },
                 snackbarHost = { SnackbarHost(snackbar) { PulseSnackbar(it) } },
             ) { insets ->
-                PulseSnackbarProvider(snackbar) {
-                    NavHost(
-                        nav,
-                        startDestination = AppDestination.Home.route,
-                        modifier = Modifier.padding(insets).consumeWindowInsets(insets),
-                    ) {
-                        composable(AppDestination.Home.route) {
-                            HomeRoute(
-                                username,
-                                { selectDestination(AppDestination.Horizon) },
-                                onFitness = { selectDestination(AppDestination.Fitness) },
-                                onNotifications = { nav.navigateSingleTop(AppDestination.Notifications.path) },
-                                onProfile = if (isTablet) null else ({ selectDestination(AppDestination.Profile) }),
-                                onMissingProfile = shell::offerOnboarding,
-                            )
-                            if (shell.onboarding == OnboardingPrompt.Showing) {
-                                ProfileSetupPrompt({
-                                    shell.dismissOnboarding()
-                                    nav.navigateSingleTop("${AppDestination.Profile.path}?editName=true")
-                                }, shell::dismissOnboarding)
+                CompositionLocalProvider(LocalPulseNavigationHidingScreens provides hidingScreens) {
+                    PulseSnackbarProvider(snackbar) {
+                        NavHost(
+                            nav,
+                            startDestination = AppDestination.Home.route,
+                            modifier = Modifier.padding(insets).consumeWindowInsets(insets),
+                        ) {
+                            composable(AppDestination.Home.route) {
+                                HomeRoute(
+                                    username,
+                                    { selectDestination(AppDestination.Horizon) },
+                                    onFitness = { selectDestination(AppDestination.Fitness) },
+                                    onNotifications = { nav.navigateSingleTop(AppDestination.Notifications.path) },
+                                    onProfile = if (isTablet) null else ({ selectDestination(AppDestination.Profile) }),
+                                    onMissingProfile = shell::offerOnboarding,
+                                )
+                                if (shell.onboarding == OnboardingPrompt.Showing) {
+                                    ProfileSetupPrompt({
+                                        shell.dismissOnboarding()
+                                        nav.navigateSingleTop("${AppDestination.Profile.path}?editName=true")
+                                    }, shell::dismissOnboarding)
+                                }
                             }
-                        }
-                        composable(AppDestination.Spaces.route) {
-                            SpacesScreen(
-                                { nav.navigateSingleTop(AppDestination.Fitness.path) },
-                                { nav.navigateSingleTop(AppDestination.Horizon.path) },
-                                { nav.navigateSingleTop(AppDestination.Garage.path) },
-                                { nav.navigateSingleTop(AppDestination.MealPlan.path) },
-                            )
-                        }
-                        composable(AppDestination.MealPlan.route) {
-                            MealPlanRoute(
-                                backLabel = backToNotifications,
-                            )
-                        }
-                        composable(AppDestination.Garage.route) {
-                            GarageRoute(
-                                backLabel = backToNotifications,
-                            )
-                        }
-                        composable(
-                            AppDestination.Vehicle.route,
-                            arguments = listOf(navArgument("id") { type = NavType.LongType }),
-                        ) { vehicle ->
-                            GarageRoute(
-                                initialVehicle = vehicle.arguments?.getLong("id"),
-                                backLabel = backToNotifications ?: stringResource(R.string.pulse_app_back_to_garage),
-                            )
-                        }
-                        composable(AppDestination.Horizon.route) {
-                            HorizonRoute(
-                                backLabel = backToNotifications,
-                            )
-                        }
-                        composable(AppDestination.Fitness.route) {
-                            FitnessRoute(
-                                onWorkout = { id -> nav.navigateSingleTop(AppDestination.Workout.withId(id)) },
-                                backLabel = backToNotifications,
-                            )
-                        }
-                        composable(AppDestination.Workout.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) {
-                            WorkoutRoute(
-                                onDeleted = { nav.popBackStack() },
-                                backLabel = backToNotifications ?: stringResource(R.string.pulse_app_back_to_fitness),
-                            )
-                        }
-                        composable(
-                            AppDestination.Profile.route,
-                            arguments =
-                                listOf(
-                                    navArgument("editName") {
-                                        type = NavType.BoolType
-                                        defaultValue = false
+                            composable(AppDestination.Spaces.route) {
+                                SpacesScreen(
+                                    { nav.navigateSingleTop(AppDestination.Fitness.path) },
+                                    { nav.navigateSingleTop(AppDestination.Horizon.path) },
+                                    { nav.navigateSingleTop(AppDestination.Garage.path) },
+                                    { nav.navigateSingleTop(AppDestination.MealPlan.path) },
+                                )
+                            }
+                            composable(AppDestination.MealPlan.route) {
+                                MealPlanRoute(
+                                    backLabel = backToNotifications,
+                                )
+                            }
+                            composable(AppDestination.Garage.route) {
+                                GarageRoute(
+                                    backLabel = backToNotifications,
+                                )
+                            }
+                            composable(
+                                AppDestination.Vehicle.route,
+                                arguments = listOf(navArgument("id") { type = NavType.LongType }),
+                            ) { vehicle ->
+                                GarageRoute(
+                                    initialVehicle = vehicle.arguments?.getLong("id"),
+                                    backLabel = backToNotifications ?: stringResource(R.string.pulse_app_back_to_garage),
+                                )
+                            }
+                            composable(AppDestination.Horizon.route) {
+                                HorizonRoute(
+                                    backLabel = backToNotifications,
+                                )
+                            }
+                            composable(AppDestination.Fitness.route) {
+                                FitnessRoute(
+                                    onWorkout = { id -> nav.navigateSingleTop(AppDestination.Workout.withId(id)) },
+                                    backLabel = backToNotifications,
+                                )
+                            }
+                            composable(AppDestination.Workout.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) {
+                                WorkoutRoute(
+                                    onDeleted = { nav.popBackStack() },
+                                    backLabel = backToNotifications ?: stringResource(R.string.pulse_app_back_to_fitness),
+                                )
+                            }
+                            composable(
+                                AppDestination.Profile.route,
+                                arguments =
+                                    listOf(
+                                        navArgument("editName") {
+                                            type = NavType.BoolType
+                                            defaultValue = false
+                                        },
+                                    ),
+                            ) { profileEntry ->
+                                ProfileRoute(
+                                    username,
+                                    appearance.theme,
+                                    appearance.error,
+                                    onTheme,
+                                    operation.running,
+                                    unsavedChanges.any { it != DraftSource.Profile },
+                                    onLogout,
+                                    profileEntry.arguments?.getBoolean("editName") == true,
+                                    backLabel = if (isTablet) null else stringResource(R.string.pulse_app_back_to_home),
+                                ) { DebugGalleryAction { nav.navigateSingleTop(AppDestination.Gallery.path) } }
+                            }
+                            composable(AppDestination.Notifications.route) {
+                                NotificationsRoute(
+                                    onOpen = { target ->
+                                        // Keep Notifications underneath the destination it opened.
+                                        val route =
+                                            when (target) {
+                                                NotificationTarget.Fitness -> AppDestination.Fitness.path
+                                                NotificationTarget.Horizon -> AppDestination.Horizon.path
+                                                NotificationTarget.Garage -> AppDestination.Garage.path
+                                                NotificationTarget.MealPlan -> AppDestination.MealPlan.path
+                                                is NotificationTarget.Workout -> AppDestination.Workout.withId(target.id)
+                                                is NotificationTarget.Vehicle -> AppDestination.Vehicle.withId(target.id)
+                                            }
+                                        nav.navigateSingleTop(route)
                                     },
-                                ),
-                        ) { profileEntry ->
-                            ProfileRoute(
-                                username,
-                                appearance.theme,
-                                appearance.error,
-                                onTheme,
-                                operation.running,
-                                unsavedChanges.any { it != DraftSource.Profile },
-                                onLogout,
-                                profileEntry.arguments?.getBoolean("editName") == true,
-                                backLabel = if (isTablet) null else stringResource(R.string.pulse_app_back_to_home),
-                            ) { DebugGalleryAction { nav.navigateSingleTop(AppDestination.Gallery.path) } }
+                                    backLabel = stringResource(R.string.pulse_app_back_to_home),
+                                )
+                            }
+                            debugGalleryDestination { nav.popBackStack() }
                         }
-                        composable(AppDestination.Notifications.route) {
-                            NotificationsRoute(
-                                onOpen = { target ->
-                                    // Keep Notifications underneath the destination it opened.
-                                    val route =
-                                        when (target) {
-                                            NotificationTarget.Fitness -> AppDestination.Fitness.path
-                                            NotificationTarget.Horizon -> AppDestination.Horizon.path
-                                            NotificationTarget.Garage -> AppDestination.Garage.path
-                                            NotificationTarget.MealPlan -> AppDestination.MealPlan.path
-                                            is NotificationTarget.Workout -> AppDestination.Workout.withId(target.id)
-                                            is NotificationTarget.Vehicle -> AppDestination.Vehicle.withId(target.id)
-                                        }
-                                    nav.navigateSingleTop(route)
-                                },
-                                backLabel = stringResource(R.string.pulse_app_back_to_home),
-                            )
-                        }
-                        debugGalleryDestination { nav.popBackStack() }
                     }
                 }
             }

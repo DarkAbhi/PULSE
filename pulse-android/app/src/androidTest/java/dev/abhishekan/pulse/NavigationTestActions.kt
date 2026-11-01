@@ -21,3 +21,17 @@ internal fun ComposeTestRule.openProfileFromNavigation() {
         onNodeWithContentDescription("Profile").performScrollTo().performClick()
     }
 }
+
+internal fun ComposeTestRule.assertTabNavigationHidden() {
+    listOf("Home", "Fitness", "Horizon", "Garage", "Meals", "You").forEach { label ->
+        onNode(hasText(label) and isSelectable()).assertDoesNotExist()
+    }
+}
+
+internal fun ComposeTestRule.returnHomeFromProfile() {
+    if (usesNavigationRail()) {
+        onNode(hasText("Home") and isSelectable()).performScrollTo().performClick()
+    } else {
+        onNodeWithContentDescription("Back to Home").performClick()
+    }
+}

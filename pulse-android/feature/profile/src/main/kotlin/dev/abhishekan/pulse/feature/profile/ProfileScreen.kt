@@ -59,6 +59,7 @@ import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
+import dev.abhishekan.pulse.core.ui.PulseHideNavigation
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
@@ -120,6 +121,7 @@ fun ProfileRoute(
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) { viewModel.refreshProfile() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    PulseHideNavigation(state.editor != null || state.token != null)
     PulseSnackbarEffect(state.message.takeUnless { state.uncertain }, viewModel::consumeMessage)
     val context = LocalContext.current
     val activity = context as? Activity

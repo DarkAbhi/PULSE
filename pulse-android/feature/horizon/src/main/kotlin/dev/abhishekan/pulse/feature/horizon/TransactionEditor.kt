@@ -62,10 +62,14 @@ internal fun TransactionEditor(
         val wide = maxWidth >= 600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             error?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = PulseTheme.colors.error) }
-            TransactionSection(R.string.transaction_details, R.string.transaction_details_hint, R.drawable.pulse_obligation_card) {
+            TransactionSection(
+                R.string.pulse_horizon_transaction_details,
+                R.string.pulse_horizon_transaction_details_hint,
+                R.drawable.pulse_obligation_card,
+            ) {
                 SubscriptionInput(draft.name, {
                     onChange(draft.copy(name = it))
-                }, stringResource(R.string.pulse_horizon_name), stringResource(R.string.transaction_name_hint), !busy)
+                }, stringResource(R.string.pulse_horizon_name), stringResource(R.string.pulse_horizon_transaction_name_hint), !busy)
                 SubscriptionInput(
                     draft.amount,
                     {
@@ -91,10 +95,14 @@ internal fun TransactionEditor(
                     color = PulseTheme.colors.textSecondary,
                 )
             }
-            TransactionSection(R.string.transaction_when, R.string.transaction_when_hint, R.drawable.pulse_obligation_calendar) {
+            TransactionSection(
+                R.string.pulse_horizon_transaction_when,
+                R.string.pulse_horizon_transaction_when_hint,
+                R.drawable.pulse_obligation_calendar,
+            ) {
                 SubscriptionFieldPair(wide, {
                     TransactionPickerField(
-                        R.string.transaction_date,
+                        R.string.pulse_horizon_transaction_date,
                         draft.date.ifBlank { stringResource(R.string.pulse_horizon_not_set) },
                         !busy,
                     ) {
@@ -103,13 +111,17 @@ internal fun TransactionEditor(
                             "date"
                     }
                 }, {
-                    TransactionPickerField(R.string.transaction_time, draft.time, !busy) {
+                    TransactionPickerField(R.string.pulse_horizon_transaction_time, draft.time, !busy) {
                         focus.clearFocus()
                         picker = "time"
                     }
                 })
             }
-            TransactionSection(R.string.transaction_organize, R.string.transaction_organize_hint, R.drawable.pulse_obligation_tag) {
+            TransactionSection(
+                R.string.pulse_horizon_transaction_organize,
+                R.string.pulse_horizon_transaction_organize_hint,
+                R.drawable.pulse_obligation_tag,
+            ) {
                 SubscriptionFieldPair(wide, {
                     SubscriptionRelation(
                         R.string.pulse_horizon_category,
@@ -142,7 +154,7 @@ internal fun TransactionEditor(
             }
             TransactionSection(
                 R.string.pulse_horizon_notes_optional,
-                R.string.transaction_notes_hint,
+                R.string.pulse_horizon_transaction_notes_hint,
                 R.drawable.pulse_obligation_document,
             ) {
                 PulseTextField(

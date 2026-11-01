@@ -803,21 +803,13 @@ class MealPlanDeviceTest {
         assertEquals(1, mutations)
     }
 
-    @Test fun draftRecreationTabsLogoutKeyboardAndDiscard() {
+    @Test fun draftRecreationKeyboardAndDiscardKeepNavigationAtRoot() {
         launchPlanner()
         tap("Add meal")
         field("Meal name", "Unsaved bowl")
         scenario!!.recreate()
         awaitText("Unsaved bowl")
-        tap("Home")
-        tap("Meals")
-        awaitText("Unsaved bowl")
-        tap("You")
-        tap("Log out")
-        awaitText("Log out and discard edits?")
-        confirm("Cancel")
-        tap("Meals")
-        awaitText("Unsaved bowl")
+        compose.assertTabNavigationHidden()
         field("Meal name", "")
         compose.onNodeWithText("Meal name").performImeAction()
         compose.waitForIdle()

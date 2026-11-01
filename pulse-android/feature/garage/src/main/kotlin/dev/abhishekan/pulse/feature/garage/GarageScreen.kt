@@ -48,6 +48,7 @@ import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
+import dev.abhishekan.pulse.core.ui.PulseHideNavigation
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
@@ -84,6 +85,7 @@ fun GarageRoute(
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    PulseHideNavigation(state.vehicle != null || state.draft != null)
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     var initialVehicleOpened by rememberSaveable(initialVehicle) { mutableStateOf(false) }
     LaunchedEffect(initialVehicle) {

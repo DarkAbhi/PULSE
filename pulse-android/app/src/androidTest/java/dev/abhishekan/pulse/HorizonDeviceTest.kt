@@ -1529,7 +1529,7 @@ class HorizonDeviceTest {
         }
     }
 
-    @Test fun draftsSurviveRotationTabsAndKeyboardAndWarnBeforeDiscard() {
+    @Test fun draftsSurviveRotationAndKeyboardAndHideNavigationUntilDiscard() {
         launchHorizon()
         tap("Transactions")
         quickAction("Log a transaction")
@@ -1539,15 +1539,7 @@ class HorizonDeviceTest {
         assertEquals(0, backend.mutations)
         scenario!!.recreate()
         awaitText("Unsaved finance")
-        tap("Home")
-        tap("Horizon")
-        awaitText("Unsaved finance")
-        tap("You")
-        tap("Log out")
-        awaitText("Log out and discard edits?")
-        confirm("Cancel")
-        tap("Horizon")
-        awaitText("Unsaved finance")
+        compose.assertTabNavigationHidden()
         compose.onNodeWithText("Name").performScrollTo().performImeAction()
         screenshot("draft")
         compose.onNodeWithContentDescription("Back to Financial Horizon").assertIsDisplayed().performClick()

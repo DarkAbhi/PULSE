@@ -105,17 +105,6 @@ private fun GarageVehicleCard(
             val wide = maxWidth >= 440.dp && LocalDensity.current.fontScale <= 1.3f
             val title: @Composable (Modifier) -> Unit = { titleModifier ->
                 Column(titleModifier, verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                    Box(
-                        Modifier.size(56.dp).background(colors.primarySoft, RoundedCornerShape(16.dp)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            painterResource(CoreUiR.drawable.pulse_garage),
-                            null,
-                            Modifier.size(24.dp),
-                            tint = colors.action,
-                        )
-                    }
                     PulseText(vehicle.name, Modifier.semantics { heading() }, PulseTextStyle.Title)
                     if (vehicle.makeName.isNotBlank() || vehicle.modelName.isNotBlank()) {
                         PulseText(

@@ -257,7 +257,7 @@ private fun WorkoutInformation(info: WorkoutInfo) {
             }
         }
         if (!hasMetrics || info.imported) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 WorkoutGlyph(WorkoutSymbol.Info, PulseTheme.colors.textSecondary)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (!hasMetrics) {

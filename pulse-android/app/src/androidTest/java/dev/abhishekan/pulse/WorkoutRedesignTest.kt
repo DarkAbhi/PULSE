@@ -7,13 +7,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
@@ -62,7 +65,7 @@ class WorkoutRedesignTest {
         screenshot("workout-linked-empty")
     }
 
-    @Test fun populatedWorkoutHasCountsAndModalInstructions() {
+    @Test fun populatedWorkoutHasCountsAndSheetInstructions() {
         compose.setContent { Content(WorkoutDetail(manual, listOf(exercise))) }
         compose.onNodeWithText("Timing and energy data aren’t available for this visit.").assertIsDisplayed()
         compose.onNodeWithText("WORKOUT SUMMARY").performScrollTo().assertIsDisplayed()
@@ -76,7 +79,7 @@ class WorkoutRedesignTest {
         compose.onNodeWithText("View instructions").performClick()
         compose.onNodeWithText("1. ${catalog.instructions.first()}").assertIsDisplayed()
         screenshot("workout-instructions")
-        compose.onNodeWithText("Close").performClick()
+        compose.onNodeWithContentDescription("Close sheet").performSemanticsAction(SemanticsActions.OnClick) { it() }
         compose.onNodeWithText("1. ${catalog.instructions.first()}").assertDoesNotExist()
         compose.onNodeWithText("View instructions").assertIsDisplayed()
     }

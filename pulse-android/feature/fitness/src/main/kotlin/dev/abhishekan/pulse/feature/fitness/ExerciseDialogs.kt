@@ -227,17 +227,17 @@ internal fun EditorInstructions(exercise: CatalogExercise) {
         true,
         soft = true,
     )
-    if (open) ExerciseInstructionsDialog(exercise, { open = false })
+    if (open) ExerciseInstructionsSheet(exercise, { open = false })
 }
 
 @Composable
-internal fun ExerciseInstructionsDialog(
+internal fun ExerciseInstructionsSheet(
     exercise: CatalogExercise,
     onDismiss: () -> Unit,
 ) {
-    ExerciseModal(exercise.name, onDismiss) {
+    PulseBottomSheet(exercise.name, onDismiss, expandOnOverflow = true) {
         Column(
-            Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()),
+            Modifier.fillMaxWidth().padding(horizontal = PulseTokens.medium, vertical = PulseTokens.medium),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
         ) {
             if (exercise.instructions.isNotEmpty()) {

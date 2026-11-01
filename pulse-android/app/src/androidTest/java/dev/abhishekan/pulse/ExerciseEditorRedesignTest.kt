@@ -158,7 +158,7 @@ class ExerciseEditorRedesignTest {
         compose.onNodeWithText("View instructions").performScrollTo().performClick()
         compose.onNodeWithText("1. Curl with control.").assertIsDisplayed()
         screenshot("instructions")
-        compose.onNodeWithText("Close").performClick()
+        compose.onNodeWithContentDescription("Close sheet").performSemanticsAction(SemanticsActions.OnClick) { it() }
         compose.runOnIdle { check(editor.value.draft == draft) }
         compose.onNodeWithText("Save exercise").performScrollTo().assertIsNotEnabled()
     }
@@ -200,7 +200,7 @@ class ExerciseEditorRedesignTest {
         screenshot("large-type-dark")
         compose.onNodeWithText("View instructions").performScrollTo().performClick()
         compose.onNodeWithText("1. Curl with control.").assertIsDisplayed()
-        compose.onNodeWithText("Close").performClick()
+        compose.onNodeWithContentDescription("Close sheet").performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
     private fun screenshot(name: String) {

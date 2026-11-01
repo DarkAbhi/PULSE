@@ -159,7 +159,10 @@ private fun GarageVehicleCard(
 }
 
 @Composable
-private fun GarageVehicleArtwork(vehicleKind: String, modifier: Modifier) {
+private fun GarageVehicleArtwork(
+    vehicleKind: String,
+    modifier: Modifier,
+) {
     Box(modifier, contentAlignment = Alignment.Center) {
         Box(
             Modifier
@@ -167,6 +170,11 @@ private fun GarageVehicleArtwork(vehicleKind: String, modifier: Modifier) {
                 .rotate(-12f)
                 .background(PulseTheme.colors.primarySoft.copy(alpha = 0.4f), RoundedCornerShape(48)),
         )
-        Image(painterResource(vehicleArtwork(vehicleKind) ?: R.drawable.garage_workshop), null, Modifier.matchParentSize().padding(8.dp), contentScale = ContentScale.Fit)
+        Image(
+            painterResource(vehicleArtwork(vehicleKind) ?: R.drawable.garage_workshop),
+            null,
+            Modifier.matchParentSize().padding(8.dp),
+            contentScale = ContentScale.Fit,
+        )
     }
 }

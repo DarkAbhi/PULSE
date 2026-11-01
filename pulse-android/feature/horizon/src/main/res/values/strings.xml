@@ -1,5 +1,15 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
+<string name="transaction_details">Transaction details</string>
+    <string name="transaction_details_hint">Record the amount and how it moves.</string>
+    <string name="transaction_name_hint">What was this for?</string>
+    <string name="transaction_when">Date and time</string>
+    <string name="transaction_when_hint">When did this transaction happen?</string>
+    <string name="transaction_organize">Organization</string>
+    <string name="transaction_organize_hint">Optionally link this transaction to your finances.</string>
+    <string name="transaction_notes_hint">Add any details you want to remember.</string>
+    <string name="transaction_date">Date</string>
+    <string name="transaction_time">Time</string>
     <string name="pulse_horizon_subscription_name_required">Subscription name *</string>
     <string name="pulse_horizon_billing_day_required">Billing day of month (1–31) *</string>
     <string name="pulse_horizon_annual_renewal_date_required">Annual renewal date *: %1$s</string>

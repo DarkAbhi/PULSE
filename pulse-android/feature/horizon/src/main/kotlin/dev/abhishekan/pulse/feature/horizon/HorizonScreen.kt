@@ -200,6 +200,8 @@ internal fun HorizonScreen(
                                 state.formError,
                                 vm::update,
                             )
+                        } else if (state.draft.kind == HorizonForm.Transaction) {
+                            TransactionEditor(state.draft, state.overview.value, state.busy, state.formError, vm::update)
                         } else if (state.draft.kind == HorizonForm.Budget) {
                             BudgetEditor(
                                 state.draft,
@@ -234,12 +236,14 @@ internal fun HorizonScreen(
                         val actionDraft =
                             state.draft.takeIf {
                                 it.kind in
-                                    listOf(HorizonForm.Subscription, HorizonForm.Budget, HorizonForm.Category)
+                                    listOf(HorizonForm.Subscription, HorizonForm.Budget, HorizonForm.Category, HorizonForm.Transaction)
                             }
                         if (actionDraft != null) {
                             HorizonEditorActions(
                                 stringResource(
-                                    if (actionDraft.kind == HorizonForm.Category) {
+                                    if (actionDraft.kind == HorizonForm.Transaction) {
+                                        actionDraft.kind.editorLabel(EditorAction.Save)
+                                    } else if (actionDraft.kind == HorizonForm.Category) {
                                         R.string.pulse_horizon_save_category
                                     } else if (actionDraft.kind == HorizonForm.Budget) {
                                         R.string.pulse_horizon_save_budget

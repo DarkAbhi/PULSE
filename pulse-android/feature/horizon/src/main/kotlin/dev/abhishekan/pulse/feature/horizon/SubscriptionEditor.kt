@@ -259,7 +259,7 @@ private fun SubscriptionSection(
 }
 
 @Composable
-private fun SubscriptionFieldPair(
+internal fun SubscriptionFieldPair(
     wide: Boolean,
     first: @Composable () -> Unit,
     second: @Composable () -> Unit,
@@ -278,7 +278,7 @@ private fun SubscriptionFieldPair(
 }
 
 @Composable
-private fun SubscriptionInput(
+internal fun SubscriptionInput(
     value: String,
     onChange: (String) -> Unit,
     label: String,
@@ -301,7 +301,7 @@ private fun SubscriptionInput(
 }
 
 @Composable
-private fun SubscriptionSegments(
+internal fun SubscriptionSegments(
     label: String,
     value: String,
     options: List<String>,
@@ -365,7 +365,7 @@ private fun SubscriptionSegments(
 }
 
 @Composable
-private fun SubscriptionRelation(
+internal fun SubscriptionRelation(
     label: Int,
     id: Long?,
     options: List<Pair<Long, String>>,

@@ -7,7 +7,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -27,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -66,38 +64,17 @@ internal fun MaintenanceHistoryCard(
     download: (Long, GarageReceipt) -> Unit,
     uploadRecord: Long?,
     progress: Float?,
+    modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(Modifier.fillMaxWidth().testTag("garage-care-${item.id}")) {
-        val sideBySide = maxWidth >= 840.dp && LocalDensity.current.fontScale <= 1.3f
-        val summary: @Composable () -> Unit = {
-            MaintenancePanel { MaintenanceSummary(item, vehicle, enabled, edit, remove) }
-        }
-        val receipts: @Composable () -> Unit = {
-            MaintenancePanel {
-                MaintenanceReceipts(item, vehicle, enabled, busy, remove, upload, open, download, uploadRecord, progress)
-            }
-        }
-        if (sideBySide) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-                Box(Modifier.weight(4f)) { summary() }
-                Box(Modifier.weight(5f)) { receipts() }
-            }
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-                summary()
-                receipts()
-            }
-        }
-    }
-}
-
-@Composable
-private fun MaintenancePanel(content: @Composable () -> Unit) {
     PulseCard(
-        Modifier.fillMaxWidth(),
+        modifier.fillMaxWidth().testTag("garage-care-${item.id}"),
         border = BorderStroke(PulseTokens.focusWidth / 2, PulseTheme.colors.divider),
         shape = PulseTheme.shapes.extraLarge,
-    ) { content() }
+    ) {
+        MaintenanceSummary(item, vehicle, enabled, edit, remove)
+        MaintenanceDivider()
+        MaintenanceReceipts(item, vehicle, enabled, busy, remove, upload, open, download, uploadRecord, progress)
+    }
 }
 
 @Composable
@@ -110,14 +87,20 @@ private fun MaintenanceSummary(
 ) {
     val colors = PulseTheme.colors
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(
                 Modifier.size(PulseTokens.target).background(colors.errorSoft, PulseTheme.shapes.pill),
                 contentAlignment = Alignment.Center,
             ) { MaintenanceIcon(R.drawable.garage_service, colors.coral) }
-            PulseText(item.title, Modifier.weight(1f).semantics { heading() }, PulseTextStyle.Heading3)
+            Column(Modifier.weight(1f)) {
+                PulseText(item.title, Modifier.semantics { heading() }, PulseTextStyle.Heading3)
+                PulseText(UserCurrency.format(item.amount), style = PulseTextStyle.Title2, color = colors.action)
+            }
         }
-        PulseText(UserCurrency.format(item.amount), style = PulseTextStyle.DisplayXL, color = colors.action)
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.small),

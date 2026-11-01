@@ -1,12 +1,22 @@
 package dev.abhishekan.pulse.feature.garage
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
+import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
@@ -85,7 +95,32 @@ internal fun MaintenanceCards(
             ),
         )
     }
-    data.maintenance.forEach { item ->
-        MaintenanceHistoryCard(item, vehicle, enabled, busy, edit, remove, upload, open, download, uploadRecord, progress)
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columns = if (maxWidth >= 840.dp && LocalDensity.current.fontScale <= 1.3f) 2 else 1
+        Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
+            data.maintenance.chunked(columns).forEach { entries ->
+                Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
+                    entries.forEach { item ->
+                        key(item.id) {
+                            MaintenanceHistoryCard(
+                                item,
+                                vehicle,
+                                enabled,
+                                busy,
+                                edit,
+                                remove,
+                                upload,
+                                open,
+                                download,
+                                uploadRecord,
+                                progress,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                    if (entries.size < columns) Spacer(Modifier.weight(1f))
+                }
+            }
+        }
     }
 }

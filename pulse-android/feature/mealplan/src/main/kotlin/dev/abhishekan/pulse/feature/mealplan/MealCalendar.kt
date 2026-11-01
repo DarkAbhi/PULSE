@@ -105,7 +105,15 @@ internal fun MealCalendar(
     }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val compact = pulseWindowSize(maxWidth) == PulseWindowSize.Compact
-        val dayWidth = if (compact) 48.dp * LocalDensity.current.fontScale.coerceAtLeast(1f) else 80.dp
+        val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+        val dayWidth =
+            if (compact && fontScale == 1f) {
+                minOf(48.dp, ((maxWidth - 24.dp) / 7) - 1.dp).coerceAtLeast(40.dp)
+            } else if (compact) {
+                48.dp * fontScale
+            } else {
+                80.dp
+            }
         val wide = maxWidth / LocalDensity.current.fontScale >= 840.dp
         Column(
             Modifier.fillMaxWidth().padding(vertical = 8.dp),

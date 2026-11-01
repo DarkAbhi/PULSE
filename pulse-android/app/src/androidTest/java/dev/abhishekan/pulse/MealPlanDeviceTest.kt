@@ -416,14 +416,6 @@ class MealPlanDeviceTest {
         awaitText(firstMeal)
     }
 
-    private fun pickTime(
-        current: String,
-        option: String,
-    ) {
-        tap("Meal time: $current")
-        tap(option)
-    }
-
     @Test fun pullToRefreshLoadsUpdatedMeals() {
         launchPlanner()
         compose.onNodeWithText("Refresh").assertDoesNotExist()
@@ -684,7 +676,7 @@ class MealPlanDeviceTest {
         compose.onNode(hasText("Today") and hasClickAction()).assertDoesNotExist()
         tap("Add meal")
         field("Meal name", "Rice bowl")
-        pickTime("Select a meal time", "Lunch · 12:00–14:30")
+        tap("Lunch")
         compose.onNodeWithTag("meal-date").performScrollTo().performClick()
         screenshot("date-picker", true)
         confirm("Choose date")
@@ -711,7 +703,7 @@ class MealPlanDeviceTest {
         awaitText("Planned · Rice bowl")
         tap("Edit Rice bowl")
         field("Meal name", "Rice and beans")
-        pickTime("Lunch · 12:00–14:30", "Evening bowl · 18:00–19:00")
+        tap("Evening bowl")
         tap("Save meal")
         awaitText("Rice and beans")
         screenshot("meals")
@@ -747,7 +739,7 @@ class MealPlanDeviceTest {
         compose.onNode(hasContentDescription("Back to planner")).performScrollTo().performClick()
         tap("Add meal")
         field("Meal name", "Oats")
-        pickTime("Select a meal time", "Evening bowl · 18:00–19:00")
+        tap("Evening bowl")
         tap("Save meal")
         awaitText("Oats")
         tap("Meal times")
@@ -792,7 +784,7 @@ class MealPlanDeviceTest {
         launchPlanner()
         tap("Add meal")
         field("Meal name", "Lost bowl")
-        pickTime("Select a meal time", "Lunch · 12:00–14:30")
+        tap("Lunch")
         loseSave = true
         tap("Save meal")
         awaitText("Review before another change")
@@ -860,7 +852,7 @@ class MealPlanDeviceTest {
             launchPlanner()
             tap("Add meal")
             field("Meal name", "Resized meal")
-            pickTime("Select a meal time", "Lunch · 12:00–14:30")
+            tap("Lunch")
             shell("wm size 2560x1800")
             shell("wm density 320")
             awaitText("Resized meal")

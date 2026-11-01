@@ -36,7 +36,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
-import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -139,40 +138,6 @@ internal fun MealEditor(
                 focus.clearFocus()
                 onUpdate(draft.copy(timeId = it.id))
             }
-            val choices =
-                buildList {
-                    if (draft.timeId != null &&
-                        times.none { it.id == draft.timeId }
-                    ) {
-                        add(
-                            draft.timeId.toString() to
-                                stringResource(R.string.pulse_mealplan_previously_assigned_meal_time),
-                        )
-                    }
-                    addAll(
-                        times.map {
-                            it.id.toString() to
-                                stringResource(
-                                    R.string.pulse_mealplan_time_option,
-                                    it.name,
-                                    it.start.format(mealClock),
-                                    it.end.format(mealClock),
-                                )
-                        },
-                    )
-                }
-            PulseSelectionField(
-                stringResource(R.string.pulse_mealplan_meal_time),
-                choices.firstOrNull { it.first == draft.timeId?.toString().orEmpty() }?.second
-                    ?: stringResource(R.string.pulse_mealplan_select_meal_time),
-                choices.map {
-                    it.second
-                },
-                {
-                    onUpdate(draft.copy(timeId = choices[it].first.toLongOrNull()))
-                },
-                enabled = !busy,
-            )
             if (draft.originalTimeId !=
                 null
             ) {

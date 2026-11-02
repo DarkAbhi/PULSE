@@ -1,9 +1,7 @@
 package dev.abhishekan.pulse
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -51,7 +49,6 @@ import dev.abhishekan.pulse.core.domain.model.NotificationTarget
 import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.ui.DraftSource
-import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.LocalPulseNavigationHidingScreens
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -65,7 +62,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationItem
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationRail
-import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbar
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarProvider
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -306,14 +302,6 @@ private fun SignedInApp(
                                     }, shell::dismissOnboarding)
                                 }
                             }
-                            composable(AppDestination.Spaces.route) {
-                                SpacesScreen(
-                                    { nav.navigateSingleTop(AppDestination.Fitness.path) },
-                                    { nav.navigateSingleTop(AppDestination.Horizon.path) },
-                                    { nav.navigateSingleTop(AppDestination.Garage.path) },
-                                    { nav.navigateSingleTop(AppDestination.MealPlan.path) },
-                                )
-                            }
                             composable(AppDestination.MealPlan.route) {
                                 MealPlanRoute()
                             }
@@ -398,92 +386,5 @@ private fun SignedInApp(
             { shell.confirmLeave()?.let(nav::navigateToTab) },
             shell::cancelLeave,
         )
-    }
-}
-
-@Composable
-private fun SpacesScreen(
-    onFitness: () -> Unit,
-    onHorizon: () -> Unit,
-    onGarage: () -> Unit,
-    onMealPlan: () -> Unit,
-) {
-    PulseScreenScaffold(
-        stringResource(R.string.pulse_app_spaces),
-        backLabel = stringResource(R.string.pulse_app_back_to_home),
-    ) {
-        PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
-            Column(
-                Modifier
-                    .widthIn(
-                        max = PulseTokens.contentWidth,
-                    ).fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(LocalPulseContentPadding.current)
-                    .padding(size.pagePadding),
-                verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
-            ) {
-                PulseText(
-                    stringResource(R.string.pulse_app_make_room_for_your_everyday),
-                    style = PulseTextStyle.Display,
-                )
-                PulseCard(Modifier.fillMaxWidth()) {
-                    PulseText(stringResource(R.string.pulse_app_fitness), style = PulseTextStyle.Title)
-                    PulseText(
-                        stringResource(
-                            R.string.pulse_app_find_your_rhythm_record_workouts_revisit_your_activity_and,
-                        ),
-                    )
-                    PulseButton(
-                        stringResource(R.string.pulse_app_open_fitness),
-                        onFitness,
-                        Modifier.fillMaxWidth(),
-                    )
-                }
-                PulseCard(Modifier.fillMaxWidth()) {
-                    PulseText(
-                        stringResource(R.string.pulse_app_financial_horizon),
-                        style = PulseTextStyle.Title,
-                    )
-                    PulseText(
-                        stringResource(
-                            R.string.pulse_app_your_room_to_move_review_commitments_track_transactions_and,
-                        ),
-                    )
-                    PulseButton(
-                        stringResource(R.string.pulse_app_open_financial_horizon),
-                        onHorizon,
-                        Modifier.fillMaxWidth(),
-                    )
-                }
-                PulseCard(Modifier.fillMaxWidth()) {
-                    PulseText(stringResource(R.string.pulse_app_garage), style = PulseTextStyle.Title)
-                    PulseText(
-                        stringResource(
-                            R.string.pulse_app_care_for_every_journey_track_fuel_tire_pressure_maintenance,
-                        ),
-                    )
-                    PulseButton(
-                        stringResource(R.string.pulse_app_open_garage),
-                        onGarage,
-                        Modifier.fillMaxWidth(),
-                    )
-                }
-                PulseCard(Modifier.fillMaxWidth()) {
-                    PulseText(
-                        stringResource(R.string.pulse_app_meal_plan),
-                        style = PulseTextStyle.Title,
-                    )
-                    PulseText(
-                        stringResource(R.string.pulse_app_a_little_care_for_your_day_plan_the_week),
-                    )
-                    PulseButton(
-                        stringResource(R.string.pulse_app_open_meal_plan),
-                        onMealPlan,
-                        Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-        }
     }
 }

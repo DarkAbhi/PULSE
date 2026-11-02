@@ -20,7 +20,6 @@ internal enum class AppDestination(
     Workout("workout/{id}"),
     Vehicle("vehicle/{id}"),
     Notifications("notifications"),
-    Spaces("space-list"),
     Gallery("gallery"),
     ;
 

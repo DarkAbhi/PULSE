@@ -24,7 +24,6 @@ import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs
@@ -105,12 +104,6 @@ private fun GaragePreview() {
                                     {
                                     },
                                     {},
-                                )
-                            }
-                            Column(Modifier.weight(1f)) {
-                                PulseEmptyState(
-                                    "Your story starts here",
-                                    "Add fuel fill-ups to build your efficiency history.",
                                 )
                             }
                         }

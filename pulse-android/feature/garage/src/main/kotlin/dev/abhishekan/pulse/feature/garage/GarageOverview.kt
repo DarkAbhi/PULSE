@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.abhishekan.pulse.core.domain.model.FuelEfficiency
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
@@ -48,10 +49,10 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import java.math.BigDecimal
 
 @Composable
 internal fun GarageOverview(
@@ -76,7 +77,7 @@ internal fun GarageOverview(
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-                if (data.efficiency.isNotEmpty()) EfficiencyCards(data)
+                EfficiencyCards(data)
                 OverviewCare(data, enabled, addFuel, addCare)
                 GarageRule()
                 PressureCard(data.pressure, enabled, editPressure, recordAir)
@@ -90,13 +91,15 @@ internal fun EfficiencyCards(
     data: VehicleHistory,
     minimumHeight: Dp = 0.dp,
 ) {
-    if (data.efficiency.isEmpty()) {
-        PulseEmptyState(
-            stringResource(R.string.pulse_garage_your_story_starts_here),
-            stringResource(R.string.pulse_garage_add_fuel_fill_ups_to_build_an_efficiency_history),
-        )
-    }
-    data.efficiency.forEach { (type, stat) ->
+    val efficiency =
+        if (data.efficiency.isEmpty() && data.fuel.isEmpty()) {
+            data.fuelTypes.associateWith {
+                FuelEfficiency(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO)
+            }
+        } else {
+            data.efficiency
+        }
+    efficiency.forEach { (type, stat) ->
         PulseCard(
             Modifier.fillMaxWidth().heightIn(min = minimumHeight),
             highlighted = true,

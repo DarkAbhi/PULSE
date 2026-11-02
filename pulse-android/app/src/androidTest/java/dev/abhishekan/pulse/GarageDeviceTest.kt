@@ -1154,6 +1154,17 @@ class GarageDeviceTest {
         )
     }
 
+    @Test fun overviewShowsZeroEfficiencyBeforeFirstFillUp() {
+        efficiencyFixture = "{}"
+        launchGarage()
+        select()
+        compose.onNodeWithText("Petrol · your efficiency").assertExists()
+        compose.onNodeWithText("km/L").assertExists()
+        assertTrue(compose.onAllNodesWithText("0").fetchSemanticsNodes().size >= 4)
+        compose.onNodeWithText("Your story starts here").assertDoesNotExist()
+        compose.onNodeWithText("Not enough history").assertDoesNotExist()
+    }
+
     @Test fun redesignedOverviewKeepsTitleActionsAndPressureAccessible() {
         efficiencyFixture =
             """{"petrol":{"total_cost":2000,"total_volume":20,"average_km_per_litre":22.1,"last_km_per_litre":22.1,"min_km_per_litre":22.1,"max_km_per_litre":22.1}}"""

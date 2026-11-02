@@ -51,23 +51,24 @@ func (q *Queries) DeleteMaintenanceActions(ctx context.Context, arg DeleteMainte
 }
 
 const listMaintenanceActions = `-- name: ListMaintenanceActions :many
-SELECT component, action, description FROM vehicle_maintenance_actions
-WHERE maintenance_record_id=$1 AND user_id=$2 ORDER BY id
+SELECT maintenance_record_id, component, action, description FROM vehicle_maintenance_actions
+WHERE maintenance_record_id = ANY($1::bigint[]) AND user_id=$2 ORDER BY id
 `
 
 type ListMaintenanceActionsParams struct {
-	MaintenanceRecordID int64
-	UserID              int64
+	RecordIds []int64
+	UserID    int64
 }
 
 type ListMaintenanceActionsRow struct {
-	Component   string
-	Action      string
-	Description string
+	MaintenanceRecordID int64
+	Component           string
+	Action              string
+	Description         string
 }
 
 func (q *Queries) ListMaintenanceActions(ctx context.Context, arg ListMaintenanceActionsParams) ([]ListMaintenanceActionsRow, error) {
-	rows, err := q.db.Query(ctx, listMaintenanceActions, arg.MaintenanceRecordID, arg.UserID)
+	rows, err := q.db.Query(ctx, listMaintenanceActions, arg.RecordIds, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +76,12 @@ func (q *Queries) ListMaintenanceActions(ctx context.Context, arg ListMaintenanc
 	var items []ListMaintenanceActionsRow
 	for rows.Next() {
 		var i ListMaintenanceActionsRow
-		if err := rows.Scan(&i.Component, &i.Action, &i.Description); err != nil {
+		if err := rows.Scan(
+			&i.MaintenanceRecordID,
+			&i.Component,
+			&i.Action,
+			&i.Description,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

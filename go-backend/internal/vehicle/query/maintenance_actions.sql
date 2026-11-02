@@ -6,8 +6,8 @@ VALUES ($1, $2, $3, $4, $5);
 DELETE FROM vehicle_maintenance_actions WHERE maintenance_record_id=$1 AND user_id=$2;
 
 -- name: ListMaintenanceActions :many
-SELECT component, action, description FROM vehicle_maintenance_actions
-WHERE maintenance_record_id=$1 AND user_id=$2 ORDER BY id;
+SELECT maintenance_record_id, component, action, description FROM vehicle_maintenance_actions
+WHERE maintenance_record_id = ANY(sqlc.arg(record_ids)::bigint[]) AND user_id=sqlc.arg(user_id) ORDER BY id;
 
 -- name: SearchMaintenanceHistory :many
 SELECT r.id, r.category, r.title, r.amount, r.occurred_at, r.odometer_km, r.provider_name, r.notes

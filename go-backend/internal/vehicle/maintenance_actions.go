@@ -68,20 +68,35 @@ func saveMaintenanceActions(ctx context.Context, q *query.Queries, recordID, use
 }
 
 func populateMaintenanceRecord(ctx context.Context, q *query.Queries, userID int64, record *maintenanceRecord) error {
-	actions, err := q.ListMaintenanceActions(ctx, query.ListMaintenanceActionsParams{MaintenanceRecordID: record.ID, UserID: userID})
+	return populateMaintenanceRecords(ctx, q, userID, []*maintenanceRecord{record})
+}
+
+func populateMaintenanceRecords(ctx context.Context, q *query.Queries, userID int64, records []*maintenanceRecord) error {
+	if len(records) == 0 {
+		return nil
+	}
+	ids := make([]int64, 0, len(records))
+	byID := make(map[int64]*maintenanceRecord, len(records))
+	for _, record := range records {
+		ids = append(ids, record.ID)
+		byID[record.ID] = record
+		record.Actions = []maintenanceAction{}
+		record.Attachments = []maintenanceAttachment{}
+	}
+	actions, err := q.ListMaintenanceActions(ctx, query.ListMaintenanceActionsParams{RecordIds: ids, UserID: userID})
 	if err != nil {
 		return fmt.Errorf("list maintenance actions: %w", err)
 	}
-	record.Actions = []maintenanceAction{}
 	for _, a := range actions {
+		record := byID[a.MaintenanceRecordID]
 		record.Actions = append(record.Actions, maintenanceAction{a.Component, a.Action, a.Description})
 	}
-	attachments, err := q.ListMaintenanceAttachments(ctx, query.ListMaintenanceAttachmentsParams{MaintenanceRecordID: record.ID, UserID: userID})
+	attachments, err := q.ListMaintenanceAttachments(ctx, query.ListMaintenanceAttachmentsParams{RecordIds: ids, UserID: userID})
 	if err != nil {
 		return fmt.Errorf("list maintenance attachments: %w", err)
 	}
-	record.Attachments = []maintenanceAttachment{}
 	for _, a := range attachments {
+		record := byID[a.MaintenanceRecordID]
 		record.Attachments = append(record.Attachments, maintenanceAttachment{ID: a.ID, FileName: a.FileName, ContentType: a.ContentType, SizeBytes: a.SizeBytes, CreatedAt: a.CreatedAt.Time.UTC()})
 	}
 	return nil
@@ -110,11 +125,15 @@ func (h *Handler) MaintenanceHistory(w http.ResponseWriter, r *http.Request) {
 	records := []maintenanceRecord{}
 	for _, row := range rows {
 		record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt.Time, row.OdometerKm, row.ProviderName, textToNullString(row.Notes))
-		if err := populateMaintenanceRecord(r.Context(), q, user.ID, &record); err != nil {
-			webutil.ServerError(w, err)
-			return
-		}
 		records = append(records, record)
+	}
+	pointers := make([]*maintenanceRecord, 0, len(records))
+	for i := range records {
+		pointers = append(pointers, &records[i])
+	}
+	if err := populateMaintenanceRecords(r.Context(), q, user.ID, pointers); err != nil {
+		webutil.ServerError(w, err)
+		return
 	}
 	webutil.WriteJSON(w, http.StatusOK, records)
 }

@@ -77,10 +77,10 @@ JOIN gym_visits v ON v.id=e.gym_visit_id
 WHERE e.gym_visit_id=$1 AND v.user_id=$2 ORDER BY e.id ASC;
 
 -- name: ListSets :many
-SELECT s.id,s.set_number,s.reps,s.weight FROM gym_exercise_sets s
+SELECT s.gym_visit_exercise_id,s.id,s.set_number,s.reps,s.weight FROM gym_exercise_sets s
 JOIN gym_visit_exercises e ON e.id=s.gym_visit_exercise_id
 JOIN gym_visits v ON v.id=e.gym_visit_id
-WHERE s.gym_visit_exercise_id=$1 AND v.user_id=$2 ORDER BY s.set_number ASC;
+WHERE e.gym_visit_id=$1 AND v.user_id=$2 ORDER BY s.set_number ASC;
 
 -- name: CreateExercise :one
 INSERT INTO gym_visit_exercises (gym_visit_id,name,exercise_catalog_id)

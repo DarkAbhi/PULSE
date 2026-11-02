@@ -577,6 +577,31 @@ func TestHistoryAndDeleteLogs(t *testing.T) {
 		}
 	}
 
+	var secondFillID int64
+	if err := db.QueryRow(`INSERT INTO vehicle_fuel_fillups (vehicle_id,user_id,odometer_km) VALUES ($1,1,1300) RETURNING id`, vehicleID).Scan(&secondFillID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO vehicle_fuel_items (fillup_id,fuel_type,fill_type,quantity,unit_price,total_cost) VALUES ($1,'petrol','full',5,10,50)`, secondFillID); err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/vehicles/{id}/history", nil)
+	req.AddCookie(cookie)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", strconv.FormatInt(vehicleID, 10))
+	h.History(rec, req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx)))
+	var history struct {
+		Fills []fuelFillHistory `json:"fuel_fillups"`
+	}
+	if rec.Code != http.StatusOK || json.NewDecoder(rec.Body).Decode(&history) != nil || len(history.Fills) != 2 {
+		t.Fatalf("history: status %d, fills %+v", rec.Code, history.Fills)
+	}
+	for _, fill := range history.Fills {
+		if len(fill.Items) != 1 || (fill.ID == fuelFillupID && fill.Items[0].Quantity != 10) || (fill.ID == secondFillID && fill.Items[0].Quantity != 5) {
+			t.Fatalf("fill items not grouped correctly: %+v", fill)
+		}
+	}
+
 	// 2. Delete air fill record
 	{
 		rec := httptest.NewRecorder()
@@ -687,6 +712,16 @@ func TestMaintenanceRecords(t *testing.T) {
 	if updated.Category != "repair" || updated.Title != "Brake-pad repair" || updated.Amount != 5200 {
 		t.Fatalf("unexpected updated record: %+v", updated)
 	}
+	var secondID int64
+	if err := db.QueryRow(`INSERT INTO vehicle_maintenance_records (vehicle_id,user_id,category,title,amount) VALUES ($1,1,'service','Second service',1) RETURNING id`, vehicleID).Scan(&secondID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO vehicle_maintenance_actions (maintenance_record_id,user_id,component,action) VALUES ($1,1,'tyre','inspected')`, secondID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO vehicle_maintenance_attachments (maintenance_record_id,user_id,storage_key,file_name,content_type,size_bytes) VALUES ($1,1,'batch-test','receipt.pdf','application/pdf',1)`, secondID); err != nil {
+		t.Fatal(err)
+	}
 
 	rec, req = request(http.MethodGet, "/vehicles/{id}/history", nil, 0)
 	h.History(rec, req)
@@ -696,8 +731,17 @@ func TestMaintenanceRecords(t *testing.T) {
 	var history map[string]any
 	_ = json.NewDecoder(rec.Body).Decode(&history)
 	records := history["maintenance_records"].([]any)
-	if len(records) != 1 {
-		t.Fatalf("expected one maintenance record in history, got %v", records)
+	if len(records) != 2 {
+		t.Fatalf("expected two maintenance records in history, got %v", records)
+	}
+	for _, value := range records {
+		record := value.(map[string]any)
+		if int64(record["id"].(float64)) == secondID && (len(record["actions"].([]any)) != 1 || len(record["attachments"].([]any)) != 1) {
+			t.Fatalf("second record children not grouped correctly: %v", record)
+		}
+		if int64(record["id"].(float64)) == created.ID && (len(record["actions"].([]any)) != 2 || len(record["attachments"].([]any)) != 0) {
+			t.Fatalf("first record children not grouped correctly: %v", record)
+		}
 	}
 
 	rec, req = request(http.MethodGet, "/vehicles/{id}/maintenance-history?component=engine_oil&action=replaced", nil, 0)

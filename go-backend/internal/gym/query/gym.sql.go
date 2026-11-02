@@ -276,26 +276,27 @@ func (q *Queries) ListExercises(ctx context.Context, arg ListExercisesParams) ([
 }
 
 const listSets = `-- name: ListSets :many
-SELECT s.id,s.set_number,s.reps,s.weight FROM gym_exercise_sets s
+SELECT s.gym_visit_exercise_id,s.id,s.set_number,s.reps,s.weight FROM gym_exercise_sets s
 JOIN gym_visit_exercises e ON e.id=s.gym_visit_exercise_id
 JOIN gym_visits v ON v.id=e.gym_visit_id
-WHERE s.gym_visit_exercise_id=$1 AND v.user_id=$2 ORDER BY s.set_number ASC
+WHERE e.gym_visit_id=$1 AND v.user_id=$2 ORDER BY s.set_number ASC
 `
 
 type ListSetsParams struct {
-	GymVisitExerciseID int64
-	UserID             int64
+	GymVisitID int64
+	UserID     int64
 }
 
 type ListSetsRow struct {
-	ID        int64
-	SetNumber int16
-	Reps      int16
-	Weight    *float64
+	GymVisitExerciseID int64
+	ID                 int64
+	SetNumber          int16
+	Reps               int16
+	Weight             *float64
 }
 
 func (q *Queries) ListSets(ctx context.Context, arg ListSetsParams) ([]ListSetsRow, error) {
-	rows, err := q.db.Query(ctx, listSets, arg.GymVisitExerciseID, arg.UserID)
+	rows, err := q.db.Query(ctx, listSets, arg.GymVisitID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -304,6 +305,7 @@ func (q *Queries) ListSets(ctx context.Context, arg ListSetsParams) ([]ListSetsR
 	for rows.Next() {
 		var i ListSetsRow
 		if err := rows.Scan(
+			&i.GymVisitExerciseID,
 			&i.ID,
 			&i.SetNumber,
 			&i.Reps,

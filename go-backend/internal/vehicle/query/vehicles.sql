@@ -41,17 +41,17 @@ SELECT id,odometer_km,filled_at,station_name,notes FROM vehicle_fuel_fillups
 WHERE vehicle_id=$1 AND user_id=$2 ORDER BY filled_at DESC,id DESC;
 
 -- name: ListFuelItems :many
-SELECT i.fuel_type,i.fill_type,i.quantity,i.unit_price,i.total_cost FROM vehicle_fuel_items i
+SELECT i.fillup_id,i.fuel_type,i.fill_type,i.quantity,i.unit_price,i.total_cost FROM vehicle_fuel_items i
 JOIN vehicle_fuel_fillups f ON f.id=i.fillup_id
-WHERE i.fillup_id=$1 AND f.user_id=$2 ORDER BY i.id;
+WHERE f.vehicle_id=$1 AND f.user_id=$2 ORDER BY i.id;
 
 -- name: ListVehicleMaintenanceRecords :many
 SELECT id,category,title,amount,occurred_at,odometer_km,provider_name,notes
 FROM vehicle_maintenance_records WHERE vehicle_id=$1 AND user_id=$2 ORDER BY occurred_at DESC,id DESC;
 
 -- name: ListMaintenanceAttachments :many
-SELECT id,file_name,content_type,size_bytes,created_at FROM vehicle_maintenance_attachments
-WHERE maintenance_record_id=$1 AND user_id=$2 ORDER BY created_at ASC;
+SELECT maintenance_record_id,id,file_name,content_type,size_bytes,created_at FROM vehicle_maintenance_attachments
+WHERE maintenance_record_id = ANY(sqlc.arg(record_ids)::bigint[]) AND user_id=sqlc.arg(user_id) ORDER BY created_at ASC;
 
 -- name: DeleteVehicleAirFill :execrows
 DELETE FROM vehicle_air_fills WHERE id=$1 AND vehicle_id=$2 AND user_id=$3;

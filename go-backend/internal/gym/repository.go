@@ -123,25 +123,26 @@ func (r *Repository) ListExercises(ctx context.Context, userID, visitID int64) (
 	if err != nil {
 		return nil, err
 	}
+	sets, err := r.queries.ListSets(ctx, query.ListSetsParams{GymVisitID: visitID, UserID: userID})
+	if err != nil {
+		return nil, err
+	}
+	setsByExercise := make(map[int64][]exerciseSetDTO)
+	for _, set := range sets {
+		setsByExercise[set.GymVisitExerciseID] = append(setsByExercise[set.GymVisitExerciseID], exerciseSetDTO{
+			ID: set.ID, SetNumber: int(set.SetNumber), Reps: int(set.Reps), Weight: set.Weight,
+		})
+	}
 	items := make([]exerciseDTO, 0, len(rows))
 	for _, row := range rows {
-		sets, err := r.queries.ListSets(ctx, query.ListSetsParams{GymVisitExerciseID: row.ID, UserID: userID})
-		if err != nil {
-			return nil, err
-		}
 		item := exerciseDTO{
 			ID: row.ID, Name: row.Name, ExerciseCatalogID: row.ExerciseCatalogID,
-			Sets: make([]exerciseSetDTO, 0, len(sets)),
+			Sets: append([]exerciseSetDTO{}, setsByExercise[row.ID]...),
 		}
 		if row.ExerciseCatalogID != nil && row.CatalogName != nil {
 			item.CatalogExercise = &catalogExercise{
 				ID: *row.ExerciseCatalogID, Name: *row.CatalogName, Equipment: row.Equipment, Data: row.Data,
 			}
-		}
-		for _, set := range sets {
-			item.Sets = append(item.Sets, exerciseSetDTO{
-				ID: set.ID, SetNumber: int(set.SetNumber), Reps: int(set.Reps), Weight: set.Weight,
-			})
 		}
 		items = append(items, item)
 	}

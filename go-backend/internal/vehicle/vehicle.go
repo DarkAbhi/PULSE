@@ -309,6 +309,15 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 		webutil.ServerError(w, err)
 		return
 	}
+	itemRows, err := q.ListFuelItems(r.Context(), query.ListFuelItemsParams{VehicleID: vehicleID, UserID: user.ID})
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	itemsByFill := make(map[int64][]fuelHistoryItem)
+	for _, row := range itemRows {
+		itemsByFill[row.FillupID] = append(itemsByFill[row.FillupID], fuelHistoryItem{FuelType: row.FuelType, FillType: row.FillType, Quantity: row.Quantity, UnitPrice: row.UnitPrice, TotalCost: row.TotalCost})
+	}
 	fuels := make([]fuelFillHistory, 0)
 	for _, row := range fuelRows {
 		fill := fuelFillHistory{ID: row.ID, OdometerKM: row.OdometerKm, FilledAt: row.FilledAt.Time.UTC()}
@@ -318,16 +327,7 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 		if row.Notes.Valid {
 			fill.Notes = &row.Notes.String
 		}
-		rows, err := q.ListFuelItems(r.Context(), query.ListFuelItemsParams{FillupID: fill.ID, UserID: user.ID})
-		if err != nil {
-			webutil.ServerError(w, err)
-			return
-		}
-		fill.Items = []fuelHistoryItem{}
-		for _, row := range rows {
-			item := fuelHistoryItem{FuelType: row.FuelType, FillType: row.FillType, Quantity: row.Quantity, UnitPrice: row.UnitPrice, TotalCost: row.TotalCost}
-			fill.Items = append(fill.Items, item)
-		}
+		fill.Items = append([]fuelHistoryItem{}, itemsByFill[fill.ID]...)
 		fuels = append(fuels, fill)
 	}
 	maintenanceRows, err := q.ListVehicleMaintenanceRecords(r.Context(), query.ListVehicleMaintenanceRecordsParams{VehicleID: vehicleID, UserID: user.ID})
@@ -338,11 +338,15 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 	maintenance := make([]maintenanceRecord, 0)
 	for _, row := range maintenanceRows {
 		record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt.Time, row.OdometerKm, row.ProviderName, textToNullString(row.Notes))
-		if err := populateMaintenanceRecord(r.Context(), q, user.ID, &record); err != nil {
-			webutil.ServerError(w, err)
-			return
-		}
 		maintenance = append(maintenance, record)
+	}
+	pointers := make([]*maintenanceRecord, 0, len(maintenance))
+	for i := range maintenance {
+		pointers = append(pointers, &maintenance[i])
+	}
+	if err := populateMaintenanceRecords(r.Context(), q, user.ID, pointers); err != nil {
+		webutil.ServerError(w, err)
+		return
 	}
 	// History is newest first; calculate intervals in the reverse order.
 	entries := []fuelMileageEntry{}

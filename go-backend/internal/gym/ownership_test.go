@@ -29,7 +29,8 @@ func TestRepositoryScopesExerciseChildren(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := createExerciseBody{Name: "private exercise", Sets: []exerciseSetInput{{Reps: 5}}}
-	if _, err := repo.CreateExercises(ctx, 1, visitID, []createExerciseBody{body}); err != nil {
+	second := createExerciseBody{Name: "second exercise", Sets: []exerciseSetInput{{Reps: 8}, {Reps: 10}}}
+	if _, err := repo.CreateExercises(ctx, 1, visitID, []createExerciseBody{body, second}); err != nil {
 		t.Fatal(err)
 	}
 	if items, err := repo.ListExercises(ctx, otherID, visitID); err != nil || len(items) != 0 {
@@ -39,7 +40,7 @@ func TestRepositoryScopesExerciseChildren(t *testing.T) {
 		t.Fatal("foreign child insert accepted")
 	}
 	items, err := repo.ListExercises(ctx, 1, visitID)
-	if err != nil || len(items) != 1 || len(items[0].Sets) != 1 {
+	if err != nil || len(items) != 2 || len(items[0].Sets) != 1 || items[0].Sets[0].Reps != 5 || len(items[1].Sets) != 2 || items[1].Sets[1].Reps != 10 {
 		t.Fatalf("foreign insert modified owner's exercises: %+v %v", items, err)
 	}
 }

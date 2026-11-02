@@ -264,17 +264,18 @@ func (q *Queries) GetVehicleHistoryHeader(ctx context.Context, arg GetVehicleHis
 }
 
 const listFuelItems = `-- name: ListFuelItems :many
-SELECT i.fuel_type,i.fill_type,i.quantity,i.unit_price,i.total_cost FROM vehicle_fuel_items i
+SELECT i.fillup_id,i.fuel_type,i.fill_type,i.quantity,i.unit_price,i.total_cost FROM vehicle_fuel_items i
 JOIN vehicle_fuel_fillups f ON f.id=i.fillup_id
-WHERE i.fillup_id=$1 AND f.user_id=$2 ORDER BY i.id
+WHERE f.vehicle_id=$1 AND f.user_id=$2 ORDER BY i.id
 `
 
 type ListFuelItemsParams struct {
-	FillupID int64
-	UserID   int64
+	VehicleID int64
+	UserID    int64
 }
 
 type ListFuelItemsRow struct {
+	FillupID  int64
 	FuelType  string
 	FillType  string
 	Quantity  float64
@@ -283,7 +284,7 @@ type ListFuelItemsRow struct {
 }
 
 func (q *Queries) ListFuelItems(ctx context.Context, arg ListFuelItemsParams) ([]ListFuelItemsRow, error) {
-	rows, err := q.db.Query(ctx, listFuelItems, arg.FillupID, arg.UserID)
+	rows, err := q.db.Query(ctx, listFuelItems, arg.VehicleID, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -292,6 +293,7 @@ func (q *Queries) ListFuelItems(ctx context.Context, arg ListFuelItemsParams) ([
 	for rows.Next() {
 		var i ListFuelItemsRow
 		if err := rows.Scan(
+			&i.FillupID,
 			&i.FuelType,
 			&i.FillType,
 			&i.Quantity,
@@ -309,25 +311,26 @@ func (q *Queries) ListFuelItems(ctx context.Context, arg ListFuelItemsParams) ([
 }
 
 const listMaintenanceAttachments = `-- name: ListMaintenanceAttachments :many
-SELECT id,file_name,content_type,size_bytes,created_at FROM vehicle_maintenance_attachments
-WHERE maintenance_record_id=$1 AND user_id=$2 ORDER BY created_at ASC
+SELECT maintenance_record_id,id,file_name,content_type,size_bytes,created_at FROM vehicle_maintenance_attachments
+WHERE maintenance_record_id = ANY($1::bigint[]) AND user_id=$2 ORDER BY created_at ASC
 `
 
 type ListMaintenanceAttachmentsParams struct {
-	MaintenanceRecordID int64
-	UserID              int64
+	RecordIds []int64
+	UserID    int64
 }
 
 type ListMaintenanceAttachmentsRow struct {
-	ID          int64
-	FileName    string
-	ContentType string
-	SizeBytes   int64
-	CreatedAt   pgtype.Timestamptz
+	MaintenanceRecordID int64
+	ID                  int64
+	FileName            string
+	ContentType         string
+	SizeBytes           int64
+	CreatedAt           pgtype.Timestamptz
 }
 
 func (q *Queries) ListMaintenanceAttachments(ctx context.Context, arg ListMaintenanceAttachmentsParams) ([]ListMaintenanceAttachmentsRow, error) {
-	rows, err := q.db.Query(ctx, listMaintenanceAttachments, arg.MaintenanceRecordID, arg.UserID)
+	rows, err := q.db.Query(ctx, listMaintenanceAttachments, arg.RecordIds, arg.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -336,6 +339,7 @@ func (q *Queries) ListMaintenanceAttachments(ctx context.Context, arg ListMainte
 	for rows.Next() {
 		var i ListMaintenanceAttachmentsRow
 		if err := rows.Scan(
+			&i.MaintenanceRecordID,
 			&i.ID,
 			&i.FileName,
 			&i.ContentType,

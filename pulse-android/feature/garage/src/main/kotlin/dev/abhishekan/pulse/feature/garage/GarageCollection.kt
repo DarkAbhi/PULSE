@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -77,7 +78,15 @@ internal fun GarageVehicleGrid(
     select: (Long) -> Unit,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val columns = if (maxWidth >= 960.dp && LocalDensity.current.fontScale <= 1.3f) 2 else 1
+        val columns =
+            if (LocalConfiguration.current.smallestScreenWidthDp >= 600 &&
+                maxWidth >= 400.dp &&
+                LocalDensity.current.fontScale <= 1.3f
+            ) {
+                2
+            } else {
+                1
+            }
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             vehicles.chunked(columns).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {

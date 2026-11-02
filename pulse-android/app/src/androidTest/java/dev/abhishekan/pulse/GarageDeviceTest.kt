@@ -696,6 +696,34 @@ class GarageDeviceTest {
         compose.onNodeWithText("Care, at a glance").performScrollTo().assertIsDisplayed()
     }
 
+    @Test fun collectionUsesTwoColumnsOnTabletAndOneOnPhone() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        val fontScale = shell("settings get system font_scale").toFloatOrNull() ?: 1f
+        try {
+            shell("wm density 320")
+            shell("wm size 786x1700")
+            shell("settings put system font_scale 1.0")
+            vehicles[2] = "Second vehicle"
+            launchGarage()
+            awaitText("View Second vehicle")
+            val first = compose.onNodeWithText("View Comet")
+            val second = compose.onNodeWithText("View Second vehicle")
+            assertTrue(second.getUnclippedBoundsInRoot().top > first.getUnclippedBoundsInRoot().top)
+
+            shell("wm size 1280x1800")
+            compose.waitUntil(15_000) {
+                val a = first.getUnclippedBoundsInRoot()
+                val b = second.getUnclippedBoundsInRoot()
+                b.left > a.left && b.top == a.top
+            }
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+            shell("settings put system font_scale $fontScale")
+        }
+    }
+
     @Test fun vehicleDetailsUseSeparatePageWithTopBackAndSurviveRecreation() {
         launchGarage()
         select()

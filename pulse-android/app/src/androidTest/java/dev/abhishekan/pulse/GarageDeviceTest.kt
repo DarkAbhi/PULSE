@@ -187,10 +187,23 @@ class GarageDeviceTest {
         reminderSettings["engine_oil"] =
             obj(
                 """{
-          "kind":"engine_oil","active_source":"default",
-          "personal":{"kilometers":0,"duration":0,"unit":"months"},
-          "manual":{"kilometers":0,"duration":0,"unit":"months"},"manual_reference":"",
-          "default":{"kilometers":3000,"duration":4,"unit":"months"}
+          "kind":"engine_oil","active_source":"personal",
+          "personal":{"kilometers":3000,"duration":4,"unit":"months"},
+          "manual":{"kilometers":0,"duration":0,"unit":"months"},"manual_reference":""
+        }""",
+            )
+        reminderSettings["tire_pressure"] =
+            obj(
+                """{
+            "kind":"tire_pressure","active_source":"personal","personal":{"kilometers":0,"duration":14,"unit":"days"},
+            "manual":{"kilometers":0,"duration":0,"unit":"months"},"manual_reference":""
+        }""",
+            )
+        reminderSettings["general_service"] =
+            obj(
+                """{
+            "kind":"general_service","active_source":"personal","personal":{"kilometers":5000,"duration":6,"unit":"months"},
+            "manual":{"kilometers":0,"duration":0,"unit":"months"},"manual_reference":""
         }""",
             )
         care[10] =
@@ -368,7 +381,6 @@ class GarageDeviceTest {
                                                     obj(raw) +
                                                         mapOf(
                                                             "kind" to JsonPrimitive(key),
-                                                            "default" to reminderSettings.getValue(key).getValue("default"),
                                                         ),
                                                 )
                                         }
@@ -1199,7 +1211,18 @@ class GarageDeviceTest {
     @Test fun reminderSettingsKeepBothSourcesAndActiveChoice() {
         launchGarage()
         select()
-        compose.onNode(hasTestTag("schedule-edit-engine_oil")).performScrollTo().performClick()
+        compose.onNode(hasTestTag("maintenance-reminders")).assertDoesNotExist()
+        tap("Maintenance")
+        compose.onNode(hasTestTag("maintenance-reminders")).performScrollTo().performClick()
+        compose.onNode(hasTestTag("reminder-task-tire_pressure")).performScrollTo().performClick()
+        awaitText("Tire pressure reminder")
+        tap("Back to reminder settings")
+        compose.onNode(hasTestTag("reminder-task-general_service")).performScrollTo().performClick()
+        awaitText("General service reminder")
+        tap("Back to reminder settings")
+        compose.onNode(hasTestTag("reminder-task-engine_oil")).performScrollTo().performClick()
+        awaitText("Engine oil reminder")
+        compose.onNodeWithText("App default").assertDoesNotExist()
 
         fun interval(
             tag: String,
@@ -1212,10 +1235,11 @@ class GarageDeviceTest {
         interval("manual-km", "5000")
         interval("manual-time", "6")
         field("Manual reference or page (optional)", "Page 42")
-        pick("Active schedule", "App default", "Vehicle manual")
+        pick("Active schedule", "My intervals", "Vehicle manual")
         scenario?.recreate()
         compose.onNode(hasTestTag("schedule-engine_oil-manual-km")).performScrollTo()
         compose.onNodeWithText("5000").assertExists()
+        screenshot("reminder-engine-oil")
         compose.onNode(hasTestTag("schedule-save-engine_oil")).performScrollTo().performClick()
         compose.waitUntil(10000) { reminderSettings["engine_oil"]?.get("active_source")?.jsonPrimitive?.content == "manual" }
         val setting = reminderSettings.getValue("engine_oil")
@@ -1236,6 +1260,12 @@ class GarageDeviceTest {
                 .jsonPrimitive.content,
         )
         assertEquals("Page 42", setting.getValue("manual_reference").jsonPrimitive.content)
+        tap("Back to reminder settings")
+        tap("Back to Maintenance")
+        compose.onNodeWithText("Add maintenance").assertExists()
+        tap("Overview")
+        compose.onNodeWithText("Coming up").performScrollTo().assertIsDisplayed()
+        compose.onNode(hasTestTag("maintenance-reminders")).assertDoesNotExist()
     }
 
     @Test fun redesignedOverviewShowsUpcomingAndNavigatesToPressure() {

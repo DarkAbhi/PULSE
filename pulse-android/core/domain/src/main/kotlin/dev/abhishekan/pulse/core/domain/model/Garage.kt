@@ -92,11 +92,10 @@ data class MaintenanceInterval(
 
 data class MaintenanceSchedule(
     val kind: String,
-    val activeSource: String = "default",
+    val activeSource: String = "personal",
     val personal: MaintenanceInterval = MaintenanceInterval(),
     val manual: MaintenanceInterval = MaintenanceInterval(),
     val manualReference: String = "",
-    val defaultInterval: MaintenanceInterval = MaintenanceInterval(),
 )
 
 data class UpcomingMaintenance(
@@ -108,7 +107,7 @@ data class UpcomingMaintenance(
     val progress: Float?,
     val lastAt: Instant?,
     val lastRecordedOdometer: BigDecimal?,
-    val source: String = "default",
+    val source: String = "personal",
     val distanceUnavailable: Boolean = false,
 )
 

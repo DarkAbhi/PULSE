@@ -45,6 +45,7 @@ class GarageViewModel(
                     GarageTab.valueOf(
                         saved["tab"] ?: "Overview",
                     ),
+                reminderPage = saved["reminderPage"],
                 draft = saved.get<ArrayList<String>>("draft")?.let(GarageDraft::restore),
                 reviewRequired =
                     saved["pending"] ?: false,
@@ -132,8 +133,9 @@ class GarageViewModel(
 
     private fun clearSelection() {
         saved["vehicle"] = null
+        saved["reminderPage"] = null
         historyJob?.cancel()
-        state.update { it.copy(vehicle = null, history = GarageSection(loading = false)) }
+        state.update { it.copy(vehicle = null, reminderPage = null, history = GarageSection(loading = false)) }
     }
 
     fun select(id: Long?) {
@@ -144,9 +146,11 @@ class GarageViewModel(
             clearSelection()
         } else {
             saved["vehicle"] = id
+            saved["reminderPage"] = null
             state.update {
                 it.copy(
                     vehicle = id,
+                    reminderPage = null,
                     message = null,
                     history = if (it.vehicle == id) it.history else GarageSection(),
                 )
@@ -157,8 +161,19 @@ class GarageViewModel(
 
     fun tab(tab: GarageTab) {
         saved["tab"] = tab.name
-        state.update { it.copy(tab = tab) }
+        saved["reminderPage"] = null
+        state.update { it.copy(tab = tab, reminderPage = null) }
     }
+
+    fun reminders(page: String?) {
+        if (state.value.busy || state.value.draft != null)return
+        require(page == null || page in listOf("list", "engine_oil", "tire_pressure", "general_service"))
+        saved["reminderPage"] = page
+        saved["tab"] = GarageTab.Care.name
+        state.update { it.copy(tab = GarageTab.Care, reminderPage = page) }
+    }
+
+    fun backFromReminder() = reminders(if (state.value.reminderPage == "list")null else "list")
 
     fun edit(draft: GarageDraft) {
         if (!state.value.busy &&

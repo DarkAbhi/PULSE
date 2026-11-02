@@ -193,7 +193,7 @@ def _vehicle_id(vehicle_id):
 
 @mcp.tool()
 def get_vehicle_maintenance(vehicle_id: int, component: str = "", action: str = "") -> str:
-    """Read vehicle maintenance history and upcoming estimates. Choose the vehicle with get_vehicles. For component history pass a lowercase underscore key, e.g. engine_oil, clutch_cable, brake_cable, front_brake_pads. Filter action=replaced to answer last changed/replaced; adjusted, inspected or topped_up do not mean replacement. Results are newest service date first, up to 50 matching services. Return the first qualifying record for 'last', with date, odometer and source record/attachment. An empty result means no recorded match, not that work never happened. Without a component returns all recorded services and coming_up. General service reminders require general_service/completed. Defaults are estimates, not manufacturer schedules."""
+    """Read vehicle maintenance history and upcoming estimates. Choose the vehicle with get_vehicles. For component history pass a lowercase underscore key, e.g. engine_oil, clutch_cable, brake_cable, front_brake_pads. Filter action=replaced to answer last changed/replaced; adjusted, inspected or topped_up do not mean replacement. Results are newest service date first, up to 50 matching services. Return the first qualifying record for 'last', with date, odometer and source record/attachment. An empty result means no recorded match, not that work never happened. Without a component returns all recorded services and coming_up. General service reminders require general_service/completed. My intervals start prefilled and are editable; manual values are entered by the user."""
     import re
     _vehicle_id(vehicle_id)
     if component:
@@ -274,11 +274,11 @@ class ReminderIntervalInput(TypedDict):
 def configure_vehicle_reminder(vehicle_id: int, kind: str, active_source: str,
                                personal: ReminderIntervalInput, manual: ReminderIntervalInput,
                                manual_reference: str = "", confirmed: bool = False) -> str:
-    """Save both reminder schedules and choose which is active after explicit confirmation. First read get_vehicle_maintenance without filters, retain both existing personal/manual values, and show the complete proposed settings. kind is engine_oil, general_service or tire_pressure. active_source is default, personal or manual; only that source applies, never a mixture. Each interval has nonnegative integer kilometers and duration, unit=days or months; zero disables a threshold. At least one threshold is required for the active personal/manual schedule. Either active threshold being reached makes work due. Manual values are user-entered, not independently verified official guidance; preserve their manual_reference. Inactive values remain saved. These settings affect Coming up; only existing tire-pressure notifications are automatically delivered, not new oil/service push notifications."""
+    """Save both reminder schedules and choose which is active after explicit confirmation. First read get_vehicle_maintenance without filters, retain both existing personal/manual values, and show the complete proposed settings. kind is engine_oil, general_service or tire_pressure. active_source is personal or manual; only that source applies, never a mixture. Each interval has nonnegative integer kilometers and duration, unit=days or months; zero disables a threshold. At least one threshold is required for the active personal/manual schedule. Either active threshold being reached makes work due. Manual values are user-entered, not independently verified official guidance; preserve their manual_reference. Inactive values remain saved. These settings affect Coming up; only existing tire-pressure notifications are automatically delivered, not new oil/service push notifications."""
     if confirmed is not True:
         raise ValueError("Show both saved schedules and obtain explicit confirmation before changing reminders")
     _vehicle_id(vehicle_id)
-    if kind not in {"engine_oil", "general_service", "tire_pressure"} or active_source not in {"default", "personal", "manual"}:
+    if kind not in {"engine_oil", "general_service", "tire_pressure"} or active_source not in {"personal", "manual"}:
         raise ValueError("Choose a supported task and active schedule")
     for interval in (personal, manual):
         if not isinstance(interval, dict):
@@ -287,7 +287,7 @@ def configure_vehicle_reminder(vehicle_id: int, kind: str, active_source: str,
         if type(km) is not int or type(duration) is not int or unit not in ("days", "months") or not 0 <= km <= 1000000 or not 0 <= duration <= (36500 if unit == "days" else 1200):
             raise ValueError("Provide nonnegative whole intervals and days/months units")
     selected = personal if active_source == "personal" else manual
-    if active_source != "default" and not (selected["kilometers"] or selected["duration"]):
+    if not (selected["kilometers"] or selected["duration"]):
         raise ValueError("The active schedule needs a distance or time interval")
     if not isinstance(manual_reference, str) or len(manual_reference.encode()) > 160:
         raise ValueError("Manual reference must be at most 160 bytes")

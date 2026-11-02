@@ -468,12 +468,9 @@ definitions:
     properties:
       active_source:
         enum:
-        - default
         - personal
         - manual
         type: string
-      default:
-        $ref: '#/definitions/apidoc.MaintenanceInterval'
       kind:
         enum:
         - engine_oil
@@ -602,7 +599,6 @@ definitions:
         type: number
       source:
         enum:
-        - default
         - personal
         - manual
         type: string
@@ -4072,8 +4068,9 @@ paths:
       consumes:
       - application/json
       description: Stores both sources; only the selected source applies. Zero disables
-        a threshold. Manual values are user-entered. Default intervals are read-only.
-        Effective pressure changes dismiss old alerts and reevaluate the latest fill.
+        a threshold. Manual values are user-entered. Personal intervals start prefilled
+        and are editable. Effective pressure changes dismiss old alerts and reevaluate
+        the latest fill.
       parameters:
       - description: Vehicle ID
         in: path

@@ -57,7 +57,7 @@ func TestScheduleValidation(t *testing.T) {
 		{"negative", maintenanceSchedule{Kind: "engine_oil", ActiveSource: "manual", Manual: scheduleInterval{-1, 6, "months"}}, true},
 		{"invalid unit", maintenanceSchedule{Kind: "engine_oil", ActiveSource: "manual", Manual: scheduleInterval{1000, 1, "years"}}, true},
 		{"excess months", maintenanceSchedule{Kind: "engine_oil", ActiveSource: "manual", Manual: scheduleInterval{0, 1201, "months"}}, true},
-		{"defaults and empty saved sets", maintenanceSchedule{Kind: "engine_oil", ActiveSource: "default"}, false},
+		{"removed source", maintenanceSchedule{Kind: "engine_oil", ActiveSource: "default"}, true},
 		{"pressure distance", maintenanceSchedule{Kind: "tire_pressure", ActiveSource: "personal", Personal: scheduleInterval{500, 0, "days"}}, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -130,7 +130,7 @@ func TestMaintenanceSchedules(t *testing.T) {
 	if err := db.QueryRow(`SELECT active_source FROM vehicle_maintenance_schedules WHERE vehicle_id=$1 AND kind='engine_oil'`, vehicle).Scan(&source); err != nil || source != "personal" {
 		t.Fatalf("invalid update modified schedule: %s %v", source, err)
 	}
-	if _, err := db.Exec(`INSERT INTO vehicle_maintenance_schedules(vehicle_id,user_id,kind,active_source) VALUES($1,$2,'tire_pressure','default')`, vehicle, other); err == nil {
+	if _, err := db.Exec(`INSERT INTO vehicle_maintenance_schedules(vehicle_id,user_id,kind,active_source) VALUES($1,$2,'tire_pressure','personal')`, vehicle, other); err == nil {
 		t.Fatal("cross-owner schedule accepted")
 	}
 	// Start a pressure cycle with a known odometer, then backdate it twenty days.

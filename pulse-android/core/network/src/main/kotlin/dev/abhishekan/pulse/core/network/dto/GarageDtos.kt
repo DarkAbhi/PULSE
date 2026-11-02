@@ -58,17 +58,16 @@ import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable data class MaintenanceScheduleDto(
     val kind: String,
-    @SerialName("active_source") val activeSource: String = "default",
+    @SerialName("active_source") val activeSource: String = "personal",
     val personal: MaintenanceIntervalDto = MaintenanceIntervalDto(),
     val manual: MaintenanceIntervalDto = MaintenanceIntervalDto(),
     @SerialName("manual_reference") val manualReference: String = "",
-    @SerialName("default") val defaultInterval: MaintenanceIntervalDto = MaintenanceIntervalDto(),
 )
 
 @Serializable data class UpcomingMaintenanceDto(
     val kind: String,
     val status: String,
-    val source: String = "default",
+    val source: String = "personal",
     @SerialName("distance_unavailable") val distanceUnavailable: Boolean = false,
     @SerialName("due_date") val dueDate: String? = null,
     @SerialName("remaining_days") val remainingDays: Int? = null,

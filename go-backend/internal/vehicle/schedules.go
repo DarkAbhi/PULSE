@@ -22,10 +22,9 @@ type maintenanceSchedule struct {
 	Personal        scheduleInterval `json:"personal"`
 	Manual          scheduleInterval `json:"manual"`
 	ManualReference string           `json:"manual_reference"`
-	Default         scheduleInterval `json:"default"`
 }
 
-func defaultSchedules(kind string) []maintenanceSchedule {
+func startingSchedules(kind string) []maintenanceSchedule {
 	oil, service := scheduleInterval{10000, 9, "months"}, scheduleInterval{10000, 12, "months"}
 	pressure := scheduleInterval{0, 30, "days"}
 	switch kind {
@@ -37,25 +36,21 @@ func defaultSchedules(kind string) []maintenanceSchedule {
 	}
 	result := []maintenanceSchedule{}
 	for i, key := range []string{"engine_oil", "tire_pressure", "general_service"} {
-		result = append(result, maintenanceSchedule{Kind: key, ActiveSource: "default", Personal: scheduleInterval{Unit: "months"}, Manual: scheduleInterval{Unit: "months"}, Default: []scheduleInterval{oil, pressure, service}[i]})
+		result = append(result, maintenanceSchedule{Kind: key, ActiveSource: "personal", Personal: []scheduleInterval{oil, pressure, service}[i], Manual: scheduleInterval{Unit: "months"}})
 	}
 	return result
 }
 func (s maintenanceSchedule) effective() scheduleInterval {
-	switch s.ActiveSource {
-	case "personal":
-		return s.Personal
-	case "manual":
+	if s.ActiveSource == "manual" {
 		return s.Manual
-	default:
-		return s.Default
 	}
+	return s.Personal
 }
 func normalizeSchedule(s *maintenanceSchedule) error {
 	if s.Kind != "engine_oil" && s.Kind != "general_service" && s.Kind != "tire_pressure" {
 		return errors.New("unsupported maintenance task")
 	}
-	if s.ActiveSource != "default" && s.ActiveSource != "personal" && s.ActiveSource != "manual" {
+	if s.ActiveSource != "personal" && s.ActiveSource != "manual" {
 		return errors.New("choose an active schedule")
 	}
 	for _, v := range []*scheduleInterval{&s.Personal, &s.Manual} {
@@ -70,11 +65,9 @@ func normalizeSchedule(s *maintenanceSchedule) error {
 			return errors.New("intervals must be positive whole numbers: up to 1,000,000 km, 1,200 months or 36,500 days; leave unused thresholds blank")
 		}
 	}
-	if s.ActiveSource != "default" {
-		v := s.effective()
-		if v.Duration == 0 && v.Kilometers == 0 {
-			return errors.New("the active schedule needs a distance or time interval")
-		}
+	v := s.effective()
+	if v.Duration == 0 && v.Kilometers == 0 {
+		return errors.New("the active schedule needs a distance or time interval")
 	}
 	s.ManualReference = strings.TrimSpace(s.ManualReference)
 	if len(s.ManualReference) > 160 {
@@ -83,7 +76,7 @@ func normalizeSchedule(s *maintenanceSchedule) error {
 	return nil
 }
 func loadMaintenanceSchedules(ctx context.Context, q *query.Queries, vehicleID, userID int64, kind string) ([]maintenanceSchedule, error) {
-	result := defaultSchedules(kind)
+	result := startingSchedules(kind)
 	rows, err := q.ListMaintenanceSchedules(ctx, query.ListMaintenanceSchedulesParams{VehicleID: vehicleID, UserID: userID})
 	if err != nil {
 		return nil, err
@@ -116,6 +109,22 @@ func (h *Handler) SaveMaintenanceSchedule(w http.ResponseWriter, r *http.Request
 		return
 	}
 	s.Kind = chi.URLParam(r, "kind")
+	if s.ActiveSource == "default" {
+		s.ActiveSource = "personal"
+		if s.Personal.Kilometers == 0 && s.Personal.Duration == 0 {
+			header, err := query.New(h.DB).GetVehicleHistoryHeader(r.Context(), query.GetVehicleHistoryHeaderParams{ID: vehicleID, UserID: user.ID})
+			if err != nil {
+				webutil.ServerError(w, err)
+				return
+			}
+			for _, starting := range startingSchedules(header.Kind) {
+				if starting.Kind == s.Kind {
+					s.Personal = starting.Personal
+				}
+			}
+		}
+	}
+
 	if err := normalizeSchedule(&s); err != nil {
 		webutil.BadRequest(w, err.Error())
 		return
@@ -141,7 +150,6 @@ func (h *Handler) SaveMaintenanceSchedule(w http.ResponseWriter, r *http.Request
 	for _, setting := range before {
 		if setting.Kind == s.Kind {
 			old = setting
-			s.Default = setting.Default
 		}
 	}
 	count, err := q.SaveMaintenanceSchedule(r.Context(), query.SaveMaintenanceScheduleParams{VehicleID: vehicleID, UserID: user.ID, Kind: s.Kind, ActiveSource: s.ActiveSource, PersonalKm: s.Personal.Kilometers, PersonalDuration: s.Personal.Duration, PersonalUnit: s.Personal.Unit, ManualKm: s.Manual.Kilometers, ManualDuration: s.Manual.Duration, ManualUnit: s.Manual.Unit, ManualReference: s.ManualReference})

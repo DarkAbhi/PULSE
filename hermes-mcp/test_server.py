@@ -161,6 +161,8 @@ class LifeTrackerMCPTest(unittest.TestCase):
                 server.configure_vehicle_reminder(7, "engine_oil", "manual", personal, manual)
             with self.assertRaises(ValueError):
                 server.configure_vehicle_reminder(7, "engine_oil", "manual", personal, {"kilometers": 0, "duration": 0, "unit": "months"}, confirmed=True)
+            with self.assertRaises(ValueError):
+                server.configure_vehicle_reminder(7, "engine_oil", "default", personal, manual, confirmed=True)
             write.assert_not_called()
             server.configure_vehicle_reminder(7, "engine_oil", "manual", personal, manual, "Manual page 42", confirmed=True)
             self.assertEqual(write.call_args.args[0], "/api/vehicles/7/maintenance-schedules/engine_oil")

@@ -104,8 +104,14 @@ for a matching record.
 Reminder settings (migration 33) are returned by `get_vehicle_maintenance` without
 filters. Use `configure_vehicle_reminder` after showing both sets of settings and
 receiving explicit confirmation. Preserve inactive values. Only the selected
-`default`, `personal` or `manual` source applies; zero means an unused threshold.
+`personal` or `manual` source applies; zero means an unused threshold.
 Manual values are entered by the user, not independently verified. Add this tool
 to existing allowlists and reload Hermes. Existing tire notifications follow the
 active schedule; changing an effective pressure interval dismisses stale alerts
 and reevaluates the latest fill. Oil/service push delivery is still out of scope.
+
+
+Migration 34 makes personal starting values the editable initial schedule. There
+are only `personal` and `manual` source choices; do not offer a third source.
+Preserve values already entered by the user. The Android entry point is
+Maintenance → Reminder settings → a task page; Coming up in Overview is read-only.

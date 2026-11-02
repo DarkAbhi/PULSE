@@ -20,7 +20,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import dev.abhishekan.pulse.core.domain.model.MaintenanceSchedule
 import dev.abhishekan.pulse.core.domain.model.UpcomingMaintenance
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -36,7 +35,6 @@ internal fun ComingUp(
     enabled: Boolean,
     openCare: () -> Unit,
     openAir: () -> Unit,
-    saveSchedule: (MaintenanceSchedule) -> Unit = {},
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         PulseText(stringResource(R.string.pulse_garage_coming_up), Modifier.semantics { heading() }, PulseTextStyle.Title2)
@@ -108,16 +106,6 @@ internal fun ComingUp(
                 Icon(painterResource(R.drawable.garage_chevron_right), null, Modifier.size(20.dp), tint = PulseTheme.colors.textSecondary)
             }
         }
-        MaintenanceScheduleEditor(
-            data.schedules.filter {
-                it.kind != "engine_oil" ||
-                    data.fuelTypes.any { fuel ->
-                        fuel != "electric"
-                    }
-            },
-            enabled,
-            saveSchedule,
-        )
         PulseText(
             stringResource(R.string.pulse_garage_upcoming_estimates),
             style = PulseTextStyle.Caption,

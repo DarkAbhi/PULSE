@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.MaintenanceInterval
 import dev.abhishekan.pulse.core.domain.model.MaintenanceSchedule
 import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
@@ -28,31 +27,12 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
         when (source) {
             "personal" -> R.string.pulse_garage_schedule_personal
             "manual" -> R.string.pulse_garage_schedule_manual
-            else -> R.string.pulse_garage_schedule_default
+            else -> R.string.pulse_garage_schedule_personal
         },
     )
 
 @Composable
 internal fun MaintenanceScheduleEditor(
-    settings: List<MaintenanceSchedule>,
-    enabled: Boolean,
-    save: (MaintenanceSchedule) -> Unit,
-) {
-    settings.forEach { setting ->
-        var expanded by rememberSaveable(setting.kind) { mutableStateOf(false) }
-        PulseButton(
-            stringResource(R.string.pulse_garage_schedule_edit, garageOption(setting.kind)),
-            { expanded = !expanded },
-            Modifier.fillMaxWidth().testTag("schedule-edit-${setting.kind}"),
-            enabled,
-            variant = PulseButtonVariant.Secondary,
-        )
-        if (expanded) ScheduleFields(setting, enabled, save)
-    }
-}
-
-@Composable
-private fun ScheduleFields(
     setting: MaintenanceSchedule,
     enabled: Boolean,
     save: (MaintenanceSchedule) -> Unit,
@@ -93,7 +73,7 @@ private fun ScheduleFields(
     }
     var manualUnit by rememberSaveable(setting) { mutableStateOf(setting.manual.unit) }
     var reference by rememberSaveable(setting) { mutableStateOf(setting.manualReference) }
-    val sources = listOf("default", "personal", "manual")
+    val sources = listOf("personal", "manual")
 
     fun interval(
         km: String,
@@ -112,7 +92,7 @@ private fun ScheduleFields(
         personal != null &&
             manual != null &&
             reference.toByteArray().size <= 160 &&
-            (source == "default" || chosen != null && (chosen.kilometers > 0 || chosen.duration > 0))
+            (chosen != null && (chosen.kilometers > 0 || chosen.duration > 0))
     Column(Modifier.fillMaxWidth().testTag("schedule-fields-${setting.kind}"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         PulseText(stringResource(R.string.pulse_garage_schedule_hint), style = PulseTextStyle.Body2)
         PulseSelectionField(
@@ -122,24 +102,6 @@ private fun ScheduleFields(
             { source = sources[it] },
             enabled = enabled,
             labelAbove = true,
-        )
-        val default = setting.defaultInterval
-        PulseText(
-            stringResource(
-                R.string.pulse_garage_schedule_default_values,
-                default.kilometers,
-                default.duration,
-                stringResource(
-                    if (default.unit ==
-                        "days"
-                    ) {
-                        R.string.pulse_garage_schedule_days
-                    } else {
-                        R.string.pulse_garage_schedule_months
-                    },
-                ),
-            ),
-            style = PulseTextStyle.Caption,
         )
 
         @Composable fun inputs(

@@ -35,9 +35,9 @@ SELECT a.id
 FROM vehicle_air_fills a JOIN vehicles v ON v.id=a.vehicle_id AND v.user_id=a.user_id
 LEFT JOIN vehicle_maintenance_schedules s ON s.vehicle_id=v.id AND s.user_id=v.user_id AND s.kind='tire_pressure'
 CROSS JOIN LATERAL (
- SELECT CASE s.active_source WHEN 'personal' THEN s.personal_km WHEN 'manual' THEN s.manual_km ELSE 0 END AS km,
- CASE s.active_source WHEN 'personal' THEN s.personal_duration WHEN 'manual' THEN s.manual_duration ELSE CASE WHEN v.kind IN ('motorcycle','moped') THEN 14 ELSE 30 END END AS duration,
- CASE s.active_source WHEN 'personal' THEN s.personal_unit WHEN 'manual' THEN s.manual_unit ELSE 'days' END AS unit
+ SELECT CASE WHEN s.active_source='manual' THEN s.manual_km ELSE COALESCE(s.personal_km,0) END AS km,
+ CASE WHEN s.active_source='manual' THEN s.manual_duration ELSE COALESCE(s.personal_duration,CASE WHEN v.kind IN ('motorcycle','moped') THEN 14 ELSE 30 END) END AS duration,
+ CASE WHEN s.active_source='manual' THEN s.manual_unit ELSE COALESCE(s.personal_unit,'days') END AS unit
 ) i
 LEFT JOIN LATERAL (
  SELECT readings.odometer_km FROM (
@@ -80,9 +80,9 @@ SELECT a.user_id,a.vehicle_id,v.name
 FROM vehicle_air_fills a JOIN vehicles v ON v.id=a.vehicle_id AND v.user_id=a.user_id
 LEFT JOIN vehicle_maintenance_schedules s ON s.vehicle_id=v.id AND s.user_id=v.user_id AND s.kind='tire_pressure'
 CROSS JOIN LATERAL (
- SELECT CASE s.active_source WHEN 'personal' THEN s.personal_km WHEN 'manual' THEN s.manual_km ELSE 0 END AS km,
- CASE s.active_source WHEN 'personal' THEN s.personal_duration WHEN 'manual' THEN s.manual_duration ELSE CASE WHEN v.kind IN ('motorcycle','moped') THEN 14 ELSE 30 END END AS duration,
- CASE s.active_source WHEN 'personal' THEN s.personal_unit WHEN 'manual' THEN s.manual_unit ELSE 'days' END AS unit
+ SELECT CASE WHEN s.active_source='manual' THEN s.manual_km ELSE COALESCE(s.personal_km,0) END AS km,
+ CASE WHEN s.active_source='manual' THEN s.manual_duration ELSE COALESCE(s.personal_duration,CASE WHEN v.kind IN ('motorcycle','moped') THEN 14 ELSE 30 END) END AS duration,
+ CASE WHEN s.active_source='manual' THEN s.manual_unit ELSE COALESCE(s.personal_unit,'days') END AS unit
 ) i
 LEFT JOIN LATERAL (
  SELECT readings.odometer_km FROM (

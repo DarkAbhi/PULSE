@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.abhishekan.pulse.core.domain.model.FuelEfficiency
-import dev.abhishekan.pulse.core.domain.model.MaintenanceSchedule
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
@@ -68,7 +67,6 @@ internal fun GarageOverview(
     addCare: () -> Unit,
     openCare: () -> Unit,
     openAir: () -> Unit,
-    saveSchedule: (MaintenanceSchedule) -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val wide = maxWidth >= 840.dp && LocalDensity.current.fontScale <= 1.3f
@@ -79,7 +77,7 @@ internal fun GarageOverview(
                 }
                 Column(Modifier.weight(.63f), verticalArrangement = Arrangement.spacedBy(PulseTheme.spacing.comfortable)) {
                     OverviewCare(data, enabled, addFuel, addCare)
-                    ComingUp(data, enabled, openCare, openAir, saveSchedule)
+                    ComingUp(data, enabled, openCare, openAir)
                 }
             }
         } else {
@@ -87,7 +85,7 @@ internal fun GarageOverview(
                 EfficiencyCards(data)
                 OverviewCare(data, enabled, addFuel, addCare)
                 GarageRule()
-                ComingUp(data, enabled, openCare, openAir, saveSchedule)
+                ComingUp(data, enabled, openCare, openAir)
             }
         }
     }

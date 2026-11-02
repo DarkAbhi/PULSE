@@ -122,7 +122,6 @@ internal fun GarageHistoryDto.domain(): VehicleHistory {
                 MaintenanceInterval(it.personal.kilometers, it.personal.duration, it.personal.unit),
                 MaintenanceInterval(it.manual.kilometers, it.manual.duration, it.manual.unit),
                 it.manualReference,
-                MaintenanceInterval(it.defaultInterval.kilometers, it.defaultInterval.duration, it.defaultInterval.unit),
             )
         },
     )

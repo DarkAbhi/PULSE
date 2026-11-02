@@ -4469,7 +4469,7 @@ const docTemplate = `{
         },
         "/api/vehicles/{id}/maintenance-schedules/{kind}": {
             "put": {
-                "description": "Stores both sources; only the selected source applies. Zero disables a threshold. Manual values are user-entered. Default intervals are read-only. Effective pressure changes dismiss old alerts and reevaluate the latest fill.",
+                "description": "Stores both sources; only the selected source applies. Zero disables a threshold. Manual values are user-entered. Personal intervals start prefilled and are editable. Effective pressure changes dismiss old alerts and reevaluate the latest fill.",
                 "consumes": [
                     "application/json"
                 ],
@@ -5905,13 +5905,9 @@ const docTemplate = `{
                 "active_source": {
                     "type": "string",
                     "enum": [
-                        "default",
                         "personal",
                         "manual"
                     ]
-                },
-                "default": {
-                    "$ref": "#/definitions/apidoc.MaintenanceInterval"
                 },
                 "kind": {
                     "type": "string",
@@ -6108,7 +6104,6 @@ const docTemplate = `{
                 "source": {
                     "type": "string",
                     "enum": [
-                        "default",
                         "personal",
                         "manual"
                     ]

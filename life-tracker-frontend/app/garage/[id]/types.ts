@@ -18,8 +18,8 @@ export type FuelFill = {
 export type MaintenanceAction = { component: string; action: string; description: string };
 export type MaintenanceInterval = { kilometers: number; duration: number; unit: "days" | "months" };
 export type MaintenanceSchedule = {
-  kind: "engine_oil" | "tire_pressure" | "general_service"; active_source: "default" | "personal" | "manual";
-  personal: MaintenanceInterval; manual: MaintenanceInterval; manual_reference: string; default: MaintenanceInterval;
+  kind: "engine_oil" | "tire_pressure" | "general_service"; active_source: "personal" | "manual";
+  personal: MaintenanceInterval; manual: MaintenanceInterval; manual_reference: string;
 };
 export type UpcomingMaintenance = {
   source?: string; distance_unavailable?: boolean;

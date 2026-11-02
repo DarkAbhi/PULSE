@@ -336,7 +336,7 @@
     <string name="pulse_garage_custom_component">Custom component</string>
     <string name="pulse_garage_custom_component_hint">Use a short name, for example left switch. Names use letters, numbers and underscores.</string>
     <string name="pulse_garage_coming_up">Coming up</string>
-    <string name="pulse_garage_upcoming_estimates">Uses the active schedule shown for each task. App defaults are estimates; manual values are entered by you. Mileage uses the last recorded reading.</string>
+    <string name="pulse_garage_upcoming_estimates">Uses the active schedule shown for each task. Mileage uses the last recorded reading.</string>
     <string name="pulse_garage_upcoming_oil">Oil change</string>
     <string name="pulse_garage_upcoming_pressure">Check tire pressure</string>
     <string name="pulse_garage_upcoming_service">Service check</string>
@@ -360,7 +360,6 @@
     <string name="pulse_garage_schedule_active">Active schedule</string>
     <string name="pulse_garage_schedule_personal">My intervals</string>
     <string name="pulse_garage_schedule_manual">Vehicle manual</string>
-    <string name="pulse_garage_schedule_default">App default</string>
     <string name="pulse_garage_schedule_edit">Reminder settings · %1$s</string>
     <string name="pulse_garage_schedule_hint">Save both sets of intervals and choose which one is active. Remind after this many kilometres or this amount of time since the last completed work, whichever comes first. Leave an unused limit blank.</string>
     <string name="pulse_garage_schedule_km">Distance interval (km, optional)</string>
@@ -371,7 +370,13 @@
     <string name="pulse_garage_schedule_reference">Manual reference or page (optional)</string>
     <string name="pulse_garage_schedule_manual_hint">Manual values are entered by you and are not independently verified by Pulse. Inactive values stay saved.</string>
     <string name="pulse_garage_schedule_save">Save reminder settings</string>
-    <string name="pulse_garage_schedule_default_values">App default: %1$d km / %2$d %3$s. Zero means that limit is not used.</string>
     <string name="pulse_garage_schedule_needs_odometer">Record an odometer reading with this task to use its distance interval.</string>
     <string name="pulse_garage_schedule_cancel">Cancel</string>
+    <string name="pulse_garage_reminder_settings">Reminder settings</string>
+    <string name="pulse_garage_reminder_settings_hint">Set intervals for engine oil, tire pressure and general service.</string>
+    <string name="pulse_garage_reminder_choose">Choose a reminder to set your intervals or enter the recommendations from your vehicle manual.</string>
+    <string name="pulse_garage_reminder_page_title">%1$s reminder</string>
+    <string name="pulse_garage_reminder_back_maintenance">Back to Maintenance</string>
+    <string name="pulse_garage_reminder_back_settings">Back to reminder settings</string>
+    <string name="pulse_garage_reminder_tire_pressure">Tire pressure</string>
 </resources>

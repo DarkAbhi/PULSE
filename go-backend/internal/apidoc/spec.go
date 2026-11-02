@@ -263,7 +263,7 @@ type MaintenanceAction struct {
 }
 type UpcomingMaintenance struct {
 	DistanceUnavailable    bool       `json:"distance_unavailable"`
-	Source                 string     `json:"source" enums:"default,personal,manual"`
+	Source                 string     `json:"source" enums:"personal,manual"`
 	Kind                   string     `json:"kind"`
 	Status                 string     `json:"status" enums:"no_history,needs_odometer,upcoming,due,overdue"`
 	DueDate                *string    `json:"due_date"`
@@ -1579,15 +1579,14 @@ type MaintenanceInterval struct {
 }
 type MaintenanceSchedule struct {
 	Kind            string              `json:"kind" enums:"engine_oil,tire_pressure,general_service"`
-	ActiveSource    string              `json:"active_source" enums:"default,personal,manual"`
+	ActiveSource    string              `json:"active_source" enums:"personal,manual"`
 	Personal        MaintenanceInterval `json:"personal"`
 	Manual          MaintenanceInterval `json:"manual"`
 	ManualReference string              `json:"manual_reference"`
-	Default         MaintenanceInterval `json:"default"`
 }
 
 // @Summary Save vehicle reminder settings
-// @Description Stores both sources; only the selected source applies. Zero disables a threshold. Manual values are user-entered. Default intervals are read-only. Effective pressure changes dismiss old alerts and reevaluate the latest fill.
+// @Description Stores both sources; only the selected source applies. Zero disables a threshold. Manual values are user-entered. Personal intervals start prefilled and are editable. Effective pressure changes dismiss old alerts and reevaluate the latest fill.
 // @Tags vehicles
 // @Accept json
 // @Produce json

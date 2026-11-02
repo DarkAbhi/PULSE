@@ -8,10 +8,13 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/vehicle/query"
 )
 
-type Repository struct{ queries *query.Queries }
+type Repository struct {
+	queries *query.Queries
+	db      *pgxpool.Pool
+}
 
 func NewRepository(db *pgxpool.Pool) *Repository {
-	return &Repository{queries: query.New(db)}
+	return &Repository{queries: query.New(db), db: db}
 }
 
 func (r *Repository) Catalog(ctx context.Context, id string) (query.VehicleCatalog, error) {
@@ -23,7 +26,29 @@ func (r *Repository) List(ctx context.Context, userID int64) ([]query.ListVehicl
 }
 
 func (r *Repository) Create(ctx context.Context, arg query.CreateVehicleParams) (query.CreateVehicleRow, error) {
-	return r.queries.CreateVehicle(ctx, arg)
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return query.CreateVehicleRow{}, err
+	}
+	defer tx.Rollback(ctx)
+	q := query.New(tx)
+	row, err := q.CreateVehicle(ctx, arg)
+	if err != nil {
+		return query.CreateVehicleRow{}, err
+	}
+	for _, setting := range startingSchedules(row.Kind) {
+		if setting.Kind == "engine_oil" && len(row.FuelTypes) == 1 && row.FuelTypes[0] == "electric" {
+			setting.Personal = scheduleInterval{Unit: "months"}
+		}
+		_, err = q.SaveMaintenanceSchedule(ctx, query.SaveMaintenanceScheduleParams{VehicleID: row.ID, UserID: arg.UserID, Kind: setting.Kind, ActiveSource: "personal", PersonalKm: setting.Personal.Kilometers, PersonalDuration: setting.Personal.Duration, PersonalUnit: setting.Personal.Unit, ManualUnit: "months"})
+		if err != nil {
+			return query.CreateVehicleRow{}, err
+		}
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return query.CreateVehicleRow{}, err
+	}
+	return row, nil
 }
 
 func (r *Repository) Fetch(ctx context.Context, id, userID int64) (query.GetVehicleRow, error) {

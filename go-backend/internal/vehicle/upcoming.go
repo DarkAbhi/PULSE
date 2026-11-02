@@ -26,11 +26,10 @@ func calculateUpcoming(kind string, fuels []string, air []airFillHistory, fills 
 	location := time.FixedZone("India", 19800)
 	now = now.In(location)
 	settings := map[string]maintenanceSchedule{}
-	for _, setting := range defaultSchedules(kind) {
+	for _, setting := range startingSchedules(kind) {
 		settings[setting.Kind] = setting
 	}
 	for _, setting := range schedules {
-		setting.Default = settings[setting.Kind].Default
 		settings[setting.Kind] = setting
 	}
 	var mileage *float64

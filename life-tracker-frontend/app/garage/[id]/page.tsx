@@ -205,8 +205,8 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
           </section>
         </div>
         <FuelEfficiencySection stats={data.fuel_efficiency} />
-        <ComingUp items={data.coming_up ?? []} vehicleId={id} settings={(data.maintenance_schedules ?? []).filter((s) => s.kind !== "engine_oil" || data.fuel_types.some((f) => f !== "electric"))} />
-        <section className="mt-8">
+        <ComingUp items={data.coming_up ?? []} vehicleId={id} />
+        <section id="maintenance" className="mt-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-xl font-semibold">
               <ReceiptText className="h-5 w-5 text-action" /> Maintenance & expenses
@@ -215,6 +215,10 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
               <Plus className="h-4 w-4" /> Add record
             </Link>
           </div>
+          <Link href={`/garage/${id}/reminders`} className="mt-4 block rounded-xl border border-border p-5 hover:bg-accent focus-visible:outline-2 focus-visible:outline-action">
+            <span className="block font-semibold">Reminder settings →</span>
+            <span className="mt-1 block text-sm text-muted-foreground">Set intervals for engine oil, tire pressure and general service.</span>
+          </Link>
           <div className="mt-4 space-y-3">
             <MaintenanceHistory records={data.maintenance_records} vehicleId={id} currency={currency} />
           </div>

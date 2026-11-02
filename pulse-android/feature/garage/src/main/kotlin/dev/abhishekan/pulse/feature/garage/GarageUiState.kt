@@ -31,6 +31,7 @@ data class GarageUiState(
     val history: GarageSection<VehicleHistory> = GarageSection(loading = false),
     val vehicle: Long? = null,
     val tab: GarageTab = GarageTab.Overview,
+    val reminderPage: String? = null,
     val draft: GarageDraft? = null,
     val makes: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),
     val models: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),

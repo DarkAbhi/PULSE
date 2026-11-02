@@ -7,7 +7,7 @@ linked to the service; no automated extraction is enabled.
 
 ## Try it
 
-1. Apply migration `00033_vehicle_maintenance_schedules` (after migration 32) using the existing migration
+1. Apply migration `00034_personal_reminder_starting_values` (after migrations 32 and 33) using the existing migration
    workflow, then deploy the Go API before the updated clients.
 2. Open a vehicle's maintenance tab, create/edit a service, and choose **Add work
    performed**. Record each component and action. Amount can be zero for free/DIY
@@ -18,7 +18,7 @@ linked to the service; no automated extraction is enabled.
 4. Save, then attach the invoice through the existing attachment controls. Original
    wording belongs in the action description. Requested/estimated work belongs in
    notes until completion is confirmed.
-5. Search work in the maintenance tab, or inspect **Coming up** in Overview.
+5. Search work in the maintenance tab, or inspect **Coming up** in Overview. Open **Maintenance → Reminder settings**, then choose an individual task to edit its intervals.
    Tire pressure targets/actions remain in **Tires & air**.
 6. Add `get_vehicle_maintenance` and `record_vehicle_maintenance` to the deployed
    Hermes tool allowlist and reload the connection (see `hermes-mcp/README.md`).
@@ -56,7 +56,7 @@ determines progress. No travel-rate prediction is made. Missing/inconsistent
 mileage falls back to time only. Calendar calculations use India time and clamp
 month ends. Editing/deleting records recalculates estimates on refresh.
 
-## Initial estimates
+## Prefilled My intervals
 
 | Task | Motorcycle/moped (including scooters) | Car |
 | --- | --- | --- |
@@ -65,22 +65,20 @@ month ends. Editing/deleting records recalculates estimates on refresh.
 | Pressure | 14 days after last air fill | 30 days after last air fill |
 
 Whichever threshold comes first applies. Electric-only vehicles omit engine oil.
-Other/unknown kinds have only a pressure app default; personal/manual oil and service intervals can still be configured. Existing air notifications use the selected pressure schedule (14/30 days when App default is active) and ignore fills superseded by newer fills. Oil/service
-push notifications are not added. The UI labels the active source and mileage as based on the last recorded reading. Only the source selected by the user applies. These defaults do not automatically override personal or manual values.
+Other/unknown kinds have only a pressure app default; personal/manual oil and service intervals can still be configured. Existing air notifications use the selected pressure schedule (14/30 days until the personal interval is edited) and ignore fills superseded by newer fills. Oil/service
+push notifications are not added. The UI labels the active source and mileage as based on the last recorded reading. Only the source selected by the user applies. Only the selected personal or manual values affect reminders.
 
 ## Personal and manual reminder schedules
 
-Each vehicle/task has an **App default**, **My intervals**, or **Vehicle manual**
-active source. Both personal and manual sets stay saved when switching. They are
+Each vehicle/task has **My intervals** or **Vehicle manual** as its active source. Both personal and manual sets stay saved when switching. They are
 never combined: if manual is active, an earlier personal limit does not affect the
 reminder. Within the active set, either threshold being reached makes work due.
 
-Use **Reminder settings** below Coming up. Enter a positive whole distance (km),
+Use **Maintenance → Reminder settings** and open **Engine oil**, **Tire pressure**, or **General service**. Each opens a separate page; Back returns through the reminder list to Maintenance. Coming up remains display-only in Overview. Enter a positive whole distance (km),
 a duration in days or calendar months, or both. Leave an unused threshold blank.
-The active personal/manual set needs at least one threshold. The optional manual
+The active personal/manual set needs at least one threshold. Unsupported types have empty oil/service fields until configured. The optional manual
 reference can name the booklet/page. Manual values are user-entered and are not
-independently verified by Pulse. Defaults are read-only and remain available as a
-fallback selection. Engine-oil settings are hidden for electric-only vehicles.
+independently verified by Pulse. My intervals starts prefilled with the values above, and every value is editable. There is no third source. Engine-oil settings are hidden for electric-only vehicles.
 
 `PUT /api/vehicles/{id}/maintenance-schedules/{kind}` accepts:
 
@@ -163,3 +161,26 @@ active-source restoration through activity recreation, and recording an air-fill
 odometer. Web TypeScript, the 19 existing web tests, and the Webpack production
 build pass. MCP tests cover confirmation and preservation of both source sets.
 These changes have not been deployed or tested in a live Telegram session.
+
+
+## Reminder page and starting-value migration
+
+Migration 34 converts the retired source to personal, fills empty personal fields
+with the starter values, and creates missing task rows for existing vehicles.
+Nonempty personal values, all manual values/references, and active manual choices
+are preserved. Unsupported vehicle kinds and electric-only oil fields stay empty.
+New vehicles create their personal starting schedules in the same transaction.
+Rollback preserves filled values rather than guessing which ones were edited.
+
+Android has Maintenance → Reminder settings → individual task pages, with both
+system and toolbar Back returning through the list. Web uses
+`/garage/{id}/reminders` and `/garage/{id}/reminders/{kind}`, entered through the
+Maintenance section. Only two source choices are presented on either platform.
+Older clients' retired source value is accepted by the API as a compatibility
+alias and converted to personal values; responses do not expose a third source.
+
+The migration-34 update passes the full vehicle and notification package tests,
+103 Android unit tests, garage lint, debug app/test builds, all 19 web tests and
+the Webpack production build. Three focused emulator workflows pass, including
+opening all three separate reminder pages, restoring edits through recreation,
+saving both sources and backing through the reminder list to Maintenance.

@@ -29,6 +29,7 @@ internal fun garageOption(value: String): String =
         "insurance" -> stringResource(R.string.pulse_garage_option_insurance)
         "washing" -> stringResource(R.string.pulse_garage_option_washing)
         "tyres" -> stringResource(R.string.pulse_garage_option_tyres)
+        "tire_pressure" -> stringResource(R.string.pulse_garage_reminder_tire_pressure)
         "engine_oil" -> stringResource(R.string.pulse_garage_work_engine_oil)
         "oil_filter" -> stringResource(R.string.pulse_garage_work_oil_filter)
         "air_filter" -> stringResource(R.string.pulse_garage_work_air_filter)

@@ -168,11 +168,21 @@ fun GarageRoute(
                         },
                     ),
                 )
-            } ?: vehicleTitle ?: stringResource(R.string.pulse_garage_screen_title),
+            } ?: state.reminderPage?.let { reminderPageTitle(it) } ?: vehicleTitle ?: stringResource(R.string.pulse_garage_screen_title),
         showTopBar = state.draft != null || state.vehicle != null,
         backLabel =
             if (state.draft != null) {
                 stringResource(R.string.pulse_garage_back_to_garage)
+            } else if (state.reminderPage != null) {
+                stringResource(
+                    if (state.reminderPage ==
+                        "list"
+                    ) {
+                        R.string.pulse_garage_reminder_back_maintenance
+                    } else {
+                        R.string.pulse_garage_reminder_back_settings
+                    },
+                )
             } else {
                 backLabel
                     ?: stringResource(R.string.pulse_garage_back_to_collection)
@@ -231,6 +241,7 @@ internal fun GarageScreen(
         when {
             state.busy -> Unit
             state.draft != null -> cancel()
+            state.reminderPage != null -> vm.backFromReminder()
             else -> vm.select(null)
         }
     }
@@ -238,7 +249,7 @@ internal fun GarageScreen(
     val enabled = !state.busy && !state.reviewRequired && state.draft == null
     val refreshState = rememberPullToRefreshState()
     val tracker = rememberPullRefreshTracker(state.history.loading)
-    val canRefresh = state.vehicle != null && !state.history.loading && !state.busy && state.draft == null
+    val canRefresh = state.reminderPage == null && state.vehicle != null && !state.history.loading && !state.busy && state.draft == null
     val showLoading =
         !state.reviewRequired &&
             (state.draft == null || records) &&
@@ -409,7 +420,6 @@ internal fun GarageScreen(
                                                         },
                                                         { vm.tab(GarageTab.Care) },
                                                         { vm.tab(GarageTab.Air) },
-                                                        { vm.mutate(GarageChange.Schedule(vehicle, it)) },
                                                     )
                                                     VehicleDataCredits()
                                                 }
@@ -421,23 +431,41 @@ internal fun GarageScreen(
                                                     FuelCards(data, vehicle, enabled, edit, remove)
                                                 }
                                                 GarageTab.Care -> {
-                                                    PulseButton(
-                                                        stringResource(
-                                                            R.string.pulse_garage_add_maintenance,
-                                                        ),
-                                                        {
-                                                            records =
-                                                                false
-                                                            vm.create(GarageForm.Care)
-                                                        },
-                                                        enabled = enabled,
-                                                    )
-                                                    MaintenanceCards(data, vehicle, enabled, state.busy, edit, remove, upload, {
-                                                        record,
-                                                        receipt,
-                                                        ->
-                                                        vm.download(record, receipt)
-                                                    }, download, state.uploadRecord, state.progress)
+                                                    val schedules =
+                                                        data.schedules.filter {
+                                                            it.kind != "engine_oil" ||
+                                                                data.fuelTypes.any { fuel -> fuel != "electric" }
+                                                        }
+                                                    when (val page = state.reminderPage) {
+                                                        null -> {
+                                                            MaintenanceReminderEntry(enabled) { vm.reminders("list") }
+                                                            PulseButton(
+                                                                stringResource(
+                                                                    R.string.pulse_garage_add_maintenance,
+                                                                ),
+                                                                {
+                                                                    records =
+                                                                        false
+                                                                    vm.create(GarageForm.Care)
+                                                                },
+                                                                enabled = enabled,
+                                                            )
+                                                            MaintenanceCards(data, vehicle, enabled, state.busy, edit, remove, upload, {
+                                                                record,
+                                                                receipt,
+                                                                ->
+                                                                vm.download(record, receipt)
+                                                            }, download, state.uploadRecord, state.progress)
+                                                        }
+                                                        "list" -> MaintenanceReminderTasks(schedules, enabled, vm::reminders)
+                                                        else ->
+                                                            schedules.firstOrNull { it.kind == page }?.let { setting ->
+                                                                MaintenanceScheduleEditor(
+                                                                    setting,
+                                                                    enabled,
+                                                                ) { vm.mutate(GarageChange.Schedule(vehicle, it)) }
+                                                            }
+                                                    }
                                                 }
                                                 GarageTab.Air -> {
                                                     TiresAirSection(
@@ -478,7 +506,7 @@ internal fun GarageScreen(
             }
         }
         Column(Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize()) {
-            if (state.vehicle != null && (state.draft == null || records)) {
+            if (state.vehicle != null && state.reminderPage == null && (state.draft == null || records)) {
                 PulseTabs(
                     labels = GarageTab.entries.map { stringResource(it.label) },
                     selectedIndex = state.tab.ordinal,
@@ -525,7 +553,7 @@ internal fun GarageScreen(
                 ) {
                     key(state.draft.kind, state.draft.id) { content() }
                 } else {
-                    scrollStates.SaveableStateProvider("${state.vehicle}-${state.tab}") {
+                    scrollStates.SaveableStateProvider("${state.vehicle}-${state.tab}-${state.reminderPage}") {
                         content()
                     }
                 }

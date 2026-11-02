@@ -2,6 +2,7 @@ package dev.abhishekan.pulse.feature.garage
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -48,6 +49,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -74,8 +76,9 @@ internal fun GarageOverview(
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-                EfficiencyCards(data)
+                if (data.efficiency.isNotEmpty()) EfficiencyCards(data)
                 OverviewCare(data, enabled, addFuel, addCare)
+                GarageRule()
                 PressureCard(data.pressure, enabled, editPressure, recordAir)
             }
         }
@@ -193,7 +196,7 @@ internal fun EfficiencyCards(
 
 @Composable
 private fun GarageRule() {
-    Box(Modifier.fillMaxWidth().height(1.dp).background(PulseTheme.colors.primary.copy(alpha = .25f)))
+    PulseHorizontalDivider()
 }
 
 @Composable
@@ -215,11 +218,7 @@ private fun OverviewCare(
     addFuel: () -> Unit,
     addCare: () -> Unit,
 ) {
-    PulseCard(
-        Modifier.fillMaxWidth(),
-        border = BorderStroke(1.dp, PulseTheme.colors.divider),
-        shape = PulseTheme.shapes.extraLarge,
-    ) {
+    Column(Modifier.fillMaxWidth()) {
         PulseText(stringResource(R.string.pulse_garage_care_at_a_glance), Modifier.semantics { heading() }, PulseTextStyle.Title2)
         Spacer(Modifier.size(PulseTokens.medium))
         Row(Modifier.fillMaxWidth()) {
@@ -235,9 +234,9 @@ private fun OverviewCare(
         }
         Spacer(Modifier.size(PulseTokens.medium))
         GarageActionPair(
-            stringResource(R.string.pulse_garage_log_fuel),
+            stringResource(R.string.pulse_garage_fuel_action),
             addFuel,
-            stringResource(R.string.pulse_garage_add_maintenance),
+            stringResource(R.string.pulse_garage_service_action),
             addCare,
             enabled,
             primaryFirst = true,
@@ -271,11 +270,7 @@ internal fun PressureCard(
     prominent: Boolean = false,
 ) {
     var confirmFill by remember { mutableStateOf(false) }
-    PulseCard(
-        Modifier.fillMaxWidth(),
-        border = BorderStroke(1.dp, PulseTheme.colors.divider),
-        shape = PulseTheme.shapes.extraLarge,
-    ) {
+    Column(Modifier.fillMaxWidth()) {
         Column(
             Modifier.fillMaxWidth().heightIn(min = (minimumHeight - PulseTokens.cardPadding * 2).coerceAtLeast(0.dp)),
             verticalArrangement = Arrangement.spacedBy(if (prominent) PulseTokens.cardPadding else PulseTokens.medium),
@@ -292,52 +287,33 @@ internal fun PressureCard(
                     color = PulseTheme.colors.textSecondary,
                 )
             }
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                if (maxWidth >= 560.dp && LocalDensity.current.fontScale <= 1.3f) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(PulseTheme.spacing.compact)) {
-                        PressureValues(
-                            stringResource(R.string.pulse_garage_solo),
-                            decimal(pressure.frontSolo),
-                            decimal(pressure.rearSolo),
-                            Modifier.weight(1f),
-                            true,
-                            prominent,
-                        )
-                        PressureValues(
-                            stringResource(R.string.pulse_garage_pillion),
-                            decimal(pressure.frontPillion),
-                            decimal(pressure.rearPillion),
-                            Modifier.weight(1f),
-                            false,
-                            prominent,
-                        )
-                    }
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(PulseTheme.spacing.compact)) {
-                        PressureValues(
-                            stringResource(R.string.pulse_garage_solo),
-                            decimal(pressure.frontSolo),
-                            decimal(pressure.rearSolo),
-                            Modifier.fillMaxWidth(),
-                            true,
-                            prominent,
-                        )
-                        PressureValues(
-                            stringResource(R.string.pulse_garage_pillion),
-                            decimal(pressure.frontPillion),
-                            decimal(pressure.rearPillion),
-                            Modifier.fillMaxWidth(),
-                            false,
-                            prominent,
-                        )
-                    }
-                }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.weight(1f))
+                PulseText(
+                    stringResource(R.string.pulse_garage_front),
+                    Modifier.weight(.3f),
+                    PulseTextStyle.Body2,
+                    color = PulseTheme.colors.textSecondary,
+                )
+                PulseText(
+                    stringResource(R.string.pulse_garage_rear),
+                    Modifier.weight(.3f),
+                    PulseTextStyle.Body2,
+                    color = PulseTheme.colors.textSecondary,
+                )
             }
+            PressureTableRow(stringResource(R.string.pulse_garage_solo), decimal(pressure.frontSolo), decimal(pressure.rearSolo), true)
+            PressureTableRow(
+                stringResource(R.string.pulse_garage_pillion),
+                decimal(pressure.frontPillion),
+                decimal(pressure.rearPillion),
+                false,
+            )
             Spacer(Modifier.weight(1f))
             GarageActionPair(
-                stringResource(R.string.pulse_garage_set_tire_pressure),
+                stringResource(R.string.pulse_garage_set_pressure_action),
                 edit,
-                stringResource(R.string.pulse_garage_record_air_fill_now),
+                stringResource(R.string.pulse_garage_record_air_action),
                 { confirmFill = true },
                 enabled,
             )
@@ -354,6 +330,38 @@ internal fun PressureCard(
             },
             { confirmFill = false },
         )
+    }
+}
+
+@Composable
+private fun PressureTableRow(
+    label: String,
+    front: String,
+    rear: String,
+    highlighted: Boolean,
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .then(
+                if (highlighted) {
+                    Modifier
+                        .background(PulseTheme.colors.primarySoft, PulseTheme.shapes.large)
+                        .then(Modifier.border(BorderStroke(1.dp, PulseTheme.colors.primary), PulseTheme.shapes.large))
+                } else {
+                    Modifier
+                },
+            ).padding(PulseTokens.medium),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PulseText(
+            label,
+            Modifier.weight(1f),
+            PulseTextStyle.Title3,
+            color = if (highlighted) PulseTheme.colors.action else PulseTheme.colors.textPrimary,
+        )
+        PulseText(front, Modifier.weight(.3f), PulseTextStyle.Title3)
+        PulseText(rear, Modifier.weight(.3f), PulseTextStyle.Title3)
     }
 }
 
@@ -456,10 +464,34 @@ private fun GarageActionPair(
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val firstVariant = if (primaryFirst) PulseButtonVariant.Primary else PulseButtonVariant.Secondary
         val secondVariant = if (primaryFirst) PulseButtonVariant.Secondary else PulseButtonVariant.Primary
-        if (maxWidth >= (if (primaryFirst) 300.dp else 480.dp) && LocalDensity.current.fontScale <= 1.3f) {
+        if (maxWidth >= 300.dp && LocalDensity.current.fontScale <= 1.3f) {
             Row(horizontalArrangement = Arrangement.spacedBy(PulseTheme.spacing.compact)) {
-                PulseButton(first, onFirst, Modifier.weight(1f).heightIn(min = 52.dp), enabled, variant = firstVariant)
-                PulseButton(second, onSecond, Modifier.weight(1f).heightIn(min = 52.dp), enabled, variant = secondVariant)
+                PulseButton(
+                    first,
+                    onFirst,
+                    Modifier.weight(1f).heightIn(min = 52.dp),
+                    enabled,
+                    variant = firstVariant,
+                    leadingIcon =
+                        if (primaryFirst) {
+                            { PulseText("+", style = PulseTextStyle.Title2) }
+                        } else {
+                            null
+                        },
+                )
+                PulseButton(
+                    second,
+                    onSecond,
+                    Modifier.weight(1f).heightIn(min = 52.dp),
+                    enabled,
+                    variant = secondVariant,
+                    leadingIcon =
+                        if (primaryFirst) {
+                            { PulseText("+", style = PulseTextStyle.Title2) }
+                        } else {
+                            null
+                        },
+                )
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {

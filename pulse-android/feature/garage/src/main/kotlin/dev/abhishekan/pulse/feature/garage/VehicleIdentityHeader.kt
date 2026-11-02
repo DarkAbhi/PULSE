@@ -23,6 +23,7 @@ internal fun VehicleIdentityHeader(
     data: VehicleHistory,
     enabled: Boolean,
     edit: () -> Unit,
+    delete: () -> Unit,
 ) {
     Row(
         Modifier.fillMaxWidth(),
@@ -32,13 +33,27 @@ internal fun VehicleIdentityHeader(
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
             val makeAndModel = listOf(data.makeName, data.modelName).filter(String::isNotBlank).joinToString(" ")
             if (makeAndModel.isNotBlank()) {
-                PulseText(makeAndModel, Modifier.semantics { heading() }, PulseTextStyle.Title3)
+                PulseText(makeAndModel, Modifier.semantics { heading() }, PulseTextStyle.Heading3)
             }
             PulseText(garageOption(data.vehicleKind), style = PulseTextStyle.Body2, color = PulseTheme.colors.textSecondary)
             if (data.vehicleKind == "unknown") {
                 PulseText(stringResource(R.string.pulse_garage_classify_hint), color = PulseTheme.colors.textSecondary)
             }
         }
-        PulseButton(stringResource(R.string.pulse_garage_edit_vehicle), edit, enabled = enabled, style = PulseButtonStyle.Text)
+        PulseButton(stringResource(R.string.pulse_garage_edit_vehicle), edit, enabled = enabled, style = PulseButtonStyle.Icon, icon = {
+            PulseText("✎", style = PulseTextStyle.Title2, color = PulseTheme.colors.action)
+        })
+        PulseButton(
+            stringResource(
+                R.string.pulse_garage_delete_1_s,
+                data.name,
+            ),
+            delete,
+            enabled = enabled,
+            style = PulseButtonStyle.Icon,
+            icon = {
+                GarageDetailIcon(GarageIcon.Delete, PulseTheme.colors.error)
+            },
+        )
     }
 }

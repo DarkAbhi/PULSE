@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/jackc/pgx/v5/pgtype"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -22,13 +23,14 @@ var maintenanceCategories = map[string]bool{
 }
 
 type maintenanceRecordPayload struct {
-	Category     string     `json:"category"`
-	Title        string     `json:"title"`
-	Amount       float64    `json:"amount"`
-	OccurredAt   *time.Time `json:"occurred_at"`
-	OdometerKM   *float64   `json:"odometer_km"`
-	ProviderName *string    `json:"provider_name"`
-	Notes        *string    `json:"notes"`
+	Actions      *[]maintenanceAction `json:"actions"`
+	Category     string               `json:"category"`
+	Title        string               `json:"title"`
+	Amount       float64              `json:"amount"`
+	OccurredAt   *time.Time           `json:"occurred_at"`
+	OdometerKM   *float64             `json:"odometer_km"`
+	ProviderName *string              `json:"provider_name"`
+	Notes        *string              `json:"notes"`
 }
 
 type maintenanceRecord struct {
@@ -41,6 +43,7 @@ type maintenanceRecord struct {
 	ProviderName *string                 `json:"provider_name"`
 	Notes        *string                 `json:"notes"`
 	Attachments  []maintenanceAttachment `json:"attachments"`
+	Actions      []maintenanceAction     `json:"actions"`
 }
 
 func normalizeMaintenanceRecord(p *maintenanceRecordPayload) error {
@@ -52,10 +55,10 @@ func normalizeMaintenanceRecord(p *maintenanceRecordPayload) error {
 	if p.Title == "" || len(p.Title) > 160 {
 		return errors.New("title is required and must be 160 characters or fewer")
 	}
-	if p.Amount <= 0 {
-		return errors.New("amount must be greater than zero")
+	if math.IsNaN(p.Amount) || math.IsInf(p.Amount, 0) || p.Amount < 0 || p.Amount >= 1e10 {
+		return errors.New("amount must be between zero and 9,999,999,999.99")
 	}
-	if p.OdometerKM != nil && *p.OdometerKM < 0 {
+	if p.OdometerKM != nil && (math.IsNaN(*p.OdometerKM) || math.IsInf(*p.OdometerKM, 0) || *p.OdometerKM < 0 || *p.OdometerKM >= 1e11) {
 		return errors.New("odometer cannot be negative")
 	}
 	if p.ProviderName != nil {
@@ -68,7 +71,7 @@ func normalizeMaintenanceRecord(p *maintenanceRecordPayload) error {
 	if p.Notes != nil {
 		p.Notes = optionalString(strings.TrimSpace(*p.Notes))
 	}
-	return nil
+	return normalizeMaintenanceActions(p.Actions)
 }
 
 func optionalString(value string) *string {
@@ -86,7 +89,7 @@ func nullableString(value *string) sql.NullString {
 }
 
 func maintenanceRecordDTO(id int64, category, title string, amount float64, occurredAt time.Time, odometer *float64, provider, notes sql.NullString) maintenanceRecord {
-	record := maintenanceRecord{ID: id, Category: category, Title: title, Amount: amount, OccurredAt: occurredAt.UTC(), OdometerKM: odometer}
+	record := maintenanceRecord{Actions: []maintenanceAction{}, Attachments: []maintenanceAttachment{}, ID: id, Category: category, Title: title, Amount: amount, OccurredAt: occurredAt.UTC(), OdometerKM: odometer}
 	if provider.Valid {
 		record.ProviderName = &provider.String
 	}
@@ -118,7 +121,14 @@ func (h *Handler) CreateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 	if p.OccurredAt != nil {
 		occurredAt = *p.OccurredAt
 	}
-	row, err := query.New(h.DB).CreateMaintenanceRecord(r.Context(), query.CreateMaintenanceRecordParams{VehicleID: vehicleID, UserID: user.ID, Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: pgtype.Timestamptz{Time: occurredAt, Valid: true}, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableText(p.Notes)})
+	tx, err := h.DB.Begin(r.Context())
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	defer tx.Rollback(r.Context())
+	q := query.New(tx)
+	row, err := q.CreateMaintenanceRecord(r.Context(), query.CreateMaintenanceRecordParams{VehicleID: vehicleID, UserID: user.ID, Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: pgtype.Timestamptz{Time: occurredAt, Valid: true}, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableText(p.Notes)})
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
@@ -128,6 +138,18 @@ func (h *Handler) CreateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 		return
 	}
 	record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt.Time, row.OdometerKm, row.ProviderName, textToNullString(row.Notes))
+	if err := saveMaintenanceActions(r.Context(), q, row.ID, user.ID, p.Actions); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	if err := populateMaintenanceRecord(r.Context(), q, user.ID, &record); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	if err := tx.Commit(r.Context()); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
 	webutil.WriteJSON(w, http.StatusCreated, record)
 }
 
@@ -154,11 +176,18 @@ func (h *Handler) UpdateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 		webutil.BadRequest(w, err.Error())
 		return
 	}
-	occurredAt := time.Now().UTC()
+	occurredAt := pgtype.Timestamptz{}
 	if p.OccurredAt != nil {
-		occurredAt = *p.OccurredAt
+		occurredAt = pgtype.Timestamptz{Time: *p.OccurredAt, Valid: true}
 	}
-	row, err := query.New(h.DB).UpdateMaintenanceRecord(r.Context(), query.UpdateMaintenanceRecordParams{Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: pgtype.Timestamptz{Time: occurredAt, Valid: true}, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableText(p.Notes), ID: recordID, VehicleID: vehicleID, UserID: user.ID})
+	tx, err := h.DB.Begin(r.Context())
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	defer tx.Rollback(r.Context())
+	q := query.New(tx)
+	row, err := q.UpdateMaintenanceRecord(r.Context(), query.UpdateMaintenanceRecordParams{Category: p.Category, Title: p.Title, Amount: p.Amount, OccurredAt: occurredAt, OdometerKm: p.OdometerKM, ProviderName: nullableString(p.ProviderName), Notes: nullableText(p.Notes), ID: recordID, VehicleID: vehicleID, UserID: user.ID})
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return
@@ -168,6 +197,18 @@ func (h *Handler) UpdateMaintenanceRecord(w http.ResponseWriter, r *http.Request
 		return
 	}
 	record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt.Time, row.OdometerKm, row.ProviderName, textToNullString(row.Notes))
+	if err := saveMaintenanceActions(r.Context(), q, row.ID, user.ID, p.Actions); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	if err := populateMaintenanceRecord(r.Context(), q, user.ID, &record); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
+	if err := tx.Commit(r.Context()); err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
 	webutil.WriteJSON(w, http.StatusOK, record)
 }
 

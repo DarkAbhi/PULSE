@@ -4,6 +4,7 @@ import dev.abhishekan.pulse.core.domain.model.FuelItem
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.GarageRecord
+import dev.abhishekan.pulse.core.domain.model.MaintenanceAction
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.RECEIPT_LIMIT
 import dev.abhishekan.pulse.core.domain.model.TirePressure
@@ -186,6 +187,56 @@ class GarageRepositoryTest {
     }
 
     private val receipt = GarageReceipt(3, "receipt.pdf", "application/pdf", 3)
+
+    @Test fun structuredWorkAndSignedReminderDistanceRoundTrip() =
+        runTest {
+            Harness().use { h ->
+                h.body = """{
+              "vehicle_name":"Ride","kind":"motorcycle","fuel_types":["petrol"],
+              "air_fills":[],"fuel_fillups":[],"fuel_efficiency":{},
+              "maintenance_records":[{"id":1,"category":"service","title":"Service","amount":0,
+                "occurred_at":"2026-09-07T09:34:00Z","actions":[{"component":"engine_oil","action":"replaced","description":"15W50"}]}],
+              "coming_up":[{"kind":"engine_oil","status":"overdue","due_date":"2027-01-07",
+                "remaining_days":66,"remaining_km":-278,"progress":1,"last_at":"2026-09-07T09:34:00Z"}]
+            }"""
+                val history = (h.repo.history(1) as Outcome.Success).value
+                val record = history.maintenance.single()
+                assertEquals(listOf(MaintenanceAction("engine_oil", "replaced", "15W50")), record.actions)
+                assertEquals(
+                    "-278",
+                    history.upcoming
+                        .single()
+                        .remainingKm
+                        ?.toPlainString(),
+                )
+                h.body = "{}"
+                assertTrue(
+                    h.repo.apply(
+                        GarageChange.Care(
+                            1,
+                            1,
+                            "service",
+                            record.title,
+                            record.amount,
+                            record.date,
+                            record.odometer,
+                            record.provider,
+                            record.notes,
+                            record.actions,
+                        ),
+                    ) is Outcome.Success,
+                )
+                val body = Json.parseToJsonElement(h.requests.last().second).jsonObject
+                val work =
+                    body
+                        .getValue("actions")
+                        .jsonArray
+                        .single()
+                        .jsonObject
+                assertEquals("engine_oil", work.getValue("component").jsonPrimitive.content)
+                assertEquals("replaced", work.getValue("action").jsonPrimitive.content)
+            }
+        }
 
     @Test fun exactBackendSummaryAndMissingHistoryStayHonest() =
         runTest {

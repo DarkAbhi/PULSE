@@ -177,6 +177,93 @@ def add_exercises_to_workout(exercises: list[ExerciseInput], confirmed: bool = F
                                method="POST", body={"exercises": exercises}))
 
 
+
+
+class MaintenanceActionInput(TypedDict):
+    component: str
+    action: str
+    description: str
+
+
+def _vehicle_id(vehicle_id):
+    if type(vehicle_id) is not int or vehicle_id <= 0:
+        raise ValueError("Choose a vehicle ID returned by get_vehicles")
+    return vehicle_id
+
+
+@mcp.tool()
+def get_vehicle_maintenance(vehicle_id: int, component: str = "", action: str = "") -> str:
+    """Read vehicle maintenance history and upcoming estimates. Choose the vehicle with get_vehicles. For component history pass a lowercase underscore key, e.g. engine_oil, clutch_cable, brake_cable, front_brake_pads. Filter action=replaced to answer last changed/replaced; adjusted, inspected or topped_up do not mean replacement. Results are newest service date first, up to 50 matching services. Return the first qualifying record for 'last', with date, odometer and source record/attachment. An empty result means no recorded match, not that work never happened. Without a component returns all recorded services and coming_up. General service reminders require general_service/completed. Defaults are estimates, not manufacturer schedules."""
+    import re
+    _vehicle_id(vehicle_id)
+    if component:
+        if not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", component) or (action and action not in _maintenance_actions):
+            raise ValueError("Provide a component key and supported action")
+        result = _get(f"/api/vehicles/{vehicle_id}/maintenance-history?{urlencode({'component': component, 'action': action})}")
+        if not isinstance(result, list):
+            raise ValueError("Invalid maintenance history from PULSE")
+        return json.dumps({"records": result, "limit": 50, "order": "service_date_desc"})
+    if action:
+        raise ValueError("A component is required when filtering an action")
+    result = _get(f"/api/vehicles/{vehicle_id}/history")
+    if not isinstance(result, dict) or not isinstance(result.get("maintenance_records"), list):
+        raise ValueError("Invalid vehicle history from PULSE")
+    return json.dumps({"records": result["maintenance_records"], "coming_up": result.get("coming_up", [])})
+
+
+_maintenance_actions = {"replaced", "inspected", "adjusted", "repaired", "topped_up", "cleaned", "lubricated", "completed"}
+
+
+@mcp.tool()
+def record_vehicle_maintenance(vehicle_id: int, title: str, service_date: str, amount: float,
+                               actions: list[MaintenanceActionInput], category: str = "service",
+                               odometer_km: float | None = None, provider_name: str = "",
+                               notes: str = "", confirmed: bool = False) -> str:
+    """Save manually reported completed work after explicit confirmation. First show the exact vehicle, service date, mileage, amount, and every component/action to the user. Ask about ambiguous invoice wording; never treat requested work or a pre-invoice as proof of completion. service_date is required YYYY-MM-DD in India time; never infer it from an upload date. Amount may be zero for free/DIY work. Actions use component keys (engine_oil, oil_filter, clutch_cable, etc.) and replaced/inspected/adjusted/repaired/topped_up/cleaned/lubricated/completed. Oil change is engine_oil/replaced; full service is general_service/completed. Preserve original wording in description. This tool does not upload or extract invoices. After an uncertain write/network failure inspect existing history before retrying: a repeated write can create duplicates."""
+    import math
+    import re
+    if confirmed is not True:
+        raise ValueError("Show the complete maintenance entry and obtain explicit confirmation before saving")
+    _vehicle_id(vehicle_id)
+    try:
+        parsed_date = date.fromisoformat(service_date)
+    except (ValueError, TypeError):
+        raise ValueError("Provide the service date as YYYY-MM-DD") from None
+    if parsed_date.isoformat() != service_date or parsed_date > datetime.now(_india_time).date():
+        raise ValueError("Provide a service date no later than today")
+    if not isinstance(title, str) or not title.strip() or len(title.strip().encode()) > 160:
+        raise ValueError("A title of at most 160 bytes is required")
+    if category not in {"service", "repair", "insurance", "washing", "tyres"}:
+        raise ValueError("Unsupported maintenance category")
+    if type(amount) not in (int, float) or not math.isfinite(amount) or not 0 <= amount < 1e10:
+        raise ValueError("Provide a non-negative finite amount below 10 billion")
+    if odometer_km is not None and (type(odometer_km) not in (int, float) or not math.isfinite(odometer_km) or not 0 <= odometer_km < 1e11):
+        raise ValueError("Provide a non-negative finite odometer")
+    if not isinstance(provider_name, str) or len(provider_name.strip().encode()) > 160 or not isinstance(notes, str):
+        raise ValueError("Provide a provider of at most 160 bytes and text notes")
+    if not isinstance(actions, list) or len(actions) > 100:
+        raise ValueError("Provide at most 100 maintenance actions")
+    seen = set()
+    normalized = []
+    for item in actions:
+        if not isinstance(item, dict):
+            raise ValueError("Each maintenance action must be an object")
+        component, action, description = item.get("component"), item.get("action"), item.get("description", "")
+        if not isinstance(component, str) or not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", component) or not isinstance(action, str) or action not in _maintenance_actions:
+            raise ValueError("Each action needs a component key and supported action")
+        if not isinstance(description, str) or len(description.encode()) > 500 or (component, action) in seen:
+            raise ValueError("Descriptions must be at most 500 bytes; duplicate component/action pairs are not allowed")
+        seen.add((component, action))
+        normalized.append({"component": component, "action": action, "description": description})
+    occurred_at = datetime.combine(parsed_date, datetime.min.time(), _india_time).isoformat()
+    result = _request(f"/api/vehicles/{vehicle_id}/maintenance-records", "POST", {
+        "category": category, "title": title.strip(), "occurred_at": occurred_at, "amount": amount,
+        "odometer_km": odometer_km, "provider_name": provider_name.strip() or None,
+        "notes": notes.strip() or None, "actions": normalized,
+    })
+    return json.dumps(result)
+
+
 if __name__ == "__main__":
     mcp.run(transport="streamable-http", host="0.0.0.0", port=8000,
             stateless_http=True, json_response=True)

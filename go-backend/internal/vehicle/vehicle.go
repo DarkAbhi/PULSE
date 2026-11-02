@@ -337,15 +337,9 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 	maintenance := make([]maintenanceRecord, 0)
 	for _, row := range maintenanceRows {
 		record := maintenanceRecordDTO(row.ID, row.Category, row.Title, row.Amount, row.OccurredAt.Time, row.OdometerKm, row.ProviderName, textToNullString(row.Notes))
-		attachmentRows, err := q.ListMaintenanceAttachments(r.Context(), query.ListMaintenanceAttachmentsParams{MaintenanceRecordID: record.ID, UserID: user.ID})
-		if err != nil {
+		if err := populateMaintenanceRecord(r.Context(), q, user.ID, &record); err != nil {
 			webutil.ServerError(w, err)
 			return
-		}
-		record.Attachments = []maintenanceAttachment{}
-		for _, row := range attachmentRows {
-			attachment := maintenanceAttachment{ID: row.ID, FileName: row.FileName, ContentType: row.ContentType, SizeBytes: row.SizeBytes, CreatedAt: row.CreatedAt.Time.UTC()}
-			record.Attachments = append(record.Attachments, attachment)
 		}
 		maintenance = append(maintenance, record)
 	}
@@ -382,6 +376,7 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 		"air_fills":                    air,
 		"fuel_fillups":                 fuels,
 		"maintenance_records":          maintenance,
+		"coming_up":                    calculateUpcoming(header.Kind, header.FuelTypes, air, fuels, maintenance, time.Now()),
 		"average_mileage_km_per_litre": averages,
 		"fuel_efficiency":              stats,
 	})

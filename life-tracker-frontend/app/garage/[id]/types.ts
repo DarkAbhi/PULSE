@@ -15,6 +15,13 @@ export type FuelFill = {
   items: FuelItem[];
 };
 
+export type MaintenanceAction = { component: string; action: string; description: string };
+export type UpcomingMaintenance = {
+  kind: string; status: string; due_date: string | null; remaining_days: number | null;
+  remaining_km: number | null; progress: number | null; last_at: string | null;
+  last_recorded_odometer_km: number | null;
+};
+
 export type MaintenanceRecord = {
   id: number;
   category: "service" | "repair" | "insurance" | "washing" | "tyres";
@@ -25,6 +32,7 @@ export type MaintenanceRecord = {
   provider_name: string | null;
   notes: string | null;
   attachments: MaintenanceAttachment[];
+  actions?: MaintenanceAction[];
 };
 
 export type MaintenanceAttachment = {
@@ -45,6 +53,7 @@ export type FuelEfficiencyStats = {
 };
 
 export type VehicleHistoryData = {
+  coming_up?: UpcomingMaintenance[];
   vehicle_name: string;
   kind: string;
   catalog_id: string | null;

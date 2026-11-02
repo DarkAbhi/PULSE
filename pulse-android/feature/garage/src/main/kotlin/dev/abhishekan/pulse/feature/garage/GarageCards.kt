@@ -7,7 +7,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -21,6 +25,8 @@ import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.components.PulseText
+import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.pulseDescription
 import java.math.BigDecimal
 import java.time.Instant
@@ -87,6 +93,17 @@ internal fun MaintenanceCards(
     uploadRecord: Long?,
     progress: Float?,
 ) {
+    var workQuery by rememberSaveable(vehicle) { mutableStateOf("") }
+    PulseTextField(workQuery, { workQuery = it }, stringResource(R.string.pulse_garage_filter_work), Modifier.fillMaxWidth())
+    val matches =
+        data.maintenance.filter { record ->
+            workQuery.isBlank() ||
+                record.actions.any { action ->
+                    val words = listOf(action.component, action.action, action.description).joinToString(" ").replace('_', ' ')
+                    words.contains(workQuery.trim(), ignoreCase = true)
+                }
+        }
+    if (matches.isEmpty() && workQuery.isNotBlank()) PulseText(stringResource(R.string.pulse_garage_no_matching_work))
     if (data.maintenance.isEmpty()) {
         PulseEmptyState(
             stringResource(R.string.pulse_garage_no_maintenance_yet),
@@ -98,7 +115,7 @@ internal fun MaintenanceCards(
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val columns = if (maxWidth >= 840.dp && LocalDensity.current.fontScale <= 1.3f) 2 else 1
         Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-            data.maintenance.chunked(columns).forEach { entries ->
+            matches.chunked(columns).forEach { entries ->
                 Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
                     entries.forEach { item ->
                         key(item.id) {

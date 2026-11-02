@@ -10,5 +10,5 @@ UPDATE notifications SET dismissed_at=NOW() WHERE user_id=$1 AND dismissed_at IS
 
 -- name: CreateAirFillReminder :one
 INSERT INTO notifications (user_id,source,title,body,target_path,priority,metadata)
-VALUES ($1,'Garage','Time to check ' || $3 || '''s air','It has been 30 days since you last filled air in ' || $3 || '.','/garage',1,jsonb_build_object('vehicle_id',$2::bigint))
+VALUES ($1,'Garage','Time to check ' || $3 || '''s air','Your tire pressure check is due for ' || $3 || '. Check the tires when cold.','/garage',1,jsonb_build_object('vehicle_id',$2::bigint))
 RETURNING id;

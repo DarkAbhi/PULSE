@@ -60,6 +60,40 @@ data class GarageReceipt(
     val size: Long,
 )
 
+val garageMaintenanceComponents =
+    listOf(
+        "engine_oil",
+        "oil_filter",
+        "air_filter",
+        "clutch_cable",
+        "brake_cable",
+        "front_brake_pads",
+        "rear_brake_pads",
+        "brake_fluid",
+        "chain",
+        "spark_plug",
+        "battery",
+        "general_service",
+    )
+val garageMaintenanceActions = listOf("replaced", "inspected", "adjusted", "repaired", "topped_up", "cleaned", "lubricated", "completed")
+
+data class MaintenanceAction(
+    val component: String,
+    val action: String,
+    val description: String = "",
+)
+
+data class UpcomingMaintenance(
+    val kind: String,
+    val status: String,
+    val dueDate: String?,
+    val remainingDays: Int?,
+    val remainingKm: BigDecimal?,
+    val progress: Float?,
+    val lastAt: Instant?,
+    val lastRecordedOdometer: BigDecimal?,
+)
+
 data class Maintenance(
     val id: Long,
     val category: String,
@@ -70,6 +104,7 @@ data class Maintenance(
     val provider: String?,
     val notes: String?,
     val receipts: List<GarageReceipt>,
+    val actions: List<MaintenanceAction> = emptyList(),
 )
 
 data class FuelEfficiency(
@@ -93,6 +128,7 @@ data class VehicleHistory(
     val catalogId: String? = null,
     val makeName: String = "",
     val modelName: String = "",
+    val upcoming: List<UpcomingMaintenance> = emptyList(),
 )
 
 enum class GarageRecord { Vehicle, Fuel, Air, Maintenance, Receipt }
@@ -139,6 +175,7 @@ sealed interface GarageChange {
         val odometer: BigDecimal?,
         val provider: String?,
         val notes: String?,
+        val actions: List<MaintenanceAction> = emptyList(),
     ) : GarageChange
 
     data class Delete(

@@ -4,6 +4,7 @@ import dev.abhishekan.pulse.core.domain.model.FuelFill
 import dev.abhishekan.pulse.core.domain.model.FuelItem
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.Maintenance
+import dev.abhishekan.pulse.core.domain.model.MaintenanceAction
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.VehicleCatalogMatch
@@ -107,6 +108,17 @@ data class GarageDraft(
         )
     }
 
+    val maintenanceActions get() =
+        (0 until (get("workCount").toIntOrNull() ?: 0)).map {
+            MaintenanceAction(get("workComponent$it"), get("workAction$it"), get("workDescription$it"))
+        }
+
+    fun withMaintenanceActions(actions: List<MaintenanceAction>) =
+        copy(
+            fields = fields.filterKeys { !it.startsWith("work") } + maintenanceActionFields(actions),
+            dirty = true,
+        )
+
     fun saved() =
         arrayListOf(
             kind.name,
@@ -188,6 +200,7 @@ data class GarageDraft(
                     number("odometer"),
                     get("provider"),
                     get("notes"),
+                    maintenanceActions,
                 )
         }
     }
@@ -307,6 +320,16 @@ internal fun Maintenance.draft(vehicle: Long): GarageDraft {
             "odometer" to odometer?.toPlainString().orEmpty(),
             "provider" to provider.orEmpty(),
             "notes" to notes.orEmpty(),
-        ),
+        ) + maintenanceActionFields(actions),
     )
 }
+
+private fun maintenanceActionFields(actions: List<MaintenanceAction>): Map<String, String> =
+    buildMap {
+        put("workCount", actions.size.toString())
+        actions.forEachIndexed { i, a ->
+            put("workComponent$i", a.component)
+            put("workAction$i", a.action)
+            put("workDescription$i", a.description)
+        }
+    }

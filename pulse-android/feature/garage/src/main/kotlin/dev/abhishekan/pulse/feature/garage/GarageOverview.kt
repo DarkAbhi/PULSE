@@ -60,8 +60,8 @@ internal fun GarageOverview(
     enabled: Boolean,
     addFuel: () -> Unit,
     addCare: () -> Unit,
-    editPressure: () -> Unit,
-    recordAir: () -> Unit,
+    openCare: () -> Unit,
+    openAir: () -> Unit,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val wide = maxWidth >= 840.dp && LocalDensity.current.fontScale <= 1.3f
@@ -72,7 +72,7 @@ internal fun GarageOverview(
                 }
                 Column(Modifier.weight(.63f), verticalArrangement = Arrangement.spacedBy(PulseTheme.spacing.comfortable)) {
                     OverviewCare(data, enabled, addFuel, addCare)
-                    PressureCard(data.pressure, enabled, editPressure, recordAir, minimumHeight = 377.dp)
+                    ComingUp(data, enabled, openCare, openAir)
                 }
             }
         } else {
@@ -80,7 +80,7 @@ internal fun GarageOverview(
                 EfficiencyCards(data)
                 OverviewCare(data, enabled, addFuel, addCare)
                 GarageRule()
-                PressureCard(data.pressure, enabled, editPressure, recordAir)
+                ComingUp(data, enabled, openCare, openAir)
             }
         }
     }

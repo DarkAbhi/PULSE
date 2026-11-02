@@ -369,8 +369,31 @@ definitions:
       username:
         type: string
     type: object
+  apidoc.MaintenanceAction:
+    properties:
+      action:
+        enum:
+        - replaced
+        - inspected
+        - adjusted
+        - repaired
+        - topped_up
+        - cleaned
+        - lubricated
+        - completed
+        type: string
+      component:
+        example: engine_oil
+        type: string
+      description:
+        type: string
+    type: object
   apidoc.MaintenanceInput:
     properties:
+      actions:
+        items:
+          $ref: '#/definitions/apidoc.MaintenanceAction'
+        type: array
       amount:
         type: number
       category:
@@ -394,6 +417,10 @@ definitions:
     type: object
   apidoc.MaintenanceRecord:
     properties:
+      actions:
+        items:
+          $ref: '#/definitions/apidoc.MaintenanceAction'
+        type: array
       amount:
         type: number
       attachments:
@@ -504,6 +531,36 @@ definitions:
       rear_tire_pressure_solo:
         type: number
     type: object
+  apidoc.UpcomingMaintenance:
+    properties:
+      due_date:
+        type: string
+      interval_days:
+        type: integer
+      interval_km:
+        type: integer
+      interval_months:
+        type: integer
+      kind:
+        type: string
+      last_at:
+        type: string
+      last_recorded_odometer_km:
+        type: number
+      progress:
+        type: number
+      remaining_days:
+        type: integer
+      remaining_km:
+        type: number
+      status:
+        enum:
+        - no_history
+        - upcoming
+        - due
+        - overdue
+        type: string
+    type: object
   apidoc.Username:
     properties:
       username:
@@ -522,6 +579,10 @@ definitions:
         type: object
       catalog_id:
         type: string
+      coming_up:
+        items:
+          $ref: '#/definitions/apidoc.UpcomingMaintenance'
+        type: array
       front_tire_pressure:
         type: number
       front_tire_pressure_pillion:
@@ -3624,6 +3685,50 @@ paths:
       security:
       - SessionBearer: []
       summary: Get vehicle history
+      tags:
+      - vehicles
+  /api/vehicles/{id}/maintenance-history:
+    get:
+      description: Up to 50 matching records, newest service date first. An empty
+        list means no recorded match. Omitted/null actions in maintenance updates
+        preserve existing actions; an empty array clears them.
+      parameters:
+      - description: Vehicle ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Component key, e.g. engine_oil or clutch_cable
+        in: query
+        name: component
+        required: true
+        type: string
+      - description: Action, e.g. replaced or adjusted
+        in: query
+        name: action
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apidoc.MaintenanceRecord'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Find component maintenance history
       tags:
       - vehicles
   /api/vehicles/{id}/maintenance-records:

@@ -10,7 +10,8 @@ import Button from "@/app/components/design-system/button";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createMaintenanceRecord, SaveMaintenancePayload, updateMaintenanceRecord } from "./actions";
-import { MaintenanceAttachment, MaintenanceRecord } from "./types";
+import MaintenanceWorkFields from "./maintenance-work-fields";
+import { MaintenanceAction, MaintenanceAttachment, MaintenanceRecord } from "./types";
 import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
@@ -28,6 +29,7 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
   const [odometer, setOdometer] = useState(record?.odometer_km == null ? "" : String(record.odometer_km));
   const [provider, setProvider] = useState(record?.provider_name ?? "");
   const [notes, setNotes] = useState(record?.notes ?? "");
+  const [work, setWork] = useState<MaintenanceAction[]>(record?.actions ?? []);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
   const [attachments, setAttachments] = useState<MaintenanceAttachment[]>(record?.attachments ?? []);
@@ -74,7 +76,7 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
         ? record.occurred_at : fromDateTimeInput(`${occurredAt}T12:00`, entryTimeZone);
     } catch (error) { setError(error instanceof Error ? error.message : "Choose a valid date."); return; }
     const payload: SaveMaintenancePayload = {
-      category, title, amount: Number(amount), occurred_at: occurredInstant,
+      actions: work, category, title, amount: Number(amount), occurred_at: occurredInstant,
       odometer_km: odometer === "" ? null : Number(odometer), provider_name: provider || null, notes: notes || null,
     };
     startTransition(async () => {
@@ -92,11 +94,12 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
         <label className="text-sm font-medium">Category<select className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" value={category} onChange={(e) => setCategory(e.target.value as Category)}>{categories.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}</select></label>
         <label className="text-sm font-medium">Date<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" type="date" required value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} /></label>
         <label className="text-sm font-medium sm:col-span-2">Title<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" maxLength={160} required placeholder="e.g. Annual service" value={title} onChange={(e) => setTitle(e.target.value)} /></label>
-        <label className="text-sm font-medium">Amount ({currencySymbol(currency)})<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" min="0.01" required step="0.01" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
+        <label className="text-sm font-medium">Amount ({currencySymbol(currency)})<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" min="0" required step="0.01" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
         <label className="text-sm font-medium">Odometer (km, optional)<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" min="0" step="0.1" type="number" value={odometer} onChange={(e) => setOdometer(e.target.value)} /></label>
         <label className="text-sm font-medium sm:col-span-2">Service centre or provider (optional)<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" maxLength={160} value={provider} onChange={(e) => setProvider(e.target.value)} /></label>
         <label className="text-sm font-medium sm:col-span-2">Notes (optional)<textarea className="mt-1 min-h-24 w-full rounded-lg border border-border bg-background px-3 py-2" value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
       </div>
+      <MaintenanceWorkFields value={work} onChange={setWork} disabled={isPending} />
       <section className="mt-6 rounded-xl border border-border p-4">
         <h3 className="font-semibold">Receipts and service bills</h3>
         {!record ? <p className="mt-1 text-sm text-muted-foreground">Save this record first, then reopen it to attach receipts or bills.</p> : <>

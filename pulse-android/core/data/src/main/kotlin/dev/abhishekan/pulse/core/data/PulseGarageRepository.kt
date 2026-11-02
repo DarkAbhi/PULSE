@@ -193,6 +193,17 @@ class PulseGarageRepository(
                             put("odometer_km", change.odometer.json())
                             text("provider_name", change.provider)
                             text("notes", change.notes)
+                            putJsonArray("actions") {
+                                change.actions.forEach { a ->
+                                    add(
+                                        buildJsonObject {
+                                            put("component", a.component)
+                                            put("action", a.action)
+                                            put("description", a.description)
+                                        },
+                                    )
+                                }
+                            }
                         },
                     )
                 is GarageChange.Delete ->

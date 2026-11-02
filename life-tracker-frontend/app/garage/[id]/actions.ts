@@ -27,6 +27,7 @@ export interface SaveMaintenancePayload {
   odometer_km: number | null;
   provider_name: string | null;
   notes: string | null;
+  actions?: import("./types").MaintenanceAction[];
 }
 
 import { SaveTirePressurePayload } from "./types";

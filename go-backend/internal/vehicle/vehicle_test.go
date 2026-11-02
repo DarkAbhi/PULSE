@@ -80,6 +80,7 @@ func TestVehicleRoutesRequireOwnership(t *testing.T) {
 	request(http.MethodDelete, path, "other", nil, http.StatusNotFound)
 	request(http.MethodPost, path+"/air-fills", "other", nil, http.StatusNotFound)
 	request(http.MethodGet, path+"/air-fills", "owner", nil, http.StatusMethodNotAllowed)
+	request(http.MethodGet, path+"/maintenance-history?component=engine_oil", "other", nil, http.StatusNotFound)
 	request(http.MethodGet, path, "owner", nil, http.StatusOK)
 	if body := request(http.MethodGet, "/vehicles", "other", nil, http.StatusOK).Body.String(); body != "[]\n" {
 		t.Fatalf("other user saw vehicles: %s", body)
@@ -650,7 +651,9 @@ func TestMaintenanceRecords(t *testing.T) {
 		return rec, req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 	}
 
-	payload, _ := json.Marshal(maintenanceRecordPayload{Category: "service", Title: "Annual service", Amount: 4500, OdometerKM: floatPtr(42000)})
+	actions := []maintenanceAction{{Component: "engine_oil", Action: "replaced", Description: "15W50 oil"}, {Component: "clutch_cable", Action: "adjusted"}}
+	servicedAt := time.Date(2026, 9, 7, 9, 34, 0, 0, time.UTC)
+	payload, _ := json.Marshal(maintenanceRecordPayload{OccurredAt: &servicedAt, Actions: &actions, Category: "service", Title: "Annual service", Amount: 4500, OdometerKM: floatPtr(42000)})
 	rec, req := request(http.MethodPost, "/vehicles/{id}/maintenance-records", payload, 0)
 	h.CreateMaintenanceRecord(rec, req)
 	if rec.Code != http.StatusCreated {
@@ -659,6 +662,9 @@ func TestMaintenanceRecords(t *testing.T) {
 	var created maintenanceRecord
 	if err := json.NewDecoder(rec.Body).Decode(&created); err != nil {
 		t.Fatalf("decode created record: %v", err)
+	}
+	if len(created.Actions) != 2 {
+		t.Fatalf("actions not saved: %+v", created)
 	}
 	if created.Category != "service" || created.Amount != 4500 || created.OdometerKM == nil || *created.OdometerKM != 42000 {
 		t.Fatalf("unexpected created record: %+v", created)
@@ -672,6 +678,12 @@ func TestMaintenanceRecords(t *testing.T) {
 	}
 	var updated maintenanceRecord
 	_ = json.NewDecoder(rec.Body).Decode(&updated)
+	if !updated.OccurredAt.Equal(servicedAt) {
+		t.Fatalf("metadata edit changed service date: %v", updated.OccurredAt)
+	}
+	if len(updated.Actions) != 2 {
+		t.Fatalf("old client removed actions: %+v", updated)
+	}
 	if updated.Category != "repair" || updated.Title != "Brake-pad repair" || updated.Amount != 5200 {
 		t.Fatalf("unexpected updated record: %+v", updated)
 	}
@@ -688,10 +700,57 @@ func TestMaintenanceRecords(t *testing.T) {
 		t.Fatalf("expected one maintenance record in history, got %v", records)
 	}
 
+	rec, req = request(http.MethodGet, "/vehicles/{id}/maintenance-history?component=engine_oil&action=replaced", nil, 0)
+	h.MaintenanceHistory(rec, req)
+	var matches []maintenanceRecord
+	if rec.Code != http.StatusOK {
+		t.Fatalf("search: %s", rec.Body.String())
+	}
+	if err := json.NewDecoder(rec.Body).Decode(&matches); err != nil || len(matches) != 1 || len(matches[0].Actions) != 2 {
+		t.Fatalf("search: %+v err=%v", matches, err)
+	}
+	rec, req = request(http.MethodGet, "/vehicles/{id}/maintenance-history?component=clutch_cable&action=replaced", nil, 0)
+	h.MaintenanceHistory(rec, req)
+	if rec.Code != http.StatusOK || rec.Body.String() != "[]\n" {
+		t.Fatalf("adjustment treated as replacement: %s", rec.Body.String())
+	}
+	invalid := []byte(`{"category":"service","title":"should not save","amount":0,"actions":[{"component":"engine_oil","action":"changed"}]}`)
+	rec, req = request(http.MethodPut, "/vehicles/{id}/maintenance-records/{recordID}", invalid, created.ID)
+	h.UpdateMaintenanceRecord(rec, req)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("invalid work accepted: %s", rec.Body.String())
+	}
+	var title string
+	if err := db.QueryRow(`SELECT title FROM vehicle_maintenance_records WHERE id=$1`, created.ID).Scan(&title); err != nil || title != "Brake-pad repair" {
+		t.Fatalf("invalid update changed record: title=%s err=%v", title, err)
+	}
+	var otherUser int64
+	if err := db.QueryRow(`INSERT INTO users(username,password_hash) VALUES ('wrong-action-owner','x') RETURNING id`).Scan(&otherUser); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO vehicle_maintenance_actions(maintenance_record_id,user_id,component,action) VALUES($1,$2,'oil_filter','replaced')`, created.ID, otherUser); err == nil {
+		t.Fatal("cross-owner action accepted")
+	}
+	// Explicit [] clears actions; zero-cost work is valid.
+	rec, req = request(http.MethodPut, "/vehicles/{id}/maintenance-records/{recordID}", []byte(`{"category":"service","title":"Free service","amount":0,"actions":[]}`), created.ID)
+	h.UpdateMaintenanceRecord(rec, req)
+	var cleared maintenanceRecord
+	if err := json.NewDecoder(rec.Body).Decode(&cleared); err != nil || rec.Code != http.StatusOK || len(cleared.Actions) != 0 || cleared.Amount != 0 {
+		t.Fatalf("clear/free service failed: %+v err=%v", cleared, err)
+	}
+	// Reinstate work to exercise deletion cascade.
+	if _, err := db.Exec(`INSERT INTO vehicle_maintenance_actions(maintenance_record_id,user_id,component,action) VALUES($1,1,'oil_filter','replaced')`, created.ID); err != nil {
+		t.Fatal(err)
+	}
+
 	rec, req = request(http.MethodDelete, "/vehicles/{id}/maintenance-records/{recordID}", nil, created.ID)
 	h.DeleteMaintenanceRecord(rec, req)
 	if rec.Code != http.StatusNoContent {
 		t.Fatalf("expected 204, got %d", rec.Code)
+	}
+	var remaining int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM vehicle_maintenance_actions WHERE maintenance_record_id=$1`, created.ID).Scan(&remaining); err != nil || remaining != 0 {
+		t.Fatalf("actions not cascaded: %d %v", remaining, err)
 	}
 }
 

@@ -91,8 +91,10 @@ func (q *Queries) DeleteMaintenanceRecord(ctx context.Context, arg DeleteMainten
 
 const updateMaintenanceRecord = `-- name: UpdateMaintenanceRecord :one
 UPDATE vehicle_maintenance_records
-SET category=$1,title=$2,amount=$3,occurred_at=$4,odometer_km=$5,provider_name=$6,notes=$7,updated_at=CURRENT_TIMESTAMP
-WHERE id=$8 AND vehicle_id=$9 AND user_id=$10
+SET category=$1::varchar,title=$2::varchar,amount=$3::numeric,
+ occurred_at=COALESCE($4::timestamptz,occurred_at),odometer_km=$5::numeric,
+ provider_name=$6::varchar,notes=$7::text,updated_at=CURRENT_TIMESTAMP
+WHERE id=$8::bigint AND vehicle_id=$9::bigint AND user_id=$10::bigint
 RETURNING id,category,title,amount,occurred_at,odometer_km,provider_name,notes
 `
 

@@ -406,8 +406,8 @@ internal fun GarageScreen(
                                                         records = false
                                                         vm.create(GarageForm.Care)
                                                     },
-                                                    vm::pressure,
-                                                    { vm.mutate(GarageChange.Air(vehicle)) },
+                                                    { vm.tab(GarageTab.Care) },
+                                                    { vm.tab(GarageTab.Air) },
                                                 )
                                                 VehicleDataCredits()
                                             }

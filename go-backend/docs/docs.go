@@ -3981,6 +3981,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/vehicles/{id}/maintenance-history": {
+            "get": {
+                "description": "Up to 50 matching records, newest service date first. An empty list means no recorded match. Omitted/null actions in maintenance updates preserve existing actions; an empty array clears them.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vehicles"
+                ],
+                "summary": "Find component maintenance history",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Vehicle ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Component key, e.g. engine_oil or clutch_cable",
+                        "name": "component",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Action, e.g. replaced or adjusted",
+                        "name": "action",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/apidoc.MaintenanceRecord"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/vehicles/{id}/maintenance-records": {
             "post": {
                 "security": [
@@ -5614,9 +5677,40 @@ const docTemplate = `{
                 }
             }
         },
+        "apidoc.MaintenanceAction": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "replaced",
+                        "inspected",
+                        "adjusted",
+                        "repaired",
+                        "topped_up",
+                        "cleaned",
+                        "lubricated",
+                        "completed"
+                    ]
+                },
+                "component": {
+                    "type": "string",
+                    "example": "engine_oil"
+                },
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
         "apidoc.MaintenanceInput": {
             "type": "object",
             "properties": {
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apidoc.MaintenanceAction"
+                    }
+                },
                 "amount": {
                     "type": "number"
                 },
@@ -5650,6 +5744,12 @@ const docTemplate = `{
         "apidoc.MaintenanceRecord": {
             "type": "object",
             "properties": {
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apidoc.MaintenanceAction"
+                    }
+                },
                 "amount": {
                     "type": "number"
                 },
@@ -5819,6 +5919,50 @@ const docTemplate = `{
                 }
             }
         },
+        "apidoc.UpcomingMaintenance": {
+            "type": "object",
+            "properties": {
+                "due_date": {
+                    "type": "string"
+                },
+                "interval_days": {
+                    "type": "integer"
+                },
+                "interval_km": {
+                    "type": "integer"
+                },
+                "interval_months": {
+                    "type": "integer"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "last_at": {
+                    "type": "string"
+                },
+                "last_recorded_odometer_km": {
+                    "type": "number"
+                },
+                "progress": {
+                    "type": "number"
+                },
+                "remaining_days": {
+                    "type": "integer"
+                },
+                "remaining_km": {
+                    "type": "number"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "no_history",
+                        "upcoming",
+                        "due",
+                        "overdue"
+                    ]
+                }
+            }
+        },
         "apidoc.Username": {
             "type": "object",
             "properties": {
@@ -5845,6 +5989,12 @@ const docTemplate = `{
                 },
                 "catalog_id": {
                     "type": "string"
+                },
+                "coming_up": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apidoc.UpcomingMaintenance"
+                    }
                 },
                 "front_tire_pressure": {
                     "type": "number"

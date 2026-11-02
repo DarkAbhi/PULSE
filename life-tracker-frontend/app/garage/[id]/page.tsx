@@ -8,8 +8,9 @@ import { VehicleHistoryData } from "./types";
 import DeleteButton from "./delete-button";
 import DeleteVehicleButton from "./delete-vehicle-button";
 import EditFuelModal from "./edit-fuel-modal";
+import ComingUp from "./coming-up";
+import MaintenanceHistory from "./maintenance-history";
 import MaintenanceRecordModal from "./maintenance-record-modal";
-import MaintenanceRecordActions from "./maintenance-record-actions";
 import FuelEfficiencySection from "./fuel-efficiency-section";
 import TirePressureCard from "./tire-pressure-card";
 import LocalDate from "@/app/components/local-date";
@@ -172,6 +173,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
             <h2 className="flex items-center gap-2 text-xl font-semibold">
               <Wind className="h-5 w-5 text-action" /> Air fills
             </h2>
+            <div id="tires-air" />
             <TirePressureCard
               frontTirePressurePillion={data.front_tire_pressure_pillion}
               frontTirePressureSolo={data.front_tire_pressure_solo}
@@ -203,6 +205,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
           </section>
         </div>
         <FuelEfficiencySection stats={data.fuel_efficiency} />
+        <ComingUp items={data.coming_up ?? []} vehicleId={id} />
         <section className="mt-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-xl font-semibold">
@@ -213,21 +216,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
             </Link>
           </div>
           <div className="mt-4 space-y-3">
-            {data.maintenance_records.length === 0 ? (
-              <PulseCard as="p" className="p-5 text-sm text-muted-foreground">No maintenance or expense records yet.</PulseCard>
-            ) : data.maintenance_records.map((record) => (
-              <PulseCard as="article" className="p-5" key={record.id}>
-                <div className="flex flex-wrap justify-between gap-3">
-                  <div>
-                    <p className="font-semibold">{record.title}</p>
-                    <p className="mt-1 text-sm text-muted-foreground"><span className="capitalize">{record.category}</span> · <LocalDate dateString={record.occurred_at} />{record.odometer_km != null ? ` · ${record.odometer_km} km` : ""}</p>
-                  </div>
-                  <div className="flex items-start gap-4"><p className="font-semibold">{formatMoney(record.amount, currency)}</p><MaintenanceRecordActions vehicleId={id} recordId={record.id} /></div>
-                </div>
-                {record.provider_name && <p className="mt-2 text-sm text-muted-foreground">{record.provider_name}</p>}
-                {record.notes && <p className="mt-2 text-sm text-muted-foreground">{record.notes}</p>}
-              </PulseCard>
-            ))}
+            <MaintenanceHistory records={data.maintenance_records} vehicleId={id} currency={currency} />
           </div>
         </section>
       </div>

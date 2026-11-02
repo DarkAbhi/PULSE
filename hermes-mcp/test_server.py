@@ -15,6 +15,9 @@ class LifeTrackerMCPTest(unittest.TestCase):
                 self.version = version
                 self.tools = []
 
+            def run(self, **kwargs):
+                self.tools_at_startup = self.tools.copy()
+
             def tool(self):
                 def register(fn):
                     self.tools.append(fn.__name__)
@@ -30,8 +33,12 @@ class LifeTrackerMCPTest(unittest.TestCase):
             spec = importlib.util.spec_from_file_location("life_tracker_mcp", Path(__file__).with_name("server.py"))
             server = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(server)
+            import runpy
+            startup = runpy.run_path(str(Path(__file__).with_name("server.py")), run_name="__main__")
+            self.assertIn("get_vehicle_maintenance", startup["mcp"].tools_at_startup)
+            self.assertIn("record_vehicle_maintenance", startup["mcp"].tools_at_startup)
 
-        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles", "search_exercises", "add_exercises_to_workout"])
+        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles", "search_exercises", "add_exercises_to_workout", "get_vehicle_maintenance", "record_vehicle_maintenance"])
         self.assertEqual(server.mcp.version,
                          json.loads(Path(__file__).resolve().parent.parent.joinpath("release.json").read_text())["version"])
 
@@ -115,6 +122,36 @@ class LifeTrackerMCPTest(unittest.TestCase):
                 lookup.return_value = visits + [{"id": 31, "created_at": "2026-09-29T10:00:00+05:30"}]
                 server.add_exercises_to_workout(workout, True, "2026-09-29")
             self.assertEqual(write.call_count, 1)
+
+        with patch.object(server, "_get", return_value=[]) as lookup:
+            response = json.loads(server.get_vehicle_maintenance(7, "clutch_cable", "replaced"))
+            self.assertEqual(response["records"], [])
+            lookup.assert_called_once_with("/api/vehicles/7/maintenance-history?component=clutch_cable&action=replaced")
+            for bad in ("../engine_oil", "oil;drop", "Oil"):
+                with self.assertRaises(ValueError):
+                    server.get_vehicle_maintenance(7, bad)
+            with self.assertRaises(ValueError):
+                server.get_vehicle_maintenance(True)
+        with patch.object(server, "_get", return_value={"maintenance_records": [], "coming_up": [{"kind": "engine_oil"}]}):
+            self.assertEqual(json.loads(server.get_vehicle_maintenance(7))["coming_up"], [{"kind": "engine_oil"}])
+        work = [{"component": "engine_oil", "action": "replaced", "description": "15W50 oil"}]
+        with patch.object(server, "_request", return_value={"id": 12, "actions": work}) as write:
+            with self.assertRaisesRegex(ValueError, "confirmation"):
+                server.record_vehicle_maintenance(7, "Service", "2026-09-07", 0, work)
+            with self.assertRaises(ValueError):
+                server.record_vehicle_maintenance(7, "Service", "2026-09-31", 0, work, confirmed=True)
+            with self.assertRaises(ValueError):
+                server.record_vehicle_maintenance(7, "Service", "2026-09-07", float("nan"), work, confirmed=True)
+            with self.assertRaises(ValueError):
+                server.record_vehicle_maintenance(7, "Service", "2026-09-07", 0, work + work, confirmed=True)
+            write.assert_not_called()
+            result = json.loads(server.record_vehicle_maintenance(7, "Service", "2026-09-07", 0, work, odometer_km=4722, confirmed=True))
+            self.assertEqual(result["id"], 12)
+            args = write.call_args.args
+            self.assertEqual(args[:2], ("/api/vehicles/7/maintenance-records", "POST"))
+            self.assertEqual(args[2]["occurred_at"], "2026-09-07T00:00:00+05:30")
+            self.assertEqual(args[2]["actions"], work)
+            self.assertEqual(args[2]["amount"], 0)
 
         server._session_token = None
         with patch.dict(os.environ, {}, clear=True):

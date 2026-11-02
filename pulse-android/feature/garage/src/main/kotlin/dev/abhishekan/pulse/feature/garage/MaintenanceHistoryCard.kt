@@ -114,6 +114,19 @@ private fun MaintenanceSummary(
                 )
             }
         }
+        if (item.actions.isNotEmpty()) {
+            PulseText(stringResource(R.string.pulse_garage_work_performed), style = PulseTextStyle.Title3)
+            item.actions.forEach { action ->
+                PulseText("${garageOption(action.component)} · ${garageOption(action.action)}", style = PulseTextStyle.Label)
+                if (action.description.isNotBlank()) {
+                    PulseText(
+                        action.description,
+                        style = PulseTextStyle.Body2,
+                        color = colors.textSecondary,
+                    )
+                }
+            }
+        }
         item.provider?.takeIf { it.isNotBlank() }?.let { PulseText(it, style = PulseTextStyle.Body2, color = colors.textSecondary) }
         item.notes?.takeIf { it.isNotBlank() }?.let { PulseText(it, style = PulseTextStyle.Body2, color = colors.textSecondary) }
         MaintenanceDivider()

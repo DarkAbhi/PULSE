@@ -135,6 +135,11 @@ class GarageDeviceTest {
     @Volatile private var loseSave = false
 
     @Volatile private var storageError = false
+    private var upcomingFixture = """[
+      {"kind":"engine_oil","status":"no_history"},
+      {"kind":"tire_pressure","status":"no_history"},
+      {"kind":"general_service","status":"no_history"}
+    ]"""
     private var mutations = 0
     private var storageCookie: String? = null
     private val monitors = mutableListOf<Instrumentation.ActivityMonitor>()
@@ -152,6 +157,7 @@ class GarageDeviceTest {
             pressure.forEach { (k, v) -> put(k, v) }
             put("fuel_fillups", JsonArray(fuel.values.toList()))
             put("air_fills", JsonArray(air.values.toList()))
+            put("coming_up", Json.parseToJsonElement(upcomingFixture))
             put(
                 "maintenance_records",
                 JsonArray(
@@ -1165,7 +1171,12 @@ class GarageDeviceTest {
         compose.onNodeWithText("Not enough history").assertDoesNotExist()
     }
 
-    @Test fun redesignedOverviewKeepsTitleActionsAndPressureAccessible() {
+    @Test fun redesignedOverviewShowsUpcomingAndNavigatesToPressure() {
+        upcomingFixture = """[
+          {"kind":"engine_oil","status":"upcoming","due_date":"2027-01-07","remaining_days":66,"remaining_km":640,"progress":0.8},
+          {"kind":"tire_pressure","status":"overdue","remaining_days":-4,"last_at":"2026-10-15T10:00:00Z"},
+          {"kind":"general_service","status":"no_history"}
+        ]"""
         efficiencyFixture =
             """{"petrol":{"total_cost":2000,"total_volume":20,"average_km_per_litre":22.1,"last_km_per_litre":22.1,"min_km_per_litre":22.1,"max_km_per_litre":22.1}}"""
         pressure =
@@ -1186,11 +1197,18 @@ class GarageDeviceTest {
         compose.onAllNodesWithText("22.1").assertCountEquals(4)
         compose.onNodeWithText("km/L").assertExists()
         screenshot("detail-redesign-top")
-        compose.onNodeWithText("Record air fill now").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Coming up").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Set pressure").assertDoesNotExist()
+        compose.onNodeWithText("Oil change").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Service check").performScrollTo().assertIsDisplayed()
+        screenshot("detail-coming-up")
+        tap("Check tire pressure")
+        awaitText("Record air fill")
+        compose.onNodeWithText("Record air fill").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Solo").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Pillion").performScrollTo().assertIsDisplayed()
         screenshot("detail-redesign-pressure")
-        tap("Set tire pressure")
+        tap("Set pressure")
         awaitText("Save tire pressure")
     }
 
@@ -1215,15 +1233,15 @@ class GarageDeviceTest {
         confirm("Delete")
         compose.waitUntil(10_000) { air.isEmpty() }
         compose.onNodeWithText("No air fills recorded").performScrollTo().assertIsDisplayed()
-        tap("Record air fill now")
+        tap("Record air fill")
         awaitText("Record air fill?")
         assertTrue(air.isEmpty())
         confirm("Cancel")
         assertTrue(air.isEmpty())
-        tap("Record air fill now")
+        tap("Record air fill")
         confirm("Record air fill")
         compose.waitUntil(10_000) { air.size == 1 }
-        tap("Set tire pressure")
+        tap("Set pressure")
         awaitText("Save tire pressure")
     }
 
@@ -1256,6 +1274,7 @@ class GarageDeviceTest {
         tap("Add maintenance")
         field("Title", "Brake service")
         field("Amount (₹)", "1250")
+        compose.onNode(hasTestTag("maintenance-add-work")).performScrollTo().performClick()
         compose.onNode(hasTestTag("maintenance-category")).performScrollTo().performClick()
         awaitText("Choose maintenance category")
         screenshot("maintenance-category-sheet")
@@ -1280,6 +1299,15 @@ class GarageDeviceTest {
         val saved = care.values.single { it["title"]?.jsonPrimitive?.content == "Brake service" }
         assertEquals("repair", saved["category"]?.jsonPrimitive?.content)
         assertEquals("1250", saved["amount"]?.jsonPrimitive?.content)
+        val savedWork =
+            saved
+                .getValue("actions")
+                .jsonArray
+                .single()
+                .jsonObject
+        assertEquals("engine_oil", savedWork.getValue("component").jsonPrimitive.content)
+        assertEquals("replaced", savedWork.getValue("action").jsonPrimitive.content)
+        compose.onNodeWithText("Engine oil · Replaced").performScrollTo().assertIsDisplayed()
     }
 
     @Test fun vehicleFuelPressureAirAndMaintenanceCrud() {
@@ -1313,12 +1341,13 @@ class GarageDeviceTest {
         )
         select()
         screenshot("overview")
-        tap("Set tire pressure")
+        tap("Tires & air")
+        tap("Set pressure")
         field("Rear · solo (PSI)", "34.5")
         tap("Save tire pressure")
-        awaitText("Care, at a glance")
+        awaitText("A little air, a smoother ride")
         assertEquals("34.5", pressure["rear_tire_pressure_solo"]?.jsonPrimitive?.content)
-        tap("Record air fill now")
+        tap("Record air fill")
         confirm("Record air fill")
         awaitText("Saved. Your garage is up to date.")
         tap("Tires & air")

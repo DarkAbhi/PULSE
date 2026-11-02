@@ -43,6 +43,23 @@ import kotlinx.serialization.json.JsonPrimitive
     @SerialName("size_bytes") val size: Long,
 )
 
+@Serializable data class MaintenanceActionDto(
+    val component: String,
+    val action: String,
+    val description: String = "",
+)
+
+@Serializable data class UpcomingMaintenanceDto(
+    val kind: String,
+    val status: String,
+    @SerialName("due_date") val dueDate: String? = null,
+    @SerialName("remaining_days") val remainingDays: Int? = null,
+    @SerialName("remaining_km") val remainingKm: JsonPrimitive? = null,
+    val progress: Float? = null,
+    @SerialName("last_at") val lastAt: String? = null,
+    @SerialName("last_recorded_odometer_km") val lastRecordedOdometer: JsonPrimitive? = null,
+)
+
 @Serializable data class MaintenanceDto(
     val id: Long,
     val category: String,
@@ -53,6 +70,7 @@ import kotlinx.serialization.json.JsonPrimitive
     @SerialName("provider_name") val provider: String? = null,
     val notes: String? = null,
     val attachments: List<ReceiptDto>? = null,
+    val actions: List<MaintenanceActionDto> = emptyList(),
 )
 
 @Serializable data class EfficiencyDto(
@@ -81,6 +99,7 @@ import kotlinx.serialization.json.JsonPrimitive
     @SerialName("fuel_fillups") val fuel: List<FuelDto>?,
     @SerialName("maintenance_records") val maintenance: List<MaintenanceDto>?,
     @SerialName("fuel_efficiency") val efficiency: Map<String, EfficiencyDto>?,
+    @SerialName("coming_up") val upcoming: List<UpcomingMaintenanceDto> = emptyList(),
 )
 
 @Serializable data class VehicleCatalogOptionDto(

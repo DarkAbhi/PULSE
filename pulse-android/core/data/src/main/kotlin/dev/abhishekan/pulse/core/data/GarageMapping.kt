@@ -5,7 +5,9 @@ import dev.abhishekan.pulse.core.domain.model.FuelFill
 import dev.abhishekan.pulse.core.domain.model.FuelItem
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.Maintenance
+import dev.abhishekan.pulse.core.domain.model.MaintenanceAction
 import dev.abhishekan.pulse.core.domain.model.TirePressure
+import dev.abhishekan.pulse.core.domain.model.UpcomingMaintenance
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.domain.model.validVehicleDetails
 import dev.abhishekan.pulse.core.network.dto.GarageHistoryDto
@@ -76,6 +78,7 @@ internal fun GarageHistoryDto.domain(): VehicleHistory {
                     require(it.id > 0 && it.size > 0 && it.name.isNotBlank())
                     GarageReceipt(it.id, it.name, it.contentType, it.size)
                 },
+                m.actions.map { MaintenanceAction(it.component, it.action, it.description) },
             )
         },
         efficiency.orEmpty().mapValues { (_, s) ->
@@ -93,5 +96,20 @@ internal fun GarageHistoryDto.domain(): VehicleHistory {
         catalogId,
         makeName,
         modelName,
+        upcoming.map {
+            UpcomingMaintenance(
+                it.kind,
+                it.status,
+                it.dueDate,
+                it.remainingDays,
+                it.remainingKm
+                    ?.takeUnless { value -> value == JsonNull }
+                    ?.content
+                    ?.toBigDecimal(),
+                it.progress,
+                it.lastAt?.let(Instant::parse),
+                it.lastRecordedOdometer.optional(),
+            )
+        },
     )
 }

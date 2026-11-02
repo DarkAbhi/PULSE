@@ -8,6 +8,7 @@ import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.garageCategories
 import dev.abhishekan.pulse.core.domain.model.garageFillTypes
 import dev.abhishekan.pulse.core.domain.model.garageFuelTypes
+import dev.abhishekan.pulse.core.domain.model.garageMaintenanceActions
 import dev.abhishekan.pulse.core.domain.model.validCatalogIdentity
 import dev.abhishekan.pulse.core.domain.model.validVehicleDetails
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
@@ -85,9 +86,19 @@ class ApplyGarageChange(
                     change.category in garageCategories &&
                     change.title.isNotBlank() &&
                     bytes(change.title.trim(), 160) &&
-                    number(change.amount, 12, 2, true) &&
+                    number(change.amount, 12, 2) &&
                     number(change.odometer, 12, 1) &&
-                    bytes(change.provider.orEmpty().trim(), 160)
+                    bytes(change.provider.orEmpty().trim(), 160) &&
+                    change.actions.size <= 100 &&
+                    change.actions
+                        .map { it.component to it.action }
+                        .distinct()
+                        .size == change.actions.size &&
+                    change.actions.all {
+                        it.component.matches(Regex("[a-z][a-z0-9_]{0,63}")) &&
+                            it.action in garageMaintenanceActions &&
+                            bytes(it.description, 500)
+                    }
             is GarageChange.Delete ->
                 change.vehicle > 0 &&
                     change.id > 0 &&

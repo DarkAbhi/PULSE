@@ -176,6 +176,7 @@ internal fun MaintenanceEditor(
                 }
             }
         }
+        MaintenanceWorkEditor(draft, enabled, change)
         MaintenanceSection(R.string.pulse_garage_care_extra, R.string.pulse_garage_care_extra_hint, R.drawable.garage_document) {
             input("odometer", R.string.pulse_garage_odometer_km_optional, true)
             input("provider", R.string.pulse_garage_provider_optional, placeholder = R.string.pulse_garage_care_provider_hint)

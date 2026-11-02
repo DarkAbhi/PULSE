@@ -251,14 +251,33 @@ type AirFillHistory struct {
 	ID       int64     `json:"id"`
 	FilledAt time.Time `json:"filled_at"`
 }
+type MaintenanceAction struct {
+	Component   string `json:"component" example:"engine_oil"`
+	Action      string `json:"action" enums:"replaced,inspected,adjusted,repaired,topped_up,cleaned,lubricated,completed"`
+	Description string `json:"description"`
+}
+type UpcomingMaintenance struct {
+	Kind                   string     `json:"kind"`
+	Status                 string     `json:"status" enums:"no_history,upcoming,due,overdue"`
+	DueDate                *string    `json:"due_date"`
+	RemainingDays          *int       `json:"remaining_days"`
+	RemainingKM            *float64   `json:"remaining_km"`
+	Progress               *float64   `json:"progress"`
+	LastAt                 *time.Time `json:"last_at"`
+	LastRecordedOdometerKM *float64   `json:"last_recorded_odometer_km"`
+	IntervalKM             int        `json:"interval_km"`
+	IntervalMonths         int        `json:"interval_months"`
+	IntervalDays           int        `json:"interval_days"`
+}
 type MaintenanceInput struct {
-	Category     string     `json:"category" enums:"service,repair,insurance,washing,tyres"`
-	Title        string     `json:"title"`
-	Amount       float64    `json:"amount"`
-	OccurredAt   *time.Time `json:"occurred_at"`
-	OdometerKM   *float64   `json:"odometer_km"`
-	ProviderName *string    `json:"provider_name"`
-	Notes        *string    `json:"notes"`
+	Actions      *[]MaintenanceAction `json:"actions"`
+	Category     string               `json:"category" enums:"service,repair,insurance,washing,tyres"`
+	Title        string               `json:"title"`
+	Amount       float64              `json:"amount"`
+	OccurredAt   *time.Time           `json:"occurred_at"`
+	OdometerKM   *float64             `json:"odometer_km"`
+	ProviderName *string              `json:"provider_name"`
+	Notes        *string              `json:"notes"`
 }
 type Attachment struct {
 	ID          int64     `json:"id"`
@@ -268,22 +287,24 @@ type Attachment struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 type MaintenanceRecord struct {
-	ID           int64        `json:"id"`
-	Category     string       `json:"category"`
-	Title        string       `json:"title"`
-	Amount       float64      `json:"amount"`
-	OccurredAt   time.Time    `json:"occurred_at"`
-	OdometerKM   *float64     `json:"odometer_km"`
-	ProviderName *string      `json:"provider_name"`
-	Notes        *string      `json:"notes"`
-	Attachments  []Attachment `json:"attachments"`
+	Actions      []MaintenanceAction `json:"actions"`
+	ID           int64               `json:"id"`
+	Category     string              `json:"category"`
+	Title        string              `json:"title"`
+	Amount       float64             `json:"amount"`
+	OccurredAt   time.Time           `json:"occurred_at"`
+	OdometerKM   *float64            `json:"odometer_km"`
+	ProviderName *string             `json:"provider_name"`
+	Notes        *string             `json:"notes"`
+	Attachments  []Attachment        `json:"attachments"`
 }
 type VehicleHistory struct {
-	CatalogID *string  `json:"catalog_id"`
-	MakeName  string   `json:"make_name"`
-	ModelName string   `json:"model_name"`
-	Kind      string   `json:"kind" enums:"unknown,car,motorcycle,moped,van,truck,bus"`
-	FuelTypes []string `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
+	ComingUp  []UpcomingMaintenance `json:"coming_up"`
+	CatalogID *string               `json:"catalog_id"`
+	MakeName  string                `json:"make_name"`
+	ModelName string                `json:"model_name"`
+	Kind      string                `json:"kind" enums:"unknown,car,motorcycle,moped,van,truck,bus"`
+	FuelTypes []string              `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
 
 	VehicleName              string              `json:"vehicle_name"`
 	FrontTirePressureSolo    *float64            `json:"front_tire_pressure_solo"`
@@ -1526,3 +1547,17 @@ type CurrencyPreference struct {
 // @Failure 500 {object} Error
 // @Router /api/profile/currency [put]
 func operationSaveCurrency() {}
+
+// @Summary Find component maintenance history
+// @Description Up to 50 matching records, newest service date first. An empty list means no recorded match. Omitted/null actions in maintenance updates preserve existing actions; an empty array clears them.
+// @Tags vehicles
+// @Produce json
+// @Param id path int true "Vehicle ID"
+// @Param component query string true "Component key, e.g. engine_oil or clutch_cable"
+// @Param action query string false "Action, e.g. replaced or adjusted"
+// @Success 200 {array} MaintenanceRecord
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 404 {object} Error
+// @Router /api/vehicles/{id}/maintenance-history [get]
+func maintenanceComponentHistory() {}

@@ -1542,7 +1542,7 @@ class HorizonDeviceTest {
         assertEquals(0, backend.mutations)
         scenario!!.recreate()
         awaitText("Unsaved finance")
-        compose.assertTabNavigationHidden()
+        compose.assertNestedNavigationForLayout()
         compose.onNodeWithText("Name").performScrollTo().performImeAction()
         screenshot("draft")
         compose.onNodeWithContentDescription("Back to Financial Horizon").assertIsDisplayed().performClick()

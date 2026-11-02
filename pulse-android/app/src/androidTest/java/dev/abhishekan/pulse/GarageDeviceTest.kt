@@ -1349,7 +1349,7 @@ class GarageDeviceTest {
         assertEquals(0, mutations)
         scenario!!.recreate()
         awaitText("Unsaved care")
-        compose.assertTabNavigationHidden()
+        compose.assertNestedNavigationForLayout()
         compose
             .onNode(hasTestTag("maintenance-title") and hasSetTextAction())
             .performScrollTo()

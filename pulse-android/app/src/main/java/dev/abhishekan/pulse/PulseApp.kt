@@ -239,8 +239,7 @@ private fun SignedInApp(
     BoxWithConstraints(Modifier.fillMaxSize()) {
         // Some keyboards resize the root before IME insets arrive; preserve space for the form.
         val showBars = maxHeight >= PulseTokens.minimumNavigationHeight
-        val visibleTabs = if (isTablet) AppDestination.tabs else AppDestination.tabs.take(5)
-        val showNavigation = destination in visibleTabs && hidingScreens.isEmpty() && showBars
+        val showNavigation = destination != AppDestination.Gallery && showBars
         val navigationItems =
             AppDestination.tabs.map { tab ->
                 PulseNavigationItem(stringResource(tab.label)) {
@@ -274,7 +273,7 @@ private fun SignedInApp(
                 modifier = Modifier.weight(1f),
                 contentWindowInsets = WindowInsets.safeDrawing,
                 bottomBar = {
-                    if (!isTablet && showNavigation) {
+                    if (!isTablet && showNavigation && destination in AppDestination.tabs.take(5) && hidingScreens.isEmpty()) {
                         PulseBottomNavigationBar(
                             navigationItems.take(5),
                             AppDestination.tabs.indexOf(destination?.tab),

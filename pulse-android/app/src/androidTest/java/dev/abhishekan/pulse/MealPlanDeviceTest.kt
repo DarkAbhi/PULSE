@@ -827,7 +827,7 @@ class MealPlanDeviceTest {
         field("Meal name", "Unsaved bowl")
         scenario!!.recreate()
         awaitText("Unsaved bowl")
-        compose.assertTabNavigationHidden()
+        compose.assertNestedNavigationForLayout()
         field("Meal name", "")
         compose.onNodeWithText("Meal name").performImeAction()
         compose.waitForIdle()

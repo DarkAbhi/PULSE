@@ -490,7 +490,7 @@ class FitnessDeviceTest {
         }
         tap("Workout")
         awaitText("Add exercise")
-        compose.assertTabNavigationHidden()
+        compose.assertNestedNavigationForLayout()
     }
 
     private fun chooseCustomName(name: String) {
@@ -670,10 +670,10 @@ class FitnessDeviceTest {
         recordAndOpen()
         tap("Add exercise")
         awaitText("Save exercise")
-        compose.assertTabNavigationHidden()
+        compose.assertNestedNavigationForLayout()
         compose.onNodeWithContentDescription("Back to workout").performClick()
         awaitText("Add exercise")
-        compose.assertTabNavigationHidden()
+        compose.assertNestedNavigationForLayout()
         compose.onNodeWithContentDescription("Back to Fitness").performClick()
         awaitText("Add workout")
         compose
@@ -698,7 +698,7 @@ class FitnessDeviceTest {
         awaitText("Add exercise")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
         screenshot("editor")
-        compose.assertTabNavigationHidden()
+        compose.assertNestedNavigationForLayout()
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("Back to workout").performClick()
         awaitText("Discard exercise edits?")

@@ -618,14 +618,14 @@ class AccountNotificationsDeviceTest {
         if (rail) {
             assertEquals(window.bottom.value - safeBottom, viewport.bottom.value, 1f)
         } else {
-            compose.assertTabNavigationHidden()
+            compose.assertNestedNavigationForLayout()
             assertEquals(window.bottom.value - safeBottom, viewport.bottom.value, 1f)
         }
         screenshot("profile-safe-area")
         tap("Change password")
         field("Current password", "unsaved")
         hideKeyboard()
-        compose.assertTabNavigationHidden()
+        compose.assertNestedNavigationForLayout()
         tap("Cancel")
         awaitText("Discard unsaved changes?")
         confirm("Cancel")
@@ -641,7 +641,7 @@ class AccountNotificationsDeviceTest {
         compose.onNode(items[0]).apply { if (rail) performScrollTo() }.performClick()
         awaitText("Good to see you,")
         openNotifications()
-        compose.assertTabNavigationHidden()
+        compose.assertNestedNavigationForLayout()
         tap("Vehicle care update")
         awaitText("Your garage")
         compose.onNode(items[3]).assertIsSelected()
@@ -651,7 +651,7 @@ class AccountNotificationsDeviceTest {
         compose.onNodeWithContentDescription("Back to Home").performClick()
         compose.onNode(items[0]).assertIsSelected()
         openNotifications()
-        compose.assertTabNavigationHidden()
+        compose.assertNestedNavigationForLayout()
         compose.onNodeWithContentDescription("Back to Home").performClick()
         awaitText("Good to see you,")
         compose.onNodeWithContentDescription("Back to Home").assertDoesNotExist()
@@ -693,7 +693,7 @@ class AccountNotificationsDeviceTest {
                 ),
             )
         field("Current password", "unsaved")
-        compose.assertTabNavigationHidden()
+        compose.assertNestedNavigationForLayout()
         tap("Cancel")
         awaitText("Discard unsaved changes?")
         confirm("Cancel")

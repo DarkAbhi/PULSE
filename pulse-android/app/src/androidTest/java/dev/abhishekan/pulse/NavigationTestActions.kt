@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse
 
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.ComposeTestRule
@@ -22,9 +23,14 @@ internal fun ComposeTestRule.openProfileFromNavigation() {
     }
 }
 
-internal fun ComposeTestRule.assertTabNavigationHidden() {
+internal fun ComposeTestRule.assertNestedNavigationForLayout() {
     listOf("Home", "Fitness", "Horizon", "Garage", "Meals", "You").forEach { label ->
-        onNode(hasText(label) and isSelectable()).assertDoesNotExist()
+        val item = onNode(hasText(label) and isSelectable())
+        if (usesNavigationRail()) {
+            item.performScrollTo().assertIsDisplayed()
+        } else {
+            item.assertDoesNotExist()
+        }
     }
 }
 

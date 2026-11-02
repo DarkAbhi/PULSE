@@ -71,6 +71,7 @@
     <string name="pulse_garage_room_for_your_first_ride">"Room for your first ride"</string>
     <string name="pulse_garage_add_a_vehicle_to_record_fuel_tire_pressure_and">"Add a vehicle to record fuel, tire pressure and maintenance."</string>
     <string name="pulse_garage_view_1_s">"View %1$s"</string>
+    <string name="pulse_garage_log_fuel">Log fuel</string>
     <string name="pulse_garage_care_at_a_glance">"Care, at a glance"</string>
     <string name="pulse_garage_latest_care_1_s_2_s">"Latest care: %1$s · %2$s"</string>
     <string name="pulse_garage_add_fuel_fill_up">"Add fuel fill-up"</string>

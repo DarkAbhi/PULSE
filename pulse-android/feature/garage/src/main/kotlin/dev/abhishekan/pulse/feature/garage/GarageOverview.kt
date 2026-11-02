@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
@@ -220,15 +221,21 @@ private fun OverviewCare(
         shape = PulseTheme.shapes.extraLarge,
     ) {
         PulseText(stringResource(R.string.pulse_garage_care_at_a_glance), Modifier.semantics { heading() }, PulseTextStyle.Title2)
-        Spacer(Modifier.size(PulseTokens.tiny))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PulseTheme.spacing.compact)) {
+        Spacer(Modifier.size(PulseTokens.medium))
+        Row(Modifier.fillMaxWidth()) {
             CareCount(data.fuel.size, R.plurals.pulse_garage_fuel_label, Modifier.weight(1f))
-            CareCount(data.maintenance.size, R.plurals.pulse_garage_maintenance_label, Modifier.weight(1f))
-            CareCount(data.air.size, R.plurals.pulse_garage_air_label, Modifier.weight(1f))
+            Box(Modifier.width(1.dp).height(72.dp).background(PulseTheme.colors.divider))
+            CareCount(
+                data.maintenance.size,
+                R.plurals.pulse_garage_maintenance_label,
+                Modifier.weight(1f).padding(start = PulseTokens.medium),
+            )
+            Box(Modifier.width(1.dp).height(72.dp).background(PulseTheme.colors.divider))
+            CareCount(data.air.size, R.plurals.pulse_garage_air_label, Modifier.weight(1f).padding(start = PulseTokens.medium))
         }
-        Spacer(Modifier.size(PulseTokens.tiny))
+        Spacer(Modifier.size(PulseTokens.medium))
         GarageActionPair(
-            stringResource(R.string.pulse_garage_add_fuel_fill_up),
+            stringResource(R.string.pulse_garage_log_fuel),
             addFuel,
             stringResource(R.string.pulse_garage_add_maintenance),
             addCare,
@@ -244,18 +251,13 @@ private fun CareCount(
     label: Int,
     modifier: Modifier,
 ) {
-    PulseCard(
-        modifier.heightIn(min = 96.dp),
-        border = BorderStroke(1.dp, PulseTheme.colors.divider),
-        shape = PulseTheme.shapes.medium,
-        contentPadding = PulseTokens.medium,
-    ) {
+    Column(modifier) {
         PulseText(
             count.toString(),
-            style = PulseTheme.typography.displayMedium.copy(fontSize = 32.sp, lineHeight = 36.sp),
+            style = PulseTextStyle.Metric,
             color = PulseTheme.colors.primary,
         )
-        PulseText(pluralStringResource(label, count), style = PulseTextStyle.Caption, color = PulseTheme.colors.textSecondary)
+        PulseText(pluralStringResource(label, count), style = PulseTextStyle.Body2, color = PulseTheme.colors.textSecondary)
     }
 }
 
@@ -454,7 +456,7 @@ private fun GarageActionPair(
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val firstVariant = if (primaryFirst) PulseButtonVariant.Primary else PulseButtonVariant.Secondary
         val secondVariant = if (primaryFirst) PulseButtonVariant.Secondary else PulseButtonVariant.Primary
-        if (maxWidth >= 480.dp && LocalDensity.current.fontScale <= 1.3f) {
+        if (maxWidth >= (if (primaryFirst) 300.dp else 480.dp) && LocalDensity.current.fontScale <= 1.3f) {
             Row(horizontalArrangement = Arrangement.spacedBy(PulseTheme.spacing.compact)) {
                 PulseButton(first, onFirst, Modifier.weight(1f).heightIn(min = 52.dp), enabled, variant = firstVariant)
                 PulseButton(second, onSecond, Modifier.weight(1f).heightIn(min = 52.dp), enabled, variant = secondVariant)

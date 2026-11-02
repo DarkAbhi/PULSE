@@ -267,14 +267,13 @@ def record_vehicle_maintenance(vehicle_id: int, title: str, service_date: str, a
 class ReminderIntervalInput(TypedDict):
     kilometers: int
     duration: int
-    unit: str
 
 
 @mcp.tool()
 def configure_vehicle_reminder(vehicle_id: int, kind: str, active_source: str,
                                personal: ReminderIntervalInput, manual: ReminderIntervalInput,
                                manual_reference: str = "", confirmed: bool = False) -> str:
-    """Save both reminder schedules and choose which is active after explicit confirmation. First read get_vehicle_maintenance without filters, retain both existing personal/manual values, and show the complete proposed settings. kind is engine_oil, general_service or tire_pressure. active_source is personal or manual; only that source applies, never a mixture. Each interval has nonnegative integer kilometers and duration, unit=days or months; zero disables a threshold. At least one threshold is required for the active personal/manual schedule. Either active threshold being reached makes work due. Manual values are user-entered, not independently verified official guidance; preserve their manual_reference. Inactive values remain saved. These settings affect Coming up; only existing tire-pressure notifications are automatically delivered, not new oil/service push notifications."""
+    """Save both reminder schedules and choose which is active after explicit confirmation. First read get_vehicle_maintenance without filters, retain both existing personal/manual values, and show the complete proposed settings. kind is engine_oil, general_service or tire_pressure. active_source is personal or manual; only that source applies, never a mixture. Each interval has nonnegative integer kilometers and duration in calendar months; zero disables a threshold. At least one threshold is required for the active personal/manual schedule. Either active threshold being reached makes work due. Manual values are user-entered, not independently verified official guidance; preserve their manual_reference. Inactive values remain saved. These settings affect Coming up; only existing tire-pressure notifications are automatically delivered, not new oil/service push notifications."""
     if confirmed is not True:
         raise ValueError("Show both saved schedules and obtain explicit confirmation before changing reminders")
     _vehicle_id(vehicle_id)
@@ -283,16 +282,16 @@ def configure_vehicle_reminder(vehicle_id: int, kind: str, active_source: str,
     for interval in (personal, manual):
         if not isinstance(interval, dict):
             raise ValueError("Provide both complete interval objects")
-        km, duration, unit = interval.get("kilometers"), interval.get("duration"), interval.get("unit")
-        if type(km) is not int or type(duration) is not int or unit not in ("days", "months") or not 0 <= km <= 1000000 or not 0 <= duration <= (36500 if unit == "days" else 1200):
-            raise ValueError("Provide nonnegative whole intervals and days/months units")
+        km, duration, unit = interval.get("kilometers"), interval.get("duration"), interval.get("unit", "months")
+        if type(km) is not int or type(duration) is not int or unit != "months" or not 0 <= km <= 1000000 or not 0 <= duration <= 1200:
+            raise ValueError("Provide nonnegative whole intervals; time is always in months")
     selected = personal if active_source == "personal" else manual
     if not (selected["kilometers"] or selected["duration"]):
         raise ValueError("The active schedule needs a distance or time interval")
     if not isinstance(manual_reference, str) or len(manual_reference.encode()) > 160:
         raise ValueError("Manual reference must be at most 160 bytes")
     return json.dumps(_request(f"/api/vehicles/{vehicle_id}/maintenance-schedules/{kind}", "PUT", {
-        "active_source": active_source, "personal": personal, "manual": manual,
+        "active_source": active_source, "personal": dict(personal, unit="months"), "manual": dict(manual, unit="months"),
         "manual_reference": manual_reference,
     }))
 

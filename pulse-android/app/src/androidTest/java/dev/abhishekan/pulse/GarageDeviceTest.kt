@@ -195,7 +195,7 @@ class GarageDeviceTest {
         reminderSettings["tire_pressure"] =
             obj(
                 """{
-            "kind":"tire_pressure","active_source":"personal","personal":{"kilometers":0,"duration":14,"unit":"days"},
+            "kind":"tire_pressure","active_source":"personal","personal":{"kilometers":0,"duration":1,"unit":"months"},
             "manual":{"kilometers":0,"duration":0,"unit":"months"},"manual_reference":""
         }""",
             )
@@ -1208,6 +1208,37 @@ class GarageDeviceTest {
         compose.onNodeWithText("Not enough history").assertDoesNotExist()
     }
 
+    @Test fun reminderCancelKeepsSavedIntervals() {
+        val initial = reminderSettings.getValue("engine_oil")
+        reminderSettings["engine_oil"] =
+            JsonObject(
+                initial +
+                    mapOf(
+                        "active_source" to JsonPrimitive("manual"),
+                        "manual" to obj("""{"kilometers":5000,"duration":6,"unit":"months"}"""),
+                    ),
+            )
+        launchGarage()
+        select()
+        tap("Maintenance")
+        compose.onNode(hasTestTag("maintenance-reminders")).performScrollTo().performClick()
+        compose.onNode(hasTestTag("reminder-task-engine_oil")).performScrollTo().performClick()
+        compose.onNode(hasTestTag("schedule-engine_oil-manual-km")).performScrollTo().performTextReplacement("8000")
+        tap("Cancel")
+        compose.onNode(hasTestTag("reminder-task-engine_oil")).performScrollTo().performClick()
+        compose.onNode(hasTestTag("schedule-engine_oil-manual-km")).performScrollTo()
+        compose.onNodeWithText("5000").assertExists()
+        assertEquals(
+            "5000",
+            reminderSettings
+                .getValue("engine_oil")
+                .getValue("manual")
+                .jsonObject
+                .getValue("kilometers")
+                .jsonPrimitive.content,
+        )
+    }
+
     @Test fun reminderSettingsKeepBothSourcesAndActiveChoice() {
         launchGarage()
         select()
@@ -1223,6 +1254,8 @@ class GarageDeviceTest {
         compose.onNode(hasTestTag("reminder-task-engine_oil")).performScrollTo().performClick()
         awaitText("Engine oil reminder")
         compose.onNodeWithText("App default").assertDoesNotExist()
+        compose.onNodeWithText("Time unit").assertDoesNotExist()
+        screenshot("reminder-redesign-top")
 
         fun interval(
             tag: String,
@@ -1235,7 +1268,7 @@ class GarageDeviceTest {
         interval("manual-km", "5000")
         interval("manual-time", "6")
         field("Manual reference or page (optional)", "Page 42")
-        pick("Active schedule", "My intervals", "Vehicle manual")
+        compose.onNode(hasTestTag("schedule-source-manual")).performScrollTo().performClick()
         scenario?.recreate()
         compose.onNode(hasTestTag("schedule-engine_oil-manual-km")).performScrollTo()
         compose.onNodeWithText("5000").assertExists()
@@ -1260,6 +1293,22 @@ class GarageDeviceTest {
                 .jsonPrimitive.content,
         )
         assertEquals("Page 42", setting.getValue("manual_reference").jsonPrimitive.content)
+        assertEquals(
+            "months",
+            setting
+                .getValue("personal")
+                .jsonObject
+                .getValue("unit")
+                .jsonPrimitive.content,
+        )
+        assertEquals(
+            "months",
+            setting
+                .getValue("manual")
+                .jsonObject
+                .getValue("unit")
+                .jsonPrimitive.content,
+        )
         tap("Back to reminder settings")
         tap("Back to Maintenance")
         compose.onNodeWithText("Add maintenance").assertExists()

@@ -7,7 +7,7 @@ linked to the service; no automated extraction is enabled.
 
 ## Try it
 
-1. Apply migration `00034_personal_reminder_starting_values` (after migrations 32 and 33) using the existing migration
+1. Apply migration `00035_reminder_month_intervals` (after migrations 32–34) using the existing migration
    workflow, then deploy the Go API before the updated clients.
 2. Open a vehicle's maintenance tab, create/edit a service, and choose **Add work
    performed**. Record each component and action. Amount can be zero for free/DIY
@@ -62,10 +62,10 @@ month ends. Editing/deleting records recalculates estimates on refresh.
 | --- | --- | --- |
 | Oil | 3,000 km or 4 calendar months | 10,000 km or 9 calendar months |
 | General service | 5,000 km or 6 calendar months | 10,000 km or 12 calendar months |
-| Pressure | 14 days after last air fill | 30 days after last air fill |
+| Pressure | 1 calendar month after last air fill | 1 calendar month after last air fill |
 
 Whichever threshold comes first applies. Electric-only vehicles omit engine oil.
-Other/unknown kinds have only a pressure app default; personal/manual oil and service intervals can still be configured. Existing air notifications use the selected pressure schedule (14/30 days until the personal interval is edited) and ignore fills superseded by newer fills. Oil/service
+Other/unknown kinds have only a pressure starting interval; personal/manual oil and service intervals can still be configured. Existing air notifications use the selected pressure schedule (one calendar month until the personal interval is edited) and ignore fills superseded by newer fills. Oil/service
 push notifications are not added. The UI labels the active source and mileage as based on the last recorded reading. Only the source selected by the user applies. Only the selected personal or manual values affect reminders.
 
 ## Personal and manual reminder schedules
@@ -75,7 +75,7 @@ never combined: if manual is active, an earlier personal limit does not affect t
 reminder. Within the active set, either threshold being reached makes work due.
 
 Use **Maintenance → Reminder settings** and open **Engine oil**, **Tire pressure**, or **General service**. Each opens a separate page; Back returns through the reminder list to Maintenance. Coming up remains display-only in Overview. Enter a positive whole distance (km),
-a duration in days or calendar months, or both. Leave an unused threshold blank.
+a time interval in whole calendar months, or both. Leave an unused threshold blank.
 The active personal/manual set needs at least one threshold. Unsupported types have empty oil/service fields until configured. The optional manual
 reference can name the booklet/page. Manual values are user-entered and are not
 independently verified by Pulse. My intervals starts prefilled with the values above, and every value is editable. There is no third source. Engine-oil settings are hidden for electric-only vehicles.
@@ -95,7 +95,7 @@ These are illustrative inputs, not a recommendation for a specific model. Zero
 represents an unused threshold in the API. Send both complete sets on a PUT.
 Tasks are `engine_oil`, `general_service`, and `tire_pressure`. Owner-scoped saved
 settings are included in `maintenance_schedules` on the existing history response.
-Bounds are 1,000,000 km, 1,200 months or 36,500 days.
+Bounds are 1,000,000 km or 1,200 calendar months.
 
 Air fills now accept an optional `odometer_km` and return it in history. Android
 and web allow entering it when recording a fill. A distance-only rule with no
@@ -184,3 +184,35 @@ The migration-34 update passes the full vehicle and notification package tests,
 the Webpack production build. Three focused emulator workflows pass, including
 opening all three separate reminder pages, restoring edits through recreation,
 saving both sources and backing through the reminder list to Maintenance.
+
+
+## Month-only reminder form
+
+Time is now always entered in whole calendar months; neither Android nor web
+shows a time-unit selector. Android reuses the garage maintenance form's section
+cards, matching the Horizon editors: icon headers, labels above inputs,
+responsive field pairs, accessible source radio choices, inline validation, and
+paired Cancel/Save buttons. Cancel restores the saved form values before returning
+to the reminder list. Individual pages and Coming up's Overview placement stay
+unchanged.
+
+Migration 35 converts saved day durations with `(days * 12 + 364) / 365`, an integer
+ceiling based on twelve months per 365 days. Thus 14/30 days become one month,
+45 days become two, and blank limits stay blank. Distances, source selections,
+and manual references are preserved. Existing affected pressure alerts are
+dismissed and only the latest fill is reset for reevaluation. Inactive conversions
+do not reset alerts. Rollback retains converted months because original day values
+cannot safely be reconstructed. Apply the migration with the backend update
+before releasing the new clients.
+
+Older API clients' day values are converted at the backend boundary; new client
+and Hermes writes use months only. Hermes interval inputs no longer ask for a unit.
+
+
+The month-only update passes vehicle and notification Go tests (including migration
+35 and legacy-input conversion), 105 Android unit tests, garage lint, debug app/test
+builds, web TypeScript, all 19 web tests, the Webpack production build, and MCP
+tests. Three focused API 35 emulator tests pass: source selection/save with
+activity recreation, cancellation preserving saved intervals, and Overview-to-Tires
+navigation. The redesigned form was visually checked in light mode. No production
+deployment, live Telegram session, or physical-device testing was performed.

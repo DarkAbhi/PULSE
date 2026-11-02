@@ -361,15 +361,12 @@
     <string name="pulse_garage_schedule_personal">My intervals</string>
     <string name="pulse_garage_schedule_manual">Vehicle manual</string>
     <string name="pulse_garage_schedule_edit">Reminder settings · %1$s</string>
-    <string name="pulse_garage_schedule_hint">Save both sets of intervals and choose which one is active. Remind after this many kilometres or this amount of time since the last completed work, whichever comes first. Leave an unused limit blank.</string>
-    <string name="pulse_garage_schedule_km">Distance interval (km, optional)</string>
-    <string name="pulse_garage_schedule_time">Time interval (optional)</string>
-    <string name="pulse_garage_schedule_unit">Time unit</string>
-    <string name="pulse_garage_schedule_days">Days</string>
-    <string name="pulse_garage_schedule_months">Months</string>
+    <string name="pulse_garage_schedule_hint">Remind after a distance or time since the last completed work, whichever comes first. Leave an unused limit blank.</string>
+    <string name="pulse_garage_schedule_km">Distance (km)</string>
+    <string name="pulse_garage_schedule_time">Time (months)</string>
     <string name="pulse_garage_schedule_reference">Manual reference or page (optional)</string>
     <string name="pulse_garage_schedule_manual_hint">Manual values are entered by you and are not independently verified by Pulse. Inactive values stay saved.</string>
-    <string name="pulse_garage_schedule_save">Save reminder settings</string>
+    <string name="pulse_garage_schedule_save">Save reminder</string>
     <string name="pulse_garage_schedule_needs_odometer">Record an odometer reading with this task to use its distance interval.</string>
     <string name="pulse_garage_schedule_cancel">Cancel</string>
     <string name="pulse_garage_reminder_settings">Reminder settings</string>
@@ -379,4 +376,14 @@
     <string name="pulse_garage_reminder_back_maintenance">Back to Maintenance</string>
     <string name="pulse_garage_reminder_back_settings">Back to reminder settings</string>
     <string name="pulse_garage_reminder_tire_pressure">Tire pressure</string>
+    <string name="pulse_garage_schedule_active_hint">Choose which schedule to use. Both sets of intervals stay saved.</string>
+    <string name="pulse_garage_schedule_personal_hint">Set your preferred distance and time between reminders.</string>
+    <string name="pulse_garage_schedule_manual_section_hint">Enter the intervals recommended in your vehicle manual.</string>
+    <string name="pulse_garage_schedule_km_error">Enter a whole number from 1 to 1,000,000, or leave blank.</string>
+    <string name="pulse_garage_schedule_time_error">Enter a whole number from 1 to 1,200 months, or leave blank.</string>
+    <string name="pulse_garage_schedule_reference_error">Use a shorter manual reference.</string>
+    <string name="pulse_garage_schedule_km_example">e.g. 3000</string>
+    <string name="pulse_garage_schedule_time_example">e.g. 6</string>
+    <string name="pulse_garage_schedule_reference_example">e.g. Owner manual, page 42</string>
+    <string name="pulse_garage_schedule_missing_interval">Enter a distance or a time interval for the active schedule.</string>
 </resources>

@@ -11,8 +11,7 @@ FROM vehicle_air_fills a JOIN vehicles v ON v.id=a.vehicle_id AND v.user_id=a.us
 LEFT JOIN vehicle_maintenance_schedules s ON s.vehicle_id=v.id AND s.user_id=v.user_id AND s.kind='tire_pressure'
 CROSS JOIN LATERAL (
  SELECT CASE WHEN s.active_source='manual' THEN s.manual_km ELSE COALESCE(s.personal_km,0) END AS km,
- CASE WHEN s.active_source='manual' THEN s.manual_duration ELSE COALESCE(s.personal_duration,CASE WHEN v.kind IN ('motorcycle','moped') THEN 14 ELSE 30 END) END AS duration,
- CASE WHEN s.active_source='manual' THEN s.manual_unit ELSE COALESCE(s.personal_unit,'days') END AS unit
+ CASE WHEN s.active_source='manual' THEN s.manual_duration ELSE COALESCE(s.personal_duration,1) END AS duration
 ) i
 LEFT JOIN LATERAL (
  SELECT readings.odometer_km FROM (
@@ -24,7 +23,7 @@ LEFT JOIN LATERAL (
 WHERE a.reminder_notification_id IS NULL AND a.filled_at<=NOW()
 AND NOT EXISTS (SELECT 1 FROM vehicle_air_fills newer WHERE newer.vehicle_id=a.vehicle_id AND (newer.filled_at,newer.id)>(a.filled_at,a.id))
 AND (
- (i.duration>0 AND ((a.filled_at AT TIME ZONE 'Asia/Kolkata')::date + CASE WHEN i.unit='months' THEN make_interval(months=>i.duration) ELSE make_interval(days=>i.duration) END)::date <= (NOW() AT TIME ZONE 'Asia/Kolkata')::date)
+ (i.duration>0 AND ((a.filled_at AT TIME ZONE 'Asia/Kolkata')::date + make_interval(months=>i.duration))::date <= (NOW() AT TIME ZONE 'Asia/Kolkata')::date)
  OR (i.km>0 AND a.odometer_km IS NOT NULL AND mileage.odometer_km>=a.odometer_km+i.km)
 )
 ORDER BY a.filled_at,a.id LIMIT 100;
@@ -35,8 +34,7 @@ FROM vehicle_air_fills a JOIN vehicles v ON v.id=a.vehicle_id AND v.user_id=a.us
 LEFT JOIN vehicle_maintenance_schedules s ON s.vehicle_id=v.id AND s.user_id=v.user_id AND s.kind='tire_pressure'
 CROSS JOIN LATERAL (
  SELECT CASE WHEN s.active_source='manual' THEN s.manual_km ELSE COALESCE(s.personal_km,0) END AS km,
- CASE WHEN s.active_source='manual' THEN s.manual_duration ELSE COALESCE(s.personal_duration,CASE WHEN v.kind IN ('motorcycle','moped') THEN 14 ELSE 30 END) END AS duration,
- CASE WHEN s.active_source='manual' THEN s.manual_unit ELSE COALESCE(s.personal_unit,'days') END AS unit
+ CASE WHEN s.active_source='manual' THEN s.manual_duration ELSE COALESCE(s.personal_duration,1) END AS duration
 ) i
 LEFT JOIN LATERAL (
  SELECT readings.odometer_km FROM (
@@ -48,7 +46,7 @@ LEFT JOIN LATERAL (
 WHERE a.id=$1 AND a.reminder_notification_id IS NULL AND a.filled_at<=NOW()
 AND NOT EXISTS (SELECT 1 FROM vehicle_air_fills newer WHERE newer.vehicle_id=a.vehicle_id AND (newer.filled_at,newer.id)>(a.filled_at,a.id))
 AND (
- (i.duration>0 AND ((a.filled_at AT TIME ZONE 'Asia/Kolkata')::date + CASE WHEN i.unit='months' THEN make_interval(months=>i.duration) ELSE make_interval(days=>i.duration) END)::date <= (NOW() AT TIME ZONE 'Asia/Kolkata')::date)
+ (i.duration>0 AND ((a.filled_at AT TIME ZONE 'Asia/Kolkata')::date + make_interval(months=>i.duration))::date <= (NOW() AT TIME ZONE 'Asia/Kolkata')::date)
  OR (i.km>0 AND a.odometer_km IS NOT NULL AND mileage.odometer_km>=a.odometer_km+i.km)
 )
 FOR UPDATE OF a;

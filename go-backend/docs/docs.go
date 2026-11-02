@@ -5852,7 +5852,6 @@ const docTemplate = `{
                 "unit": {
                     "type": "string",
                     "enum": [
-                        "days",
                         "months"
                     ]
                 }

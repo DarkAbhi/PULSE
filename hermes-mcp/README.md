@@ -115,3 +115,11 @@ Migration 34 makes personal starting values the editable initial schedule. There
 are only `personal` and `manual` source choices; do not offer a third source.
 Preserve values already entered by the user. The Android entry point is
 Maintenance → Reminder settings → a task page; Coming up in Overview is read-only.
+
+
+After migration 35, reminder durations are always whole calendar months. The
+`configure_vehicle_reminder` interval objects contain `kilometers` and `duration`;
+there is no unit choice. The bridge sends `unit: "months"` to the API. Previously
+saved 14/30-day rules become one month, with longer day periods rounded up to
+whole months. Do not interpret a chat request in days as a same-number month
+interval; clarify the intended number of months before the existing confirmation.

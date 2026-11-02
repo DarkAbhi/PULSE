@@ -21,8 +21,7 @@ export default function MaintenanceScheduleForm({ initial, vehicleId }: { initia
     const update = (patch: Partial<MaintenanceInterval>) => setValue({ ...value, [key]: { ...interval, ...patch } });
     return <fieldset className="space-y-3 rounded-lg border border-border p-4"><legend className="px-1 font-semibold">{scheduleSourceLabel(key)}</legend>
       <label className="block text-sm">Distance interval (km, optional)<input className={inputClass} type="number" min="1" max="1000000" step="1" value={interval.kilometers || ""} onChange={(e) => update({ kilometers: Number(e.target.value) })} /></label>
-      <div className="grid grid-cols-2 gap-3"><label className="text-sm">Time interval (optional)<input className={inputClass} type="number" min="1" max={interval.unit === "days" ? 36500 : 1200} step="1" value={interval.duration || ""} onChange={(e) => update({ duration: Number(e.target.value) })} /></label>
-        <label className="text-sm">Time unit<select className={inputClass} value={interval.unit} onChange={(e) => update({ unit: e.target.value as "days" | "months" })}><option value="days">Days</option><option value="months">Months</option></select></label></div>
+      <label className="text-sm">Time (months, optional)<input className={inputClass} type="number" min="1" max="1200" step="1" value={interval.duration || ""} onChange={(e) => update({ duration: Number(e.target.value) })} /></label>
     </fieldset>;
   }
   return <form className="mt-4 space-y-4" onSubmit={(e) => { e.preventDefault(); setError(""); startTransition(async () => {

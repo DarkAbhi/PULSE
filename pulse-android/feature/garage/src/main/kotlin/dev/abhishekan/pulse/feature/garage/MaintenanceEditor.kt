@@ -253,7 +253,7 @@ internal fun MaintenanceEditor(
 }
 
 @Composable
-private fun MaintenanceSection(
+internal fun MaintenanceSection(
     title: Int,
     hint: Int,
     icon: Int,

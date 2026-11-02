@@ -25,7 +25,7 @@ func TestCalculateUpcoming(t *testing.T) {
 	if *oil.DueDate != "2027-01-07" || *oil.RemainingKM != 1722 || !oil.LastAt.Equal(changed) {
 		t.Fatalf("top-up reset oil: %+v", oil)
 	}
-	if air.Status != "overdue" || *air.RemainingDays != -4 {
+	if air.Status != "upcoming" || *air.RemainingDays != 13 {
 		t.Fatalf("pressure: %+v", air)
 	}
 	if *service.DueDate != "2027-03-07" || !service.LastAt.Equal(changed) {

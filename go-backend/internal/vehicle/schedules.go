@@ -26,10 +26,10 @@ type maintenanceSchedule struct {
 
 func startingSchedules(kind string) []maintenanceSchedule {
 	oil, service := scheduleInterval{10000, 9, "months"}, scheduleInterval{10000, 12, "months"}
-	pressure := scheduleInterval{0, 30, "days"}
+	pressure := scheduleInterval{0, 1, "months"}
 	switch kind {
 	case "motorcycle", "moped":
-		oil, service, pressure = scheduleInterval{3000, 4, "months"}, scheduleInterval{5000, 6, "months"}, scheduleInterval{0, 14, "days"}
+		oil, service, pressure = scheduleInterval{3000, 4, "months"}, scheduleInterval{5000, 6, "months"}, scheduleInterval{0, 1, "months"}
 	case "car":
 	default:
 		oil, service = scheduleInterval{Unit: "months"}, scheduleInterval{Unit: "months"}
@@ -57,12 +57,16 @@ func normalizeSchedule(s *maintenanceSchedule) error {
 		if v.Unit == "" {
 			v.Unit = "months"
 		}
-		limit := int32(1200)
+		// Older clients may still send days; new rules are stored as calendar months.
 		if v.Unit == "days" {
-			limit = 36500
+			if v.Duration < 0 || v.Duration > 36500 {
+				return errors.New("invalid legacy time interval")
+			}
+			v.Duration = (v.Duration*12 + 364) / 365
+			v.Unit = "months"
 		}
-		if (v.Unit != "months" && v.Unit != "days") || v.Duration < 0 || v.Duration > limit || v.Kilometers < 0 || v.Kilometers > 1000000 {
-			return errors.New("intervals must be positive whole numbers: up to 1,000,000 km, 1,200 months or 36,500 days; leave unused thresholds blank")
+		if v.Unit != "months" || v.Duration < 0 || v.Duration > 1200 || v.Kilometers < 0 || v.Kilometers > 1000000 {
+			return errors.New("enter whole intervals up to 1,000,000 km or 1,200 months; leave unused limits blank")
 		}
 	}
 	v := s.effective()

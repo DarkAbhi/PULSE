@@ -40,9 +40,9 @@ func TestConfiguredUpcoming(t *testing.T) {
 	if result.Status != "needs_odometer" || result.Progress != nil {
 		t.Fatalf("missing mileage: %+v", result)
 	}
-	s.Personal = scheduleInterval{0, 10, "days"}
+	s.Personal = scheduleInterval{0, 1, "months"}
 	result = calculateUpcoming("motorcycle", []string{"petrol"}, nil, nil, records, now, s)[0]
-	if result.RemainingKM != nil || *result.DueDate != "2026-09-17" {
+	if result.RemainingKM != nil || *result.DueDate != "2026-10-07" {
 		t.Fatalf("time-only: %+v", result)
 	}
 }
@@ -58,7 +58,7 @@ func TestScheduleValidation(t *testing.T) {
 		{"invalid unit", maintenanceSchedule{Kind: "engine_oil", ActiveSource: "manual", Manual: scheduleInterval{1000, 1, "years"}}, true},
 		{"excess months", maintenanceSchedule{Kind: "engine_oil", ActiveSource: "manual", Manual: scheduleInterval{0, 1201, "months"}}, true},
 		{"removed source", maintenanceSchedule{Kind: "engine_oil", ActiveSource: "default"}, true},
-		{"pressure distance", maintenanceSchedule{Kind: "tire_pressure", ActiveSource: "personal", Personal: scheduleInterval{500, 0, "days"}}, false},
+		{"pressure distance", maintenanceSchedule{Kind: "tire_pressure", ActiveSource: "personal", Personal: scheduleInterval{500, 0, "months"}}, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if err := normalizeSchedule(&tc.s); (err != nil) != tc.bad {
@@ -133,12 +133,12 @@ func TestMaintenanceSchedules(t *testing.T) {
 	if _, err := db.Exec(`INSERT INTO vehicle_maintenance_schedules(vehicle_id,user_id,kind,active_source) VALUES($1,$2,'tire_pressure','personal')`, vehicle, other); err == nil {
 		t.Fatal("cross-owner schedule accepted")
 	}
-	// Start a pressure cycle with a known odometer, then backdate it twenty days.
+	// Start a pressure cycle with a known odometer, then backdate it forty days.
 	request("POST", "/air-fills", map[string]any{"odometer_km": 1000}, false, 201)
-	if _, err := db.Exec(`UPDATE vehicle_air_fills SET filled_at=NOW()-INTERVAL '20 days' WHERE vehicle_id=$1`, vehicle); err != nil {
+	if _, err := db.Exec(`UPDATE vehicle_air_fills SET filled_at=NOW()-INTERVAL '40 days' WHERE vehicle_id=$1`, vehicle); err != nil {
 		t.Fatal(err)
 	}
-	pressure := maintenanceSchedule{Kind: "tire_pressure", ActiveSource: "personal", Personal: scheduleInterval{0, 7, "days"}, Manual: scheduleInterval{0, 45, "days"}}
+	pressure := maintenanceSchedule{Kind: "tire_pressure", ActiveSource: "personal", Personal: scheduleInterval{0, 1, "months"}, Manual: scheduleInterval{0, 2, "months"}}
 	request("PUT", "/maintenance-schedules/tire_pressure", pressure, false, 200)
 	reminders := NewReminderService(pool, notification.NewService(notification.NewRepository(pool)))
 	if err := reminders.CreateDue(context.Background()); err != nil {
@@ -153,7 +153,7 @@ func TestMaintenanceSchedules(t *testing.T) {
 		return active
 	}
 	if countAlerts() != 1 {
-		t.Fatal("selected seven-day pressure rule did not notify")
+		t.Fatal("selected monthly pressure rule did not notify")
 	}
 	pressure.ActiveSource = "manual"
 	request("PUT", "/maintenance-schedules/tire_pressure", pressure, false, 200)
@@ -167,7 +167,7 @@ func TestMaintenanceSchedules(t *testing.T) {
 		t.Fatal("inactive personal rule still sent a reminder")
 	}
 	pressure.ActiveSource = "personal"
-	pressure.Personal = scheduleInterval{500, 0, "days"}
+	pressure.Personal = scheduleInterval{500, 0, "months"}
 	request("PUT", "/maintenance-schedules/tire_pressure", pressure, false, 200)
 	if _, err := db.Exec(`INSERT INTO vehicle_fuel_fillups(vehicle_id,user_id,odometer_km,filled_at) VALUES($1,1,1600,NOW())`, vehicle); err != nil {
 		t.Fatal(err)

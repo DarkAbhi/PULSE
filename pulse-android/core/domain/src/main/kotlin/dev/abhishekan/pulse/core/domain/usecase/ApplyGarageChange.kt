@@ -72,8 +72,8 @@ class ApplyGarageChange(
                     bytes(s.manualReference, 160) &&
                     intervals.all {
                         it.kilometers in 0..1000000 &&
-                            it.unit in listOf("days", "months") &&
-                            it.duration in 0..(if (it.unit == "days")36500 else 1200)
+                            it.unit == "months" &&
+                            it.duration in 0..1200
                     } &&
                     (selected.kilometers > 0 || selected.duration > 0)
             }

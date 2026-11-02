@@ -463,6 +463,7 @@ internal fun GarageScreen(
                                                                 MaintenanceScheduleEditor(
                                                                     setting,
                                                                     enabled,
+                                                                    vm::backFromReminder,
                                                                 ) { vm.mutate(GarageChange.Schedule(vehicle, it)) }
                                                             }
                                                     }

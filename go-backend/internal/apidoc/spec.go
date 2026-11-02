@@ -1575,7 +1575,7 @@ func maintenanceComponentHistory() {}
 type MaintenanceInterval struct {
 	Kilometers int32  `json:"kilometers" minimum:"0" maximum:"1000000"`
 	Duration   int32  `json:"duration" minimum:"0"`
-	Unit       string `json:"unit" enums:"days,months"`
+	Unit       string `json:"unit" enums:"months"`
 }
 type MaintenanceSchedule struct {
 	Kind            string              `json:"kind" enums:"engine_oil,tire_pressure,general_service"`

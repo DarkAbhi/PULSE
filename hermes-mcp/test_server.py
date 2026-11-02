@@ -168,6 +168,11 @@ class LifeTrackerMCPTest(unittest.TestCase):
             self.assertEqual(write.call_args.args[0], "/api/vehicles/7/maintenance-schedules/engine_oil")
             self.assertEqual(write.call_args.args[2]["personal"], personal)
             self.assertEqual(write.call_args.args[2]["active_source"], "manual")
+            with self.assertRaises(ValueError):
+                server.configure_vehicle_reminder(7, "engine_oil", "personal", dict(personal, unit="days"), manual, confirmed=True)
+            server.configure_vehicle_reminder(7, "engine_oil", "personal", {"kilometers":3000,"duration":4}, {"kilometers":5000,"duration":6}, confirmed=True)
+            self.assertEqual(write.call_args.args[2]["personal"]["unit"], "months")
+
 
         server._session_token = None
         with patch.dict(os.environ, {}, clear=True):

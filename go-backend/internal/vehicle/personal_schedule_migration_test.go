@@ -21,6 +21,17 @@ func TestPersonalScheduleMigration(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	changeMonths := func(direction string) {
+		t.Helper()
+		sql, err := os.ReadFile("../../migrations/00035_reminder_month_intervals." + direction + ".sql")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := db.Exec(string(sql)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	changeMonths("down")
 	migrate("down")
 	ids := map[string]int64{}
 	for _, v := range []struct{ name, kind, fuel string }{{"Bike", "motorcycle", "petrol"}, {"Car", "car", "petrol"}, {"Van", "van", "diesel"}, {"Electric", "car", "electric"}} {
@@ -71,6 +82,7 @@ func TestPersonalScheduleMigration(t *testing.T) {
 	}
 	migrate("down")
 	migrate("up")
+	changeMonths("up")
 	pool := newTestPool(t, dsn)
 	defer pool.Close()
 	vehicle, err := NewRepository(pool).Create(context.Background(), query.CreateVehicleParams{Name: "New bike", UserID: 1, Kind: "motorcycle", FuelTypes: []string{"petrol"}, IsActive: true})

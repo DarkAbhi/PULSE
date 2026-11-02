@@ -433,7 +433,6 @@ definitions:
         type: integer
       unit:
         enum:
-        - days
         - months
         type: string
     type: object

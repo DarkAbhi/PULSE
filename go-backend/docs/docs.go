@@ -3612,6 +3612,9 @@ const docTemplate = `{
                         "SessionBearer": []
                     }
                 ],
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -3620,6 +3623,14 @@ const docTemplate = `{
                 ],
                 "summary": "Record air fill",
                 "parameters": [
+                    {
+                        "description": "Optional recorded odometer",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.AirFillInput"
+                        }
+                    },
                     {
                         "minimum": 1,
                         "type": "integer",
@@ -4456,6 +4467,80 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/vehicles/{id}/maintenance-schedules/{kind}": {
+            "put": {
+                "description": "Stores both sources; only the selected source applies. Zero disables a threshold. Manual values are user-entered. Default intervals are read-only. Effective pressure changes dismiss old alerts and reevaluate the latest fill.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "vehicles"
+                ],
+                "summary": "Save vehicle reminder settings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Vehicle ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "engine_oil",
+                            "tire_pressure",
+                            "general_service"
+                        ],
+                        "type": "string",
+                        "description": "Task",
+                        "name": "kind",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Both saved intervals and active source",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.MaintenanceSchedule"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "boolean"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/vehicles/{id}/tire-pressure": {
             "put": {
                 "security": [
@@ -5141,6 +5226,17 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "odometer_km": {
+                    "type": "number"
+                }
+            }
+        },
+        "apidoc.AirFillInput": {
+            "type": "object",
+            "properties": {
+                "odometer_km": {
+                    "type": "number"
                 }
             }
         },
@@ -5741,6 +5837,27 @@ const docTemplate = `{
                 }
             }
         },
+        "apidoc.MaintenanceInterval": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "kilometers": {
+                    "type": "integer",
+                    "maximum": 1000000,
+                    "minimum": 0
+                },
+                "unit": {
+                    "type": "string",
+                    "enum": [
+                        "days",
+                        "months"
+                    ]
+                }
+            }
+        },
         "apidoc.MaintenanceRecord": {
             "type": "object",
             "properties": {
@@ -5779,6 +5896,39 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string"
+                }
+            }
+        },
+        "apidoc.MaintenanceSchedule": {
+            "type": "object",
+            "properties": {
+                "active_source": {
+                    "type": "string",
+                    "enum": [
+                        "default",
+                        "personal",
+                        "manual"
+                    ]
+                },
+                "default": {
+                    "$ref": "#/definitions/apidoc.MaintenanceInterval"
+                },
+                "kind": {
+                    "type": "string",
+                    "enum": [
+                        "engine_oil",
+                        "tire_pressure",
+                        "general_service"
+                    ]
+                },
+                "manual": {
+                    "$ref": "#/definitions/apidoc.MaintenanceInterval"
+                },
+                "manual_reference": {
+                    "type": "string"
+                },
+                "personal": {
+                    "$ref": "#/definitions/apidoc.MaintenanceInterval"
                 }
             }
         },
@@ -5922,6 +6072,9 @@ const docTemplate = `{
         "apidoc.UpcomingMaintenance": {
             "type": "object",
             "properties": {
+                "distance_unavailable": {
+                    "type": "boolean"
+                },
                 "due_date": {
                     "type": "string"
                 },
@@ -5952,10 +6105,19 @@ const docTemplate = `{
                 "remaining_km": {
                     "type": "number"
                 },
+                "source": {
+                    "type": "string",
+                    "enum": [
+                        "default",
+                        "personal",
+                        "manual"
+                    ]
+                },
                 "status": {
                     "type": "string",
                     "enum": [
                         "no_history",
+                        "needs_odometer",
                         "upcoming",
                         "due",
                         "overdue"
@@ -6040,6 +6202,12 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/apidoc.MaintenanceRecord"
+                    }
+                },
+                "maintenance_schedules": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/apidoc.MaintenanceSchedule"
                     }
                 },
                 "make_name": {

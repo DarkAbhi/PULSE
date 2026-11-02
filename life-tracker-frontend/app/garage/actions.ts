@@ -104,12 +104,14 @@ export async function deleteVehicleAction(vehicleID: number | string) {
   }
 }
 
-export async function markAirFillAction(vehicleID: number) {
+export async function markAirFillAction(vehicleID: number, odometerKM: number | null = null) {
   try {
     const response = await apiFetch(
       `${apiBaseURL}/api/vehicles/${vehicleID}/air-fills`,
       {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ odometer_km: odometerKM }),
       },
     );
 
@@ -123,6 +125,7 @@ export async function markAirFillAction(vehicleID: number) {
     }
 
     revalidatePath("/garage");
+    revalidatePath(`/garage/${vehicleID}`);
     return { ok: true };
   } catch {
     return {

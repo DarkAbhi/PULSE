@@ -62,7 +62,22 @@ class ApplyGarageChange(
                     validCatalogIdentity(change.vehicleKind, change.catalogId) &&
                     pressure(change.pressure)
             is GarageChange.Pressure -> change.vehicle > 0 && pressure(change.value)
-            is GarageChange.Air -> change.vehicle > 0
+            is GarageChange.Schedule -> {
+                val s = change.schedule
+                val intervals = listOf(s.personal, s.manual)
+                val selected = if (s.activeSource == "personal")s.personal else s.manual
+                change.vehicle > 0 &&
+                    s.kind in listOf("engine_oil", "tire_pressure", "general_service") &&
+                    s.activeSource in listOf("default", "personal", "manual") &&
+                    bytes(s.manualReference, 160) &&
+                    intervals.all {
+                        it.kilometers in 0..1000000 &&
+                            it.unit in listOf("days", "months") &&
+                            it.duration in 0..(if (it.unit == "days")36500 else 1200)
+                    } &&
+                    (s.activeSource == "default" || selected.kilometers > 0 || selected.duration > 0)
+            }
+            is GarageChange.Air -> change.vehicle > 0 && number(change.odometer, 12, 1)
             is GarageChange.Fuel ->
                 change.vehicle > 0 &&
                     id(change.id) &&

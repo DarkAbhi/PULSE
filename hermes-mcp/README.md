@@ -1,6 +1,6 @@
 # PULSE MCP server
 
-The production Compose stack runs this MCP server beside the Go backend. It exposes workout tools plus `get_vehicles`, `get_vehicle_maintenance`, and `record_vehicle_maintenance` for garage history.
+The production Compose stack runs this MCP server beside the Go backend. It exposes workout tools plus `get_vehicles`, `get_vehicle_maintenance`, `record_vehicle_maintenance`, and `configure_vehicle_reminder` for garage history and reminder settings.
 
 ## Ubuntu setup
 
@@ -22,7 +22,7 @@ mcp_servers:
   pulse:
     url: http://127.0.0.1:18082/mcp
     tools:
-      include: [get_workout_today, get_vehicles, search_exercises, add_exercises_to_workout, get_vehicle_maintenance, record_vehicle_maintenance]
+      include: [get_workout_today, get_vehicles, search_exercises, add_exercises_to_workout, get_vehicle_maintenance, record_vehicle_maintenance, configure_vehicle_reminder]
       prompts: false
       resources: false
 ```
@@ -99,3 +99,13 @@ invoice supplied by the user. It does not implement automatic OCR, Telegram file
 transfer, invoice upload via MCP, or extraction review. Attach invoices through
 Android/web after saving. Do not retry an uncertain create until checking history
 for a matching record.
+
+
+Reminder settings (migration 33) are returned by `get_vehicle_maintenance` without
+filters. Use `configure_vehicle_reminder` after showing both sets of settings and
+receiving explicit confirmation. Preserve inactive values. Only the selected
+`default`, `personal` or `manual` source applies; zero means an unused threshold.
+Manual values are entered by the user, not independently verified. Add this tool
+to existing allowlists and reload Hermes. Existing tire notifications follow the
+active schedule; changing an effective pressure interval dismisses stale alerts
+and reevaluates the latest fill. Oil/service push delivery is still out of scope.

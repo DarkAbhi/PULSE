@@ -205,7 +205,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
           </section>
         </div>
         <FuelEfficiencySection stats={data.fuel_efficiency} />
-        <ComingUp items={data.coming_up ?? []} vehicleId={id} />
+        <ComingUp items={data.coming_up ?? []} vehicleId={id} settings={(data.maintenance_schedules ?? []).filter((s) => s.kind !== "engine_oil" || data.fuel_types.some((f) => f !== "electric"))} />
         <section className="mt-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-xl font-semibold">

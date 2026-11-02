@@ -159,3 +159,16 @@ export async function saveTirePressure(
   }
 }
 
+
+export async function saveMaintenanceSchedule(vehicleId: string, setting: import("./types").MaintenanceSchedule) {
+  if (!["engine_oil", "tire_pressure", "general_service"].includes(setting.kind)) return { ok: false, error: "Unsupported maintenance task." };
+  try {
+    const response = await apiFetch(`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-schedules/${setting.kind}`, {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(setting),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: body.error ?? "Could not save reminder settings." };
+    revalidatePath(`/garage/${vehicleId}`);
+    return { ok: true };
+  } catch { return { ok: false, error: "Could not reach the server." }; }
+}

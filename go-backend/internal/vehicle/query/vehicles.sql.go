@@ -353,7 +353,7 @@ func (q *Queries) ListMaintenanceAttachments(ctx context.Context, arg ListMainte
 }
 
 const listVehicleAirFills = `-- name: ListVehicleAirFills :many
-SELECT id,filled_at FROM vehicle_air_fills WHERE vehicle_id=$1 AND user_id=$2 ORDER BY filled_at DESC,id DESC
+SELECT id,filled_at,odometer_km FROM vehicle_air_fills WHERE vehicle_id=$1 AND user_id=$2 ORDER BY filled_at DESC,id DESC
 `
 
 type ListVehicleAirFillsParams struct {
@@ -362,8 +362,9 @@ type ListVehicleAirFillsParams struct {
 }
 
 type ListVehicleAirFillsRow struct {
-	ID       int64
-	FilledAt pgtype.Timestamptz
+	ID         int64
+	FilledAt   pgtype.Timestamptz
+	OdometerKm *float64
 }
 
 func (q *Queries) ListVehicleAirFills(ctx context.Context, arg ListVehicleAirFillsParams) ([]ListVehicleAirFillsRow, error) {
@@ -375,7 +376,7 @@ func (q *Queries) ListVehicleAirFills(ctx context.Context, arg ListVehicleAirFil
 	var items []ListVehicleAirFillsRow
 	for rows.Next() {
 		var i ListVehicleAirFillsRow
-		if err := rows.Scan(&i.ID, &i.FilledAt); err != nil {
+		if err := rows.Scan(&i.ID, &i.FilledAt, &i.OdometerKm); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

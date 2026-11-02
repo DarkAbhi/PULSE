@@ -384,68 +384,72 @@ internal fun GarageScreen(
                                             records = false
                                             vm.edit(it)
                                         }
-                                        when (state.tab) {
-                                            GarageTab.Overview -> {
-                                                VehicleIdentityHeader(data, enabled, { edit(data.draft(vehicle)) }) {
-                                                    remove(
-                                                        GarageChange.Delete(GarageRecord.Vehicle, vehicle),
-                                                        uiText(
-                                                            R.string.pulse_garage_delete_1_s_this_permanently_deletes_the_vehicle_fuel,
-                                                            data.name,
-                                                        ),
+                                        androidx.compose.runtime.key(vehicle) {
+                                            when (state.tab) {
+                                                GarageTab.Overview -> {
+                                                    VehicleIdentityHeader(data, enabled, { edit(data.draft(vehicle)) }) {
+                                                        remove(
+                                                            GarageChange.Delete(GarageRecord.Vehicle, vehicle),
+                                                            uiText(
+                                                                R.string.pulse_garage_delete_1_s_this_permanently_deletes_the_vehicle_fuel,
+                                                                data.name,
+                                                            ),
+                                                        )
+                                                    }
+                                                    GarageOverview(
+                                                        data,
+                                                        enabled,
+                                                        {
+                                                            records = false
+                                                            vm.create(GarageForm.Fuel)
+                                                        },
+                                                        {
+                                                            records = false
+                                                            vm.create(GarageForm.Care)
+                                                        },
+                                                        { vm.tab(GarageTab.Care) },
+                                                        { vm.tab(GarageTab.Air) },
+                                                        { vm.mutate(GarageChange.Schedule(vehicle, it)) },
                                                     )
+                                                    VehicleDataCredits()
                                                 }
-                                                GarageOverview(
-                                                    data,
-                                                    enabled,
-                                                    {
+                                                GarageTab.Fuel -> {
+                                                    FuelHistoryHeader(data.fuel.size, enabled) {
                                                         records = false
                                                         vm.create(GarageForm.Fuel)
-                                                    },
-                                                    {
-                                                        records = false
-                                                        vm.create(GarageForm.Care)
-                                                    },
-                                                    { vm.tab(GarageTab.Care) },
-                                                    { vm.tab(GarageTab.Air) },
-                                                )
-                                                VehicleDataCredits()
-                                            }
-                                            GarageTab.Fuel -> {
-                                                FuelHistoryHeader(data.fuel.size, enabled) {
-                                                    records = false
-                                                    vm.create(GarageForm.Fuel)
+                                                    }
+                                                    FuelCards(data, vehicle, enabled, edit, remove)
                                                 }
-                                                FuelCards(data, vehicle, enabled, edit, remove)
-                                            }
-                                            GarageTab.Care -> {
-                                                PulseButton(
-                                                    stringResource(
-                                                        R.string.pulse_garage_add_maintenance,
-                                                    ),
-                                                    {
-                                                        records =
-                                                            false
-                                                        vm.create(GarageForm.Care)
-                                                    },
-                                                    enabled = enabled,
-                                                )
-                                                MaintenanceCards(data, vehicle, enabled, state.busy, edit, remove, upload, {
-                                                    record,
-                                                    receipt,
-                                                    ->
-                                                    vm.download(record, receipt)
-                                                }, download, state.uploadRecord, state.progress)
-                                            }
-                                            GarageTab.Air -> {
-                                                TiresAirSection(
-                                                    data,
-                                                    vehicle,
-                                                    enabled,
-                                                    vm::pressure,
-                                                    { vm.mutate(GarageChange.Air(vehicle)) },
-                                                    remove,
-                                                )
+                                                GarageTab.Care -> {
+                                                    PulseButton(
+                                                        stringResource(
+                                                            R.string.pulse_garage_add_maintenance,
+                                                        ),
+                                                        {
+                                                            records =
+                                                                false
+                                                            vm.create(GarageForm.Care)
+                                                        },
+                                                        enabled = enabled,
+                                                    )
+                                                    MaintenanceCards(data, vehicle, enabled, state.busy, edit, remove, upload, {
+                                                        record,
+                                                        receipt,
+                                                        ->
+                                                        vm.download(record, receipt)
+                                                    }, download, state.uploadRecord, state.progress)
+                                                }
+                                                GarageTab.Air -> {
+                                                    TiresAirSection(
+                                                        data,
+                                                        vehicle,
+                                                        enabled,
+                                                        vm::pressure,
+                                                        { vm.mutate(GarageChange.Air(vehicle)) },
+                                                        remove,
+                                                        { vm.mutate(GarageChange.Air(vehicle, it)) },
+                                                    )
+                                                }
                                             }
                                         }
                                     }

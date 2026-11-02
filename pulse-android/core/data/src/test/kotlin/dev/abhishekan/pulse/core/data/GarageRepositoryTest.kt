@@ -188,6 +188,36 @@ class GarageRepositoryTest {
 
     private val receipt = GarageReceipt(3, "receipt.pdf", "application/pdf", 3)
 
+    @Test fun bothReminderSourcesAreReadAndSavedWithoutMixing() =
+        runTest {
+            Harness().use { h ->
+                h.body = """{
+              "vehicle_name":"Ride","kind":"motorcycle","fuel_types":["petrol"],"air_fills":[],"fuel_fillups":[],
+              "maintenance_records":[],"fuel_efficiency":{},"maintenance_schedules":[{
+                "kind":"engine_oil","active_source":"manual","personal":{"kilometers":3000,"duration":4,"unit":"months"},
+                "manual":{"kilometers":5000,"duration":6,"unit":"months"},"manual_reference":"Page 42",
+                "default":{"kilometers":3000,"duration":4,"unit":"months"}}]
+            }"""
+                val setting = (h.repo.history(1) as Outcome.Success).value.schedules.single()
+                assertEquals("manual", setting.activeSource)
+                assertEquals(5000, setting.manual.kilometers)
+                assertEquals(3000, setting.personal.kilometers)
+                h.body = "{}"
+                assertTrue(h.repo.apply(GarageChange.Schedule(1, setting.copy(activeSource = "personal"))) is Outcome.Success)
+                val body = Json.parseToJsonElement(h.requests.last().second).jsonObject
+                assertEquals("personal", body.getValue("active_source").jsonPrimitive.content)
+                assertEquals(
+                    "5000",
+                    body
+                        .getValue("manual")
+                        .jsonObject
+                        .getValue("kilometers")
+                        .jsonPrimitive.content,
+                )
+                assertEquals("Page 42", body.getValue("manual_reference").jsonPrimitive.content)
+            }
+        }
+
     @Test fun structuredWorkAndSignedReminderDistanceRoundTrip() =
         runTest {
             Harness().use { h ->

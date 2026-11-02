@@ -145,12 +145,31 @@ class PulseGarageRepository(
                             pressure(change.value)
                         },
                     )
+                is GarageChange.Schedule ->
+                    api.save(
+                        "vehicles/${change.vehicle}/maintenance-schedules/${change.schedule.kind}",
+                        true,
+                        buildJsonObject {
+                            val schedule = change.schedule
+                            put("active_source", schedule.activeSource)
+                            put("manual_reference", schedule.manualReference)
+                            for ((key, value) in listOf("personal" to schedule.personal, "manual" to schedule.manual)) {
+                                put(
+                                    key,
+                                    buildJsonObject {
+                                        put("kilometers", value.kilometers)
+                                        put("duration", value.duration)
+                                        put("unit", value.unit)
+                                    },
+                                )
+                            }
+                        },
+                    )
                 is GarageChange.Air ->
                     api.save(
                         "vehicles/${change.vehicle}/air-fills",
                         false,
-                        buildJsonObject {
-                        },
+                        buildJsonObject { put("odometer_km", change.odometer.json()) },
                     )
                 is GarageChange.Fuel ->
                     api.save(

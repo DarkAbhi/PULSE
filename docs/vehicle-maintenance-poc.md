@@ -1,13 +1,13 @@
 # Vehicle maintenance proof of concept
 
-The first version supports manual structured work entry on Android, web and
+The feature supports manual structured work entry and per-vehicle reminder settings on Android, web and
 Hermes MCP. The same PostgreSQL records power component history and upcoming
 maintenance estimates. Existing invoice attachments remain private evidence
 linked to the service; no automated extraction is enabled.
 
 ## Try it
 
-1. Apply migration `00032_maintenance_actions` using the existing migration
+1. Apply migration `00033_vehicle_maintenance_schedules` (after migration 32) using the existing migration
    workflow, then deploy the Go API before the updated clients.
 2. Open a vehicle's maintenance tab, create/edit a service, and choose **Add work
    performed**. Record each component and action. Amount can be zero for free/DIY
@@ -50,7 +50,7 @@ from this lookup and upcoming baselines.
 
 The existing history endpoint adds `coming_up`. Its entries contain kind, status,
 due date, signed remaining days/km, elapsed interval progress (0..1), last action
-date, last recorded mileage, and default interval. Status is `no_history`,
+date, last recorded mileage, and active interval/source. Status is `no_history`, `needs_odometer`,
 `upcoming`, `due`, or `overdue`. The more elapsed of time and recorded mileage
 determines progress. No travel-rate prediction is made. Missing/inconsistent
 mileage falls back to time only. Calendar calculations use India time and clamp
@@ -65,17 +65,62 @@ month ends. Editing/deleting records recalculates estimates on refresh.
 | Pressure | 14 days after last air fill | 30 days after last air fill |
 
 Whichever threshold comes first applies. Electric-only vehicles omit engine oil.
-Other/unknown kinds get pressure reminders only. Existing air notifications use
-the same 14/30-day cadence and ignore fills superseded by newer fills. Oil/service
-push notifications are not added. The UI labels defaults as estimates and mileage
-as based on the last recorded reading. Manufacturer schedules take precedence.
+Other/unknown kinds have only a pressure app default; personal/manual oil and service intervals can still be configured. Existing air notifications use the selected pressure schedule (14/30 days when App default is active) and ignore fills superseded by newer fills. Oil/service
+push notifications are not added. The UI labels the active source and mileage as based on the last recorded reading. Only the source selected by the user applies. These defaults do not automatically override personal or manual values.
+
+## Personal and manual reminder schedules
+
+Each vehicle/task has an **App default**, **My intervals**, or **Vehicle manual**
+active source. Both personal and manual sets stay saved when switching. They are
+never combined: if manual is active, an earlier personal limit does not affect the
+reminder. Within the active set, either threshold being reached makes work due.
+
+Use **Reminder settings** below Coming up. Enter a positive whole distance (km),
+a duration in days or calendar months, or both. Leave an unused threshold blank.
+The active personal/manual set needs at least one threshold. The optional manual
+reference can name the booklet/page. Manual values are user-entered and are not
+independently verified by Pulse. Defaults are read-only and remain available as a
+fallback selection. Engine-oil settings are hidden for electric-only vehicles.
+
+`PUT /api/vehicles/{id}/maintenance-schedules/{kind}` accepts:
+
+```json
+{
+  "active_source": "manual",
+  "personal": {"kilometers": 3000, "duration": 4, "unit": "months"},
+  "manual": {"kilometers": 5000, "duration": 6, "unit": "months"},
+  "manual_reference": "Owner manual, page 42"
+}
+```
+
+These are illustrative inputs, not a recommendation for a specific model. Zero
+represents an unused threshold in the API. Send both complete sets on a PUT.
+Tasks are `engine_oil`, `general_service`, and `tire_pressure`. Owner-scoped saved
+settings are included in `maintenance_schedules` on the existing history response.
+Bounds are 1,000,000 km, 1,200 months or 36,500 days.
+
+Air fills now accept an optional `odometer_km` and return it in history. Android
+and web allow entering it when recording a fill. A distance-only rule with no
+usable task baseline/current reading shows **Record an odometer** instead of an
+invented due date. With a time threshold, the time estimate remains available and
+the UI explains that the distance limit cannot yet be evaluated. No current
+odometer or travel rate is inferred from elapsed time.
+
+Existing tire notifications use the selected source's thresholds. Changing an
+effective pressure interval dismisses old active pressure alerts and clears only
+the latest fill's sent marker so it can be reevaluated. Saving unchanged active
+intervals or editing only an inactive set does not restart notification delivery.
+Oil and general-service push notifications remain out of scope.
+
+Hermes can read the selected intervals using `get_vehicle_maintenance` and update
+both saved sets using `configure_vehicle_reminder`, after explicit confirmation.
+Add this tool to existing allowlists and reload Hermes.
 
 ## Next increment
 
 Add invoice import drafts and extraction review on top of these action rows:
 embedded PDF text first, OCR for scans, original page/line evidence, and explicit
-review before saving. Add per-vehicle manufacturer intervals as a separate
-schedule table. Neither requires a column for each component. Durable import
+review before saving. The per-vehicle schedule table is already implemented. Neither schedules nor extracted work require a column for each component. Durable import
 jobs, file deduplication, audit revisions, Telegram file transfer and AI provider
 configuration belong to that increment, not this manual POC. Invoice content must
 always be treated as untrusted data, never instructions.
@@ -105,3 +150,16 @@ Its service completion/date must be confirmed before it becomes recorded history
 
 No production deployment, live Telegram session, physical-device/TalkBack testing,
 or invoice extraction was performed.
+
+
+## Configurable schedules verification
+
+Migration 33, selected-source isolation, retained inactive values, invalid inputs,
+owner isolation, mileage-only and time-only calculations, stale-alert dismissal,
+and selected tire notification thresholds are covered by passing Go tests.
+The updated Android modules pass 103 unit tests, garage lint, and debug app/test
+builds. Three focused API 35 emulator checks pass, including both-source entry and
+active-source restoration through activity recreation, and recording an air-fill
+odometer. Web TypeScript, the 19 existing web tests, and the Webpack production
+build pass. MCP tests cover confirmation and preservation of both source sets.
+These changes have not been deployed or tested in a live Telegram session.

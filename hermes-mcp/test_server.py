@@ -37,8 +37,9 @@ class LifeTrackerMCPTest(unittest.TestCase):
             startup = runpy.run_path(str(Path(__file__).with_name("server.py")), run_name="__main__")
             self.assertIn("get_vehicle_maintenance", startup["mcp"].tools_at_startup)
             self.assertIn("record_vehicle_maintenance", startup["mcp"].tools_at_startup)
+            self.assertIn("configure_vehicle_reminder", startup["mcp"].tools_at_startup)
 
-        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles", "search_exercises", "add_exercises_to_workout", "get_vehicle_maintenance", "record_vehicle_maintenance"])
+        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles", "search_exercises", "add_exercises_to_workout", "get_vehicle_maintenance", "record_vehicle_maintenance", "configure_vehicle_reminder"])
         self.assertEqual(server.mcp.version,
                          json.loads(Path(__file__).resolve().parent.parent.joinpath("release.json").read_text())["version"])
 
@@ -152,6 +153,19 @@ class LifeTrackerMCPTest(unittest.TestCase):
             self.assertEqual(args[2]["occurred_at"], "2026-09-07T00:00:00+05:30")
             self.assertEqual(args[2]["actions"], work)
             self.assertEqual(args[2]["amount"], 0)
+
+        personal = {"kilometers": 3000, "duration": 4, "unit": "months"}
+        manual = {"kilometers": 5000, "duration": 6, "unit": "months"}
+        with patch.object(server, "_request", return_value={"saved": True}) as write:
+            with self.assertRaises(ValueError):
+                server.configure_vehicle_reminder(7, "engine_oil", "manual", personal, manual)
+            with self.assertRaises(ValueError):
+                server.configure_vehicle_reminder(7, "engine_oil", "manual", personal, {"kilometers": 0, "duration": 0, "unit": "months"}, confirmed=True)
+            write.assert_not_called()
+            server.configure_vehicle_reminder(7, "engine_oil", "manual", personal, manual, "Manual page 42", confirmed=True)
+            self.assertEqual(write.call_args.args[0], "/api/vehicles/7/maintenance-schedules/engine_oil")
+            self.assertEqual(write.call_args.args[2]["personal"], personal)
+            self.assertEqual(write.call_args.args[2]["active_source"], "manual")
 
         server._session_token = None
         with patch.dict(os.environ, {}, clear=True):

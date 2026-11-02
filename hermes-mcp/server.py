@@ -208,7 +208,7 @@ def get_vehicle_maintenance(vehicle_id: int, component: str = "", action: str = 
     result = _get(f"/api/vehicles/{vehicle_id}/history")
     if not isinstance(result, dict) or not isinstance(result.get("maintenance_records"), list):
         raise ValueError("Invalid vehicle history from PULSE")
-    return json.dumps({"records": result["maintenance_records"], "coming_up": result.get("coming_up", [])})
+    return json.dumps({"records": result["maintenance_records"], "coming_up": result.get("coming_up", []), "maintenance_schedules": result.get("maintenance_schedules", [])})
 
 
 _maintenance_actions = {"replaced", "inspected", "adjusted", "repaired", "topped_up", "cleaned", "lubricated", "completed"}
@@ -262,6 +262,39 @@ def record_vehicle_maintenance(vehicle_id: int, title: str, service_date: str, a
         "notes": notes.strip() or None, "actions": normalized,
     })
     return json.dumps(result)
+
+
+class ReminderIntervalInput(TypedDict):
+    kilometers: int
+    duration: int
+    unit: str
+
+
+@mcp.tool()
+def configure_vehicle_reminder(vehicle_id: int, kind: str, active_source: str,
+                               personal: ReminderIntervalInput, manual: ReminderIntervalInput,
+                               manual_reference: str = "", confirmed: bool = False) -> str:
+    """Save both reminder schedules and choose which is active after explicit confirmation. First read get_vehicle_maintenance without filters, retain both existing personal/manual values, and show the complete proposed settings. kind is engine_oil, general_service or tire_pressure. active_source is default, personal or manual; only that source applies, never a mixture. Each interval has nonnegative integer kilometers and duration, unit=days or months; zero disables a threshold. At least one threshold is required for the active personal/manual schedule. Either active threshold being reached makes work due. Manual values are user-entered, not independently verified official guidance; preserve their manual_reference. Inactive values remain saved. These settings affect Coming up; only existing tire-pressure notifications are automatically delivered, not new oil/service push notifications."""
+    if confirmed is not True:
+        raise ValueError("Show both saved schedules and obtain explicit confirmation before changing reminders")
+    _vehicle_id(vehicle_id)
+    if kind not in {"engine_oil", "general_service", "tire_pressure"} or active_source not in {"default", "personal", "manual"}:
+        raise ValueError("Choose a supported task and active schedule")
+    for interval in (personal, manual):
+        if not isinstance(interval, dict):
+            raise ValueError("Provide both complete interval objects")
+        km, duration, unit = interval.get("kilometers"), interval.get("duration"), interval.get("unit")
+        if type(km) is not int or type(duration) is not int or unit not in ("days", "months") or not 0 <= km <= 1000000 or not 0 <= duration <= (36500 if unit == "days" else 1200):
+            raise ValueError("Provide nonnegative whole intervals and days/months units")
+    selected = personal if active_source == "personal" else manual
+    if active_source != "default" and not (selected["kilometers"] or selected["duration"]):
+        raise ValueError("The active schedule needs a distance or time interval")
+    if not isinstance(manual_reference, str) or len(manual_reference.encode()) > 160:
+        raise ValueError("Manual reference must be at most 160 bytes")
+    return json.dumps(_request(f"/api/vehicles/{vehicle_id}/maintenance-schedules/{kind}", "PUT", {
+        "active_source": active_source, "personal": personal, "manual": manual,
+        "manual_reference": manual_reference,
+    }))
 
 
 if __name__ == "__main__":

@@ -16,12 +16,14 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,21 +38,25 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.abhishekan.pulse.core.domain.model.FuelEfficiency
+import dev.abhishekan.pulse.core.domain.model.MaintenanceSchedule
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
+import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.math.BigDecimal
 
@@ -62,6 +68,7 @@ internal fun GarageOverview(
     addCare: () -> Unit,
     openCare: () -> Unit,
     openAir: () -> Unit,
+    saveSchedule: (MaintenanceSchedule) -> Unit = {},
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val wide = maxWidth >= 840.dp && LocalDensity.current.fontScale <= 1.3f
@@ -72,7 +79,7 @@ internal fun GarageOverview(
                 }
                 Column(Modifier.weight(.63f), verticalArrangement = Arrangement.spacedBy(PulseTheme.spacing.comfortable)) {
                     OverviewCare(data, enabled, addFuel, addCare)
-                    ComingUp(data, enabled, openCare, openAir)
+                    ComingUp(data, enabled, openCare, openAir, saveSchedule)
                 }
             }
         } else {
@@ -80,7 +87,7 @@ internal fun GarageOverview(
                 EfficiencyCards(data)
                 OverviewCare(data, enabled, addFuel, addCare)
                 GarageRule()
-                ComingUp(data, enabled, openCare, openAir)
+                ComingUp(data, enabled, openCare, openAir, saveSchedule)
             }
         }
     }
@@ -271,7 +278,9 @@ internal fun PressureCard(
     fill: () -> Unit,
     minimumHeight: Dp = 0.dp,
     prominent: Boolean = false,
+    fillWithOdometer: ((BigDecimal?) -> Unit)? = null,
 ) {
+    var odometer by rememberSaveable { mutableStateOf("") }
     var confirmFill by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth()) {
         Column(
@@ -323,15 +332,41 @@ internal fun PressureCard(
         }
     }
     if (confirmFill) {
+        val mileage = odometer.toBigDecimalOrNull()
+        val valid =
+            odometer.isBlank() ||
+                (
+                    mileage != null &&
+                        mileage.signum() >= 0 &&
+                        mileage < "100000000000".toBigDecimal() &&
+                        mileage.stripTrailingZeros().scale() <= 1
+                )
         PulseDialog(
-            stringResource(R.string.pulse_garage_confirm_air_fill_title),
-            stringResource(R.string.pulse_garage_confirm_air_fill_message),
-            stringResource(R.string.pulse_garage_confirm_air_fill_action),
-            {
-                confirmFill = false
-                fill()
+            onDismissRequest = { confirmFill = false },
+            title = { PulseText(stringResource(R.string.pulse_garage_confirm_air_fill_title), style = PulseTextStyle.Title) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
+                    PulseText(stringResource(R.string.pulse_garage_confirm_air_fill_message))
+                    if (fillWithOdometer != null) {
+                        PulseTextField(
+                            odometer,
+                            { odometer = it },
+                            stringResource(R.string.pulse_garage_odometer_km_optional),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        )
+                    }
+                }
             },
-            { confirmFill = false },
+            confirmButton = {
+                PulseButton(stringResource(R.string.pulse_garage_confirm_air_fill_action), {
+                    confirmFill = false
+                    if (fillWithOdometer != null)fillWithOdometer(mileage) else fill()
+                    odometer = ""
+                }, enabled = valid, style = PulseButtonStyle.Text)
+            },
+            dismissButton = {
+                PulseButton(stringResource(R.string.pulse_garage_schedule_cancel), { confirmFill = false }, style = PulseButtonStyle.Text)
+            },
         )
     }
 }

@@ -43,12 +43,20 @@ internal fun TiresAirSection(
     editPressure: () -> Unit,
     recordAir: () -> Unit,
     remove: (GarageChange.Delete, UiText) -> Unit,
+    recordAirWithOdometer: ((java.math.BigDecimal?) -> Unit)? = null,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         if (maxWidth >= 1000.dp && LocalDensity.current.fontScale <= 1.3f) {
             Row(horizontalArrangement = Arrangement.spacedBy(PulseTheme.spacing.comfortable)) {
                 Column(Modifier.weight(.64f)) {
-                    PressureCard(data.pressure, enabled, editPressure, recordAir, prominent = true)
+                    PressureCard(
+                        data.pressure,
+                        enabled,
+                        editPressure,
+                        recordAir,
+                        prominent = true,
+                        fillWithOdometer = recordAirWithOdometer,
+                    )
                 }
                 Column(Modifier.weight(.36f)) {
                     AirFillHistory(data.air, vehicle, enabled, remove)
@@ -56,7 +64,7 @@ internal fun TiresAirSection(
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding)) {
-                PressureCard(data.pressure, enabled, editPressure, recordAir, prominent = true)
+                PressureCard(data.pressure, enabled, editPressure, recordAir, prominent = true, fillWithOdometer = recordAirWithOdometer)
                 AirFillHistory(data.air, vehicle, enabled, remove)
             }
         }

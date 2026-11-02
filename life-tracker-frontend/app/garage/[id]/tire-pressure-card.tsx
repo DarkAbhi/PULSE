@@ -4,7 +4,9 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 
 import Button from "@/app/components/design-system/button";
 
-import { useState } from "react";
+import { markAirFillAction } from "../actions";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { Gauge, Pencil, User, Users } from "lucide-react";
 import TirePressureModal from "./tire-pressure-modal";
 
@@ -23,6 +25,10 @@ export default function TirePressureCard({
   frontTirePressurePillion,
   rearTirePressurePillion,
 }: TirePressureCardProps) {
+  const [odometer, setOdometer] = useState("");
+  const [error, setError] = useState("");
+  const [pending, startTransition] = useTransition();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
 
   const hasSolo = frontTirePressureSolo != null || rearTirePressureSolo != null;
@@ -95,6 +101,17 @@ export default function TirePressureCard({
             )}
           </Button>
         </div>
+        <form className="mt-4 space-y-3" onSubmit={(event) => {
+          event.preventDefault(); setError(""); startTransition(async () => {
+            const result = await markAirFillAction(Number(vehicleId), odometer === "" ? null : Number(odometer));
+            if (!result.ok) { setError(result.error ?? "Could not record air fill."); return; }
+            setOdometer(""); router.refresh();
+          });
+        }}>
+          <label className="block text-sm">Odometer (km, optional)<input type="number" min="0" max="99999999999.9" step="0.1" value={odometer} onChange={(e) => setOdometer(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" /></label>
+          <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Record air fill"}</Button>
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        </form>
       </PulseCard>
 
       <TirePressureModal

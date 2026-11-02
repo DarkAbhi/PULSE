@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import dev.abhishekan.pulse.core.domain.model.MaintenanceSchedule
 import dev.abhishekan.pulse.core.domain.model.UpcomingMaintenance
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -35,6 +36,7 @@ internal fun ComingUp(
     enabled: Boolean,
     openCare: () -> Unit,
     openAir: () -> Unit,
+    saveSchedule: (MaintenanceSchedule) -> Unit = {},
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         PulseText(stringResource(R.string.pulse_garage_coming_up), Modifier.semantics { heading() }, PulseTextStyle.Title2)
@@ -74,11 +76,17 @@ internal fun ComingUp(
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     PulseText(title, style = PulseTextStyle.Title3)
+                    PulseText(scheduleSourceLabel(item.source), style = PulseTextStyle.Caption, color = PulseTheme.colors.textSecondary)
                     PulseText(
                         upcomingText(item),
                         style = PulseTextStyle.Body2,
                         color = if (item.status == "overdue") PulseTheme.colors.error else PulseTheme.colors.textSecondary,
                     )
+                    if (item.distanceUnavailable &&
+                        item.status != "needs_odometer"
+                    ) {
+                        PulseText(stringResource(R.string.pulse_garage_schedule_needs_odometer), style = PulseTextStyle.Caption)
+                    }
                     if (pressure && lastAt != null) {
                         PulseText(
                             stringResource(R.string.pulse_garage_upcoming_last_air, garageDate(lastAt)),
@@ -100,6 +108,16 @@ internal fun ComingUp(
                 Icon(painterResource(R.drawable.garage_chevron_right), null, Modifier.size(20.dp), tint = PulseTheme.colors.textSecondary)
             }
         }
+        MaintenanceScheduleEditor(
+            data.schedules.filter {
+                it.kind != "engine_oil" ||
+                    data.fuelTypes.any { fuel ->
+                        fuel != "electric"
+                    }
+            },
+            enabled,
+            saveSchedule,
+        )
         PulseText(
             stringResource(R.string.pulse_garage_upcoming_estimates),
             style = PulseTextStyle.Caption,
@@ -123,17 +141,19 @@ private fun upcomingText(item: UpcomingMaintenance): String {
             },
         )
     }
-    val days = item.remainingDays ?: 0
+    if (item.status == "needs_odometer")return stringResource(R.string.pulse_garage_schedule_needs_odometer)
+    val days = item.remainingDays
     val date = item.dueDate?.let { LocalDate.parse(it).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)) }
     val time =
         when {
-            days < 0 -> pluralStringResource(R.plurals.pulse_garage_upcoming_overdue_days, -days, -days)
+            days != null && days < 0 -> pluralStringResource(R.plurals.pulse_garage_upcoming_overdue_days, -days, -days)
             days == 0 -> stringResource(R.string.pulse_garage_upcoming_today)
-            else -> pluralStringResource(R.plurals.pulse_garage_upcoming_days, days, days)
+            days != null -> pluralStringResource(R.plurals.pulse_garage_upcoming_days, days, days)
+            else -> ""
         }
     val distance = item.remainingKm ?: return time
     val km = decimal(distance.abs().setScale(0, java.math.RoundingMode.CEILING))
-    if (days <= 0) return time
+    if (days != null && days <= 0) return time
     val text =
         stringResource(
             if (distance.signum() <

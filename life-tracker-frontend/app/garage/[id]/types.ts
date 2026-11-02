@@ -1,4 +1,4 @@
-export type AirFill = { id: number; filled_at: string };
+export type AirFill = { id: number; filled_at: string; odometer_km?: number | null };
 export type FuelItem = {
   fuel_type: string;
   fill_type: string;
@@ -16,7 +16,13 @@ export type FuelFill = {
 };
 
 export type MaintenanceAction = { component: string; action: string; description: string };
+export type MaintenanceInterval = { kilometers: number; duration: number; unit: "days" | "months" };
+export type MaintenanceSchedule = {
+  kind: "engine_oil" | "tire_pressure" | "general_service"; active_source: "default" | "personal" | "manual";
+  personal: MaintenanceInterval; manual: MaintenanceInterval; manual_reference: string; default: MaintenanceInterval;
+};
 export type UpcomingMaintenance = {
+  source?: string; distance_unavailable?: boolean;
   kind: string; status: string; due_date: string | null; remaining_days: number | null;
   remaining_km: number | null; progress: number | null; last_at: string | null;
   last_recorded_odometer_km: number | null;
@@ -54,6 +60,7 @@ export type FuelEfficiencyStats = {
 
 export type VehicleHistoryData = {
   coming_up?: UpcomingMaintenance[];
+  maintenance_schedules?: MaintenanceSchedule[];
   vehicle_name: string;
   kind: string;
   catalog_id: string | null;

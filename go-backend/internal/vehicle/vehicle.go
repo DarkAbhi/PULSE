@@ -61,8 +61,9 @@ type DTO struct {
 }
 
 type airFillHistory struct {
-	ID       int64     `json:"id"`
-	FilledAt time.Time `json:"filled_at"`
+	OdometerKM *float64  `json:"odometer_km"`
+	ID         int64     `json:"id"`
+	FilledAt   time.Time `json:"filled_at"`
 }
 
 type fuelHistoryItem struct {
@@ -300,7 +301,7 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 	}
 	air := make([]airFillHistory, 0)
 	for _, row := range airRows {
-		item := airFillHistory{ID: row.ID, FilledAt: row.FilledAt.Time.UTC()}
+		item := airFillHistory{ID: row.ID, FilledAt: row.FilledAt.Time.UTC(), OdometerKM: row.OdometerKm}
 		air = append(air, item)
 	}
 	fuelRows, err := q.ListVehicleFuelFillups(r.Context(), query.ListVehicleFuelFillupsParams{VehicleID: vehicleID, UserID: user.ID})
@@ -360,6 +361,11 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 			averages[fuelType] = *stat.AverageKMPerLitre
 		}
 	}
+	schedules, err := loadMaintenanceSchedules(r.Context(), q, vehicleID, user.ID, header.Kind)
+	if err != nil {
+		webutil.ServerError(w, err)
+		return
+	}
 	webutil.WriteJSON(w, http.StatusOK, map[string]any{
 		"vehicle_name":                 header.Name,
 		"catalog_id":                   header.CatalogID,
@@ -376,7 +382,8 @@ func (h *Handler) History(w http.ResponseWriter, r *http.Request) {
 		"air_fills":                    air,
 		"fuel_fillups":                 fuels,
 		"maintenance_records":          maintenance,
-		"coming_up":                    calculateUpcoming(header.Kind, header.FuelTypes, air, fuels, maintenance, time.Now()),
+		"coming_up":                    calculateUpcoming(header.Kind, header.FuelTypes, air, fuels, maintenance, time.Now(), schedules...),
+		"maintenance_schedules":        schedules,
 		"average_mileage_km_per_litre": averages,
 		"fuel_efficiency":              stats,
 	})

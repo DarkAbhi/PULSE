@@ -6,6 +6,8 @@ import dev.abhishekan.pulse.core.domain.model.FuelItem
 import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.Maintenance
 import dev.abhishekan.pulse.core.domain.model.MaintenanceAction
+import dev.abhishekan.pulse.core.domain.model.MaintenanceInterval
+import dev.abhishekan.pulse.core.domain.model.MaintenanceSchedule
 import dev.abhishekan.pulse.core.domain.model.TirePressure
 import dev.abhishekan.pulse.core.domain.model.UpcomingMaintenance
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
@@ -40,7 +42,7 @@ internal fun GarageHistoryDto.domain(): VehicleHistory {
         ),
         air.orEmpty().map {
             require(it.id > 0)
-            AirFill(it.id, Instant.parse(it.date))
+            AirFill(it.id, Instant.parse(it.date), it.odometer.optional())
         },
         fuel.orEmpty().map { f ->
             require(f.id > 0 && !f.items.isNullOrEmpty())
@@ -109,6 +111,18 @@ internal fun GarageHistoryDto.domain(): VehicleHistory {
                 it.progress,
                 it.lastAt?.let(Instant::parse),
                 it.lastRecordedOdometer.optional(),
+                it.source,
+                it.distanceUnavailable,
+            )
+        },
+        schedules.map {
+            MaintenanceSchedule(
+                it.kind,
+                it.activeSource,
+                MaintenanceInterval(it.personal.kilometers, it.personal.duration, it.personal.unit),
+                MaintenanceInterval(it.manual.kilometers, it.manual.duration, it.manual.unit),
+                it.manualReference,
+                MaintenanceInterval(it.defaultInterval.kilometers, it.defaultInterval.duration, it.defaultInterval.unit),
             )
         },
     )

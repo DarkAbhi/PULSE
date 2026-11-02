@@ -13,6 +13,13 @@ definitions:
         type: string
       id:
         type: integer
+      odometer_km:
+        type: number
+    type: object
+  apidoc.AirFillInput:
+    properties:
+      odometer_km:
+        type: number
     type: object
   apidoc.Attachment:
     properties:
@@ -415,6 +422,21 @@ definitions:
       title:
         type: string
     type: object
+  apidoc.MaintenanceInterval:
+    properties:
+      duration:
+        minimum: 0
+        type: integer
+      kilometers:
+        maximum: 1000000
+        minimum: 0
+        type: integer
+      unit:
+        enum:
+        - days
+        - months
+        type: string
+    type: object
   apidoc.MaintenanceRecord:
     properties:
       actions:
@@ -441,6 +463,29 @@ definitions:
         type: string
       title:
         type: string
+    type: object
+  apidoc.MaintenanceSchedule:
+    properties:
+      active_source:
+        enum:
+        - default
+        - personal
+        - manual
+        type: string
+      default:
+        $ref: '#/definitions/apidoc.MaintenanceInterval'
+      kind:
+        enum:
+        - engine_oil
+        - tire_pressure
+        - general_service
+        type: string
+      manual:
+        $ref: '#/definitions/apidoc.MaintenanceInterval'
+      manual_reference:
+        type: string
+      personal:
+        $ref: '#/definitions/apidoc.MaintenanceInterval'
     type: object
   apidoc.Message:
     properties:
@@ -533,6 +578,8 @@ definitions:
     type: object
   apidoc.UpcomingMaintenance:
     properties:
+      distance_unavailable:
+        type: boolean
       due_date:
         type: string
       interval_days:
@@ -553,9 +600,16 @@ definitions:
         type: integer
       remaining_km:
         type: number
+      source:
+        enum:
+        - default
+        - personal
+        - manual
+        type: string
       status:
         enum:
         - no_history
+        - needs_odometer
         - upcoming
         - due
         - overdue
@@ -616,6 +670,10 @@ definitions:
       maintenance_records:
         items:
           $ref: '#/definitions/apidoc.MaintenanceRecord'
+        type: array
+      maintenance_schedules:
+        items:
+          $ref: '#/definitions/apidoc.MaintenanceSchedule'
         type: array
       make_name:
         type: string
@@ -3446,7 +3504,14 @@ paths:
       - vehicles
   /api/vehicles/{id}/air-fills:
     post:
+      consumes:
+      - application/json
       parameters:
+      - description: Optional recorded odometer
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/apidoc.AirFillInput'
       - description: Positive id
         in: path
         minimum: 1
@@ -4000,6 +4065,58 @@ paths:
       security:
       - SessionBearer: []
       summary: Download maintenance attachment
+      tags:
+      - vehicles
+  /api/vehicles/{id}/maintenance-schedules/{kind}:
+    put:
+      consumes:
+      - application/json
+      description: Stores both sources; only the selected source applies. Zero disables
+        a threshold. Manual values are user-entered. Default intervals are read-only.
+        Effective pressure changes dismiss old alerts and reevaluate the latest fill.
+      parameters:
+      - description: Vehicle ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Task
+        enum:
+        - engine_oil
+        - tire_pressure
+        - general_service
+        in: path
+        name: kind
+        required: true
+        type: string
+      - description: Both saved intervals and active source
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.MaintenanceSchedule'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: boolean
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      summary: Save vehicle reminder settings
       tags:
       - vehicles
   /api/vehicles/{id}/tire-pressure:

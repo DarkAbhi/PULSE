@@ -34,6 +34,7 @@ data class TirePressure(
 data class AirFill(
     val id: Long,
     val date: Instant,
+    val odometer: BigDecimal? = null,
 )
 
 data class FuelItem(
@@ -83,6 +84,21 @@ data class MaintenanceAction(
     val description: String = "",
 )
 
+data class MaintenanceInterval(
+    val kilometers: Int = 0,
+    val duration: Int = 0,
+    val unit: String = "months",
+)
+
+data class MaintenanceSchedule(
+    val kind: String,
+    val activeSource: String = "default",
+    val personal: MaintenanceInterval = MaintenanceInterval(),
+    val manual: MaintenanceInterval = MaintenanceInterval(),
+    val manualReference: String = "",
+    val defaultInterval: MaintenanceInterval = MaintenanceInterval(),
+)
+
 data class UpcomingMaintenance(
     val kind: String,
     val status: String,
@@ -92,6 +108,8 @@ data class UpcomingMaintenance(
     val progress: Float?,
     val lastAt: Instant?,
     val lastRecordedOdometer: BigDecimal?,
+    val source: String = "default",
+    val distanceUnavailable: Boolean = false,
 )
 
 data class Maintenance(
@@ -129,6 +147,7 @@ data class VehicleHistory(
     val makeName: String = "",
     val modelName: String = "",
     val upcoming: List<UpcomingMaintenance> = emptyList(),
+    val schedules: List<MaintenanceSchedule> = emptyList(),
 )
 
 enum class GarageRecord { Vehicle, Fuel, Air, Maintenance, Receipt }
@@ -151,8 +170,14 @@ sealed interface GarageChange {
         val value: TirePressure,
     ) : GarageChange
 
+    data class Schedule(
+        val vehicle: Long,
+        val schedule: MaintenanceSchedule,
+    ) : GarageChange
+
     data class Air(
         val vehicle: Long,
+        val odometer: BigDecimal? = null,
     ) : GarageChange
 
     data class Fuel(

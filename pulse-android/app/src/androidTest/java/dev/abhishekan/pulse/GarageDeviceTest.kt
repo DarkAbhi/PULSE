@@ -116,6 +116,7 @@ class GarageDeviceTest {
     private val vehicleDetails = mutableMapOf<Long, JsonObject>()
     private val fuel = linkedMapOf<Long, JsonObject>()
     private val care = linkedMapOf<Long, JsonObject>()
+    private val reminderSettings = linkedMapOf<String, JsonObject>()
     private val air = linkedMapOf<Long, JsonObject>()
     private val receipts = linkedMapOf<Long, JsonObject>()
     private var pressure: JsonObject =
@@ -158,6 +159,7 @@ class GarageDeviceTest {
             put("fuel_fillups", JsonArray(fuel.values.toList()))
             put("air_fills", JsonArray(air.values.toList()))
             put("coming_up", Json.parseToJsonElement(upcomingFixture))
+            put("maintenance_schedules", JsonArray(reminderSettings.values.toList()))
             put(
                 "maintenance_records",
                 JsonArray(
@@ -182,6 +184,15 @@ class GarageDeviceTest {
         }
         store = GlobalContext.get().get()
         runBlocking { store.clear() }
+        reminderSettings["engine_oil"] =
+            obj(
+                """{
+          "kind":"engine_oil","active_source":"default",
+          "personal":{"kilometers":0,"duration":0,"unit":"months"},
+          "manual":{"kilometers":0,"duration":0,"unit":"months"},"manual_reference":"",
+          "default":{"kilometers":3000,"duration":4,"unit":"months"}
+        }""",
+            )
         care[10] =
             obj(
                 (
@@ -350,6 +361,17 @@ class GarageDeviceTest {
                                     receipts.clear()
                                 } else {
                                     when (parts[2]) {
+                                        "maintenance-schedules" -> {
+                                            val key = parts.last()
+                                            reminderSettings[key] =
+                                                JsonObject(
+                                                    obj(raw) +
+                                                        mapOf(
+                                                            "kind" to JsonPrimitive(key),
+                                                            "default" to reminderSettings.getValue(key).getValue("default"),
+                                                        ),
+                                                )
+                                        }
                                         "tire-pressure" -> pressure = obj(raw)
                                         "air-fills" ->
                                             if (request.method ==
@@ -359,7 +381,10 @@ class GarageDeviceTest {
                                             } else {
                                                 val id = next++
                                                 air[id] =
-                                                    obj("""{"id":$id,"filled_at":"2026-10-17T10:00:00Z"}""")
+                                                    JsonObject(
+                                                        obj("""{"id":$id,"filled_at":"2026-10-17T10:00:00Z"}""") +
+                                                            obj(raw).filterKeys { it == "odometer_km" },
+                                                    )
                                             }
                                         "fuel-fillups", "maintenance-records" -> {
                                             val target = if (parts[2] == "fuel-fillups") fuel else care
@@ -1171,6 +1196,48 @@ class GarageDeviceTest {
         compose.onNodeWithText("Not enough history").assertDoesNotExist()
     }
 
+    @Test fun reminderSettingsKeepBothSourcesAndActiveChoice() {
+        launchGarage()
+        select()
+        compose.onNode(hasTestTag("schedule-edit-engine_oil")).performScrollTo().performClick()
+
+        fun interval(
+            tag: String,
+            value: String,
+        ) {
+            compose.onNode(hasTestTag("schedule-engine_oil-$tag")).performScrollTo().performTextReplacement(value)
+        }
+        interval("personal-km", "3000")
+        interval("personal-time", "4")
+        interval("manual-km", "5000")
+        interval("manual-time", "6")
+        field("Manual reference or page (optional)", "Page 42")
+        pick("Active schedule", "App default", "Vehicle manual")
+        scenario?.recreate()
+        compose.onNode(hasTestTag("schedule-engine_oil-manual-km")).performScrollTo()
+        compose.onNodeWithText("5000").assertExists()
+        compose.onNode(hasTestTag("schedule-save-engine_oil")).performScrollTo().performClick()
+        compose.waitUntil(10000) { reminderSettings["engine_oil"]?.get("active_source")?.jsonPrimitive?.content == "manual" }
+        val setting = reminderSettings.getValue("engine_oil")
+        assertEquals(
+            "3000",
+            setting
+                .getValue("personal")
+                .jsonObject
+                .getValue("kilometers")
+                .jsonPrimitive.content,
+        )
+        assertEquals(
+            "5000",
+            setting
+                .getValue("manual")
+                .jsonObject
+                .getValue("kilometers")
+                .jsonPrimitive.content,
+        )
+        assertEquals("Page 42", setting.getValue("manual_reference").jsonPrimitive.content)
+    }
+
     @Test fun redesignedOverviewShowsUpcomingAndNavigatesToPressure() {
         upcomingFixture = """[
           {"kind":"engine_oil","status":"upcoming","due_date":"2027-01-07","remaining_days":66,"remaining_km":640,"progress":0.8},
@@ -1348,9 +1415,17 @@ class GarageDeviceTest {
         awaitText("A little air, a smoother ride")
         assertEquals("34.5", pressure["rear_tire_pressure_solo"]?.jsonPrimitive?.content)
         tap("Record air fill")
+        field("Odometer (km, optional)", "1234")
         confirm("Record air fill")
         awaitText("Saved. Your garage is up to date.")
         tap("Tires & air")
+        assertEquals(
+            "1234",
+            air.values
+                .single()
+                .getValue("odometer_km")
+                .jsonPrimitive.content,
+        )
         tap("Delete air fill 101")
         confirm("Delete")
         compose.waitForIdle()

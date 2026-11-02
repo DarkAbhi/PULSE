@@ -247,9 +247,14 @@ type FuelFillup struct {
 	Notes       *string    `json:"notes"`
 	Items       []FuelItem `json:"items"`
 }
+type AirFillInput struct {
+	OdometerKM *float64 `json:"odometer_km"`
+}
+
 type AirFillHistory struct {
-	ID       int64     `json:"id"`
-	FilledAt time.Time `json:"filled_at"`
+	OdometerKM *float64  `json:"odometer_km"`
+	ID         int64     `json:"id"`
+	FilledAt   time.Time `json:"filled_at"`
 }
 type MaintenanceAction struct {
 	Component   string `json:"component" example:"engine_oil"`
@@ -257,8 +262,10 @@ type MaintenanceAction struct {
 	Description string `json:"description"`
 }
 type UpcomingMaintenance struct {
+	DistanceUnavailable    bool       `json:"distance_unavailable"`
+	Source                 string     `json:"source" enums:"default,personal,manual"`
 	Kind                   string     `json:"kind"`
-	Status                 string     `json:"status" enums:"no_history,upcoming,due,overdue"`
+	Status                 string     `json:"status" enums:"no_history,needs_odometer,upcoming,due,overdue"`
 	DueDate                *string    `json:"due_date"`
 	RemainingDays          *int       `json:"remaining_days"`
 	RemainingKM            *float64   `json:"remaining_km"`
@@ -299,12 +306,13 @@ type MaintenanceRecord struct {
 	Attachments  []Attachment        `json:"attachments"`
 }
 type VehicleHistory struct {
-	ComingUp  []UpcomingMaintenance `json:"coming_up"`
-	CatalogID *string               `json:"catalog_id"`
-	MakeName  string                `json:"make_name"`
-	ModelName string                `json:"model_name"`
-	Kind      string                `json:"kind" enums:"unknown,car,motorcycle,moped,van,truck,bus"`
-	FuelTypes []string              `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
+	MaintenanceSchedules []MaintenanceSchedule `json:"maintenance_schedules"`
+	ComingUp             []UpcomingMaintenance `json:"coming_up"`
+	CatalogID            *string               `json:"catalog_id"`
+	MakeName             string                `json:"make_name"`
+	ModelName            string                `json:"model_name"`
+	Kind                 string                `json:"kind" enums:"unknown,car,motorcycle,moped,van,truck,bus"`
+	FuelTypes            []string              `json:"fuel_types" enums:"petrol,diesel,lpg,cng,electric" minItems:"1" maxItems:"2" uniqueItems:"true"`
 
 	VehicleName              string              `json:"vehicle_name"`
 	FrontTirePressureSolo    *float64            `json:"front_tire_pressure_solo"`
@@ -1180,6 +1188,8 @@ func operation61() {}
 
 // operation62 documents POST /api/vehicles/{id}/air-fills.
 // @Summary Record air fill
+// @Accept json
+// @Param body body AirFillInput false "Optional recorded odometer"
 // @Tags vehicles
 // @Produce json
 // @Param id path integer true "Positive id" minimum(1)
@@ -1561,3 +1571,32 @@ func operationSaveCurrency() {}
 // @Failure 404 {object} Error
 // @Router /api/vehicles/{id}/maintenance-history [get]
 func maintenanceComponentHistory() {}
+
+type MaintenanceInterval struct {
+	Kilometers int32  `json:"kilometers" minimum:"0" maximum:"1000000"`
+	Duration   int32  `json:"duration" minimum:"0"`
+	Unit       string `json:"unit" enums:"days,months"`
+}
+type MaintenanceSchedule struct {
+	Kind            string              `json:"kind" enums:"engine_oil,tire_pressure,general_service"`
+	ActiveSource    string              `json:"active_source" enums:"default,personal,manual"`
+	Personal        MaintenanceInterval `json:"personal"`
+	Manual          MaintenanceInterval `json:"manual"`
+	ManualReference string              `json:"manual_reference"`
+	Default         MaintenanceInterval `json:"default"`
+}
+
+// @Summary Save vehicle reminder settings
+// @Description Stores both sources; only the selected source applies. Zero disables a threshold. Manual values are user-entered. Default intervals are read-only. Effective pressure changes dismiss old alerts and reevaluate the latest fill.
+// @Tags vehicles
+// @Accept json
+// @Produce json
+// @Param id path int true "Vehicle ID"
+// @Param kind path string true "Task" Enums(engine_oil,tire_pressure,general_service)
+// @Param body body MaintenanceSchedule true "Both saved intervals and active source"
+// @Success 200 {object} map[string]bool
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 404 {object} Error
+// @Router /api/vehicles/{id}/maintenance-schedules/{kind} [put]
+func saveMaintenanceSchedule() {}

@@ -26,6 +26,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		v.Get("/maintenance-records/{recordID}/attachments/{attachmentID}", h.DownloadMaintenanceAttachment)
 		v.Get("/history", h.History)
 		v.Get("/maintenance-history", h.MaintenanceHistory)
+		v.Put("/maintenance-schedules/{kind}", h.SaveMaintenanceSchedule)
 		v.Delete("/air-fills/{airFillID}", h.DeleteAirFill)
 		v.Delete("/fuel-fillups/{fillupID}", h.DeleteFuelFillup)
 		v.Delete("/maintenance-records/{recordID}", h.DeleteMaintenanceRecord)

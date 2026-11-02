@@ -2,7 +2,10 @@ package vehicle
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
+	"io"
+	"math"
 	"net/http"
 	"time"
 
@@ -30,6 +33,17 @@ func (h *Handler) CreateAirFill(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	var input struct {
+		OdometerKM *float64 `json:"odometer_km"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024)).Decode(&input); err != nil && !errors.Is(err, io.EOF) {
+		webutil.BadRequest(w, "invalid json")
+		return
+	}
+	if input.OdometerKM != nil && (math.IsNaN(*input.OdometerKM) || math.IsInf(*input.OdometerKM, 0) || *input.OdometerKM < 0 || *input.OdometerKM >= 1e11) {
+		webutil.BadRequest(w, "invalid odometer")
+		return
+	}
 
 	q := query.New(h.DB)
 	hasVehicle, err := q.VehicleExists(r.Context(), query.VehicleExistsParams{ID: vehicleID, UserID: user.ID})
@@ -42,7 +56,7 @@ func (h *Handler) CreateAirFill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filledAt, err := q.CreateVehicleAirFill(r.Context(), query.CreateVehicleAirFillParams{VehicleID: vehicleID, UserID: user.ID})
+	filledAt, err := q.CreateVehicleAirFill(r.Context(), query.CreateVehicleAirFillParams{VehicleID: vehicleID, UserID: user.ID, OdometerKm: input.OdometerKM})
 	if errors.Is(err, sql.ErrNoRows) {
 		http.NotFound(w, r)
 		return

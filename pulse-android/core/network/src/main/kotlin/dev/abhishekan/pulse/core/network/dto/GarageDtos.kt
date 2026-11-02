@@ -17,6 +17,7 @@ import kotlinx.serialization.json.JsonPrimitive
 @Serializable data class AirDto(
     val id: Long,
     @SerialName("filled_at") val date: String,
+    @SerialName("odometer_km") val odometer: JsonPrimitive? = null,
 )
 
 @Serializable data class FuelItemDto(
@@ -49,9 +50,26 @@ import kotlinx.serialization.json.JsonPrimitive
     val description: String = "",
 )
 
+@Serializable data class MaintenanceIntervalDto(
+    val kilometers: Int = 0,
+    val duration: Int = 0,
+    val unit: String = "months",
+)
+
+@Serializable data class MaintenanceScheduleDto(
+    val kind: String,
+    @SerialName("active_source") val activeSource: String = "default",
+    val personal: MaintenanceIntervalDto = MaintenanceIntervalDto(),
+    val manual: MaintenanceIntervalDto = MaintenanceIntervalDto(),
+    @SerialName("manual_reference") val manualReference: String = "",
+    @SerialName("default") val defaultInterval: MaintenanceIntervalDto = MaintenanceIntervalDto(),
+)
+
 @Serializable data class UpcomingMaintenanceDto(
     val kind: String,
     val status: String,
+    val source: String = "default",
+    @SerialName("distance_unavailable") val distanceUnavailable: Boolean = false,
     @SerialName("due_date") val dueDate: String? = null,
     @SerialName("remaining_days") val remainingDays: Int? = null,
     @SerialName("remaining_km") val remainingKm: JsonPrimitive? = null,
@@ -100,6 +118,7 @@ import kotlinx.serialization.json.JsonPrimitive
     @SerialName("maintenance_records") val maintenance: List<MaintenanceDto>?,
     @SerialName("fuel_efficiency") val efficiency: Map<String, EfficiencyDto>?,
     @SerialName("coming_up") val upcoming: List<UpcomingMaintenanceDto> = emptyList(),
+    @SerialName("maintenance_schedules") val schedules: List<MaintenanceScheduleDto> = emptyList(),
 )
 
 @Serializable data class VehicleCatalogOptionDto(

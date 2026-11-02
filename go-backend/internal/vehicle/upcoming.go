@@ -7,6 +7,8 @@ import (
 )
 
 type upcomingMaintenance struct {
+	DistanceUnavailable    bool       `json:"distance_unavailable"`
+	Source                 string     `json:"source"`
 	Kind                   string     `json:"kind"`
 	Status                 string     `json:"status"`
 	DueDate                *string    `json:"due_date"`
@@ -20,10 +22,17 @@ type upcomingMaintenance struct {
 	IntervalDays           int        `json:"interval_days"`
 }
 
-// shortcut: generic estimates until per-vehicle manufacturer schedules are supported.
-func calculateUpcoming(kind string, fuels []string, air []airFillHistory, fills []fuelFillHistory, records []maintenanceRecord, now time.Time) []upcomingMaintenance {
+func calculateUpcoming(kind string, fuels []string, air []airFillHistory, fills []fuelFillHistory, records []maintenanceRecord, now time.Time, schedules ...maintenanceSchedule) []upcomingMaintenance {
 	location := time.FixedZone("India", 19800)
 	now = now.In(location)
+	settings := map[string]maintenanceSchedule{}
+	for _, setting := range defaultSchedules(kind) {
+		settings[setting.Kind] = setting
+	}
+	for _, setting := range schedules {
+		setting.Default = settings[setting.Kind].Default
+		settings[setting.Kind] = setting
+	}
 	var mileage *float64
 	var mileageAt time.Time
 	for _, f := range fills {
@@ -36,11 +45,10 @@ func calculateUpcoming(kind string, fuels []string, air []airFillHistory, fills 
 			mileage, mileageAt = r.OdometerKM, r.OccurredAt
 		}
 	}
-	twoWheeler := kind == "motorcycle" || kind == "moped"
-	supported := twoWheeler || kind == "car"
-	oilKM, oilMonths, serviceKM, serviceMonths := 10000, 9, 10000, 12
-	if twoWheeler {
-		oilKM, oilMonths, serviceKM, serviceMonths = 3000, 4, 5000, 6
+	for _, a := range air {
+		if a.OdometerKM != nil && !a.FilledAt.After(now) && (a.FilledAt.After(mileageAt) || (a.FilledAt.Equal(mileageAt) && (mileage == nil || *a.OdometerKM > *mileage))) {
+			mileage, mileageAt = a.OdometerKM, a.FilledAt
+		}
 	}
 	result := []upcomingMaintenance{}
 	find := func(component, action string) *maintenanceRecord {
@@ -58,8 +66,16 @@ func calculateUpcoming(kind string, fuels []string, air []airFillHistory, fills 
 		}
 		return latest
 	}
-	build := func(key string, km, months, days int, at *time.Time, baselineKM *float64) upcomingMaintenance {
-		item := upcomingMaintenance{Kind: key, Status: "no_history", IntervalKM: km, IntervalMonths: months, IntervalDays: days, LastAt: at, LastRecordedOdometerKM: mileage}
+	build := func(key string, at *time.Time, baselineKM *float64) upcomingMaintenance {
+		setting := settings[key]
+		interval := setting.effective()
+		km, months, days := int(interval.Kilometers), 0, 0
+		if interval.Unit == "months" {
+			months = int(interval.Duration)
+		} else {
+			days = int(interval.Duration)
+		}
+		item := upcomingMaintenance{Kind: key, Source: setting.ActiveSource, Status: "no_history", IntervalKM: km, IntervalMonths: months, IntervalDays: days, LastAt: at, LastRecordedOdometerKM: mileage}
 		if at == nil {
 			return item
 		}
@@ -71,14 +87,18 @@ func calculateUpcoming(kind string, fuels []string, air []airFillHistory, fills 
 			lastDay := first.AddDate(0, 1, -1).Day()
 			due = first.AddDate(0, 0, min(start.Day(), lastDay)-1)
 		}
-		date := due.Format("2006-01-02")
-		remaining := int(due.Sub(dayIn(now, location)).Hours() / 24)
-		progress := now.Sub(start).Seconds() / due.Sub(start).Seconds()
+		progress := 0.0
 		item.Status = "upcoming"
-		if remaining == 0 {
-			item.Status = "due"
-		} else if remaining < 0 {
-			item.Status = "overdue"
+		if months > 0 || days > 0 {
+			date := due.Format("2006-01-02")
+			remaining := int(due.Sub(dayIn(now, location)).Hours() / 24)
+			item.DueDate, item.RemainingDays = &date, &remaining
+			progress = now.Sub(start).Seconds() / due.Sub(start).Seconds()
+			if remaining == 0 {
+				item.Status = "due"
+			} else if remaining < 0 {
+				item.Status = "overdue"
+			}
 		}
 		if km > 0 && mileage != nil && baselineKM != nil && !mileageAt.Before(*at) && *mileage >= *baselineKM {
 			distance := *baselineKM + float64(km) - *mileage
@@ -90,36 +110,39 @@ func calculateUpcoming(kind string, fuels []string, air []airFillHistory, fills 
 				item.Status = "due"
 			}
 		}
+		item.DistanceUnavailable = km > 0 && item.RemainingKM == nil
+		if item.DueDate == nil && item.RemainingKM == nil {
+			item.Status = "needs_odometer"
+			return item
+		}
 		progress = math.Max(0, math.Min(1, progress))
-		item.DueDate, item.RemainingDays, item.Progress = &date, &remaining, &progress
+		item.Progress = &progress
 		return item
 	}
-	if supported && slices.ContainsFunc(fuels, func(f string) bool { return f != "electric" }) {
+	if (settings["engine_oil"].effective().Kilometers > 0 || settings["engine_oil"].effective().Duration > 0) && slices.ContainsFunc(fuels, func(f string) bool { return f != "electric" }) {
 		var at *time.Time
 		var odometer *float64
 		if r := find("engine_oil", "replaced"); r != nil {
 			at, odometer = &r.OccurredAt, r.OdometerKM
 		}
-		result = append(result, build("engine_oil", oilKM, oilMonths, 0, at, odometer))
-	}
-	days := 30
-	if twoWheeler {
-		days = 14
+		result = append(result, build("engine_oil", at, odometer))
 	}
 	var lastAir *time.Time
+	var airOdometer *float64
 	for i := range air {
 		if !air[i].FilledAt.After(now) && (lastAir == nil || air[i].FilledAt.After(*lastAir)) {
 			lastAir = &air[i].FilledAt
+			airOdometer = air[i].OdometerKM
 		}
 	}
-	result = append(result, build("tire_pressure", 0, 0, days, lastAir, nil))
-	if supported {
+	result = append(result, build("tire_pressure", lastAir, airOdometer))
+	if settings["general_service"].effective().Kilometers > 0 || settings["general_service"].effective().Duration > 0 {
 		var at *time.Time
 		var odometer *float64
 		if r := find("general_service", "completed"); r != nil {
 			at, odometer = &r.OccurredAt, r.OdometerKM
 		}
-		result = append(result, build("general_service", serviceKM, serviceMonths, 0, at, odometer))
+		result = append(result, build("general_service", at, odometer))
 	}
 	return result
 }

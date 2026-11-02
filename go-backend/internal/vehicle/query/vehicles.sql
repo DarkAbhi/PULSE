@@ -34,7 +34,7 @@ SELECT name, kind, catalog_id, make_name, model_name, fuel_types, front_tire_pre
 front_tire_pressure_pillion, rear_tire_pressure_pillion FROM vehicles WHERE id=$1 AND user_id=$2;
 
 -- name: ListVehicleAirFills :many
-SELECT id,filled_at FROM vehicle_air_fills WHERE vehicle_id=$1 AND user_id=$2 ORDER BY filled_at DESC,id DESC;
+SELECT id,filled_at,odometer_km FROM vehicle_air_fills WHERE vehicle_id=$1 AND user_id=$2 ORDER BY filled_at DESC,id DESC;
 
 -- name: ListVehicleFuelFillups :many
 SELECT id,odometer_km,filled_at,station_name,notes FROM vehicle_fuel_fillups

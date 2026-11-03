@@ -7,7 +7,7 @@ import { Watch } from "lucide-react";
 import DeleteVisitButton from "./delete-visit-button";
 import DeleteExerciseButton from "./delete-exercise-button";
 import EditExerciseButton from "./edit-exercise-button";
-import AddExerciseForm from "./add-exercise-form";
+import AddExerciseForm, { AddExerciseShortcut } from "./add-exercise-form";
 import { formatDuration } from "./format-duration.mjs";
 import type { SavedExercise } from "./actions";
 
@@ -41,6 +41,13 @@ export default async function GymVisitPage({ params }: PageProps) {
     timeZone,
   });
 
+  const compactDateFormatter = new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone,
+  });
+
   const workoutTimeFormatter = new Intl.DateTimeFormat("en-IN", {
     timeStyle: "short",
     timeZone,
@@ -69,6 +76,7 @@ export default async function GymVisitPage({ params }: PageProps) {
   let exercises: SavedExercise[] = [];
   let error = "";
   let workoutTitle = "Workout";
+  let compactTitle = workoutTitle;
   let visit: GymVisit | null = null;
   let detailsError = "";
   let visitNotFound = false;
@@ -88,9 +96,11 @@ export default async function GymVisitPage({ params }: PageProps) {
     if (visitResponse.ok) {
       visit = (await visitResponse.json()) as GymVisit;
       const visitDate = new Date(visit.start_time ?? visit.created_at);
-      workoutTitle = isToday(visitDate)
+      const today = isToday(visitDate);
+      workoutTitle = today
         ? "Today's workout"
         : visitDateFormatter.format(visitDate);
+      compactTitle = today ? workoutTitle : compactDateFormatter.format(visitDate);
     } else {
       detailsError = "We couldn't load this workout's details. Please try again.";
     }
@@ -108,19 +118,19 @@ export default async function GymVisitPage({ params }: PageProps) {
     visit.calories_burned,
   ].some((value) => value != null);
 
+  const showExerciseLog = Boolean(error) || exercises.length > 0;
+
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
-      <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.15fr_0.85fr]">
-        <section>
+    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-10 sm:py-10 lg:px-16">
+      <div className="mx-auto grid max-w-6xl items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:auto-rows-min lg:gap-x-10">
+        <header className="min-w-0 lg:col-start-1 lg:row-start-1">
           <div className="flex items-start justify-between gap-4">
             <BackLink href="/fitness">Fitness</BackLink>
             <DeleteVisitButton visitID={visitID} />
           </div>
-          <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-action uppercase">
-            Fitness Workout
-          </p>
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            {workoutTitle}
+            <span className="sm:hidden">{compactTitle}</span>
+            <span className="hidden sm:inline">{workoutTitle}</span>
           </h1>
           {visit?.synced_from_apple_watch && (
             <p className="mt-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -128,65 +138,61 @@ export default async function GymVisitPage({ params }: PageProps) {
               Synced from fitness watch
             </p>
           )}
-          <p className="mt-3 text-base text-muted-foreground">
-            Capture what you did, one exercise and set at a time.
-          </p>
+          {showExerciseLog && <AddExerciseShortcut />}
 
-          {hasWorkoutDetails && <PulseCard as="section" aria-labelledby="workout-details-heading" className="mt-8 p-6">
-            <h2 id="workout-details-heading" className="text-xl font-semibold">Workout details</h2>
+          {(hasWorkoutDetails || (detailsError && detailsError !== error)) && <PulseCard as="section" aria-labelledby="workout-details-heading" className="mt-5 p-4 sm:p-6">
+            <h2 id="workout-details-heading" className="text-base font-semibold">Workout details</h2>
             {detailsError ? (
               <p className="mt-4 text-sm text-destructive" role="alert">{detailsError}</p>
             ) : visit && (
-              <>
-                <dl className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {[
-                    ["Start time", visit.start_time == null ? "Not available" : workoutTimeFormatter.format(new Date(visit.start_time))],
-                    ["End time", visit.end_time == null ? "Not available" : workoutTimeFormatter.format(new Date(visit.end_time))],
-                    ["Duration", formatDuration(visit.duration_seconds)],
-                    ["Calories burned", visit.calories_burned == null ? "Not available" : `${workoutNumberFormatter.format(visit.calories_burned)} kcal`],
-                  ].map(([label, value]) => (
-                    <div key={label}>
-                      <dt className="text-sm text-muted-foreground">{label}</dt>
-                      <dd className="mt-1 font-semibold text-foreground">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-                {visit.start_time == null && (
-                  <p className="mt-5 text-sm text-muted-foreground">No timing or calorie data is linked to this workout yet.</p>
-                )}
-              </>
+              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+                {[
+                  ["Start time", visit.start_time == null ? "Not available" : workoutTimeFormatter.format(new Date(visit.start_time))],
+                  ["End time", visit.end_time == null ? "Not available" : workoutTimeFormatter.format(new Date(visit.end_time))],
+                  ["Duration", formatDuration(visit.duration_seconds)],
+                  ["Calories burned", visit.calories_burned == null ? "Not available" : `${workoutNumberFormatter.format(visit.calories_burned)} kcal`],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <dt className="text-sm text-muted-foreground">{label}</dt>
+                    <dd className="mt-1 font-semibold text-foreground">{value}</dd>
+                  </div>
+                ))}
+              </dl>
             )}
           </PulseCard>}
 
-          <div className="mt-8 space-y-4">
+          {!showExerciseLog && (
+            <p className="mt-4 text-sm text-muted-foreground">No exercises saved yet.</p>
+          )}
+        </header>
+
+        {showExerciseLog && (
+          <section className="min-w-0 space-y-3 lg:col-start-1 lg:row-start-2" aria-labelledby="exercises-heading">
+            <h2 id="exercises-heading" className="text-xl font-semibold">Exercises</h2>
             {error ? (
               <p className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
                 {error}
               </p>
-            ) : exercises.length === 0 ? (
-              <PulseCard className="p-8">
-                <p className="font-semibold text-foreground">
-                  No exercises saved yet.
-                </p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Add your first exercise using the form.
-                </p>
-              </PulseCard>
             ) : (
               exercises.map((exercise) => (
                 <PulseCard as="article"
-                  className="p-6"
+                  className="p-4 sm:p-6"
                   key={exercise.id}
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <h2 className="min-w-0 break-words text-xl font-semibold text-foreground">
+                  <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                    <h3 className="min-w-0 break-words text-lg font-semibold text-foreground">
                       {exercise.name}
-                    </h2>
-                    <DeleteExerciseButton visitID={visitID} exerciseID={exercise.id} exerciseName={exercise.name} />
+                    </h3>
+                    <div className="flex items-center gap-1">
+                      <EditExerciseButton visitID={visitID} exercise={exercise} />
+                      <DeleteExerciseButton visitID={visitID} exerciseID={exercise.id} exerciseName={exercise.name} />
+                    </div>
                   </div>
-                  <EditExerciseButton visitID={visitID} exercise={exercise} />
                   {exercise.catalog_exercise && <div className="mt-2 text-sm text-muted-foreground">
-                    <p>{exercise.catalog_exercise.name} · {exercise.catalog_exercise.equipment ?? "Equipment unspecified"}</p>
+                    <p>
+                      {exercise.catalog_exercise.name !== exercise.name && `${exercise.catalog_exercise.name} · `}
+                      {exercise.catalog_exercise.equipment ?? "Equipment unspecified"}
+                    </p>
                     <p className="mt-1">{exercise.catalog_exercise.data.primaryMuscles.join(", ")}</p>
                     <details className="mt-3">
                       <summary className="cursor-pointer">Exercise instructions</summary>
@@ -195,21 +201,21 @@ export default async function GymVisitPage({ params }: PageProps) {
                       </ol>
                     </details>
                   </div>}
-                  <div className="mt-4 overflow-hidden rounded-lg">
+                  <div className="mt-4 overflow-x-auto rounded-lg">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-muted text-muted-foreground">
                         <tr>
-                          <th className="px-4 py-3 font-medium">Set</th>
-                          <th className="px-4 py-3 font-medium">Reps</th>
-                          <th className="px-4 py-3 font-medium">Weight</th>
+                          <th className="px-2 py-2 sm:px-4 font-medium">Set</th>
+                          <th className="px-2 py-2 sm:px-4 font-medium">Reps</th>
+                          <th className="px-2 py-2 sm:px-4 font-medium">Weight</th>
                         </tr>
                       </thead>
                       <tbody>
                         {exercise.sets.map((set) => (
                           <tr key={set.id} className="border-t border-divider">
-                            <td className="px-4 py-3 text-muted-foreground">{set.set_number}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{set.reps}</td>
-                            <td className="px-4 py-3 text-muted-foreground">
+                            <td className="px-2 py-2 sm:px-4 text-muted-foreground">{set.set_number}</td>
+                            <td className="px-2 py-2 sm:px-4 text-muted-foreground">{set.reps}</td>
+                            <td className="px-2 py-2 sm:px-4 text-muted-foreground">
                               {set.weight === null
                                 ? "Bodyweight"
                                 : `${set.weight} kg`}
@@ -222,8 +228,8 @@ export default async function GymVisitPage({ params }: PageProps) {
                 </PulseCard>
               ))
             )}
-          </div>
-        </section>
+          </section>
+        )}
 
         <AddExerciseForm visitID={visitID} />
       </div>

@@ -16,13 +16,13 @@ export default function EditExerciseButton({ visitID, exercise }: { visitID: str
   }
 
   return (
-    <div className="mt-3">
-      <Button ref={triggerRef} type="button" variant="secondary" size="sm"
+    <>
+      <Button ref={triggerRef} type="button" variant="secondary" size="lg"
         aria-haspopup="dialog" aria-label={`Edit ${exercise.name}`}
         onClick={() => setIsEditing(true)}>
-        <Pencil className="h-4 w-4" /> Edit exercise
+        <Pencil className="h-4 w-4" /> Edit
       </Button>
       {isEditing && <AddExerciseForm visitID={visitID} exercise={exercise} onClose={closeEditor} />}
-    </div>
+    </>
   );
 }

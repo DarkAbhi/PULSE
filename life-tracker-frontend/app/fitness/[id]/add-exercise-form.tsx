@@ -19,6 +19,18 @@ function newSet(): ExerciseSet {
   return { reps: "", weight: "" };
 }
 
+const addExerciseNameID = "add-exercise-name";
+
+export function AddExerciseShortcut() {
+  return (
+    <Button type="button" variant="soft" size="lg" className="mt-4 lg:hidden"
+      icon={<Plus aria-hidden="true" className="h-4 w-4" />}
+      onClick={() => document.getElementById(addExerciseNameID)?.focus()}>
+      Add exercise
+    </Button>
+  );
+}
+
 interface AddExerciseFormProps {
   visitID: string;
   exercise?: SavedExercise;
@@ -26,7 +38,8 @@ interface AddExerciseFormProps {
 }
 
 export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerciseFormProps) {
-  const fieldID = useId();
+  const editFieldID = useId();
+  const fieldID = exercise ? editFieldID : addExerciseNameID;
   const titleID = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const [exerciseName, setExerciseName] = useState(exercise?.name ?? "");
@@ -332,7 +345,7 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
   }
 
   return (
-    <PulseCard as="aside" className="h-fit p-6 sm:p-8">
+    <PulseCard as="aside" className="min-w-0 p-4 sm:p-8 lg:col-start-2 lg:row-start-1 lg:row-span-2">
       <h2 className="text-xl font-semibold text-foreground">Add an exercise</h2>
       {form}
     </PulseCard>

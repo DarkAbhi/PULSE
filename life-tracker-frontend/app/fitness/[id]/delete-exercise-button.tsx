@@ -26,12 +26,13 @@ export default function DeleteExerciseButton({ visitID, exerciseID, exerciseName
 
   return (
     <>
-      <Button type="button" variant="destructive" size="sm"
+      <Button type="button" variant="icon" size="lg"
+        title="Delete exercise"
         aria-label={`Delete ${exerciseName}`}
         disabled={isPending}
         onClick={() => { setError(""); setIsOpen(true); }}
       >
-        <Trash2 className="h-4 w-4" /> Delete exercise
+        <Trash2 aria-hidden="true" className="h-4 w-4" />
       </Button>
       <ConfirmationDialog
         isOpen={isOpen}

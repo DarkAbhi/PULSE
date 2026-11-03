@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.UpcomingMaintenance
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseLinearProgressIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.time.LocalDate
@@ -93,7 +93,7 @@ internal fun ComingUp(
                         )
                     }
                     if (!pressure && progress != null) {
-                        LinearProgressIndicator(
+                        PulseLinearProgressIndicator(
                             progress = { progress.coerceIn(0f, 1f) },
                             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                             color = PulseTheme.colors.action,

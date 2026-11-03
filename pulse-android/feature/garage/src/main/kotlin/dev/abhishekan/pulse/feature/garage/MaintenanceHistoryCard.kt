@@ -117,7 +117,14 @@ private fun MaintenanceSummary(
         if (item.actions.isNotEmpty()) {
             PulseText(stringResource(R.string.pulse_garage_work_performed), style = PulseTextStyle.Title3)
             item.actions.forEach { action ->
-                PulseText("${garageOption(action.component)} · ${garageOption(action.action)}", style = PulseTextStyle.Label)
+                PulseText(
+                    stringResource(
+                        R.string.pulse_garage_work_performed_action,
+                        garageOption(action.component),
+                        garageOption(action.action),
+                    ),
+                    style = PulseTextStyle.Label,
+                )
                 if (action.description.isNotBlank()) {
                     PulseText(
                         action.description,

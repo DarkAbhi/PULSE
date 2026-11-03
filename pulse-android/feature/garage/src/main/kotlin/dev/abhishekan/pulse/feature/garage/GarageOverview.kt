@@ -34,6 +34,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -510,7 +511,7 @@ private fun GarageActionPair(
                     variant = firstVariant,
                     leadingIcon =
                         if (primaryFirst) {
-                            { PulseText("+", style = PulseTextStyle.Title2) }
+                            { Icon(painterResource(R.drawable.garage_add), null, Modifier.size(PulseTokens.medium)) }
                         } else {
                             null
                         },
@@ -523,7 +524,7 @@ private fun GarageActionPair(
                     variant = secondVariant,
                     leadingIcon =
                         if (primaryFirst) {
-                            { PulseText("+", style = PulseTextStyle.Title2) }
+                            { Icon(painterResource(R.drawable.garage_add), null, Modifier.size(PulseTokens.medium)) }
                         } else {
                             null
                         },

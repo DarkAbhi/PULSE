@@ -386,4 +386,5 @@
     <string name="pulse_garage_schedule_time_example">e.g. 6</string>
     <string name="pulse_garage_schedule_reference_example">e.g. Owner manual, page 42</string>
     <string name="pulse_garage_schedule_missing_interval">Enter a distance or a time interval for the active schedule.</string>
+    <string name="pulse_garage_work_performed_action">%1$s · %2$s</string>
 </resources>

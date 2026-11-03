@@ -70,8 +70,9 @@ for Maestro setup and commands.
 Use `PulseCard` from `app/components/design-system/pulse-card` for card surfaces,
 including empty states. It shares the dashboard's themed background, soft corners,
 and borderless treatment. Pass `as="section"`, `as="article"`, or `as="aside"`
-when the content needs those semantics, and supply padding and layout with
-`className`. Use the named `PulseCardLink` export for cards that navigate.
+when the content needs those semantics, and supply sizing, padding, and layout
+with `className`. Use the named `PulseCardLink` export for cards that navigate.
+Card surfaces should keep the same shadow and position on hover.
 Keep the shared surface styling in `globals.css` rather than adding per-page
 card outlines, backgrounds, or corner radii. Status colors and artwork may be
 applied where needed.

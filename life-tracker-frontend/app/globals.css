@@ -187,25 +187,9 @@
     background-color: var(--card);
   }
 
-  .pulse-card[href] {
-    transition: box-shadow 0.2s;
-  }
-
   .pulse-card[href]:focus-visible {
     outline: 3px solid var(--ring);
     outline-offset: 4px;
-  }
-
-  @media (hover: hover) {
-    .pulse-card[href]:hover {
-      box-shadow: 0 8px 24px #00000012;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .pulse-card[href] {
-      transition: none;
-    }
   }
 }
 

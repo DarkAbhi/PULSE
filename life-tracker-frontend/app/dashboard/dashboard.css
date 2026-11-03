@@ -52,7 +52,7 @@
 .pulse-space-link span span { display: block; color: var(--dashboard-muted); font-size: 12px; margin-top: 4px; }
 .pulse-dashboard a, .pulse-dashboard button { -webkit-tap-highlight-color: transparent; }
 .pulse-dashboard a:focus-visible, .pulse-dashboard button:focus-visible { outline: 3px solid var(--ring); outline-offset: 4px; }
-@media (hover: hover) { .pulse-summary-card, .pulse-space-link { transition: box-shadow .2s; } .pulse-horizon-card:hover, .pulse-space-link:hover { box-shadow: 0 8px 24px #00000012; } .pulse-card-cta:hover { filter: brightness(.96); } }
+@media (hover: hover) { .pulse-card-cta:hover { filter: brightness(.96); } }
 @media (min-width: 600px) {
   .pulse-dashboard { padding: 32px 24px 64px; }
   .pulse-hero { padding: 32px; min-height: 400px; }

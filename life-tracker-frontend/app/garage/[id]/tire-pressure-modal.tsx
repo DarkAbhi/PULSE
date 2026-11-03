@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
+import PulseCard from "@/app/components/design-system/pulse-card";
 import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 import { saveTirePressure } from "./actions";
 import { Gauge, User, Users } from "lucide-react";
@@ -110,7 +111,7 @@ export default function TirePressureModal({
 
         <div className="mt-6 space-y-4">
           {/* Solo Riding */}
-          <div className="rounded-xl bg-card p-4">
+          <PulseCard className="rounded-xl p-4">
             <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
               <User className="h-4 w-4 text-action" /> Solo riding
             </h3>
@@ -148,10 +149,10 @@ export default function TirePressureModal({
                 />
               </div>
             </div>
-          </div>
+          </PulseCard>
 
           {/* With Pillion */}
-          <div className="rounded-xl bg-card p-4">
+          <PulseCard className="rounded-xl p-4">
             <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
               <Users className="h-4 w-4 text-action" /> With pillion
             </h3>
@@ -189,7 +190,7 @@ export default function TirePressureModal({
                 />
               </div>
             </div>
-          </div>
+          </PulseCard>
         </div>
 
         {error && (

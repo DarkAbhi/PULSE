@@ -165,7 +165,7 @@ export default function PlannedPurchasesTab({
             {purchases.map((item) => (
               <PulseCard
                 key={item.id}
-                className="flex items-center justify-between gap-3 bg-background p-4 transition hover:shadow-md"
+                className="flex items-center justify-between gap-3 bg-background p-4"
               >
                 <div className="min-w-0 flex-1">
                   <h4 className="font-semibold text-foreground text-sm truncate">{item.name}</h4>

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import PulseCard from "@/app/components/design-system/pulse-card";
 import Button from "@/app/components/design-system/button";
 import { MaintenanceInterval, MaintenanceSchedule } from "./types";
 import { saveMaintenanceSchedule } from "./actions";
@@ -48,7 +49,7 @@ export default function MaintenanceScheduleForm({ initial, vehicleId }: { initia
               setValue((current) => ({ ...current, [key]: { ...current[key], ...patch } }));
 
             return (
-              <section key={key} aria-label={label} className="min-w-0 overflow-hidden rounded-xl bg-card">
+              <PulseCard as="section" key={key} aria-label={label} className="overflow-hidden rounded-xl">
                 <label className={`flex min-h-12 cursor-pointer items-center gap-3 border-b px-4 py-3 sm:px-5 ${active ? "border-action/25 bg-accent text-accent-foreground" : "border-divider bg-secondary/45"}`}>
                   <input
                     type="radio"
@@ -80,7 +81,7 @@ export default function MaintenanceScheduleForm({ initial, vehicleId }: { initia
                     </label>
                   )}
                 </div>
-              </section>
+              </PulseCard>
             );
           })}
         </div>

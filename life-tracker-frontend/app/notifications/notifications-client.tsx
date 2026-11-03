@@ -51,7 +51,7 @@ export default function NotificationsClient({ notifications }: NotificationsClie
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Notification center</h1>
             <p className="mt-3 text-base text-muted-foreground">Stay in the loop across every part of PULSE.</p>
           </div>
-          <Button variant="destructiveOutline" size="lg"
+          <Button variant="destructive" size="lg"
             className="shrink-0"
             disabled={isPending || notifications.length === 0}
             onClick={handleClearAll}

@@ -1,5 +1,6 @@
 "use client";
 
+import Select from "@/app/components/design-system/select";
 import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 import { dateKey } from "@/app/lib/time-zone.mjs";
@@ -154,9 +155,9 @@ export default function SubscriptionDialog({
   };
 
   return (
-    <Dialog panelClassName="border-border/80 p-6 sm:p-6 transition-all" size="md">
+    <Dialog panelClassName="p-6 sm:p-6 transition-all" size="md">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border/60 pb-4">
+        <div className="flex items-center justify-between border-b border-divider/60 pb-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-action">
               <CreditCard className="h-5 w-5" />
@@ -180,7 +181,7 @@ export default function SubscriptionDialog({
 
         {/* Error alert */}
         {error && (
-          <div className="mt-4 flex items-center gap-2 rounded-xl bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20">
+          <div className="mt-4 flex items-center gap-2 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -198,7 +199,7 @@ export default function SubscriptionDialog({
               placeholder="e.g. Netflix, Spotify, AWS, Gym"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
+              className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground"
               required
             />
           </div>
@@ -215,7 +216,7 @@ export default function SubscriptionDialog({
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground"
                 required
               />
             </div>
@@ -223,14 +224,14 @@ export default function SubscriptionDialog({
               <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
                 Billing Cycle *
               </label>
-              <select
+              <Select
                 value={billingCycle}
                 onChange={(e) => setBillingCycle(e.target.value)}
-                className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
               >
                 <option value="monthly">Monthly</option>
                 <option value="yearly">Yearly (Annual)</option>
-              </select>
+              </Select>
             </div>
           </div>
 
@@ -248,7 +249,7 @@ export default function SubscriptionDialog({
                   placeholder="1 - 31"
                   value={billingDay}
                   onChange={(e) => setBillingDay(e.target.value)}
-                  className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
                   required
                 />
               </div>
@@ -262,7 +263,7 @@ export default function SubscriptionDialog({
                     type="date"
                     value={renewalDate}
                     onChange={(e) => setRenewalDate(e.target.value)}
-                    className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
                     required
                   />
                 </div>
@@ -273,15 +274,15 @@ export default function SubscriptionDialog({
               <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
                 Status *
               </label>
-              <select
+              <Select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
               >
                 <option value="active">Active</option>
                 <option value="paused">Paused</option>
                 <option value="cancelled">Cancelled</option>
-              </select>
+              </Select>
             </div>
           </div>
 
@@ -291,10 +292,10 @@ export default function SubscriptionDialog({
               <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
                 Category
               </label>
-              <select
+              <Select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
               >
                 <option value="">None (Uncategorized)</option>
                 {categories.map((c) => (
@@ -302,16 +303,16 @@ export default function SubscriptionDialog({
                     {c.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
                 Link to Budget
               </label>
-              <select
+              <Select
                 value={budgetId}
                 onChange={(e) => setBudgetId(e.target.value)}
-                className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
               >
                 <option value="">None (No Budget)</option>
                 {budgets.map((b) => (
@@ -319,7 +320,7 @@ export default function SubscriptionDialog({
                     {b.name} ({formatMoney(b.allocated_amount, currency)})
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
 
@@ -333,12 +334,12 @@ export default function SubscriptionDialog({
               placeholder="e.g. Shared plan with family, renewal URL, payment card used"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary resize-none"
+              className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground resize-none"
             />
           </div>
 
           {/* Footer Actions */}
-          <DialogActions className="border-t border-border/60 pt-3">
+          <DialogActions className="border-t border-divider/60 pt-3">
             <DialogAction
               type="button"
               variant="secondary"

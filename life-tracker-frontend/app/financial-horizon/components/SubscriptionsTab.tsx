@@ -1,5 +1,6 @@
 "use client";
 
+import Select from "@/app/components/design-system/select";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { formatMoney } from "@/app/lib/currency.mjs";
@@ -127,19 +128,19 @@ export default function SubscriptionsTab({
     switch (status) {
       case "active":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-bold text-success border border-success/20">
+          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-bold text-success">
             <CheckCircle2 className="h-3 w-3" /> Active
           </span>
         );
       case "paused":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2.5 py-0.5 text-xs font-bold text-warning border border-warning/20">
+          <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2.5 py-0.5 text-xs font-bold text-warning">
             <PauseCircle className="h-3 w-3" /> Paused
           </span>
         );
       case "cancelled":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-bold text-muted-foreground border border-border">
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-bold text-muted-foreground">
             <XCircle className="h-3 w-3" /> Cancelled
           </span>
         );
@@ -278,34 +279,36 @@ export default function SubscriptionsTab({
             placeholder="Search subscriptions..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-border/80 bg-card pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary transition"
+            className="w-full rounded-xl bg-secondary pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground transition"
           />
         </div>
 
         {/* Filters & Add Button */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Cycle Filter */}
-          <select
+          <Select
+            aria-label="Billing cadence"
             value={cycleFilter}
             onChange={(e) => setCycleFilter(e.target.value)}
-            className="rounded-xl border border-border/80 bg-card px-3 py-2.5 text-xs font-semibold text-foreground focus:border-primary focus:outline-hidden"
+            className="min-h-8 rounded-lg bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground"
           >
             <option value="all">All Cadences</option>
             <option value="monthly">Monthly</option>
             <option value="yearly">Yearly</option>
-          </select>
+          </Select>
 
           {/* Status Filter */}
-          <select
+          <Select
+            aria-label="Subscription status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-border/80 bg-card px-3 py-2.5 text-xs font-semibold text-foreground focus:border-primary focus:outline-hidden"
+            className="min-h-8 rounded-lg bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground"
           >
             <option value="all">All Statuses</option>
             <option value="active">Active</option>
             <option value="paused">Paused</option>
             <option value="cancelled">Cancelled</option>
-          </select>
+          </Select>
 
           {/* Add Subscription Button */}
           <Button variant="primary" size="sm"
@@ -394,7 +397,7 @@ export default function SubscriptionsTab({
                   )}
 
                   {/* Details: Start Date & Renewal */}
-                  <div className="mt-4 space-y-2 border-t border-border/60 pt-3 text-xs">
+                  <div className="mt-4 space-y-2 border-t border-divider/60 pt-3 text-xs">
                     {/* Cycle Specific Detail (Billing Day for Monthly, Renewal Date for Yearly) */}
                     <div className="flex items-center justify-between text-muted-foreground">
                       <span className="flex items-center gap-1.5">
@@ -454,7 +457,7 @@ export default function SubscriptionsTab({
                 </div>
 
                 {/* Card Footer Actions */}
-                <div className="mt-5 pt-3 border-t border-border/60 flex items-center justify-between gap-2">
+                <div className="mt-5 pt-3 border-t border-divider/60 flex items-center justify-between gap-2">
                   {/* Left: Linked Transactions Trigger */}
                   <Button variant="tertiary" size="sm"
                     onClick={() => onViewTransactions(sub)}

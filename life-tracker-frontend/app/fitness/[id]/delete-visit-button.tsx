@@ -33,7 +33,7 @@ export default function DeleteVisitButton({ visitID }: DeleteVisitButtonProps) {
 
   return (
     <>
-      <Button variant="destructiveOutline" size="md"
+      <Button variant="destructive" size="md"
         onClick={() => setIsConfirmingDelete(true)}
         type="button"
       >

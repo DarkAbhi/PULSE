@@ -135,7 +135,7 @@ export default function ChangePasswordDialog({
         ) : (
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             {error && (
-              <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive" role="alert">
+              <div className="rounded-lg bg-destructive/10 p-3 text-xs text-destructive" role="alert">
                 {error}
               </div>
             )}
@@ -152,7 +152,7 @@ export default function ChangePasswordDialog({
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-xl bg-secondary px-4 py-2.5 pr-10 text-sm text-foreground transition"
                 />
                 <Button variant="icon" size="sm"
                   type="button"
@@ -178,7 +178,7 @@ export default function ChangePasswordDialog({
                   placeholder="At least 6 characters"
                   required
                   minLength={6}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-xl bg-secondary px-4 py-2.5 pr-10 text-sm text-foreground transition"
                 />
                 <Button variant="icon" size="sm"
                   type="button"
@@ -203,7 +203,7 @@ export default function ChangePasswordDialog({
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter new password"
                   required
-                  className="w-full rounded-xl border border-border bg-background px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-xl bg-secondary px-4 py-2.5 pr-10 text-sm text-foreground transition"
                 />
                 <Button variant="icon" size="sm"
                   type="button"

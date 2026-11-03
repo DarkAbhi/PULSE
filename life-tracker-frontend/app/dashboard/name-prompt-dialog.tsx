@@ -47,7 +47,7 @@ export default function NamePromptDialog({
           </label>
           <input
             autoFocus
-            className="w-full rounded-lg border border-border bg-background text-foreground px-4 py-3 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15"
+            className="w-full rounded-lg bg-secondary text-foreground px-4 py-3 transition"
             id="display-name"
             maxLength={120}
             onChange={(event) => setDisplayName(event.target.value)}

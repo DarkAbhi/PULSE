@@ -7,7 +7,6 @@ export type ButtonVariant =
   | "secondary"
   | "tertiary"
   | "destructive"
-  | "destructiveOutline"
   | "soft"
   | "warning"
   | "icon"
@@ -24,17 +23,16 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-primary-foreground hover:bg-primary-pressed focus-visible:ring-primary/20",
-  secondary: "border border-btn-cancel-border bg-btn-cancel-bg text-btn-cancel-text hover:bg-btn-cancel-hover focus-visible:ring-ring/15",
-  tertiary: "text-action hover:bg-primary/10 focus-visible:ring-primary/20",
-  destructive: "bg-destructive-soft text-destructive hover:bg-destructive-soft/80 focus-visible:ring-destructive/20",
-  destructiveOutline: "border border-destructive/40 text-destructive hover:bg-destructive/10 focus-visible:ring-destructive/20",
-  soft: "border border-primary/20 bg-primary/10 text-action hover:bg-primary/20 focus-visible:ring-primary/20",
-  warning: "bg-warning-soft text-warning hover:bg-warning-soft/80 focus-visible:ring-warning/20",
-  icon: "text-muted-foreground hover:bg-secondary hover:text-foreground focus-visible:ring-primary/20",
-  iconSecondary: "border border-border bg-card text-foreground hover:bg-secondary focus-visible:ring-primary/20",
-  iconDanger: "text-destructive hover:bg-destructive/10 focus-visible:ring-destructive/20",
-  menuItem: "w-full text-foreground hover:bg-primary/10 hover:text-action focus-visible:ring-primary/20",
+  primary: "bg-primary text-primary-foreground hover:bg-primary-pressed",
+  secondary: "bg-btn-cancel-bg text-btn-cancel-text hover:bg-btn-cancel-hover",
+  tertiary: "text-action hover:bg-primary/10",
+  destructive: "bg-destructive-soft text-destructive hover:bg-destructive-soft/80",
+  soft: "bg-primary/10 text-action hover:bg-primary/20",
+  warning: "bg-warning-soft text-warning hover:bg-warning-soft/80",
+  icon: "text-muted-foreground hover:bg-secondary hover:text-foreground",
+  iconSecondary: "bg-secondary text-foreground hover:bg-surface-strong",
+  iconDanger: "text-destructive hover:bg-destructive/10",
+  menuItem: "w-full text-foreground hover:bg-primary/10 hover:text-action",
 };
 
 const sizes: Record<ButtonSize, string> = {
@@ -60,7 +58,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     <button
       {...props}
       ref={ref}
-      className={`inline-flex items-center ${variant === "menuItem" ? "justify-start font-medium" : "justify-center font-semibold"} transition focus-visible:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-50 ${isIconButton ? iconSizes[size] : sizes[size]} ${variants[variant]} ${className}`}
+      className={`inline-flex items-center ${variant === "menuItem" ? "justify-start font-medium" : "justify-center font-semibold"} transition disabled:cursor-not-allowed disabled:opacity-50 ${isIconButton ? iconSizes[size] : sizes[size]} ${variants[variant]} ${className}`}
     >
       {iconPosition === "start" && icon}
       {children}

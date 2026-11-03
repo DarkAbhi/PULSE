@@ -113,7 +113,7 @@ export default function APIKeys() {
       {loading ? <p className="mt-6 text-sm text-muted-foreground">Loading keys…</p> : keys.length === 0 ? (
         <p className="mt-6 text-sm text-muted-foreground">No API keys yet.</p>
       ) : (
-        <ul className="mt-5 divide-y divide-border">
+        <ul className="mt-5 divide-y divide-divider">
           {keys.map((key) => (
             <li className="flex items-center justify-between gap-4 py-3" key={key.id}>
               <div className="min-w-0">
@@ -139,7 +139,7 @@ export default function APIKeys() {
             <div className="mt-6">
               <label htmlFor="created-api-key" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your API key</label>
               <div className="flex gap-2">
-                <input ref={tokenInput} id="created-api-key" readOnly value={token} onFocus={(event) => event.target.select()} className="min-w-0 flex-1 rounded-xl border border-border bg-background px-3 py-2 font-mono text-xs text-foreground" />
+                <input ref={tokenInput} id="created-api-key" readOnly value={token} onFocus={(event) => event.target.select()} className="min-w-0 flex-1 rounded-xl bg-secondary px-3 py-2 font-mono text-xs text-foreground" />
                 <Button type="button" variant="secondary" size="sm" aria-label="Copy API key" onClick={copyKey}><Copy className="h-4 w-4" /></Button>
               </div>
               <DialogActions><DialogAction type="button" onClick={closeDialog}>Done</DialogAction></DialogActions>
@@ -147,7 +147,7 @@ export default function APIKeys() {
           ) : (
             <form className="mt-6" onSubmit={createKey}>
               <label htmlFor="api-key-name" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name</label>
-              <input id="api-key-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} required autoFocus placeholder="e.g. Personal sync service" className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+              <input id="api-key-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} required autoFocus placeholder="e.g. Personal sync service" className="w-full rounded-xl bg-secondary px-4 py-2.5 text-sm text-foreground" />
               <DialogActions>
                 <DialogAction type="button" variant="secondary" onClick={closeDialog} disabled={busy}>Cancel</DialogAction>
                 <DialogAction type="submit" disabled={busy}>{busy ? "Creating…" : "Create key"}</DialogAction>

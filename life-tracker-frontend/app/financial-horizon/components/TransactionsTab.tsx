@@ -1,5 +1,6 @@
 "use client";
 
+import Select from "@/app/components/design-system/select";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { formatMoney } from "@/app/lib/currency.mjs";
@@ -66,7 +67,7 @@ export default function TransactionsTab({
   return (
     <section className="space-y-6">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-divider pb-4">
         <div>
           <div className="flex items-center gap-2">
             <Receipt className="h-5 w-5 text-action" />
@@ -102,18 +103,21 @@ export default function TransactionsTab({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 flex-wrap">
           {/* Transaction Type Filter Segment */}
-          <div className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-secondary/30 p-1 text-xs">
+          <div className="inline-flex items-center gap-1.5 rounded-xl bg-secondary/50 p-1 text-xs">
             <Button variant={txTypeFilter === "all" ? "primary" : "secondary"} size="sm"
+              aria-pressed={txTypeFilter === "all"}
               onClick={() => onTxTypeFilterChange("all")}
             >
               All Types
             </Button>
             <Button variant={txTypeFilter === "debit" ? "primary" : "secondary"} size="sm"
+              aria-pressed={txTypeFilter === "debit"}
               onClick={() => onTxTypeFilterChange("debit")}
             >
               Debit
             </Button>
             <Button variant={txTypeFilter === "credit" ? "primary" : "secondary"} size="sm"
+              aria-pressed={txTypeFilter === "credit"}
               onClick={() => onTxTypeFilterChange("credit")}
             >
               Credit
@@ -123,6 +127,7 @@ export default function TransactionsTab({
           {/* Categories Pill List */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none max-w-full sm:max-w-xl">
             <Button variant={txCategoryFilter === "all" ? "primary" : "secondary"} size="sm"
+              aria-pressed={txCategoryFilter === "all"}
               onClick={() => onTxCategoryFilterChange("all")}
               className="shrink-0"
             >
@@ -134,6 +139,7 @@ export default function TransactionsTab({
               return (
                 <Button variant={isSelected ? "soft" : "secondary"} size="sm"
                   key={cat.id}
+                  aria-pressed={isSelected}
                   onClick={() => onTxCategoryFilterChange(isSelected ? "all" : cat.name)}
                   className="shrink-0"
                 >
@@ -161,7 +167,7 @@ export default function TransactionsTab({
             placeholder="Search transactions..."
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
-            className="w-full rounded-xl border border-border bg-background pl-9 pr-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-xl bg-secondary pl-9 pr-3 py-1.5 text-xs text-foreground"
           />
         </div>
       </div>
@@ -217,26 +223,25 @@ export default function TransactionsTab({
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="font-bold text-foreground text-base truncate">{tx.name}</h4>
                       <span
-                        className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border"
+                        className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
                         style={{
                           backgroundColor: `${catColor}15`,
                           color: catColor,
-                          borderColor: `${catColor}30`,
                         }}
                       >
                         {tx.category_name}
                       </span>
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold border ${
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                           isCredit
-                            ? "bg-success/10 border-success/30 text-success"
-                            : "bg-destructive/10 border-destructive/30 text-destructive"
+                            ? "bg-success/10 text-success"
+                            : "bg-destructive/10 text-destructive"
                         }`}
                       >
                         {isCredit ? "Credit" : "Debit"}
                       </span>
                       {tx.budget_name && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-medium text-action">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-action">
                           <Wallet className="h-3 w-3" /> {tx.budget_name}
                         </span>
                       )}
@@ -251,9 +256,9 @@ export default function TransactionsTab({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/50">
+                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-divider/50">
                   <span
-                    className={`font-extrabold text-lg ${
+                    className={`text-lg font-extrabold tabular-nums ${
                       isCredit ? "text-success dark:text-success" : "text-foreground"
                     }`}
                     suppressHydrationWarning
@@ -283,15 +288,15 @@ export default function TransactionsTab({
             <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
               <label className="text-xs text-muted-foreground">
                 <span className="sr-only">Transactions per page</span>
-                <select
+                <Select
                   value={transactionPage.page_size}
                   onChange={(event) => onPageSizeChange(Number(event.target.value))}
                   disabled={isPending}
-                  className="rounded-lg border border-border bg-card px-2 py-1.5 text-foreground"
+                  className="rounded-lg bg-secondary px-2 py-1.5 text-foreground"
                 >
                   <option value={10}>10 per page</option>
                   <option value={25}>25 per page</option>
-                </select>
+                </Select>
               </label>
               <nav className="flex flex-wrap items-center justify-center gap-2" aria-label="Transaction pages">
                 {Array.from({ length: transactionPage.total_pages }, (_, index) => index + 1).map((page) => (

@@ -125,7 +125,7 @@ export default async function GymVisitPage({ params }: PageProps) {
           {visit?.synced_from_apple_watch && (
             <p className="mt-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Watch aria-hidden="true" className="h-4 w-4" />
-              Synced from Apple Watch
+              Synced from fitness watch
             </p>
           )}
           <p className="mt-3 text-base text-muted-foreground">
@@ -195,7 +195,7 @@ export default async function GymVisitPage({ params }: PageProps) {
                       </ol>
                     </details>
                   </div>}
-                  <div className="mt-4 overflow-hidden rounded-lg border border-border">
+                  <div className="mt-4 overflow-hidden rounded-lg">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-muted text-muted-foreground">
                         <tr>
@@ -206,10 +206,7 @@ export default async function GymVisitPage({ params }: PageProps) {
                       </thead>
                       <tbody>
                         {exercise.sets.map((set) => (
-                          <tr
-                            className="border-t border-border"
-                            key={set.id}
-                          >
+                          <tr key={set.id} className="border-t border-divider">
                             <td className="px-4 py-3 text-muted-foreground">{set.set_number}</td>
                             <td className="px-4 py-3 text-muted-foreground">{set.reps}</td>
                             <td className="px-4 py-3 text-muted-foreground">

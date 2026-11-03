@@ -26,7 +26,7 @@ export default function DeleteExerciseButton({ visitID, exerciseID, exerciseName
 
   return (
     <>
-      <Button type="button" variant="destructiveOutline" size="sm"
+      <Button type="button" variant="destructive" size="sm"
         aria-label={`Delete ${exerciseName}`}
         disabled={isPending}
         onClick={() => { setError(""); setIsOpen(true); }}

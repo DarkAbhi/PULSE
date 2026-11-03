@@ -50,7 +50,7 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
     <div className="space-y-10">
       <div className="grid items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
         <PulseCard as="section" aria-label="Workout calendar" className="p-4 sm:p-6">
-          <div className="flex items-center justify-between gap-3 border-b border-border pb-5">
+          <div className="flex items-center justify-between gap-3 border-b border-divider pb-5">
             <h2 aria-live="polite" className="text-xl font-semibold sm:text-2xl">
               {monthFormatter.format(new Date(`${month}-01T00:00:00Z`))}
             </h2>
@@ -78,7 +78,7 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
                     aria-current={date === today ? "date" : undefined}
                     aria-label={`${dayFormatter.format(new Date(`${date}T00:00:00Z`))}, ${count ? `${count} completed workout${count === 1 ? "" : "s"}` : "no workouts"}`}
                     onClick={() => selectDate(date)}
-                    className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/30 sm:h-11 sm:w-11 sm:text-base ${selected ? "border-transparent bg-primary text-primary-foreground" : count ? "border-success bg-success-soft text-success hover:bg-success-soft dark:border-success dark:bg-success/15 dark:text-success dark:hover:bg-success/25" : date.slice(0, 7) !== month ? "border-transparent text-muted-foreground/50 hover:bg-secondary" : "border-transparent text-foreground hover:bg-secondary"}`}
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition sm:h-11 sm:w-11 sm:text-base ${selected ? "bg-primary text-primary-foreground" : count ? "bg-success-soft text-success hover:bg-success-soft dark:bg-success/15 dark:text-success dark:hover:bg-success/25" : date.slice(0, 7) !== month ? "text-muted-foreground/50 hover:bg-secondary" : "text-foreground hover:bg-secondary"}`}
                   >
                     {Number(date.slice(8))}
                     {count > 0 && (
@@ -130,10 +130,10 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
                   <span>{card.subtitle}</span>
                   {card.tooltip && (
                     <span className="group relative inline-flex">
-                      <button type="button" aria-label={`${card.label} information`} aria-describedby={`stat-tooltip-${card.id}`} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <button type="button" aria-label={`${card.label} information`} aria-describedby={`stat-tooltip-${card.id}`} className="rounded-full">
                         <Info className="h-4 w-4" aria-hidden="true" />
                       </button>
-                      <span id={`stat-tooltip-${card.id}`} role="tooltip" className="pointer-events-none invisible absolute bottom-full left-1/2 z-10 mb-2 w-52 -translate-x-1/2 rounded-lg border border-border bg-popover px-3 py-2 text-center text-xs text-popover-foreground shadow-md group-hover:visible group-focus-within:visible">
+                      <span id={`stat-tooltip-${card.id}`} role="tooltip" className="pointer-events-none invisible absolute bottom-full left-1/2 z-10 mb-2 w-52 -translate-x-1/2 rounded-lg bg-popover px-3 py-2 text-center text-xs text-popover-foreground shadow-md group-hover:visible group-focus-within:visible">
                         {card.tooltip}
                       </span>
                     </span>

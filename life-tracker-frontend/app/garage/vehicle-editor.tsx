@@ -1,5 +1,6 @@
 "use client";
 
+import Select from "@/app/components/design-system/select";
 import { useEffect, useId, useState, useTransition } from "react";
 import { CarFront, ListFilter, PencilLine, Plus } from "lucide-react";
 import Button from "@/app/components/design-system/button";
@@ -22,7 +23,7 @@ type Option = { id: string; name: string };
 const kinds = ["car", "motorcycle", "moped", "van", "truck", "bus"];
 const fuels = ["petrol", "diesel", "lpg", "cng", "electric"];
 const field =
-  "w-full rounded-lg border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-primary focus:ring-4 focus:ring-primary/15";
+  "w-full rounded-lg bg-secondary px-4 py-3 text-foreground";
 const titleCase = (value: string) =>
   value === "lpg" || value === "cng"
     ? value.toUpperCase()
@@ -88,7 +89,7 @@ function CatalogSelect({
       <label className="block text-sm font-medium" htmlFor={id}>
         {label}
       </label>
-      <select
+      <Select
         id={id}
         className={field}
         required
@@ -107,7 +108,7 @@ function CatalogSelect({
             {option.name}
           </option>
         ))}
-      </select>
+      </Select>
       <p className="text-sm text-muted-foreground" role="status">
         {loading
           ? "Loading…"
@@ -221,7 +222,7 @@ export default function VehicleEditor({
             <fieldset className="grid min-w-0 gap-2 sm:grid-cols-2">
               <legend className="mb-2 text-sm font-semibold">Entry method</legend>
               {["catalog", "manual"].map((option) => (
-                <label key={option} className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg border border-border px-3 py-2.5 text-sm font-medium has-checked:border-action has-checked:bg-accent has-checked:text-accent-foreground">
+                <label key={option} className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium has-checked:bg-accent has-checked:text-accent-foreground">
                   <input
                     type="radio"
                     className="shrink-0 accent-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
@@ -254,7 +255,7 @@ export default function VehicleEditor({
                 >
                   Vehicle type
                 </label>
-                <select
+                <Select
                   id={`${uid}-kind`}
                   required
                   className={field}
@@ -273,7 +274,7 @@ export default function VehicleEditor({
                       {titleCase(k)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               {mode === "catalog" && kind && (
                 <CatalogSelect
@@ -367,7 +368,7 @@ export default function VehicleEditor({
               >
                 Fuel type
               </label>
-              <select
+              <Select
                 id={`${uid}-fuel`}
                 className={field}
                 required
@@ -383,7 +384,7 @@ export default function VehicleEditor({
                     {titleCase(f)}
                   </option>
                 ))}
-              </select>
+              </Select>
               <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg bg-secondary px-3 text-sm">
                 <input
                   type="checkbox"
@@ -401,7 +402,7 @@ export default function VehicleEditor({
                   >
                     Second fuel type
                   </label>
-                  <select
+                  <Select
                     id={`${uid}-second`}
                     className={field}
                     required
@@ -416,7 +417,7 @@ export default function VehicleEditor({
                           {titleCase(f)}
                         </option>
                       ))}
-                  </select>
+                  </Select>
                 </>
               )}
             </fieldset>

@@ -46,7 +46,7 @@ export default function TabNavigation({
   return (
     <nav
       aria-label="Financial Horizon sections"
-      className="grid grid-cols-2 gap-1 rounded-2xl border border-border bg-card p-1.5 lg:flex"
+      className="grid grid-cols-2 gap-1 rounded-2xl bg-card p-1.5 lg:flex"
     >
       {tabs.map(({ id, label, icon: Icon }) => {
         const isActive = activeTab === id;
@@ -54,7 +54,7 @@ export default function TabNavigation({
         return (
           <Button
             key={id}
-            variant={isActive ? "soft" : "menuItem"}
+            variant={isActive ? "primary" : "menuItem"}
             size="lg"
             aria-current={isActive ? "true" : undefined}
             onClick={() => onTabChange(id)}

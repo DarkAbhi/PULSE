@@ -1,5 +1,6 @@
 "use client";
 
+import Select from "@/app/components/design-system/select";
 import { formatMoney } from "@/app/lib/currency.mjs";
 import { useCurrency } from "@/app/components/currency-provider";
 import { useTimeZone } from "@/app/components/time-zone-provider";
@@ -195,7 +196,7 @@ export default function StatementUploadDialog({
   return (
     <Dialog panelClassName="relative rounded-3xl p-0 overflow-hidden" size="xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-secondary/30">
+        <div className="flex items-center justify-between border-b border-divider px-6 py-4 bg-secondary/30">
           <div className="flex items-center gap-2.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-action font-bold">
               <Sparkles className="h-5 w-5" />
@@ -224,12 +225,12 @@ export default function StatementUploadDialog({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center cursor-pointer transition ${
+              className={`flex flex-col items-center justify-center rounded-2xl p-8 text-center cursor-pointer transition ${
                 isDragOver
-                  ? "border-primary bg-primary/5"
+                  ? "bg-accent"
                   : selectedFile
-                  ? "border-success/50 bg-success/5"
-                  : "border-border/80 bg-secondary/20 hover:border-primary/50 hover:bg-secondary/40"
+                  ? "bg-success-soft"
+                  : "bg-secondary hover:bg-surface-strong"
               }`}
             >
               <input
@@ -276,7 +277,7 @@ export default function StatementUploadDialog({
 
           {/* Error Message */}
           {error && (
-            <div className="flex items-center gap-2.5 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-xs text-destructive">
+            <div className="flex items-center gap-2.5 rounded-2xl bg-destructive/10 p-4 text-xs text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -299,7 +300,7 @@ export default function StatementUploadDialog({
           {extractionResult && (
             <div className="space-y-4">
               {/* Header Tabs: Pure JSON vs Transaction List */}
-              <div className="flex items-center justify-between border-b border-border pb-3">
+              <div className="flex items-center justify-between border-b border-divider pb-3">
                 <div className="flex items-center gap-2">
                   <Button variant={activeView === "json" ? "primary" : "secondary"} size="sm"
                     onClick={() => setActiveView("json")}
@@ -342,9 +343,9 @@ export default function StatementUploadDialog({
               </div>
 
               {/* Statement Overview Badge */}
-              <div className="flex items-center gap-3 flex-wrap text-xs rounded-xl border border-border bg-secondary/20 p-3">
+              <div className="flex items-center gap-3 flex-wrap text-xs rounded-xl bg-secondary/20 p-3">
                 {extractionResult.data.statementType && (
-                  <span className="rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 font-semibold text-action capitalize">
+                  <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-semibold text-action capitalize">
                     {extractionResult.data.statementType.replace("_", " ")}
                   </span>
                 )}
@@ -373,7 +374,7 @@ export default function StatementUploadDialog({
 
               {/* Pure JSON Code View */}
               {activeView === "json" && (
-                <div className="relative rounded-2xl border border-border bg-card p-4 font-mono text-xs text-muted-foreground overflow-x-auto max-h-96 leading-relaxed">
+                <div className="relative rounded-2xl bg-card p-4 font-mono text-xs text-muted-foreground overflow-x-auto max-h-96 leading-relaxed">
                   <pre>{JSON.stringify(JSON.parse(extractionResult.rawJson), null, 2)}</pre>
                 </div>
               )}
@@ -386,10 +387,10 @@ export default function StatementUploadDialog({
                     return (
                       <div
                         key={idx}
-                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-3 text-xs transition ${
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl p-3 text-xs transition ${
                           isSelected
-                            ? "border-primary/50 bg-primary/5"
-                            : "border-border bg-card opacity-60"
+                            ? "bg-accent"
+                            : "bg-card opacity-60"
                         }`}
                       >
                         <div className="flex items-start gap-3 min-w-0">
@@ -397,7 +398,7 @@ export default function StatementUploadDialog({
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => toggleSelectTx(idx)}
-                            className="mt-0.5 rounded border-border text-action focus:ring-primary h-4 w-4 shrink-0"
+                            className="mt-0.5 rounded text-action h-4 w-4 shrink-0"
                           />
                           <div className="min-w-0">
                             <div className="font-semibold text-foreground truncate text-sm">
@@ -412,9 +413,9 @@ export default function StatementUploadDialog({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 shrink-0 justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-border/40">
+                        <div className="flex items-center gap-3 shrink-0 justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-divider/40">
                           {/* Category Selector */}
-                          <select
+                          <Select
                             value={selectedCategoryMap[idx] ?? ""}
                             onChange={(e) =>
                               setSelectedCategoryMap((prev) => ({
@@ -422,7 +423,7 @@ export default function StatementUploadDialog({
                                 [idx]: e.target.value ? Number(e.target.value) : null,
                               }))
                             }
-                            className="rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                            className="rounded-lg bg-secondary px-2 py-1 text-xs text-foreground"
                           >
                             <option value="">Uncategorized</option>
                             {categories.map((cat) => (
@@ -430,7 +431,7 @@ export default function StatementUploadDialog({
                                 {cat.name}
                               </option>
                             ))}
-                          </select>
+                          </Select>
 
                           <span
                             className={`font-bold text-sm ${
@@ -450,7 +451,7 @@ export default function StatementUploadDialog({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between border-t border-border px-6 py-4 bg-secondary/20">
+        <div className="flex items-center justify-between border-t border-divider px-6 py-4 bg-secondary/20">
           {extractionResult ? (
             <Button variant="tertiary" size="sm"
               onClick={() => setExtractionResult(null)}

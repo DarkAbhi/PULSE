@@ -120,7 +120,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
             </div>
             <VehicleEditor key={`${data.catalog_id}/${data.vehicle_name}/${data.kind}/${data.make_name}/${data.model_name}/${data.fuel_types.join()}`} vehicle={{ id, name: data.vehicle_name, kind: data.kind, catalog_id: data.catalog_id, make_name: data.make_name, model_name: data.model_name, fuel_types: data.fuel_types }} />
           </div>
-          <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-border pt-5 sm:grid-cols-4">
+          <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-divider pt-5 sm:grid-cols-4">
             {specs.map(({ label, value }) => (
               <div key={label} className="min-w-0">
                 <dt className="text-xs text-muted-foreground">{label}</dt>
@@ -210,7 +210,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
                         <li className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-sm" key={index}>
                           <span className="font-medium capitalize">{item.fuel_type}</span>
                           <span className="tabular-nums text-muted-foreground">{item.quantity} L</span>
-                          <span className="border-l border-border pl-2.5 font-medium tabular-nums text-action">
+                          <span className="border-l border-divider pl-2.5 font-medium tabular-nums text-action">
                             {formatMoney(item.total_cost, currency)}
                           </span>
                           <span className="text-xs capitalize text-muted-foreground">{item.fill_type}</span>

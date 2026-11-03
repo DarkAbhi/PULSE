@@ -55,7 +55,7 @@ export default function LogoutButton() {
   return (
     <>
       <div className="mt-6 w-full">
-        <Button variant="destructiveOutline" size="lg"
+        <Button variant="destructive" size="lg"
           className="w-full"
           onClick={() => {
             setLogoutError("");

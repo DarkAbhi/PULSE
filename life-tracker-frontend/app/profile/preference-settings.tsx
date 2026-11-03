@@ -87,11 +87,11 @@ export default function PreferenceSettings({ id, title, value, choices, label, p
       }}>
         <div>
           <label htmlFor={`${id}-search`} className="text-sm font-medium">Search {plural}</label>
-          <input autoFocus id={`${id}-search`} type="search" value={search} disabled={pending} onChange={event => setSearch(event.target.value)} placeholder={placeholder} className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2" />
+          <input autoFocus id={`${id}-search`} type="search" value={search} disabled={pending} onChange={event => setSearch(event.target.value)} placeholder={placeholder} className="mt-2 w-full rounded-lg bg-secondary px-3 py-2" />
         </div>
         <div>
           <label htmlFor={`${id}-choice`} className="text-sm font-medium">Choose a {title.toLowerCase()}</label>
-          <select id={`${id}-choice`} size={6} value={matches.includes(draft) ? draft : ""} disabled={pending || !matches.length} onChange={event => { setDraft(event.target.value); setError(""); }} className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2">
+          <select id={`${id}-choice`} size={6} value={matches.includes(draft) ? draft : ""} disabled={pending || !matches.length} onChange={event => { setDraft(event.target.value); setError(""); }} className="mt-2 w-full rounded-lg bg-secondary px-3 py-2">
             {!matches.length ? <option value="">No matching {plural}</option> : <><option value="" disabled>Select a {title.toLowerCase()}</option>{matches.map(choice => <option key={choice} value={choice}>{label(choice)}</option>)}</>}
           </select>
         </div>

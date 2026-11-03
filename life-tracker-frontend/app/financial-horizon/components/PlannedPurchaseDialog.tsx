@@ -89,7 +89,7 @@ export default function PlannedPurchaseDialog({
       onBackdropClick={handleBackdropClick}
       panelClassName="scale-100 transition-all duration-200 sm:p-6"
     >
-        <div className="flex items-center justify-between border-b border-border pb-4">
+        <div className="flex items-center justify-between border-b border-divider pb-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10 text-warning">
               <ShoppingBag className="h-5 w-5" />
@@ -108,7 +108,7 @@ export default function PlannedPurchaseDialog({
         </div>
 
         {errorMsg && (
-          <div className="mt-4 rounded-xl bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive">
+          <div className="mt-4 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">
             {errorMsg}
           </div>
         )}
@@ -122,7 +122,7 @@ export default function PlannedPurchaseDialog({
               placeholder="e.g. Noise Cancelling Headphones"
               value={purchaseName}
               onChange={(e) => setPurchaseName(e.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3.5 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-xl bg-secondary px-3.5 py-2 text-sm text-foreground"
               autoFocus
             />
           </div>
@@ -137,7 +137,7 @@ export default function PlannedPurchaseDialog({
               placeholder="0.00"
               value={purchasePrice}
               onChange={(e) => setPurchasePrice(e.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3.5 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-xl bg-secondary px-3.5 py-2 text-sm text-foreground"
             />
           </div>
 
@@ -148,7 +148,7 @@ export default function PlannedPurchaseDialog({
               placeholder="https://..."
               value={purchaseURL}
               onChange={(e) => setPurchaseURL(e.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3.5 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-xl bg-secondary px-3.5 py-2 text-sm text-foreground"
             />
           </div>
 

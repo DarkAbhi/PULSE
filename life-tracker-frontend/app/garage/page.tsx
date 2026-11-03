@@ -61,11 +61,9 @@ export default async function GaragePage() {
         <BackLink href="/dashboard">Dashboard</BackLink>
 
         <PulseCard as="section" aria-labelledby="garage-title"
-          className="relative isolate mt-3 overflow-hidden border border-border bg-secondary px-6 py-8 sm:px-10 sm:py-12"
+          className="relative isolate mt-3 overflow-hidden bg-secondary px-6 py-8 sm:px-10 sm:py-12"
         >
-          <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-12 hidden w-44 -skew-x-12 items-center justify-center border-x-2 border-action/20 md:flex lg:right-24 lg:w-56">
-            <div className="absolute inset-y-0 -left-10 border-l-2 border-action/20" />
-            <div className="absolute inset-y-0 -right-10 border-r-2 border-action/20" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-12 hidden w-44 -skew-x-12 bg-action/5 items-center justify-center md:flex lg:right-24 lg:w-56">
             <CarFront className="size-24 skew-x-12 text-action/40" strokeWidth={1} />
           </div>
           <div className="relative max-w-xs">

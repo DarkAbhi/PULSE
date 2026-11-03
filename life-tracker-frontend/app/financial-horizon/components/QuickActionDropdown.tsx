@@ -66,7 +66,7 @@ export default function QuickActionDropdown({
       </Button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-2xl border border-border bg-card p-2 shadow-xl ring-1 ring-black/5 animate-in fade-in-50 zoom-in-95">
+        <div className="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-2xl bg-card p-2 shadow-xl animate-in fade-in-50 zoom-in-95">
           <div className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             Financial Actions
           </div>
@@ -108,7 +108,7 @@ export default function QuickActionDropdown({
               </div>
             </Button>
 
-            <div className="my-1 border-t border-border/60" />
+            <div className="my-1 border-t border-divider/60" />
 
             <Button variant="menuItem"
               onClick={() => handleAction(onAddBudget)}

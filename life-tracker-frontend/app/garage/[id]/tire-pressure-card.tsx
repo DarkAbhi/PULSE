@@ -59,7 +59,7 @@ export default function TirePressureCard({
         <div className="mt-5 rounded-xl bg-secondary px-3 sm:px-5">
           <table aria-labelledby="pressure-heading" className="w-full table-fixed text-left">
             <thead>
-              <tr className="border-b border-border">
+              <tr className="border-b border-divider">
                 <th scope="col" className="w-[38%] py-4 text-xs font-medium text-muted-foreground">Riding load</th>
                 {["Front", "Rear"].map((position) => (
                   <th key={position} scope="col" className="py-4 text-center text-sm font-semibold">
@@ -72,7 +72,7 @@ export default function TirePressureCard({
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-divider">
               {pressureRows.map(({ label, readings }) => (
                 <tr key={label}>
                   <th scope="row" className="py-4 pr-2 text-sm font-medium">{label}</th>
@@ -106,7 +106,7 @@ export default function TirePressureCard({
         }}>
           <label className="block text-sm">
             Odometer <span className="text-muted-foreground">(km, optional)</span>
-            <input type="number" min="0" max="99999999999.9" step="0.1" value={odometer} onChange={(e) => setOdometer(e.target.value)} className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
+            <input type="number" min="0" max="99999999999.9" step="0.1" value={odometer} onChange={(e) => setOdometer(e.target.value)} className="mt-1.5 w-full rounded-lg bg-secondary px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" />
           </label>
           <Button type="submit" disabled={pending}>{pending ? "Saving…" : "Record air fill"}</Button>
           {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

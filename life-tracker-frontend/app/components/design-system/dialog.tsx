@@ -61,7 +61,7 @@ export default function Dialog({
         onClick={onBackdropClick}
       >
         <section
-          className={`flex w-full ${widths[size]} max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-8 lg:max-h-[calc(100dvh-4rem)] ${panelClassName}`}
+          className={`flex w-full ${widths[size]} max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl bg-card p-6 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-8 lg:max-h-[calc(100dvh-4rem)] ${panelClassName}`}
         >
           <DialogFooterContext.Provider value={footer}>
             <div

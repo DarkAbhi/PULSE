@@ -81,10 +81,10 @@ export default function PlannedPurchasesTab({
               Pool After Purchases
             </span>
             {hasPurchases && (
-              <span className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-bold border ${
+              <span className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-bold ${
                 netRemainingPool >= 0
-                  ? "bg-success/10 border-success/30 text-success"
-                  : "bg-destructive/10 border-destructive/30 text-destructive"
+                  ? "bg-success/10 text-success"
+                  : "bg-destructive/10 text-destructive"
               }`}>
                 {netRemainingPool >= 0 ? "Surplus" : "Deficit"}
               </span>
@@ -110,7 +110,7 @@ export default function PlannedPurchasesTab({
       <div className="space-y-10">
       {/* Planned Purchases Section */}
       <PulseCard as="section" className="p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-divider pb-4">
           <div>
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-5 w-5 text-warning" />
@@ -122,7 +122,7 @@ export default function PlannedPurchasesTab({
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-warning/10 px-3 py-1.5 text-xs font-bold text-warning border border-warning/20">
+            <div className="rounded-xl bg-warning/10 px-3 py-1.5 text-xs font-bold text-warning">
               Total Planned: {formatMoney(purchasesTotal, summary.currency)}
             </div>
 
@@ -135,7 +135,7 @@ export default function PlannedPurchasesTab({
             </Button>
 
             {purchases.length > 0 && (
-              <Button variant="destructiveOutline" size="sm"
+              <Button variant="destructive" size="sm"
                 onClick={onConfirmClearAllPurchases}
                 disabled={isPending || isClearingPurchases}
               >

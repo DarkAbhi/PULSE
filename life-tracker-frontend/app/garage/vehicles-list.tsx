@@ -137,7 +137,7 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
                   <p className="mt-1 text-xs text-muted-foreground">
                     <span>{vehicle.kind === "unknown" ? "Kind not selected" : vehicle.kind.charAt(0).toUpperCase() + vehicle.kind.slice(1)}</span>
                     {vehicle.fuel_types.length > 0 && (
-                      <span className="ml-2 border-l border-border pl-2">{vehicle.fuel_types.join(" + ").toUpperCase()}</span>
+                      <span className="ml-2 border-l border-divider pl-2">{vehicle.fuel_types.join(" + ").toUpperCase()}</span>
                     )}
                   </p>
                 </div>

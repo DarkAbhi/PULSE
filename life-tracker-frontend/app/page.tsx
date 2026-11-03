@@ -96,7 +96,7 @@ export default function Home() {
             </label>
             <input
               autoComplete="username"
-              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-base outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/15"
+              className="w-full rounded-lg bg-secondary px-4 py-3 text-base transition placeholder:text-muted-foreground"
               id="username"
               name="username"
               defaultValue="admin"
@@ -115,7 +115,7 @@ export default function Home() {
             </label>
             <input
               autoComplete="current-password"
-              className="w-full rounded-lg border border-border bg-background px-4 py-3 text-base outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/15"
+              className="w-full rounded-lg bg-secondary px-4 py-3 text-base transition placeholder:text-muted-foreground"
               id="password"
               name="password"
               placeholder="Enter your password"

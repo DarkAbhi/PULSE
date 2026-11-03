@@ -1,5 +1,6 @@
 "use client";
 
+import Select from "@/app/components/design-system/select";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { useTimeZone } from "@/app/components/time-zone-provider";
@@ -302,7 +303,7 @@ export default function MealPlanClient({
   })}`;
 
   const renderMeals = (items: MealPlan[]) => (
-    <ul className="divide-y divide-border/60">
+    <ul className="divide-y divide-divider/60">
       {items.map((meal) => (
         <li key={meal.id} className="flex items-center gap-2 py-2 first:pt-0 last:pb-0">
           <Button
@@ -316,7 +317,7 @@ export default function MealPlanClient({
             disabled={isPending}
             className="min-w-0 flex-1 justify-start! text-left"
           >
-            <span className="flex size-4 shrink-0 items-center justify-center rounded border border-current">
+            <span className="flex size-4 shrink-0 items-center justify-center rounded">
               {meal.is_consumed && <Check className="size-3" aria-hidden="true" />}
             </span>
             <span className={`min-w-0 wrap-anywhere text-sm ${meal.is_consumed ? "text-muted-foreground line-through" : "text-foreground"}`}>
@@ -342,7 +343,7 @@ export default function MealPlanClient({
         <BackLink href="/dashboard">Dashboard</BackLink>
 
         <PulseCard as="section" aria-labelledby="meal-plan-title" className="mt-5 overflow-hidden">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border bg-accent px-4 py-6 text-accent-foreground sm:px-7 sm:py-8">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-divider bg-accent px-4 py-6 text-accent-foreground sm:px-7 sm:py-8">
             <div>
               <h1 id="meal-plan-title" className="text-4xl font-bold tracking-tight sm:text-5xl">Meal Plan</h1>
               <p className="mt-2 text-sm">Plan your week, one meal at a time.</p>
@@ -402,7 +403,7 @@ export default function MealPlanClient({
           </div>
 
           <PulseCard className="overflow-hidden" aria-busy={isLoadingWeek}>
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-divider">
               {orderedMealTimes.map((time) => {
                 const items = dayMeals.filter((meal) => meal.meal_time_id === time.id);
                 return (
@@ -460,7 +461,7 @@ export default function MealPlanClient({
           size="sm"
         >
           <form onSubmit={handleSubmitAddMeal}>
-            <div className="mb-5 flex items-start gap-3 border-b border-border pb-4">
+            <div className="mb-5 flex items-start gap-3 border-b border-divider pb-4">
               <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
                 <Utensils className="h-5 w-5" />
               </div>
@@ -502,7 +503,7 @@ export default function MealPlanClient({
                 value={mealName}
                 onChange={(e) => setMealName(e.target.value)}
                 placeholder="e.g. Scrambled eggs on toast"
-                className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
               />
             </div>
 
@@ -523,13 +524,13 @@ export default function MealPlanClient({
                   New meal time
                 </Button>
               </div>
-              <select
+              <Select
                 id="meal-time-select"
                 value={selectedMealTimeID ?? ""}
                 onChange={(e) =>
                   setSelectedMealTimeID(e.target.value ? parseInt(e.target.value, 10) : null)
                 }
-                className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground"
               >
                 {orderedMealTimes.length === 0 && <option value="">Other meals</option>}
                 {orderedMealTimes.map((mt) => (
@@ -537,10 +538,10 @@ export default function MealPlanClient({
                     {mt.name} ({formatTimeDisplay(mt.start_time)} – {formatTimeDisplay(mt.end_time)})
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
-            <DialogActions className="border-t border-border pt-4">
+            <DialogActions className="border-t border-divider pt-4">
               <DialogAction
                 type="button"
                 variant="secondary"
@@ -577,7 +578,7 @@ export default function MealPlanClient({
           size="sm"
         >
           <form onSubmit={handleSubmitAddMealTime}>
-            <div className="mb-5 flex items-start gap-3 border-b border-border pb-4">
+            <div className="mb-5 flex items-start gap-3 border-b border-divider pb-4">
               <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
                 <Clock className="h-5 w-5" />
               </div>
@@ -615,7 +616,7 @@ export default function MealPlanClient({
                   value={newMealTimeName}
                   onChange={(e) => setNewMealTimeName(e.target.value)}
                   placeholder="e.g. Afternoon snack"
-                  className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                  className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
                 />
               </div>
 
@@ -632,7 +633,7 @@ export default function MealPlanClient({
                     type="time"
                     value={newStartTime}
                     onChange={(e) => setNewStartTime(e.target.value)}
-                    className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                    className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground"
                   />
                 </div>
                 <div>
@@ -647,13 +648,13 @@ export default function MealPlanClient({
                     type="time"
                     value={newEndTime}
                     onChange={(e) => setNewEndTime(e.target.value)}
-                    className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                    className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground"
                   />
                 </div>
               </div>
             </div>
 
-            <DialogActions className="border-t border-border pt-4">
+            <DialogActions className="border-t border-divider pt-4">
               <DialogAction
                 type="button"
                 variant="secondary"
@@ -689,7 +690,7 @@ export default function MealPlanClient({
           }}
           size="md"
         >
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-divider pb-4">
             <div className="flex items-center gap-3">
               <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
                 <Settings2 className="h-5 w-5" />
@@ -713,7 +714,7 @@ export default function MealPlanClient({
           </div>
 
           {orderedMealTimes.length === 0 && <p className="text-sm text-muted-foreground">Add a meal time to organize your daily plan.</p>}
-          <ul className="divide-y divide-border rounded-xl border border-border bg-background px-3 empty:hidden">
+          <ul className="divide-y divide-divider rounded-xl bg-background px-3 empty:hidden">
             {orderedMealTimes.map((mt) => (
               <li key={mt.id} className="flex items-center justify-between gap-2 py-3">
                 <div>
@@ -746,7 +747,7 @@ export default function MealPlanClient({
             ))}
           </ul>
 
-          <DialogActions className="border-t border-border pt-4 sm:flex sm:justify-end">
+          <DialogActions className="border-t border-divider pt-4 sm:flex sm:justify-end">
             <DialogAction
               type="button"
               variant="secondary"

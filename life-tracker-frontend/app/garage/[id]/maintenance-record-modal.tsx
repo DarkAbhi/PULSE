@@ -1,5 +1,6 @@
 "use client";
 
+import Select from "@/app/components/design-system/select";
 import { currencySymbol } from "@/app/lib/currency.mjs";
 import { useCurrency } from "@/app/components/currency-provider";
 import { useTimeZone } from "@/app/components/time-zone-provider";
@@ -18,7 +19,7 @@ import Dialog, { DialogAction, DialogActions } from "@/app/components/design-sys
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
 type Category = (typeof categories)[number];
 const apiBaseURL = "";
-const fieldClass = "mt-1.5 min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:text-sm";
+const fieldClass = "mt-1.5 min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:text-sm";
 const optionalClass = "font-normal text-muted-foreground";
 export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleId: string; record?: MaintenanceRecord }) {
   const { currency } = useCurrency();
@@ -115,9 +116,9 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
             </label>
             <label className="min-w-0 text-sm font-medium">
               Category
-              <select className={fieldClass} value={category} onChange={(e) => setCategory(e.target.value as Category)}>
+              <Select className={fieldClass} value={category} onChange={(e) => setCategory(e.target.value as Category)}>
                 {categories.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}
-              </select>
+              </Select>
             </label>
             <label className="min-w-0 text-sm font-medium">
               Date
@@ -150,7 +151,7 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
               <Paperclip className="size-4 text-action" aria-hidden="true" /> Receipts and service bills
             </h3>
             {record && (
-              <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-action focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring hover:bg-accent has-disabled:cursor-not-allowed has-disabled:opacity-50">
+              <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-action focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring hover:bg-accent has-disabled:cursor-not-allowed has-disabled:opacity-50">
                 <Upload className="size-4" aria-hidden="true" />
                 {isUploading ? "Uploading…" : "Upload file"}
                 <input className="sr-only" disabled={isUploading} type="file" onChange={(event) => {
@@ -175,7 +176,7 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
                       <span className="ml-2">{Math.max(1, Math.round(attachment.size_bytes / 1024))} KB</span>
                     </p>
                   </div>
-                  <Button variant="destructiveOutline" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</Button>
+                  <Button variant="destructive" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</Button>
                 </li>
               ))}
             </ul>

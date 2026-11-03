@@ -95,7 +95,7 @@ export default function BudgetDialog({
       onBackdropClick={handleBackdropClick}
       panelClassName="scale-100 transition-all duration-200 sm:p-6"
     >
-        <div className="flex items-center justify-between border-b border-border pb-4">
+        <div className="flex items-center justify-between border-b border-divider pb-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-action">
               <Target className="h-5 w-5" />
@@ -116,7 +116,7 @@ export default function BudgetDialog({
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {errorMsg && (
-            <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs font-semibold text-destructive">
+            <div className="rounded-xl bg-destructive/10 p-3 text-xs font-semibold text-destructive">
               {errorMsg}
             </div>
           )}
@@ -129,7 +129,7 @@ export default function BudgetDialog({
               placeholder="e.g. Housing & Utilities, Subscriptions, Shopping"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
             />
           </div>
 
@@ -145,11 +145,11 @@ export default function BudgetDialog({
               placeholder="0.00"
               value={allocatedAmount}
               onChange={(e) => setAllocatedAmount(e.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
             />
           </div>
 
-          <DialogActions className="border-t border-border pt-4">
+          <DialogActions className="border-t border-divider pt-4">
             <DialogAction
               type="button"
               variant="secondary"

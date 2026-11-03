@@ -65,7 +65,7 @@ export default function HeaderMetrics({
                 min="0"
                 value={baseInput}
                 onChange={(e) => setBaseInput(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-1 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3 py-1 text-sm font-bold text-foreground"
                 placeholder="100000"
                 autoFocus
               />
@@ -106,7 +106,7 @@ export default function HeaderMetrics({
               Total Committed
             </span>
           </div>
-          <span className="rounded-full bg-warning/10 border border-warning/20 px-2.5 py-0.5 text-xs font-bold text-warning">
+          <span className="rounded-full bg-warning/10 px-2.5 py-0.5 text-xs font-bold text-warning">
             {totalCommittedRatio.toFixed(1)}% of pool
           </span>
         </div>
@@ -138,10 +138,10 @@ export default function HeaderMetrics({
             </span>
           </div>
           <span
-            className={`rounded-full px-2.5 py-0.5 text-xs font-bold border ${
+            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
               uncommittedPool >= 0
-                ? "bg-success/10 border-success/30 text-success"
-                : "bg-destructive/10 border-destructive/30 text-destructive"
+                ? "bg-success/10 text-success"
+                : "bg-destructive/10 text-destructive"
             }`}
           >
             {uncommittedPool >= 0 ? "Surplus" : "Deficit"}

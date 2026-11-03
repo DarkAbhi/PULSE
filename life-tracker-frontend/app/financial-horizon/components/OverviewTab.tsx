@@ -42,7 +42,7 @@ export default function OverviewTab({
     <div className="space-y-10">
       {/* Active Monthly Budgets Section */}
       <section className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-divider pb-4">
           <div>
             <div className="flex items-center gap-2">
               <Target className="h-5 w-5 text-action" />
@@ -190,7 +190,7 @@ export default function OverviewTab({
 
                   {/* Linked items chips */}
                   {linkedDeductions.length > 0 && (
-                    <div className="mt-4 border-t border-border/50 pt-3">
+                    <div className="mt-4 border-t border-divider/50 pt-3">
                       <span className="text-[11px] font-semibold text-muted-foreground uppercase">
                         Linked Obligations:
                       </span>
@@ -198,7 +198,7 @@ export default function OverviewTab({
                         {linkedDeductions.map((item) => (
                           <span
                             key={item.id}
-                            className="inline-flex items-center gap-1 rounded-md bg-background border border-border px-2 py-0.5 text-[11px] font-medium text-foreground"
+                            className="inline-flex items-center gap-1 rounded-md bg-background px-2 py-0.5 text-[11px] font-medium text-foreground"
                           >
                             {item.name} ({currencySymbol(summary.currency)}
                             {item.amount})
@@ -227,7 +227,7 @@ export default function OverviewTab({
           </div>
         </div>
 
-        <dl className="mt-5 divide-y divide-border rounded-xl border border-border bg-background/50 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <dl className="mt-5 divide-y divide-divider rounded-xl bg-background/50 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0">
           {[3, 6, 12].map((months) => (
             <div key={months} className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1 p-4 sm:block">
               <dt className="text-sm font-medium text-muted-foreground">{months} months</dt>

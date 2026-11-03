@@ -108,14 +108,14 @@ export default function LinkSubscriptionPaymentDialog({
         value={search}
         onChange={(event) => { setSearch(event.target.value); setPage(1); setSelectedId(null); }}
         placeholder="Search by name or notes"
-        className="mt-1 w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+        className="mt-1 w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
       />
       {error && <p className="mt-3 text-sm text-destructive" role="alert">{error}</p>}
       <div className="mt-4 max-h-72 space-y-2 overflow-y-auto" aria-busy={loading}>
         {loading ? <p className="text-sm text-muted-foreground">Loading transactions…</p> : transactions.length === 0 ? (
           <p className="text-sm text-muted-foreground">{transactionCount === 0 ? "No transactions yet. Create one to log this payment." : "No matching transactions found."}</p>
         ) : transactions.map((transaction) => (
-          <label key={transaction.id} className={`flex items-center gap-3 rounded-xl border p-3 text-sm ${transaction.subscription_id ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:border-primary"}`}>
+          <label key={transaction.id} className={`flex items-center gap-3 rounded-xl bg-secondary/50 p-3 text-sm has-checked:bg-accent ${transaction.subscription_id ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-secondary"}`}>
             <input
               type="radio"
               name="payment-transaction"
@@ -134,7 +134,7 @@ export default function LinkSubscriptionPaymentDialog({
         <span>Page {page} of {totalPages}</span>
         <Button variant="secondary" size="sm" disabled={page === totalPages || loading} onClick={() => { setPage(page + 1); setSelectedId(null); }}>Next</Button>
       </div>}
-      <div className="mt-5 flex flex-wrap justify-between gap-3 border-t border-border pt-4">
+      <div className="mt-5 flex flex-wrap justify-between gap-3 border-t border-divider pt-4">
         <Button variant="secondary" onClick={onCreateNew} disabled={saving}>Create new transaction</Button>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>

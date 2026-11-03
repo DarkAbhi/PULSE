@@ -858,7 +858,7 @@ export default function FinancialHorizonClient({
         {/* Global Error Banner */}
         {errorMsg && !(activeTab === "fixed" && (isAddingDeduction || editingDeductionId !== null)) && (
           <div
-            className="rounded-2xl bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive flex items-center justify-between shadow-xs"
+            className="rounded-2xl bg-destructive/10 p-4 text-sm text-destructive flex items-center justify-between shadow-xs"
             role="alert"
           >
             <span>{errorMsg}</span>
@@ -1081,7 +1081,7 @@ export default function FinancialHorizonClient({
       {/* Subscription Linked Transactions Dialog */}
       {viewingSubTransactions && (
         <Dialog size="wide" panelClassName="p-6 sm:p-6">
-            <div className="flex items-center justify-between border-b border-border pb-4">
+            <div className="flex items-center justify-between border-b border-divider pb-4">
               <div>
                 <h3 className="text-lg font-bold text-foreground">
                   {viewingSubTransactions.name} Payment History
@@ -1111,7 +1111,7 @@ export default function FinancialHorizonClient({
                 subTransactionsList.map((tx) => (
                   <div
                     key={tx.id}
-                    className="flex items-center justify-between rounded-xl border border-border/60 bg-background p-3 text-sm"
+                    className="flex items-center justify-between rounded-xl bg-background p-3 text-sm"
                   >
                     <div>
                       <span className="font-semibold text-foreground">{tx.name}</span>
@@ -1131,7 +1131,7 @@ export default function FinancialHorizonClient({
               )}
             </div>
 
-            <div className="mt-5 border-t border-border/60 pt-3">
+            <div className="mt-5 border-t border-divider/60 pt-3">
               <DialogAction
                 className="w-full"
                 variant="secondary"

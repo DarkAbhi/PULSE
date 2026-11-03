@@ -49,9 +49,9 @@ export default async function FuelEfficiencySection({
             {fuelType && (
               <h4 className="mb-2 text-sm font-semibold capitalize">{fuelType}</h4>
             )}
-            <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-divider bg-divider sm:grid-cols-3">
+            <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-divider sm:grid-cols-3">
               {readings.map(({ label, value, unit }) => (
-                <div className={`min-w-0 px-3 py-2.5 ${label === "Average" ? "bg-accent text-accent-foreground" : "bg-card"}`} key={label}>
+                <div className={`min-w-0 rounded-lg px-3 py-2.5 ${label === "Average" ? "bg-accent text-accent-foreground" : "bg-card"}`} key={label}>
                   <dt className={`text-xs ${label === "Average" ? "font-semibold" : "text-muted-foreground"}`}>{label}</dt>
                   <dd className="mt-0.5 break-words text-lg font-semibold tabular-nums tracking-tight">
                     {value}

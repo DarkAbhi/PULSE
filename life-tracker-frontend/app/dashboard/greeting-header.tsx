@@ -8,7 +8,7 @@ export function PulseOrb() {
   return (
     <div className="pulse-orb-scene" aria-hidden="true">
       {[0, 2, 4].map((delay) => (
-        <div key={delay} className="pulse-orb pulse-orb-ring" style={{ animationDelay: `${delay}s` }} />
+        <div key={delay} className="pulse-orb pulse-orb-wave" style={{ animationDelay: `${delay}s` }} />
       ))}
       <div className="pulse-orb pulse-orb-fill" />
     </div>

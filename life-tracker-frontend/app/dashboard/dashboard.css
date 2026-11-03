@@ -18,15 +18,14 @@
 .pulse-orb { position: absolute; width: min(64%, 280px); aspect-ratio: 1; right: -22%; top: -4%; border-radius: 50%; transform-origin: center; }
 .pulse-orb-fill { background: radial-gradient(circle at 30% 28%, #fff 0, #ffffffd9 12%, #ffffff00 34%), radial-gradient(circle at 40% 40%, #19d3f3, #4c6bff 45%, #ff2fd0 85%); box-shadow: inset -20px -30px 60px #ffffff59, 0 40px 80px -30px #4c6bff99; animation: pulse-breathe 6s ease-in-out infinite; }
 .dark .pulse-orb-fill { background: radial-gradient(circle at 35% 30%, #daf5ff, #64ccf3 20%, #446bff 40%, #ff2fd0 78%); box-shadow: none; }
-.pulse-orb-ring { border: 2px solid #4c6bff73; animation: pulse-ripple 6s ease-out infinite; }
-.dark .pulse-orb-ring { border-color: #ffffff70; }
+.pulse-orb-wave { background: radial-gradient(circle, #4c6bff3d, #4c6bff00 72%); animation: pulse-ripple 6s ease-out infinite; }
 .pulse-hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .pulse-clock { min-width: 0; }
 .pulse-clock-time { font-size: 24px; line-height: 1.25; font-weight: 700; font-variant-numeric: tabular-nums; }
 .pulse-clock-date { margin-top: 4px; font-size: 14px; color: #5e5a7d; max-width: 24ch; }
 .dark .pulse-clock-date, .dark .pulse-greeting-eyebrow { color: #ffffffe0; }
 .pulse-hero-actions { display: flex; flex-shrink: 0; gap: 4px; }
-.pulse-profile-link, .pulse-hero-actions > div > button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; color: inherit; }
+.pulse-profile-link, .pulse-hero-actions > div > button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: transparent; color: inherit; }
 .pulse-hero-actions > div > button svg { color: inherit; }
 .pulse-profile-link:hover, .pulse-hero-actions > div > button:hover { background: #ffffff26; }
 .pulse-greeting-eyebrow { color: #5e5a7d; font-size: 20px; }
@@ -72,4 +71,4 @@
 @keyframes pulse-breathe { 0%, 100% { transform: scale(.95); } 50% { transform: scale(1.04); } }
 @keyframes pulse-ripple { from { transform: scale(.95); opacity: .8; } to { transform: scale(1.5); opacity: 0; } }
 @keyframes pulse-sway { to { transform: scale(1.08) translate(-2%, 2%); } }
-@media (prefers-reduced-motion: reduce) { .pulse-orb-fill, .pulse-hero-art::before { animation: none; } .pulse-orb-ring { display: none; } }
+@media (prefers-reduced-motion: reduce) { .pulse-orb-fill, .pulse-hero-art::before { animation: none; } .pulse-orb-wave { display: none; } }

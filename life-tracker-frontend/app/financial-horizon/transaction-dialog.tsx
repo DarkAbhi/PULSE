@@ -1,5 +1,6 @@
 "use client";
 
+import Select from "@/app/components/design-system/select";
 import { currencySymbol } from "@/app/lib/currency.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
@@ -150,7 +151,7 @@ export default function TransactionDialog({
       panelClassName="scale-100 transition-all duration-200 sm:p-6"
       size="wide"
     >
-        <div className="flex items-center justify-between border-b border-border pb-4">
+        <div className="flex items-center justify-between border-b border-divider pb-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-action">
               <Receipt className="h-5 w-5" />
@@ -171,7 +172,7 @@ export default function TransactionDialog({
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {errorMsg && (
-            <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs font-semibold text-destructive">
+            <div className="rounded-xl bg-destructive/10 p-3 text-xs font-semibold text-destructive">
               {errorMsg}
             </div>
           )}
@@ -205,7 +206,7 @@ export default function TransactionDialog({
               placeholder="e.g. Netflix Monthly Payment, Spotify"
               value={txName}
               onChange={(e) => setTxName(e.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
             />
           </div>
 
@@ -220,7 +221,7 @@ export default function TransactionDialog({
                 placeholder="0.00"
                 value={txAmount}
                 onChange={(e) => setTxAmount(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
               />
             </div>
 
@@ -231,7 +232,7 @@ export default function TransactionDialog({
                 required
                 value={txDate}
                 onChange={(e) => setTxDate(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
               />
             </div>
           </div>
@@ -239,25 +240,25 @@ export default function TransactionDialog({
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">Category</label>
-              <select
+              <Select
                 value={txCategoryId ?? ""}
                 onChange={(e) => setTxCategoryId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3 py-2.5 text-sm text-foreground"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">Link to Budget</label>
-              <select
+              <Select
                 value={txBudgetId ?? ""}
                 onChange={(e) => setTxBudgetId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3 py-2.5 text-sm text-foreground"
               >
                 <option value="">-- Unlinked --</option>
                 {budgets.map((b) => (
@@ -265,15 +266,15 @@ export default function TransactionDialog({
                     {b.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">Link to Subscription</label>
-              <select
+              <Select
                 value={txSubscriptionId ?? ""}
                 onChange={(e) => setTxSubscriptionId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3 py-2.5 text-sm text-foreground"
               >
                 <option value="">-- Unlinked --</option>
                 {subscriptions.map((s) => (
@@ -281,7 +282,7 @@ export default function TransactionDialog({
                     {s.name} ({currencySymbol(currency)}{s.amount})
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
 
@@ -292,11 +293,11 @@ export default function TransactionDialog({
               placeholder="e.g. Paid via UPI, invoice #1234"
               value={txNotes}
               onChange={(e) => setTxNotes(e.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
             />
           </div>
 
-          <DialogActions className="border-t border-border pt-4">
+          <DialogActions className="border-t border-divider pt-4">
             <DialogAction
               type="button"
               variant="secondary"

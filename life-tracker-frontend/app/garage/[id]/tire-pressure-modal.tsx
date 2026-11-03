@@ -110,7 +110,7 @@ export default function TirePressureModal({
 
         <div className="mt-6 space-y-4">
           {/* Solo Riding */}
-          <div className="rounded-xl border border-border/70 bg-card p-4">
+          <div className="rounded-xl bg-card p-4">
             <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
               <User className="h-4 w-4 text-action" /> Solo riding
             </h3>
@@ -120,7 +120,7 @@ export default function TirePressureModal({
                   Front tire (PSI)
                 </label>
                 <input
-                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="mt-1 w-full rounded-lg bg-secondary px-3 py-2 text-sm transition"
                   id="front-pressure-solo"
                   max="150"
                   min="0"
@@ -136,7 +136,7 @@ export default function TirePressureModal({
                   Rear tire (PSI)
                 </label>
                 <input
-                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="mt-1 w-full rounded-lg bg-secondary px-3 py-2 text-sm transition"
                   id="rear-pressure-solo"
                   max="150"
                   min="0"
@@ -151,7 +151,7 @@ export default function TirePressureModal({
           </div>
 
           {/* With Pillion */}
-          <div className="rounded-xl border border-border/70 bg-card p-4">
+          <div className="rounded-xl bg-card p-4">
             <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
               <Users className="h-4 w-4 text-action" /> With pillion
             </h3>
@@ -161,7 +161,7 @@ export default function TirePressureModal({
                   Front tire (PSI)
                 </label>
                 <input
-                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="mt-1 w-full rounded-lg bg-secondary px-3 py-2 text-sm transition"
                   id="front-pressure-pillion"
                   max="150"
                   min="0"
@@ -177,7 +177,7 @@ export default function TirePressureModal({
                   Rear tire (PSI)
                 </label>
                 <input
-                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="mt-1 w-full rounded-lg bg-secondary px-3 py-2 text-sm transition"
                   id="rear-pressure-pillion"
                   max="150"
                   min="0"

@@ -37,7 +37,7 @@ export default function DeleteVehicleButton({
   return (
     <>
       <Button
-        variant="destructiveOutline"
+        variant="destructive"
         size="md"
         onClick={() => setIsConfirmingDelete(true)}
         type="button"

@@ -1,5 +1,6 @@
 "use client";
 
+import Select from "@/app/components/design-system/select";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
@@ -32,12 +33,12 @@ import {
 import { HorizonSummary, DeductionItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
 
 const CATEGORIES = [
-  { id: "housing", label: "Housing & Rent", icon: Home, color: "bg-info/10 text-info border-info/20" },
-  { id: "investment", label: "Investments & SIPs", icon: TrendingUp, color: "bg-success/10 text-success border-success/20" },
-  { id: "bill", label: "Bills & Utilities", icon: Zap, color: "bg-warning/10 text-warning border-warning/20" },
-  { id: "subscription", label: "Subscriptions", icon: Tv, color: "bg-lavender/10 text-foreground border-lavender/20" },
-  { id: "debt", label: "Debt & EMIs", icon: CreditCard, color: "bg-destructive/10 text-destructive border-destructive/20" },
-  { id: "other", label: "Other Fixed", icon: Receipt, color: "bg-muted/10 text-muted-foreground border-border/20" },
+  { id: "housing", label: "Housing & Rent", icon: Home, color: "bg-info/10 text-info" },
+  { id: "investment", label: "Investments & SIPs", icon: TrendingUp, color: "bg-success/10 text-success" },
+  { id: "bill", label: "Bills & Utilities", icon: Zap, color: "bg-warning/10 text-warning" },
+  { id: "subscription", label: "Subscriptions", icon: Tv, color: "bg-lavender/10 text-foreground" },
+  { id: "debt", label: "Debt & EMIs", icon: CreditCard, color: "bg-destructive/10 text-destructive" },
+  { id: "other", label: "Other Fixed", icon: Receipt, color: "bg-muted/10 text-muted-foreground" },
 ] as const;
 
 function formatOrdinalDay(day: number): string {
@@ -126,7 +127,7 @@ export default function FixedObligationsTab({
         id: "other",
         label: "Other Fixed",
         icon: Receipt,
-        color: "bg-muted/10 text-muted-foreground border-border/20",
+        color: "bg-muted/10 text-muted-foreground",
       }
     );
   };
@@ -166,7 +167,7 @@ export default function FixedObligationsTab({
   return (
     <section className="space-y-6">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-divider pb-4">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <Calendar className="h-5 w-5 text-action" />
@@ -174,7 +175,7 @@ export default function FixedObligationsTab({
             <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-action">
               {totalActiveCount} Active
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-lavender/10 px-2.5 py-0.5 text-xs font-semibold text-foreground border border-lavender/20">
+            <span className="inline-flex items-center gap-1 rounded-full bg-lavender/10 px-2.5 py-0.5 text-xs font-semibold text-foreground">
               {formatMoney(totalFixedCommitments, summary.currency)}/mo
             </span>
           </div>
@@ -223,7 +224,7 @@ export default function FixedObligationsTab({
             if (event.target === event.currentTarget && !isPending) onCancelDeductionForm();
           }}
         >
-          <div className="flex items-center justify-between gap-3 border-b border-border pb-4">
+          <div className="flex items-center justify-between gap-3 border-b border-divider pb-4">
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-action">
                 <Calendar className="h-5 w-5" />
@@ -245,7 +246,7 @@ export default function FixedObligationsTab({
 
           <form onSubmit={onSaveDeduction} className="mt-5 grid gap-4 sm:grid-cols-2">
             {error && (
-              <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive sm:col-span-2">
+              <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive sm:col-span-2">
                 {error}
               </p>
             )}
@@ -259,24 +260,24 @@ export default function FixedObligationsTab({
                 placeholder="e.g. Apartment Rent, SIP"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3 py-2 text-sm text-foreground"
               />
             </div>
 
             <div className="space-y-1">
               <label htmlFor={`${titleId}-category`} className="text-xs font-semibold text-muted-foreground">Category</label>
-              <select
+              <Select
                 id={`${titleId}-category`}
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3 py-2 text-sm text-foreground"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
             <div className="space-y-1">
@@ -290,7 +291,7 @@ export default function FixedObligationsTab({
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3 py-2 text-sm text-foreground"
               />
             </div>
 
@@ -304,17 +305,17 @@ export default function FixedObligationsTab({
                 placeholder="e.g. 5"
                 value={dueDay}
                 onChange={(e) => setDueDay(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3 py-2 text-sm text-foreground"
               />
             </div>
 
             <div className="space-y-1 sm:col-span-2">
               <label htmlFor={`${titleId}-budget`} className="text-xs font-semibold text-muted-foreground">Link to Monthly Budget (Optional)</label>
-              <select
+              <Select
                 id={`${titleId}-budget`}
                 value={selectedBudgetId ?? ""}
                 onChange={(e) => setSelectedBudgetId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-xl bg-secondary px-3 py-2 text-sm text-foreground"
               >
                 <option value="">-- No Budget Link --</option>
                 {(summary.budgets ?? []).map((b) => (
@@ -322,10 +323,10 @@ export default function FixedObligationsTab({
                     {b.name} ({formatMoney(b.allocated_amount, summary.currency)})
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
 
-            <DialogActions className="border-t border-border pt-4 sm:col-span-2">
+            <DialogActions className="border-t border-divider pt-4 sm:col-span-2">
               <DialogAction
                 variant="secondary"
                 type="button"
@@ -374,7 +375,7 @@ export default function FixedObligationsTab({
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${catCfg.color}`}>
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${catCfg.color}`}>
                       <IconComponent className="h-5 w-5" />
                     </div>
                     <div>
@@ -416,13 +417,13 @@ export default function FixedObligationsTab({
                 </div>
 
                 {linkedBudget && (
-                  <div className="mt-3 flex items-center gap-1.5 text-xs text-action bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
+                  <div className="mt-3 flex items-center gap-1.5 text-xs text-action bg-primary/10 px-2.5 py-1 rounded-lg">
                     <Target className="h-3.5 w-3.5" />
                     <span>Budget: <strong>{linkedBudget.name}</strong></span>
                   </div>
                 )}
 
-                <div className="mt-4 flex items-center justify-end gap-2 border-t border-border/50 pt-3">
+                <div className="mt-4 flex items-center justify-end gap-2 border-t border-divider/50 pt-3">
                   <Button variant="icon"
                     onClick={() => onOpenEditDeduction(item)}
                     title="Edit obligation"
@@ -452,7 +453,7 @@ export default function FixedObligationsTab({
                 <div>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border bg-lavender/10 text-foreground border-lavender/20">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-lavender/10 text-foreground">
                         <Tv className="h-5 w-5" />
                       </div>
                       <div>
@@ -460,7 +461,7 @@ export default function FixedObligationsTab({
                           {sub.name}
                         </h4>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="inline-flex items-center gap-1 rounded-md bg-lavender/10 px-2 py-0.5 text-xs font-semibold text-foreground border border-lavender/20">
+                          <span className="inline-flex items-center gap-1 rounded-md bg-lavender/10 px-2 py-0.5 text-xs font-semibold text-foreground">
                             Subscription
                           </span>
                           {sub.billing_cycle === "yearly" && (
@@ -486,7 +487,7 @@ export default function FixedObligationsTab({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1 text-xs text-foreground bg-lavender/10 px-2 py-1 rounded-lg border border-lavender/20">
+                    <div className="flex items-center gap-1 text-xs text-foreground bg-lavender/10 px-2 py-1 rounded-lg">
                       <Calendar className="h-3 w-3" />
                       <span>
                         {sub.billing_cycle === "yearly"
@@ -497,14 +498,14 @@ export default function FixedObligationsTab({
                   </div>
 
                   {sub.budget_name && (
-                    <div className="mt-3 flex items-center gap-1.5 text-xs text-action bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
+                    <div className="mt-3 flex items-center gap-1.5 text-xs text-action bg-primary/10 px-2.5 py-1 rounded-lg">
                       <Target className="h-3.5 w-3.5" />
                       <span>Budget: <strong>{sub.budget_name}</strong></span>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3 text-xs">
+                <div className="mt-4 flex items-center justify-between border-t border-divider/50 pt-3 text-xs">
                   <span className="text-muted-foreground italic truncate max-w-[150px]">
                     {sub.category_name ?? "Recurring Subscription"}
                   </span>

@@ -10,7 +10,7 @@ const sources = [
   { key: "personal", label: "My intervals" },
   { key: "manual", label: "Vehicle manual" },
 ] as const;
-const inputClass = "mt-1.5 block min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-base tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+const inputClass = "mt-1.5 block min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-base tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 export default function MaintenanceScheduleForm({ initial, vehicleId }: { initial: MaintenanceSchedule; vehicleId: string }) {
   const [value, setValue] = useState(initial);
@@ -48,7 +48,7 @@ export default function MaintenanceScheduleForm({ initial, vehicleId }: { initia
               setValue((current) => ({ ...current, [key]: { ...current[key], ...patch } }));
 
             return (
-              <section key={key} aria-label={label} className={`min-w-0 overflow-hidden rounded-xl border bg-card ${active ? "border-action" : "border-border"}`}>
+              <section key={key} aria-label={label} className="min-w-0 overflow-hidden rounded-xl bg-card">
                 <label className={`flex min-h-12 cursor-pointer items-center gap-3 border-b px-4 py-3 sm:px-5 ${active ? "border-action/25 bg-accent text-accent-foreground" : "border-divider bg-secondary/45"}`}>
                   <input
                     type="radio"

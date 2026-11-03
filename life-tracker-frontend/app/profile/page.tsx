@@ -51,7 +51,7 @@ export default async function ProfilePage() {
         <section className="mt-12 flex flex-col items-center text-center">
           {/* Circular Profile Picture Placeholder on top */}
           <div className="relative mb-6">
-            <div className="h-32 w-32 overflow-hidden rounded-full border-4 border-card shadow-xl ring-2 ring-primary/20">
+            <div className="h-32 w-32 overflow-hidden rounded-full shadow-xl">
               <img
                 alt="Profile picture placeholder"
                 className="h-full w-full object-cover"
@@ -76,7 +76,7 @@ export default async function ProfilePage() {
               <ChangePasswordButton />
             </div>
             <div className="space-y-4 text-sm">
-              <div className="flex justify-between py-2 border-b border-border">
+              <div className="flex justify-between py-2 border-b border-divider">
                 <span className="text-muted-foreground">Display Name</span>
                 <span className="font-medium text-foreground">{displayName || "Not set"}</span>
               </div>

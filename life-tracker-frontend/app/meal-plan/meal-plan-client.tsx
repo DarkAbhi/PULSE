@@ -14,7 +14,6 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
   Plus,
   Trash2,
   Utensils,
@@ -87,9 +86,6 @@ export default function MealPlanClient({
 }: MealPlanClientProps) {
   const { timeZone } = useTimeZone();
   const [todayStr, setTodayStr] = useState(() => initialTodayStr ?? dateKey(new Date(), timeZone));
-  const [currentMonday, setCurrentMonday] = useState(() =>
-    getMonday(parseYMD(initialTodayStr ?? dateKey(new Date(), timeZone)))
-  );
   useEffect(() => {
     const update = () => setTodayStr(dateKey(new Date(), timeZone));
     update();
@@ -104,13 +100,13 @@ export default function MealPlanClient({
   const [mealTimes, setMealTimes] = useState<MealTime[]>(initialMealTimes);
   const [isLoadingWeek, setIsLoadingWeek] = useState(false);
 
-  // Add Meal Modal state
+  // Meal form state
   const [isAddMealOpen, setIsAddMealOpen] = useState(false);
   const [selectedMealTimeID, setSelectedMealTimeID] = useState<number | null>(null);
   const [mealName, setMealName] = useState("");
   const [mealModalError, setMealModalError] = useState("");
 
-  // Add Custom Meal Time Modal state
+  // New meal time Meal Time Modal state
   const [isAddMealTimeOpen, setIsAddMealTimeOpen] = useState(false);
   const [newMealTimeName, setNewMealTimeName] = useState("");
   const [newStartTime, setNewStartTime] = useState("16:00");
@@ -126,10 +122,12 @@ export default function MealPlanClient({
 
   const [isPending, startTransition] = useTransition();
 
+  const [deleteError, setDeleteError] = useState("");
   const addMealTitleId = useId();
   const addMealTimeTitleId = useId();
   const manageMealTimesTitleId = useId();
 
+  const currentMonday = getMonday(parseYMD(selectedDate));
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = addDays(currentMonday, i);
     const dateStr = formatYMD(d);
@@ -164,33 +162,20 @@ export default function MealPlanClient({
     };
   }, [weekStartStr, weekEndStr]);
 
-  const handlePrevWeek = () => setCurrentMonday((prev) => addDays(prev, -7));
-  const handleNextWeek = () => setCurrentMonday((prev) => addDays(prev, 7));
-  const handleCurrentWeek = () => {
-    const today = dateKey(new Date(), timeZone);
-    setCurrentMonday(getMonday(parseYMD(today)));
-    setSelectedDate(today);
-  };
+  const moveWeek = (days: number) => setSelectedDate((date) => formatYMD(addDays(parseYMD(date), days)));
+  const handleToday = () => setSelectedDate(dateKey(new Date(), timeZone));
 
-  const selectedDayObj = weekDays.find((d) => d.dateStr === selectedDate) ?? {
-    dayFull: parseYMD(selectedDate).toLocaleDateString("en-IN", { timeZone: "UTC",
-      weekday: "long",
-    }),
-    monthDay: parseYMD(selectedDate).toLocaleDateString("en-IN", { timeZone: "UTC",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    }),
-    isToday: selectedDate === todayStr,
-  };
-
-  const dayMeals = meals.filter((m) => m.date === selectedDate);
+  const selectedDay = weekDays.find((day) => day.isSelected)!;
+  const dayMeals = meals.filter((meal) => meal.date === selectedDate);
+  const orderedMealTimes = [...mealTimes].sort((a, b) => a.start_time.localeCompare(b.start_time));
+  const otherMeals = dayMeals.filter((meal) => !mealTimes.some((time) => time.id === meal.meal_time_id));
+  const eatenCount = dayMeals.filter((meal) => meal.is_consumed).length;
 
   // Open add meal modal, optionally preselecting a meal time slot
   const handleOpenAddMeal = (mealTimeID?: number) => {
     setMealName("");
     setMealModalError("");
-    setSelectedMealTimeID(mealTimeID ?? (mealTimes.length > 0 ? mealTimes[0].id : null));
+    setSelectedMealTimeID(mealTimeID ?? orderedMealTimes[0]?.id ?? null);
     setIsAddMealOpen(true);
   };
 
@@ -223,11 +208,14 @@ export default function MealPlanClient({
 
   const handleConfirmDeleteMeal = () => {
     if (!mealToDelete) return;
+    setDeleteError("");
     startTransition(async () => {
       const res = await deleteMealPlanAction(mealToDelete.id);
       if (res.ok) {
         setMeals((prev) => prev.filter((m) => m.id !== mealToDelete.id));
         setMealToDelete(null);
+      } else {
+        setDeleteError(res.error ?? "Could not remove the meal.");
       }
     });
   };
@@ -250,7 +238,7 @@ export default function MealPlanClient({
     });
   };
 
-  // Add Custom Meal Time handlers
+  // New meal time Meal Time handlers
   const handleOpenAddMealTime = () => {
     setNewMealTimeName("");
     setNewStartTime("16:00");
@@ -293,11 +281,14 @@ export default function MealPlanClient({
 
   const handleConfirmDeleteMealTime = () => {
     if (!mealTimeToDelete) return;
+    setDeleteError("");
     startTransition(async () => {
       const res = await deleteMealTimeAction(mealTimeToDelete.id);
       if (res.ok) {
         setMealTimes((prev) => prev.filter((mt) => mt.id !== mealTimeToDelete.id));
         setMealTimeToDelete(null);
+      } else {
+        setDeleteError(res.error ?? "Could not remove the meal time.");
       }
     });
   };
@@ -311,326 +302,177 @@ export default function MealPlanClient({
     year: "numeric",
   })}`;
 
-  // Check for any meals with no assigned meal time
-  const unassignedMeals = dayMeals.filter((m) => !m.meal_time_id);
+  const renderMeals = (items: MealPlan[]) => (
+    <ul className="divide-y divide-border/60">
+      {items.map((meal) => (
+        <li key={meal.id} className="flex items-center gap-2 py-2 first:pt-0 last:pb-0">
+          <Button
+            variant={meal.is_consumed ? "soft" : "tertiary"}
+            size="sm"
+            type="button"
+            role="checkbox"
+            aria-checked={meal.is_consumed}
+            aria-label={`Eaten: ${meal.name}`}
+            onClick={() => handleToggleConsumed(meal)}
+            disabled={isPending}
+            className="min-w-0 flex-1 justify-start! text-left"
+          >
+            <span className="flex size-4 shrink-0 items-center justify-center rounded border border-current">
+              {meal.is_consumed && <Check className="size-3" aria-hidden="true" />}
+            </span>
+            <span className={`min-w-0 wrap-anywhere text-sm ${meal.is_consumed ? "text-muted-foreground line-through" : "text-foreground"}`}>
+              {meal.name}
+            </span>
+          </Button>
+          <Button variant="iconDanger" size="md" type="button"
+            onClick={() => { setDeleteError(""); setMealToDelete(meal); }}
+            aria-label={`Delete ${meal.name}`}
+            disabled={isPending}
+            className="shrink-0"
+          >
+            <Trash2 className="size-4" aria-hidden="true" />
+          </Button>
+        </li>
+      ))}
+    </ul>
+  );
 
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
-      <div className="mx-auto max-w-6xl">
-        {/* Top Header */}
-        <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <Link
-              className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80 w-fit"
-              href="/dashboard"
-            >
-              <ArrowLeft className="h-4 w-4" /> Dashboard
-            </Link>
-            <h1 className="mt-5 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Meal Plan
-            </h1>
-            <p className="mt-3 text-base text-muted-foreground">
-              Plan and track your daily meals.
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0 sm:pt-2">
-            <Button variant="secondary" size="sm"
-              onClick={() => setIsManageMealTimesOpen(true)}
-            >
-              <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
-              Meal Times
-            </Button>
-            <Button variant="secondary" size="sm"
-              onClick={handleCurrentWeek}
-            >
-              <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
-              Current Week
+    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
+      <div className="mx-auto max-w-5xl" inert={isAddMealOpen || isAddMealTimeOpen || isManageMealTimesOpen || mealToDelete !== null || mealTimeToDelete !== null}>
+        <Link className="inline-flex items-center gap-2 rounded-md text-sm font-semibold text-action focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" href="/dashboard">
+          <ArrowLeft className="size-4" aria-hidden="true" /> Dashboard
+        </Link>
+
+        <PulseCard as="section" aria-labelledby="meal-plan-title" className="mt-5 overflow-hidden">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border bg-accent px-4 py-6 text-accent-foreground sm:px-7 sm:py-8">
+            <div>
+              <h1 id="meal-plan-title" className="text-4xl font-bold tracking-tight sm:text-5xl">Meal Plan</h1>
+              <p className="mt-2 text-sm">Plan your week, one meal at a time.</p>
+            </div>
+            <Button variant="secondary" onClick={() => setIsManageMealTimesOpen(true)}>
+              <Settings2 className="size-4" aria-hidden="true" /> Meal times
             </Button>
           </div>
-        </header>
 
-        {/* Week Navigator & Calendar Bar */}
-        <PulseCard as="section" className="p-5 sm:p-6 mb-10">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2.5">
-              <span className="text-base font-semibold text-foreground" suppressHydrationWarning>
-                {formattedWeekRange}
-              </span>
-              {isLoadingWeek && (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              )}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Button variant="iconSecondary"
-                onClick={handlePrevWeek}
-                aria-label="Previous week"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="iconSecondary"
-                onClick={handleNextWeek}
-                aria-label="Next week"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-7 sm:gap-3">
-            {weekDays.map((day) => {
-              const active = day.isSelected;
-              return (
-                <Button variant={active ? "primary" : "secondary"} size="sm"
-                  key={day.dateStr}
-                  onClick={() => setSelectedDate(day.dateStr)}
-                  className="w-full min-w-0 flex-col"
-                >
-                  <span
-                    className={`text-xs uppercase tracking-wider ${
-                      active
-                        ? "text-primary-foreground/90 font-bold"
-                        : "text-muted-foreground font-medium"
-                    }`}
-                  >
-                    {day.dayShort}
-                  </span>
-                  <span
-                    className={`mt-1 text-sm sm:text-base ${
-                      active ? "font-bold text-primary-foreground" : "font-semibold"
-                    }`}
-                  >
-                    {day.date.getUTCDate()}
-                  </span>
-
-                  <div className="mt-1.5 flex items-center justify-center min-h-[6px]">
-                    {day.isToday && (
-                      <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          active ? "bg-primary-foreground" : "bg-primary"
-                        }`}
-                        title="Today"
-                      />
-                    )}
-                  </div>
+          <div className="p-3 sm:p-6">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
+              <h2 className="text-sm font-semibold sm:text-base">{formattedWeekRange}</h2>
+              <div className="flex items-center gap-1">
+                <Button variant="tertiary" size="sm" onClick={handleToday}>Today</Button>
+                <Button variant="iconSecondary" size="sm" onClick={() => moveWeek(-7)} aria-label="Previous week">
+                  <ChevronLeft className="size-4" aria-hidden="true" />
                 </Button>
-              );
-            })}
+                <Button variant="iconSecondary" size="sm" onClick={() => moveWeek(7)} aria-label="Next week">
+                  <ChevronRight className="size-4" aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 sm:gap-2" role="group" aria-label="Days of the week">
+              {weekDays.map((day) => (
+                <Button
+                  key={day.dateStr}
+                  variant={day.isSelected ? "primary" : "iconSecondary"}
+                  aria-label={`${day.dayFull}, ${day.monthDay}`}
+                  aria-pressed={day.isSelected}
+                  aria-current={day.isToday ? "date" : undefined}
+                  onClick={() => setSelectedDate(day.dateStr)}
+                  className="h-auto min-h-16 w-full min-w-0 flex-col px-0 py-2 sm:min-h-20"
+                >
+                  <span className="text-xs font-medium">{day.dayShort}</span>
+                  <span className="text-lg leading-none tabular-nums sm:text-2xl">{day.date.getUTCDate()}</span>
+                  <span aria-hidden="true" className={`size-1 rounded-full ${day.isToday ? "bg-current" : "invisible"}`} />
+                </Button>
+              ))}
+            </div>
           </div>
         </PulseCard>
 
-        {/* Selected Day Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                {selectedDayObj.dayFull}
+        <section aria-labelledby="meal-agenda-title" className="mt-7 sm:mt-9">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 id="meal-agenda-title" className="text-2xl font-bold tracking-tight sm:text-3xl">
+                {selectedDay.dayFull}, {selectedDay.monthDay}
               </h2>
-              {selectedDayObj.isToday && (
-                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-action">
-                  Today
-                </span>
-              )}
+              <p className="mt-1 text-sm text-muted-foreground" role="status">
+                {isLoadingWeek ? "Loading meals…" : dayMeals.length ? `${eatenCount} of ${dayMeals.length} meals eaten` : "No meals planned yet"}
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground mt-1" suppressHydrationWarning>
-              {parseYMD(selectedDate).toLocaleDateString("en-IN", { timeZone: "UTC",
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
+            <Button onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek}>
+              <Plus className="size-4" aria-hidden="true" /> Add meal
+            </Button>
           </div>
 
-          {dayMeals.length > 0 && (
-            <Button variant="primary" size="md"
-              onClick={() => handleOpenAddMeal()}
-            >
-              <Plus className="h-4 w-4" />
-              Add meal
-            </Button>
-          )}
-        </div>
-
-        {/* Meal Times Sections or Empty State */}
-        {dayMeals.length === 0 ? (
-          <PulseCard className="p-12 sm:p-16 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-secondary-foreground mb-4">
-              <Utensils className="h-7 w-7 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground">
-              No meals planned for this day yet
-            </h3>
-            <p className="mt-1.5 text-sm text-muted-foreground max-w-sm mx-auto">
-              Start planning your meals for {selectedDayObj.dayFull}.
-            </p>
-            <div className="mt-6">
-              <Button variant="primary" size="md"
-                onClick={() => handleOpenAddMeal()}
-              >
-                <Plus className="h-4 w-4" />
-                Add meal
-              </Button>
-            </div>
-          </PulseCard>
-        ) : (
-          <>
-            <div className="grid gap-5 sm:grid-cols-2">
-              {mealTimes.map((mt) => {
-                const slotMeals = dayMeals.filter((m) => m.meal_time_id === mt.id);
+          <PulseCard className="overflow-hidden" aria-busy={isLoadingWeek}>
+            <div className="divide-y divide-border">
+              {orderedMealTimes.map((time) => {
+                const items = dayMeals.filter((meal) => meal.meal_time_id === time.id);
                 return (
-                  <PulseCard
-                    key={mt.id}
-                    className="flex flex-col justify-between p-6"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2 border-b border-border/70 pb-3 mb-3">
-                        <div className="min-w-0">
-                          <h3 className="font-semibold text-foreground truncate text-base">
-                            {mt.name}
-                          </h3>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                            <Clock className="h-3 w-3 shrink-0" />
-                            <span>
-                              {formatTimeDisplay(mt.start_time)} – {formatTimeDisplay(mt.end_time)}
-                            </span>
-                          </div>
-                        </div>
-                        <Button variant="secondary" size="sm"
-                          onClick={() => handleOpenAddMeal(mt.id)}
-                          title={`Add to ${mt.name}`}
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                          Add
-                        </Button>
+                  <section key={time.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-5 gap-y-3 px-4 py-4 sm:grid-cols-[12rem_minmax(0,1fr)_auto] sm:items-start sm:px-6">
+                    <div className="col-start-1 row-start-1 flex min-w-0 items-start gap-3">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
+                        <Clock className="size-4" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold wrap-anywhere">{time.name}</h3>
+                        <p className="text-xs text-muted-foreground">{formatTimeDisplay(time.start_time)} – {formatTimeDisplay(time.end_time)}</p>
                       </div>
-
-                      {slotMeals.length === 0 ? (
-                        <p className="text-xs text-muted-foreground italic py-3">
-                          Nothing planned yet.
-                        </p>
-                      ) : (
-                        <ul className="divide-y divide-border/50">
-                          {slotMeals.map((meal) => (
-                            <li
-                              key={meal.id}
-                              className={`flex items-center justify-between py-2 px-1 rounded-lg transition group ${
-                                meal.is_consumed ? "bg-muted/20" : "hover:bg-muted/10"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                                <Button variant={meal.is_consumed ? "primary" : "secondary"} size="sm"
-                                  type="button"
-                                  role="checkbox"
-                                  aria-checked={meal.is_consumed}
-                                  onClick={() => handleToggleConsumed(meal)}
-                                  disabled={isPending}
-                                  title={meal.is_consumed ? "Mark as not consumed" : "Mark as consumed"}
-                                  className="shrink-0"
-                                >
-                                  {meal.is_consumed && <Check className="h-3 w-3 stroke-[2.5]" />}
-                                </Button>
-                                <span
-                                  onClick={() => handleToggleConsumed(meal)}
-                                  className={`text-sm truncate transition cursor-pointer select-none ${
-                                    meal.is_consumed
-                                      ? "text-muted-foreground line-through font-normal"
-                                      : "text-foreground font-medium"
-                                  }`}
-                                >
-                                  {meal.name}
-                                </span>
-                              </div>
-                              <Button variant="iconDanger" size="sm"
-                                onClick={() => setMealToDelete(meal)}
-                                aria-label={`Delete ${meal.name}`}
-                                disabled={isPending}
-                                className="shrink-0"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
                     </div>
-                  </PulseCard>
+                    <div className="col-span-2 row-start-2 min-w-0 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+                      {items.length ? renderMeals(items) : <p className="py-2 text-sm text-muted-foreground">Nothing planned</p>}
+                    </div>
+                    <Button variant="secondary" size="sm" className="col-start-2 row-start-1 justify-self-end sm:col-start-3"
+                      onClick={() => handleOpenAddMeal(time.id)}
+                      aria-label={`Add meal to ${time.name}`}
+                      disabled={isLoadingWeek}
+                    >
+                      <Plus className="size-3.5" aria-hidden="true" /> Add
+                    </Button>
+                  </section>
                 );
               })}
+              {otherMeals.length > 0 && (
+                <section className="grid gap-3 px-4 py-4 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-5 sm:px-6">
+                  <h3 className="flex items-center gap-3 font-semibold">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary">
+                      <Utensils className="size-4" aria-hidden="true" />
+                    </span>
+                    Other meals
+                  </h3>
+                  {renderMeals(otherMeals)}
+                </section>
+              )}
+              {orderedMealTimes.length === 0 && otherMeals.length === 0 && (
+                <p className="px-4 py-8 text-sm text-muted-foreground sm:px-6">
+                  Add a meal to start planning this day.
+                </p>
+              )}
             </div>
-
-            {/* Unassigned meals if any */}
-            {unassignedMeals.length > 0 && (
-              <PulseCard className="mt-6 p-5">
-                <h3 className="font-semibold text-foreground text-base mb-3 border-b border-border/70 pb-2">
-                  Other Meals
-                </h3>
-                <ul className="divide-y divide-border/50">
-                  {unassignedMeals.map((meal) => (
-                    <li
-                      key={meal.id}
-                      className={`flex items-center justify-between py-2 px-1 rounded-lg transition group ${
-                        meal.is_consumed ? "bg-muted/20" : "hover:bg-muted/10"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
-                        <Button variant={meal.is_consumed ? "primary" : "secondary"} size="sm"
-                          type="button"
-                          role="checkbox"
-                          aria-checked={meal.is_consumed}
-                          onClick={() => handleToggleConsumed(meal)}
-                          disabled={isPending}
-                          title={meal.is_consumed ? "Mark as not consumed" : "Mark as consumed"}
-                          className="shrink-0"
-                        >
-                          {meal.is_consumed && <Check className="h-3 w-3 stroke-[2.5]" />}
-                        </Button>
-                        <span
-                          onClick={() => handleToggleConsumed(meal)}
-                          className={`text-sm truncate transition cursor-pointer select-none ${
-                            meal.is_consumed
-                              ? "text-muted-foreground line-through font-normal"
-                              : "text-foreground font-medium"
-                          }`}
-                        >
-                          {meal.name}
-                        </span>
-                      </div>
-                      <Button variant="iconDanger" size="sm"
-                        onClick={() => setMealToDelete(meal)}
-                        aria-label={`Delete ${meal.name}`}
-                        disabled={isPending}
-                        className="shrink-0"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              </PulseCard>
-            )}
-          </>
-        )}
+          </PulseCard>
+        </section>
       </div>
 
-      {/* Add Meal Modal Dialog */}
-      {isAddMealOpen && (
+      {/* Add meal Modal Dialog */}
+      {isAddMealOpen && !isAddMealTimeOpen && (
         <Dialog
           labelledBy={addMealTitleId}
           onBackdropClick={(e) => {
-            if (e.target === e.currentTarget) handleCloseAddMeal();
+            if (!isPending && e.target === e.currentTarget) handleCloseAddMeal();
           }}
           size="sm"
         >
           <form onSubmit={handleSubmitAddMeal}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-action">
+            <div className="mb-5 flex items-start gap-3 border-b border-border pb-4">
+              <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
                 <Utensils className="h-5 w-5" />
               </div>
               <div>
-                <h2 id={addMealTitleId} className="text-lg font-bold text-foreground">
-                  Add Meal
+                <h2 id={addMealTitleId} className="text-xl font-bold tracking-tight text-foreground">
+                  Add meal
                 </h2>
-                <p className="text-xs text-muted-foreground" suppressHydrationWarning>
-                  For {selectedDayObj.dayFull},{" "}
+                <p className="mt-1 text-sm text-muted-foreground">
+                  For {selectedDay.dayFull},{" "}
                   {parseYMD(selectedDate).toLocaleDateString("en-IN", { timeZone: "UTC",
                     month: "short",
                     day: "numeric",
@@ -648,14 +490,33 @@ export default function MealPlanClient({
               </div>
             )}
 
+            {/* Meal name Input */}
+            <div className="mb-4 space-y-1.5">
+              <label
+                htmlFor="meal-name-input"
+                className="block text-sm font-semibold text-foreground"
+              >
+                Meal name
+              </label>
+              <input
+                id="meal-name-input"
+                type="text"
+                autoFocus
+                value={mealName}
+                onChange={(e) => setMealName(e.target.value)}
+                placeholder="e.g. Scrambled eggs on toast"
+                className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
             {/* Meal Time Selector */}
             <div className="space-y-1.5 mb-4">
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="meal-time-select"
-                  className="block text-xs font-semibold text-foreground uppercase tracking-wider"
+                  className="block text-sm font-semibold text-foreground"
                 >
-                  Time of Day
+                  Meal time
                 </label>
                 <Button variant="tertiary" size="sm"
                   icon={<Plus className="h-3 w-3" />}
@@ -671,9 +532,10 @@ export default function MealPlanClient({
                 onChange={(e) =>
                   setSelectedMealTimeID(e.target.value ? parseInt(e.target.value, 10) : null)
                 }
-                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
               >
-                {mealTimes.map((mt) => (
+                {orderedMealTimes.length === 0 && <option value="">Other meals</option>}
+                {orderedMealTimes.map((mt) => (
                   <option key={mt.id} value={mt.id}>
                     {mt.name} ({formatTimeDisplay(mt.start_time)} – {formatTimeDisplay(mt.end_time)})
                   </option>
@@ -681,26 +543,7 @@ export default function MealPlanClient({
               </select>
             </div>
 
-            {/* Meal Name Input */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor="meal-name-input"
-                className="block text-xs font-semibold text-foreground uppercase tracking-wider"
-              >
-                Meal Name
-              </label>
-              <input
-                id="meal-name-input"
-                type="text"
-                autoFocus
-                value={mealName}
-                onChange={(e) => setMealName(e.target.value)}
-                placeholder="e.g., Scrambled Eggs with Avocado"
-                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
-            <DialogActions className="mt-6">
+            <DialogActions className="border-t border-border pt-4">
               <DialogAction
                 type="button"
                 variant="secondary"
@@ -719,7 +562,7 @@ export default function MealPlanClient({
                     <Loader2 className="h-4 w-4 animate-spin" /> Adding...
                   </span>
                 ) : (
-                  "Add Meal"
+                  "Add meal"
                 )}
               </DialogAction>
             </DialogActions>
@@ -727,26 +570,26 @@ export default function MealPlanClient({
         </Dialog>
       )}
 
-      {/* Add Custom Meal Time Modal Dialog */}
+      {/* New meal time dialog */}
       {isAddMealTimeOpen && (
         <Dialog
           labelledBy={addMealTimeTitleId}
           onBackdropClick={(e) => {
-            if (e.target === e.currentTarget) handleCloseAddMealTime();
+            if (!isPending && e.target === e.currentTarget) handleCloseAddMealTime();
           }}
           size="sm"
         >
           <form onSubmit={handleSubmitAddMealTime}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-action">
+            <div className="mb-5 flex items-start gap-3 border-b border-border pb-4">
+              <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
                 <Clock className="h-5 w-5" />
               </div>
               <div>
-                <h2 id={addMealTimeTitleId} className="text-lg font-bold text-foreground">
-                  New Meal Time
+                <h2 id={addMealTimeTitleId} className="text-xl font-bold tracking-tight text-foreground">
+                  New meal time
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Add a custom time of day and its time range
+                  Set the hours when this meal time appears in your daily plan.
                 </p>
               </div>
             </div>
@@ -764,9 +607,9 @@ export default function MealPlanClient({
               <div>
                 <label
                   htmlFor="meal-time-name-input"
-                  className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1"
+                  className="block text-sm font-semibold text-foreground mb-1"
                 >
-                  Meal Time Name
+                  Meal time name
                 </label>
                 <input
                   id="meal-time-name-input"
@@ -774,8 +617,8 @@ export default function MealPlanClient({
                   autoFocus
                   value={newMealTimeName}
                   onChange={(e) => setNewMealTimeName(e.target.value)}
-                  placeholder="e.g., Pre-workout Snack"
-                  className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                  placeholder="e.g. Afternoon snack"
+                  className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
@@ -783,37 +626,37 @@ export default function MealPlanClient({
                 <div>
                   <label
                     htmlFor="start-time-input"
-                    className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1"
+                    className="block text-sm font-semibold text-foreground mb-1"
                   >
-                    Start Time
+                    Starts
                   </label>
                   <input
                     id="start-time-input"
                     type="time"
                     value={newStartTime}
                     onChange={(e) => setNewStartTime(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                    className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="end-time-input"
-                    className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1"
+                    className="block text-sm font-semibold text-foreground mb-1"
                   >
-                    End Time
+                    Ends
                   </label>
                   <input
                     id="end-time-input"
                     type="time"
                     value={newEndTime}
                     onChange={(e) => setNewEndTime(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
+                    className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
               </div>
             </div>
 
-            <DialogActions className="mt-6">
+            <DialogActions className="border-t border-border pt-4">
               <DialogAction
                 type="button"
                 variant="secondary"
@@ -832,7 +675,7 @@ export default function MealPlanClient({
                     <Loader2 className="h-4 w-4 animate-spin" /> Saving...
                   </span>
                 ) : (
-                  "Create Meal Time"
+                  "Create meal time"
                 )}
               </DialogAction>
             </DialogActions>
@@ -841,7 +684,7 @@ export default function MealPlanClient({
       )}
 
       {/* Manage Meal Times Modal Dialog */}
-      {isManageMealTimesOpen && (
+      {isManageMealTimesOpen && !isAddMealTimeOpen && !mealTimeToDelete && (
         <Dialog
           labelledBy={manageMealTimesTitleId}
           onBackdropClick={(e) => {
@@ -849,37 +692,36 @@ export default function MealPlanClient({
           }}
           size="md"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-action">
+              <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
                 <Settings2 className="h-5 w-5" />
               </div>
               <div>
-                <h2 id={manageMealTimesTitleId} className="text-lg font-bold text-foreground">
-                  Meal Times & Ranges
+                <h2 id={manageMealTimesTitleId} className="text-xl font-bold tracking-tight text-foreground">
+                  Meal times
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Configured times of day for your meals
+                  Set up the time slots in your daily plan.
                 </p>
               </div>
             </div>
             <Button variant="primary" size="sm"
-              onClick={() => {
-                setIsManageMealTimesOpen(false);
-                handleOpenAddMealTime();
-              }}
+              onClick={handleOpenAddMealTime}
+              autoFocus
             >
               <Plus className="h-3.5 w-3.5" />
-              Add Custom
+              New meal time
             </Button>
           </div>
 
-          <ul className="divide-y divide-border/60 my-4 max-h-80 overflow-y-auto pr-1">
-            {mealTimes.map((mt) => (
-              <li key={mt.id} className="flex items-center justify-between py-3">
+          {orderedMealTimes.length === 0 && <p className="text-sm text-muted-foreground">Add a meal time to organize your daily plan.</p>}
+          <ul className="divide-y divide-border rounded-xl border border-border bg-background px-3 empty:hidden">
+            {orderedMealTimes.map((mt) => (
+              <li key={mt.id} className="flex items-center justify-between gap-2 py-3">
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-foreground">{mt.name}</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="wrap-anywhere font-semibold text-sm text-foreground">{mt.name}</span>
                     {mt.is_default && (
                       <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-secondary-foreground">
                         Default
@@ -896,7 +738,7 @@ export default function MealPlanClient({
 
                 {!mt.is_default && (
                   <Button variant="iconDanger" size="sm"
-                    onClick={() => setMealTimeToDelete(mt)}
+                    onClick={() => { setDeleteError(""); setMealTimeToDelete(mt); }}
                     aria-label={`Delete ${mt.name}`}
                     disabled={isPending}
                   >
@@ -907,15 +749,15 @@ export default function MealPlanClient({
             ))}
           </ul>
 
-          <div className="mt-4 flex justify-end">
+          <DialogActions className="border-t border-border pt-4 sm:flex sm:justify-end">
             <DialogAction
               type="button"
               variant="secondary"
               onClick={() => setIsManageMealTimesOpen(false)}
             >
-              Close
+              Done
             </DialogAction>
-          </div>
+          </DialogActions>
         </Dialog>
       )}
 
@@ -924,16 +766,17 @@ export default function MealPlanClient({
         isOpen={mealToDelete !== null}
         onClose={() => setMealToDelete(null)}
         onConfirm={handleConfirmDeleteMeal}
-        title="Delete Meal?"
+        title="Remove this meal?"
         description={
           mealToDelete ? (
             <span>
-              Are you sure you want to remove <strong>{mealToDelete.name}</strong> from your meal plan for {selectedDayObj.dayFull}?
+              <strong>{mealToDelete.name}</strong> will be removed from your plan for {selectedDay.dayFull}, {selectedDay.monthDay}.
             </span>
           ) : null
         }
-        confirmText="Yes, delete"
-        confirmLoadingText="Deleting…"
+        confirmText="Remove meal"
+        confirmLoadingText="Removing…"
+        error={deleteError}
         isLoading={isPending}
         variant="destructive"
       />
@@ -943,16 +786,17 @@ export default function MealPlanClient({
         isOpen={mealTimeToDelete !== null}
         onClose={() => setMealTimeToDelete(null)}
         onConfirm={handleConfirmDeleteMealTime}
-        title="Delete Meal Time?"
+        title="Remove this meal time?"
         description={
           mealTimeToDelete ? (
             <span>
-              Are you sure you want to delete the custom meal time <strong>{mealTimeToDelete.name}</strong>? Any meals assigned to it will remain in your plan under Other Meals.
+              Meals scheduled for <strong>{mealTimeToDelete.name}</strong> will move to Other meals.
             </span>
           ) : null
         }
-        confirmText="Yes, delete"
-        confirmLoadingText="Deleting…"
+        confirmText="Remove meal time"
+        confirmLoadingText="Removing…"
+        error={deleteError}
         isLoading={isPending}
         variant="destructive"
       />

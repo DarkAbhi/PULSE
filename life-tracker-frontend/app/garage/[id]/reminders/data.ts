@@ -1,10 +1,14 @@
 import { apiFetch } from "@/app/lib/server-api";
+import { Droplet, Wind, Wrench } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 import { VehicleHistoryData } from "../types";
 
-export const reminderTitles: Record<string, string> = {
-  engine_oil: "Engine oil", tire_pressure: "Tire pressure", general_service: "General service",
+export const reminderDetails = {
+  engine_oil: { title: "Engine oil", icon: Droplet },
+  tire_pressure: { title: "Tire pressure", icon: Wind },
+  general_service: { title: "General service", icon: Wrench },
 };
+
 export async function loadReminderSettings(id: string) {
   const base = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
   const response = await apiFetch(`${base}/api/vehicles/${id}/history`);

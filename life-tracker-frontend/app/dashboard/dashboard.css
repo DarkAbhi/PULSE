@@ -48,6 +48,7 @@
 .pulse-space-link { display: flex; align-items: center; gap: 16px; padding: 20px 24px; }
 .pulse-space-icon { display: inline-flex; padding: 12px; border-radius: 16px; background: var(--dashboard-green); }
 .pulse-space-link > span:nth-child(2) { flex: 1; min-width: 0; }
+.pulse-meal-plan-link .pulse-space-icon { background: var(--accent); color: var(--accent-foreground); }
 .pulse-space-link strong { display: block; font-weight: 600; }
 .pulse-space-link span span { display: block; color: var(--dashboard-muted); font-size: 12px; margin-top: 4px; }
 .pulse-dashboard a, .pulse-dashboard button { -webkit-tap-highlight-color: transparent; }

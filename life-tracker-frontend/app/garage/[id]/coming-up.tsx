@@ -18,7 +18,7 @@ export default function ComingUp({ items, vehicleId }: { items: UpcomingMaintena
         : days != null && days < 0 ? `Overdue by ${-days} ${days === -1 ? "day" : "days"}` : days === 0 ? "Due today"
         : km != null ? `${km < 0 ? "Overdue by" : "Due in"} ${Math.ceil(Math.abs(km)).toLocaleString("en-IN")} km${item.due_date ? ` · by ${item.due_date}` : ""}`
         : days != null ? `Due in ${days} ${days === 1 ? "day" : "days"}` : "Mileage needed";
-      return <Link key={item.kind} href={pressure ? "#tires-air" : `/garage/${vehicleId}?maintenance=new`} className="flex min-h-14 items-center gap-4 rounded-lg py-2 focus-visible:outline-2 focus-visible:outline-action">
+      return <Link key={item.kind} href={pressure ? `/garage/${vehicleId}?tab=tires` : `/garage/${vehicleId}?maintenance=new`} className="flex min-h-14 items-center gap-4 rounded-lg py-2 focus-visible:outline-2 focus-visible:outline-action">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border bg-muted"><Icon className="h-6 w-6 text-action" aria-hidden="true" /></span>
         <span className="min-w-0 flex-1"><span className="block text-lg font-semibold">{title}</span><span className="block text-xs text-muted-foreground">{item.source === "manual" ? "Vehicle manual" : "My intervals"}</span><span className={`block text-sm ${item.status === "overdue" ? "text-destructive" : "text-muted-foreground"}`}>{detail}</span>
           {item.distance_unavailable && item.status !== "needs_odometer" && <span className="block text-xs text-muted-foreground">Record an odometer with this task to use its distance interval.</span>}

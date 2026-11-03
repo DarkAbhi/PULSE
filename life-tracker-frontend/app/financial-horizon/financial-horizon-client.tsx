@@ -827,7 +827,7 @@ export default function FinancialHorizonClient({
   };
 
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
+    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-10 sm:py-10 lg:px-16">
       <div className="mx-auto max-w-6xl space-y-8">
         {/* Navigation & Unified Header */}
         <div>
@@ -837,20 +837,11 @@ export default function FinancialHorizonClient({
           >
             <ArrowLeft className="h-4 w-4" /> Back to Dashboard
           </Link>
-          <div className="mt-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-action">
-                  <Compass className="h-6 w-6" />
-                </div>
-                <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
-                  Financial Horizon
-                </h1>
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
-                Your month&apos;s starting line calculator. Manages monthly budgets, subtracts fixed obligations and planned purchases from base income to reveal your exact net uncommitted cash pool.
-              </p>
-            </div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight sm:text-3xl">
+              <Compass aria-hidden="true" className="h-6 w-6 shrink-0 text-action" />
+              Financial Horizon
+            </h1>
 
             {/* Unified Quick Action Trigger */}
             <div className="shrink-0">
@@ -870,7 +861,7 @@ export default function FinancialHorizonClient({
         </div>
 
         {/* Global Error Banner */}
-        {errorMsg && (
+        {errorMsg && !(activeTab === "fixed" && (isAddingDeduction || editingDeductionId !== null)) && (
           <div
             className="rounded-2xl bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive flex items-center justify-between shadow-xs"
             role="alert"
@@ -901,14 +892,7 @@ export default function FinancialHorizonClient({
         />
 
         {/* Sub-Navigation Tabs */}
-        <TabNavigation
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          transactionsCount={totalTransactionsCount}
-          subscriptionsCount={subscriptions.filter((s) => s.status === "active").length}
-          fixedObligationsCount={summary.deductions.filter((d) => d.is_active).length}
-          plannedPurchasesCount={purchases.length}
-        />
+        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         {/* Tab Content Views */}
         {activeTab === "overview" && (
@@ -982,6 +966,7 @@ export default function FinancialHorizonClient({
             onOpenEditDeduction={handleOpenEditDeductionForm}
             onCancelDeductionForm={handleCancelDeductionForm}
             onSaveDeduction={handleSaveDeduction}
+            error={errorMsg}
             onToggleDeductionActive={handleToggleDeductionActive}
             onDeleteDeduction={setDeductionToDelete}
             onEditSubscription={(sub) => {

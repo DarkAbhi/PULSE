@@ -46,7 +46,7 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
   }, [toastError]);
 
   const handleCancel = () => {
-    router.replace(`/garage/${vehicleId}`);
+    router.replace(`/garage/${vehicleId}?tab=fuel`, { scroll: false });
   };
 
   const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
@@ -77,7 +77,7 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
         setToastError(res.error ?? "We couldn't save this fuel entry.");
         return;
       }
-      router.replace(`/garage/${vehicleId}`);
+      router.replace(`/garage/${vehicleId}?tab=fuel`, { scroll: false });
     });
   };
 
@@ -90,10 +90,6 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
           >
             Edit fuel fill-up
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Enter any two fuel-cost values; the third is calculated
-            automatically when saved.
-          </p>
           <FuelForm
             error=""
             filledAt={filledAt}

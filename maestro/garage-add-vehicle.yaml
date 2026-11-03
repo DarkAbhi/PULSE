@@ -25,7 +25,7 @@ url: http://localhost:3000
 
 # 3. Garage page verification
 - assertVisible: Garage
-- assertVisible: A simple home for every vehicle in your life.
+- assertVisible: Your vehicles
 - assertVisible: Add vehicle
 
 # 4. Open Add Vehicle modal
@@ -60,3 +60,20 @@ url: http://localhost:3000
 # 7. Assert dialog closed and newly added vehicle appears in the list
 - assertNotVisible: "Add a vehicle"
 - assertVisible: "Honda Civic"
+
+# 8. Switch sections without showing the other histories
+- tapOn: "Honda Civic"
+- assertVisible:
+    css: "nav[aria-label='Vehicle sections'] a[aria-current='page']"
+- tapOn:
+    css: "nav[aria-label='Vehicle sections'] a[href$='?tab=fuel']"
+- assertVisible: Fuel fill-ups
+- assertNotVisible: Air fills
+- tapOn:
+    css: "nav[aria-label='Vehicle sections'] a[href$='?tab=tires']"
+- assertVisible: Air fills
+- assertNotVisible: Fuel fill-ups
+- tapOn:
+    css: "nav[aria-label='Vehicle sections'] a[href$='?tab=maintenance']"
+- assertVisible: Maintenance & expenses
+- assertNotVisible: Air fills

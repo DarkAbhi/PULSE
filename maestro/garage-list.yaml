@@ -19,4 +19,4 @@ url: http://localhost:3000
     direction: DOWN
 - tapOn: "Garage"
 - assertVisible: Garage
-- assertVisible: A simple home for every vehicle in your life.
+- assertVisible: Your vehicles

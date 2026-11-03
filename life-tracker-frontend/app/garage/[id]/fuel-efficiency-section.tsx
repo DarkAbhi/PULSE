@@ -1,7 +1,7 @@
 import PulseCard from "@/app/components/design-system/pulse-card";
-import { currencySymbol } from "@/app/lib/currency.mjs";
+import { Gauge } from "lucide-react";
+import { formatMoney } from "@/app/lib/currency.mjs";
 import { getUserCurrency } from "@/app/lib/user-currency";
-import { Fuel } from "lucide-react";
 import { FuelEfficiencyStats } from "./types";
 
 const emptyStats: FuelEfficiencyStats = {
@@ -31,38 +31,33 @@ export default async function FuelEfficiencySection({
   const groups = entries.length > 0 ? entries : [["", emptyStats] as const];
 
   return (
-    <section className="mt-8" aria-labelledby="fuel-efficiency-heading">
-      <h2 id="fuel-efficiency-heading" className="flex items-center gap-2 text-xl font-semibold">
-        <Fuel className="h-5 w-5 text-action" /> Fuel Efficiency
-      </h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Monitoring your fuel economy as you go.
-      </p>
+    <PulseCard as="section" className="mt-4 px-4 py-5 sm:px-5" aria-labelledby="fuel-efficiency-heading">
+      <h3 id="fuel-efficiency-heading" className="flex items-center gap-2 font-semibold">
+        <Gauge className="size-5 text-action" aria-hidden="true" /> Fuel economy
+      </h3>
       {groups.map(([fuelType, summary]) => {
-        const cards = [
-          { label: "Total refuelling", value: summary.total_cost, decimals: 2, unit: `${currencySymbol(currency)} so far` },
-          { label: "Total volume", value: summary.total_volume, decimals: 3, unit: fuelType ? `L · ${fuelType}` : "L" },
-          { label: "Avg fuel efficiency", value: summary.average_km_per_litre, decimals: 3, unit: "km/L" },
-          { label: "Max fuel efficiency", value: summary.max_km_per_litre, decimals: 3, unit: "km/L" },
-          { label: "Min fuel efficiency", value: summary.min_km_per_litre, decimals: 3, unit: "km/L" },
-          { label: "Last fuel efficiency", value: summary.last_km_per_litre, decimals: 3, unit: "km/L" },
+        const readings = [
+          { label: "Average", value: formatNumber(summary.average_km_per_litre, 3), unit: "km/L" },
+          { label: "Latest", value: formatNumber(summary.last_km_per_litre, 3), unit: "km/L" },
+          { label: "Best", value: formatNumber(summary.max_km_per_litre, 3), unit: "km/L" },
+          { label: "Lowest", value: formatNumber(summary.min_km_per_litre, 3), unit: "km/L" },
+          { label: "Fuel used", value: formatNumber(summary.total_volume, 3), unit: "L" },
+          { label: "Total spent", value: formatMoney(summary.total_cost, currency) },
         ];
         return (
-          <div className="mt-4" key={fuelType}>
-            {entries.length > 1 && (
-              <h3 className="mb-3 font-semibold capitalize">{fuelType}</h3>
+          <div className="mt-3" key={fuelType}>
+            {fuelType && (
+              <h4 className="mb-2 text-sm font-semibold capitalize">{fuelType}</h4>
             )}
-            <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {cards.map((card) => (
-                <PulseCard className="px-4 py-6 text-center" key={card.label}>
-                  <dt className="text-sm text-foreground">{card.label}</dt>
-                  <dd className="mt-3 text-3xl font-bold tabular-nums tracking-tight">
-                    {formatNumber(card.value, card.decimals)}
-                    <span className="mt-2 block text-sm font-normal tracking-normal text-muted-foreground capitalize">
-                      {card.unit}
-                    </span>
+            <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-divider bg-divider sm:grid-cols-3">
+              {readings.map(({ label, value, unit }) => (
+                <div className={`min-w-0 px-3 py-2.5 ${label === "Average" ? "bg-accent text-accent-foreground" : "bg-card"}`} key={label}>
+                  <dt className={`text-xs ${label === "Average" ? "font-semibold" : "text-muted-foreground"}`}>{label}</dt>
+                  <dd className="mt-0.5 break-words text-lg font-semibold tabular-nums tracking-tight">
+                    {value}
+                    {unit && value !== "—" && <span className="ml-1 text-xs font-normal tracking-normal">{unit}</span>}
                   </dd>
-                </PulseCard>
+                </div>
               ))}
             </dl>
             {summary.average_km_per_litre === null && (
@@ -73,9 +68,12 @@ export default async function FuelEfficiencySection({
           </div>
         );
       })}
-      <p className="mt-3 text-xs text-muted-foreground">
-        Efficiency uses complete full-tank intervals, including partial fills. Missed fills reset the calculation. Average is weighted by fuel used; last is the latest complete interval.
-      </p>
-    </section>
+      <details className="mt-2 text-xs text-muted-foreground">
+        <summary className="w-fit cursor-pointer rounded py-2 font-medium text-action focus-visible:outline-2 focus-visible:outline-ring">
+          How fuel economy is calculated
+        </summary>
+        <p>Efficiency uses complete full-tank intervals, including partial fills. Missed fills reset the calculation. Average is weighted by fuel used, and latest is the most recent complete interval.</p>
+      </details>
+    </PulseCard>
   );
 }

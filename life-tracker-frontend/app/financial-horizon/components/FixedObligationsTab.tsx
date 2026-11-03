@@ -10,7 +10,8 @@ import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import Button from "@/app/components/design-system/button";
 
-import { useMemo } from "react";
+import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import { useEffect, useId, useMemo } from "react";
 import {
   Calendar,
   Plus,
@@ -74,6 +75,7 @@ interface FixedObligationsTabProps {
   onEditSubscription?: (sub: SubscriptionItem) => void;
   onNavigateToSubscriptions?: () => void;
   isPending?: boolean;
+  error?: string;
 }
 
 export default function FixedObligationsTab({
@@ -102,8 +104,22 @@ export default function FixedObligationsTab({
   onEditSubscription,
   onNavigateToSubscriptions,
   isPending = false,
+  error,
 }: FixedObligationsTabProps) {
   const { timeZone } = useTimeZone();
+  const titleId = useId();
+  const isFormOpen = isAddingDeduction || editingDeductionId !== null;
+
+  useEffect(() => {
+    if (!isFormOpen || isPending) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCancelDeductionForm();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFormOpen, isPending, onCancelDeductionForm]);
+
   const getCategoryConfig = (catKey: string) => {
     return (
       CATEGORIES.find((c) => c.id === catKey) ?? {
@@ -198,26 +214,46 @@ export default function FixedObligationsTab({
         })}
       </div>
 
-      {/* Add / Edit Form Block */}
-      {(isAddingDeduction || editingDeductionId !== null) && (
-        <PulseCard as="section" className="p-6 transition duration-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-foreground">
-              {editingDeductionId !== null ? "Edit Fixed Obligation" : "Add Fixed Obligation"}
-            </h3>
-            <Button variant="icon"
-              onClick={onCancelDeductionForm}
+      {isFormOpen && (
+        <Dialog
+          labelledBy={titleId}
+          size="md"
+          panelClassName="sm:p-6"
+          onBackdropClick={(event) => {
+            if (event.target === event.currentTarget && !isPending) onCancelDeductionForm();
+          }}
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-border pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-action">
+                <Calendar className="h-5 w-5" />
+              </div>
+              <h2 id={titleId} className="text-xl font-bold text-foreground">
+                {editingDeductionId !== null ? "Edit Fixed Obligation" : "Add Fixed Obligation"}
+              </h2>
+            </div>
+            <Button
+              variant="icon"
               type="button"
-              aria-label="Cancel deduction"
+              onClick={onCancelDeductionForm}
+              disabled={isPending}
+              aria-label="Close"
             >
               <X className="h-5 w-5" />
             </Button>
           </div>
 
-          <form onSubmit={onSaveDeduction} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <form onSubmit={onSaveDeduction} className="mt-5 grid gap-4 sm:grid-cols-2">
+            {error && (
+              <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive sm:col-span-2">
+                {error}
+              </p>
+            )}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Title / Name</label>
+              <label htmlFor={`${titleId}-name`} className="text-xs font-semibold text-muted-foreground">Title / Name</label>
               <input
+                id={`${titleId}-name`}
+                autoFocus
                 type="text"
                 required
                 placeholder="e.g. Apartment Rent, SIP"
@@ -228,8 +264,9 @@ export default function FixedObligationsTab({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Category</label>
+              <label htmlFor={`${titleId}-category`} className="text-xs font-semibold text-muted-foreground">Category</label>
               <select
+                id={`${titleId}-category`}
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -243,8 +280,9 @@ export default function FixedObligationsTab({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Monthly Amount ({currencySymbol(summary.currency)})</label>
+              <label htmlFor={`${titleId}-amount`} className="text-xs font-semibold text-muted-foreground">Monthly Amount ({currencySymbol(summary.currency)})</label>
               <input
+                id={`${titleId}-amount`}
                 type="number"
                 step="0.01"
                 min="0"
@@ -257,8 +295,9 @@ export default function FixedObligationsTab({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground">Due Day (1-31, optional)</label>
+              <label htmlFor={`${titleId}-due-day`} className="text-xs font-semibold text-muted-foreground">Due Day (1-31, optional)</label>
               <input
+                id={`${titleId}-due-day`}
                 type="number"
                 min="1"
                 max="31"
@@ -269,9 +308,10 @@ export default function FixedObligationsTab({
               />
             </div>
 
-            <div className="space-y-1 sm:col-span-2 lg:col-span-2">
-              <label className="text-xs font-semibold text-muted-foreground">Link to Monthly Budget (Optional)</label>
+            <div className="space-y-1 sm:col-span-2">
+              <label htmlFor={`${titleId}-budget`} className="text-xs font-semibold text-muted-foreground">Link to Monthly Budget (Optional)</label>
               <select
+                id={`${titleId}-budget`}
                 value={selectedBudgetId ?? ""}
                 onChange={(e) => setSelectedBudgetId(e.target.value ? parseInt(e.target.value, 10) : null)}
                 className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -285,22 +325,21 @@ export default function FixedObligationsTab({
               </select>
             </div>
 
-            <div className="sm:col-span-2 lg:col-span-3 flex justify-end gap-3 pt-2">
-              <Button variant="secondary" size="md"
+            <DialogActions className="border-t border-border pt-4 sm:col-span-2">
+              <DialogAction
+                variant="secondary"
                 type="button"
                 onClick={onCancelDeductionForm}
-              >
-                Cancel
-              </Button>
-              <Button variant="primary" size="md"
-                type="submit"
                 disabled={isPending}
               >
-                {editingDeductionId !== null ? "Update Obligation" : "Save Obligation"}
-              </Button>
-            </div>
+                Cancel
+              </DialogAction>
+              <DialogAction type="submit" disabled={isPending}>
+                {isPending ? "Saving…" : editingDeductionId !== null ? "Update Obligation" : "Save Obligation"}
+              </DialogAction>
+            </DialogActions>
           </form>
-        </PulseCard>
+        </Dialog>
       )}
 
       {/* Cards Grid */}

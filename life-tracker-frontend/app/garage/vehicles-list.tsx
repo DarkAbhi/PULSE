@@ -7,9 +7,8 @@ import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
 import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Bike, Bus, Car, Truck } from "lucide-react";
+import { Bike, Bus, Car, ChevronRight, Fuel, Gauge, Truck } from "lucide-react";
 import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import Dialog from "@/app/components/design-system/dialog";
@@ -40,7 +39,6 @@ interface VehiclesListProps {
 
 export default function VehiclesList({ vehicles }: VehiclesListProps) {
   const { timeZone } = useTimeZone();
-  const router = useRouter();
   const [entryTimeZone, setEntryTimeZone] = useState(timeZone);
   const localDateTime = () => toDateTimeInput(new Date(), timeZone);
   const [pendingAirFillVehicle, setPendingAirFillVehicle] =
@@ -115,57 +113,71 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
 
   return (
     <>
-      <section
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-        aria-label="Vehicles"
-      >
-        {vehicles.map((vehicle) => (
-          <PulseCard as="article"
-            className="cursor-pointer p-6"
-            key={vehicle.id}
-            onClick={() => router.push(`/garage/${vehicle.id}`)}
-          >
-            <div
-              className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-secondary-foreground"
-              aria-hidden="true"
-            >
-              {vehicle.kind === "motorcycle" || vehicle.kind === "moped" ? <Bike className="h-5 w-5" /> : vehicle.kind === "bus" ? <Bus className="h-5 w-5" /> : vehicle.kind === "truck" || vehicle.kind === "van" ? <Truck className="h-5 w-5" /> : <Car className="h-5 w-5" />}
-            </div>
-            <h2 className="mt-4 text-lg font-semibold text-foreground">
-              <Link href={`/garage/${vehicle.id}`}>{vehicle.name}</Link>
-            </h2>
-            {(vehicle.make_name || vehicle.model_name) && <p className="mt-1 text-sm text-muted-foreground">{vehicle.make_name} {vehicle.model_name}</p>}
-            <p className="mt-1 text-sm text-muted-foreground">
-              {vehicle.kind === "unknown" ? "Kind not selected" : vehicle.kind.charAt(0).toUpperCase() + vehicle.kind.slice(1)}
-              {" · "}{vehicle.fuel_types.join(" + ").toUpperCase()}
-            </p>
-            <Button variant="secondary" size="lg"
-              onClick={(event) => {
-                event.stopPropagation();
-                setAirFillError("");
-                setPendingAirFillVehicle(vehicle);
-              }}
-              type="button"
-              className="mt-4 w-full"
-            >
-              Mark air filled now
-            </Button>
-            <Button variant="primary" size="lg"
-              className="mt-3 w-full"
-              onClick={(event) => {
-                event.stopPropagation();
-                setFuelError("");
-                setEntryTimeZone(timeZone);
-                setFuelDateTime(localDateTime());
-                setFuelVehicle(vehicle);
-              }}
-              type="button"
-            >
-              Add fuel
-            </Button>
-          </PulseCard>
-        ))}
-      </section>
+      <PulseCard className="divide-y divide-divider px-4 sm:px-6">
+        {vehicles.map((vehicle) => {
+          const VehicleIcon = vehicle.kind === "motorcycle" || vehicle.kind === "moped" ? Bike
+            : vehicle.kind === "bus" ? Bus
+            : vehicle.kind === "truck" || vehicle.kind === "van" ? Truck
+            : Car;
+
+          return (
+            <article key={vehicle.id} className="grid gap-3 py-4 sm:py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-6">
+              <Link
+                href={`/garage/${vehicle.id}`}
+                className="group flex min-w-0 items-center gap-3 rounded-xl p-2 hover:bg-secondary/60 focus-visible:outline-2 focus-visible:outline-ring sm:gap-4"
+              >
+                <span aria-hidden="true" className="grid size-12 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground sm:size-14">
+                  <VehicleIcon className="size-6" strokeWidth={1.6} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg leading-tight font-semibold break-words text-foreground">{vehicle.name}</h3>
+                  {(vehicle.make_name || vehicle.model_name) && (
+                    <p className="mt-1 text-sm break-words text-muted-foreground">{vehicle.make_name} {vehicle.model_name}</p>
+                  )}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    <span>{vehicle.kind === "unknown" ? "Kind not selected" : vehicle.kind.charAt(0).toUpperCase() + vehicle.kind.slice(1)}</span>
+                    {vehicle.fuel_types.length > 0 && (
+                      <span className="ml-2 border-l border-border pl-2">{vehicle.fuel_types.join(" + ").toUpperCase()}</span>
+                    )}
+                  </p>
+                </div>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground group-hover:text-action" aria-hidden="true" />
+              </Link>
+
+              <div className="flex flex-wrap gap-2 px-2">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  icon={<Gauge className="size-4 shrink-0" aria-hidden="true" />}
+                  aria-label={`Mark air filled now for ${vehicle.name}`}
+                  onClick={() => {
+                    setAirFillError("");
+                    setPendingAirFillVehicle(vehicle);
+                  }}
+                  type="button"
+                >
+                  Mark air filled now
+                </Button>
+                <Button
+                  variant="soft"
+                  size="lg"
+                  icon={<Fuel className="size-4 shrink-0" aria-hidden="true" />}
+                  aria-label={`Add fuel for ${vehicle.name}`}
+                  onClick={() => {
+                    setFuelError("");
+                    setEntryTimeZone(timeZone);
+                    setFuelDateTime(localDateTime());
+                    setFuelVehicle(vehicle);
+                  }}
+                  type="button"
+                >
+                  Add fuel
+                </Button>
+              </div>
+            </article>
+          );
+        })}
+      </PulseCard>
 
       <ConfirmationDialog
         isOpen={!!pendingAirFillVehicle}
@@ -190,11 +202,10 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
               className="text-2xl font-bold tracking-tight text-foreground"
               id="fuel-title"
             >
-              Add fuel for {fuelVehicle.name}
+              Add fuel
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Enter any two fuel-cost values; the third is calculated
-              automatically when saved.
+            <p className="mt-1 text-sm break-words text-muted-foreground">
+              {fuelVehicle.name}
             </p>
             <FuelForm
               error={fuelError}

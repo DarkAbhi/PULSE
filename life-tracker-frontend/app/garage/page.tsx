@@ -2,7 +2,7 @@ import { apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CarFront } from "lucide-react";
 import AddVehicleButton from "./add-vehicle-button";
 import VehiclesList from "./vehicles-list";
 
@@ -42,7 +42,7 @@ export default async function GaragePage() {
   if (!error) {
     try {
       const vehiclesResponse = await apiFetch(`${apiBaseURL}/api/vehicles`, {
-       signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.timeout(10_000),
       });
       if (!vehiclesResponse.ok) {
         error = "We couldn't load your vehicles. Please try again.";
@@ -55,46 +55,66 @@ export default async function GaragePage() {
   }
 
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
-      <div className="mx-auto max-w-6xl">
-        <header className="mb-10 flex items-start justify-between gap-4">
-          <div>
-            <Link
-              className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80 w-fit"
-              href="/dashboard"
-            >
-              <ArrowLeft className="h-4 w-4" /> Dashboard
-            </Link>
-            <h1 className="mt-5 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
+      <div className="mx-auto max-w-5xl">
+        <Link
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-action hover:bg-secondary focus-visible:outline-2 focus-visible:outline-ring"
+          href="/dashboard"
+        >
+          <ArrowLeft className="size-4" aria-hidden="true" /> Dashboard
+        </Link>
+
+        <PulseCard as="section" aria-labelledby="garage-title"
+          className="relative isolate mt-3 overflow-hidden border border-border bg-secondary px-6 py-8 sm:px-10 sm:py-12"
+        >
+          <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-12 hidden w-44 -skew-x-12 items-center justify-center border-x-2 border-action/20 md:flex lg:right-24 lg:w-56">
+            <div className="absolute inset-y-0 -left-10 border-l-2 border-action/20" />
+            <div className="absolute inset-y-0 -right-10 border-r-2 border-action/20" />
+            <CarFront className="size-24 skew-x-12 text-action/40" strokeWidth={1} />
+          </div>
+          <div className="relative max-w-xs">
+            <h1 id="garage-title" className="text-5xl font-bold tracking-tight sm:text-6xl">
               Garage
             </h1>
-            <p className="mt-3 text-base text-muted-foreground">
-              A simple home for every vehicle in your life.
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Manage your vehicles and log fuel and tire air.
             </p>
           </div>
-          <AddVehicleButton />
-        </header>
+        </PulseCard>
 
-        <p className="mb-6 text-xs text-muted-foreground">Vehicle data by <a className="text-action underline" href="https://vehiclesdb.com">VehiclesDB</a> · <Link className="text-action underline" href="/vehicle-data">Sources and credits</Link></p>
-        {error ? (
-          <p
-            className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive"
-            role="alert"
-          >
-            {error}
-          </p>
-        ) : vehicles.length === 0 ? (
-          <PulseCard as="section" className="p-10 text-center">
-            <p className="text-lg font-semibold text-foreground">
-              Your garage is ready for its first vehicle.
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Add one whenever you&apos;re ready.
-            </p>
-          </PulseCard>
-        ) : (
-          <VehiclesList vehicles={vehicles} />
-        )}
+        <section aria-labelledby="vehicles-title" className="mt-8 sm:mt-10">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h2 id="vehicles-title" className="text-xl font-semibold tracking-tight">Your vehicles</h2>
+              {!error && (
+                <span className="rounded-full bg-secondary px-2.5 py-0.5 text-sm font-medium tabular-nums text-secondary-foreground">
+                  <span className="sr-only">Total vehicles: </span>{vehicles.length}
+                </span>
+              )}
+            </div>
+            <div className="shrink-0"><AddVehicleButton /></div>
+          </div>
+
+          {error ? (
+            <PulseCard as="p" className="bg-destructive-soft px-6 py-5 text-sm text-destructive" role="alert">
+              {error}
+            </PulseCard>
+          ) : vehicles.length === 0 ? (
+            <PulseCard className="px-6 py-8 sm:px-8">
+              <p className="font-semibold">Your garage is empty</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Add your first vehicle to start logging fuel and tire air.
+              </p>
+            </PulseCard>
+          ) : (
+            <VehiclesList vehicles={vehicles} />
+          )}
+        </section>
+
+        <footer className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 px-1 text-xs text-muted-foreground">
+          <span>Vehicle data by <a className="text-action underline" href="https://vehiclesdb.com">VehiclesDB</a></span>
+          <Link className="text-action underline" href="/vehicle-data">Sources and credits</Link>
+        </footer>
       </div>
     </main>
   );

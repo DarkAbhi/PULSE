@@ -6,6 +6,7 @@ import { useTimeZone } from "@/app/components/time-zone-provider";
 import { dateKey, fromDateTimeInput, formatInstant } from "@/app/lib/time-zone.mjs";
 
 import Button from "@/app/components/design-system/button";
+import { ClipboardList, Paperclip, Upload } from "lucide-react";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -17,6 +18,8 @@ import Dialog, { DialogAction, DialogActions } from "@/app/components/design-sys
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
 type Category = (typeof categories)[number];
 const apiBaseURL = "";
+const fieldClass = "mt-1.5 min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:text-sm";
+const optionalClass = "font-normal text-muted-foreground";
 export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleId: string; record?: MaintenanceRecord }) {
   const { currency } = useCurrency();
   const { timeZone } = useTimeZone();
@@ -35,7 +38,7 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
   const [attachments, setAttachments] = useState<MaintenanceAttachment[]>(record?.attachments ?? []);
   const [isUploading, setIsUploading] = useState(false);
 
-  function close() { router.replace(`/garage/${vehicleId}`); }
+  function close() { router.replace(`/garage/${vehicleId}?tab=maintenance`, { scroll: false }); }
 
   async function uploadAttachment(file: File) {
     if (!record) return;
@@ -86,39 +89,105 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
     });
   }
 
-  return <Dialog labelledBy="maintenance-record-title" size="lg" panelClassName="p-6 sm:p-8">
-    <form onSubmit={submit}>
-      <h2 className="text-2xl font-bold tracking-tight" id="maintenance-record-title">{record ? "Edit record" : "Add maintenance or expense"}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">Keep this vehicle&apos;s costs and maintenance history together.</p>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <label className="text-sm font-medium">Category<select className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" value={category} onChange={(e) => setCategory(e.target.value as Category)}>{categories.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}</select></label>
-        <label className="text-sm font-medium">Date<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" type="date" required value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} /></label>
-        <label className="text-sm font-medium sm:col-span-2">Title<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" maxLength={160} required placeholder="e.g. Annual service" value={title} onChange={(e) => setTitle(e.target.value)} /></label>
-        <label className="text-sm font-medium">Amount ({currencySymbol(currency)})<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" min="0" required step="0.01" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
-        <label className="text-sm font-medium">Odometer (km, optional)<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" min="0" step="0.1" type="number" value={odometer} onChange={(e) => setOdometer(e.target.value)} /></label>
-        <label className="text-sm font-medium sm:col-span-2">Service centre or provider (optional)<input className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2" maxLength={160} value={provider} onChange={(e) => setProvider(e.target.value)} /></label>
-        <label className="text-sm font-medium sm:col-span-2">Notes (optional)<textarea className="mt-1 min-h-24 w-full rounded-lg border border-border bg-background px-3 py-2" value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
-      </div>
-      <MaintenanceWorkFields value={work} onChange={setWork} disabled={isPending} />
-      <section className="mt-6 rounded-xl border border-border p-4">
-        <h3 className="font-semibold">Receipts and service bills</h3>
-        {!record ? <p className="mt-1 text-sm text-muted-foreground">Save this record first, then reopen it to attach receipts or bills.</p> : <>
-          <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-border px-3 py-2 text-sm font-semibold text-action hover:bg-accent">
-            {isUploading ? "Uploading…" : "Upload file"}
-            <input className="sr-only" disabled={isUploading} type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAttachment(file); event.currentTarget.value = ""; }} />
-          </label>
-          <p className="mt-2 text-xs text-muted-foreground">Each upload is saved privately with a unique filename. Your original filename is kept for display and downloads. Maximum 10 MB per file.</p>
-          {attachments.length > 0 && <ul className="mt-3 space-y-2">{attachments.map((attachment) => <li className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm" key={attachment.id}>
-            <div className="min-w-0">
-              <a className="break-all font-medium text-action hover:underline" href={`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments/${attachment.id}`}>{attachment.file_name}</a>
-              <p className="mt-1 text-xs text-muted-foreground">Uploaded <time dateTime={attachment.created_at}>{formatInstant(attachment.created_at, timeZone, { dateStyle: "medium", timeStyle: "medium" })}</time> · {Math.max(1, Math.round(attachment.size_bytes / 1024))} KB</p>
-            </div>
-            <Button variant="destructiveOutline" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</Button>
-          </li>)}</ul>}
-        </>}
-      </section>
-      {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
-      <DialogActions><DialogAction variant="secondary" disabled={isPending} onClick={close} type="button">Cancel</DialogAction><DialogAction disabled={isPending} type="submit">{isPending ? "Saving…" : "Save record"}</DialogAction></DialogActions>
-    </form>
-  </Dialog>;
+  return (
+    <Dialog labelledBy="maintenance-record-title" size="lg">
+      <form onSubmit={submit}>
+        <header className="flex items-start gap-3 border-b border-divider pb-5 sm:gap-4">
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/15 text-action" aria-hidden="true">
+            <ClipboardList className="size-5" />
+          </span>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl" id="maintenance-record-title">
+              {record ? "Edit maintenance record" : "Add maintenance or expense"}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {record ? "Update the details, work performed, or receipts." : "Log a service, repair, or other vehicle expense."}
+            </p>
+          </div>
+        </header>
+
+        <fieldset className="mt-5 min-w-0">
+          <legend className="font-semibold">Record details</legend>
+          <div className="mt-3 grid min-w-0 gap-x-4 gap-y-4 sm:grid-cols-2">
+            <label className="min-w-0 text-sm font-medium sm:col-span-2">
+              Title
+              <input className={fieldClass} maxLength={160} required placeholder="e.g. Annual service" value={title} onChange={(e) => setTitle(e.target.value)} />
+            </label>
+            <label className="min-w-0 text-sm font-medium">
+              Category
+              <select className={fieldClass} value={category} onChange={(e) => setCategory(e.target.value as Category)}>
+                {categories.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}
+              </select>
+            </label>
+            <label className="min-w-0 text-sm font-medium">
+              Date
+              <input className={fieldClass} type="date" required value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
+            </label>
+            <label className="min-w-0 text-sm font-medium">
+              Amount <span className={optionalClass}>({currencySymbol(currency)})</span>
+              <input className={fieldClass} min="0" required step="0.01" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            </label>
+            <label className="min-w-0 text-sm font-medium">
+              Odometer <span className={optionalClass}>(km, optional)</span>
+              <input className={fieldClass} min="0" step="0.1" type="number" value={odometer} onChange={(e) => setOdometer(e.target.value)} />
+            </label>
+            <label className="min-w-0 text-sm font-medium sm:col-span-2">
+              Service centre or provider <span className={optionalClass}>(optional)</span>
+              <input className={fieldClass} maxLength={160} value={provider} onChange={(e) => setProvider(e.target.value)} />
+            </label>
+            <label className="min-w-0 text-sm font-medium sm:col-span-2">
+              Notes <span className={optionalClass}>(optional)</span>
+              <textarea className={fieldClass} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </label>
+          </div>
+        </fieldset>
+
+        <MaintenanceWorkFields value={work} onChange={setWork} disabled={isPending} />
+
+        <section aria-labelledby="maintenance-receipts-heading" className="mt-5 border-t border-divider pt-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 id="maintenance-receipts-heading" className="flex items-center gap-2 font-semibold">
+              <Paperclip className="size-4 text-action" aria-hidden="true" /> Receipts and service bills
+            </h3>
+            {record && (
+              <label className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-action focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring hover:bg-accent has-disabled:cursor-not-allowed has-disabled:opacity-50">
+                <Upload className="size-4" aria-hidden="true" />
+                {isUploading ? "Uploading…" : "Upload file"}
+                <input className="sr-only" disabled={isUploading} type="file" onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) void uploadAttachment(file);
+                  event.currentTarget.value = "";
+                }} />
+              </label>
+            )}
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {record ? "Files are private. Maximum 10 MB per file." : "Save the record, then open it in edit mode to attach a file."}
+          </p>
+          {record && attachments.length > 0 && (
+            <ul className="mt-3 divide-y divide-divider border-t border-divider">
+              {attachments.map((attachment) => (
+                <li className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm" key={attachment.id}>
+                  <div className="min-w-0">
+                    <a className="break-all font-medium text-action hover:underline" href={`${apiBaseURL}/api/vehicles/${vehicleId}/maintenance-records/${record.id}/attachments/${attachment.id}`}>{attachment.file_name}</a>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      <time dateTime={attachment.created_at}>{formatInstant(attachment.created_at, timeZone, { dateStyle: "medium", timeStyle: "medium" })}</time>
+                      <span className="ml-2">{Math.max(1, Math.round(attachment.size_bytes / 1024))} KB</span>
+                    </p>
+                  </div>
+                  <Button variant="destructiveOutline" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <DialogActions className="grid-cols-2 border-t border-divider pt-3">
+          {error && <p className="text-sm text-destructive col-span-2" role="alert">{error}</p>}
+          <DialogAction variant="secondary" disabled={isPending} onClick={close} type="button">Cancel</DialogAction>
+          <DialogAction disabled={isPending} type="submit">{isPending ? "Saving…" : record ? "Save changes" : "Save record"}</DialogAction>
+        </DialogActions>
+      </form>
+    </Dialog>
+  );
 }

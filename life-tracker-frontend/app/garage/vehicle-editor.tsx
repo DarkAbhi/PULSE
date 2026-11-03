@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState, useTransition } from "react";
+import { CarFront, ListFilter, PencilLine, Plus } from "lucide-react";
 import Button from "@/app/components/design-system/button";
 import Dialog, {
   DialogAction,
@@ -190,6 +191,7 @@ export default function VehicleEditor({
       <Button
         id={vehicle ? undefined : "add-vehicle-button"}
         variant={vehicle ? "secondary" : "primary"}
+        icon={vehicle ? undefined : <Plus className="size-4" aria-hidden="true" />}
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -201,20 +203,28 @@ export default function VehicleEditor({
         {vehicle ? "Edit vehicle" : "Add vehicle"}
       </Button>
       {open && (
-        <Dialog size="md" labelledBy={`${uid}-title`}>
-          <h2 id={`${uid}-title`} className="text-2xl font-bold tracking-tight">
-            {vehicle ? "Edit vehicle" : "Add a vehicle"}
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Choose your vehicle from the catalog or enter its details manually.
-          </p>
-          <form className="mt-6 space-y-4" onSubmit={submit}>
-            <fieldset className="flex gap-4 text-sm">
-              <legend className="mb-2 font-medium">Vehicle details</legend>
+        <Dialog size="lg" labelledBy={`${uid}-title`}>
+          <header className="flex items-start gap-3 rounded-xl bg-secondary p-4 sm:gap-4 sm:p-5">
+            <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
+              <CarFront className="size-6" strokeWidth={1.6} aria-hidden="true" />
+            </span>
+            <div>
+              <h2 id={`${uid}-title`} className="text-2xl font-bold tracking-tight">
+                {vehicle ? "Edit vehicle" : "Add a vehicle"}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Choose your vehicle from the catalog or enter its details manually.
+              </p>
+            </div>
+          </header>
+          <form className="mt-6 space-y-6" onSubmit={submit}>
+            <fieldset className="grid min-w-0 gap-2 sm:grid-cols-2">
+              <legend className="mb-2 text-sm font-semibold">Entry method</legend>
               {["catalog", "manual"].map((option) => (
-                <label key={option} className="flex items-center gap-2">
+                <label key={option} className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-lg border border-border px-3 py-2.5 text-sm font-medium has-checked:border-action has-checked:bg-accent has-checked:text-accent-foreground">
                   <input
                     type="radio"
+                    className="shrink-0 accent-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                     name={`${uid}-mode`}
                     value={option}
                     checked={mode === option}
@@ -228,172 +238,190 @@ export default function VehicleEditor({
                       }
                     }}
                   />
-                  {option === "catalog" ? "Choose a vehicle" : "Enter manually"}
+                  {option === "catalog"
+                    ? <ListFilter className="size-4 shrink-0" aria-hidden="true" />
+                    : <PencilLine className="size-4 shrink-0" aria-hidden="true" />}
+                  {option === "catalog" ? "Choose from catalog" : "Enter manually"}
                 </label>
               ))}
             </fieldset>
-            <label
-              className="block text-sm font-medium"
-              htmlFor={`${uid}-kind`}
-            >
-              Kind
-            </label>
-            <select
-              id={`${uid}-kind`}
-              required
-              className={field}
-              value={kind}
-              onChange={(e) => {
-                setKind(e.target.value);
-                setMake("");
-                setCatalog("");
-                setMakeName("");
-                setModelName("");
-              }}
-            >
-              <option value="">Select kind</option>
-              {kinds.map((k) => (
-                <option key={k} value={k}>
-                  {titleCase(k)}
-                </option>
-              ))}
-            </select>
-            {mode === "catalog" && kind && (
-              <CatalogSelect
-                key={kind}
-                label="Make"
-                kind={kind}
-                make=""
-                value={make}
-                initialName={makeName}
-                onChange={(option) => {
-                  setMake(option.id);
-                  setMakeName(option.name);
-                  setCatalog("");
-                  setModelName("");
-                }}
-              />
-            )}
-            {mode === "catalog" && kind && make && (
-              <CatalogSelect
-                key={`${kind}/${make}`}
-                label="Model"
-                kind={kind}
-                make={make}
-                value={catalog}
-                initialName={modelName}
-                onChange={(option) => {
-                  setCatalog(option.id);
-                  setModelName(option.name);
-                  if (!name || name === `${makeName} ${modelName}`.trim())
-                    setName(`${makeName} ${option.name}`.trim());
-                }}
-              />
-            )}
-            {mode === "manual" && (
-              <>
+            <fieldset className="min-w-0 space-y-4">
+              <legend className="mb-2 text-base font-semibold">Vehicle details</legend>
+              <div className="space-y-2">
                 <label
                   className="block text-sm font-medium"
-                  htmlFor={`${uid}-make`}
+                  htmlFor={`${uid}-kind`}
                 >
-                  Make (optional)
-                </label>
-                <input
-                  id={`${uid}-make`}
-                  className={field}
-                  maxLength={200}
-                  value={makeName}
-                  onChange={(e) => setMakeName(e.target.value)}
-                />
-                <label
-                  className="block text-sm font-medium"
-                  htmlFor={`${uid}-model`}
-                >
-                  Model (optional)
-                </label>
-                <input
-                  id={`${uid}-model`}
-                  className={field}
-                  maxLength={200}
-                  value={modelName}
-                  onChange={(e) => setModelName(e.target.value)}
-                />
-              </>
-            )}
-            <label
-              className="block text-sm font-medium"
-              htmlFor={`${uid}-name`}
-            >
-              Vehicle name
-            </label>
-            <input
-              id={`${uid}-name`}
-              className={field}
-              required
-              maxLength={48}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Model name or a personal nickname"
-            />
-            <label
-              className="block text-sm font-medium"
-              htmlFor={`${uid}-fuel`}
-            >
-              Fuel type
-            </label>
-            <select
-              id={`${uid}-fuel`}
-              className={field}
-              required
-              value={fuel}
-              onChange={(e) => {
-                setFuel(e.target.value);
-                if (e.target.value === secondFuel) setSecondFuel("");
-              }}
-            >
-              <option value="">Select fuel type</option>
-              {fuels.map((f) => (
-                <option key={f} value={f}>
-                  {titleCase(f)}
-                </option>
-              ))}
-            </select>
-            <label className="flex items-center gap-3 text-sm">
-              <input
-                type="checkbox"
-                checked={dual}
-                onChange={(e) => setDual(e.target.checked)}
-              />
-              Dual tank (two fuel types)
-            </label>
-            {dual && (
-              <>
-                <label
-                  className="block text-sm font-medium"
-                  htmlFor={`${uid}-second`}
-                >
-                  Second fuel type
+                  Vehicle type
                 </label>
                 <select
-                  id={`${uid}-second`}
+                  id={`${uid}-kind`}
+                  required
+                  className={field}
+                  value={kind}
+                  onChange={(e) => {
+                    setKind(e.target.value);
+                    setMake("");
+                    setCatalog("");
+                    setMakeName("");
+                    setModelName("");
+                  }}
+                >
+                  <option value="">Select vehicle type</option>
+                  {kinds.map((k) => (
+                    <option key={k} value={k}>
+                      {titleCase(k)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {mode === "catalog" && kind && (
+                <CatalogSelect
+                  key={kind}
+                  label="Make"
+                  kind={kind}
+                  make=""
+                  value={make}
+                  initialName={makeName}
+                  onChange={(option) => {
+                    setMake(option.id);
+                    setMakeName(option.name);
+                    setCatalog("");
+                    setModelName("");
+                  }}
+                />
+              )}
+              {mode === "catalog" && kind && make && (
+                <CatalogSelect
+                  key={`${kind}/${make}`}
+                  label="Model"
+                  kind={kind}
+                  make={make}
+                  value={catalog}
+                  initialName={modelName}
+                  onChange={(option) => {
+                    setCatalog(option.id);
+                    setModelName(option.name);
+                    if (!name || name === `${makeName} ${modelName}`.trim())
+                      setName(`${makeName} ${option.name}`.trim());
+                  }}
+                />
+              )}
+              {mode === "manual" && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label
+                      className="block text-sm font-medium"
+                      htmlFor={`${uid}-make`}
+                    >
+                      Make (optional)
+                    </label>
+                    <input
+                      id={`${uid}-make`}
+                      className={field}
+                      maxLength={200}
+                      value={makeName}
+                      onChange={(e) => setMakeName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label
+                      className="block text-sm font-medium"
+                      htmlFor={`${uid}-model`}
+                    >
+                      Model (optional)
+                    </label>
+                    <input
+                      id={`${uid}-model`}
+                      className={field}
+                      maxLength={200}
+                      value={modelName}
+                      onChange={(e) => setModelName(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="space-y-2">
+                <label
+                  className="block text-sm font-medium"
+                  htmlFor={`${uid}-name`}
+                >
+                  Vehicle name
+                </label>
+                <input
+                  id={`${uid}-name`}
                   className={field}
                   required
-                  value={secondFuel}
-                  onChange={(e) => setSecondFuel(e.target.value)}
-                >
-                  <option value="">Select second fuel type</option>
-                  {fuels
-                    .filter((f) => f !== fuel)
-                    .map((f) => (
-                      <option key={f} value={f}>
-                        {titleCase(f)}
-                      </option>
-                    ))}
-                </select>
-              </>
-            )}
+                  maxLength={48}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Model name or a personal nickname"
+                />
+              </div>
+            </fieldset>
+            <fieldset className="min-w-0 space-y-3">
+              <legend className="mb-2 w-full border-t border-divider pt-4 text-base font-semibold">Fuel setup</legend>
+              <label
+                className="block text-sm font-medium"
+                htmlFor={`${uid}-fuel`}
+              >
+                Fuel type
+              </label>
+              <select
+                id={`${uid}-fuel`}
+                className={field}
+                required
+                value={fuel}
+                onChange={(e) => {
+                  setFuel(e.target.value);
+                  if (e.target.value === secondFuel) setSecondFuel("");
+                }}
+              >
+                <option value="">Select fuel type</option>
+                {fuels.map((f) => (
+                  <option key={f} value={f}>
+                    {titleCase(f)}
+                  </option>
+                ))}
+              </select>
+              <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg bg-secondary px-3 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  checked={dual}
+                  onChange={(e) => setDual(e.target.checked)}
+                />
+                Dual tank (two fuel types)
+              </label>
+              {dual && (
+                <>
+                  <label
+                    className="block text-sm font-medium"
+                    htmlFor={`${uid}-second`}
+                  >
+                    Second fuel type
+                  </label>
+                  <select
+                    id={`${uid}-second`}
+                    className={field}
+                    required
+                    value={secondFuel}
+                    onChange={(e) => setSecondFuel(e.target.value)}
+                  >
+                    <option value="">Select second fuel type</option>
+                    {fuels
+                      .filter((f) => f !== fuel)
+                      .map((f) => (
+                        <option key={f} value={f}>
+                          {titleCase(f)}
+                        </option>
+                      ))}
+                  </select>
+                </>
+              )}
+            </fieldset>
             {error && (
-              <p role="alert" className="text-sm text-destructive">
+              <p role="alert" className="rounded-lg bg-destructive-soft p-3 text-sm text-destructive">
                 {error}
               </p>
             )}
@@ -410,7 +438,7 @@ export default function VehicleEditor({
                 Sources and credits
               </a>
             </p>
-            <DialogActions>
+            <DialogActions className="grid-cols-2 border-t border-divider pt-4">
               <DialogAction
                 type="button"
                 variant="secondary"

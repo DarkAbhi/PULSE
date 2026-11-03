@@ -395,7 +395,8 @@ internal fun HorizonScreen(
                                     create(HorizonForm.Deduction)
                                 }
                                 SectionState(state.overview, vm::refreshOverview) { data ->
-                                    if (data.deductions.isEmpty()) {
+                                    val activeSubscriptions = data.subscriptions.filter { it.status == "active" }
+                                    if (data.deductions.isEmpty() && activeSubscriptions.isEmpty()) {
                                         PulseEmptyState(
                                             stringResource(
                                                 R.string.pulse_horizon_no_fixed_obligations,
@@ -405,7 +406,7 @@ internal fun HorizonScreen(
                                             ),
                                         )
                                     }
-                                    ObligationGrid(data.deductions) { item ->
+                                    ObligationGrid(data.deductions, { it.id }) { item ->
                                         ObligationCard(
                                             item = item,
                                             budgetName =
@@ -439,6 +440,15 @@ internal fun HorizonScreen(
                                                     ),
                                                 )
                                             },
+                                        )
+                                    }
+                                    ObligationGrid(activeSubscriptions, { it.id }) { item ->
+                                        SubscriptionObligationCard(
+                                            item = item,
+                                            budgetName = item.budgetId?.let { id -> data.budgets.find { it.id == id }?.name },
+                                            categoryName = item.categoryId?.let { id -> data.categories.find { it.id == id }?.name },
+                                            enabled = canMutate,
+                                            manage = { edit(item.draft(currency)) },
                                         )
                                     }
                                 }

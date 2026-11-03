@@ -24,6 +24,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.HorizonDeduction
+import dev.abhishekan.pulse.core.domain.model.HorizonSubscription
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.asString
@@ -33,18 +34,21 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.currencyText
 import dev.abhishekan.pulse.core.ui.pulseDescription
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @Composable
-internal fun ObligationGrid(
-    items: List<HorizonDeduction>,
-    card: @Composable (HorizonDeduction) -> Unit,
+internal fun <T> ObligationGrid(
+    items: List<T>,
+    itemKey: (T) -> Long,
+    card: @Composable (T) -> Unit,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth().testTag("obligation-grid")) {
         val columns = if (maxWidth >= 560.dp && LocalDensity.current.fontScale <= 1.3f) 2 else 1
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items.chunked(columns).forEach { group ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    group.forEach { item -> key(item.id) { Box(Modifier.weight(1f)) { card(item) } } }
+                    group.forEach { item -> key(itemKey(item)) { Box(Modifier.weight(1f)) { card(item) } } }
                     repeat(columns - group.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
@@ -138,6 +142,85 @@ internal fun ObligationCard(
                     },
                 )
             }
+        }
+    }
+}
+
+@Composable
+internal fun SubscriptionObligationCard(
+    item: HorizonSubscription,
+    budgetName: String?,
+    categoryName: String?,
+    enabled: Boolean,
+    manage: () -> Unit,
+) {
+    val colors = PulseTheme.colors
+    val billingDay = item.billingDay
+    Surface(
+        Modifier.fillMaxWidth().testTag("obligation-subscription-${item.id}"),
+        shape = PulseTokens.cardShape,
+        color = colors.surface,
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Top) {
+                Box(
+                    Modifier.size(56.dp).background(colors.primarySoft, RoundedCornerShape(16.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(painterResource(R.drawable.pulse_obligation_recurring), null, Modifier.size(26.dp), tint = colors.textPrimary)
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PulseText(item.name, style = PulseTextStyle.Title3)
+                    Surface(shape = PulseTheme.shapes.medium, color = colors.primarySoft) {
+                        PulseText(
+                            stringResource(R.string.pulse_horizon_subscription),
+                            Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = PulseTextStyle.Label,
+                            color = colors.onPrimarySoft,
+                        )
+                    }
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                PulseText(stringResource(R.string.pulse_horizon_subscription_monthly_equivalent), style = PulseTextStyle.Body2)
+                PulseText(currencyText(item.monthlyAmount).asString(), style = PulseTextStyle.Metric)
+                if (item.cycle == "yearly") {
+                    PulseText(
+                        stringResource(R.string.pulse_horizon_subscription_yearly_amount, currencyText(item.amount).asString()),
+                        style = PulseTextStyle.Body2,
+                        color = colors.textSecondary,
+                    )
+                }
+                PulseText(
+                    if (item.cycle == "monthly" && billingDay != null) {
+                        stringResource(R.string.pulse_horizon_billing_day_1_s, billingDay)
+                    } else {
+                        item.nextRenewal?.let {
+                            stringResource(
+                                R.string.pulse_horizon_subscription_renews_on,
+                                it.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
+                            )
+                        } ?: stringResource(R.string.pulse_horizon_subscription_renewal_unknown)
+                    },
+                    style = PulseTextStyle.Body2,
+                    color = colors.textSecondary,
+                )
+                budgetName?.let {
+                    PulseText(
+                        stringResource(R.string.pulse_horizon_budget_1_s, it),
+                        style = PulseTextStyle.Body2,
+                        color = colors.textSecondary,
+                    )
+                }
+                categoryName?.let { PulseText(it, style = PulseTextStyle.Body2, color = colors.textSecondary) }
+            }
+            PulseButton(
+                stringResource(R.string.pulse_horizon_manage_subscription),
+                manage,
+                Modifier.pulseDescription(stringResource(R.string.pulse_horizon_manage_subscription_named, item.name)),
+                enabled = enabled,
+                variant = PulseButtonVariant.Soft,
+            )
         }
     }
 }

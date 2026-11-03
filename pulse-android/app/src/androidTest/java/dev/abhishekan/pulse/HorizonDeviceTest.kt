@@ -1005,6 +1005,136 @@ class HorizonDeviceTest {
         assertEquals(21, backend.items("transactions").size)
     }
 
+    @Test fun obligationsIncludeOnlyActiveSubscriptionsAndManageTheSubscriptionRecord() {
+        val monthly = backend.items("subscriptions").getValue(4)
+        // Matching IDs must still target the subscription, not the deduction.
+        backend.items("subscriptions").clear()
+        backend.items("subscriptions")[2] =
+            JsonObject(
+                monthly +
+                    mapOf(
+                        "id" to JsonPrimitive(2),
+                        "budget_id" to JsonPrimitive(1),
+                        "category_id" to JsonPrimitive(3),
+                    ),
+            )
+        backend.items("subscriptions")[5] =
+            JsonObject(
+                monthly +
+                    mapOf(
+                        "id" to JsonPrimitive(5),
+                        "name" to JsonPrimitive("Annual plan"),
+                        "billing_cycle" to JsonPrimitive("yearly"),
+                        "amount" to JsonPrimitive(120),
+                        "monthly_equivalent_amount" to JsonPrimitive(10),
+                    ),
+            )
+        for ((id, status) in listOf(6L to "paused", 7L to "cancelled")) {
+            backend.items("subscriptions")[id] =
+                JsonObject(
+                    monthly +
+                        mapOf(
+                            "id" to JsonPrimitive(id),
+                            "name" to JsonPrimitive("Hidden $status"),
+                            "status" to JsonPrimitive(status),
+                        ),
+                )
+        }
+        launchHorizon()
+        tap("Obligations")
+        awaitText("Rent")
+        val monthlyCard = hasTestTag("obligation-subscription-2")
+        compose.onNode(hasText("Subscription") and hasAnyAncestor(monthlyCard)).performScrollTo().assertIsDisplayed()
+        compose.onNode(hasText("Budget: Everyday") and hasAnyAncestor(monthlyCard)).performScrollTo().assertIsDisplayed()
+        compose.onNode(hasText("Billing day: 5") and hasAnyAncestor(monthlyCard)).performScrollTo().assertIsDisplayed()
+        val yearlyCard = hasTestTag("obligation-subscription-5")
+        compose
+            .onNode(
+                hasText(UserCurrency.format("10".toBigDecimal())) and hasAnyAncestor(yearlyCard),
+            ).performScrollTo()
+            .assertIsDisplayed()
+        compose.onNode(hasText("per year", substring = true) and hasAnyAncestor(yearlyCard)).performScrollTo().assertIsDisplayed()
+        compose.onNode(hasText("Renews on", substring = true) and hasAnyAncestor(yearlyCard)).performScrollTo().assertIsDisplayed()
+        screenshot("obligation-subscriptions-phone")
+        compose.onNodeWithText("Hidden paused").assertDoesNotExist()
+        compose.onNodeWithText("Hidden cancelled").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Manage subscription Music").performScrollTo().performClick()
+        awaitText("Edit subscription")
+        field("Subscription name *", "Updated music")
+        tap("Save changes")
+        awaitText("Updated music")
+        assertEquals(
+            "Updated music",
+            backend
+                .items("subscriptions")
+                .getValue(2)["name"]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(
+            "Rent",
+            backend
+                .items("deductions")
+                .getValue(2)["name"]
+                ?.jsonPrimitive
+                ?.content,
+        )
+        assertEquals(1, backend.mutations)
+    }
+
+    @Test fun subscriptionObligationsAdaptToTabletAndLargeText() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        val fontScale = shell("settings get system font_scale").trim()
+        try {
+            launchHorizon()
+            tap("Obligations")
+            for ((layout, dimensions) in listOf("tablet" to "2048x1800", "large-text" to "720x1600")) {
+                shell("wm size $dimensions")
+                shell("wm density 320")
+                shell("settings put system font_scale ${if (layout == "large-text") "1.8" else "1.0"}")
+                awaitText("Music")
+                compose.onNodeWithText("Subscription").performScrollTo().assertIsDisplayed()
+                compose
+                    .onNodeWithContentDescription(
+                        "Manage subscription Music",
+                    ).performScrollTo()
+                    .assertIsDisplayed()
+                    .assertHasClickAction()
+                screenshot("obligation-subscriptions-$layout")
+            }
+            assertEquals(0, backend.mutations)
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+            shell("settings put system font_scale ${fontScale.takeUnless { it == "null" || it.isEmpty() } ?: "1.0"}")
+        }
+    }
+
+    @Test fun subscriptionsAloneKeepObligationsNonemptyAndPausingRefreshesTheList() {
+        backend.items("deductions").clear()
+        launchHorizon()
+        tap("Obligations")
+        awaitText("Music")
+        compose.onNodeWithText("No fixed obligations").assertDoesNotExist()
+        tap("Manage subscription Music")
+        awaitText("Edit subscription")
+        tap("Paused")
+        tap("Save changes")
+        awaitText("No fixed obligations")
+        compose.onNode(hasTestTag("obligation-subscription-4")).assertDoesNotExist()
+        tap("Subscriptions")
+        awaitText("Music")
+        assertEquals(
+            "paused",
+            backend
+                .items("subscriptions")
+                .getValue(4)["status"]
+                ?.jsonPrimitive
+                ?.content,
+        )
+    }
+
     @Test fun subscriptionsLinkExistingDebitsAndPreserveTransactionsOnDelete() {
         backend.items("transactions")[2] =
             JsonObject(

@@ -4,7 +4,7 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "@/app/components/design-system/button";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import GymVisitsList, { type WorkoutGroup } from "./gym-visits-list";
@@ -16,6 +16,10 @@ const monthFormatter = new Intl.DateTimeFormat("en-IN", {
 });
 const dayFormatter = new Intl.DateTimeFormat("en-IN", {
   dateStyle: "full", timeZone: "UTC",
+});
+
+const shortDayFormatter = new Intl.DateTimeFormat("en-IN", {
+  day: "numeric", month: "short", timeZone: "UTC",
 });
 
 export type FitnessOverview = {
@@ -34,6 +38,9 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
   const [dateToMark, setDateToMark] = useState<string | null>(null);
   const router = useRouter();
   const selectedGroup = workoutsByDate[selectedDate];
+  const day = new Date(`${selectedDate}T00:00:00Z`);
+  const summaryCards = cards.filter(({ id }) => id === "last_workout" || id === "streak");
+  const yearCards = cards.filter(({ id }) => id !== "last_workout" && id !== "streak");
 
   function selectDate(date: string) {
     setMarkError("");
@@ -47,10 +54,10 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
   }
 
   return (
-    <div className="space-y-10">
-      <div className="grid items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
+    <div className="space-y-8">
+      <PulseCard className="grid items-start lg:grid-cols-[1.3fr_1fr] lg:gap-6 lg:bg-transparent">
         <PulseCard as="section" aria-label="Workout calendar" className="p-4 sm:p-6">
-          <div className="flex items-center justify-between gap-3 border-b border-divider pb-5">
+          <div className="flex items-center justify-between gap-3 border-b border-divider pb-2 sm:pb-3">
             <h2 aria-live="polite" className="text-xl font-semibold sm:text-2xl">
               {monthFormatter.format(new Date(`${month}-01T00:00:00Z`))}
             </h2>
@@ -63,22 +70,22 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
               </Button>
             </div>
           </div>
-          <div className="mt-5 grid grid-cols-7 text-center text-xs font-semibold text-muted-foreground sm:text-sm" aria-hidden="true">
+          <div className="mt-3 grid grid-cols-7 text-center text-xs font-semibold text-muted-foreground sm:text-sm" aria-hidden="true">
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => <span key={day}>{day}</span>)}
           </div>
-          <div className="mt-3 grid grid-cols-7 gap-y-3 sm:gap-y-5">
+          <div className="mt-2 grid grid-cols-7 gap-y-1 sm:gap-y-2">
             {calendarDays(month).map((date) => {
               const count = workoutsByDate[date]?.workouts.length ?? 0;
               const selected = date === selectedDate;
               return (
-                <div key={date} className="flex justify-center py-1">
+                <div key={date} className="flex min-w-0 justify-center">
                   <button
                     type="button"
                     aria-pressed={selected}
                     aria-current={date === today ? "date" : undefined}
                     aria-label={`${dayFormatter.format(new Date(`${date}T00:00:00Z`))}, ${count ? `${count} completed workout${count === 1 ? "" : "s"}` : "no workouts"}`}
                     onClick={() => selectDate(date)}
-                    className={`relative flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition sm:h-11 sm:w-11 sm:text-base ${selected ? "bg-primary text-primary-foreground" : count ? "bg-success-soft text-success hover:bg-success-soft dark:bg-success/15 dark:text-success dark:hover:bg-success/25" : date.slice(0, 7) !== month ? "text-muted-foreground/50 hover:bg-secondary" : "text-foreground hover:bg-secondary"}`}
+                    className={`relative flex h-11 w-full max-w-11 items-center justify-center rounded-full text-sm font-semibold transition sm:text-base ${selected ? "bg-primary text-primary-foreground" : count ? "border-2 border-success bg-success-soft text-success hover:bg-success-soft dark:bg-success/15 dark:text-success dark:hover:bg-success/25" : date.slice(0, 7) !== month ? "text-muted-foreground/50 hover:bg-secondary" : "text-foreground hover:bg-secondary"}`}
                   >
                     {Number(date.slice(8))}
                     {count > 0 && (
@@ -89,68 +96,81 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
               );
             })}
           </div>
-          <p className="mt-5 flex items-center gap-2 text-xs text-muted-foreground">
+          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
             <span aria-hidden="true" className="h-2 w-2 rounded-full bg-success" />
             Workout completed
           </p>
         </PulseCard>
-        <section aria-label="Selected day's workouts" className="space-y-4">
-          <h2 className="text-xl font-semibold">Workouts for this day</h2>
-          <div aria-live="polite">
-            {selectedGroup ? <GymVisitsList groups={[selectedGroup]} /> : (
-              <PulseCard className="p-6">
-                <p className="text-sm font-semibold">{dayFormatter.format(new Date(`${selectedDate}T00:00:00Z`))}</p>
-                <p className="mt-2 text-sm text-muted-foreground">No workouts recorded for this day.</p>
+        <PulseCard
+          as="section"
+          aria-labelledby="selected-workouts-heading"
+          className="border-t border-divider p-4 max-lg:rounded-t-none sm:p-6 lg:border-t-0"
+        >
+          <div aria-live="polite" className="space-y-3">
+            <h2 id="selected-workouts-heading" className="text-lg font-semibold sm:text-xl">
+              {selectedDate === today ? `Today, ${shortDayFormatter.format(day)}` : dayFormatter.format(day)}
+            </h2>
+            {selectedGroup ? <GymVisitsList groups={[selectedGroup]} hideDate /> : (
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                <p className="text-sm text-muted-foreground">No workout logged</p>
                 <Button
                   type="button"
-                  size="sm"
-                  className="mt-4"
+                  size="lg"
                   disabled={isMarking}
                   onClick={() => {
                     setMarkError("");
                     setDateToMark(selectedDate);
                   }}
                 >
-                  {isMarking ? "Marking…" : "Mark workout"}
+                  {isMarking ? "Logging…" : "Log gym visit"}
                 </Button>
-              </PulseCard>
+              </div>
             )}
           </div>
-        </section>
-      </div>
-      <div className="grid items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
-        <section aria-labelledby="fitness-stats-heading" className="space-y-4">
-          <h2 id="fitness-stats-heading" className="text-xl font-semibold">Your fitness stats</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {cards.map((card) => (
-              <PulseCard key={card.id} className="flex min-h-44 flex-col items-center justify-center px-4 py-6 text-center">
-                <h3 className="text-base font-medium">{card.label}</h3>
-                <p className="my-3 max-w-full break-words text-3xl font-bold tracking-tight sm:text-4xl">{card.value}</p>
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <span>{card.subtitle}</span>
-                  {card.tooltip && (
-                    <span className="group relative inline-flex">
-                      <button type="button" aria-label={`${card.label} information`} aria-describedby={`stat-tooltip-${card.id}`} className="rounded-full">
-                        <Info className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                      <span id={`stat-tooltip-${card.id}`} role="tooltip" className="pointer-events-none invisible absolute bottom-full left-1/2 z-10 mb-2 w-52 -translate-x-1/2 rounded-lg bg-popover px-3 py-2 text-center text-xs text-popover-foreground shadow-md group-hover:visible group-focus-within:visible">
-                        {card.tooltip}
-                      </span>
-                    </span>
-                  )}
-                </div>
-              </PulseCard>
-            ))}
-          </div>
-        </section>
-        <section aria-labelledby="recent-workouts-heading" className="space-y-4">
+        </PulseCard>
+      </PulseCard>
+      <div className="grid items-start gap-8 lg:grid-cols-[1.3fr_1fr] lg:gap-6">
+        <section aria-labelledby="recent-workouts-heading" className="space-y-3 lg:col-start-2 lg:row-start-1">
           <h2 id="recent-workouts-heading" className="text-xl font-semibold">Recent workouts</h2>
           {recentWorkouts.length ? <GymVisitsList groups={recentWorkouts} /> : (
-            <PulseCard className="p-6">
-              <p className="font-semibold">No workouts yet.</p>
-              <p className="mt-2 text-sm text-muted-foreground">Mark a workout completed when you&apos;re ready.</p>
+            <PulseCard className="p-4">
+              <p className="font-semibold">No workouts yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">Select a date in the calendar to log a gym visit.</p>
             </PulseCard>
           )}
+        </section>
+        <section aria-labelledby="fitness-stats-heading" className="space-y-3 lg:col-start-1 lg:row-start-1">
+          <h2 id="fitness-stats-heading" className="text-xl font-semibold">Your fitness stats</h2>
+          <PulseCard className="grid grid-cols-2 divide-x divide-divider">
+            {summaryCards.map((card) => (
+              <div key={card.id} className="min-w-0 p-3 sm:p-4">
+                <h3 className="text-sm font-medium">{card.label}</h3>
+                <p className="mt-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{card.value}</p>
+                <p className="text-xs text-muted-foreground">{card.subtitle}</p>
+              </div>
+            ))}
+          </PulseCard>
+          <PulseCard className="px-4 pt-4">
+            <h3 className="text-sm font-semibold">Year to date</h3>
+            <dl className="mt-1 divide-y divide-divider">
+              {yearCards.map((card) => {
+                const note = card.subtitle.replace(/(?:^This year$| this year\b)/i, "");
+                return (
+                  <div key={card.id} className="flex items-baseline justify-between gap-3 py-2.5 text-sm">
+                    <dt>
+                      {card.label}
+                      {(note || card.tooltip) && (
+                        <span className="block text-xs text-muted-foreground">
+                          {[note, card.tooltip].filter(Boolean).join(". ")}
+                        </span>
+                      )}
+                    </dt>
+                    <dd className="max-w-[50%] break-words text-right font-semibold tabular-nums">{card.value}</dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </PulseCard>
         </section>
       </div>
       <ConfirmationDialog
@@ -162,17 +182,17 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
           startMarking(async () => {
             const result = await markGymVisitAction(dateToMark);
             if (!result.ok) {
-              setMarkError(result.error ?? "We couldn't save your workout.");
+              setMarkError(result.error ?? "We couldn't save your gym visit.");
               return;
             }
             setDateToMark(null);
             router.refresh();
           });
         }}
-        title="Mark workout?"
-        description={dateToMark ? `Mark a workout as completed for ${dayFormatter.format(new Date(`${dateToMark}T00:00:00Z`))}?` : ""}
-        confirmText="Mark workout"
-        confirmLoadingText="Marking…"
+        title="Log gym visit?"
+        description={dateToMark ? `Log a gym visit for ${dayFormatter.format(new Date(`${dateToMark}T00:00:00Z`))}?` : ""}
+        confirmText="Log gym visit"
+        confirmLoadingText="Logging…"
         isLoading={isMarking}
         error={markError}
         variant="positive"

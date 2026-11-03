@@ -1,8 +1,5 @@
-"use client";
-
 import { PulseCardLink } from "@/app/components/design-system/pulse-card";
-
-import { Dumbbell, ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 export type WorkoutGroup = {
   date: string;
@@ -12,47 +9,28 @@ export type WorkoutGroup = {
 
 interface GymVisitsListProps {
   groups: WorkoutGroup[];
+  hideDate?: boolean;
 }
 
-export default function GymVisitsList({ groups }: GymVisitsListProps) {
+export default function GymVisitsList({ groups, hideDate = false }: GymVisitsListProps) {
   return (
-    <div className="space-y-9">
-      {groups.map((group) => (
-        <section key={group.date}>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-action">
-            {group.date_label}
-          </h2>
-          <div className="space-y-3">
-            {group.workouts.map((visit) => (
-              <PulseCardLink
-                className="flex items-center justify-between p-5"
-                href={`/fitness/${visit.id}`}
-                key={visit.id}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-secondary-foreground"
-                    aria-hidden="true"
-                  >
-                    <Dumbbell className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">
-                      Workout
-                    </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {visit.time_label}
-                    </p>
-                  </div>
-                </div>
-                <span className="flex items-center gap-1 text-sm font-semibold text-action">
-                  Open <ArrowRight className="h-4 w-4" />
-                </span>
-              </PulseCardLink>
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
+    <ul className="space-y-2">
+      {groups.flatMap((group) =>
+        group.workouts.map((visit) => (
+          <li key={visit.id}>
+            <PulseCardLink
+              className="flex min-h-12 items-center justify-between gap-3 px-4 py-2.5 text-sm hover:bg-secondary"
+              href={`/fitness/${visit.id}`}
+            >
+              <span>
+                <span className="block font-semibold">{hideDate ? visit.time_label : group.date_label}</span>
+                <span className="block text-xs text-muted-foreground">{hideDate ? "View workout" : visit.time_label}</span>
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-action" aria-hidden="true" />
+            </PulseCardLink>
+          </li>
+        )),
+      )}
+    </ul>
   );
 }

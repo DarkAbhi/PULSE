@@ -35,17 +35,13 @@ export default async function GymVisitsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
+    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-10 sm:py-10 lg:px-16">
       <div className="mx-auto max-w-6xl">
         <BackLink href="/dashboard">Dashboard</BackLink>
-        <h1 className="mt-5 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="mt-3 text-3xl sm:mt-5 font-bold tracking-tight text-foreground sm:text-4xl">
           Fitness
         </h1>
-        <p className="mt-3 text-base text-muted-foreground">
-          Track your workouts and revisit each session whenever you want.
-        </p>
-
-        <div className="mt-10">
+        <div className="mt-5 sm:mt-8">
           {error ? (
             <p className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
               {error}

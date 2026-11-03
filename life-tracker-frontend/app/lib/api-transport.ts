@@ -20,8 +20,12 @@ export async function proxyAPI(
 ) {
   const url = new URL(request.url);
   const origin = request.headers.get("Origin");
+  // Next.js can use the internal port in request.url behind Docker port mapping.
+  const publicOrigin = request.headers.has("Host")
+    ? `${url.protocol}//${request.headers.get("Host")}`
+    : url.origin;
   if (!["GET", "HEAD", "OPTIONS"].includes(request.method) &&
-      ((origin && origin !== url.origin) || request.headers.get("Sec-Fetch-Site") === "cross-site")) {
+      ((origin && origin !== publicOrigin) || request.headers.get("Sec-Fetch-Site") === "cross-site")) {
     return new Response("Cross-origin request denied", {
       status: 403, headers: { "Cache-Control": "private, no-store" },
     });

@@ -54,3 +54,29 @@ test("cross-origin writes are rejected before forwarding a credential", async ()
   }), "http://api", "session", async () => { throw new Error("must not forward"); });
   assert.equal(response.status, 403);
 });
+
+test("login and logout accept the public Host when Docker changes the request URL port", async () => {
+  for (const host of ["localhost:3102", "100.115.134.90:3100"]) {
+    for (const path of ["login", "logout"]) {
+      const response = await proxyAPI(new Request(`http://localhost:3000/api/auth/${path}`, {
+        method: "POST", headers: { Host: host, Origin: `http://${host}`, "Sec-Fetch-Site": "same-origin" },
+      }), "http://api", "session", async () => new Response("{}"));
+      assert.equal(response.status, 200);
+    }
+  }
+});
+
+test("public Host checks still reject different origins and cross-site requests", async () => {
+  for (const headers of [
+    { Origin: "http://attacker.example", "X-Forwarded-Host": "attacker.example" },
+    { Origin: "http://localhost:3103" },
+    { Origin: "https://localhost:3102" },
+    { Origin: "null" },
+    { Origin: "http://localhost:3102", "Sec-Fetch-Site": "cross-site" },
+  ]) {
+    const response = await proxyAPI(new Request("http://localhost:3000/api/auth/logout", {
+      method: "POST", headers: { Host: "localhost:3102", ...headers },
+    }), "http://api", "session", async () => { throw new Error("must not forward"); });
+    assert.equal(response.status, 403);
+  }
+});

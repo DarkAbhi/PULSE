@@ -2,8 +2,8 @@ import { apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { getUserTimeZone } from "@/app/lib/user-time-zone";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Watch } from "lucide-react";
+import BackLink from "@/app/components/design-system/back-link";
+import { Watch } from "lucide-react";
 import DeleteVisitButton from "./delete-visit-button";
 import DeleteExerciseButton from "./delete-exercise-button";
 import EditExerciseButton from "./edit-exercise-button";
@@ -113,12 +113,7 @@ export default async function GymVisitPage({ params }: PageProps) {
       <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.15fr_0.85fr]">
         <section>
           <div className="flex items-start justify-between gap-4">
-            <Link
-              className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80 w-fit"
-              href="/fitness"
-            >
-              <ArrowLeft className="h-4 w-4" /> Fitness
-            </Link>
+            <BackLink href="/fitness">Fitness</BackLink>
             <DeleteVisitButton visitID={visitID} />
           </div>
           <p className="mt-5 text-sm font-semibold tracking-[0.18em] text-action uppercase">

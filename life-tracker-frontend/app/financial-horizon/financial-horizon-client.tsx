@@ -10,8 +10,8 @@ import { useTimeZone } from "@/app/components/time-zone-provider";
 import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition, useEffect } from "react";
-import Link from "next/link";
-import { ArrowLeft, Compass, X } from "lucide-react";
+import BackLink from "@/app/components/design-system/back-link";
+import { Compass, X } from "lucide-react";
 
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import Dialog, { DialogAction } from "@/app/components/design-system/dialog";
@@ -831,12 +831,7 @@ export default function FinancialHorizonClient({
       <div className="mx-auto max-w-6xl space-y-8">
         {/* Navigation & Unified Header */}
         <div>
-          <Link
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-action transition hover:opacity-80"
-            href="/dashboard"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to Dashboard
-          </Link>
+          <BackLink href="/dashboard">Back to Dashboard</BackLink>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight sm:text-3xl">
               <Compass aria-hidden="true" className="h-6 w-6 shrink-0 text-action" />

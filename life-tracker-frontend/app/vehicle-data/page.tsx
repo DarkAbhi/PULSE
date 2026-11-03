@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import Link from "next/link";
+import BackLink from "@/app/components/design-system/back-link";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 export const metadata = { title: "Vehicle data credits | PULSE" };
@@ -13,9 +13,7 @@ export default async function VehicleDataPage() {
   return (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10">
       <div className="mx-auto max-w-4xl">
-        <Link href="/garage" className="text-sm font-semibold text-action">
-          ← Garage
-        </Link>
+        <BackLink href="/garage">Garage</BackLink>
         <h1 className="mt-5 text-3xl font-bold">Vehicle data and credits</h1>
         <p className="mt-4 text-muted-foreground">
           Vehicle data by{" "}

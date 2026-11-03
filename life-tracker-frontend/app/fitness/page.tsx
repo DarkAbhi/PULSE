@@ -1,7 +1,6 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import BackLink from "@/app/components/design-system/back-link";
 import FitnessCalendar, { type FitnessOverview } from "./fitness-calendar";
 
 export const metadata = {
@@ -38,12 +37,7 @@ export default async function GymVisitsPage() {
   return (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
       <div className="mx-auto max-w-6xl">
-        <Link
-          className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80 w-fit"
-          href="/dashboard"
-        >
-          <ArrowLeft className="h-4 w-4" /> Dashboard
-        </Link>
+        <BackLink href="/dashboard">Dashboard</BackLink>
         <h1 className="mt-5 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Fitness
         </h1>

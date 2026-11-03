@@ -1,8 +1,7 @@
 import { apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import BackLink from "@/app/components/design-system/back-link";
 import CurrencySettings from "./currency-settings";
 import TimeZoneSettings from "./time-zone-settings";
 import ThemeSettings from "./theme-settings";
@@ -47,9 +46,7 @@ export default async function ProfilePage() {
   return (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
       <div className="mx-auto max-w-6xl">
-        <Link className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80 w-fit" href="/dashboard">
-          <ArrowLeft className="h-4 w-4" /> Dashboard
-        </Link>
+        <BackLink href="/dashboard">Dashboard</BackLink>
 
         <section className="mt-12 flex flex-col items-center text-center">
           {/* Circular Profile Picture Placeholder on top */}

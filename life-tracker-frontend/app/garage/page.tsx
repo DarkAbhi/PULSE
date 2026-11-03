@@ -2,7 +2,8 @@ import { apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CarFront } from "lucide-react";
+import BackLink from "@/app/components/design-system/back-link";
+import { CarFront } from "lucide-react";
 import AddVehicleButton from "./add-vehicle-button";
 import VehiclesList from "./vehicles-list";
 
@@ -57,12 +58,7 @@ export default async function GaragePage() {
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
       <div className="mx-auto max-w-5xl">
-        <Link
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-action hover:bg-secondary focus-visible:outline-2 focus-visible:outline-ring"
-          href="/dashboard"
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" /> Dashboard
-        </Link>
+        <BackLink href="/dashboard">Dashboard</BackLink>
 
         <PulseCard as="section" aria-labelledby="garage-title"
           className="relative isolate mt-3 overflow-hidden border border-border bg-secondary px-6 py-8 sm:px-10 sm:py-12"

@@ -4,6 +4,7 @@ import { getUserCurrency } from "@/app/lib/user-currency";
 import { formatMoney } from "@/app/lib/currency.mjs";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import BackLink from "@/app/components/design-system/back-link";
 import { VehicleHistoryData } from "./types";
 import DeleteButton from "./delete-button";
 import DeleteVehicleButton from "./delete-vehicle-button";
@@ -15,7 +16,7 @@ import FuelEfficiencySection from "./fuel-efficiency-section";
 import TirePressureCard from "./tire-pressure-card";
 import LocalDate from "@/app/components/local-date";
 import VehicleEditor from "../vehicle-editor";
-import { ArrowLeft, Bike, Bus, CarFront, ChevronRight, Fuel, Plus, ReceiptText, Truck, Wind } from "lucide-react";
+import { Bike, Bus, CarFront, ChevronRight, Fuel, Plus, ReceiptText, Truck, Wind } from "lucide-react";
 
 export const metadata = { title: "Vehicle details | PULSE" };
 
@@ -60,12 +61,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
             <p className="mt-2 text-sm text-muted-foreground">
               This vehicle may have been deleted or does not exist.
             </p>
-            <Link
-              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-action transition hover:opacity-80"
-              href="/garage"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back to Garage
-            </Link>
+            <BackLink href="/garage" className="mt-6">Back to Garage</BackLink>
           </PulseCard>
         </div>
       </main>
@@ -78,9 +74,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
         <div className="mx-auto max-w-5xl">
           <PulseCard className="p-6">
             <p role="alert" className="text-destructive">We couldn&apos;t load this vehicle&apos;s history.</p>
-            <Link className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-action underline" href="/garage">
-              <ArrowLeft className="size-4" aria-hidden="true" /> Back to Garage
-            </Link>
+            <BackLink href="/garage" className="mt-4">Back to Garage</BackLink>
           </PulseCard>
         </div>
       </main>
@@ -114,12 +108,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
       <div className="mx-auto max-w-5xl">
-        <Link
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-action hover:bg-secondary focus-visible:outline-2 focus-visible:outline-ring"
-          href="/garage"
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" /> Garage
-        </Link>
+        <BackLink href="/garage">Garage</BackLink>
 
         <PulseCard as="section" aria-labelledby="vehicle-title" className="mt-3 bg-secondary px-5 py-6 sm:px-8 sm:py-8">
           <div className="flex flex-wrap items-center justify-between gap-4">

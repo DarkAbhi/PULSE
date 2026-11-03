@@ -1,7 +1,6 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import BackLink from "@/app/components/design-system/back-link";
 import FinancialHorizonClient, { NextMonthPurchaseItem } from "./financial-horizon-client";
 import { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
 import type { TransactionPage } from "./actions";
@@ -18,7 +17,7 @@ export default async function FinancialHorizonPage() {
   const unavailable = (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10">
       <div className="mx-auto max-w-4xl">
-        <Link className="text-sm font-semibold text-action" href="/dashboard">← Back to Dashboard</Link>
+        <BackLink href="/dashboard">Back to Dashboard</BackLink>
         <h1 className="mt-6 text-3xl font-bold">Financial Horizon</h1>
         <p className="mt-8 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
           We couldn&apos;t reach your financial data. Please try again.
@@ -62,12 +61,7 @@ export default async function FinancialHorizonPage() {
     return (
       <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10">
         <div className="mx-auto max-w-4xl">
-          <Link
-            className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80"
-            href="/dashboard"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to Dashboard
-          </Link>
+          <BackLink href="/dashboard">Back to Dashboard</BackLink>
           <header className="mt-6">
             <h1 className="text-3xl font-bold text-foreground">Financial Horizon</h1>
           </header>

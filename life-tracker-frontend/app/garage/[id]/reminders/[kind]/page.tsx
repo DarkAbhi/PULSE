@@ -1,6 +1,5 @@
-import Link from "next/link";
+import BackLink from "@/app/components/design-system/back-link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import MaintenanceScheduleForm from "../../maintenance-schedules";
 import { loadReminderSettings, reminderDetails } from "../data";
 
@@ -16,9 +15,7 @@ export default async function ReminderPage({ params }: { params: Promise<{ id: s
 
   return (
     <>
-      <Link href={`/garage/${id}/reminders`} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-action hover:bg-secondary focus-visible:outline-2 focus-visible:outline-ring">
-        <ArrowLeft className="size-4" aria-hidden="true" /> Back to reminder settings
-      </Link>
+      <BackLink href={`/garage/${id}/reminders`}>Back to reminder settings</BackLink>
       <header className="mt-4 flex items-center gap-4 border-b border-divider pb-5 sm:pb-6">
         <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground sm:size-16">
           <Icon className="size-6 sm:size-8" aria-hidden="true" />

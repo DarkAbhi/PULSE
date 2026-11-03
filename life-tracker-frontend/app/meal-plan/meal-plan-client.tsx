@@ -9,9 +9,8 @@ import { dateKey } from "@/app/lib/time-zone.mjs";
 import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useTransition, useId } from "react";
-import Link from "next/link";
+import BackLink from "@/app/components/design-system/back-link";
 import {
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Plus,
@@ -340,9 +339,7 @@ export default function MealPlanClient({
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
       <div className="mx-auto max-w-5xl" inert={isAddMealOpen || isAddMealTimeOpen || isManageMealTimesOpen || mealToDelete !== null || mealTimeToDelete !== null}>
-        <Link className="inline-flex items-center gap-2 rounded-md text-sm font-semibold text-action focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring" href="/dashboard">
-          <ArrowLeft className="size-4" aria-hidden="true" /> Dashboard
-        </Link>
+        <BackLink href="/dashboard">Dashboard</BackLink>
 
         <PulseCard as="section" aria-labelledby="meal-plan-title" className="mt-5 overflow-hidden">
           <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border bg-accent px-4 py-6 text-accent-foreground sm:px-7 sm:py-8">

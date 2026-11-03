@@ -1,9 +1,8 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import BackLink from "@/app/components/design-system/back-link";
 import { AppNotification } from "@/app/components/notification-list";
 import NotificationsClient from "./notifications-client";
-import { ArrowLeft } from "lucide-react";
 
 const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
@@ -23,12 +22,7 @@ export default async function NotificationsPage() {
     return (
       <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
         <div className="mx-auto max-w-6xl">
-          <Link
-            className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80"
-            href="/dashboard"
-          >
-            <ArrowLeft className="h-4 w-4" /> Dashboard
-          </Link>
+          <BackLink href="/dashboard">Dashboard</BackLink>
           <header className="mt-5">
             <p className="text-sm font-semibold tracking-[0.18em] text-action">
               NOTIFICATIONS

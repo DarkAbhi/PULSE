@@ -4,11 +4,11 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 
 import Button from "@/app/components/design-system/button";
 
-import Link from "next/link";
+import BackLink from "@/app/components/design-system/back-link";
 import { useState, useTransition } from "react";
 import { AppNotification, NotificationList } from "@/app/components/notification-list";
 import { dismissNotification, clearAllNotifications } from "./actions";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 interface NotificationsClientProps {
   notifications: AppNotification[];
@@ -44,9 +44,7 @@ export default function NotificationsClient({ notifications }: NotificationsClie
   return (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
       <div className="mx-auto max-w-6xl">
-        <Link className="flex items-center gap-1 text-sm font-semibold text-action transition hover:opacity-80 w-fit" href="/dashboard">
-          <ArrowLeft className="h-4 w-4" /> Dashboard
-        </Link>
+        <BackLink href="/dashboard">Dashboard</BackLink>
         <header className="mt-5 flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold tracking-[0.18em] text-action">NOTIFICATIONS</p>

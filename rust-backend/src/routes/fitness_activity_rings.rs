@@ -194,11 +194,16 @@ fn parse(payload: &Value) -> Result<Import, String> {
         )?;
     let (stand_hours, stand_hours_goal) = integer_metric(payload, "stand", "hr")
         .ok_or("stand must include non-negative integer value and goal values with unit 'hr'.")?;
+    // iOS can send fractional step totals, while the database stores whole steps.
     let steps_count = payload
         .get("step_count")
         .and_then(Value::as_f64)
+        .and_then(|value| fitness_input::number(value, f64::from(i32::MAX)))
+        .map(f64::round)
         .and_then(fitness_input::integer)
-        .ok_or("step_count is required and must be a non-negative integer.")?;
+        .ok_or(
+            "step_count is required and must be a non-negative number within the supported range.",
+        )?;
     let mut workouts = Vec::new();
     let mut uuids = HashSet::new();
     if let Some(values) = payload.get("workouts") {
@@ -478,19 +483,28 @@ mod tests {
         let payload = example();
         assert_eq!(validate(&payload), Ok(()));
         let mut invalid = payload.clone();
-        invalid["step_count"] = json!(7500.5);
-        assert_eq!(
-            validate(&invalid),
-            Err("step_count is required and must be a non-negative integer.".into())
-        );
-        invalid["step_count"] = serde_json::from_str("7500.0").unwrap();
-        assert_eq!(validate(&invalid), Ok(()));
-        invalid = payload.clone();
         invalid["workouts"][0]["metadata"] = json!([]);
         assert_eq!(
             validate(&invalid),
             Err("workouts[0] metadata must be an object, null, or omitted.".into())
         );
+    }
+
+    #[test]
+    fn rounds_fractional_steps_and_rejects_invalid_counts() {
+        let mut payload = example();
+        for (input, expected) in [
+            (11_386.062386679294, 11_386),
+            (7500.5, 7501),
+            (7500.0, 7500),
+        ] {
+            payload["step_count"] = json!(input);
+            assert_eq!(parse(&payload).unwrap().rings.steps_count, expected);
+        }
+        for input in [json!(-0.1), json!(null), json!("7500")] {
+            payload["step_count"] = input;
+            assert!(validate(&payload).is_err(), "accepted {payload}");
+        }
     }
 
     async fn setup(pool: &sqlx::PgPool) {

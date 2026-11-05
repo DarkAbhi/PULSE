@@ -72,4 +72,9 @@ url: http://localhost:3000
     css: "nav[aria-label='Your spaces'] a[href='/garage']"
 - tapOn: "Meal Plan"
 - assertVisible: '\s*Dashboard\s*'
+- runFlow:
+    when:
+      visible: "Skip setup"
+    commands:
+      - tapOn: "Skip setup"
 - assertVisible: "Meal Plan"

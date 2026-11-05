@@ -1083,6 +1083,81 @@ definitions:
         description: accepts "HH:MM" or "HH:MM:SS"
         type: string
     type: object
+  mealplan.MealPreferenceTime:
+    properties:
+      kind:
+        enum:
+        - breakfast
+        - lunch
+        - dinner
+        type: string
+      usual_time:
+        example: "09:00"
+        type: string
+    type: object
+  mealplan.MealPreferences:
+    properties:
+      barriers:
+        items:
+          type: string
+        type: array
+      dietary_pattern:
+        enum:
+        - no_preference
+        - vegetarian
+        - vegan
+        - pescatarian
+        type: string
+      food_avoidances:
+        items:
+          type: string
+        type: array
+      goal:
+        enum:
+        - feel_satisfied
+        - food_calm
+        - nourish_without_dieting
+        type: string
+      meals:
+        items:
+          $ref: '#/definitions/mealplan.MealPreferenceTime'
+        type: array
+    type: object
+  mealplan.OnboardingConflictResponse:
+    properties:
+      error:
+        type: string
+      state:
+        $ref: '#/definitions/mealplan.OnboardingState'
+    type: object
+  mealplan.OnboardingInput:
+    properties:
+      preferences:
+        $ref: '#/definitions/mealplan.MealPreferences'
+      questionnaire_version:
+        example: 1
+        type: integer
+      status:
+        enum:
+        - skipped
+        - completed
+        type: string
+    type: object
+  mealplan.OnboardingState:
+    properties:
+      decided_at:
+        type: string
+      preferences:
+        $ref: '#/definitions/mealplan.MealPreferences'
+      questionnaire_version:
+        type: integer
+      status:
+        enum:
+        - pending
+        - skipped
+        - completed
+        type: string
+    type: object
   mealplan.PlanDTO:
     properties:
       created_at:
@@ -2426,6 +2501,68 @@ paths:
       summary: Create transactions in bulk
       tags:
       - horizon
+  /api/meal-plan-onboarding:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/mealplan.OnboardingState'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Read meal setup and preferences
+      tags:
+      - meal-plan
+    put:
+      consumes:
+      - application/json
+      description: Version 1. First terminal decision wins; identical status retries
+        return saved state. Conflicts return error and authoritative state.
+      parameters:
+      - description: Explicit decision; completed requires preferences
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/mealplan.OnboardingInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/mealplan.OnboardingState'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/mealplan.OnboardingConflictResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Finish or skip meal setup
+      tags:
+      - meal-plan
   /api/meal-plans:
     get:
       parameters:
@@ -2667,6 +2804,45 @@ paths:
       summary: Set meal consumption
       tags:
       - meal plans
+  /api/meal-preferences:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Complete replacement preferences
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/mealplan.MealPreferences'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/mealplan.OnboardingState'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/mealplan.OnboardingConflictResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Update meal preferences after setup
+      tags:
+      - meal-plan
   /api/meal-times:
     get:
       produces:

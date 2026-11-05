@@ -20,6 +20,9 @@ type ValidationError struct{ Message string }
 func (e ValidationError) Error() string { return e.Message }
 
 type store interface {
+	GetOnboarding(context.Context, int64) (OnboardingState, error)
+	ResolveOnboarding(context.Context, int64, OnboardingInput) (OnboardingState, error)
+	SavePreferences(context.Context, int64, MealPreferences) (OnboardingState, error)
 	EnsureDefaultTime(context.Context, EnsureDefaultTimeParams) error
 	ListTimes(context.Context, sql.NullInt64) ([]ListTimesRow, error)
 	CreateTime(context.Context, CreateTimeParams) (CreateTimeRow, error)

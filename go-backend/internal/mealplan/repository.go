@@ -11,9 +11,14 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/mealplan/query"
 )
 
-type Repository struct{ queries *query.Queries }
+type Repository struct {
+	queries *query.Queries
+	pool    *pgxpool.Pool
+}
 
-func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{queries: query.New(db)} }
+func NewRepository(db *pgxpool.Pool) *Repository {
+	return &Repository{queries: query.New(db), pool: db}
+}
 
 type CreatePlanParams = query.CreateMealPlanParams
 type CreateTimeParams = query.CreateMealTimeParams

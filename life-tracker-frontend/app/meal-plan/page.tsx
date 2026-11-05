@@ -3,7 +3,8 @@ import { getUserTimeZone } from "@/app/lib/user-time-zone";
 
 import { dateKey } from "@/app/lib/time-zone.mjs";
 import { redirect } from "next/navigation";
-import MealPlanClient from "./meal-plan-client";
+import MealPlanGate from "./onboarding/meal-plan-gate";
+import { getMealOnboardingAction } from "./onboarding/actions";
 import { MealPlan, MealTime } from "./actions";
 
 export const metadata = {
@@ -20,9 +21,11 @@ export default async function MealPlanPage() {
   if (!sessionResponse.ok) {
     redirect("/");
   }
+  const session = await sessionResponse.json() as { username: string };
 
   let initialMeals: MealPlan[] = [];
   let initialMealTimes: MealTime[] = [];
+  const onboardingPromise = getMealOnboardingAction();
 
   try {
     const [mealsRes, mealTimesRes] = await Promise.all([
@@ -45,9 +48,12 @@ export default async function MealPlanPage() {
   }
 
   const todayStr = dateKey(new Date(), await getUserTimeZone());
+  const onboarding = await onboardingPromise;
 
   return (
-    <MealPlanClient
+    <MealPlanGate
+      key={session.username}
+      initialState={onboarding.ok ? onboarding.state : null}
       initialMeals={initialMeals}
       initialMealTimes={initialMealTimes}
       initialTodayStr={todayStr}

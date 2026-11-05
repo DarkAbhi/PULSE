@@ -1,5 +1,19 @@
 # Meal planner artwork
 
+## Web onboarding artwork
+
+Generated with the built-in image-generation tool on 2026-11-05. Optimized to 900×900 WebP using Sharp, retaining alpha and centering the landscape pesto source inside a square canvas. Referenced from the web onboarding through Next Image. These assets are decorative food illustrations, not previews of a user's saved meals.
+
+`life-tracker-frontend/public/meal-plan/onboarding/salad.webp` (source generation `exec-3ec7c73c-e270-42d4-8914-bbf331b8938a.png`):
+
+> Create an original premium food illustration for PULSE meal-planning onboarding. A single beautiful handmade sage-green ceramic dinner plate, viewed directly overhead, holding a vibrant balanced vegetarian salad: spinach, watermelon cubes, crumbled feta, pumpkin seeds, small cucumber slices, fresh herbs. Photorealistic appetizing food with soft natural studio lighting, carefully arranged yet natural, subtle plate texture. Entire round plate visible with generous transparent margin. True transparent background. No text, no typography, no UI, no watermark, no utensils or extra objects. This is one isolated raster asset that will sit on a cream or charcoal interface. Save generated image.
+
+`life-tracker-frontend/public/meal-plan/onboarding/pesto.webp` (source generation `exec-18994103-67ed-4770-b999-0e0576864a7a.png`):
+
+> Create a premium original food photography asset for PULSE meal planner. Directly overhead view of a single complete round handmade golden-yellow ceramic plate with a subtle dark green rim, holding delicious small gnocchi coated in vibrant basil pesto, a few basil leaves and delicate parmesan shavings. Consistent soft natural studio lighting and realistic appetizing texture. Generous transparent margin around the entire plate. True transparent background. No words, no text, no logos, no UI, no utensils or extra objects. Clean isolated plate, calm editorial composition for cream and charcoal app backgrounds. Save asset.
+
+## Android planner artwork
+
 Generated with the built-in image-generation tool for the Android meal planner. Assets live in `pulse-android/feature/mealplan/src/main/res/drawable-nodpi/`.
 
 The food illustrations represent meal time categories, rather than the exact dish entered by the user. The existing light and dark themes remain supported.

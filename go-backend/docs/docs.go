@@ -1928,6 +1928,103 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/meal-plan-onboarding": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meal-plan"
+                ],
+                "summary": "Read meal setup and preferences",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/mealplan.OnboardingState"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Version 1. First terminal decision wins; identical status retries return saved state. Conflicts return error and authoritative state.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meal-plan"
+                ],
+                "summary": "Finish or skip meal setup",
+                "parameters": [
+                    {
+                        "description": "Explicit decision; completed requires preferences",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/mealplan.OnboardingInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/mealplan.OnboardingState"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/mealplan.OnboardingConflictResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/meal-plans": {
             "get": {
                 "security": [
@@ -2294,6 +2391,68 @@ const docTemplate = `{
                         "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/meal-preferences": {
+            "put": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meal-plan"
+                ],
+                "summary": "Update meal preferences after setup",
+                "parameters": [
+                    {
+                        "description": "Complete replacement preferences",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/mealplan.MealPreferences"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/mealplan.OnboardingState"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/mealplan.OnboardingConflictResponse"
                         }
                     },
                     "500": {
@@ -6816,6 +6975,115 @@ const docTemplate = `{
                 "start_time": {
                     "description": "accepts \"HH:MM\" or \"HH:MM:SS\"",
                     "type": "string"
+                }
+            }
+        },
+        "mealplan.MealPreferenceTime": {
+            "type": "object",
+            "properties": {
+                "kind": {
+                    "type": "string",
+                    "enum": [
+                        "breakfast",
+                        "lunch",
+                        "dinner"
+                    ]
+                },
+                "usual_time": {
+                    "type": "string",
+                    "example": "09:00"
+                }
+            }
+        },
+        "mealplan.MealPreferences": {
+            "type": "object",
+            "properties": {
+                "barriers": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "dietary_pattern": {
+                    "type": "string",
+                    "enum": [
+                        "no_preference",
+                        "vegetarian",
+                        "vegan",
+                        "pescatarian"
+                    ]
+                },
+                "food_avoidances": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "goal": {
+                    "type": "string",
+                    "enum": [
+                        "feel_satisfied",
+                        "food_calm",
+                        "nourish_without_dieting"
+                    ]
+                },
+                "meals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/mealplan.MealPreferenceTime"
+                    }
+                }
+            }
+        },
+        "mealplan.OnboardingConflictResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "state": {
+                    "$ref": "#/definitions/mealplan.OnboardingState"
+                }
+            }
+        },
+        "mealplan.OnboardingInput": {
+            "type": "object",
+            "properties": {
+                "preferences": {
+                    "$ref": "#/definitions/mealplan.MealPreferences"
+                },
+                "questionnaire_version": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "skipped",
+                        "completed"
+                    ]
+                }
+            }
+        },
+        "mealplan.OnboardingState": {
+            "type": "object",
+            "properties": {
+                "decided_at": {
+                    "type": "string"
+                },
+                "preferences": {
+                    "$ref": "#/definitions/mealplan.MealPreferences"
+                },
+                "questionnaire_version": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "skipped",
+                        "completed"
+                    ]
                 }
             }
         },

@@ -14,14 +14,15 @@ import uuid
 ROOT = Path(__file__).resolve().parent.parent
 PASSWORD_HASH = "$2y$12$bB7WwVq7nGJ4cfNTCX6kQODcNRLQvMjRhIFuH4Qv2.GAxlqNac4/S"
 EXCLUDED = {"schema_migrations", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports", "api_keys", "user_sessions",
-            "vehicle_maintenance_attachments"}
+            "vehicle_maintenance_attachments", "vehicle_maintenance_actions", "vehicle_maintenance_schedules",
+            "meal_plan_onboarding", "meal_preferences", "meal_preference_times"}
 TABLES = set("""vehicle_catalog vehicle_catalog_imports api_keys exercise_aliases exercise_catalog
 financial_horizon_budgets financial_horizon_categories financial_horizon_configs
 financial_horizon_deductions financial_horizon_subscriptions financial_horizon_transactions
 fitness_activity_rings fitness_workouts gym_exercise_sets gym_visit_exercises gym_visits
-meal_plans meal_times next_month_purchases notifications schema_migrations
+meal_plan_onboarding meal_preferences meal_preference_times meal_plans meal_times next_month_purchases notifications schema_migrations
 users user_profiles user_sessions vehicle_air_fills vehicle_fuel_fillups vehicle_fuel_items
-vehicle_maintenance_attachments vehicle_maintenance_records vehicles workout_activity_types""".split())
+vehicle_maintenance_actions vehicle_maintenance_schedules vehicle_maintenance_attachments vehicle_maintenance_records vehicles workout_activity_types""".split())
 BASELINE = {"users", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports", "schema_migrations",
             "financial_horizon_categories", "meal_times"}
 ENUMS = {

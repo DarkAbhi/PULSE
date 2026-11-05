@@ -21,6 +21,9 @@ func NewHandler(service *Service, userID func(*http.Request) (int64, error)) *Ha
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
+	r.Get("/meal-plan-onboarding", h.GetOnboarding)
+	r.Put("/meal-plan-onboarding", h.ResolveOnboarding)
+	r.Put("/meal-preferences", h.SavePreferences)
 	r.Get("/meal-times", h.ListTimes)
 	r.Post("/meal-times", h.CreateTime)
 	r.Delete("/meal-times/{id}", h.DeleteTime)

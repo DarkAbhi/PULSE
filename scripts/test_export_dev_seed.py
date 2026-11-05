@@ -63,6 +63,15 @@ class SeedExportTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Schema tables changed"):
                 seed.export({})
 
+    def test_meal_preferences_and_setup_decisions_are_not_exported(self):
+        private_tables = {"meal_plan_onboarding", "meal_preferences", "meal_preference_times"}
+        self.assertTrue(private_tables <= seed.TABLES)
+        self.assertTrue(private_tables <= seed.EXCLUDED)
+        snapshot = (Path(__file__).resolve().parent.parent / "go-backend/data/dev-seed.sql").read_text()
+        for table in private_tables:
+            self.assertNotIn(f"COPY public.{table} ", snapshot)
+            self.assertIn(f"NOT EXISTS (SELECT FROM public.{table})", snapshot)
+
 
 if __name__ == "__main__":
     unittest.main()

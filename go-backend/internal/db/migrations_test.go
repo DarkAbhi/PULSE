@@ -16,6 +16,22 @@ func TestRetiredPersonalTablesUpgradeAndRollback(t *testing.T) {
 	t.Chdir("../..")
 	database, dsn, stop := testhelper.StartPostgresWithDSN(t)
 	defer stop()
+	// This test exercises migration 31, independently of later migrations.
+	for {
+		var version int
+		if err := database.QueryRow(`SELECT version FROM schema_migrations`).Scan(&version); err != nil {
+			t.Fatal(err)
+		}
+		if version == 31 {
+			break
+		}
+		if version < 31 {
+			t.Fatalf("expected migration 31 or later, got %d", version)
+		}
+		if err := db.RollbackMigration(dsn); err != nil {
+			t.Fatal(err)
+		}
+	}
 	if err := db.RollbackMigration(dsn); err != nil {
 		t.Fatal(err)
 	}

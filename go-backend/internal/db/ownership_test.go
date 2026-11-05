@@ -3,19 +3,37 @@
 package db_test
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/DarkAbhi/life-backend/internal/db"
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
 )
 
+func rollbackBeforePersonalOwnership(t *testing.T, database *sql.DB, dsn string) {
+	t.Helper()
+	for {
+		var version int
+		if err := database.QueryRow(`SELECT version FROM schema_migrations`).Scan(&version); err != nil {
+			t.Fatal(err)
+		}
+		if version == 28 {
+			return
+		}
+		if version < 28 {
+			t.Fatalf("expected version 28 or later, got %d", version)
+		}
+		if err := db.RollbackMigration(dsn); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestPersonalOwnershipUpgrade(t *testing.T) {
 	t.Chdir("../..")
 	database, dsn, stop := testhelper.StartPostgresWithDSN(t)
 	defer stop()
-	if err := db.RunMigrationSteps(dsn, -3); err != nil {
-		t.Fatal(err)
-	}
+	rollbackBeforePersonalOwnership(t, database, dsn)
 	if _, err := database.Exec(`INSERT INTO meditations DEFAULT VALUES;
         INSERT INTO credit_cards (name,link) VALUES ('Existing card','https://example.com');
         INSERT INTO sports (name) VALUES ('cricket')`); err != nil {
@@ -42,9 +60,7 @@ func TestAmbiguousPersonalOwnershipStopsAndCanBeMapped(t *testing.T) {
 	t.Chdir("../..")
 	database, dsn, stop := testhelper.StartPostgresWithDSN(t)
 	defer stop()
-	if err := db.RunMigrationSteps(dsn, -3); err != nil {
-		t.Fatal(err)
-	}
+	rollbackBeforePersonalOwnership(t, database, dsn)
 	if _, err := database.Exec(`INSERT INTO users (username,password_hash) VALUES ('second','test');
         INSERT INTO sports (name) VALUES ('football')`); err != nil {
 		t.Fatal(err)

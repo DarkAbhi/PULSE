@@ -1,6 +1,8 @@
 "use client";
 
 import Select from "@/app/components/design-system/select";
+import type { MealPreferences } from "./onboarding/types";
+import { standardMealKind } from "./onboarding/questionnaire";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { useTimeZone } from "@/app/components/time-zone-provider";
@@ -36,6 +38,8 @@ import {
 } from "./actions";
 
 interface MealPlanClientProps {
+  preferences?: MealPreferences | null;
+  onEditPreferences?: () => void;
   initialMeals: MealPlan[];
   initialMealTimes: MealTime[];
   initialTodayStr?: string;
@@ -80,6 +84,8 @@ function formatTimeDisplay(timeStr?: string): string {
 }
 
 export default function MealPlanClient({
+  preferences,
+  onEditPreferences,
   initialMeals,
   initialMealTimes,
   initialTodayStr,
@@ -348,9 +354,12 @@ export default function MealPlanClient({
               <h1 id="meal-plan-title" className="text-4xl font-bold tracking-tight sm:text-5xl">Meal Plan</h1>
               <p className="mt-2 text-sm">Plan your week, one meal at a time.</p>
             </div>
+            <div className="flex flex-wrap gap-2">
+            {onEditPreferences && <Button variant="secondary" onClick={onEditPreferences}>Meal preferences</Button>}
             <Button variant="secondary" onClick={() => setIsManageMealTimesOpen(true)}>
               <Settings2 className="size-4" aria-hidden="true" /> Meal times
             </Button>
+            </div>
           </div>
 
           <div className="p-3 sm:p-6">
@@ -403,9 +412,17 @@ export default function MealPlanClient({
           </div>
 
           <PulseCard className="overflow-hidden" aria-busy={isLoadingWeek}>
+            {!isLoadingWeek && dayMeals.length === 0 && preferences && <div className="flex flex-wrap items-center gap-2 border-b border-divider px-4 py-4 sm:px-6">
+              <span className="mr-1 text-sm text-muted-foreground">Start with your usual meals</span>
+              {preferences.meals.map(preference => {
+                const slot = mealTimes.find(time => standardMealKind(time) === preference.kind);
+                return slot ? <Button key={preference.kind} variant="soft" size="sm" onClick={() => handleOpenAddMeal(slot.id)}>Plan {slot.name.toLowerCase()} · {formatTimeDisplay(preference.usual_time)}</Button> : null;
+              })}
+            </div>}
             <div className="divide-y divide-divider">
               {orderedMealTimes.map((time) => {
                 const items = dayMeals.filter((meal) => meal.meal_time_id === time.id);
+                const usualTime = preferences?.meals.find(meal => meal.kind === standardMealKind(time))?.usual_time;
                 return (
                   <section key={time.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-5 gap-y-3 px-4 py-4 sm:grid-cols-[12rem_minmax(0,1fr)_auto] sm:items-start sm:px-6">
                     <div className="col-start-1 row-start-1 flex min-w-0 items-start gap-3">
@@ -415,6 +432,7 @@ export default function MealPlanClient({
                       <div className="min-w-0">
                         <h3 className="font-semibold wrap-anywhere">{time.name}</h3>
                         <p className="text-xs text-muted-foreground">{formatTimeDisplay(time.start_time)} – {formatTimeDisplay(time.end_time)}</p>
+                        {usualTime && <p className="mt-1 text-xs text-action">Your usual time: {formatTimeDisplay(usualTime)}</p>}
                       </div>
                     </div>
                     <div className="col-span-2 row-start-2 min-w-0 sm:col-span-1 sm:col-start-2 sm:row-start-1">

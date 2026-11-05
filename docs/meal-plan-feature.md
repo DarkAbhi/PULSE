@@ -1,5 +1,7 @@
 # Meal Plan Feature
 
+Meal preference onboarding, its API/storage contract, tests, and release order are documented in [Meal plan onboarding](meal-plan-onboarding.md).
+
 ## 1. Feature Overview
 
 The Meal Plan is a personal daily and weekly planning tool inside PULSE. It lets a user organize meals by date and time of day, mark meals as consumed, and customize the meal-time ranges that appear in the planner.

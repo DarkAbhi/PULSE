@@ -44,12 +44,14 @@ import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
 import dev.abhishekan.pulse.core.data.PulseDashboardRepository
 import dev.abhishekan.pulse.core.data.PulseMealPlanRepository
+import dev.abhishekan.pulse.core.data.PulseMealPreferencesRepository
 import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
 import dev.abhishekan.pulse.core.data.PulseProfileRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
+import dev.abhishekan.pulse.core.domain.repository.MealPreferencesRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.domain.usecase.MealCalendar
@@ -120,6 +122,14 @@ class MealPlanDeviceTest {
     @Volatile private var failToggle = false
     private var mutations = 0
 
+    @Volatile private var setupRecord =
+        Json
+            .parseToJsonElement(
+                """{"status":"skipped","questionnaire_version":1,"preferences":null}""",
+            ).jsonObject
+
+    @Volatile private var loseSetupResponse = false
+
     private fun obj(raw: String) = Json.parseToJsonElement(raw).jsonObject
 
     private fun joined(value: JsonObject): JsonObject {
@@ -188,6 +198,7 @@ class MealPlanDeviceTest {
                                     "horizon" ->
                                         """{"currency":"₹","remaining_amount":100,"base_amount":200,"total_deductions":100,"total_transactions":0}"""
                                     "meal-times" -> JsonArray(times.values.toList()).toString()
+                                    "meal-plan-onboarding" -> setupRecord.toString()
                                     "meal-plans" -> {
                                         val start = LocalDate.parse(request.url.parameters["start_date"]!!)
                                         val end = LocalDate.parse(request.url.parameters["end_date"]!!)
@@ -212,6 +223,30 @@ class MealPlanDeviceTest {
                                 val id = parts.getOrNull(1)?.toLongOrNull()
                                 var result = "{}"
                                 when {
+                                    path == "meal-plan-onboarding" -> {
+                                        check(input.getValue("questionnaire_version").jsonPrimitive.content == "1")
+                                        result =
+                                            when {
+                                                setupRecord.getValue("status").jsonPrimitive.content == "pending" -> {
+                                                    val preferences = input["preferences"] ?: kotlinx.serialization.json.JsonNull
+                                                    setupRecord = JsonObject(input + ("preferences" to preferences))
+                                                    setupRecord.toString()
+                                                }
+                                                setupRecord["status"] != input["status"] -> {
+                                                    status = HttpStatusCode.Conflict
+                                                    JsonObject(mapOf("state" to setupRecord)).toString()
+                                                }
+                                                else -> setupRecord.toString()
+                                            }
+                                        if (loseSetupResponse) {
+                                            loseSetupResponse = false
+                                            throw IOException("Lost setup response after commit")
+                                        }
+                                    }
+                                    path == "meal-preferences" -> {
+                                        setupRecord = JsonObject(setupRecord + ("preferences" to input))
+                                        result = setupRecord.toString()
+                                    }
                                     path == "meal-times" -> {
                                         val key = next++
                                         times[key] =
@@ -298,6 +333,7 @@ class MealPlanDeviceTest {
                     PulseNotificationsRepository(api, auth, PulseDashboardRepository(api, auth))
                 }
                 single<MealPlanRepository> { repo }
+                single<MealPreferencesRepository> { PulseMealPreferencesRepository(MealPlanApi(client), auth) }
                 factory { MealCalendar(plannerClock) }
             }
         loadKoinModules(overrides)
@@ -332,15 +368,10 @@ class MealPlanDeviceTest {
             compose.openProfileFromNavigation()
             return
         }
-        if (text in
-            listOf("Home", "Fitness", "Horizon", "Garage", "Meals", "You")
-        ) {
-            scenario?.onActivity {
-                it
-                    .getSystemService(
-                        InputMethodManager::class.java,
-                    ).hideSoftInputFromWindow(it.window.decorView.windowToken, 0)
-            }
+        scenario?.onActivity {
+            it
+                .getSystemService(InputMethodManager::class.java)
+                .hideSoftInputFromWindow(it.window.decorView.windowToken, 0)
         }
         awaitText(text)
         compose.waitUntil(20_000) {
@@ -350,16 +381,22 @@ class MealPlanDeviceTest {
                 ).fetchSemanticsNodes()
                 .isNotEmpty()
         }
-        compose
-            .onAllNodes((hasText(text) or hasContentDescription(text)) and hasClickAction() and isEnabled())[0]
-            .apply {
-                if (text !in listOf("Add meal", "Add custom meal time") &&
-                    (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail())
-                ) {
-                    performScrollTo()
-                }
-            }.assertIsDisplayed()
-            .performSemanticsAction(SemanticsActions.OnClick) { it() }
+        val setupVisible = compose.onAllNodes(hasText("Skip setup") or hasText("Cancel editing")).fetchSemanticsNodes().isNotEmpty()
+        val fixedSetupAction =
+            setupVisible &&
+                text in listOf("Continue", "Skip setup", "Cancel editing", "Previous question", "Save preferences", "Back to review")
+        val target = compose.onAllNodes((hasText(text) or hasContentDescription(text)) and hasClickAction() and isEnabled())[0]
+        val scrolls =
+            !fixedSetupAction &&
+                text !in listOf("Add meal", "Add custom meal time") &&
+                (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail())
+        // IME insets can settle after the first scroll. Recheck the visible target
+        // instead of asserting against a single intermediate animation frame.
+        compose.waitUntil(5_000) {
+            if (scrolls) target.performScrollTo()
+            runCatching { target.assertIsDisplayed() }.isSuccess
+        }
+        target.assertIsDisplayed().performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
     private fun field(
@@ -411,10 +448,134 @@ class MealPlanDeviceTest {
         awaitText("Welcome back")
         field("Username", "meal-fixture")
         field("Password", "test-only")
-        tap("Continue")
+        compose.onNodeWithText("Password").performImeAction()
         awaitText("Home")
         tap("Meals")
         awaitText(firstMeal)
+    }
+
+    @Test fun mealSetupCompletedOnWebIsNotShownAndAnswersRemainEditableOnAndroid() {
+        setupRecord =
+            obj(
+                """
+                {"status":"completed","questionnaire_version":1,"preferences":{
+                "goal":"food_calm","barriers":[],"dietary_pattern":"vegan","food_avoidances":["peanuts"],
+                "meals":[{"kind":"lunch","usual_time":"13:15"}]}}
+                """.trimIndent(),
+            )
+        launchPlanner()
+        compose.onNodeWithText("What’s your goal?").assertDoesNotExist()
+        tap("Meal preferences")
+        awaitText("What’s your goal?")
+        compose.onNodeWithText("Find more calm around food").assertIsSelected()
+        tap("Cancel editing")
+        awaitText("Soup")
+        assertEquals(0, mutations)
+    }
+
+    @Test fun mealSetupTabletAndLargeTextKeepChoicesReachable() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        val fontScale = shell("settings get system font_scale").takeUnless { it == "null" } ?: "1.0"
+        setupRecord = obj("""{"status":"pending","questionnaire_version":1,"preferences":null}""")
+        try {
+            shell("wm size 2560x1600")
+            shell("wm density 320")
+            launchPlanner("What’s your goal?")
+            compose.onNodeWithText("Meals, your way.").assertIsDisplayed()
+            screenshot("onboarding-tablet")
+            shell("wm size 1080x1920")
+            shell("wm density 420")
+            shell("settings put system font_scale 1.6")
+            awaitText("What’s your goal?")
+            tap("Feel full and satisfied")
+            screenshot("onboarding-large-text")
+            tap("Continue")
+            awaitText("What gets in the way?")
+            tap("Skip setup")
+            awaitText("Soup")
+        } finally {
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+            shell("settings put system font_scale $fontScale")
+        }
+    }
+
+    @Test fun mealSetupAndroidSaveAndLostResponseUseSharedServerDecision() {
+        setupRecord = obj("""{"status":"pending","questionnaire_version":1,"preferences":null}""")
+        launchPlanner("What’s your goal?")
+        compose.onNodeWithText("Previous question").assertDoesNotExist()
+        compose.onNodeWithTag("meal-setup-artwork").assertDoesNotExist()
+        compose.onNodeWithText("Nourish myself without dieting").assertIsDisplayed()
+        screenshot("onboarding-goal")
+        tap("Feel full and satisfied")
+        tap("Continue")
+        awaitText("What gets in the way?")
+        compose.onNode(hasContentDescription("Previous question")).performClick()
+        compose.onNodeWithText("Feel full and satisfied").assertIsSelected()
+        tap("Continue")
+        awaitText("What gets in the way?")
+        tap("Continue")
+        tap("Vegetarian")
+        tap("Continue")
+        tap("Peanuts")
+        screenshot("onboarding-avoidances")
+        tap("Continue")
+        awaitText("Where would a little help go furthest?")
+        tap("Continue")
+        awaitText("When do you usually eat these meals?")
+        screenshot("onboarding-times")
+        tap("Continue")
+        awaitText("A plan that feels like you.")
+        tap("Edit Your goal")
+        compose.onNodeWithText("Feel full and satisfied").assertIsSelected()
+        tap("Back to review")
+        assertEquals(0, mutations)
+        screenshot("onboarding-review")
+        loseSetupResponse = true
+        tap("Save preferences")
+        awaitText("Soup")
+        assertEquals("completed", setupRecord.getValue("status").jsonPrimitive.content)
+        assertEquals(
+            "vegetarian",
+            setupRecord
+                .getValue("preferences")
+                .jsonObject
+                .getValue("dietary_pattern")
+                .jsonPrimitive.content,
+        )
+        assertEquals(1, mutations)
+        scenario!!.recreate()
+        awaitText("Soup")
+        compose.onNodeWithText("What’s your goal?").assertDoesNotExist()
+    }
+
+    @Test fun mealSetupAndroidSkipPersistsAndWebCompletionIsPickedUpOnResume() {
+        setupRecord = obj("""{"status":"pending","questionnaire_version":1,"preferences":null}""")
+        launchPlanner("What’s your goal?")
+        tap("Skip setup")
+        awaitText("Soup")
+        assertEquals("skipped", setupRecord.getValue("status").jsonPrimitive.content)
+        assertEquals(kotlinx.serialization.json.JsonNull, setupRecord["preferences"])
+        // A separate, pending setup can be resolved on the web while Android is paused.
+        scenario!!.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+        setupRecord = obj("""{"status":"pending","questionnaire_version":1,"preferences":null}""")
+        scenario!!.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+        awaitText("What’s your goal?")
+        tap("Feel full and satisfied")
+        scenario!!.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+        setupRecord =
+            obj(
+                """
+                {"status":"completed","questionnaire_version":1,"preferences":{
+                "goal":"food_calm","barriers":[],"dietary_pattern":"vegan","food_avoidances":[],
+                "meals":[{"kind":"lunch","usual_time":"12:30"}]}}
+                """.trimIndent(),
+            )
+        scenario!!.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+        awaitText("Soup")
+        compose.onNodeWithText("What’s your goal?").assertDoesNotExist()
+        assertEquals(1, mutations)
     }
 
     @Test fun nestedMealPagesHaveOneTitledBarAndBackReturnsToTheirParent() {

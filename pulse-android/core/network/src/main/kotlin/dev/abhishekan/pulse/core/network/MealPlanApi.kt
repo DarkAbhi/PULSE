@@ -1,4 +1,7 @@
 package dev.abhishekan.pulse.core.network
+import dev.abhishekan.pulse.core.network.dto.MealOnboardingDto
+import dev.abhishekan.pulse.core.network.dto.MealOnboardingInput
+import dev.abhishekan.pulse.core.network.dto.MealPreferencesDto
 import dev.abhishekan.pulse.core.network.dto.MealTimeDto
 import dev.abhishekan.pulse.core.network.dto.PlannedMealDto
 import io.ktor.client.HttpClient
@@ -8,12 +11,20 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import kotlinx.serialization.json.JsonObject
 
 class MealPlanApi(
     private val client: HttpClient,
 ) {
+    suspend fun onboarding(): MealOnboardingDto = client.get("meal-plan-onboarding").body()
+
+    suspend fun resolveOnboarding(input: MealOnboardingInput): MealOnboardingDto =
+        client.put("meal-plan-onboarding") { setBody(input) }.body()
+
+    suspend fun savePreferences(input: MealPreferencesDto): MealOnboardingDto = client.put("meal-preferences") { setBody(input) }.body()
+
     suspend fun meals(
         start: String,
         end: String,

@@ -12,6 +12,7 @@ import dev.abhishekan.pulse.core.data.PulseFitnessRepository
 import dev.abhishekan.pulse.core.data.PulseGarageRepository
 import dev.abhishekan.pulse.core.data.PulseHorizonRepository
 import dev.abhishekan.pulse.core.data.PulseMealPlanRepository
+import dev.abhishekan.pulse.core.data.PulseMealPreferencesRepository
 import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
 import dev.abhishekan.pulse.core.data.PulsePreferences
 import dev.abhishekan.pulse.core.data.PulseProfileRepository
@@ -23,6 +24,7 @@ import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
 import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
+import dev.abhishekan.pulse.core.domain.repository.MealPreferencesRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import dev.abhishekan.pulse.core.domain.repository.PreferencesRepository
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
@@ -34,6 +36,7 @@ import org.koin.dsl.module
 
 val dataModule =
     module {
+        singleOf(::PulseMealPreferencesRepository) bind MealPreferencesRepository::class
         singleOf(::PulseProfileRepository) bind ProfileRepository::class
         singleOf(::PulseNotificationsRepository) bind NotificationsRepository::class
         singleOf(::PulseMealPlanRepository) bind

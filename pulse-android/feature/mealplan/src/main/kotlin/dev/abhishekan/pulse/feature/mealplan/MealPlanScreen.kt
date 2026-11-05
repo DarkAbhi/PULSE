@@ -65,14 +65,25 @@ import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun MealPlanRoute(viewModel: MealPlanViewModel = koinViewModel()) {
+fun MealPlanRoute(
+    viewModel: MealPlanViewModel = koinViewModel(),
+    onboarding: MealOnboardingViewModel = koinViewModel(),
+) {
+    val setup by onboarding.uiState.collectAsStateWithLifecycle()
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { onboarding.refresh() }
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) {
         viewModel.resume()
         viewModel.refresh()
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    PulseHideNavigation(state.draft != null || state.managing)
+    PulseHideNavigation(setup.record == null || setup.showJourney || state.draft != null || state.managing)
+    if (setup.record == null || setup.showJourney) {
+        PulseScreenScaffold(title = stringResource(R.string.meal_setup_title), showTopBar = false) {
+            MealOnboardingScreen(setup, onboarding)
+        }
+        return
+    }
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
     PulseScreenScaffold(
@@ -99,7 +110,7 @@ fun MealPlanRoute(viewModel: MealPlanViewModel = koinViewModel()) {
         backEnabled = !state.busy,
     ) {
         key(timeZone) {
-            MealPlanScreen(state, viewModel)
+            MealPlanScreen(state, viewModel, onboarding::editPreferences, setup.resolvedElsewhere)
         }
     }
 }
@@ -108,6 +119,8 @@ fun MealPlanRoute(viewModel: MealPlanViewModel = koinViewModel()) {
 internal fun MealPlanScreen(
     state: MealPlanUiState,
     vm: MealPlanViewModel,
+    onPreferences: (() -> Unit)? = null,
+    resolvedElsewhere: Boolean = false,
 ) {
     var discard by rememberSaveable { mutableStateOf(false) }
     var records by rememberSaveable { mutableStateOf(false) }
@@ -308,6 +321,8 @@ internal fun MealPlanScreen(
                                 !state.busy && state.draft == null,
                                 state.times.value?.size,
                             )
+                            if (resolvedElsewhere) PulseText(stringResource(R.string.meal_setup_elsewhere))
+                            onPreferences?.let { PulseButton(stringResource(R.string.meal_setup_title), it, style = PulseButtonStyle.Text) }
                             MealSectionContent(state.meals, vm::refreshMeals, showLoading = false) { meals ->
                                 MealAgenda(
                                     state.selected,

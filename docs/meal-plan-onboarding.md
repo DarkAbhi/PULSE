@@ -1,5 +1,7 @@
 # Meal plan onboarding
 
+The Android app also uses this same account-level state and API. See [Android meal onboarding](../pulse-android/docs/meal-plan-onboarding.md) for its native questionnaire, resume checks, and tests. A Save or Skip on either platform suppresses automatic setup on both.
+
 The web `/meal-plan` page now asks six questions on an account's first visit, followed by review and an explicit **Save preferences** action. **Skip setup** is available on every question and review. After either action commits successfully, that account opens the planner directly on later visits, including other browsers/devices.
 
 Closing a tab, refreshing, following Dashboard, or navigating away never resolves setup. Unsubmitted answers stay only in the component's memory; a fresh visit starts the questions again. Required inputs are goal, eating style, at least one selected meal, and a valid usual time per selected meal. Barriers and food avoidances are optional.

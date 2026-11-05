@@ -33,6 +33,8 @@ Ktlint is applied to every module and the root Gradle scripts. It checks product
 
 ## User ownership
 
+Meal setup and preferences are shared with the web for the same account. Completing or skipping setup on either platform suppresses it on both; closing an unfinished journey does not. See [Meal plan onboarding](docs/meal-plan-onboarding.md) for behavior, API usage, and verification.
+
 All feature APIs authenticate through the shared Ktor client. The current securely stored `life_session` is sent as `Authorization: Bearer <session token>` only to the configured API origin and `/api/` path. Login still captures the backend cookie; existing encrypted sessions restore without signing in again. Cookie transport is retained for compatibility with the production web proxy, which resolves the same session before forwarding to Go. Private API requests specify `Cache-Control: no-store`.
 
 The backend derives record ownership from that session. Android does not add `user_id` to create/update payloads or offer an owner selector. Shared category/meal defaults and private feature records keep their existing response models. A foreign/deleted record returns not found; unavailable relationships are validation errors. A 401 expires only the session that started the request, and signing out removes authenticated navigation state before another account signs in. Signed receipt downloads never receive session cookies or bearer tokens, even on the API origin. Fitness screens continue using the Go session APIs; integration API keys remain separate from app login.

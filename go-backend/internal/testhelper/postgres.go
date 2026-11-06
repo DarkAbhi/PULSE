@@ -10,14 +10,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/go-connections/nat"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/moby/moby/api/types/network"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
 // StartPostgres starts a temporary postgres container, runs migrations, and returns the DB connection and a cleanup function.
@@ -39,7 +39,7 @@ func StartPostgresWithDSN(t *testing.T) (*sql.DB, string, func()) {
 			"POSTGRES_USER":     "user",
 			"POSTGRES_DB":       "testdb",
 		},
-		WaitingFor: wait.ForSQL("5432/tcp", "pgx", func(host string, port nat.Port) string {
+		WaitingFor: wait.ForSQL("5432/tcp", "pgx", func(host string, port network.Port) string {
 			return fmt.Sprintf("postgres://user:pass@%s:%s/testdb?sslmode=disable", host, port.Port())
 		}).WithStartupTimeout(60 * time.Second),
 	}
@@ -89,11 +89,14 @@ func StartPostgresWithDSN(t *testing.T) (*sql.DB, string, func()) {
 	if migrationsPath == "" {
 		migrationsPath = filepath.Clean(filepath.Join(startWd, "../../migrations"))
 	}
-	srcURL := "file://" + migrationsPath
-
-	m, err := migrate.New(srcURL, dsn)
+	source, err := iofs.New(os.DirFS(migrationsPath), ".")
 	if err != nil {
-		t.Fatalf("migrate.New for path %s: %v", srcURL, err)
+		t.Fatalf("open migrations at %s: %v", migrationsPath, err)
+	}
+
+	m, err := migrate.NewWithSourceInstance("iofs", source, dsn)
+	if err != nil {
+		t.Fatalf("migrate.New for path %s: %v", migrationsPath, err)
 	}
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		t.Fatalf("migrate up: %v", err)

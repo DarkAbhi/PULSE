@@ -26,7 +26,7 @@ pub async fn require_api_key(
 }
 
 async fn api_key_user(pool: &PgPool, token: &str) -> Result<Option<i64>, sqlx::Error> {
-    let hash = format!("{:x}", Sha256::digest(token.as_bytes()));
+    let hash = hex::encode(Sha256::digest(token.as_bytes()));
     sqlx::query_scalar("SELECT user_id FROM api_keys WHERE token_hash = $1 AND revoked_at IS NULL")
         .bind(hash)
         .fetch_optional(pool)
@@ -78,7 +78,7 @@ mod tests {
             .await
             .unwrap();
         let token = "lt_test_key";
-        let hash = format!("{:x}", sha2::Sha256::digest(token.as_bytes()));
+        let hash = hex::encode(sha2::Sha256::digest(token.as_bytes()));
         sqlx::query("INSERT INTO api_keys (user_id, token_hash) VALUES ($1, $2)")
             .bind(42_i64)
             .bind(hash)

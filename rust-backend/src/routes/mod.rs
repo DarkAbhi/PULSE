@@ -174,7 +174,7 @@ mod tests {
         }
         let owner: i64 = sqlx::query_scalar("INSERT INTO users (username, password_hash) VALUES ('key-owner', 'unused') RETURNING id")
             .fetch_one(&pool).await.unwrap();
-        let hash = format!("{:x}", Sha256::digest(b"lt_route_test"));
+        let hash = hex::encode(Sha256::digest(b"lt_route_test"));
         sqlx::query("INSERT INTO api_keys (user_id, name, token_hash, token_prefix) VALUES ($1, 'test', $2, 'lt_route')")
             .bind(owner).bind(hash).execute(&pool).await.unwrap();
         let app = router(
@@ -242,7 +242,7 @@ mod tests {
         assert_eq!(workout_owner, owner);
         let other_owner: i64 = sqlx::query_scalar("INSERT INTO users (username, password_hash) VALUES ('summary-other-owner', 'unused') RETURNING id")
             .fetch_one(&pool).await.unwrap();
-        let other_hash = format!("{:x}", Sha256::digest(b"lt_summary_other"));
+        let other_hash = hex::encode(Sha256::digest(b"lt_summary_other"));
         sqlx::query("INSERT INTO api_keys (user_id, name, token_hash, token_prefix) VALUES ($1, 'other', $2, 'lt_summary')")
             .bind(other_owner).bind(other_hash).execute(&pool).await.unwrap();
         sqlx::query("INSERT INTO fitness_activity_rings (user_id, summary_date, steps_count) VALUES ($1, '2027-01-01', 123)")

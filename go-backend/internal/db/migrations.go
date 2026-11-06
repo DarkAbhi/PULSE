@@ -28,7 +28,8 @@ func migrationsPath() (string, error) {
 		wd = filepath.Dir(wd)
 	}
 	p := filepath.Join(wd, "migrations")
-	return "file://" + p, nil
+	// Keep Windows drive letters in the path rather than the URL host.
+	return "file:" + filepath.ToSlash(p), nil
 }
 
 // RunMigrations applies every pending migration using the configured database.

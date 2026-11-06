@@ -12,15 +12,15 @@ import (
 	"time"
 
 	"github.com/DarkAbhi/life-backend/internal/gym"
-	"github.com/docker/go-connections/nat"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/moby/moby/api/types/network"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
 type testEnv struct {
@@ -42,7 +42,7 @@ func startPostgres(t *testing.T) *testEnv {
 			"POSTGRES_DB":       "testdb",
 		},
 		// A published port can open before PostgreSQL accepts queries.
-		WaitingFor: wait.ForSQL("5432/tcp", "pgx", func(host string, port nat.Port) string {
+		WaitingFor: wait.ForSQL("5432/tcp", "pgx", func(host string, port network.Port) string {
 			return fmt.Sprintf("postgres://user:pass@%s:%s/testdb?sslmode=disable", host, port.Port())
 		}).WithStartupTimeout(60 * time.Second),
 	}
@@ -75,10 +75,13 @@ func startPostgres(t *testing.T) *testEnv {
 	// migrations
 	wd, _ := os.Getwd()
 	migrationsPath := filepath.Clean(filepath.Join(wd, "../../migrations"))
-	srcURL := "file://" + migrationsPath
+	source, err := iofs.New(os.DirFS(migrationsPath), ".")
+	if err != nil {
+		t.Fatalf("open migrations: %v", err)
+	}
 
 	// IMPORTANT: pass the same DSN (no extra ?sslmode=disable appended)
-	m, err := migrate.New(srcURL, dsn)
+	m, err := migrate.NewWithSourceInstance("iofs", source, dsn)
 	if err != nil {
 		t.Fatalf("migrate.New: %v", err)
 	}

@@ -1,34 +1,200 @@
-version: '3.8'
-
 services:
-  db:
-    image: postgres:15.4
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-  web:
-    build: .
-    restart: always
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/code
-    env_file:
-      - ./.env.local
-    ports:
-      - 8000:8000
-    depends_on:
-      - db
-  telegram-bot:  # Add this new service for your Telegram bot
+  migrate:
+    profiles: ["prod"]
     build:
-      context: ./telegram-bot  # Specify the path to your Telegram bot's Dockerfile
-    env_file:
-      - ./.env.local
-    restart: always
+      context: .
+      dockerfile: go-backend/Dockerfile
+    environment:
+      DB_HOSTNAME: ${DB_HOSTNAME}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_SSLMODE: ${DB_SSLMODE:-require}
+    command: ["--migrate-up"]
+    restart: "no"
+
+  backend:
+    profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: go-backend/Dockerfile
     depends_on:
-      - web  # Make sure your Django app is up before starting the bot
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      APP_ENV: ${APP_ENV}
+      PORT: 8080
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOSTNAME: ${DB_HOSTNAME}
+      DB_PORT: ${DB_PORT}
+      DB_SSLMODE: ${DB_SSLMODE:-require}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      S3_BUCKET: ${S3_BUCKET:-}
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-}
+      OTEL_EXPORTER_OTLP_ENDPOINT: jaeger:4317
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+    networks:
+      default:
+        aliases:
+          - backend-api
+    ports:
+      - "127.0.0.1:18080:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  rust-backend:
+    profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: rust-backend/Dockerfile
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOSTNAME}:${DB_PORT:-5432}/${DB_NAME}?sslmode=${RUST_DB_SSLMODE:-disable}
+      PORT: ${RUST_PORT:-8083}
+      RUST_LOG: ${RUST_LOG:-info}
+    networks:
+      default:
+        aliases:
+          - rust-backend-api
+    restart: unless-stopped
+
+  cloudflared:
+    profiles: ["prod"]
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    restart: unless-stopped
+
+  web:
+    profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: life-tracker-frontend/Dockerfile
+      args:
+        INTERNAL_API_BASE_URL: http://backend:8080
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      INTERNAL_API_BASE_URL: http://backend:8080
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "3100:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      start_period: 15s
+      retries: 15
+
+  mcp:
+    profiles: ["prod"]
+    build:
+      context: .
+      dockerfile: hermes-mcp/Dockerfile
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      LIFE_BACKEND_BASE_URL: http://backend:8080
+      MCP_BACKEND_USERNAME: ${MCP_BACKEND_USERNAME:-}
+      MCP_BACKEND_PASSWORD: ${MCP_BACKEND_PASSWORD:-}
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "127.0.0.1:18082:8000"
+    restart: unless-stopped
+
+  prometheus:
+    profiles: ["prod", "dev"]
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+      - "--enable-feature=exemplar-storage"
+      - "--web.enable-remote-write-receiver"
+
+  grafana:
+    profiles: ["prod", "dev"]
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_BIND_ADDRESS:-127.0.0.1}:3101:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?Set a Grafana admin password}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+
+  loki:
+    profiles: ["prod", "dev"]
+    image: grafana/loki:3.7.8
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/config.yml"]
+    volumes:
+      - ./monitoring/loki/config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+
+  alloy:
+    profiles: ["prod", "dev"]
+    image: grafana/alloy:v1.20.1
+    restart: unless-stopped
+    user: "0:0"
+    # cAdvisor needs host cgroups and devices to measure other containers.
+    privileged: true
+    pid: host
+    cgroup: host
+    command: ["run", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
+    environment:
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME}
+      LOG_ENVIRONMENT: production
+    volumes:
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/rootfs:ro
+      - /proc:/host/proc:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - alloy_data:/var/lib/alloy/data
+    depends_on:
+      - loki
+
+  jaeger:
+    profiles: ["prod", "dev"]
+    image: jaegertracing/all-in-one:1.76.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:16686:16686"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
 
 volumes:
-  postgres_data:
+  loki_data:
+  alloy_data:

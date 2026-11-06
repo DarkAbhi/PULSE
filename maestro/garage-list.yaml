@@ -1,0 +1,22 @@
+url: http://localhost:3000
+---
+- launchApp:
+    clearState: true
+- assertVisible: Welcome back
+- tapOn:
+    css: "#username"
+- eraseText
+- inputText: admin
+- tapOn:
+    css: "#password"
+- inputText: password
+- tapOn: Continue
+- assertVisible: "Good to see you,"
+- assertVisible:
+    css: "section[aria-label='Welcome'] h1"
+- scrollUntilVisible:
+    element: "Garage"
+    direction: DOWN
+- tapOn: "Garage"
+- assertVisible: Garage
+- assertVisible: Your vehicles

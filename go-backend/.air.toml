@@ -1,0 +1,14 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "/usr/local/go/bin/go build -o ./tmp/main ./cmd/api"
+bin = "tmp/main"
+include_ext = ["go"]
+exclude_dir = ["tmp", "vendor", ".git", "migrations"]
+# Windows bind mounts may not deliver file events to the Linux container.
+poll = true
+poll_interval = 1000
+
+[log]
+time = true

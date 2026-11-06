@@ -1,0 +1,107 @@
+import { apiFetch } from "@/app/lib/server-api";
+import { PulseCardLink } from "@/app/components/design-system/pulse-card";
+import "./dashboard.css";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Car, ArrowRight, CalendarDays, UserRound } from "lucide-react";
+import GreetingHeader from "./greeting-header";
+import GymVisitCard from "./gym-visit-card";
+import NotificationDropdown from "./notification-dropdown";
+import NamePromptDialog from "./name-prompt-dialog";
+import FinancialHorizonCard, { HorizonSummary } from "./financial-horizon-card";
+import { AppNotification } from "@/app/components/notification-list";
+
+export const metadata = {
+  title: "Dashboard | PULSE",
+};
+
+const apiBaseURL =
+  process.env.INTERNAL_API_BASE_URL ??
+  "http://localhost:8080";
+
+type ProfileResponse = {
+  has_profile: boolean;
+  name?: string;
+};
+
+export default async function DashboardPage() {
+  // Validate session on the server
+  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
+  if (!sessionResponse.ok) {
+    redirect("/");
+  }
+  const session = (await sessionResponse.json()) as { username: string };
+
+  let profile: ProfileResponse = { has_profile: false };
+  let gymVisited = false;
+  let notifications: AppNotification[] = [];
+  let horizonSummary: HorizonSummary | null = null;
+  let horizonError = "";
+
+  try {
+    const [profileRes, gymRes, notificationsRes, horizonRes] =
+      await Promise.all([
+        apiFetch(`${apiBaseURL}/api/profile`),
+        apiFetch(`${apiBaseURL}/api/workout/today`),
+        apiFetch(`${apiBaseURL}/api/notifications?limit=5`),
+        apiFetch(`${apiBaseURL}/api/horizon`),
+      ]);
+
+    if (!profileRes.ok) {
+      redirect("/");
+    }
+    profile = (await profileRes.json()) as ProfileResponse;
+
+    if (gymRes.ok) {
+      const gym = (await gymRes.json()) as { visited: boolean };
+      gymVisited = gym.visited;
+    }
+
+    if (notificationsRes.ok) {
+      notifications = (await notificationsRes.json()) as AppNotification[];
+    }
+
+    if (horizonRes.ok) {
+      horizonSummary = (await horizonRes.json()) as HorizonSummary;
+    } else {
+      horizonError = "We couldn't load your financial horizon.";
+    }
+  } catch {
+    redirect("/");
+  }
+
+  const username = session.username;
+  const displayName = profile.name ?? "";
+  const needsProfile = !profile.has_profile;
+
+  return (
+    <main className="pulse-dashboard">
+      <div className="pulse-dashboard-content">
+        <GreetingHeader username={username} displayName={displayName}>
+          <NotificationDropdown initialNotifications={notifications} />
+          <Link className="pulse-profile-link" href="/profile" aria-label="Profile">
+            <UserRound className="h-5 w-5" />
+          </Link>
+        </GreetingHeader>
+        <section className="pulse-dashboard-cards" aria-label="Your day at a glance">
+          <FinancialHorizonCard summary={horizonSummary} error={horizonError} />
+          <GymVisitCard visited={gymVisited} />
+        </section>
+        <nav className="pulse-spaces" aria-label="Your spaces">
+          <PulseCardLink className="pulse-space-link" href="/garage">
+            <span className="pulse-space-icon"><Car className="h-5 w-5" /></span>
+            <span><strong>Garage</strong><span>Vehicles, fuel & maintenance</span></span>
+            <ArrowRight className="h-4 w-4" />
+          </PulseCardLink>
+          <PulseCardLink className="pulse-space-link pulse-meal-plan-link" href="/meal-plan">
+            <span className="pulse-space-icon"><CalendarDays className="h-5 w-5" /></span>
+            <span><strong>Meal Plan</strong><span>Plan your week and track meals eaten</span></span>
+            <ArrowRight className="h-4 w-4" />
+          </PulseCardLink>
+        </nav>
+      </div>
+
+      {needsProfile && <NamePromptDialog initialDisplayName={displayName} />}
+    </main>
+  );
+}

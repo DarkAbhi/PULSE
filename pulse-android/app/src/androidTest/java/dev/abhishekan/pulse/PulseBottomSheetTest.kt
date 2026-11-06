@@ -1,0 +1,112 @@
+package dev.abhishekan.pulse
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
+import androidx.compose.ui.text.TextLayoutResult
+import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
+import dev.abhishekan.pulse.core.ui.components.PulseText
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+
+class PulseBottomSheetTest {
+    @get:Rule val compose = createComposeRule()
+    private var windowHeight = 0
+
+    @Test fun halfOpenExpandsAndSwipesAwayInLightTheme() = verifyGestures(false)
+
+    @Test fun halfOpenExpandsAndSwipesAwayInDarkTheme() = verifyGestures(true)
+
+    @Test fun fullScreenShowsCenteredTitleAndScrimDismisses() {
+        showSheet(fullScreen = true)
+        assertTrue(titleY() < windowHeight * 0.25f)
+        compose.onNodeWithContentDescription("Close sheet").assertIsDisplayed().performSemanticsAction(SemanticsActions.OnClick) { it() }
+        compose.onNodeWithText("Sheet title").assertDoesNotExist()
+    }
+
+    @Test fun overflowContentExpandsButShortContentStaysHalfOpen() {
+        showSheet(expandOnOverflow = true, lines = 1)
+        assertTrue("Short content stays halfway", titleY() > windowHeight * 0.4f)
+    }
+
+    @Test fun longContentExpandsInitially() {
+        showSheet(expandOnOverflow = true, lines = 100)
+        assertTrue("Long content opens expanded", titleY() < windowHeight * 0.25f)
+    }
+
+    private fun verifyGestures(dark: Boolean) {
+        showSheet(dark = dark)
+        assertTrue("Default sheet opens halfway: ${titleY()} / $windowHeight", titleY() in windowHeight * 0.45f..windowHeight * 0.75f)
+        compose.onNodeWithText("Sheet title").performTouchInput {
+            swipe(center, Offset(center.x, center.y - windowHeight * 0.6f), 500)
+        }
+        compose.waitForIdle()
+        assertTrue("Upward drag expands sheet", titleY() < windowHeight * 0.25f)
+        // One downward drag may stop at the half-height anchor; the next dismisses.
+        repeat(2) {
+            if (compose.onAllNodes(hasText("Sheet title")).fetchSemanticsNodes().isNotEmpty()) {
+                compose.onNodeWithText("Sheet title").performTouchInput {
+                    swipe(center, Offset(center.x, center.y + windowHeight * 0.8f), 300)
+                }
+                compose.waitForIdle()
+            }
+        }
+        compose.onNodeWithText("Sheet title").assertDoesNotExist()
+    }
+
+    private fun assertTitleCentered() {
+        val layouts = mutableListOf<TextLayoutResult>()
+        compose.onNodeWithText("Sheet title").performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        val layout = layouts.single()
+        assertEquals(layout.size.width / 2f, (layout.getLineLeft(0) + layout.getLineRight(0)) / 2f, 1f)
+    }
+
+    private fun titleY() =
+        compose
+            .onNodeWithText("Sheet title")
+            .fetchSemanticsNode()
+            .positionInWindow.y
+
+    private fun showSheet(
+        fullScreen: Boolean = false,
+        dark: Boolean = false,
+        expandOnOverflow: Boolean = false,
+        lines: Int = 1,
+    ) {
+        compose.setContent {
+            windowHeight = LocalWindowInfo.current.containerSize.height
+            var open by remember { mutableStateOf(true) }
+            PulseTheme(dark) {
+                Box(Modifier.fillMaxSize()) {
+                    if (open) {
+                        PulseBottomSheet("Sheet title", { open = false }, fullScreen = fullScreen, expandOnOverflow = expandOnOverflow) {
+                            repeat(lines) { PulseText("Sheet content $it") }
+                        }
+                    }
+                }
+            }
+        }
+        compose.waitForIdle()
+        compose.onNodeWithText("Sheet title").assertIsDisplayed()
+        assertTitleCentered()
+        compose.onNodeWithContentDescription("Close bottom sheet").assertDoesNotExist()
+    }
+}

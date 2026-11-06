@@ -1,0 +1,4 @@
+# Preserve the exact upstream snapshot bytes used by SHA256SUMS on Windows too.
+go-backend/data/vehiclesdb/vehicles.csv -text
+go-backend/data/vehiclesdb/manifest.json -text
+go-backend/data/vehiclesdb/ATTRIBUTION.md -text

@@ -1,0 +1,134 @@
+discovery.docker "compose" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+
+  filter {
+    name   = "label"
+    values = ["com.docker.compose.project=" + sys.env("COMPOSE_PROJECT_NAME")]
+  }
+}
+
+discovery.relabel "compose" {
+  targets = discovery.docker.compose.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+
+  rule {
+    target_label = "environment"
+    replacement  = sys.env("LOG_ENVIRONMENT")
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    target_label  = "project"
+  }
+}
+
+loki.source.docker "compose" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.compose.targets
+  relabel_rules = discovery.relabel.compose.rules
+  forward_to    = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+prometheus.exporter.cadvisor "containers" {
+  // Docker 29's image store needs the host containerd socket, not Alloy's /run.
+  containerd_host = "/rootfs/run/containerd/containerd.sock"
+  docker_only = true
+  store_container_labels = false
+  allowlisted_container_labels = ["com.docker.compose.project", "com.docker.compose.service"]
+}
+
+prometheus.scrape "containers" {
+  targets = discovery.relabel.container_metrics.output
+  scrape_interval = "15s"
+  forward_to = [prometheus.relabel.containers.receiver]
+}
+
+discovery.relabel "container_metrics" {
+  targets = prometheus.exporter.cadvisor.containers.targets
+  rule {
+    target_label = "job"
+    replacement = "pulse-containers"
+  }
+  rule {
+    target_label = "instance"
+    replacement = sys.env("COMPOSE_PROJECT_NAME") + "-docker-host"
+  }
+}
+
+prometheus.relabel "containers" {
+  forward_to = [prometheus.remote_write.local.receiver]
+
+  rule {
+    source_labels = ["__name__", "container_label_com_docker_compose_project"]
+    regex = "(up|scrape_.+);|.+;" + sys.env("COMPOSE_PROJECT_NAME")
+    action = "keep"
+  }
+  rule {
+    source_labels = ["container_label_com_docker_compose_service"]
+    target_label = "service"
+  }
+  rule {
+    source_labels = ["service"]
+    regex = "backend(-dev)?"
+    target_label = "service"
+    replacement = "Go backend"
+  }
+  rule {
+    source_labels = ["service"]
+    regex = "rust-backend(-dev)?"
+    target_label = "service"
+    replacement = "Rust backend"
+  }
+  rule {
+    target_label = "job"
+    replacement = "pulse-containers"
+  }
+}
+
+prometheus.exporter.unix "host" {
+  rootfs_path = "/rootfs"
+  procfs_path = "/host/proc"
+  sysfs_path = "/sys"
+  set_collectors = ["cpu", "meminfo", "filesystem", "diskstats", "loadavg", "netdev"]
+}
+
+prometheus.scrape "host" {
+  targets = discovery.relabel.host_metrics.output
+  scrape_interval = "15s"
+  forward_to = [prometheus.remote_write.local.receiver]
+}
+
+discovery.relabel "host_metrics" {
+  targets = prometheus.exporter.unix.host.targets
+  rule {
+    target_label = "job"
+    replacement = "pulse-host"
+  }
+  rule {
+    target_label = "instance"
+    replacement = sys.env("COMPOSE_PROJECT_NAME") + "-docker-host"
+  }
+}
+
+prometheus.remote_write "local" {
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}

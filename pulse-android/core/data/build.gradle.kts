@@ -27,5 +27,5 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:network"))
     implementation(libs.datastore.preferences)
-    implementation(libs.coroutines.android)
+    implementation(libs.coroutines.core)
 }

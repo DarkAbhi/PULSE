@@ -608,6 +608,23 @@ class MealPlanDeviceTest {
     @Test fun compactWeekFitsPhoneScrollsOnNarrowScreensAndKeepsTabletDatesLarge() {
         val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
         val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+
+        fun awaitWindow(
+            width: Int,
+            densityDpi: Int,
+        ) {
+            // Display overrides propagate outside Compose's idle tracking.
+            compose.waitUntil(15_000) {
+                val actualDensity =
+                    InstrumentationRegistry
+                        .getInstrumentation()
+                        .targetContext.resources.configuration.densityDpi
+                val root = compose.onRoot().getUnclippedBoundsInRoot()
+                val actualWidth = (root.right - root.left).value
+                actualDensity == densityDpi && kotlin.math.abs(actualWidth - width * 160f / densityDpi) < 2f
+            }
+            compose.waitForIdle()
+        }
         try {
             shell("wm size 800x1800")
             shell("wm density 320")
@@ -623,7 +640,7 @@ class MealPlanDeviceTest {
             compose.onNodeWithText("Mon").performClick()
             compose.onNodeWithText("Sun").assertIsDisplayed().performClick()
             shell("wm size 640x1800")
-            compose.waitForIdle()
+            awaitWindow(640, 320)
             val week =
                 compose.onNode(
                     SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange) and
@@ -637,13 +654,13 @@ class MealPlanDeviceTest {
             // A smaller landscape tablet enters the wide layout but cannot fit a trailing action beside the centered week.
             shell("wm size 1920x1200")
             shell("wm density 280")
-            compose.waitForIdle()
+            awaitWindow(1920, 280)
             week.performScrollToIndex(0)
             assertMealTimesClearOfDates(stacked = true)
             screenshot("small-landscape-week")
             shell("wm size 2560x1800")
             shell("wm density 320")
-            compose.waitForIdle()
+            awaitWindow(2560, 320)
             week.performScrollToIndex(0)
             listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
                 val bounds = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
@@ -670,7 +687,10 @@ class MealPlanDeviceTest {
                 action.right <= date.left || action.left >= date.right || action.bottom <= date.top || action.top >= date.bottom,
             )
             if (stacked) {
-                assertTrue("Meal times moves above the week when space is tight", action.bottom + 15.dp <= date.top)
+                assertTrue(
+                    "Meal times moves above the week when space is tight: action=$action, $label=$date",
+                    action.bottom + 15.dp <= date.top,
+                )
             } else {
                 assertTrue("Meal times stays beside the week when space permits", action.top < date.bottom && action.bottom > date.top)
             }

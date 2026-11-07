@@ -32,6 +32,7 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
@@ -827,7 +828,9 @@ class FitnessDeviceTest {
         awaitText("Add exercise")
         compose.onNodeWithText("12.123456789").performScrollTo().assertIsDisplayed()
         tap("Change")
-        compose.onNodeWithText("Close").performClick()
+        awaitText("Choose an exercise")
+        Espresso.closeSoftKeyboard()
+        Espresso.pressBack()
         compose.onNodeWithText("12.123456789").performScrollTo().assertIsDisplayed()
         tap("Save exercise")
         awaitText("Edit exercise")

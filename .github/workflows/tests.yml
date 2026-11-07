@@ -42,14 +42,10 @@ jobs:
             pulse-android/**/build/test-results/
 
   android-ui:
-    name: Pulse Android (UI and device tests, shard ${{ matrix.shard }})
+    name: Pulse Android (UI and device tests)
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    # Bound resize-heavy sessions by starting each test shard on a fresh emulator.
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [0, 1, 2]
+    # Allow the complete suite to run sequentially on one emulator.
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: pulse-android
@@ -81,16 +77,12 @@ jobs:
           emulator-options: -no-window -gpu swangle -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           working-directory: pulse-android
-          script: >-
-            ./gradlew --no-daemon --stacktrace
-            -Pandroid.testInstrumentationRunnerArguments.numShards=3
-            -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }}
-            :app:connectedDebugAndroidTest
+          script: ./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest
       - name: Upload device test reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: pulse-android-device-reports-shard-${{ matrix.shard }}
+          name: pulse-android-device-reports
           path: |
             pulse-android/**/build/reports/androidTests/
             pulse-android/**/build/outputs/androidTest-results/

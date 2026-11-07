@@ -544,7 +544,6 @@ class GarageDeviceTest {
         }
         compose.waitUntil(15_000) { node.isDisplayed() }
         node
-            .assertIsDisplayed()
             .performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
@@ -1029,10 +1028,10 @@ class GarageDeviceTest {
         tap("Save vehicle")
         awaitText("View Weekend Civic")
         tap("View Weekend Civic")
-        awaitText("Edit vehicle")
         tap("Edit vehicle")
+        compose.waitUntil(15_000) { compose.onAllNodes(hasText("Weekend Civic") and hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithContentDescription("Back to Garage").assertDoesNotExist()
-        compose.onNodeWithContentDescription("Weekend Civic").assertIsDisplayed()
+        compose.onNode(hasText("Weekend Civic") and hasSetTextAction()).performScrollTo().assertIsDisplayed()
         field("Vehicle name", "Daily Civic")
         tap("Continue to fuel")
         tap("Continue to tyres")
@@ -1042,7 +1041,7 @@ class GarageDeviceTest {
         assertEquals("car/honda/civic", saved.getValue("catalog_id").jsonPrimitive.content)
         assertEquals("Honda", saved.getValue("make_name").jsonPrimitive.content)
         assertEquals("Civic", saved.getValue("model_name").jsonPrimitive.content)
-        compose.onNodeWithText("Edit vehicle").performScrollTo()
+        compose.onNodeWithContentDescription("Edit vehicle").performScrollTo()
         screenshot("vehicle-catalog-details")
     }
 
@@ -1131,7 +1130,7 @@ class GarageDeviceTest {
         tap("Continue to fuel")
         tap("Continue to tyres")
         tap("Save vehicle")
-        awaitText("Edit vehicle")
+        compose.waitUntil(15_000) { compose.onAllNodes(hasContentDescription("Edit vehicle")).fetchSemanticsNodes().isNotEmpty() }
         assertEquals("Comet", vehicles[1])
         assertEquals(
             "van",
@@ -1564,6 +1563,7 @@ class GarageDeviceTest {
     @Test fun draftRotationLargeTextKeyboardAndDiscardHideNavigation() {
         launchGarage()
         select()
+        tap("Maintenance")
         tap("Add maintenance")
         field("Title", "Unsaved care")
         field("Amount (₹)", "-2")
@@ -1591,17 +1591,18 @@ class GarageDeviceTest {
                 target
         }
         screenshot("draft")
-        compose.onNodeWithContentDescription("Back to Garage").performClick()
+        compose.onNodeWithContentDescription("Back to garage").performClick()
         confirm("Cancel")
         compose.onNodeWithText("Unsaved care").assertExists()
-        compose.onNodeWithContentDescription("Back to Garage").performClick()
+        compose.onNodeWithContentDescription("Back to garage").performClick()
         confirm("Discard edits")
-        awaitText("Care, at a glance")
+        awaitText("Annual service")
     }
 
     @Test fun lostSaveRequiresServerReviewAndDoesNotDuplicate() {
         launchGarage()
         select()
+        tap("Maintenance")
         tap("Add maintenance")
         field("Title", "Lost receipt record")
         field("Amount (₹)", "123.45")
@@ -1765,6 +1766,7 @@ class GarageDeviceTest {
         try {
             launchGarage()
             select()
+            tap("Maintenance")
             tap("Add maintenance")
             field("Title", "Resized care")
             field("Amount (₹)", "500.25")
@@ -1780,7 +1782,7 @@ class GarageDeviceTest {
             compose.onNodeWithText("500.25").performScrollTo().assertIsDisplayed()
             screenshot("resized-editor")
             tap("Save maintenance")
-            awaitText("Care, at a glance")
+            awaitText("Annual service")
             assertEquals(1, mutations)
         } finally {
             shell("wm size ${size ?: "reset"}")

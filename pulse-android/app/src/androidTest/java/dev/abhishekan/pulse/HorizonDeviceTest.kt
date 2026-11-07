@@ -6,6 +6,7 @@ import android.view.KeyEvent
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -25,6 +26,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -513,7 +515,17 @@ class HorizonDeviceTest {
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         val node = compose.onAllNodes(button)[0]
         if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) node.performScrollTo()
-        node.assertIsDisplayed().performSemanticsAction(SemanticsActions.OnClick) { it() }
+        compose.waitUntil(15_000) { node.isDisplayed() }
+        node.performSemanticsAction(SemanticsActions.OnClick) { it() }
+    }
+
+    private fun expandBottomSheet() {
+        compose.waitForIdle()
+        val expandable = SemanticsMatcher.keyIsDefined(SemanticsActions.Expand)
+        if (compose.onAllNodes(expandable).fetchSemanticsNodes().isNotEmpty()) {
+            compose.onNode(expandable).performSemanticsAction(SemanticsActions.Expand) { it() }
+            compose.waitForIdle()
+        }
     }
 
     private fun quickAction(label: String) {
@@ -823,7 +835,11 @@ class HorizonDeviceTest {
         compose.onNode(hasTestTag("obligation-category-investment")).performScrollTo().performClick()
         field("Name", "Internet")
         field("Amount (${UserCurrency.symbol()})", "50.25")
-        compose.onNode(hasTestTag("obligation-due-day")).performScrollTo().performClick()
+        compose
+            .onNode(hasTestTag("obligation-due-day"))
+            .performScrollTo()
+            .assertIsDisplayed()
+            .performSemanticsAction(SemanticsActions.OnClick) { it() }
         awaitText("Choose due day")
         compose.onNode(hasTestTag("obligation-day-31")).performScrollTo().performClick()
         compose.waitUntil(5_000) {
@@ -853,6 +869,7 @@ class HorizonDeviceTest {
         compose.onNode(hasTestTag("obligation-due-day")).assertTextContains("31")
         compose.onNode(hasTestTag("obligation-due-day")).performScrollTo().performClick()
         compose.onNode(hasTestTag("obligation-day-31")).assertIsSelected()
+        expandBottomSheet()
         tap("Clear due day")
         compose.onNode(hasTestTag("obligation-due-day")).assertTextContains("Not set")
         compose.onNode(hasTestTag("obligation-due-day")).performClick()
@@ -973,7 +990,7 @@ class HorizonDeviceTest {
         quickAction("Log a transaction")
         field("Name", "Coffee refund")
         field("Amount (${UserCurrency.symbol()})", "12.50")
-        pick("Type", "Debit", "Credit")
+        tap("Credit")
         pick("Category", "None", "Coffee")
         pick("Budget", "None", "Everyday")
         pick("Subscription", "None", "Music")
@@ -990,16 +1007,18 @@ class HorizonDeviceTest {
         assertEquals(1L, tx["budget_id"]?.jsonPrimitive?.long)
         assertEquals(4L, tx["subscription_id"]?.jsonPrimitive?.long)
         compose.onNode(hasTestTag("horizon-record-${backend.items("transactions").keys.last()}")).performScrollTo().performClick()
-        tap("Edit")
+        expandBottomSheet()
+        tap("Edit Coffee refund")
         field("Name", "Coffee expense")
-        pick("Type", "Credit", "Debit")
+        tap("Debit")
         pick("Subscription", "Music", "None")
         tap("Save transaction")
         field("Search transactions", "Coffee expense")
         awaitText("Page 1 of 1 · 1 transaction")
         awaitText("Coffee expense")
         compose.onNode(hasTestTag("horizon-record-${backend.items("transactions").keys.last()}")).performScrollTo().performClick()
-        tap("Delete")
+        expandBottomSheet()
+        tap("Delete Coffee expense")
         confirm("Delete")
         awaitText("No transactions")
         assertEquals(21, backend.items("transactions").size)
@@ -1673,7 +1692,7 @@ class HorizonDeviceTest {
         scenario!!.recreate()
         awaitText("Unsaved finance")
         compose.assertNestedNavigationForLayout()
-        compose.onNodeWithText("Name").performScrollTo().performImeAction()
+        compose.onNode(hasContentDescription("Name") and hasSetTextAction()).performScrollTo().performImeAction()
         screenshot("draft")
         compose.onNodeWithContentDescription("Back to Financial Horizon").assertIsDisplayed().performClick()
         awaitText("Discard unsaved changes?")
@@ -1737,13 +1756,13 @@ class HorizonDeviceTest {
             quickAction("Log a transaction")
             field("Name", "Resized draft")
             field("Amount (${UserCurrency.symbol()})", "75.25")
-            compose.onNodeWithText("Name").performScrollTo().performImeAction()
-            compose.onNodeWithText("Amount (${UserCurrency.symbol()})").assertIsFocused()
-            compose.onNodeWithText("Date:", substring = true).performScrollTo().performClick()
+            compose.onNode(hasContentDescription("Name") and hasSetTextAction()).performScrollTo().performImeAction()
+            compose.onNode(hasContentDescription("Amount (${UserCurrency.symbol()})") and hasSetTextAction()).assertIsFocused()
+            compose.onNode(hasContentDescription("Date:", substring = true) and hasClickAction()).performScrollTo().performClick()
             compose.onNode(isDialog()).assertExists()
             screenshot("date-picker", true)
             confirm("Choose date")
-            compose.onNodeWithText("Time:", substring = true).performScrollTo().performClick()
+            compose.onNode(hasContentDescription("Time:", substring = true) and hasClickAction()).performScrollTo().performClick()
             compose.onNode(isDialog()).assertExists()
             screenshot("time-picker", true)
             confirm("Choose time")

@@ -58,6 +58,7 @@ import dev.abhishekan.pulse.core.data.PulseFitnessRepository
 import dev.abhishekan.pulse.core.data.PulseGarageRepository
 import dev.abhishekan.pulse.core.data.PulseHorizonRepository
 import dev.abhishekan.pulse.core.data.PulseMealPlanRepository
+import dev.abhishekan.pulse.core.data.PulseMealPreferencesRepository
 import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
 import dev.abhishekan.pulse.core.data.PulseProfileRepository
 import dev.abhishekan.pulse.core.data.di.dataModule
@@ -68,6 +69,7 @@ import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
 import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
+import dev.abhishekan.pulse.core.domain.repository.MealPreferencesRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.network.FitnessApi
@@ -287,6 +289,8 @@ class AccountNotificationsDeviceTest {
                             path == "workout/today" -> """{"visited":false}"""
                             path == "horizon" -> """{"currency":"USD","base_amount":100,"remaining_amount":100,"total_deductions":0}"""
                             path == "vehicles" -> "[]"
+                            path == "meal-plan-onboarding" -> """{"status":"skipped","questionnaire_version":1,"preferences":null}"""
+                            path == "meal-times" || path == "meal-plans" -> "[]"
                             path.startsWith("vehicles/") -> {
                                 status = HttpStatusCode.NotFound
                                 "{}"
@@ -320,6 +324,7 @@ class AccountNotificationsDeviceTest {
                 single<FitnessRepository> { PulseFitnessRepository(FitnessApi(client), auth) }
                 single<HorizonRepository> { PulseHorizonRepository(HorizonApi(client), auth) }
                 single<MealPlanRepository> { PulseMealPlanRepository(MealPlanApi(client), auth) }
+                single<MealPreferencesRepository> { PulseMealPreferencesRepository(MealPlanApi(client), auth) }
             }
         loadKoinModules(overrides)
     }
@@ -596,6 +601,8 @@ class AccountNotificationsDeviceTest {
         screenshot("adaptive-navigation")
         items.drop(1).forEach { item ->
             compose.onNode(item).apply { if (rail) performScrollTo() }.performClick()
+            // Meals hides phone navigation until its asynchronous setup read finishes.
+            compose.waitUntil(20_000) { compose.onAllNodes(item and isSelected()).fetchSemanticsNodes().isNotEmpty() }
             compose.onNode(item).assertIsSelected()
             compose.onNodeWithText("Spaces").assertDoesNotExist()
             compose.onNodeWithContentDescription("Back to Spaces").assertDoesNotExist()

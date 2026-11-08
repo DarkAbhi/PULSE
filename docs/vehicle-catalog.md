@@ -95,7 +95,7 @@ global search and manual entry remain available without country filtering.
   from schema 26, repeated seeding and repair, catalog search and validation,
   canonical labels, manual unlinking, partial updates and ownership.
 * Web: `npm test` and `npm run build` from `life-tracker-frontend`.
-* Browser: `maestro test --headless maestro/garage-add-vehicle.yaml` against the
+* Browser (paused in CI): `maestro test --headless maestro/web/garage-add-vehicle.yaml` against the
   disposable browser-test stack; this preserves manual-entry coverage.
 * Seed exporter: `python -m unittest discover -v -s scripts -p test_export_dev_seed.py`.
 

@@ -16,7 +16,7 @@ The root modules and shared files are:
 | [`life-tracker-frontend/`](life-tracker-frontend/README.md) | Next.js web app and server-side forwarding of browser API requests to the Go backend. |
 | [`hermes-mcp/`](hermes-mcp/README.md) | MCP server that connects Hermes to gym and garage data and workout tools through the Go API. |
 | [`monitoring/`](monitoring/) | Prometheus metrics and alerts, Loki log storage, Alloy collection, Grafana dashboards, and provisioning. |
-| [`maestro/`](maestro/) | Browser flows for login, dashboard, profile/themes, and garage screens. |
+| [`maestro/`](maestro/README.md) | Small native Android smoke tests and paused browser flows. |
 | [`docs/`](docs/) | Shared feature documentation and branding assets. |
 | [`Makefile`](Makefile) | Commands to build, deploy, inspect, and migrate the Docker Compose stacks. |
 | [`docker-compose.yml`](docker-compose.yml), [`docker-compose.dev.yml`](docker-compose.dev.yml) | Production services and development overrides, including Jaeger tracing. |
@@ -510,23 +510,17 @@ the production build.
 
 `make test` covers the module suites above; browser flows and production builds
 run separately because they need additional setup.
-Maestro browser flows require Maestro, the running Go API and frontend, and a
-separate migrated database with the demo account/data. The flows target
-`http://localhost:3000`; start the frontend on that port and point
-`INTERNAL_API_BASE_URL` at the Go API. Run
-`maestro test --headless --screen-size 1440x1200 maestro/`
-from the root. These flows write data: use a disposable database. See the
-[CI browser job](.github/workflows/tests.yml) for the full migration, demo seed,
-and server startup sequence. Dashboard checks cover the greeting/clock, notification
-panel, illustrated finance and fitness cards, navigation to the other spaces, and
-the absence of inline workout logging controls. Profile checks also verify light
-and dark theme selection carries back to the dashboard. The flows scroll to the
-lower cards and shortcuts rather than assuming everything fits in one viewport.
-The suite uses a 1440×1200 desktop browser window so vehicle form fields fit above
-the dialog's fixed footer. These flows do not constitute a mobile/tablet viewport matrix.
-Scroll targets use visible text so Maestro can check its hierarchy between scrolls
-without waiting for CSS selector lookup timeouts.
-Failed runs upload screenshots and logs in the `maestro-browser-failure` artifact.
+Maestro now runs two native Android smoke flows: the clean sign-in screen and
+required-field validation. They use an installed debug APK on an API 35 emulator,
+with no backend, account or database. Run `maestro test maestro/android/` using
+Java 21; see [Maestro smoke tests](maestro/README.md) for build and report commands.
+CI runs these flows after Android instrumentation on the same emulator and
+uploads JUnit/debug evidence in `pulse-android-device-reports`.
+
+Browser E2E coverage is paused in CI. Existing Maestro web flows are retained in
+`maestro/web/`, and Playwright journeys remain available for later work. Frontend
+Node unit tests, type checks and the production build continue to run. Select
+`maestro/android/` explicitly so the paused browser flows are not discovered.
 
 Seed restore checks separately require `psql`
 and `TEST_SEED_DATABASE_URL`; see [Development seed data](#development-seed-data).
@@ -544,12 +538,10 @@ can also be started manually from GitHub Actions. Its independent jobs run:
 - All frontend Node tests through `npm test`, plus TypeScript checks and the
   Next.js production build.
 - All Hermes MCP Python tests and seed exporter tests.
-- Every Maestro browser flow in headless Chromium, against a production-built
-  frontend and Go API with a separate, migrated PostgreSQL service. This job
-  loads the shared anonymized development snapshot, including the bootstrap
-  account's profile. It also tests seed restoration, repeat runs, protection
-  of existing data, date rebasing, and rollback on error against temporary
-  databases.
+- Android unit tests, lint and formatting, the full instrumentation suite, and
+  two small native Maestro smoke tests on one API 35 emulator.
+- Seed restoration, repeat runs, protection of existing data, date rebasing and
+  rollback on error against disposable PostgreSQL databases, in a dedicated job.
 
 The databases are disposable and removed with their jobs. No production
 credentials or repository secrets are required. Jobs run independently so a
@@ -591,7 +583,7 @@ migration changes: restoring into a pristine database with a different schema
 version fails rather than applying an incompatible snapshot. Do not manually
 load an unsanitized dump into the shared seed file.
 
-GitHub's browser job uses this same fixture in a disposable database. Go and
+GitHub's seed-database job checks this same fixture in disposable databases. Go and
 Rust unit/integration tests keep their existing controlled fixtures: many
 assert empty results or insert fixed IDs, so adding a month of records to every
 test database would invalidate those tests. Seed restore tests can be run

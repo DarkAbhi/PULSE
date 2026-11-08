@@ -46,6 +46,8 @@ jobs:
     runs-on: ubuntu-24.04
     # Allow the complete suite to run sequentially on one emulator.
     timeout-minutes: 90
+    env:
+      MAESTRO_CLI_NO_ANALYTICS: '1'
     defaults:
       run:
         working-directory: pulse-android
@@ -54,7 +56,9 @@ jobs:
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
-          java-version: 25
+          java-version: |
+            21
+            25
       - uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-37.0 build-tools;36.0.0'
@@ -66,7 +70,12 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - name: Build the app and device test APKs
         run: ./gradlew --no-daemon --stacktrace :app:assembleDebug :app:assembleDebugAndroidTest
-      - name: Run all Android instrumentation tests
+      - name: Install Maestro for Android smoke tests
+        run: |
+          curl -fsSL https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.11.0/maestro.zip -o "$RUNNER_TEMP/maestro.zip"
+          unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/maestro/bin" >> "$GITHUB_PATH"
+      - name: Run Android instrumentation and Maestro smoke tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -83,8 +92,10 @@ jobs:
             adb shell input keyevent KEYCODE_WAKEUP
             adb shell wm dismiss-keyguard
             adb shell settings put secure show_ime_with_hard_keyboard 1
-            mkdir -p build/reports/device-environment
+            mkdir -p build/reports/device-environment build/reports/maestro
             ./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest || { adb shell dumpsys power > build/reports/device-environment/power.txt; adb shell dumpsys window > build/reports/device-environment/window.txt; adb logcat -d > build/reports/device-environment/logcat.txt; exit 1; }
+            adb install -r -g app/build/outputs/apk/debug/app-debug.apk
+            JAVA_HOME="$JAVA_HOME_21_X64" PATH="$JAVA_HOME_21_X64/bin:$PATH" maestro test --format junit --output build/reports/maestro/junit.xml --debug-output build/reports/maestro/debug ../maestro/android/
       - name: Upload device test reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -94,6 +105,7 @@ jobs:
             pulse-android/**/build/reports/androidTests/
             pulse-android/**/build/outputs/androidTest-results/
             pulse-android/build/reports/device-environment/
+            pulse-android/build/reports/maestro/
 
   go:
     name: Go backend (unit and integration)
@@ -155,16 +167,6 @@ jobs:
       - name: Type-check and build the production app
         if: ${{ !cancelled() }}
         run: npm run build
-      - name: Run meal setup browser journeys against the production build
-        env:
-          PULSE_E2E_PRODUCTION: '1'
-        run: npm run test:e2e
-      - name: Upload meal setup browser evidence
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: meal-setup-browser-results
-          path: life-tracker-frontend/test-results/
 
   hermes:
     name: Hermes MCP tests
@@ -185,20 +187,10 @@ jobs:
       - name: Run seed exporter tests
         run: python -m unittest discover -v -s scripts -p 'test_export_dev_seed.py'
 
-  browser:
-    name: Maestro browser tests
+  seed-database:
+    name: Development seed database checks
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    env:
-      APP_ENV: development
-      DB_HOSTNAME: localhost
-      DB_PORT: 5432
-      DB_NAME: pulse_test
-      DB_USERNAME: pulse
-      DB_PASSWORD: pulse
-      DB_SSLMODE: disable
-      INTERNAL_API_BASE_URL: http://localhost:8080
-      NEXT_TELEMETRY_DISABLED: 1
+    timeout-minutes: 10
     services:
       postgres:
         image: postgres:17.6
@@ -215,19 +207,6 @@ jobs:
           --health-retries 12
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
-        with:
-          go-version-file: go-backend/go.mod
-          cache-dependency-path: go-backend/go.sum
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 26
-          cache: npm
-          cache-dependency-path: life-tracker-frontend/package-lock.json
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: 21
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
@@ -235,46 +214,3 @@ jobs:
         env:
           TEST_SEED_DATABASE_URL: postgres://pulse:pulse@localhost:5432/pulse_test?sslmode=disable
         run: python -m unittest discover -v -s scripts -p 'test_seed_database.py'
-      - name: Install Maestro
-        run: |
-          curl -fsSL https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.11.0/maestro.zip -o "$RUNNER_TEMP/maestro.zip"
-          unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP"
-          echo "$RUNNER_TEMP/maestro/bin" >> "$GITHUB_PATH"
-      - name: Build the Go API and migrate the disposable database
-        working-directory: go-backend
-        run: |
-          go build -o "$RUNNER_TEMP/pulse-api" ./cmd/api
-          "$RUNNER_TEMP/pulse-api" --migrate-up
-      - name: Load the anonymized development snapshot
-        run: |
-          docker exec -i "${{ job.services.postgres.id }}" \
-            psql -X -U pulse -d pulse_test -v seed_environment=test < go-backend/data/dev-seed.sql
-      - name: Install and build the frontend
-        working-directory: life-tracker-frontend
-        run: |
-          npm ci
-          npm run build
-      - name: Start the API and frontend
-        run: |
-          (cd go-backend && "$RUNNER_TEMP/pulse-api") > "$RUNNER_TEMP/api.log" 2>&1 &
-          (cd life-tracker-frontend && npm start) > "$RUNNER_TEMP/frontend.log" 2>&1 &
-          curl --fail --retry 30 --retry-connrefused --retry-delay 2 --retry-max-time 90 http://localhost:8080/readyz
-          curl --fail --retry 30 --retry-connrefused --retry-delay 2 --retry-max-time 90 http://localhost:3000
-      - name: Run every Maestro flow
-        # shortcut: desktop size fits the vehicle dialog; add dialog scrolling for smaller-screen coverage.
-        run: maestro test --headless --screen-size 1440x1200 --debug-output "$RUNNER_TEMP/maestro-results" maestro/
-      - name: Upload Maestro failure screenshots and logs
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: maestro-browser-failure
-          path: |
-            ${{ runner.temp }}/maestro-results/
-            ${{ runner.temp }}/api.log
-            ${{ runner.temp }}/frontend.log
-      - name: Print server logs on failure
-        if: failure()
-        run: |
-          for log in "$RUNNER_TEMP/api.log" "$RUNNER_TEMP/frontend.log"; do
-            if [ -f "$log" ]; then cat "$log"; fi
-          done

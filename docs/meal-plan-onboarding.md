@@ -76,6 +76,9 @@ npm run build
 npm run test:e2e
 ```
 
+Browser E2E execution is paused in GitHub Actions while initial Maestro coverage
+focuses on native Android smoke tests. The suite below is retained for later work.
+
 The Playwright suite uses an isolated test-only HTTP contract server, the actual Next.js page/server actions, and Chrome. Its fixture does not contact development/production accounts. It covers interrupted setup, failed reads/writes, loss of a successful response, save/skip across browser contexts, later edits, account switching, concurrent-tab decisions, and narrow/dark layouts. The Go tests separately verify real PostgreSQL persistence, transactions, HTTP contracts, user isolation, cascades, and migrations.
 
 Set `PULSE_E2E_PRODUCTION=1` after building to run those browser checks against the production build. The frontend CI job does this and uploads screenshots/traces. The existing Maestro dashboard flow skips setup when needed before asserting the planner. Development seed schema/empty-database/truncate guards now include the new tables; preference answers and onboarding decisions are excluded from exported snapshots so seed accounts start pending.

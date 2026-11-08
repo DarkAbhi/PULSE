@@ -62,8 +62,9 @@ npm run build
 ```
 
 The Node tests cover frontend utility behavior and need no database or running
-backend. Browser flows are separate; see [Running tests locally](../README.md#running-tests-locally)
-for Maestro setup and commands.
+backend. Browser E2E coverage is paused in CI; retained Playwright journeys can
+be revisited later. Maestro currently covers small native Android smoke tests;
+see [Maestro smoke tests](../maestro/README.md).
 
 ## Cards
 

@@ -73,3 +73,24 @@ JDK 25 and the repository's Gradle wrapper, with isolated HTTP fixtures.
 
 The GitHub-hosted Linux workflow has not been executed for these local changes.
 No push, merge or release was performed.
+
+## Maestro smoke integration — 9 November 2026
+
+Browser E2E execution is paused in CI: the Maestro browser job and frontend
+Playwright steps are removed. Existing browser flows remain under `maestro/web/`
+for later work. Frontend unit tests and builds remain enabled; database-seed
+checks retain their PostgreSQL service in a separate `seed-database` job.
+
+The Android job now installs Java 21 alongside Java 25 and Maestro 2.11.0. After
+instrumentation it reinstalls the debug APK and runs only `maestro/android/` on
+the same emulator. The two flows cover the sign-in screen and required-field
+validation. No complete credential pair is submitted, and no backend, database,
+account or secrets are needed. Their JUnit report and debug files are included
+in `pulse-android-device-reports`.
+
+Local verification: **2/2 native Maestro flows passed in 26 seconds** on API 35.
+The debug APK built successfully. Workflow YAML, preservation of frontend and
+seed checks, native-only flow selection and Bash syntax were verified. This
+integration does not change Android production or instrumentation-test sources;
+the instrumentation results above are from the preceding verification. The
+changes have not been pushed or executed by GitHub Actions.

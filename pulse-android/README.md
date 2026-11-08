@@ -31,6 +31,11 @@ keyboard. Failed runs include device power state, window state and logcat in
 the device-report artifact. Window-sensitive tests wait for the active app or
 dialog to gain focus and for the IME to hide before issuing system Back.
 
+After instrumentation, CI reinstalls the debug APK and runs two small native
+Maestro smoke flows for sign-in launch and required-field validation. These
+flows use Java 21 and no backend or credentials; Gradle continues to use Java
+25. Both suites share the same emulator. See [Maestro smoke tests](../maestro/README.md).
+
 Device tests must supply fixtures for every repository used by a journey,
 including meal setup when navigating across tabs. Wait for asynchronous setup
 reads before asserting navigation, and enter the relevant feature tab before

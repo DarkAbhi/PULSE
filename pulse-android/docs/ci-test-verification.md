@@ -25,6 +25,31 @@ individual UI job.
 - Wait for Android density and Compose window dimensions to match display
   overrides before asserting Meal Plan's responsive layout.
 
+### Window-focus failures reported after the first local pass
+
+The reported failures included Espresso selecting an unfocused activity or
+popup root, Back events that did not dismiss sheets, and clipboard/IME checks
+after recreation or resizing. The earlier local pass did not establish that
+these interactions were stable in CI.
+
+`DeviceWindowTestActions.kt` now waits for the focusable dialog/popup window,
+hides the IME using each app window's own token, and issues Android's system
+Back action without Espresso root selection. Navigation and sheet-dismissal
+assertions remain enabled. Account and Horizon resize checks also wait for
+the requested dimensions, density and font scale before window-sensitive
+actions; dialog confirmations wait for focus before tapping Copy token.
+
+These helpers use Android's public [window inspection API](https://developer.android.com/reference/android/view/inspector/WindowInspector)
+and [system action API](https://developer.android.com/reference/android/app/UiAutomation#performGlobalAction(int)).
+
+The CI script explicitly wakes/unlocks the emulator, keeps it awake, and
+enables the software keyboard. If Gradle fails, it records power state,
+window state and logcat before emulator cleanup, preserves the failing exit
+status and uploads these files with the device reports. Screen sleep was not
+confirmed from the supplied traces; the explicit settings remove that
+environmental variable and the diagnostics support investigating any further
+GitHub-only failure.
+
 No tests were disabled or excluded from the CI job.
 
 ## Results and limits
@@ -32,15 +57,19 @@ No tests were disabled or excluded from the CI job.
 Verification used the dedicated `Pulse_CI_API_35` Android 15 emulator on Windows,
 JDK 25 and the repository's Gradle wrapper, with isolated HTTP fixtures.
 
-- **253 unit tests passed**, with zero failures, errors or skips, after forcing
-  execution of `testDebugUnitTest` and `:core:domain:test`.
+- The unit suite passed; its reports contain **253 passing tests**, with zero
+  failures, errors or skips.
 - `lint` and `ktlintCheck` passed. The final instrumentation sources also passed
   `:app:ktlintAndroidTestSourceSetCheck` and compiled successfully.
 - **All 167 UI/device tests passed together in one complete, unsharded run**,
   with zero failures, errors or skips. The Gradle invocation, including final
-  test compilation and formatting validation, completed in **14m 15s**.
-- The previously intermittent Meal Plan resize case also passed three
-  consecutive focused runs before the final complete regression.
+  device invocation completed in **10m 55s** after the focus corrections.
+- Nine reported or related focus, clipboard, keyboard, Back and resize cases
+  passed **three consecutive focused runs: 27/27 executions**, with zero
+  failures, errors or skips. This includes the additional Account failures
+  in the attachment and the related Horizon section-navigation case.
+- The updated CI command block passed Bash syntax validation. No automatic
+  retry or test exclusion was added to the workflow.
 
 The GitHub-hosted Linux workflow has not been executed for these local changes.
 No push, merge or release was performed.

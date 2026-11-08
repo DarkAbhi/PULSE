@@ -77,7 +77,14 @@ jobs:
           emulator-options: -no-window -gpu swangle -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           working-directory: pulse-android
-          script: ./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest
+          script: |
+            adb shell svc power stayon true
+            adb shell settings put system screen_off_timeout 2147483647
+            adb shell input keyevent KEYCODE_WAKEUP
+            adb shell wm dismiss-keyguard
+            adb shell settings put secure show_ime_with_hard_keyboard 1
+            mkdir -p build/reports/device-environment
+            ./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest || { adb shell dumpsys power > build/reports/device-environment/power.txt; adb shell dumpsys window > build/reports/device-environment/window.txt; adb logcat -d > build/reports/device-environment/logcat.txt; exit 1; }
       - name: Upload device test reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -86,6 +93,7 @@ jobs:
           path: |
             pulse-android/**/build/reports/androidTests/
             pulse-android/**/build/outputs/androidTest-results/
+            pulse-android/build/reports/device-environment/
 
   go:
     name: Go backend (unit and integration)

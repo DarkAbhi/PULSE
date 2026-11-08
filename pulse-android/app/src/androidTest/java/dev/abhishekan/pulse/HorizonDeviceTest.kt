@@ -2,7 +2,6 @@ package dev.abhishekan.pulse
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.ParcelFileDescriptor
-import android.view.KeyEvent
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
@@ -39,7 +38,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
-import androidx.test.espresso.Espresso
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
@@ -705,14 +703,15 @@ class HorizonDeviceTest {
                 shell("wm size $dimensions")
                 shell("wm density 320")
                 shell("settings put system font_scale ${if (layout == "large-text") "1.8" else "1.0"}")
+                val (width, height) = dimensions.split('x').map(String::toInt)
+                compose.awaitWindowConfiguration(scenario!!, width, height, 320, if (layout == "large-text") 1.8f else 1f)
                 compose.onNode(hasText("Home") and hasAnyAncestor(hasTestTag("budget-grid"))).performScrollTo().assertIsDisplayed()
                 screenshot("budget-cards-$layout")
                 names.forEach { name ->
                     compose.onNodeWithContentDescription("Actions for $name").performScrollTo().performClick()
                     compose.onNodeWithContentDescription("Edit $name").assertIsDisplayed()
                     compose.onNodeWithContentDescription("Delete $name").assertIsDisplayed()
-                    Espresso
-                        .pressBack()
+                    compose.pressSystemBack(scenario!!)
                 }
             }
             assertEquals(0, backend.mutations)
@@ -756,7 +755,7 @@ class HorizonDeviceTest {
                         compose.onNode(hasTestTag("obligation-due-day")).performScrollTo().performClick()
                         awaitText("Choose due day")
                         screenshot("obligation-days-$layout", tag = "obligation-day-picker")
-                        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+                        compose.pressSystemBack(scenario!!)
                         compose.onNode(hasTestTag("obligation-category-other")).performScrollTo().assertIsDisplayed()
                     }
                     compose.onNodeWithContentDescription("Back to Financial Horizon").assertIsDisplayed().performClick()
@@ -875,7 +874,7 @@ class HorizonDeviceTest {
         compose.onNode(hasTestTag("obligation-due-day")).performClick()
         awaitText("Choose due day")
         compose.waitForIdle()
-        InstrumentationRegistry.getInstrumentation().sendKeyDownUpSync(KeyEvent.KEYCODE_BACK)
+        compose.pressSystemBack(scenario!!)
         compose.waitUntil(5_000) { compose.onAllNodes(hasTestTag("obligation-day-picker")).fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithText("Discard unsaved changes?").assertDoesNotExist()
         compose.onNode(hasTestTag("obligation-due-day")).assertTextContains("Not set")
@@ -1296,9 +1295,10 @@ class HorizonDeviceTest {
             screenshot("subscription-payments-phone", tag = "subscription-payments-sheet")
             shell("wm size 2400x1800")
             shell("wm density 320")
+            compose.awaitWindowConfiguration(scenario!!, 2400, 1800, 320)
             compose.onNode(sheet).assertIsDisplayed()
             screenshot("subscription-payments-tablet", tag = "subscription-payments-sheet")
-            shell("input keyevent KEYCODE_BACK")
+            compose.pressSystemBack(scenario!!)
             compose.waitUntil(5_000) { compose.onAllNodes(sheet).fetchSemanticsNodes().isEmpty() }
             tap("View payments for Music")
             awaitText("Payment history")

@@ -26,6 +26,11 @@ It has a 90-minute limit to allow for emulator startup, APK builds and the full
 suite. Running one job avoids building the same APKs and starting an emulator
 three times, though the UI result takes longer than parallel shards.
 
+CI explicitly keeps the emulator awake and unlocked and enables the software
+keyboard. Failed runs include device power state, window state and logcat in
+the device-report artifact. Window-sensitive tests wait for the active app or
+dialog to gain focus and for the IME to hide before issuing system Back.
+
 Device tests must supply fixtures for every repository used by a journey,
 including meal setup when navigating across tabs. Wait for asynchronous setup
 reads before asserting navigation, and enter the relevant feature tab before

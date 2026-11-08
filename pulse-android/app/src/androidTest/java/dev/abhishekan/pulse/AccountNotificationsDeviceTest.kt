@@ -21,6 +21,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -49,7 +50,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
-import androidx.test.espresso.Espresso
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
@@ -395,6 +395,7 @@ class AccountNotificationsDeviceTest {
         val match =
             hasText(text) and hasAnyAncestor(isDialog())
         compose.waitUntil(20_000) { compose.onAllNodes(match).fetchSemanticsNodes().isNotEmpty() }
+        compose.awaitAppWindowFocus(scenario!!)
         compose.onNode(match).performClick()
     }
 
@@ -653,7 +654,7 @@ class AccountNotificationsDeviceTest {
         awaitText("Your garage")
         compose.onNode(items[3]).assertIsSelected()
         compose.onNodeWithContentDescription("Back to notifications").assertDoesNotExist()
-        Espresso.pressBack()
+        compose.pressSystemBack(scenario!!)
         awaitText("Notifications")
         compose.onNodeWithContentDescription("Back to Home").performClick()
         compose.onNode(items[0]).assertIsSelected()
@@ -841,7 +842,7 @@ class AccountNotificationsDeviceTest {
             ).assertExists()
         assertEquals(2, notifications.size)
         compose.onNodeWithContentDescription("Back to notifications").assertDoesNotExist()
-        Espresso.pressBack()
+        compose.pressSystemBack(scenario!!)
         awaitText("Notifications")
         compose.onNodeWithText("Vehicle care update").assert(hasClickAction())
         compose.onNodeWithText("Open space").assertDoesNotExist()
@@ -875,6 +876,7 @@ class AccountNotificationsDeviceTest {
     @Test fun resizingAndLargeTextKeepAccountFormsAndNotificationsUsable() {
         val originalSize = shell("wm size").lineSequence().last().substringAfter(": ")
         val originalDensity = shell("wm density").lineSequence().last().substringAfter(": ")
+        val originalFontScale = shell("settings get system font_scale").trim().toFloatOrNull() ?: 1f
         try {
             launch()
             openProfile()
@@ -883,9 +885,10 @@ class AccountNotificationsDeviceTest {
             awaitText("Resized name")
             shell("wm size 1440x900")
             shell("wm density 320")
+            compose.awaitWindowConfiguration(scenario!!, 1440, 900, 320)
             awaitText("Resized name")
             screenshot("landscape-editor")
-            compose.onNodeWithText("Display name").performClick()
+            compose.onNode(hasText("Display name") and hasSetTextAction()).performScrollTo().performClick()
             compose.waitUntil(15_000) {
                 var visible = false
                 scenario!!.onActivity {
@@ -906,6 +909,7 @@ class AccountNotificationsDeviceTest {
             tap("Edit display name")
             shell("settings put system font_scale 2.0")
             shell("wm size 720x1600")
+            compose.awaitWindowConfiguration(scenario!!, 720, 1600, 320, 2f)
             awaitText("Resized name")
             screenshot("large-text-editor")
             tap("Save changes")
@@ -919,7 +923,7 @@ class AccountNotificationsDeviceTest {
             screenshot("resize-failure")
             throw failure
         } finally {
-            shell("settings put system font_scale 1.0")
+            shell("settings put system font_scale $originalFontScale")
             shell("wm size $originalSize")
             shell("wm density $originalDensity")
         }

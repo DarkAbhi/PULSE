@@ -7,7 +7,13 @@ import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.view.inspector.WindowInspector
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.performScrollTo
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
@@ -50,11 +56,26 @@ internal fun <A : Activity> ComposeTestRule.hideAppKeyboard(scenario: ActivitySc
         scenario.onActivity { activity ->
             hidden =
                 windowRoots(activity).none {
-                    ViewCompat.getRootWindowInsets(it)?.isVisible(WindowInsetsCompat.Type.ime()) == true
+                    val insets = ViewCompat.getRootWindowInsets(it)
+                    it.isLayoutRequested ||
+                        insets == null ||
+                        insets.isVisible(WindowInsetsCompat.Type.ime()) ||
+                        insets.getInsets(WindowInsetsCompat.Type.ime()).bottom != 0
                 }
         }
         hidden
     }
+    waitForIdle()
+}
+
+internal fun ComposeTestRule.scrollToDisplayed(node: SemanticsNodeInteraction) {
+    // Recreation, IME insets, and step changes can move the viewport after a scroll.
+    // Scroll again while waiting instead of waiting on an offscreen node forever.
+    waitUntil(15_000) {
+        if (hasAnyAncestor(hasScrollAction()).matches(node.fetchSemanticsNode())) node.performScrollTo()
+        node.isDisplayed()
+    }
+    node.assertIsDisplayed()
 }
 
 internal fun <A : Activity> ComposeTestRule.pressSystemBack(scenario: ActivityScenario<A>) {

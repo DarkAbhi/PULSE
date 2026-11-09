@@ -28,7 +28,6 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
-import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.isSelectable
@@ -46,8 +45,6 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeDown
 import androidx.core.content.FileProvider
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.AndroidReceiptFiles
@@ -520,29 +517,12 @@ class GarageDeviceTest {
         }
         scenario?.onActivity { activity ->
             if (text.startsWith("Save ")) activity.window.decorView.clearFocus()
-            activity
-                .getSystemService(
-                    InputMethodManager::class.java,
-                ).hideSoftInputFromWindow(activity.window.decorView.windowToken, 0)
         }
-        // Keyboard dismissal changes the scroll viewport asynchronously.
-        compose.waitUntil(15_000) {
-            var keyboardHidden = false
-            scenario?.onActivity { activity ->
-                val insets = ViewCompat.getRootWindowInsets(activity.window.decorView)
-                keyboardHidden = insets != null &&
-                    !insets.isVisible(WindowInsetsCompat.Type.ime()) &&
-                    insets.getInsets(WindowInsetsCompat.Type.ime()).bottom == 0
-            }
-            keyboardHidden
-        }
+        compose.hideAppKeyboard(scenario!!)
         val button = (hasText(text) or hasContentDescription(text)) and hasClickAction() and isEnabled()
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         val node = compose.onAllNodes(button)[0]
-        if (hasAnyAncestor(hasScrollAction()).matches(node.fetchSemanticsNode())) {
-            node.performScrollTo()
-        }
-        compose.waitUntil(15_000) { node.isDisplayed() }
+        compose.scrollToDisplayed(node)
         node
             .performSemanticsAction(SemanticsActions.OnClick) { it() }
     }

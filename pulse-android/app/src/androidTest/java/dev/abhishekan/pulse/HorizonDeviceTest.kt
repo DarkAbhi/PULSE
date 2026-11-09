@@ -27,6 +27,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.isPopup
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -708,10 +709,17 @@ class HorizonDeviceTest {
                 compose.onNode(hasText("Home") and hasAnyAncestor(hasTestTag("budget-grid"))).performScrollTo().assertIsDisplayed()
                 screenshot("budget-cards-$layout")
                 names.forEach { name ->
-                    compose.onNodeWithContentDescription("Actions for $name").performScrollTo().performClick()
+                    val actions = compose.onNodeWithContentDescription("Actions for $name")
+                    compose.scrollToDisplayed(actions)
+                    actions.performClick()
+                    compose.waitUntil(15_000) {
+                        compose.onNodeWithContentDescription("Edit $name").isDisplayed() &&
+                            compose.onNodeWithContentDescription("Delete $name").isDisplayed()
+                    }
                     compose.onNodeWithContentDescription("Edit $name").assertIsDisplayed()
                     compose.onNodeWithContentDescription("Delete $name").assertIsDisplayed()
                     compose.pressSystemBack(scenario!!)
+                    compose.waitUntil(15_000) { compose.onAllNodes(isPopup()).fetchSemanticsNodes().isEmpty() }
                 }
             }
             assertEquals(0, backend.mutations)

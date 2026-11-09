@@ -264,7 +264,8 @@ class AuthNavigationDeviceTest {
         compose.onNodeWithText("Username").performScrollTo().performTextInput("fixture-user")
         compose.onNodeWithText("Password").performScrollTo().performTextInput("test-only-password")
         scenario!!.recreate()
-        compose.onNodeWithText("fixture-user").performScrollTo().assertIsDisplayed()
+        compose.hideAppKeyboard(scenario!!)
+        compose.scrollToDisplayed(compose.onNodeWithText("fixture-user"))
         compose.onNodeWithText("Password").performScrollTo().performImeAction()
         awaitText("Asha")
         scenario!!.onActivity { it.onBackPressedDispatcher.onBackPressed() }

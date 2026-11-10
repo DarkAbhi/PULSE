@@ -1,5 +1,27 @@
 # Android CI verification — 8 November 2026
 
+## Maestro shell parsing correction — 11 November 2026
+
+The supplied screenshot shows successful APK installation, activity launch and
+startup input-focus verification. The next command fails with `Syntax error:
+end of file unexpected (expecting "fi")`, before Maestro runs. Emulator Runner
+executes each parsed script line in a separate `sh -c` invocation, so a multiline
+`if` block in its `script` input cannot share shell state with its closing `fi`.
+Checking that block as one complete Bash program did not cover this behavior.
+
+The compound command now lives in `scripts/run-android-maestro.sh`; the action
+invokes it with one `bash` command. It retains the startup check, Java 21,
+native-only flow selection, JUnit/debug outputs and original failure status.
+Diagnostic collection is bounded so an unresponsive device cannot delay it
+indefinitely.
+
+Three regression checks extract the actual Maestro workflow commands and run
+each in a separate shell with simulated device/Maestro tools. They pass for
+success, Maestro failure with diagnostics, and diagnostic failure that preserves
+Maestro's exit status. Bash syntax validation also passed. The Hermes job now
+runs these checks. No Android app code or smoke-flow assertions changed; the
+real Maestro flows and Linux GitHub job have not been rerun for this shell fix.
+
 ## Follow-up: 50 CI failures — 10 November 2026
 
 The supplied device artifact records 167 tests, 50 failures, zero skips, and

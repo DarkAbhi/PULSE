@@ -117,18 +117,7 @@ jobs:
             adb shell input keyevent KEYCODE_WAKEUP
             adb shell wm dismiss-keyguard
             adb shell settings put secure show_ime_with_hard_keyboard 1
-            mkdir -p build/reports/maestro
-            bash ../scripts/prepare-android-emulator.sh build/reports/maestro
-            # Flatten avoids the hidden .maestro directory that upload-artifact excludes.
-            if JAVA_HOME="$JAVA_HOME_21_X64" PATH="$JAVA_HOME_21_X64/bin:$PATH" maestro test --format junit --output build/reports/maestro/junit.xml --debug-output build/reports/maestro/debug --flatten-debug-output ../maestro/android/; then
-              echo "Maestro smoke tests passed"
-            else
-              status=$?
-              adb logcat -d > build/reports/maestro/logcat.txt || true
-              adb shell dumpsys window > build/reports/maestro/window.txt || true
-              tail -n 200 build/reports/maestro/debug/maestro.log || true
-              exit "$status"
-            fi
+            bash ../scripts/run-android-maestro.sh
       - name: Upload device test reports
         if: ${{ always() }}
         uses: actions/upload-artifact@v7
@@ -219,6 +208,8 @@ jobs:
         run: python -m unittest discover -v -s scripts -p 'test_test_report.py'
       - name: Check Android instrumentation timeout and diagnostics
         run: python -m unittest discover -v -s scripts -p 'test_android_instrumentation.py'
+      - name: Check Maestro workflow command execution
+        run: python -m unittest discover -v -s scripts -p 'test_android_maestro.py'
       - name: Run seed exporter tests
         run: python -m unittest discover -v -s scripts -p 'test_export_dev_seed.py'
 

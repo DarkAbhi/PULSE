@@ -1,5 +1,38 @@
 # Android CI verification — 8 November 2026
 
+## Maestro device disconnect — 11 November 2026
+
+The supplied log now reaches Maestro 2.11.0 on Java 21. The required-fields flow
+fails during `launchApp`, after state clearing and before any validation
+assertion, with `Command failed (host:transport:emulator-5554): device offline`.
+Its device-server gRPC connection also reports `UNAVAILABLE`; the sign-in flow
+then passes. The later unsupported `ACCESS_LOCAL_NETWORK` permission warning
+occurs in that passing flow and is not the recorded failure. The excerpt does
+not identify why the underlying ADB transport temporarily disconnected.
+
+The smoke emulator now has a distinct port (5556), and Maestro explicitly selects
+the action's `ANDROID_SERIAL`. A bounded readiness check requires five
+consecutive successful device-state, boot-completion and shell probes.
+
+If the first attempt fails, `maestro_transport_failure.py` inspects each failed
+JUnit case's exception header. Only an entirely transport-related failure set
+allows one fresh Maestro session after transport becomes stable again. Ordinary
+assertion failures, mixed failure sets, generic errors and missing reports do
+not authorize recovery. A second failure fails the job. Both attempts' JUnit,
+debug logs and failure diagnostics are retained; a workflow warning identifies
+the recovery and the usual root JUnit file contains the final result. Old result
+files are removed before running so a stale report cannot trigger recovery.
+
+Local verification: the original command passed both real native flows in 27s;
+the updated explicit-device runner passed both in 29s with Maestro 2.11.0, Java
+21 and the isolated API 35 emulator. The supplied transient disconnect did not
+reproduce during these local runs. Regression checks cover eligible exception
+headers, rejected assertion/mixed/unknown failures, a successful fresh session,
+retention of first-attempt evidence, and a persistent disconnect failing after
+two attempts. All nine regression checks and both shell syntax checks passed.
+Linux GitHub execution is still required to confirm behavior on
+the hosted runner. No smoke assertion or app code was changed.
+
 ## Maestro shell parsing correction — 11 November 2026
 
 The supplied screenshot shows successful APK installation, activity launch and

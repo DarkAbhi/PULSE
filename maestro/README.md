@@ -24,6 +24,9 @@ runs the smoke tests after instrumentation tests on a separate, freshly created
 emulator. This keeps instrumentation processes, display overrides and device
 settings out of the smoke-test environment. The ADB server is restarted before
 the smoke emulator starts, removing transports left by the preceding device.
+Maestro uses port 5556 and explicitly selects that emulator, instead of reusing
+the instrumentation device's port. Five consecutive successful ADB/boot/shell
+probes are required before starting its session.
 Both stages reuse the built APKs.
 
 CI uses `--flatten-debug-output` so Maestro's command records, screenshots and
@@ -31,7 +34,12 @@ logs are written directly under the report directory, instead of a hidden
 `.maestro` directory excluded by artifact uploads. On failure, CI also captures
 logcat and window state, prints the last 200 Maestro log lines and preserves the
 failing exit status. Reports are uploaded in `pulse-android-device-reports`.
-Flows and assertions are not retried.
+If every failed JUnit case explicitly identifies a lost device connection, CI
+waits for stable transport and allows one fresh Maestro session for the suite.
+Assertion failures, mixed assertion/transport failures, unknown errors and missing
+reports are never retried. A second failure fails CI. Both attempts remain under
+`build/reports/maestro/attempt-1/` and `attempt-2/`; `junit.xml` at the report root
+contains the final attempt. Recovery is announced as a workflow warning.
 
 ## Paused browser coverage
 

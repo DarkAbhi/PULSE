@@ -566,7 +566,7 @@ class FitnessDeviceTest {
         tap("Previous month")
         tap("Today")
         val monthHeading = compose.onNodeWithContentDescription(backend.today.format(DateTimeFormatter.ofPattern("MMMM yyyy")))
-        monthHeading.assertIsDisplayed()
+        compose.scrollToDisplayed(monthHeading)
         val monthBounds = monthHeading.getUnclippedBoundsInRoot()
         listOf("Previous month", "Next month", "Choose date").forEach { description ->
             val control = compose.onNodeWithContentDescription(description)

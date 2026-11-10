@@ -1,5 +1,57 @@
 # Android CI verification — 8 November 2026
 
+## Follow-up: 50 CI failures — 10 November 2026
+
+The supplied device artifact records 167 tests, 50 failures, zero skips, and
+27m 40.89s of test execution. Of these failures, **49** throw the same
+15-second `awaitAppWindowFocus` timeout; none is the new 120-second runner
+timeout. The remaining failure asserts that the Fitness calendar month heading
+is displayed immediately after navigation.
+
+The captured screen shows **“Pixel Launcher isn't responding”**. Window state
+identifies `Application Not Responding: com.google.android.apps.nexuslauncher`
+as `mCurrentFocus`, and the activity dump records an input-dispatch ANR because
+the launcher had no focused window. Its recorded ANR time precedes the first
+TestRunner start by about 45 seconds. This establishes a boot-time launcher
+failure and a blocking system dialog; unrelated feature assertions that operate
+through Compose semantics can still run while real window-focus checks fail.
+
+Both instrumentation and Maestro now use `scripts/prepare-android-emulator.sh`.
+It saves startup window/ANR state, force-stops Pixel Launcher only when its ANR
+dialog owns focus, installs and launches the built debug app, then requires
+Pulse to own input focus. Instrumentation bounds the entire startup check to
+120 seconds. A still-blocked emulator fails before the suite and retains
+diagnostics; an ANR in Pulse is not cleared or accepted. The existing focus
+assertions, test coverage, deadlines, image and renderer remain unchanged.
+
+The Fitness regression test now scrolls the month heading into view before
+checking its visibility and its alignment with the calendar controls, using the
+existing bounded scroll helper.
+
+The complete local run through the updated wrapper passed **165/167** tests,
+including **all 50 cases that failed in the supplied artifact**. It exposed two
+additional timing races: Horizon checked for a date picker immediately after a
+tap while the IME was transitioning, and Meal Plan checked responsive spacing
+after waiting only for root width/density. Horizon now hides the keyboard and
+waits for each dialog; both tests wait for complete window dimensions, density,
+focus and layout after resizing. The original dialog, spacing, non-overlap and
+tap-target assertions remain enabled. The corrected pair passed a focused
+Gradle/UTP run with the configured 120-second method timeout, then two consecutive
+direct AndroidJUnitRunner repeats: **6/6 executions** across three runs, zero
+failures or skips. Together with the 165 passing cases from the complete run,
+all 167 distinct cases passed across verification. A new complete run after
+the final two timing corrections has not been performed.
+
+Eight wrapper regression checks cover healthy startup, launcher-ANR recovery,
+unfocused startup, rejection of a Pulse ANR, ordinary failure, the overall
+deadline, a separately identified startup deadline, and an unresponsive device
+during diagnostic collection. The real
+API 35 emulator also passed startup focus verification. Debug/test APK builds,
+Android test formatting, and both shell scripts' syntax checks passed.
+All eight wrapper checks and the five existing report checks passed. Launcher
+ANR recovery was covered by simulated device responses; the real local emulator
+passed the healthy startup path. The updated Linux GitHub job has not run yet.
+
 ## Instrumentation cancellation — 10 November 2026
 
 Run `42778282245`, job `129701868149`, was cancelled because it exceeded the

@@ -611,24 +611,16 @@ class MealPlanDeviceTest {
 
         fun awaitWindow(
             width: Int,
+            height: Int,
             densityDpi: Int,
         ) {
-            // Display overrides propagate outside Compose's idle tracking.
-            compose.waitUntil(15_000) {
-                val actualDensity =
-                    InstrumentationRegistry
-                        .getInstrumentation()
-                        .targetContext.resources.configuration.densityDpi
-                val root = compose.onRoot().getUnclippedBoundsInRoot()
-                val actualWidth = (root.right - root.left).value
-                actualDensity == densityDpi && kotlin.math.abs(actualWidth - width * 160f / densityDpi) < 2f
-            }
-            compose.waitForIdle()
+            compose.awaitWindowConfiguration(scenario!!, width, height, densityDpi)
         }
         try {
             shell("wm size 800x1800")
             shell("wm density 320")
             launchPlanner()
+            awaitWindow(800, 1800, 320)
             val root = compose.onRoot().getUnclippedBoundsInRoot()
             listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
                 val date = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed()
@@ -640,7 +632,7 @@ class MealPlanDeviceTest {
             compose.onNodeWithText("Mon").performClick()
             compose.onNodeWithText("Sun").assertIsDisplayed().performClick()
             shell("wm size 640x1800")
-            awaitWindow(640, 320)
+            awaitWindow(640, 1800, 320)
             val week =
                 compose.onNode(
                     SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange) and
@@ -654,13 +646,13 @@ class MealPlanDeviceTest {
             // A smaller landscape tablet enters the wide layout but cannot fit a trailing action beside the centered week.
             shell("wm size 1920x1200")
             shell("wm density 280")
-            awaitWindow(1920, 280)
+            awaitWindow(1920, 1200, 280)
             week.performScrollToIndex(0)
             assertMealTimesClearOfDates(stacked = true)
             screenshot("small-landscape-week")
             shell("wm size 2560x1800")
             shell("wm density 320")
-            awaitWindow(2560, 320)
+            awaitWindow(2560, 1800, 320)
             week.performScrollToIndex(0)
             listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
                 val bounds = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()

@@ -4,15 +4,16 @@ set -euo pipefail
 
 reports=build/reports/device-environment
 mkdir -p "$reports"
+phase='Android emulator startup'
 
 cleanup() {
   status=$?
   trap - EXIT
   if (( status != 0 )); then
-    if (( status == 124 )); then
+    if (( status == 124 )) && [[ "$phase" == Instrumentation ]]; then
       echo "::error::Instrumentation exceeded its 45-minute deadline (exit $status). See the last TestRunner event and device diagnostics."
     else
-      echo "::error::Instrumentation failed (exit $status). See test progress and device diagnostics."
+      echo "::error::$phase failed (exit $status). See test progress and device diagnostics."
     fi
     # Bound every diagnostic: a wedged emulator must not consume the job's
     # remaining time and prevent artifact upload again.
@@ -39,6 +40,10 @@ logcat_pid=$!
 adb logcat -v brief TestRunner:I AndroidRuntime:E '*:S' &
 progress_pid=$!
 trap cleanup EXIT
+
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+timeout --signal=TERM --kill-after=5s 120s bash "$script_dir/prepare-android-emulator.sh" "$reports"
+phase=Instrumentation
 
 # Keep time for diagnostics, emulator shutdown, Maestro and report upload before
 # the job's 90-minute cap. The host deadline also covers setup/teardown hangs,

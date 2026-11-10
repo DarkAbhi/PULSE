@@ -118,7 +118,7 @@ jobs:
             adb shell wm dismiss-keyguard
             adb shell settings put secure show_ime_with_hard_keyboard 1
             mkdir -p build/reports/maestro
-            adb install -r -g app/build/outputs/apk/debug/app-debug.apk
+            bash ../scripts/prepare-android-emulator.sh build/reports/maestro
             # Flatten avoids the hidden .maestro directory that upload-artifact excludes.
             if JAVA_HOME="$JAVA_HOME_21_X64" PATH="$JAVA_HOME_21_X64/bin:$PATH" maestro test --format junit --output build/reports/maestro/junit.xml --debug-output build/reports/maestro/debug --flatten-debug-output ../maestro/android/; then
               echo "Maestro smoke tests passed"

@@ -120,7 +120,7 @@ listed in the [repository README](../README.md).
 ## Architecture
 
 Garage catalog setup, data provenance, and the new kind/make/model API contract
-are documented in [Vehicle catalog](../docs/vehicle-catalog.md). The regular
+are documented in [Vehicle catalog](../docs/development-history/features/vehicle-catalog.md). The regular
 `--migrate-up` command installs the bundled snapshot and repairs missing catalog
 rows without network access.
 

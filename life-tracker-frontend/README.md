@@ -83,4 +83,4 @@ applied where needed.
 
 Profile includes a searchable time zone setting shared with Android. The default is UTC. Dates and times render with the account preference, including server-rendered pages. Date/time forms convert local entries back to UTC instants; calendar-only dates retain their selected date. No extra time zone notices are shown around the app.
 
-Shared conversions and tests live in `app/lib/time-zone.mjs` and `app/lib/time-zone.test.mjs`. Run `npm test` and `npm run build` to verify changes. See `../docs/user-time-zones.md` for storage, daylight-saving and deployment details.
+Shared conversions and tests live in `app/lib/time-zone.mjs` and `app/lib/time-zone.test.mjs`. Run `npm test` and `npm run build` to verify changes. See [account time zones](../docs/development-history/features/user-time-zones.md) for storage, daylight-saving and deployment details.

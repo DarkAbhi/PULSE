@@ -18,6 +18,6 @@ Vehicle data by VehiclesDB: https://vehiclesdb.com
 See `ATTRIBUTION.md` for all upstream register notices; preserve them when
 redistributing. Pulse displays the notices at `/vehicle-data`.
 
-See `docs/vehicle-catalog.md` in the repository root for the import lifecycle,
+See `docs/development-history/features/vehicle-catalog.md` in the repository root for the import lifecycle,
 API contract, upgrade instructions, and tests. Do not regenerate an already
 released migration to upgrade data; add a new versioned migration instead.

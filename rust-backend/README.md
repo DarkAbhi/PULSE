@@ -18,7 +18,7 @@ The Rust container listens on `RUST_PORT` (default `8083`); Compose publishes it
 
 Prometheus metrics are available internally at `http://rust-backend-api:9091/metrics`
 in Compose. This listener has no published host port and is separate from the
-public API. See [monitoring setup](../README.md#backend-and-resource-metrics).
+public API. See [monitoring setup](../docs/guides/monitoring.md#backend-and-resource-metrics).
 
 `GET /api/fitness-summary` requires an active API key in `Authorization: Bearer <key>` and returns only that key owner’s data. Missing, invalid, or revoked keys return `401`. It returns `{"snapshot": null | {...}, "workouts": [...]}` with the latest daily rings and up to three workouts: the latest traditional or functional strength workout first, then the latest run with distance and latest cycling workout with distance.
 

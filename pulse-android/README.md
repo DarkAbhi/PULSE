@@ -41,7 +41,7 @@ including meal setup when navigating across tabs. Wait for asynchronous setup
 reads before asserting navigation, and enter the relevant feature tab before
 opening its editors. Tests use isolated HTTP fixtures and require no backend.
 
-See [CI test verification](docs/ci-test-verification.md) for the fixes, local
+See [CI test verification](../docs/development-history/android/ci-test-verification.md) for the fixes, local
 results and remaining GitHub-run verification.
 
 ## Action feedback
@@ -61,7 +61,7 @@ Ktlint is applied to every module and the root Gradle scripts. It checks product
 
 ## User ownership
 
-Meal setup and preferences are shared with the web for the same account. Completing or skipping setup on either platform suppresses it on both; closing an unfinished journey does not. See [Meal plan onboarding](docs/meal-plan-onboarding.md) for behavior, API usage, and verification.
+Meal setup and preferences are shared with the web for the same account. Completing or skipping setup on either platform suppresses it on both; closing an unfinished journey does not. See [Meal plan onboarding](../docs/development-history/android/meal-plan-onboarding.md) for behavior, API usage, and verification.
 
 All feature APIs authenticate through the shared Ktor client. The current securely stored `life_session` is sent as `Authorization: Bearer <session token>` only to the configured API origin and `/api/` path. Login still captures the backend cookie; existing encrypted sessions restore without signing in again. Cookie transport is retained for compatibility with the production web proxy, which resolves the same session before forwarding to Go. Private API requests specify `Cache-Control: no-store`.
 
@@ -70,7 +70,7 @@ The backend derives record ownership from that session. Android does not add `us
 ## API addresses
 
 Garage vehicle selection now uses the backend VehiclesDB catalog and its `kind`
-contract. See [Garage vehicle catalog](docs/garage-vehicle-catalog.md) for the
+contract. See [Garage vehicle catalog](../docs/development-history/android/garage-vehicle-catalog.md) for the
 picker, identity editing, attribution, migrations, and verification details.
 
 Debug defaults to **`http://10.0.2.2:18081/api/`**, the emulator-accessible address for this repository's Go development container. Start the backend using the repository's development instructions. Android's localhost is the Android device, not the development computer.
@@ -91,7 +91,7 @@ HTTP relies on Tailscale for transport encryption. The backend must issue non-Se
 ## Signed personal release
 
 For a GitHub release build delivered to Telegram on every push to `migration`, see
-[Get a production APK in Telegram](docs/release-apk.md), including the four required
+[Get a production APK in Telegram](../docs/guides/android-release.md), including the four required
 repository secrets and optional production API URL override.
 
 Local signing uses the ignored `.signing/release.properties` file:
@@ -215,7 +215,7 @@ Profile, workout, finance, and notifications load in separate jobs. Each section
 
 Financial numbers are parsed directly from JSON numeric text into `BigDecimal`, never through `Double`. Display pads short fractions to two places and preserves every supplied decimal place; balances and progress are not fabricated or recomputed. All-zero backend values remain actual zero values.
 
-Home uses a sunlit illustrated room, a live India-time clock, a personalized greeting, and illustrated cards for the exact remaining balance and today’s workout status. Finance opens Financial Horizon; fitness opens the existing Fitness flow; the header opens Notifications. Cards stack on phones and at large font scales, with two columns on wider screens. The dark appearance dims the room and retains readable card colors. Generated artwork, prompts and asset paths are documented in [Dashboard artwork](docs/dashboard-artwork.md). You provides username, persisted System/Light/Dark appearance, and working logout. Spaces lists Fitness and Financial Horizon, the currently implemented spaces. Deferred space workflows, profile editing, notification mutations, and onboarding have no clickable placeholders.
+Home uses a sunlit illustrated room, a live India-time clock, a personalized greeting, and illustrated cards for the exact remaining balance and today’s workout status. Finance opens Financial Horizon; fitness opens the existing Fitness flow; the header opens Notifications. Cards stack on phones and at large font scales, with two columns on wider screens. The dark appearance dims the room and retains readable card colors. Generated artwork, prompts and asset paths are documented in [Dashboard artwork](../docs/development-history/android/dashboard-artwork.md). You provides username, persisted System/Light/Dark appearance, and working logout. Spaces lists Fitness and Financial Horizon, the currently implemented spaces. Deferred space workflows, profile editing, notification mutations, and onboarding have no clickable placeholders.
 
 Shared controls now live in **`core/ui/.../components/`**, one component per file; related models sit with the component that owns them. Themes/tokens and adaptive helpers remain beside that package. There are four type sizes, two weights, tabular/monospace metrics, 4dp spacing increments, 48dp targets, labeled selection semantics, native focus behavior, and tested contrast pairs. Error/retry cards use neutral surfaces so action text remains accessible.
 
@@ -432,7 +432,7 @@ A new meal may omit its time. The current Go update contract cannot clear an ass
 
 Meal and meal-time reads load independently and expose loading/error/retry states. Last confirmed meal values remain visible during refresh and failed toggles. No optimistic consumption change occurs: the response supplies the confirmed value. Failed/uncertain writes refresh server records, retain the draft and block another mutation until successful reads are explicitly reviewed. A meal saved for another week moves review to that target week before submission, persisting the selection so process reconstruction reviews the correct date. No mutation retries automatically; duplicate submissions are blocked synchronously.
 
-SavedStateHandle stores small editor fields, selected date, management mode and an interrupted-write marker. Scroll state uses Compose saved state; dirty drafts require discard confirmation and participate in the app's logout warning. Server records are reloaded rather than saved in a Bundle or database. Debug previews demonstrate phone/large text, tablet meal cards, illustrated empty states, saving and validation errors. Asset prompts are recorded in [meal-plan-design-assets.md](../docs/meal-plan-design-assets.md). The implementation reuses the installed [Compose saved-state APIs](https://developer.android.com/develop/ui/compose/state-saving) and [Ktor request APIs](https://ktor.io/docs/client-requests.html).
+SavedStateHandle stores small editor fields, selected date, management mode and an interrupted-write marker. Scroll state uses Compose saved state; dirty drafts require discard confirmation and participate in the app's logout warning. Server records are reloaded rather than saved in a Bundle or database. Debug previews demonstrate phone/large text, tablet meal cards, illustrated empty states, saving and validation errors. Asset prompts are recorded in [meal-plan-design-assets.md](../docs/development-history/design/meal-plan-design-assets.md). The implementation reuses the installed [Compose saved-state APIs](https://developer.android.com/develop/ui/compose/state-saving) and [Ktor request APIs](https://ktor.io/docs/client-requests.html).
 
 
 ### Phase 6 verification results — 17 October 2026
@@ -521,12 +521,12 @@ Phase 7 stops here. Phase 8 has not started.
 
 ## Custom visual foundation
 
-See [Design system](docs/design-system.md) for the Pulse-owned token architecture,
+See [Design system](../docs/development-history/android/design-system.md) for the Pulse-owned token architecture,
 light/dark colors, typography, shared components, font licenses and debug showcase.
-The [pre-implementation audit](docs/design-system-audit.md) records the previous
+The [pre-implementation audit](../docs/development-history/android/design-system-audit.md) records the previous
 Material styling dependencies and migration scope. Validation results are recorded
-in [design-system validation](docs/design-system-validation.md).
-The [29 October component-adoption audit](docs/design-system-adoption-audit-2026-10-29.md)
+in [design-system validation](../docs/development-history/android/design-system-validation.md).
+The [29 October component-adoption audit](../docs/development-history/android/design-system-adoption-audit-2026-10-29.md)
 details the app-wide follow-up, replacements, deliberate primitive exceptions and
 regression checks.
 

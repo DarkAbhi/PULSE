@@ -44,7 +44,7 @@ jobs:
   android-ui:
     name: Pulse Android (UI and device tests)
     runs-on: ubuntu-24.04
-    # Allow the complete suite to run sequentially on one emulator.
+    # The test command has a shorter deadline so diagnostics can upload first.
     timeout-minutes: 90
     env:
       MAESTRO_CLI_NO_ANALYTICS: '1'
@@ -76,6 +76,7 @@ jobs:
           unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/maestro/bin" >> "$GITHUB_PATH"
       - name: Run Android instrumentation tests
+        timeout-minutes: 55
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -92,9 +93,9 @@ jobs:
             adb shell input keyevent KEYCODE_WAKEUP
             adb shell wm dismiss-keyguard
             adb shell settings put secure show_ime_with_hard_keyboard 1
-            mkdir -p build/reports/device-environment
-            ./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest || { adb shell dumpsys power > build/reports/device-environment/power.txt; adb shell dumpsys window > build/reports/device-environment/window.txt; adb logcat -d > build/reports/device-environment/logcat.txt; exit 1; }
+            bash ../scripts/run-android-instrumentation.sh
       - name: Run Maestro smoke tests on a fresh emulator
+        timeout-minutes: 15
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -129,7 +130,7 @@ jobs:
               exit "$status"
             fi
       - name: Upload device test reports
-        if: ${{ !cancelled() }}
+        if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
           name: pulse-android-device-reports
@@ -216,6 +217,8 @@ jobs:
         run: python -m unittest discover -v -s hermes-mcp -p 'test_*.py'
       - name: Check the combined test reporter
         run: python -m unittest discover -v -s scripts -p 'test_test_report.py'
+      - name: Check Android instrumentation timeout and diagnostics
+        run: python -m unittest discover -v -s scripts -p 'test_android_instrumentation.py'
       - name: Run seed exporter tests
         run: python -m unittest discover -v -s scripts -p 'test_export_dev_seed.py'
 

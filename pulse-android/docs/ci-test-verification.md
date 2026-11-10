@@ -1,5 +1,51 @@
 # Android CI verification — 8 November 2026
 
+## Instrumentation cancellation — 10 November 2026
+
+Run `42778282245`, job `129701868149`, was cancelled because it exceeded the
+configured **90-minute job limit**. Instrumentation occupied 1h 26m 2s after
+setup/build. GitHub explicitly annotated the job with “The job has exceeded
+the maximum execution time of 1h30m0s”. There was no assertion failure or test
+name in the final Gradle output. The protobuf `sun.misc.Unsafe` messages are
+deprecation warnings; emulator ColorBuffer errors alone do not establish which
+test or emulator operation stalled.
+
+The old failure handler only ran after Gradle returned. Job-level cancellation
+could terminate it first, and `!cancelled()` skipped the artifact upload. That
+left no device report to diagnose the original stall.
+
+`scripts/run-android-instrumentation.sh` now streams TestRunner start/finish
+events to Actions while retaining full logcat and Gradle output. It passes a
+120-second test-method timeout to AndroidJUnitRunner, and wraps Gradle in a
+45-minute host deadline with a 30-second forced-termination grace period.
+The host deadline also covers hangs in test setup, rules, teardown, or device
+communication that the method timeout cannot reliably stop.
+
+On failure, the wrapper preserves the failing exit status and collects power,
+window/activity state, a screenshot and logcat, with bounded diagnostic commands.
+It also requests a Java thread dump from the debuggable app when available.
+The instrumentation action has a 55-minute step limit, Maestro has 15 minutes,
+and report upload uses `always()`. The complete suite still runs sequentially;
+no class filters, shards, retries, test exclusions or graphics-driver changes
+were introduced.
+
+Regression checks in `scripts/test_android_instrumentation.py` exercise success,
+failure through the output pipeline, host deadline expiry, and an unresponsive
+device without running Android or waiting for the actual deadline. The Hermes
+CI job runs these checks. This repairs timeout handling and observability;
+the exact cause of the original Linux stall remains unconfirmed without a
+reproduction or device diagnostics from that run.
+
+Local validation on 10 November: the current debug and test APKs built
+successfully. Direct AndroidJUnitRunner execution on the dedicated API 35
+Windows emulator passed **167/167 tests**, zero failures or ignored tests, in
+**641.361 seconds (10m 41s)**. A subsequent Gradle/UTP run with
+`timeout_msec=120000` passed the Account resize/large-text, Horizon resize/native
+picker, and Meal Plan live-resize cases: **3/3**, zero failures or ignored tests.
+All four wrapper regression checks and all five existing report checks passed;
+the workflow YAML and Bash syntax were validated. The Linux-hosted workflow has
+not been rerun with these changes, and the original stall did not reproduce.
+
 ## Workflow
 
 `.github/workflows/tests.yml` now runs all Android instrumentation tests in one

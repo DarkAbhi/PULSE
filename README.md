@@ -514,7 +514,7 @@ Maestro now runs two native Android smoke flows: the clean sign-in screen and
 required-field validation. They use an installed debug APK on an API 35 emulator,
 with no backend, account or database. Run `maestro test maestro/android/` using
 Java 21; see [Maestro smoke tests](maestro/README.md) for build and report commands.
-CI runs these flows after Android instrumentation on the same emulator and
+CI runs these flows after Android instrumentation on a fresh emulator and
 uploads JUnit/debug evidence in `pulse-android-device-reports`.
 
 Browser E2E coverage is paused in CI. Existing Maestro web flows are retained in
@@ -539,7 +539,7 @@ can also be started manually from GitHub Actions. Its independent jobs run:
   Next.js production build.
 - All Hermes MCP Python tests and seed exporter tests.
 - Android unit tests, lint and formatting, the full instrumentation suite, and
-  two small native Maestro smoke tests on one API 35 emulator.
+  two small native Maestro smoke tests on a fresh API 35 emulator.
 - Seed restoration, repeat runs, protection of existing data, date rebasing and
   rollback on error against disposable PostgreSQL databases, in a dedicated job.
 

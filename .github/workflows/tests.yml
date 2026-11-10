@@ -75,7 +75,7 @@ jobs:
           curl -fsSL https://github.com/mobile-dev-inc/Maestro/releases/download/cli-2.11.0/maestro.zip -o "$RUNNER_TEMP/maestro.zip"
           unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/maestro/bin" >> "$GITHUB_PATH"
-      - name: Run Android instrumentation and Maestro smoke tests
+      - name: Run Android instrumentation tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -92,10 +92,42 @@ jobs:
             adb shell input keyevent KEYCODE_WAKEUP
             adb shell wm dismiss-keyguard
             adb shell settings put secure show_ime_with_hard_keyboard 1
-            mkdir -p build/reports/device-environment build/reports/maestro
+            mkdir -p build/reports/device-environment
             ./gradlew --no-daemon --stacktrace :app:connectedDebugAndroidTest || { adb shell dumpsys power > build/reports/device-environment/power.txt; adb shell dumpsys window > build/reports/device-environment/window.txt; adb logcat -d > build/reports/device-environment/logcat.txt; exit 1; }
+      - name: Run Maestro smoke tests on a fresh emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          # Keep instrumentation processes and display overrides out of Maestro's device.
+          avd-name: pulse-maestro-smoke
+          force-avd-creation: true
+          emulator-port: 5554
+          # Drop transports left by the instrumentation emulator before starting this one.
+          pre-emulator-launch-script: adb kill-server
+          emulator-options: -no-window -gpu swangle -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          working-directory: pulse-android
+          script: |
+            adb shell svc power stayon true
+            adb shell settings put system screen_off_timeout 2147483647
+            adb shell input keyevent KEYCODE_WAKEUP
+            adb shell wm dismiss-keyguard
+            adb shell settings put secure show_ime_with_hard_keyboard 1
+            mkdir -p build/reports/maestro
             adb install -r -g app/build/outputs/apk/debug/app-debug.apk
-            JAVA_HOME="$JAVA_HOME_21_X64" PATH="$JAVA_HOME_21_X64/bin:$PATH" maestro test --format junit --output build/reports/maestro/junit.xml --debug-output build/reports/maestro/debug ../maestro/android/
+            # Flatten avoids the hidden .maestro directory that upload-artifact excludes.
+            if JAVA_HOME="$JAVA_HOME_21_X64" PATH="$JAVA_HOME_21_X64/bin:$PATH" maestro test --format junit --output build/reports/maestro/junit.xml --debug-output build/reports/maestro/debug --flatten-debug-output ../maestro/android/; then
+              echo "Maestro smoke tests passed"
+            else
+              status=$?
+              adb logcat -d > build/reports/maestro/logcat.txt || true
+              adb shell dumpsys window > build/reports/maestro/window.txt || true
+              tail -n 200 build/reports/maestro/debug/maestro.log || true
+              exit "$status"
+            fi
       - name: Upload device test reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7

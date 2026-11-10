@@ -16,12 +16,22 @@ cd pulse-android
 ./gradlew :app:assembleDebug
 adb install -r -g app/build/outputs/apk/debug/app-debug.apk
 cd ..
-MAESTRO_CLI_NO_ANALYTICS=1 maestro test --format junit --output test-results/maestro.xml --debug-output test-results/maestro-debug maestro/android/
+MAESTRO_CLI_NO_ANALYTICS=1 maestro test --format junit --output test-results/maestro.xml --debug-output test-results/maestro-debug --flatten-debug-output maestro/android/
 ```
 
 Use Java 21 for Maestro. The Android build uses Java 25. CI installs both and
-runs the smoke tests after instrumentation tests on the same emulator, then
-uploads their JUnit report and debug files in `pulse-android-device-reports`.
+runs the smoke tests after instrumentation tests on a separate, freshly created
+emulator. This keeps instrumentation processes, display overrides and device
+settings out of the smoke-test environment. The ADB server is restarted before
+the smoke emulator starts, removing transports left by the preceding device.
+Both stages reuse the built APKs.
+
+CI uses `--flatten-debug-output` so Maestro's command records, screenshots and
+logs are written directly under the report directory, instead of a hidden
+`.maestro` directory excluded by artifact uploads. On failure, CI also captures
+logcat and window state, prints the last 200 Maestro log lines and preserves the
+failing exit status. Reports are uploaded in `pulse-android-device-reports`.
+Flows and assertions are not retried.
 
 ## Paused browser coverage
 
@@ -33,8 +43,10 @@ directory, which also contains the paused browser flows.
 
 ## Verification
 
-Both native flows passed locally on the dedicated API 35 emulator using Maestro
-2.11.0 and Java 21: **2/2 flows in 26 seconds**. The debug APK built successfully;
-workflow YAML, native-only flow selection and the CI shell script were validated.
-The updated GitHub-hosted workflow still needs execution after these changes are
-pushed.
+Both native flows passed together on the isolated API 35 emulator using Maestro
+2.11.0 and Java 21: **2/2 flows in 29 seconds, then 2/2 in 25 seconds after an ADB
+server reset**. Workflow YAML, emulator isolation, native-only flow selection,
+Bash syntax and preservation of a failing Maestro exit status were validated.
+The GitHub report contained only `Unknown error`; local diagnostics reproduced
+an emulator transport disconnect. The updated GitHub-hosted workflow still needs
+execution to confirm that the isolated startup resolves its failure.

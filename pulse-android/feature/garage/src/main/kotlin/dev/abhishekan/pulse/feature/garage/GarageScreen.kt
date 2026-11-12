@@ -39,7 +39,7 @@ fun GarageRoute(onOpenVehicle: (Long) -> Unit) {
     ) { enabled ->
         Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
             GarageCollectionHeader(enabled, viewModel::addVehicle)
-            GarageSection(vehicles, viewModel::refresh) { items ->
+            GarageSection(vehicles, viewModel::refresh, showRefreshIndicator = false) { items ->
                 if (items.isEmpty()) {
                     PulseEmptyState(
                         stringResource(R.string.pulse_garage_room_for_your_first_ride),

@@ -245,9 +245,10 @@ private fun GarageReview(
 internal fun <T> GarageSection(
     section: GarageSection<T>,
     retry: () -> Unit,
+    showRefreshIndicator: Boolean = true,
     content: @Composable (T) -> Unit,
 ) {
-    if (section.loading && section.value != null) PulseRefreshIndicator()
+    if (showRefreshIndicator && section.loading && section.value != null) PulseRefreshIndicator()
     section.error?.let { PulseErrorState(it.message, retry) }
     section.value?.let { content(it) }
 }

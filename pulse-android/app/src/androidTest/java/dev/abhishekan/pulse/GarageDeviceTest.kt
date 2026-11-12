@@ -516,7 +516,7 @@ class GarageDeviceTest {
             return
         }
         scenario?.onActivity { activity ->
-            if (text.startsWith("Save ")) activity.window.decorView.clearFocus()
+            if (text == "Save" || text.startsWith("Save ")) activity.window.decorView.clearFocus()
         }
         compose.hideAppKeyboard(scenario!!)
         val button = (hasText(text) or hasContentDescription(text)) and hasClickAction() and isEnabled()
@@ -798,7 +798,8 @@ class GarageDeviceTest {
         val total = compose.onNodeWithContentDescription("Total cost (₹) · tank 1")
         assertEquals("", total.fetchSemanticsNode().config[SemanticsProperties.EditableText].text)
         compose.onNodeWithContentDescription("Price per litre (₹) · tank 1").performScrollTo().performClick()
-        compose.onNodeWithText("Save fuel fill-up").assertIsDisplayed()
+        compose.onNodeWithText("Save").assertIsDisplayed()
+        compose.onNodeWithText("Cancel").assertIsDisplayed()
         screenshot("fuel-cards-keyboard")
         scenario?.onActivity { activity ->
             activity
@@ -807,13 +808,19 @@ class GarageDeviceTest {
         }
         tap("Partial")
         tap("How does this affect efficiency?")
-        compose.onNodeWithText("A partial fill counts toward the next full-to-full efficiency interval.").performScrollTo().assertIsDisplayed()
-        tap("Missed fill-up")
         compose
-            .onNodeWithText(
-                "A missed fill resets the efficiency baseline. The next full tank starts a new interval.",
-            ).performScrollTo()
+            .onNode(hasText("A partial fill counts toward the next full-to-full efficiency interval.") and hasAnyAncestor(isDialog()))
             .assertIsDisplayed()
+        confirm("OK")
+        tap("Missed fill-up")
+        tap("How does this affect efficiency?")
+        compose
+            .onNode(
+                hasText("A missed fill resets the efficiency baseline. The next full tank starts a new interval.") and
+                    hasAnyAncestor(isDialog()),
+            )
+            .assertIsDisplayed()
+        confirm("OK")
         tap("Full")
         tap("Add second fuel tank")
         field("Quantity (L) · tank 2", "1")
@@ -829,17 +836,14 @@ class GarageDeviceTest {
                 .text,
         )
         tap("Remove second tank")
-        tap("Notes (optional)")
         field("Notes (optional)", "Evening pit stop")
-        tap("Hide notes")
         screenshot("fuel-cards-before-recreation")
         scenario?.recreate()
         screenshot("fuel-cards-after-recreation")
-        awaitText("Save fuel fill-up")
-        tap("Notes (optional)")
+        awaitText("Save")
         compose.onNodeWithText("Evening pit stop").performScrollTo().assertIsDisplayed()
         screenshot("fuel-cards-notes")
-        tap("Save fuel fill-up")
+        tap("Save")
         awaitText("1500")
         assertEquals(
             "Evening pit stop",
@@ -1391,8 +1395,8 @@ class GarageDeviceTest {
         compose.onNodeWithText("10 L").assertExists()
         screenshot("fuel-redesign")
         action("garage-fuel-41", "Edit")
-        awaitText("Save fuel fill-up")
-        tap("Cancel editing")
+        awaitText("Save")
+        tap("Cancel")
         action("garage-fuel-41", "Delete")
         confirm("Delete")
         awaitText("No fuel fill-ups")
@@ -1502,7 +1506,7 @@ class GarageDeviceTest {
         field("Price per litre (₹) · tank 1", "100.1")
         pick("Fuel type", "Petrol", "Diesel")
         screenshot("fuel-editor")
-        tap("Save fuel fill-up")
+        tap("Save")
         awaitText("1234.5")
         assertEquals(
             "diesel",
@@ -1524,7 +1528,7 @@ class GarageDeviceTest {
             compose.onNodeWithContentDescription("Quantity (L) · tank 1").fetchSemanticsNode().config[SemanticsProperties.EditableText].text,
         )
         field("Station / vendor (optional)", "Roadside")
-        tap("Save fuel fill-up")
+        tap("Save")
         awaitText("Roadside")
         action("garage-fuel-102", "Delete")
         confirm("Delete")

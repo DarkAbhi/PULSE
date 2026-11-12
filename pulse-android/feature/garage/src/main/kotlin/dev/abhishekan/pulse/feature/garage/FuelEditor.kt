@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -48,6 +50,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
+import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -58,6 +61,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 private val fuelFormWidth = 720.dp
 private val fillOptions = listOf("full", "partial", "missed")
@@ -72,7 +76,6 @@ internal fun FuelEditor(
     val enabled = !busy
     val tanks = draft["tanks"].toIntOrNull() ?: 1
     val focus = LocalFocusManager.current
-    var notesExpanded by rememberSaveable { mutableStateOf(draft["notes"].isNotBlank()) }
 
     Column(
         Modifier.widthIn(max = fuelFormWidth).fillMaxWidth(),
@@ -107,24 +110,13 @@ internal fun FuelEditor(
                 stringResource(R.string.pulse_garage_station_vendor_optional),
                 enabled,
             )
-            PulseButton(
-                stringResource(if (notesExpanded) R.string.pulse_garage_hide_notes else R.string.pulse_garage_notes_optional),
-                {
-                    focus.clearFocus()
-                    notesExpanded = !notesExpanded
-                },
+            FuelInput(
+                draft["notes"],
+                { change(draft.set("notes", it)) },
+                stringResource(R.string.pulse_garage_notes_optional),
                 enabled = enabled,
-                style = PulseButtonStyle.Text,
+                multiline = true,
             )
-            if (notesExpanded) {
-                FuelInput(
-                    draft["notes"],
-                    { change(draft.set("notes", it)) },
-                    stringResource(R.string.pulse_garage_notes_optional),
-                    enabled,
-                    multiline = true,
-                )
-            }
         }
         error?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = PulseTheme.colors.error) }
     }
@@ -416,12 +408,16 @@ private fun FuelFillSelector(
     onSelect: (String) -> Unit,
 ) {
     var help by rememberSaveable { mutableStateOf(false) }
+    val focus = LocalFocusManager.current
     Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             PulseText(stringResource(R.string.pulse_garage_fuel_fill_type), Modifier.weight(1f), style = PulseTextStyle.Label)
             PulseButton(
                 stringResource(R.string.pulse_garage_fill_help),
-                { help = !help },
+                {
+                    focus.clearFocus()
+                    help = true
+                },
                 enabled = enabled,
                 style = PulseButtonStyle.Icon,
                 icon = { Icon(painterResource(R.drawable.garage_info), null, Modifier.size(20.dp)) },
@@ -440,19 +436,22 @@ private fun FuelFillSelector(
                 )
             }
         }
-        if (help) {
-            PulseText(
-                stringResource(
-                    when (fill) {
-                        "partial" -> R.string.pulse_garage_partial_help
-                        "missed" -> R.string.pulse_garage_missed_help
-                        else -> R.string.pulse_garage_full_help
-                    },
-                ),
-                style = PulseTextStyle.Body2,
-                color = PulseTheme.colors.textSecondary,
-            )
-        }
+    }
+    if (help) {
+        val message =
+            when (fill) {
+                "partial" -> R.string.pulse_garage_partial_help
+                "missed" -> R.string.pulse_garage_missed_help
+                else -> R.string.pulse_garage_full_help
+            }
+        PulseDialog(
+            onDismissRequest = { help = false },
+            confirmButton = {
+                PulseButton(stringResource(android.R.string.ok), { help = false }, style = PulseButtonStyle.Text)
+            },
+            title = { PulseText(stringResource(R.string.pulse_garage_fill_help), style = PulseTextStyle.Title) },
+            text = { PulseText(stringResource(message), Modifier.verticalScroll(rememberScrollState())) },
+        )
     }
 }
 
@@ -479,7 +478,7 @@ internal fun FuelEditorActions(
             maxItemsInEachRow = columns,
         ) {
             PulseButton(
-                stringResource(R.string.pulse_garage_cancel_editing),
+                stringResource(CoreUiR.string.pulse_ui_cancel),
                 {
                     focus.clearFocus()
                     cancel()

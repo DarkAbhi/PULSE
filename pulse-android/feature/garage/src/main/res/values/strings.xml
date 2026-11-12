@@ -152,7 +152,7 @@
     <string name="pulse_garage_save_vehicle">"Save vehicle"</string>
     <string name="pulse_garage_add_fuel">"Add fuel fill-up"</string>
     <string name="pulse_garage_edit_fuel">"Edit fuel fill-up"</string>
-    <string name="pulse_garage_save_fuel">"Save fuel fill-up"</string>
+    <string name="pulse_garage_save_fuel">"Save"</string>
     <string name="pulse_garage_add_care">"Add maintenance"</string>
     <string name="pulse_garage_edit_care">"Edit maintenance"</string>
     <string name="pulse_garage_save_care">"Save maintenance"</string>
@@ -179,7 +179,6 @@
     <string name="pulse_garage_trip_details">Trip details</string>
     <string name="pulse_garage_tank_details">Tank details</string>
     <string name="pulse_garage_optional_details">Optional details</string>
-    <string name="pulse_garage_hide_notes">Hide notes</string>
     <string name="pulse_garage_missed_fill">Missed fill-up</string>
     <string name="pulse_garage_fill_help">How does this affect efficiency?</string>
     <string name="pulse_garage_partial_help">A partial fill counts toward the next full-to-full efficiency interval.</string>

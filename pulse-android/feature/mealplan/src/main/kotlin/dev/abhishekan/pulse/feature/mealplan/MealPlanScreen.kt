@@ -278,7 +278,6 @@ internal fun MealPlanScreen(
                                 flat = size != PulseWindowSize.Compact,
                             )
                         } else if (state.managing) {
-                            if (state.times.loading && state.times.value != null) PulseRefreshIndicator()
                             MealSectionContent(state.times, vm::refreshTimes, showLoading = false) { times ->
                                 MealTimes(
                                     times,

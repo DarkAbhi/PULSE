@@ -746,22 +746,29 @@ class GarageDeviceTest {
         }
     }
 
-    @Test fun vehicleDetailsUseSeparatePageWithTopBackAndSurviveRecreation() {
+    @Test fun vehicleDetailsKeepTabOnRecreationAndStartOnOverviewForEachNewEntry() {
+        vehicles[2] = "Second vehicle"
         launchGarage()
         select()
         compose.onNodeWithText("Your garage").assertDoesNotExist()
         compose.onNodeWithText("Add vehicle").assertDoesNotExist()
         compose.onNodeWithContentDescription("Back to Garage").assertIsDisplayed()
+        tap("Maintenance")
+
         scenario!!.recreate()
-        awaitText("Care, at a glance")
+        awaitText("Add maintenance")
         compose.onNodeWithContentDescription("Back to Garage").assertIsDisplayed().performClick()
         awaitText("Your garage")
-        compose.onNodeWithContentDescription("Back to Garage").assertDoesNotExist()
-        select()
-        compose.onNodeWithText("Care, at a glance").performScrollTo()
-        compose.onNodeWithContentDescription("Back to Garage").assertIsDisplayed()
+
+        tap("View Second vehicle")
+        awaitText("Care, at a glance")
+        tap("Fuel")
+        awaitText("Fuel history")
         scenario!!.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         awaitText("Your garage")
+
+        tap("View Second vehicle")
+        awaitText("Care, at a glance")
     }
 
     @Test fun pullToRefreshLoadsUpdatedVehicleHistory() {

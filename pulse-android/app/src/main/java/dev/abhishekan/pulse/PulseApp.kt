@@ -72,6 +72,7 @@ import dev.abhishekan.pulse.feature.auth.LoginRoute
 import dev.abhishekan.pulse.feature.fitness.FitnessRoute
 import dev.abhishekan.pulse.feature.fitness.WorkoutRoute
 import dev.abhishekan.pulse.feature.garage.GarageRoute
+import dev.abhishekan.pulse.feature.garage.VehicleDetailRoute
 import dev.abhishekan.pulse.feature.home.HomeRoute
 import dev.abhishekan.pulse.feature.horizon.HorizonRoute
 import dev.abhishekan.pulse.feature.mealplan.MealPlanRoute
@@ -305,16 +306,20 @@ private fun SignedInApp(
                             composable(AppDestination.MealPlan.route) {
                                 MealPlanRoute()
                             }
-                            composable(AppDestination.Garage.route) {
-                                GarageRoute()
+                            composable(AppDestination.Garage.route) { garage ->
+                                GarageRoute { id ->
+                                    if (nav.currentBackStackEntry == garage) nav.navigate(AppDestination.Vehicle.withId(id))
+                                }
                             }
                             composable(
                                 AppDestination.Vehicle.route,
                                 arguments = listOf(navArgument("id") { type = NavType.LongType }),
                             ) { vehicle ->
-                                GarageRoute(
-                                    initialVehicle = vehicle.arguments?.getLong("id"),
-                                    backLabel = backToNotifications ?: stringResource(R.string.pulse_app_back_to_garage),
+                                VehicleDetailRoute(
+                                    onUnavailable = {
+                                        if (nav.currentBackStackEntry == vehicle) nav.popBackStack()
+                                    },
+                                    backLabel = backToNotifications,
                                 )
                             }
                             composable(AppDestination.Horizon.route) {
@@ -353,7 +358,7 @@ private fun SignedInApp(
                                     backLabel = if (isTablet) null else stringResource(R.string.pulse_app_back_to_home),
                                 ) { DebugGalleryAction { nav.navigateSingleTop(AppDestination.Gallery.path) } }
                             }
-                            composable(AppDestination.Notifications.route) {
+                            composable(AppDestination.Notifications.route) { notifications ->
                                 NotificationsRoute(
                                     onOpen = { target ->
                                         // Keep Notifications underneath the destination it opened.
@@ -366,7 +371,7 @@ private fun SignedInApp(
                                                 is NotificationTarget.Workout -> AppDestination.Workout.withId(target.id)
                                                 is NotificationTarget.Vehicle -> AppDestination.Vehicle.withId(target.id)
                                             }
-                                        nav.navigateSingleTop(route)
+                                        if (nav.currentBackStackEntry == notifications) nav.navigateSingleTop(route)
                                     },
                                     backLabel = stringResource(R.string.pulse_app_back_to_home),
                                 )

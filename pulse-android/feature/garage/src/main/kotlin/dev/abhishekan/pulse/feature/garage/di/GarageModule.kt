@@ -5,6 +5,7 @@ import dev.abhishekan.pulse.core.domain.usecase.GetVehicleHistory
 import dev.abhishekan.pulse.core.domain.usecase.SearchVehicleCatalog
 import dev.abhishekan.pulse.core.domain.usecase.UploadGarageReceipt
 import dev.abhishekan.pulse.feature.garage.GarageViewModel
+import dev.abhishekan.pulse.feature.garage.VehicleDetailViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -18,4 +19,5 @@ val garageModule =
         factoryOf(::UploadGarageReceipt)
         factoryOf(::DownloadGarageReceipt)
         viewModelOf(::GarageViewModel)
+        viewModelOf(::VehicleDetailViewModel)
     }

@@ -22,6 +22,7 @@ import dev.abhishekan.pulse.core.domain.usecase.DownloadGarageReceipt
 import dev.abhishekan.pulse.core.domain.usecase.GetVehicleHistory
 import dev.abhishekan.pulse.core.domain.usecase.SearchVehicleCatalog
 import dev.abhishekan.pulse.core.domain.usecase.UploadGarageReceipt
+import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.CompletableDeferred
@@ -92,8 +93,8 @@ class GarageViewModelTest {
 
         override suspend fun history(vehicle: Long): Outcome<VehicleHistory> {
             reads++
-            return failure?.let { Outcome.Error(it) }
-                ?: Outcome.Success(history)
+            val error = failure ?: Failure.NotFound.takeIf { vehicles.none { it.id == vehicle } }
+            return error?.let { Outcome.Error(it) } ?: Outcome.Success(history)
         }
 
         override suspend fun apply(change: GarageChange): Outcome<Unit> {
@@ -164,9 +165,9 @@ class GarageViewModelTest {
     @Test fun manualMatchDebouncesDoesNotSelectAndClearsOnInputChange() =
         runTest {
             val vm = vm()
-            vm.create(GarageForm.Vehicle)
+            vm.addVehicle()
             vm.update(
-                vm.uiState.value.draft!!
+                vm.editorState.value.draft!!
                     .set(
                         "catalogMode",
                         "manual",
@@ -176,24 +177,24 @@ class GarageViewModelTest {
             )
             advanceTimeBy(200)
             vm.update(
-                vm.uiState.value.draft!!
+                vm.editorState.value.draft!!
                     .set("modelName", "Civic"),
             )
             advanceUntilIdle()
             assertEquals(listOf(Triple("car", "Honda", "Civic")), matchCalls)
-            val draft = vm.uiState.value.draft!!
+            val draft = vm.editorState.value.draft!!
             assertEquals("manual", draft["catalogMode"])
             assertEquals("", draft["catalogId"])
             assertEquals("Honda Civic", draft["name"])
             assertTrue(repo.writes.isEmpty())
-            val match = vm.uiState.value.match.value!!
+            val match = vm.editorState.value.match.value!!
             val accepted = draft.set("name", "My car").useMatch(match)
             assertEquals("car/honda/civic", accepted["catalogId"])
             assertEquals("My car", accepted["name"])
             vm.update(draft.set("modelName", "Other"))
-            assertNull(vm.uiState.value.match.value)
+            assertNull(vm.editorState.value.match.value)
             advanceUntilIdle()
-            assertNull(vm.uiState.value.match.value)
+            assertNull(vm.editorState.value.match.value)
         }
 
     @Test fun vehicleWizardRestoresStepAndValidatesRequiredChoices() {
@@ -221,42 +222,42 @@ class GarageViewModelTest {
     @Test fun catalogSearchDebouncesAndKindChangeClearsDependentIdentity() =
         runTest {
             val vm = vm()
-            vm.create(GarageForm.Vehicle)
+            vm.addVehicle()
             vm.update(
-                vm.uiState.value.draft!!
+                vm.editorState.value.draft!!
                     .set("vehicleKind", "car")
                     .set("makeQuery", "H"),
             )
             vm.update(
-                vm.uiState.value.draft!!
+                vm.editorState.value.draft!!
                     .set("makeQuery", "Honda"),
             )
             advanceTimeBy(251)
             runCurrent()
             assertEquals(listOf(Triple("car", null, "Honda")), catalogCalls)
             vm.update(
-                vm.uiState.value.draft!!
+                vm.editorState.value.draft!!
                     .chooseMake(VehicleCatalogOption("honda", "Honda")),
             )
             advanceUntilIdle()
             assertEquals(
                 "car/honda/civic",
-                vm.uiState.value.models.value!!
+                vm.editorState.value.models.value!!
                     .single()
                     .id,
             )
             vm.update(
-                vm.uiState.value.draft!!
+                vm.editorState.value.draft!!
                     .chooseModel(VehicleCatalogOption("car/honda/civic", "Civic")),
             )
-            assertEquals("Honda Civic", vm.uiState.value.draft!!["name"])
+            assertEquals("Honda Civic", vm.editorState.value.draft!!["name"])
             vm.update(
-                vm.uiState.value.draft!!
+                vm.editorState.value.draft!!
                     .set("vehicleKind", "motorcycle"),
             )
-            assertEquals("", vm.uiState.value.draft!!["catalogId"])
-            assertEquals("", vm.uiState.value.draft!!["makeSlug"])
-            assertNull(vm.uiState.value.models.value)
+            assertEquals("", vm.editorState.value.draft!!["catalogId"])
+            assertEquals("", vm.editorState.value.draft!!["makeSlug"])
+            assertNull(vm.editorState.value.models.value)
             advanceUntilIdle()
             assertEquals("motorcycle", catalogCalls.last().first)
         }
@@ -265,25 +266,25 @@ class GarageViewModelTest {
         runTest {
             catalogFailure = Failure.Connection
             val vm = vm()
-            vm.create(GarageForm.Vehicle)
+            vm.addVehicle()
             vm.update(
-                vm.uiState.value.draft!!
+                vm.editorState.value.draft!!
                     .set("vehicleKind", "bus")
                     .set("name", "Our bus"),
             )
             advanceUntilIdle()
-            assertEquals(Failure.Connection, vm.uiState.value.makes.error)
+            assertEquals(Failure.Connection, vm.editorState.value.makes.error)
             catalogFailure = null
             vm.retryCatalog()
             advanceUntilIdle()
             assertEquals(
                 "Honda",
-                vm.uiState.value.makes.value!!
+                vm.editorState.value.makes.value!!
                     .single()
                     .name,
             )
             vm.update(
-                vm.uiState.value.draft!!
+                vm.editorState.value.draft!!
                     .set("catalogMode", "manual")
                     .set("vehicleFuel", "diesel"),
             )
@@ -308,7 +309,7 @@ class GarageViewModelTest {
                     .set("vehicleFuel", "petrol")
             val vm = vm(SavedStateHandle(mapOf("draft" to selected.saved())))
             advanceUntilIdle()
-            assertEquals("Civic", vm.uiState.value.draft!!["modelQuery"])
+            assertEquals("Civic", vm.editorState.value.draft!!["modelQuery"])
             vm.save()
             advanceUntilIdle()
             val change = repo.writes.single() as GarageChange.SaveVehicle
@@ -332,73 +333,74 @@ class GarageViewModelTest {
     private fun vm(saved: SavedStateHandle = SavedStateHandle()) =
         GarageViewModel(
             repo,
-            GetVehicleHistory(repo),
             ApplyGarageChange(repo),
-            UploadGarageReceipt(repo),
-            DownloadGarageReceipt(repo),
             saved,
             SearchVehicleCatalog(catalog),
-        ).also {
-            models.put("garage", it)
-        }
+            UnsavedChanges(),
+        ).also { models.put("garage", it) }
 
-    @Test fun refreshKeepsVehicleAndHistoryDataIncludingOnFailure() =
+    private fun detail(
+        id: Long = 1,
+        saved: SavedStateHandle = SavedStateHandle(mapOf("id" to id)),
+    ) = VehicleDetailViewModel(
+        GetVehicleHistory(repo),
+        ApplyGarageChange(repo),
+        UploadGarageReceipt(repo),
+        DownloadGarageReceipt(repo),
+        saved,
+        SearchVehicleCatalog(catalog),
+        UnsavedChanges(),
+    ).also { models.put("vehicle/$id", it) }
+
+    @Test fun refreshingDetailKeepsHistoryOnFailure() =
         runTest {
-            val vm = vm()
+            val vm = detail()
             runCurrent()
-            vm.select(1)
-            runCurrent()
-            val previous = vm.uiState.value
+            val previous = vm.uiState.value.history.value
             repo.failure = Failure.Connection
             vm.refresh()
-            assertTrue(vm.uiState.value.vehicles.loading)
             assertTrue(vm.uiState.value.history.loading)
-            assertEquals(previous.vehicles.value, vm.uiState.value.vehicles.value)
-            assertEquals(previous.history.value, vm.uiState.value.history.value)
+            assertEquals(previous, vm.uiState.value.history.value)
             runCurrent()
             assertEquals(Failure.Connection, vm.uiState.value.history.error)
-            assertEquals(previous.history.value, vm.uiState.value.history.value)
-            repo.vehicles = repo.vehicles + Vehicle(2, "Other", "motorcycle", listOf("petrol"))
-            vm.select(2)
-            assertNull(vm.uiState.value.history.value)
-            runCurrent()
-        }
+            assertEquals(previous, vm.uiState.value.history.value)
 
-    @Test fun missingSelectedVehicleReturnsToCollectionWithFeedbackEvenWhenListFinishesFirst() =
-        runTest {
-            repo.vehicles = emptyList()
-            val vm = vm(SavedStateHandle(mapOf("vehicle" to 999L)))
-            runCurrent()
-            assertNull(vm.uiState.value.vehicle)
-            assertEquals(Failure.NotFound.message, vm.uiState.value.message)
-        }
-
-    @Test fun historyFailureKeepsCollectionAndRetries() =
-        runTest {
-            val vm = vm()
-            runCurrent()
-            repo.failure = Failure.Connection
-            vm.select(1)
-            runCurrent()
-            assertEquals(
-                1,
-                vm.uiState.value.vehicles.value
-                    ?.size,
-            )
-            assertEquals(Failure.Connection, vm.uiState.value.history.error)
             repo.failure = null
-            vm.refreshHistory()
+            vm.refresh()
             runCurrent()
             assertNotNull(vm.uiState.value.history.value)
+            assertNull(vm.uiState.value.history.error)
+        }
+
+    @Test fun eachVehicleDetailEntryStartsOnOverview() =
+        runTest {
+            repo.vehicles = repo.vehicles + Vehicle(2, "Other", "motorcycle", listOf("petrol"))
+            val first = detail()
+            runCurrent()
+            first.tab(GarageTab.Care)
+
+            val other = detail(2)
+            assertEquals(2L, other.uiState.value.vehicleId)
+            assertEquals(GarageTab.Overview, other.uiState.value.tab)
+            assertEquals(GarageTab.Care, first.uiState.value.tab)
+
+            val reopened = detail()
+            assertEquals(GarageTab.Overview, reopened.uiState.value.tab)
+        }
+
+    @Test fun missingVehicleClearsDetailAndReportsNotFound() =
+        runTest {
+            val vm = detail(999)
+            runCurrent()
+            assertNull(vm.uiState.value.history.value)
+            assertEquals(Failure.NotFound, vm.uiState.value.history.error)
         }
 
     @Test fun duplicateWritesBlockedAndRefreshAfterSuccess() =
         runTest {
             val gate = CompletableDeferred<Outcome<Unit>>()
             repo.write = { gate.await() }
-            val vm = vm()
-            runCurrent()
-            vm.select(1)
+            val vm = detail()
             runCurrent()
             vm.mutate(GarageChange.Air(1))
             vm.mutate(GarageChange.Air(1))
@@ -407,7 +409,7 @@ class GarageViewModelTest {
             gate.complete(Outcome.Success(Unit))
             runCurrent()
             assertEquals(2, repo.reads)
-            assertFalse(vm.uiState.value.busy)
+            assertFalse(vm.editorState.value.busy)
         }
 
     @Test fun failedSaveRequiresRefreshedRecordsAndExplicitReview() =
@@ -416,13 +418,11 @@ class GarageViewModelTest {
                 repo.failure = Failure.Connection
                 Outcome.Error(Failure.Timeout)
             }
-            val vm = vm()
-            runCurrent()
-            vm.select(1)
+            val vm = detail()
             runCurrent()
             vm.mutate(GarageChange.Air(1))
             runCurrent()
-            assertTrue(vm.uiState.value.reviewRequired)
+            assertTrue(vm.editorState.value.reviewRequired)
             vm.acknowledgeReview()
             vm.mutate(GarageChange.Air(1))
             runCurrent()
@@ -431,7 +431,7 @@ class GarageViewModelTest {
             vm.refresh()
             runCurrent()
             vm.acknowledgeReview()
-            assertFalse(vm.uiState.value.reviewRequired)
+            assertFalse(vm.editorState.value.reviewRequired)
         }
 
     @Test fun processRestoreKeepsDirtyDraftAndPendingWrite() =
@@ -444,27 +444,26 @@ class GarageViewModelTest {
                     ).set("quantity0", "2.123456789")
                     .set("odometer", "120")
             val vm =
-                vm(
-                    SavedStateHandle(
-                        mapOf(
-                            "draft" to draft.saved(),
-                            "vehicle" to 1L,
-                            "pending" to true,
-                            "tab" to "Fuel",
+                detail(
+                    saved =
+                        SavedStateHandle(
+                            mapOf(
+                                "draft" to draft.saved(),
+                                "id" to 1L,
+                                "pending" to true,
+                                "tab" to "Fuel",
+                            ),
                         ),
-                    ),
                 )
             runCurrent()
-            assertEquals(draft, vm.uiState.value.draft)
-            assertTrue(vm.uiState.value.reviewRequired)
+            assertEquals(draft, vm.editorState.value.draft)
+            assertTrue(vm.editorState.value.reviewRequired)
             assertEquals(GarageTab.Fuel, vm.uiState.value.tab)
         }
 
     @Test fun validationsRejectNegativeValuesMissingOperandsAndBackwardNewOdometer() =
         runTest {
-            val vm = vm()
-            runCurrent()
-            vm.select(1)
+            val vm = detail()
             runCurrent()
             val base =
                 GarageDraft
@@ -480,7 +479,7 @@ class GarageViewModelTest {
             assertTrue(repo.writes.isEmpty())
             assertEquals(
                 uiText(R.string.pulse_garage_odometer_must_be_at_least_1_s_km_the, "100"),
-                vm.uiState.value.error,
+                vm.editorState.value.error,
             )
             val apply = ApplyGarageChange(repo)
             assertFalse(
@@ -503,11 +502,11 @@ class GarageViewModelTest {
             )
         }
 
-    @Test fun deletionRemovesMissingSelectionAndKeepsNoStaleDetail() =
+    @Test fun deletingVehicleClosesDetailAndRefreshesCollectionOnResume() =
         runTest {
-            val vm = vm()
-            runCurrent()
-            vm.select(1)
+            val collection = vm()
+            collection.resume()
+            val vm = detail()
             runCurrent()
             repo.write =
                 {
@@ -516,26 +515,29 @@ class GarageViewModelTest {
                 }
             vm.mutate(GarageChange.Delete(GarageRecord.Vehicle, 1))
             runCurrent()
-            assertNull(vm.uiState.value.vehicle)
+            assertTrue(vm.uiState.value.deleted)
             assertNull(vm.uiState.value.history.value)
+            val previousVehicles = collection.vehicles.value.value
+            assertEquals(1, previousVehicles?.size)
+            collection.resume()
+            runCurrent()
+            assertEquals(emptyList<Vehicle>(), collection.vehicles.value.value)
         }
 
     @Test fun failedAttachmentKeepsMaintenanceAndAllowsReview() =
         runTest {
-            val vm = vm()
-            runCurrent()
-            vm.select(1)
+            val vm = detail()
             runCurrent()
             repo.uploadResult =
                 Outcome.Error(Failure.Server)
-            vm.upload(1, 2, "content://fixture/receipt")
+            vm.upload(2, "content://fixture/receipt")
             runCurrent()
-            assertTrue(vm.uiState.value.reviewRequired)
+            assertTrue(vm.editorState.value.reviewRequired)
             assertNotNull(vm.uiState.value.history.value)
             assertNull(vm.uiState.value.progress)
             assertEquals(
                 uiText(R.string.pulse_garage_uncertain_change, Failure.Server.message),
-                vm.uiState.value.message,
+                vm.editorState.value.message,
             )
         }
 
@@ -666,7 +668,7 @@ class GarageViewModelTest {
             vm.save()
             runCurrent()
             assertTrue(repo.writes.isEmpty())
-            assertNotNull(vm.uiState.value.error)
+            assertNotNull(vm.editorState.value.error)
 
             val single = draft.set("vehicleKind", "car").set("vehicleFuel", "petrol")
             val apply = ApplyGarageChange(repo)

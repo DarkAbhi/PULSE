@@ -50,8 +50,6 @@ import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseSwitch
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -64,16 +62,10 @@ internal fun FixedObligationEditor(
     data: HorizonOverview?,
     busy: Boolean,
     error: UiText?,
-    blocked: Boolean,
     onChange: (HorizonDraft) -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit,
 ) {
     val colors = PulseTheme.colors
-    val keyboard = LocalSoftwareKeyboardController.current
     val editing = draft.id != null
-    val saveLabel = stringResource(if (editing) R.string.pulse_horizon_obligation_save_changes else R.string.pulse_horizon_save_deduction)
-    val cancelLabel = stringResource(R.string.pulse_horizon_cancel_editing)
     BoxWithConstraints(Modifier.widthIn(max = 1000.dp).fillMaxWidth().testTag("fixed-obligation-editor")) {
         val wide = maxWidth >= 600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
         val categoryWidth = 104.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
@@ -162,25 +154,6 @@ internal fun FixedObligationEditor(
                     )
                     error?.let {
                         PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = colors.error)
-                    }
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        PulseButton(
-                            stringResource(R.string.pulse_horizon_obligation_cancel),
-                            onCancel,
-                            Modifier.weight(1f).heightIn(min = 56.dp).semantics { contentDescription = cancelLabel },
-                            enabled = !busy,
-                            variant = PulseButtonVariant.Secondary,
-                        )
-                        PulseButton(
-                            if (editing || wide) saveLabel else stringResource(R.string.pulse_horizon_obligation_save),
-                            {
-                                keyboard?.hide()
-                                onSave()
-                            },
-                            Modifier.weight(if (wide) 1.3f else 1f).heightIn(min = 56.dp).semantics { contentDescription = saveLabel },
-                            enabled = !blocked && !busy && data != null,
-                            loading = busy,
-                        )
                     }
                 }
             }

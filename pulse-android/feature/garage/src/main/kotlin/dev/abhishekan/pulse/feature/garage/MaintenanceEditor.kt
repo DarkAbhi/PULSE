@@ -48,7 +48,6 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerSheet
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
@@ -65,11 +64,8 @@ import java.time.format.FormatStyle
 internal fun MaintenanceEditor(
     draft: GarageDraft,
     busy: Boolean,
-    blocked: Boolean,
     error: UiText?,
     change: (GarageDraft) -> Unit,
-    save: () -> Unit,
-    cancel: () -> Unit,
 ) {
     var picker by rememberSaveable { mutableStateOf<String?>(null) }
     val focus = LocalFocusManager.current
@@ -205,23 +201,6 @@ internal fun MaintenanceEditor(
             }
         }
         error?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = colors.error) }
-        PulseButton(
-            stringResource(R.string.pulse_garage_save_care),
-            {
-                focus.clearFocus()
-                save()
-            },
-            Modifier.fillMaxWidth().heightIn(min = 56.dp),
-            enabled =
-                enabled && !blocked,
-            loading = busy,
-        )
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            PulseButton(stringResource(R.string.pulse_garage_cancel_editing), {
-                focus.clearFocus()
-                cancel()
-            }, enabled = enabled, style = PulseButtonStyle.Text)
-        }
     }
     if (enabled) {
         when (picker) {

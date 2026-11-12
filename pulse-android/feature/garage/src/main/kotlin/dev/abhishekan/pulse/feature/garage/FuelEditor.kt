@@ -1,7 +1,6 @@
 package dev.abhishekan.pulse.feature.garage
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -61,9 +60,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
-private val fuelFormWidth = 720.dp
+internal val fuelFormWidth = 720.dp
 private val fillOptions = listOf("full", "partial", "missed")
 
 @Composable
@@ -452,51 +450,5 @@ private fun FuelFillSelector(
             title = { PulseText(stringResource(R.string.pulse_garage_fill_help), style = PulseTextStyle.Title) },
             text = { PulseText(stringResource(message), Modifier.verticalScroll(rememberScrollState())) },
         )
-    }
-}
-
-@Composable
-internal fun FuelEditorActions(
-    busy: Boolean,
-    blocked: Boolean,
-    save: () -> Unit,
-    cancel: () -> Unit,
-) {
-    val focus = LocalFocusManager.current
-    BoxWithConstraints(
-        Modifier
-            .widthIn(max = fuelFormWidth)
-            .fillMaxWidth()
-            .background(PulseTheme.colors.background)
-            .padding(vertical = PulseTokens.small),
-    ) {
-        val columns = if (maxWidth / LocalDensity.current.fontScale >= 288.dp) 2 else 1
-        FlowRow(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-            verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
-            maxItemsInEachRow = columns,
-        ) {
-            PulseButton(
-                stringResource(CoreUiR.string.pulse_ui_cancel),
-                {
-                    focus.clearFocus()
-                    cancel()
-                },
-                Modifier.weight(1f),
-                enabled = !busy,
-                variant = PulseButtonVariant.Secondary,
-            )
-            PulseButton(
-                stringResource(R.string.pulse_garage_save_fuel),
-                {
-                    focus.clearFocus()
-                    save()
-                },
-                Modifier.weight(1.4f),
-                enabled = !busy && !blocked,
-                loading = busy,
-            )
-        }
     }
 }

@@ -375,13 +375,9 @@ class AccountNotificationsDeviceTest {
         hideKeyboard()
         val button = hasText(text) and hasClickAction() and isEnabled()
         compose.waitUntil(20_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
-        compose
-            .onAllNodes(button)[0]
-            .apply {
-                if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) {
-                    performScrollTo()
-                }
-            }.performSemanticsAction(SemanticsActions.OnClick) { it() }
+        val node = compose.onAllNodes(button)[0]
+        compose.scrollToDisplayed(node)
+        node.performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
     private fun field(
@@ -452,7 +448,7 @@ class AccountNotificationsDeviceTest {
     private fun createKey(label: String = "Reader") {
         tap("Create API key")
         field("Key name", label)
-        tap("Save changes")
+        tap("Create")
         awaitText("Your API key")
     }
 
@@ -480,7 +476,7 @@ class AccountNotificationsDeviceTest {
         hideKeyboard()
         compose.onNodeWithText("INR — Indian Rupee").performClick()
         screenshot("currency-picker")
-        confirm("Save changes")
+        confirm("Save")
         awaitText("INR — Indian Rupee")
         assertEquals("INR", currency)
         assertEquals(1, currencyWrites)
@@ -497,7 +493,7 @@ class AccountNotificationsDeviceTest {
         hideKeyboard()
         compose.onNodeWithText("America/New York").performClick()
         screenshot("timezone-picker")
-        confirm("Save changes")
+        confirm("Save")
         awaitText("America/New York")
         assertEquals("America/New_York", timezone)
         assertEquals(1, timezoneWrites)
@@ -516,7 +512,7 @@ class AccountNotificationsDeviceTest {
         awaitText(" 😀 Asha ")
         scenario!!.recreate()
         awaitText(" 😀 Asha ")
-        tap("Save changes")
+        tap("Save")
         awaitText("😀 Asha")
         assertEquals(1, profileWrites)
         compose.onNodeWithText("Create API key").performScrollTo()
@@ -536,7 +532,7 @@ class AccountNotificationsDeviceTest {
         openProfile()
         tap("Edit display name")
         field("Display name", "New rhythm")
-        tap("Save changes")
+        tap("Save")
         awaitText("New rhythm")
         compose.returnHomeFromProfile()
         awaitText("New rhythm")
@@ -673,17 +669,17 @@ class AccountNotificationsDeviceTest {
         field("New password", " next password ")
         field("Confirm new password", "mismatch")
         scenario!!.recreate()
-        tap("Save changes")
+        tap("Save")
         assertEquals(0, passwordWrites)
         field("Confirm new password", " next password ")
         wrongPassword =
             true
-        tap("Save changes")
+        tap("Save")
         awaitText("The current password is incorrect. Please try again.")
         assertEquals(1, passwordWrites)
         wrongPassword =
             false
-        tap("Save changes")
+        tap("Save")
         awaitText("Password updated. Existing sessions remain signed in.")
         assertEquals(2, passwordWrites)
         val sent = Json.parseToJsonElement(passwordBody).jsonObject
@@ -756,7 +752,7 @@ class AccountNotificationsDeviceTest {
         loseKey = true
         createKeyLost()
         awaitText("I reviewed the server records")
-        compose.onNodeWithText("Save changes").assertIsNotEnabled()
+        compose.onNodeWithText("Create").assertIsNotEnabled()
         assertEquals(1, keyWrites)
         compose.waitUntil(15_000) {
             runCatching { compose.onNodeWithText("I reviewed the server records").assertIsEnabled() }.isSuccess
@@ -770,7 +766,7 @@ class AccountNotificationsDeviceTest {
     private fun createKeyLost() {
         tap("Create API key")
         field("Key name", "Lost reader")
-        tap("Save changes")
+        tap("Create")
         awaitText("We couldn’t confirm the change.", true)
     }
 
@@ -897,14 +893,14 @@ class AccountNotificationsDeviceTest {
                 visible
             }
             compose.waitUntil(15_000) {
-                val save = compose.onNodeWithText("Save changes").performScrollTo()
+                val save = compose.onNodeWithText("Save")
                 val visible = Rect()
                 scenario!!.onActivity { it.window.decorView.getWindowVisibleDisplayFrame(visible) }
                 val bounds = save.fetchSemanticsNode().boundsInWindow
                 bounds.height > 0 && bounds.top >= visible.top && bounds.bottom <= visible.bottom
             }
             screenshot("landscape-editor-keyboard")
-            compose.onNodeWithText("Save changes").performTouchInput { click() }
+            compose.onNodeWithText("Save").performTouchInput { click() }
             awaitText("Your account is up to date.")
             tap("Edit display name")
             shell("settings put system font_scale 2.0")
@@ -912,7 +908,7 @@ class AccountNotificationsDeviceTest {
             compose.awaitWindowConfiguration(scenario!!, 720, 1600, 320, 2f)
             awaitText("Resized name")
             screenshot("large-text-editor")
-            tap("Save changes")
+            tap("Save")
             awaitText("Resized name")
             compose.returnHomeFromProfile()
             openNotifications()
@@ -935,7 +931,7 @@ class AccountNotificationsDeviceTest {
         confirm("Set display name")
         awaitText("Display name")
         field("Display name", "Morning rhythm")
-        tap("Save changes")
+        tap("Save")
         awaitText("Morning rhythm")
         compose.returnHomeFromProfile()
         awaitText("Morning rhythm")

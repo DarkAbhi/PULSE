@@ -24,4 +24,11 @@
     <string name="pulse_ui_theme_light">"Light"</string>
     <string name="pulse_ui_theme_dark">"Dark"</string>
     <string name="pulse_ui_logout_edits_title">Log out and discard edits?</string>
+    <string name="pulse_ui_save">Save</string>
+    <string name="pulse_ui_back">Back</string>
+    <string name="pulse_ui_next">Next</string>
+    <string name="pulse_ui_skip">Skip</string>
+    <string name="pulse_ui_review">Review</string>
+    <string name="pulse_ui_create">Create</string>
+    <string name="pulse_ui_record">Record</string>
 </resources>

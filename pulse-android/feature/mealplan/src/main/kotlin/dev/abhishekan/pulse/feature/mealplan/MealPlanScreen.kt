@@ -199,13 +199,12 @@ internal fun MealPlanScreen(
                     state.selected.toString()
                 },
             ) {
-                Column(Modifier.fillMaxSize()) {
+                Column(Modifier.fillMaxSize().imePadding()) {
                     Column(
                         Modifier
                             .weight(1f)
                             .fillMaxWidth()
                             .verticalScroll(rememberScrollState())
-                            .imePadding()
                             .padding(size.pagePadding)
                             .padding(
                                 bottom =
@@ -273,11 +272,9 @@ internal fun MealPlanScreen(
                                 state.draft,
                                 state.times.value.orEmpty(),
                                 state.busy,
-                                state.reviewRequired,
                                 state.error,
                                 vm::update,
                                 vm::save,
-                                cancel,
                                 flat = size != PulseWindowSize.Compact,
                             )
                         } else if (state.managing) {
@@ -349,6 +346,15 @@ internal fun MealPlanScreen(
                                 )
                             }
                         }
+                    }
+                    if (state.draft != null && !records) {
+                        MealEditorFooter(
+                            state.busy,
+                            state.reviewRequired,
+                            vm::save,
+                            cancel,
+                            Modifier.padding(horizontal = size.pagePadding),
+                        )
                     }
                 }
             }

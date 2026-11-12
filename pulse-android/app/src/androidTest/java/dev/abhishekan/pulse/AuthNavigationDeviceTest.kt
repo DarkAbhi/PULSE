@@ -201,7 +201,7 @@ class AuthNavigationDeviceTest {
         awaitText("Welcome back")
         compose.onNodeWithText("Username").performScrollTo().performTextInput("fixture-user")
         compose.onNodeWithText("Password").performScrollTo().performTextInput("test-only-password")
-        compose.onNodeWithText("Continue").performScrollTo().performClick()
+        compose.onNodeWithText("Continue").performClick()
         awaitText("Asha")
     }
 

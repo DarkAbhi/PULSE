@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse.feature.garage
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -43,7 +41,6 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
-import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseChoiceCard
@@ -57,11 +54,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 internal fun VehicleEditor(
     draft: GarageDraft,
     busy: Boolean,
-    blocked: Boolean,
     error: UiText?,
     change: (GarageDraft) -> Unit,
-    save: () -> Unit,
-    cancel: () -> Unit,
     makes: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),
     models: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),
     retryCatalog: () -> Unit = {},
@@ -73,9 +67,8 @@ internal fun VehicleEditor(
     val step = draft.vehicleStep
     val go: (Int) -> Unit = {
         focus.clearFocus()
-        change(draft.copy(fields = draft.fields + ("vehicleStep" to it.toString())))
+        change(draft.withVehicleStep(it))
     }
-    BackHandler(step > 0 && !busy) { go(step - 1) }
     val titles = listOf(R.string.pulse_garage_which_vehicle, R.string.pulse_garage_what_powers_it, R.string.pulse_garage_tyre_pressure)
     val stepLabels = listOf(R.string.pulse_garage_step_vehicle, R.string.pulse_garage_fuel, R.string.pulse_garage_step_optional)
     BoxWithConstraints(Modifier.widthIn(max = 1200.dp).fillMaxWidth()) {
@@ -239,33 +232,8 @@ internal fun VehicleEditor(
                 }
                 Spacer(Modifier.height(spacing.small))
                 error?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = colors.error) }
-                if (step == 2) {
-                    PulseButton(
-                        stringResource(R.string.pulse_garage_save_vehicle),
-                        {
-                            focus.clearFocus()
-                            save()
-                        },
-                        Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                        enabled =
-                            !busy && !blocked && draft.vehicleIdentityValid && draft.vehicleFuelValid,
-                        loading = busy,
-                    )
-                } else {
-                    PulseButton(
-                        stringResource(if (step == 0) R.string.pulse_garage_continue_fuel else R.string.pulse_garage_continue_tyres),
-                        { go(step + 1) },
-                        Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                        enabled = !busy && (if (step == 0) draft.vehicleIdentityValid else draft.vehicleFuelValid),
-                    )
-                }
                 if (step == 0) {
                     VehicleDataCredits(Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-                }
-                if (step > 0) {
-                    PulseButton(stringResource(R.string.pulse_garage_step_back), {
-                        go(step - 1)
-                    }, Modifier.fillMaxWidth(), enabled = !busy, variant = PulseButtonVariant.Secondary)
                 }
             }
         }

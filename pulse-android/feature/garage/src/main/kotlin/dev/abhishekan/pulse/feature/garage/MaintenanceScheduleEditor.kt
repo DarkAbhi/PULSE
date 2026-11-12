@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectableGroup
@@ -19,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalDensity
@@ -28,18 +28,21 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.MaintenanceInterval
 import dev.abhishekan.pulse.core.domain.model.MaintenanceSchedule
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
+import dev.abhishekan.pulse.core.ui.components.PulseFormAction
+import dev.abhishekan.pulse.core.ui.components.PulseFormActions
+import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable internal fun scheduleSourceLabel(source: String): String =
     stringResource(if (source == "manual") R.string.pulse_garage_schedule_manual else R.string.pulse_garage_schedule_personal)
@@ -62,6 +65,9 @@ internal fun reminderInterval(
 internal fun MaintenanceScheduleEditor(
     setting: MaintenanceSchedule,
     enabled: Boolean,
+    busy: Boolean,
+    pagePadding: Dp,
+    prefix: @Composable () -> Unit,
     cancel: () -> Unit,
     save: (MaintenanceSchedule) -> Unit,
 ) {
@@ -137,117 +143,121 @@ internal fun MaintenanceScheduleEditor(
             }
         }
     }
-    Column(
-        Modifier.widthIn(max = 760.dp).fillMaxWidth().testTag("schedule-fields-${setting.kind}"),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+    PulseFormLayout(
+        scrollContentModifier = Modifier.padding(pagePadding),
+        footer = {
+            PulseFormActions(
+                primary = PulseFormAction(
+                    stringResource(CoreUiR.string.pulse_ui_save),
+                    {
+                        focus.clearFocus()
+                        keyboard?.hide()
+                        save(setting.copy(activeSource = source, personal = personal!!, manual = manual!!, manualReference = reference))
+                    },
+                    enabled = enabled && valid,
+                    loading = busy,
+                    modifier = Modifier.testTag("schedule-save-${setting.kind}"),
+                ),
+                secondary = PulseFormAction(
+                    stringResource(CoreUiR.string.pulse_ui_cancel),
+                    {
+                        focus.clearFocus()
+                        keyboard?.hide()
+                        source = setting.activeSource
+                        personalKm = setting.personal.kilometers.input()
+                        personalTime = setting.personal.duration.input()
+                        manualKm = setting.manual.kilometers.input()
+                        manualTime = setting.manual.duration.input()
+                        reference = setting.manualReference
+                        cancel()
+                    },
+                    enabled = enabled,
+                ),
+                modifier = Modifier.align(Alignment.Start).padding(horizontal = pagePadding).widthIn(max = 760.dp),
+            )
+        },
     ) {
-        PulseText(stringResource(R.string.pulse_garage_schedule_hint), style = PulseTextStyle.Body2, color = colors.textSecondary)
-        MaintenanceSection(R.string.pulse_garage_schedule_active, R.string.pulse_garage_schedule_active_hint, R.drawable.garage_clock) {
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                @Composable fun option(
-                    key: String,
-                    modifier: Modifier,
-                ) {
-                    val selected = source == key
-                    Surface(
-                        modifier,
-                        shape = PulseTokens.controlShape,
-                        color = if (selected) colors.primarySoft else colors.surfaceMuted,
-                        border = BorderStroke(1.dp, if (selected) colors.action else colors.border),
+        prefix()
+        Column(
+            Modifier.widthIn(max = 760.dp).fillMaxWidth().testTag("schedule-fields-${setting.kind}"),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            PulseText(stringResource(R.string.pulse_garage_schedule_hint), style = PulseTextStyle.Body2, color = colors.textSecondary)
+            MaintenanceSection(R.string.pulse_garage_schedule_active, R.string.pulse_garage_schedule_active_hint, R.drawable.garage_clock) {
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    @Composable fun option(
+                        key: String,
+                        modifier: Modifier,
                     ) {
-                        PulseRadioButton(
-                            selected,
-                            {
-                                focus.clearFocus()
-                                keyboard?.hide()
-                                source = key
-                            },
-                            scheduleSourceLabel(
-                                key,
-                            ),
-                            Modifier.fillMaxWidth().padding(horizontal = 12.dp).testTag("schedule-source-$key"),
-                            enabled = enabled,
-                        )
+                        val selected = source == key
+                        Surface(
+                            modifier,
+                            shape = PulseTokens.controlShape,
+                            color = if (selected) colors.primarySoft else colors.surfaceMuted,
+                            border = BorderStroke(1.dp, if (selected) colors.action else colors.border),
+                        ) {
+                            PulseRadioButton(
+                                selected,
+                                {
+                                    focus.clearFocus()
+                                    keyboard?.hide()
+                                    source = key
+                                },
+                                scheduleSourceLabel(
+                                    key,
+                                ),
+                                Modifier.fillMaxWidth().padding(horizontal = 12.dp).testTag("schedule-source-$key"),
+                                enabled = enabled,
+                            )
+                        }
                     }
-                }
-                if (maxWidth >= 300.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
-                    Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        option("personal", Modifier.weight(1f))
-                        option("manual", Modifier.weight(1f))
-                    }
-                } else {
-                    Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        option("personal", Modifier.fillMaxWidth())
-                        option("manual", Modifier.fillMaxWidth())
+                    if (maxWidth >= 300.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
+                        Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            option("personal", Modifier.weight(1f))
+                            option("manual", Modifier.weight(1f))
+                        }
+                    } else {
+                        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            option("personal", Modifier.fillMaxWidth())
+                            option("manual", Modifier.fillMaxWidth())
+                        }
                     }
                 }
             }
-        }
-        MaintenanceSection(
-            R.string.pulse_garage_schedule_personal,
-            R.string.pulse_garage_schedule_personal_hint,
-            R.drawable.garage_odometer,
-        ) {
-            intervalFields("personal", personalKm, personalTime, { personalKm = it }, { personalTime = it })
-        }
-        MaintenanceSection(
-            R.string.pulse_garage_schedule_manual,
-            R.string.pulse_garage_schedule_manual_section_hint,
-            R.drawable.garage_document,
-        ) {
-            intervalFields("manual", manualKm, manualTime, { manualKm = it }, { manualTime = it })
-            PulseTextField(
-                reference,
-                { reference = it },
-                stringResource(R.string.pulse_garage_schedule_reference),
-                Modifier.fillMaxWidth(),
-                enabled = enabled,
-                labelAbove = true,
-                error = if (!referenceValid) uiText(R.string.pulse_garage_schedule_reference_error) else null,
-                placeholder = { PulseText(stringResource(R.string.pulse_garage_schedule_reference_example), color = colors.textSecondary) },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
-            )
-        }
-        if (chosen != null && chosen.kilometers == 0 && chosen.duration == 0) {
-            PulseText(
-                stringResource(R.string.pulse_garage_schedule_missing_interval),
-                style = PulseTextStyle.Body2,
-                color = colors.textSecondary,
-            )
-        }
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            @Composable fun saveButton(modifier: Modifier) {
-                PulseButton(stringResource(R.string.pulse_garage_schedule_save), {
-                    focus.clearFocus()
-                    keyboard?.hide()
-                    save(setting.copy(activeSource = source, personal = personal!!, manual = manual!!, manualReference = reference))
-                }, modifier.heightIn(min = 56.dp).testTag("schedule-save-${setting.kind}"), enabled = enabled && valid)
+            MaintenanceSection(
+                R.string.pulse_garage_schedule_personal,
+                R.string.pulse_garage_schedule_personal_hint,
+                R.drawable.garage_odometer,
+            ) {
+                intervalFields("personal", personalKm, personalTime, { personalKm = it }, { personalTime = it })
             }
-
-            @Composable fun cancelButton(modifier: Modifier) {
-                PulseButton(stringResource(R.string.pulse_garage_schedule_cancel), {
-                    focus.clearFocus()
-                    keyboard?.hide()
-                    source = setting.activeSource
-                    personalKm = setting.personal.kilometers.input()
-                    personalTime = setting.personal.duration.input()
-                    manualKm = setting.manual.kilometers.input()
-                    manualTime = setting.manual.duration.input()
-                    reference = setting.manualReference
-                    cancel()
-                }, modifier.heightIn(min = 56.dp), enabled = enabled, variant = PulseButtonVariant.Secondary)
+            MaintenanceSection(
+                R.string.pulse_garage_schedule_manual,
+                R.string.pulse_garage_schedule_manual_section_hint,
+                R.drawable.garage_document,
+            ) {
+                intervalFields("manual", manualKm, manualTime, { manualKm = it }, { manualTime = it })
+                PulseTextField(
+                    reference,
+                    { reference = it },
+                    stringResource(R.string.pulse_garage_schedule_reference),
+                    Modifier.fillMaxWidth(),
+                    enabled = enabled,
+                    labelAbove = true,
+                    error = if (!referenceValid) uiText(R.string.pulse_garage_schedule_reference_error) else null,
+                    placeholder = {
+                        PulseText(stringResource(R.string.pulse_garage_schedule_reference_example), color = colors.textSecondary)
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
+                )
             }
-            if (maxWidth < 300.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    saveButton(Modifier.fillMaxWidth())
-                    cancelButton(Modifier.fillMaxWidth())
-                }
-            } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    cancelButton(Modifier.weight(1f))
-                    saveButton(Modifier.weight(1f))
-                }
+            if (chosen != null && chosen.kilometers == 0 && chosen.duration == 0) {
+                PulseText(
+                    stringResource(R.string.pulse_garage_schedule_missing_interval),
+                    style = PulseTextStyle.Body2,
+                    color = colors.textSecondary,
+                )
             }
         }
     }

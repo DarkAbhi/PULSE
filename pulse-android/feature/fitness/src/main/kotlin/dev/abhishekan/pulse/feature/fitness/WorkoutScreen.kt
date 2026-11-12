@@ -23,6 +23,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -42,6 +43,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
+import dev.abhishekan.pulse.core.ui.components.PulseFormAction
+import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
@@ -50,6 +53,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import org.koin.androidx.compose.koinViewModel
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 fun WorkoutRoute(
@@ -201,47 +205,67 @@ fun WorkoutScreen(
                     .widthIn(
                         max = if (state.editor != null) PulseTokens.readingWidth + PulseTokens.large * 4 else PulseTokens.contentWidth,
                     ).fillMaxSize()
-                    .verticalScroll(scroll)
-                    .imePadding()
-                    .padding(size.pagePadding),
-                verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
+                    .imePadding(),
             ) {
-                state.error?.let { PulseErrorState(fitnessFailureMessage(it), onRefresh) }
-                if (state.needsReview) {
-                    MutationReview(state.reviewReady, state.busy, onRefresh, onReviewed, message = state.message)
-                    detail?.let { ServerExercises(it.exercises) }
+                Column(
+                    Modifier.weight(1f).fillMaxWidth().verticalScroll(scroll).padding(size.pagePadding),
+                    verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
+                ) {
+                    state.error?.let { PulseErrorState(fitnessFailureMessage(it), onRefresh) }
+                    if (state.needsReview) {
+                        MutationReview(state.reviewReady, state.busy, onRefresh, onReviewed, message = state.message)
+                        detail?.let { ServerExercises(it.exercises) }
+                    }
+                    if (state.editor != null) {
+                        ExerciseEditor(
+                            state.editor,
+                            state.busy || state.loading,
+                            onName,
+                            onSet,
+                            onAddSet,
+                            onRemoveSet,
+                            onChoose,
+                            onClearMatch,
+                            onSearch,
+                            onAlias,
+                            onSearchQuery,
+                        )
+                    } else if (detail != null) {
+                        WorkoutDetailContent(
+                            detail = detail,
+                            enabled = !state.busy && !state.loading && !state.needsReview && state.error == null,
+                            onAdd = { onEdit(null) },
+                            onEdit = { onEdit(it) },
+                            onRemove = { deleteExercise = it },
+                            onDelete = { deleteWorkout = true },
+                        )
+                        if (state.busy) {
+                            PulseLoadingState(
+                                stringResource(R.string.pulse_fitness_saving_your_change),
+                            )
+                        }
+                    }
                 }
                 if (state.editor != null) {
-                    ExerciseEditor(
-                        state.editor,
-                        state.busy || state.loading,
-                        state.needsReview,
-                        onName,
-                        onSet,
-                        onAddSet,
-                        onRemoveSet,
-                        onChoose,
-                        onClearMatch,
-                        onSearch,
-                        onAlias,
-                        onSave,
-                        onCancel,
-                        onSearchQuery,
+                    val keyboard = LocalSoftwareKeyboardController.current
+                    val busy = state.busy || state.loading
+                    PulseFormActions(
+                        primary = PulseFormAction(
+                            stringResource(CoreUiR.string.pulse_ui_save),
+                            {
+                                keyboard?.hide()
+                                onSave()
+                            },
+                            enabled = state.editor.draft.issue == null && !state.needsReview && !busy,
+                            loading = busy,
+                        ),
+                        secondary = PulseFormAction(
+                            stringResource(CoreUiR.string.pulse_ui_cancel),
+                            onCancel,
+                            enabled = !busy,
+                        ),
+                        modifier = Modifier.padding(horizontal = size.pagePadding),
                     )
-                } else if (detail != null) {
-                    WorkoutDetailContent(
-                        detail = detail,
-                        enabled = !state.busy && !state.loading && !state.needsReview && state.error == null,
-                        onAdd = { onEdit(null) },
-                        onEdit = { onEdit(it) },
-                        onRemove = { deleteExercise = it },
-                        onDelete = { deleteWorkout = true },
-                    )
-                    if (state.busy) {
-                        PulseLoadingState(
-                            stringResource(R.string.pulse_fitness_saving_your_change),
-                        )
-                    }
                 }
             }
             if (state.editor == null) {

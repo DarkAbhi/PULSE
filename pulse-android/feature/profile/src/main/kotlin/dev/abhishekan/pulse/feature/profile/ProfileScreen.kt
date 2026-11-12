@@ -20,11 +20,9 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -35,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusDirection
@@ -72,6 +71,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
+import dev.abhishekan.pulse.core.ui.components.PulseFormAction
+import dev.abhishekan.pulse.core.ui.components.PulseFormActions
+import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulsePasswordField
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
@@ -276,13 +278,26 @@ internal fun ProfileScreen(
                 PulseCenteredLoadingState(stringResource(R.string.pulse_profile_profile_loading))
                 return@PulseAdaptiveLayout
             }
-            Column(
-                Modifier
-                    .widthIn(max = PulseTokens.contentWidth)
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(size.pagePadding),
-                verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
+            PulseFormLayout(
+                modifier = Modifier.widthIn(max = PulseTokens.contentWidth),
+                scrollContentModifier = Modifier.padding(size.pagePadding),
+                footer = {
+                    state.editor?.let { editor ->
+                        PulseFormActions(
+                            primary = PulseFormAction(
+                                stringResource(
+                                    if (editor == AccountEditor.Key) CoreUiR.string.pulse_ui_create else CoreUiR.string.pulse_ui_save,
+                                ),
+                                vm::save,
+                                enabled = !state.busy && !state.uncertain,
+                                loading = state.busy,
+                            ),
+                            secondary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), cancel, enabled = !state.busy),
+                            modifier = Modifier.align(Alignment.Start).padding(horizontal = size.pagePadding)
+                                .widthIn(max = PulseTokens.readingWidth),
+                        )
+                    }
+                },
             ) {
                 if (state.uncertain) {
                     PulseCard(Modifier.fillMaxWidth()) {
@@ -327,7 +342,7 @@ internal fun ProfileScreen(
                     }
                 }
                 if (state.editor != null) {
-                    AccountForm(state, vm, cancel)
+                    AccountForm(state, vm)
                     if (state.editor != AccountEditor.Password) {
                         PulseButton(stringResource(R.string.pulse_profile_logout), {
                             logout = true
@@ -485,7 +500,6 @@ internal fun ProfileScreen(
 private fun AccountForm(
     state: ProfileUiState,
     vm: ProfileViewModel,
-    cancel: () -> Unit,
 ) {
     val editor = checkNotNull(state.editor)
     val focus = LocalFocusManager.current
@@ -590,15 +604,6 @@ private fun AccountForm(
                 color = PulseTheme.colors.error,
             )
         }
-        PulseButton(
-            stringResource(R.string.pulse_profile_save),
-            vm::save,
-            Modifier.fillMaxWidth(),
-            enabled =
-                !state.busy && !state.uncertain,
-            loading = state.busy,
-        )
-        PulseButton(stringResource(R.string.pulse_profile_cancel), cancel, enabled = !state.busy, style = PulseButtonStyle.Text)
     }
 }
 

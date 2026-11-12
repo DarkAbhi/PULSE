@@ -3,11 +3,10 @@ package dev.abhishekan.pulse.feature.horizon
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
@@ -35,6 +34,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -42,10 +42,14 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseFormAction
+import dev.abhishekan.pulse.core.ui.components.PulseFormActions
+import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 internal fun PlannedPurchaseEditor(
@@ -57,6 +61,8 @@ internal fun PlannedPurchaseEditor(
     onChange: (HorizonDraft) -> Unit,
     onSave: () -> Unit,
     onCancel: () -> Unit,
+    pagePadding: Dp,
+    prefix: @Composable () -> Unit,
 ) {
     val colors = PulseTheme.colors
     val focus = LocalFocusManager.current
@@ -85,9 +91,27 @@ internal fun PlannedPurchaseEditor(
         }
         Unit
     }
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+    PulseFormLayout(
+        scrollContentModifier = Modifier.padding(pagePadding),
+        footer = {
+            PulseFormActions(
+                primary = PulseFormAction(
+                    stringResource(CoreUiR.string.pulse_ui_save),
+                    save,
+                    enabled = !busy && !blocked && data != null,
+                    loading = busy,
+                ),
+                secondary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), onCancel, enabled = !busy),
+                modifier = Modifier.padding(horizontal = pagePadding).widthIn(max = PulseTokens.readingWidth),
+            )
+        },
+    ) {
+        prefix()
         Column(
-            Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth().testTag("planned-purchase-editor"),
+            Modifier.align(Alignment.CenterHorizontally)
+                .widthIn(max = PulseTokens.readingWidth)
+                .fillMaxWidth()
+                .testTag("planned-purchase-editor"),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
         ) {
             Column(
@@ -212,33 +236,6 @@ internal fun PlannedPurchaseEditor(
                     ),
                     style = PulseTextStyle.Body2,
                     color = colors.textSecondary,
-                )
-            }
-            Column(
-                Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
-            ) {
-                PulseButton(
-                    stringResource(
-                        if (draft.id ==
-                            null
-                        ) {
-                            R.string.pulse_horizon_purchase_add
-                        } else {
-                            R.string.pulse_horizon_obligation_save_changes
-                        },
-                    ),
-                    save,
-                    Modifier.fillMaxWidth().heightIn(min = PulseTokens.target),
-                    enabled = !busy && !blocked && data != null,
-                    loading = busy,
-                )
-                PulseButton(
-                    stringResource(R.string.pulse_horizon_purchase_cancel),
-                    onCancel,
-                    enabled = !busy,
-                    style = PulseButtonStyle.Text,
                 )
             }
         }

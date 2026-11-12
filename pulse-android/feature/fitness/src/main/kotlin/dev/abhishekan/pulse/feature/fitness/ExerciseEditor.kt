@@ -53,7 +53,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 internal fun ExerciseEditor(
     editor: ExerciseEditorState,
     busy: Boolean,
-    needsReview: Boolean,
     onName: (String) -> Unit,
     onSet: (Int, String?, String?) -> Unit,
     onAddSet: () -> Unit,
@@ -62,8 +61,6 @@ internal fun ExerciseEditor(
     onClearMatch: () -> Unit,
     onSearch: () -> Unit,
     onAlias: (Boolean) -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit,
     onSearchQuery: (String) -> Unit,
 ) {
     val draft = editor.draft
@@ -85,7 +82,6 @@ internal fun ExerciseEditor(
         onSearchQuery(query)
         selector = true
     }
-    val valid = draft.issue == null
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
         Crossfade(
@@ -287,24 +283,6 @@ internal fun ExerciseEditor(
             }
         }
         editor.error?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = PulseTheme.colors.error) }
-        PulseButton(
-            stringResource(
-                if (draft.exerciseId ==
-                    null
-                ) {
-                    R.string.pulse_fitness_save_exercise
-                } else {
-                    R.string.pulse_fitness_save_changes
-                },
-            ),
-            {
-                keyboard?.hide()
-                onSave()
-            },
-            Modifier.fillMaxWidth(),
-            enabled = valid && !needsReview && !busy,
-            loading = busy,
-        )
     }
     if (selector) {
         ExerciseSelector(

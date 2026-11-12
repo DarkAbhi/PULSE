@@ -3,7 +3,6 @@ package dev.abhishekan.pulse.feature.mealplan
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -36,23 +35,24 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
+import dev.abhishekan.pulse.core.ui.components.PulseFormAction
+import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import java.time.LocalDate
 import java.time.LocalTime
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 internal fun MealEditor(
     draft: MealDraft,
     times: List<MealTime>,
     busy: Boolean,
-    review: Boolean,
     error: UiText?,
     onUpdate: (MealDraft) -> Unit,
     onSave: () -> Unit,
-    onCancel: () -> Unit,
     flat: Boolean = false,
 ) {
     var datePicker by rememberSaveable { mutableStateOf(false) }
@@ -137,32 +137,6 @@ internal fun MealEditor(
                 )
             }
         }
-        Spacer(Modifier.height(8.dp))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            PulseButton(stringResource(R.string.pulse_mealplan_cancel), {
-                focus.clearFocus()
-                onCancel()
-            }, Modifier.widthIn(min = 160.dp).weight(1f), enabled = !busy, variant = PulseButtonVariant.Secondary)
-            PulseButton(
-                if (draft.timeForm) {
-                    stringResource(
-                        R.string.pulse_mealplan_save_meal_time,
-                    )
-                } else {
-                    stringResource(R.string.pulse_mealplan_save_meal)
-                },
-                {
-                    focus.clearFocus()
-                    onSave()
-                },
-                Modifier.widthIn(min = 160.dp).weight(1f),
-                enabled = !review,
-                loading = busy,
-            )
-        }
     }
     val modifier = Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()
     if (flat) {
@@ -197,4 +171,35 @@ internal fun MealEditor(
                 null
         }, { timePicker = null })
     }
+}
+
+@Composable
+internal fun MealEditorFooter(
+    busy: Boolean,
+    blocked: Boolean,
+    onSave: () -> Unit,
+    onCancel: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val focus = LocalFocusManager.current
+    PulseFormActions(
+        primary = PulseFormAction(
+            stringResource(CoreUiR.string.pulse_ui_save),
+            {
+                focus.clearFocus()
+                onSave()
+            },
+            enabled = !blocked,
+            loading = busy,
+        ),
+        secondary = PulseFormAction(
+            stringResource(CoreUiR.string.pulse_ui_cancel),
+            {
+                focus.clearFocus()
+                onCancel()
+            },
+            enabled = !busy,
+        ),
+        modifier = modifier.widthIn(max = PulseTokens.readingWidth),
+    )
 }

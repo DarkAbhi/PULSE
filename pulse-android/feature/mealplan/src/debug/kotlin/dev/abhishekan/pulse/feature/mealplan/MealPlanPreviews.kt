@@ -18,6 +18,7 @@ import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
+import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import java.time.LocalDate
 import java.time.LocalTime
@@ -76,20 +77,20 @@ private fun PlannerPreview(
 @Composable
 private fun SavingMeal() {
     PulseTheme(false) {
-        MealEditor(
-            MealDraft(
-                name = "Soup",
-                date = day.toString(),
-            ),
-            emptyList(),
-            true,
-            false,
-            null,
-            {
-            },
-            {},
-            {},
-        )
+        PulseFormLayout(footer = { MealEditorFooter(true, false, {}, {}) }) {
+            MealEditor(
+                MealDraft(
+                    name = "Soup",
+                    date = day.toString(),
+                ),
+                emptyList(),
+                true,
+                null,
+                {
+                },
+                {},
+            )
+        }
     }
 }
 
@@ -97,20 +98,20 @@ private fun SavingMeal() {
 @Composable
 private fun InvalidMealTime() {
     PulseTheme(true) {
-        MealEditor(
-            MealDraft(
-                timeForm = true,
-                name = "Snack",
-            ),
-            emptyList(),
-            false,
-            false,
-            UiText.Literal("Enter a name and valid times."),
-            {
-            },
-            {},
-            {},
-        )
+        PulseFormLayout(footer = { MealEditorFooter(false, false, {}, {}) }) {
+            MealEditor(
+                MealDraft(
+                    timeForm = true,
+                    name = "Snack",
+                ),
+                emptyList(),
+                false,
+                UiText.Literal("Enter a name and valid times."),
+                {
+                },
+                {},
+            )
+        }
     }
 }
 

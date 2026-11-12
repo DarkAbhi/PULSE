@@ -444,7 +444,7 @@ class FitnessDeviceTest {
         val button = hasText(text) and hasClickAction() and isEnabled()
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         val node = compose.onAllNodes(button)[0]
-        if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) node.performScrollTo()
+        compose.scrollToDisplayed(node)
         node.assertIsDisplayed().performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
@@ -608,7 +608,7 @@ class FitnessDeviceTest {
                         .hasSetTextAction(),
             ).performTextReplacement("Squat")
         tap("Fixture barbell squat")
-        tap("Save exercise")
+        tap("Save")
         awaitText("Add exercise")
         tap("Edit exercise")
         tap("Edit name")
@@ -624,7 +624,7 @@ class FitnessDeviceTest {
             ).performScrollTo()
             .performTextReplacement("22.5")
         tap("Remember this name for future workouts")
-        tap("Save changes")
+        tap("Save")
         awaitText("Add exercise")
         awaitText("8 reps")
         compose.onNodeWithText("8 reps").performScrollTo().assertIsDisplayed()
@@ -635,7 +635,7 @@ class FitnessDeviceTest {
         confirm("Delete exercise")
         awaitText("No exercises added yet")
         enterOwnExercise()
-        tap("Save exercise")
+        tap("Save")
         awaitText("Add exercise")
         tap("Delete workout")
         awaitText("Delete this workout?")
@@ -669,7 +669,7 @@ class FitnessDeviceTest {
             ).assertIsDisplayed()
         recordAndOpen()
         tap("Add exercise")
-        awaitText("Save exercise")
+        awaitText("Save")
         compose.assertNestedNavigationForLayout()
         compose.onNodeWithContentDescription("Back to workout").performClick()
         awaitText("Add exercise")
@@ -688,7 +688,7 @@ class FitnessDeviceTest {
         launchFitness()
         recordAndOpen()
         tap("Add exercise")
-        compose.onNodeWithText("Save exercise").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Save").assertIsNotEnabled()
         chooseCustomName("Custom mobility")
         compose.onNodeWithText("Reps, set 1").performScrollTo().performTextInput("12")
         compose.onNodeWithText("Reps, set 1").performImeAction()
@@ -700,7 +700,7 @@ class FitnessDeviceTest {
         screenshot("editor")
         compose.assertNestedNavigationForLayout()
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithContentDescription("Back to workout").performClick()
+        tap("Cancel")
         awaitText("Discard exercise edits?")
         confirm("Cancel")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
@@ -716,9 +716,9 @@ class FitnessDeviceTest {
         recordAndOpen()
         enterOwnExercise()
         backend.loseSave = true
-        tap("Save exercise")
+        tap("Save")
         awaitText("I’ve reviewed the latest records")
-        compose.onNodeWithText("Save exercise").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Save").assertIsNotEnabled()
         assertEquals(1, backend.saves)
         compose.onNodeWithText("Latest recorded exercises").performScrollTo().assertIsDisplayed()
         screenshot("recovery")
@@ -830,7 +830,7 @@ class FitnessDeviceTest {
         awaitText("Choose an exercise")
         compose.pressSystemBack(scenario!!)
         compose.onNodeWithText("12.123456789").performScrollTo().assertIsDisplayed()
-        tap("Save exercise")
+        tap("Save")
         awaitText("Edit exercise")
         assertEquals(1, backend.saves)
     }
@@ -866,7 +866,7 @@ class FitnessDeviceTest {
             compose.onNodeWithText("20.5").performScrollTo().assertIsDisplayed()
             assertEquals(0, backend.saves)
             screenshot("resized-editor")
-            tap("Save exercise")
+            tap("Save")
             compose.waitUntil(15_000) { backend.saves == 1 }
             awaitText("Add exercise")
             assertEquals(1, backend.saves)

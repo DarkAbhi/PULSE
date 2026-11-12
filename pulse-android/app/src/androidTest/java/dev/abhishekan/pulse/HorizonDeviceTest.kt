@@ -10,7 +10,6 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsSelected
@@ -513,8 +512,7 @@ class HorizonDeviceTest {
         val button = (hasText(text) or hasContentDescription(text)) and hasClickAction() and isEnabled()
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         val node = compose.onAllNodes(button)[0]
-        if (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail()) node.performScrollTo()
-        compose.waitUntil(15_000) { node.isDisplayed() }
+        compose.scrollToDisplayed(node)
         node.performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
@@ -614,7 +612,7 @@ class HorizonDeviceTest {
         quickAction("Add a monthly budget")
         field("Name", name)
         field("Amount (${UserCurrency.symbol()})", "150.25")
-        tap("Save budget")
+        tap("Save")
         awaitText(name)
     }
 
@@ -751,7 +749,7 @@ class HorizonDeviceTest {
                 quickAction("Add a category tag")
                 awaitText("Add category")
                 compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
-                tap("Cancel editing")
+                tap("Cancel")
                 actions.forEach { (label, title) ->
                     quickAction(label)
                     awaitText(title)
@@ -777,7 +775,7 @@ class HorizonDeviceTest {
                 compose.onNodeWithText("The everyday ledger").assertDoesNotExist()
                 quickAction("Add a monthly budget")
                 awaitText("Add budget")
-                tap("Cancel editing")
+                tap("Cancel")
                 tap("Overview")
             }
             assertEquals(0, backend.mutations)
@@ -808,7 +806,7 @@ class HorizonDeviceTest {
         screenshot("overview")
         compose.onNodeWithContentDescription("Configure starting pool").performScrollTo().performClick()
         field("Amount (${UserCurrency.symbol()})", "2000.25")
-        tap("Save starting pool")
+        tap("Save")
         awaitText(
             UserCurrency
                 .format(BigDecimal("1910.25")),
@@ -835,7 +833,7 @@ class HorizonDeviceTest {
         cardAction("Travel", "Edit")
         field("Name", "Travel fund")
         field("Amount (${UserCurrency.symbol()})", "175.50")
-        tap("Save budget")
+        tap("Save")
         awaitText("Travel fund")
         tap("Obligations")
         quickAction("Add fixed obligation")
@@ -855,7 +853,7 @@ class HorizonDeviceTest {
         compose.onNode(hasTestTag("obligation-budget")).performScrollTo().performClick()
         tap("Travel fund")
         tap("Active obligation")
-        tap("Save fixed obligation")
+        tap("Save")
         awaitText("Internet")
         val obligation = backend.items("deductions").values.last()
         assertEquals("investment", obligation["category"]?.jsonPrimitive?.content)
@@ -899,7 +897,7 @@ class HorizonDeviceTest {
         awaitText("Edit fixed obligation")
         assertEquals(2, backend.items("deductions").size)
         tap("Active obligation")
-        tap("Save changes")
+        tap("Save")
         awaitText("Internet")
         tap("Budgets")
         cardAction("Travel fund", "Delete")
@@ -992,7 +990,7 @@ class HorizonDeviceTest {
         awaitText("Page 2 of 2 · 21 transactions")
         quickAction("Add a category tag")
         field("Name", "Coffee")
-        tap("Save category")
+        tap("Save")
         awaitText("Search transactions")
         quickAction("Log a transaction")
         field("Name", "Coffee refund")
@@ -1003,7 +1001,7 @@ class HorizonDeviceTest {
         pick("Subscription", "None", "Music")
         field("Notes (optional)", "Receipt refunded")
         screenshot("transaction-editor")
-        tap("Save transaction")
+        tap("Save")
         awaitText("Search transactions")
         field("Search transactions", "Coffee refund")
         awaitText("Page 1 of 1 · 1 transaction")
@@ -1019,7 +1017,7 @@ class HorizonDeviceTest {
         field("Name", "Coffee expense")
         tap("Debit")
         pick("Subscription", "Music", "None")
-        tap("Save transaction")
+        tap("Save")
         field("Search transactions", "Coffee expense")
         awaitText("Page 1 of 1 · 1 transaction")
         awaitText("Coffee expense")
@@ -1087,7 +1085,7 @@ class HorizonDeviceTest {
         compose.onNodeWithContentDescription("Manage subscription Music").performScrollTo().performClick()
         awaitText("Edit subscription")
         field("Subscription name *", "Updated music")
-        tap("Save changes")
+        tap("Save")
         awaitText("Updated music")
         assertEquals(
             "Updated music",
@@ -1146,7 +1144,7 @@ class HorizonDeviceTest {
         tap("Manage subscription Music")
         awaitText("Edit subscription")
         tap("Paused")
-        tap("Save changes")
+        tap("Save")
         awaitText("No fixed obligations")
         compose.onNode(hasTestTag("obligation-subscription-4")).assertDoesNotExist()
         tap("Subscriptions")
@@ -1176,7 +1174,7 @@ class HorizonDeviceTest {
         field("Subscription name *", "Streaming")
         field("Amount (${UserCurrency.symbol()}) *", "99.99")
         compose.onNodeWithText("Date:", substring = true).assertDoesNotExist()
-        compose.onNode(hasText("Add subscription") and hasClickAction()).assertExists()
+        compose.onNode(hasText("Save") and hasClickAction()).assertIsDisplayed()
         compose.onNodeWithText("Basic details").assertIsDisplayed()
         screenshot("subscription-basic")
         compose.onNode(hasTestTag("subscription-due-day")).performScrollTo().performClick()
@@ -1193,8 +1191,8 @@ class HorizonDeviceTest {
         screenshot("subscription-notes")
         compose
             .onNode(
-                hasText("Add subscription") and hasClickAction(),
-            ).performScrollTo()
+                hasText("Save") and hasClickAction(),
+            )
             .assertIsDisplayed()
             .performSemanticsAction(SemanticsActions.OnClick) {
                 it()
@@ -1221,8 +1219,8 @@ class HorizonDeviceTest {
         tap("Active")
         compose
             .onNodeWithText(
-                "Save changes",
-            ).performScrollTo()
+                "Save",
+            )
             .assertIsDisplayed()
             .performSemanticsAction(SemanticsActions.OnClick) {
                 it()
@@ -1388,14 +1386,22 @@ class HorizonDeviceTest {
                 shell("settings put system font_scale ${if (layout == "large-text") "1.8" else "1.0"}")
                 compose.waitForIdle()
                 compose.onNode(hasTestTag("subscription-section-menu")).assertDoesNotExist()
+                val save = compose.onNodeWithText("Save").assertIsDisplayed()
+                val cancel = compose.onNodeWithText("Cancel").assertIsDisplayed()
+                val saveBounds = save.fetchSemanticsNode().boundsInRoot
+                val cancelBounds = cancel.fetchSemanticsNode().boundsInRoot
+                assertEquals(saveBounds.top, cancelBounds.top, 1f)
+                assertEquals(saveBounds.width, cancelBounds.width, 1f)
+                assertTrue(cancelBounds.right <= saveBounds.left)
                 compose.onNode(hasTestTag("subscription-notes")).performScrollTo()
+                assertEquals(saveBounds, save.fetchSemanticsNode().boundsInRoot)
                 compose.onNode(hasTestTag("subscription-notes")).assertIsDisplayed()
-                compose.onNode(hasTestTag("horizon-editor-actions")).performScrollTo().assertIsDisplayed()
+                compose.onNode(hasTestTag("horizon-editor-actions")).assertIsDisplayed()
                 screenshot("subscription-$layout-notes")
                 compose.onNode(hasTestTag("subscription-section-menu")).assertDoesNotExist()
                 compose.onNodeWithText("Subscription name *").performScrollTo()
                 compose.onNodeWithText("Subscription name *").assertIsDisplayed()
-                if (layout == "phone") compose.onNode(hasText("Add subscription") and hasClickAction()).assertIsNotDisplayed()
+                compose.onNode(hasText("Save") and hasClickAction()).assertIsDisplayed()
                 compose.onNodeWithText("Monthly").performScrollTo().assertIsDisplayed()
                 screenshot("subscription-$layout-basic")
             }
@@ -1416,7 +1422,7 @@ class HorizonDeviceTest {
             quickAction("Add a category tag")
             compose.onNodeWithText("Add category").assertIsDisplayed()
             compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
-            tap("Save category")
+            tap("Save")
             compose.onNode(hasTestTag("category-name")).assertIsFocused()
             awaitText("Enter a category name of up to 100 characters.")
             field("Name", "Weekend outings")
@@ -1435,21 +1441,21 @@ class HorizonDeviceTest {
                 compose.onNode(hasTestTag("category-name")).performScrollTo().assertIsDisplayed()
                 screenshot("category-$layout-details")
                 compose.onNode(hasTestTag("category-color-#d96a4f")).performScrollTo().assertIsDisplayed()
-                compose.onNode(hasTestTag("horizon-editor-actions")).performScrollTo().assertIsDisplayed()
+                compose.onNode(hasTestTag("horizon-editor-actions")).assertIsDisplayed()
                 assertEquals(
                     compose
                         .onNodeWithText("Cancel")
                         .fetchSemanticsNode()
                         .boundsInRoot.width,
                     compose
-                        .onNodeWithText("Save category")
+                        .onNodeWithText("Save")
                         .fetchSemanticsNode()
                         .boundsInRoot.width,
                     1f,
                 )
                 screenshot("category-$layout-actions")
             }
-            tap("Save category")
+            tap("Save")
             compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("category-editor")).fetchSemanticsNodes().isEmpty() }
             val category = backend.items("categories").values.last()
             assertEquals("Weekend outings", category["name"]?.jsonPrimitive?.content)
@@ -1473,8 +1479,8 @@ class HorizonDeviceTest {
             compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
             compose
                 .onNodeWithText(
-                    "Save budget",
-                ).performScrollTo()
+                    "Save",
+                )
                 .performSemanticsAction(SemanticsActions.OnClick) {
                     it()
                 }
@@ -1499,14 +1505,14 @@ class HorizonDeviceTest {
                 }
                 compose.onNode(hasTestTag("budget-amount")).performScrollTo().assertIsDisplayed()
                 compose.onNode(hasTestTag("budget-amount")).assertTextContains("250.50")
-                compose.onNodeWithText("Save budget").performScrollTo().assertIsDisplayed()
-                compose.onNode(hasTestTag("horizon-editor-actions")).performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText("Save").assertIsDisplayed()
+                compose.onNode(hasTestTag("horizon-editor-actions")).assertIsDisplayed()
                 screenshot("budget-$layout")
             }
             compose
                 .onNodeWithText(
-                    "Save budget",
-                ).performScrollTo()
+                    "Save",
+                )
                 .performSemanticsAction(SemanticsActions.OnClick) {
                     it()
                 }
@@ -1550,7 +1556,7 @@ class HorizonDeviceTest {
             field("Purchase name *", name)
             field("Estimated purchase amount *", "12.50")
             field("Product link (optional)", "https://example.test/item")
-            tap("Add purchase")
+            tap("Save")
             awaitText(name)
         }
         awaitText("2 planned purchases")
@@ -1578,7 +1584,7 @@ class HorizonDeviceTest {
             tap("Plan your first purchase")
             field("Purchase name *", "New monitor")
             field("Estimated purchase amount *", "20000")
-            tap("Add purchase")
+            tap("Save")
             awaitText("New monitor")
             for ((layout, dimensions) in listOf("phone" to "720x1600", "tablet" to "2048x1800", "large-text" to "720x1600")) {
                 shell("wm size $dimensions")
@@ -1611,14 +1617,14 @@ class HorizonDeviceTest {
         compose.onNode(hasText("Add planned purchase") and hasAnyAncestor(hasTestTag("planned-purchase-editor"))).assertDoesNotExist()
         compose.onNodeWithText("Plan a purchase for your upcoming financial forecast.").assertDoesNotExist()
         compose.onNodeWithText("Planning for").assertDoesNotExist()
-        tap("Add purchase")
+        tap("Save")
         compose.onNode(hasTestTag("purchase-name")).assertIsFocused()
         awaitText("Enter a purchase name of up to 160 characters.")
         assertTrue(backend.items("purchases").isEmpty())
         field("Purchase name *", "Monitor")
         field("Estimated purchase amount *", "125000.50")
         field("Product link (optional)", "not-a-link")
-        tap("Add purchase")
+        tap("Save")
         compose.onNode(hasTestTag("purchase-url")).assertIsFocused()
         awaitText("Enter a valid http or https link.")
         assertTrue(backend.items("purchases").isEmpty())
@@ -1628,7 +1634,7 @@ class HorizonDeviceTest {
         awaitText("Add planned purchase")
         compose.onNode(hasTestTag("purchase-name")).assertTextContains("Monitor")
         compose.onNodeWithContentDescription("Clear product link").performScrollTo().performClick()
-        tap("Add purchase")
+        tap("Save")
         compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("planned-purchase-editor")).fetchSemanticsNodes().isEmpty() }
         awaitText("Monitor")
         assertEquals(1, backend.items("purchases").size)
@@ -1675,7 +1681,7 @@ class HorizonDeviceTest {
                 }
                 compose.waitForIdle()
                 compose.onNode(hasTestTag("purchase-url")).performScrollTo().assertIsDisplayed()
-                compose.onNodeWithText("Add purchase").performScrollTo().assertIsDisplayed()
+                compose.onNodeWithText("Save").assertIsDisplayed()
                 compose.onNodeWithText("Planning for").assertDoesNotExist()
                 compose.onNodeWithText("Add planned purchase").assertIsDisplayed()
                 compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
@@ -1695,7 +1701,7 @@ class HorizonDeviceTest {
         quickAction("Log a transaction")
         field("Name", "Unsaved finance")
         field("Amount (${UserCurrency.symbol()})", "0.001")
-        tap("Save transaction")
+        tap("Save")
         assertEquals(0, backend.mutations)
         scenario!!.recreate()
         awaitText("Unsaved finance")
@@ -1720,9 +1726,9 @@ class HorizonDeviceTest {
         field("Amount (${UserCurrency.symbol()})", "30.25")
         backend.loseSave =
             true
-        tap("Save budget")
+        tap("Save")
         awaitText("Review before another change")
-        compose.onNodeWithText("Save budget").assertIsNotEnabled()
+        compose.onNodeWithText("Save").assertIsNotEnabled()
         compose.onNodeWithText("I reviewed the server records").assertIsNotEnabled()
         assertEquals(1, backend.mutations)
         backend.offline = false
@@ -1732,7 +1738,7 @@ class HorizonDeviceTest {
         screenshot("recovery")
         tap("I reviewed the server records")
         tap("Resume unsaved edits")
-        tap("Cancel editing")
+        tap("Cancel")
         confirm("Discard edits")
         awaitText("Budgets")
         assertEquals(1, backend.mutations)
@@ -1786,7 +1792,7 @@ class HorizonDeviceTest {
             compose.onNodeWithText("75.25").performScrollTo().assertIsDisplayed()
             screenshot("resized-editor")
             assertEquals(0, backend.mutations)
-            tap("Save transaction")
+            tap("Save")
             awaitText("Search transactions")
             assertEquals(1, backend.mutations)
             assertEquals(

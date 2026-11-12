@@ -50,15 +50,17 @@ import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
+import dev.abhishekan.pulse.core.ui.components.PulseFormAction
+import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.math.BigDecimal
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 internal fun GarageOverview(
@@ -357,14 +359,18 @@ internal fun PressureCard(
                 }
             },
             confirmButton = {
-                PulseButton(stringResource(R.string.pulse_garage_confirm_air_fill_action), {
-                    confirmFill = false
-                    if (fillWithOdometer != null)fillWithOdometer(mileage) else fill()
-                    odometer = ""
-                }, enabled = valid, style = PulseButtonStyle.Text)
-            },
-            dismissButton = {
-                PulseButton(stringResource(R.string.pulse_garage_schedule_cancel), { confirmFill = false }, style = PulseButtonStyle.Text)
+                PulseFormActions(
+                    primary = PulseFormAction(
+                        stringResource(CoreUiR.string.pulse_ui_record),
+                        {
+                            confirmFill = false
+                            if (fillWithOdometer != null) fillWithOdometer(mileage) else fill()
+                            odometer = ""
+                        },
+                        enabled = valid,
+                    ),
+                    secondary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), { confirmFill = false }),
+                )
             },
         )
     }

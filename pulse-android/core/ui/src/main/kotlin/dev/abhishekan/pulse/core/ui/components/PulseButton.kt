@@ -2,6 +2,7 @@ package dev.abhishekan.pulse.core.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
@@ -49,6 +50,7 @@ fun PulseButton(
     leadingIcon: (@Composable () -> Unit)? = null,
     style: PulseButtonStyle = PulseButtonStyle.Standard,
     trailingIcon: (@Composable () -> Unit)? = null,
+    contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     icon: (@Composable () -> Unit)? = null,
 ) {
     val colors = PulseTheme.colors
@@ -143,6 +145,7 @@ fun PulseButton(
                 disabledContainerColor = colors.surfaceMuted,
                 disabledContentColor = colors.textSecondary,
             ),
+        contentPadding = contentPadding,
         border = if (variant == PulseButtonVariant.Secondary) BorderStroke(PulseTokens.focusWidth / 2, colors.outline) else null,
         elevation =
             ButtonDefaults.buttonElevation(

@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
@@ -17,8 +18,12 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.components.PulseFormAction
+import dev.abhishekan.pulse.core.ui.components.PulseFormActions
+import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 private val sample =
     HorizonOverview(
@@ -110,14 +115,11 @@ private fun EmptyProjectionsPreview() {
 private fun EditorPreview() {
     PulseTheme(true) {
         Surface {
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(
-                        rememberScrollState(),
-                    ).padding(PulseTokens.medium),
+            PulseFormLayout(
+                scrollContentModifier = Modifier.padding(PulseTokens.medium),
+                footer = { PreviewFormActions() },
             ) {
-                HorizonEditor(
+                TransactionEditor(
                     HorizonDraft(
                         HorizonForm.Transaction,
                         name = "Lunch",
@@ -128,10 +130,6 @@ private fun EditorPreview() {
                     sample,
                     false,
                     null,
-                    false,
-                    {
-                    },
-                    {},
                     {},
                 )
             }
@@ -187,9 +185,21 @@ private fun FixedObligationDarkPreview() {
 private fun ObligationPreviewContent(dark: Boolean) {
     PulseTheme(dark) {
         Surface(color = PulseTheme.colors.background) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
-                FixedObligationEditor(HorizonDraft(HorizonForm.Deduction), sample, false, null, false, {}, {}, {})
+            PulseFormLayout(
+                scrollContentModifier = Modifier.padding(PulseTokens.medium),
+                footer = { PreviewFormActions() },
+            ) {
+                FixedObligationEditor(HorizonDraft(HorizonForm.Deduction), sample, false, null, {})
             }
         }
     }
+}
+
+@Composable
+private fun PreviewFormActions() {
+    PulseFormActions(
+        primary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_save), {}),
+        secondary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), {}),
+        modifier = Modifier.padding(horizontal = PulseTokens.medium),
+    )
 }

@@ -9,22 +9,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -46,6 +44,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
+import dev.abhishekan.pulse.core.ui.components.PulseFormAction
+import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseSwitch
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -54,7 +54,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import dev.abhishekan.pulse.core.ui.message
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import dev.abhishekan.pulse.core.ui.R as UiR
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 private val questionTitles =
     listOf(
@@ -126,7 +126,7 @@ internal fun MealOnboardingScreen(
     vm: MealOnboardingViewModel,
 ) {
     BackHandler(state.saving || (state.showJourney && (state.step > 0 || state.editing))) { if (!state.saving) vm.back() }
-    Box(Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).padding(PulseTokens.medium)) {
+    Box(Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).imePadding().padding(PulseTokens.medium)) {
         if (state.record == null) {
             if (state.error != null) {
                 PulseErrorState(state.error.message, vm::refresh)
@@ -141,37 +141,24 @@ internal fun MealOnboardingScreen(
                 if (wide) MealSetupInfographic(state.step, Modifier.weight(0.8f).fillMaxHeight())
                 Column(Modifier.weight(1f).widthIn(max = PulseTokens.readingWidth).fillMaxSize()) {
                     val progressLabel = stringResource(R.string.meal_setup_progress, (state.step + 1).coerceAtMost(6))
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        PulseButton(
-                            stringResource(R.string.meal_setup_back),
-                            vm::back,
-                            modifier = Modifier.testTag("meal-setup-back"),
-                            enabled = !state.saving && (state.step > 0 || state.editing),
-                            style = PulseButtonStyle.Icon,
-                            icon = { Icon(painterResource(UiR.drawable.pulse_back), null) },
-                        )
-                        PulseText(
-                            stringResource(
-                                if (state.step ==
-                                    6
-                                ) {
-                                    R.string.meal_setup_review_counter
-                                } else {
-                                    R.string.meal_setup_counter
-                                },
-                                state.step + 1,
-                            ),
-                            Modifier.weight(1f).padding(horizontal = PulseTokens.small).semantics {
-                                contentDescription = progressLabel
-                                liveRegion = LiveRegionMode.Polite
+                    PulseText(
+                        stringResource(
+                            if (state.step ==
+                                6
+                            ) {
+                                R.string.meal_setup_review_counter
+                            } else {
+                                R.string.meal_setup_counter
                             },
-                            style = PulseTextStyle.Label,
-                            color = PulseTheme.colors.textSecondary,
-                        )
-                        PulseButton(stringResource(if (state.editing) R.string.meal_setup_cancel else R.string.meal_setup_skip), {
-                            if (state.editing) vm.cancelEditing() else vm.skip()
-                        }, enabled = !state.saving, style = PulseButtonStyle.Text)
-                    }
+                            state.step + 1,
+                        ),
+                        Modifier.fillMaxWidth().semantics {
+                            contentDescription = progressLabel
+                            liveRegion = LiveRegionMode.Polite
+                        },
+                        style = PulseTextStyle.Label,
+                        color = PulseTheme.colors.textSecondary,
+                    )
                     MealSetupChapterProgress(
                         state.step,
                         Modifier.fillMaxWidth().padding(top = PulseTokens.small, bottom = PulseTokens.medium),
@@ -226,22 +213,36 @@ internal fun MealOnboardingScreen(
                         Modifier.fillMaxWidth().padding(top = PulseTokens.medium),
                         verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
                     ) {
-                        PulseButton(
-                            stringResource(
-                                if (state.step ==
-                                    6
-                                ) {
-                                    R.string.meal_setup_save
-                                } else if (state.returnToReview) {
-                                    R.string.meal_setup_review_back
-                                } else {
-                                    R.string.meal_setup_continue
-                                },
-                            ),
-                            { if (state.step == 6) vm.save() else vm.next() },
-                            Modifier.fillMaxWidth(),
+                        val leave = PulseFormAction(
+                            stringResource(if (state.editing) CoreUiR.string.pulse_ui_cancel else CoreUiR.string.pulse_ui_skip),
+                            { if (state.editing) vm.cancelEditing() else vm.skip() },
                             enabled = !state.saving,
-                            loading = state.saving,
+                        )
+                        val back = if (state.step > 0) {
+                            PulseFormAction(
+                                stringResource(CoreUiR.string.pulse_ui_back),
+                                vm::back,
+                                enabled = !state.saving,
+                                modifier = Modifier.testTag("meal-setup-back"),
+                            )
+                        } else {
+                            null
+                        }
+                        PulseFormActions(
+                            primary = PulseFormAction(
+                                stringResource(
+                                    when {
+                                        state.step == 6 -> CoreUiR.string.pulse_ui_save
+                                        state.returnToReview -> CoreUiR.string.pulse_ui_review
+                                        else -> CoreUiR.string.pulse_ui_next
+                                    },
+                                ),
+                                { if (state.step == 6) vm.save() else vm.next() },
+                                enabled = !state.saving,
+                                loading = state.saving,
+                            ),
+                            secondary = back ?: leave,
+                            additional = if (back != null) leave else null,
                         )
                         PulseText(
                             stringResource(R.string.meal_setup_footer_hint),

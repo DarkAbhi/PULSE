@@ -381,21 +381,8 @@ class MealPlanDeviceTest {
                 ).fetchSemanticsNodes()
                 .isNotEmpty()
         }
-        val setupVisible = compose.onAllNodes(hasText("Skip setup") or hasText("Cancel editing")).fetchSemanticsNodes().isNotEmpty()
-        val fixedSetupAction =
-            setupVisible &&
-                text in listOf("Continue", "Skip setup", "Cancel editing", "Previous question", "Save preferences", "Back to review")
         val target = compose.onAllNodes((hasText(text) or hasContentDescription(text)) and hasClickAction() and isEnabled())[0]
-        val scrolls =
-            !fixedSetupAction &&
-                text !in listOf("Add meal", "Add custom meal time") &&
-                (text !in listOf("Home", "Fitness", "Horizon", "Garage", "Meals") || usesNavigationRail())
-        // IME insets can settle after the first scroll. Recheck the visible target
-        // instead of asserting against a single intermediate animation frame.
-        compose.waitUntil(5_000) {
-            if (scrolls) target.performScrollTo()
-            runCatching { target.assertIsDisplayed() }.isSuccess
-        }
+        compose.scrollToDisplayed(target)
         target.assertIsDisplayed().performSemanticsAction(SemanticsActions.OnClick) { it() }
     }
 
@@ -468,7 +455,7 @@ class MealPlanDeviceTest {
         tap("Meal preferences")
         awaitText("What’s your goal?")
         compose.onNodeWithText("Find more calm around food").assertIsSelected()
-        tap("Cancel editing")
+        tap("Cancel")
         awaitText("Soup")
         assertEquals(0, mutations)
     }
@@ -490,9 +477,9 @@ class MealPlanDeviceTest {
             awaitText("What’s your goal?")
             tap("Feel full and satisfied")
             screenshot("onboarding-large-text")
-            tap("Continue")
+            tap("Next")
             awaitText("What gets in the way?")
-            tap("Skip setup")
+            tap("Skip")
             awaitText("Soup")
         } finally {
             shell("wm size ${size ?: "reset"}")
@@ -504,36 +491,36 @@ class MealPlanDeviceTest {
     @Test fun mealSetupAndroidSaveAndLostResponseUseSharedServerDecision() {
         setupRecord = obj("""{"status":"pending","questionnaire_version":1,"preferences":null}""")
         launchPlanner("What’s your goal?")
-        compose.onNodeWithText("Previous question").assertDoesNotExist()
+        compose.onNodeWithText("Back").assertDoesNotExist()
         compose.onNodeWithTag("meal-setup-artwork").assertDoesNotExist()
         compose.onNodeWithText("Nourish myself without dieting").assertIsDisplayed()
         screenshot("onboarding-goal")
         tap("Feel full and satisfied")
-        tap("Continue")
+        tap("Next")
         awaitText("What gets in the way?")
-        compose.onNode(hasContentDescription("Previous question")).performClick()
+        compose.onNodeWithTag("meal-setup-back").performClick()
         compose.onNodeWithText("Feel full and satisfied").assertIsSelected()
-        tap("Continue")
+        tap("Next")
         awaitText("What gets in the way?")
-        tap("Continue")
+        tap("Next")
         tap("Vegetarian")
-        tap("Continue")
+        tap("Next")
         tap("Peanuts")
         screenshot("onboarding-avoidances")
-        tap("Continue")
+        tap("Next")
         awaitText("Where would a little help go furthest?")
-        tap("Continue")
+        tap("Next")
         awaitText("When do you usually eat these meals?")
         screenshot("onboarding-times")
-        tap("Continue")
+        tap("Next")
         awaitText("A plan that feels like you.")
         tap("Edit Your goal")
         compose.onNodeWithText("Feel full and satisfied").assertIsSelected()
-        tap("Back to review")
+        tap("Review")
         assertEquals(0, mutations)
         screenshot("onboarding-review")
         loseSetupResponse = true
-        tap("Save preferences")
+        tap("Save")
         awaitText("Soup")
         assertEquals("completed", setupRecord.getValue("status").jsonPrimitive.content)
         assertEquals(
@@ -553,7 +540,7 @@ class MealPlanDeviceTest {
     @Test fun mealSetupAndroidSkipPersistsAndWebCompletionIsPickedUpOnResume() {
         setupRecord = obj("""{"status":"pending","questionnaire_version":1,"preferences":null}""")
         launchPlanner("What’s your goal?")
-        tap("Skip setup")
+        tap("Skip")
         awaitText("Soup")
         assertEquals("skipped", setupRecord.getValue("status").jsonPrimitive.content)
         assertEquals(kotlinx.serialization.json.JsonNull, setupRecord["preferences"])
@@ -871,7 +858,7 @@ class MealPlanDeviceTest {
         compose.onNodeWithTag("meal-date").performScrollTo().performClick()
         screenshot("date-picker", true)
         confirm("Choose date")
-        tap("Save meal")
+        tap("Save")
         awaitText("Rice bowl")
         compose.onAllNodesWithText("Lunch").assertCountEquals(1)
         compose.onAllNodesWithText("Sunday").assertCountEquals(0)
@@ -895,7 +882,7 @@ class MealPlanDeviceTest {
         tap("Edit Rice bowl")
         field("Meal name", "Rice and beans")
         tap("Evening bowl")
-        tap("Save meal")
+        tap("Save")
         awaitText("Rice and beans")
         screenshot("meals")
         tap("Delete Rice and beans")
@@ -921,7 +908,7 @@ class MealPlanDeviceTest {
         confirm("Choose time")
         tap("End time: 17:00")
         confirm("Choose time")
-        tap("Save meal time")
+        tap("Save")
         awaitText("Night snack")
         compose.waitUntil(10_000) {
             compose.onAllNodesWithText("Saved. Your meal plan is up to date.").fetchSemanticsNodes().isEmpty()
@@ -931,7 +918,7 @@ class MealPlanDeviceTest {
         tap("Add meal")
         field("Meal name", "Oats")
         tap("Evening bowl")
-        tap("Save meal")
+        tap("Save")
         awaitText("Oats")
         tap("Meal times")
         tap("Delete time Evening bowl")
@@ -977,9 +964,9 @@ class MealPlanDeviceTest {
         field("Meal name", "Lost bowl")
         tap("Lunch")
         loseSave = true
-        tap("Save meal")
+        tap("Save")
         awaitText("Review before another change")
-        compose.onNodeWithText("Save meal").assertIsNotEnabled()
+        compose.onNodeWithText("Save").assertIsNotEnabled()
         assertEquals(1, mutations)
         compose.onNodeWithText("I reviewed the server records").assertIsNotEnabled()
         offline = false
@@ -1007,7 +994,7 @@ class MealPlanDeviceTest {
         assertEquals(0, mutations)
         field("Meal name", "Unsaved bowl")
         screenshot("draft")
-        compose.onNodeWithText("Save meal").performScrollTo()
+        compose.onNodeWithText("Save").assertIsDisplayed()
         compose.onNode(hasContentDescription("Back to planner")).assertIsDisplayed().performClick()
         confirm("Discard")
         awaitText("Soup")
@@ -1040,7 +1027,7 @@ class MealPlanDeviceTest {
             shell("wm density 320")
             awaitText("Resized meal")
             screenshot("resized-editor")
-            tap("Save meal")
+            tap("Save")
             compose.waitUntil(20_000) { mutations == 1 }
             awaitText("Resized meal")
             compose.onNodeWithText("Resized meal").performScrollTo().assertIsDisplayed()

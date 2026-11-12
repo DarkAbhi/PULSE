@@ -125,7 +125,7 @@ class ExerciseEditorRedesignTest {
         compose.onNodeWithText("Find an exercise to get started").assertIsDisplayed()
         compose.onNodeWithText("Your sets").assertDoesNotExist()
         screenshot("empty")
-        compose.onNodeWithText("Save exercise").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Save").assertIsNotEnabled()
         compose.onNodeWithText("Search for an exercise").performScrollTo().performClick()
         compose.onNode(hasSetTextAction() and hasText("Search for an exercise")).assertIsFocused()
         compose.onNode(hasSetTextAction() and hasText("Search for an exercise")).performTextInput("My custom exercise")
@@ -133,8 +133,7 @@ class ExerciseEditorRedesignTest {
         compose.onNodeWithText("Custom exercise").assertExists()
         compose.onNodeWithText("Reps, set 1").performScrollTo().performTextInput("12")
         compose
-            .onNodeWithText("Save exercise")
-            .performScrollTo()
+            .onNodeWithText("Save")
             .assertIsEnabled()
             .performSemanticsAction(SemanticsActions.OnClick) { it() }
         compose.runOnIdle {
@@ -160,7 +159,7 @@ class ExerciseEditorRedesignTest {
         screenshot("instructions")
         compose.onNodeWithContentDescription("Close sheet").performSemanticsAction(SemanticsActions.OnClick) { it() }
         compose.runOnIdle { check(editor.value.draft == draft) }
-        compose.onNodeWithText("Save exercise").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Save").assertIsNotEnabled()
     }
 
     @Test fun immediateCatalogueSelectionAndSetControls() {
@@ -184,7 +183,7 @@ class ExerciseEditorRedesignTest {
     @Test fun maximumSetsAndInvalidRepetitionsKeepActionsDisabled() {
         show(ExerciseEditorState(ExerciseDraft(name = "Custom", sets = List(20) { SetDraft("1001", "") })))
         compose.onNodeWithText("Add another set").performScrollTo().assertIsNotEnabled()
-        compose.onNodeWithText("Save exercise").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Save").assertIsNotEnabled()
     }
 
     @Test fun largeTypeAndDarkThemeKeepSetFieldsAndInstructionsAccessible() {
@@ -196,7 +195,7 @@ class ExerciseEditorRedesignTest {
             largeType = true,
         )
         compose.onNodeWithText("Weight (kg), set 1").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Save exercise").performScrollTo().assertIsEnabled()
+        compose.onNodeWithText("Save").assertIsEnabled()
         screenshot("large-type-dark")
         compose.onNodeWithText("View instructions").performScrollTo().performClick()
         compose.onNodeWithText("1. Curl with control.").assertIsDisplayed()

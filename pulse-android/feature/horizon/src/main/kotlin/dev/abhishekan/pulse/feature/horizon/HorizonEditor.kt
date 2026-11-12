@@ -38,19 +38,9 @@ internal fun HorizonEditor(
     data: HorizonOverview?,
     busy: Boolean,
     error: UiText?,
-    blocked: Boolean,
     onChange: (HorizonDraft) -> Unit,
     onSave: () -> Unit,
-    onCancel: () -> Unit,
 ) {
-    if (draft.kind == HorizonForm.Purchase) {
-        PlannedPurchaseEditor(draft, data, busy, error, blocked, onChange, onSave, onCancel)
-        return
-    }
-    if (draft.kind == HorizonForm.Deduction) {
-        FixedObligationEditor(draft, data, busy, error, blocked, onChange, onSave, onCancel)
-        return
-    }
     var datePicker by remember { mutableStateOf(false) }
     var timePicker by remember { mutableStateOf(false) }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -304,20 +294,6 @@ internal fun HorizonEditor(
             )
         }
         error?.let { PulseText(it, color = PulseTheme.colors.error) }
-        PulseButton(
-            stringResource(draft.kind.editorLabel(EditorAction.Save)),
-            onSave,
-            Modifier.fillMaxWidth(),
-            enabled =
-                !blocked && !busy && data != null,
-            loading = busy,
-        )
-        PulseButton(
-            stringResource(R.string.pulse_horizon_cancel_editing),
-            onCancel,
-            enabled = !busy,
-            style = PulseButtonStyle.Text,
-        )
     }
     if (datePicker) {
         PulseDatePickerDialog(

@@ -25,6 +25,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
+import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -157,7 +158,7 @@ private fun FuelEditorPreview() {
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
                     FuelEditor(GarageDraft.new(GarageForm.Fuel, 1), false, null, {})
                 }
-                FuelEditorActions(false, false, {}, {})
+                GarageFormFooter(GarageDraft.new(GarageForm.Fuel, 1), false, false, {}, {}, {})
             }
         }
     }
@@ -169,13 +170,7 @@ private fun FuelEditorPreview() {
 @Preview(name = "Add vehicle large text", widthDp = 360, heightDp = 1500, fontScale = 2f)
 @Composable
 private fun VehicleEditorPreview() {
-    PulseTheme {
-        PulseScreenScaffold("Add vehicle", backLabel = "Back to garage") {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
-                VehicleEditor(GarageDraft.new(GarageForm.Vehicle, 0), false, false, null, {}, {}, {})
-            }
-        }
-    }
+    VehicleStepPreview(0)
 }
 
 @Preview(name = "Vehicle fuel tablet", widthDp = 1280, heightDp = 1000)
@@ -193,24 +188,21 @@ private fun VehicleTyresStepPreview() = VehicleStepPreview(2)
 private fun VehicleStepPreview(step: Int) {
     PulseTheme {
         PulseScreenScaffold("Add vehicle", backLabel = "Back to garage") {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(PulseTokens.medium)) {
-                VehicleEditor(
-                    GarageDraft
-                        .new(GarageForm.Vehicle, 0)
-                        .set("catalogMode", "manual")
-                        .set("vehicleKind", "car")
-                        .set("name", "Honda HR-V")
-                        .set("vehicleFuel", "petrol")
-                        .set("dualTank", "true")
-                        .set("vehicleSecondFuel", "lpg")
-                        .set("vehicleStep", step.toString()),
-                    false,
-                    false,
-                    null,
-                    {},
-                    {},
-                    {},
-                )
+            val draft =
+                GarageDraft
+                    .new(GarageForm.Vehicle, 0)
+                    .set("catalogMode", "manual")
+                    .set("vehicleKind", "car")
+                    .set("name", "Honda HR-V")
+                    .set("vehicleFuel", "petrol")
+                    .set("dualTank", "true")
+                    .set("vehicleSecondFuel", "lpg")
+                    .withVehicleStep(step)
+            PulseFormLayout(
+                scrollContentModifier = Modifier.padding(PulseTokens.medium),
+                footer = { GarageFormFooter(draft, false, false, {}, {}, {}, Modifier.padding(horizontal = PulseTokens.medium)) },
+            ) {
+                VehicleEditor(draft, false, null, {})
             }
         }
     }

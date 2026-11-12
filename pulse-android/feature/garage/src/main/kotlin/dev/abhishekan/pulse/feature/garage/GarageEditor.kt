@@ -41,18 +41,15 @@ import java.time.LocalTime
 internal fun GarageEditor(
     draft: GarageDraft,
     busy: Boolean,
-    blocked: Boolean,
     error: UiText?,
     change: (GarageDraft) -> Unit,
-    save: () -> Unit,
-    cancel: () -> Unit,
     makes: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),
     models: GarageSection<List<VehicleCatalogOption>> = GarageSection(loading = false),
     retryCatalog: () -> Unit = {},
     match: GarageSection<VehicleCatalogMatch?> = GarageSection(loading = false),
 ) {
     if (draft.kind == GarageForm.Vehicle) {
-        VehicleEditor(draft, busy, blocked, error, change, save, cancel, makes, models, retryCatalog, match)
+        VehicleEditor(draft, busy, error, change, makes, models, retryCatalog, match)
         return
     }
     if (draft.kind == GarageForm.Fuel) {
@@ -60,7 +57,7 @@ internal fun GarageEditor(
         return
     }
     if (draft.kind == GarageForm.Care) {
-        MaintenanceEditor(draft, busy, blocked, error, change, save, cancel)
+        MaintenanceEditor(draft, busy, error, change)
         return
     }
     var datePicker by remember { mutableStateOf(false) }
@@ -168,21 +165,6 @@ internal fun GarageEditor(
                 color = PulseTheme.colors.error,
             )
         }
-        PulseButton(
-            stringResource(draft.kind.editorLabel(EditorAction.Save)),
-            {
-                focus.clearFocus()
-                save()
-            },
-            Modifier.fillMaxWidth(),
-            enabled =
-                !blocked && enabled,
-            loading = busy,
-        )
-        PulseButton(stringResource(R.string.pulse_garage_cancel_editing), {
-            focus.clearFocus()
-            cancel()
-        }, enabled = enabled, style = PulseButtonStyle.Text)
     }
     if (datePicker) {
         PulseDatePickerDialog(

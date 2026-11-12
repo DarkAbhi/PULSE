@@ -3,6 +3,7 @@ package dev.abhishekan.pulse.feature.horizon
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -22,9 +23,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.HorizonRecord
@@ -45,6 +50,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
+import dev.abhishekan.pulse.core.ui.components.PulseFormAction
+import dev.abhishekan.pulse.core.ui.components.PulseFormActions
+import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
@@ -54,6 +62,7 @@ import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
@@ -127,6 +136,54 @@ internal fun HorizonScreen(
                     }
                 }
             }
+            val review: @Composable () -> Unit = {
+                if (state.reviewRequired) {
+                    PulseCard(Modifier.fillMaxWidth()) {
+                        PulseText(
+                            stringResource(R.string.pulse_horizon_review_before_another_change),
+                            style = PulseTextStyle.Title,
+                        )
+                        PulseText(
+                            stringResource(
+                                R.string.pulse_horizon_the_server_may_have_saved_the_last_change_check,
+                            ),
+                        )
+                        PulseButton(
+                            stringResource(R.string.pulse_horizon_refresh_server_records),
+                            vm::refresh,
+                            style = PulseButtonStyle.Text,
+                        )
+                        if (state.draft !=
+                            null
+                        ) {
+                            PulseButton(
+                                if (records) {
+                                    stringResource(
+                                        R.string.pulse_horizon_return_to_draft,
+                                    )
+                                } else {
+                                    stringResource(
+                                        R.string.pulse_horizon_view_server_records,
+                                    )
+                                },
+                                {
+                                    records =
+                                        !records
+                                },
+                                style = PulseButtonStyle.Text,
+                            )
+                        }
+                        PulseButton(
+                            stringResource(
+                                R.string.pulse_horizon_i_reviewed_the_server_records,
+                            ),
+                            vm::acknowledgeReview,
+                            enabled =
+                                state.reviewReady && !state.busy,
+                        )
+                    }
+                }
+            }
             val content: @Composable () -> Unit = {
                 val scroll = rememberScrollState()
                 Column(
@@ -137,362 +194,242 @@ internal fun HorizonScreen(
                         .padding(width.pagePadding),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                 ) {
-                    if (state.reviewRequired) {
-                        PulseCard(Modifier.fillMaxWidth()) {
-                            PulseText(
-                                stringResource(R.string.pulse_horizon_review_before_another_change),
-                                style = PulseTextStyle.Title,
-                            )
-                            PulseText(
-                                stringResource(
-                                    R.string.pulse_horizon_the_server_may_have_saved_the_last_change_check,
-                                ),
-                            )
-                            PulseButton(
-                                stringResource(R.string.pulse_horizon_refresh_server_records),
-                                vm::refresh,
-                                style = PulseButtonStyle.Text,
-                            )
-                            if (state.draft !=
-                                null
-                            ) {
-                                PulseButton(
-                                    if (records) {
-                                        stringResource(
-                                            R.string.pulse_horizon_return_to_draft,
-                                        )
-                                    } else {
-                                        stringResource(
-                                            R.string.pulse_horizon_view_server_records,
-                                        )
-                                    },
-                                    {
-                                        records =
-                                            !records
-                                    },
-                                    style = PulseButtonStyle.Text,
-                                )
-                            }
-                            PulseButton(
-                                stringResource(
-                                    R.string.pulse_horizon_i_reviewed_the_server_records,
-                                ),
-                                vm::acknowledgeReview,
-                                enabled =
-                                    state.reviewReady && !state.busy,
-                            )
-                        }
+                    review()
+                    if (state.draft != null &&
+                        !state.reviewRequired
+                    ) {
+                        PulseButton(
+                            stringResource(
+                                R.string.pulse_horizon_resume_unsaved_edits,
+                            ),
+                            {
+                                records =
+                                    false
+                            },
+                            style = PulseButtonStyle.Text,
+                        )
                     }
-                    if (state.draft != null && !records) {
-                        if (state.overview.error !=
-                            null
-                        ) {
-                            PulseErrorState(state.overview.error.message, vm::refreshOverview)
-                        }
-                        if (state.draft.kind == HorizonForm.Subscription) {
-                            SubscriptionEditor(
-                                state.draft,
-                                state.overview.value,
-                                state.busy,
-                                state.formError,
-                                vm::update,
-                            )
-                        } else if (state.draft.kind == HorizonForm.Transaction) {
-                            TransactionEditor(state.draft, state.overview.value, state.busy, state.formError, vm::update)
-                        } else if (state.draft.kind == HorizonForm.Budget) {
-                            BudgetEditor(
-                                state.draft,
-                                state.busy,
-                                state.formError,
-                                LocalConfiguration.current.smallestScreenWidthDp >= 600 && width != PulseWindowSize.Compact,
-                                !state.reviewRequired && !state.busy && state.overview.value != null,
-                                vm::update,
-                                vm::save,
-                            )
-                        } else if (state.draft.kind == HorizonForm.Category) {
-                            CategoryEditor(
-                                state.draft,
-                                state.busy,
-                                state.formError,
-                                !state.reviewRequired && !state.busy && state.overview.value != null,
-                                vm::update,
-                                vm::save,
-                            )
-                        } else {
-                            HorizonEditor(
-                                state.draft,
-                                state.overview.value,
-                                state.busy,
-                                state.formError,
-                                state.reviewRequired,
-                                vm::update,
-                                vm::save,
-                                cancel,
-                            )
-                        }
-                        val actionDraft =
-                            state.draft.takeIf {
-                                it.kind in
-                                    listOf(HorizonForm.Subscription, HorizonForm.Budget, HorizonForm.Category, HorizonForm.Transaction)
-                            }
-                        if (actionDraft != null) {
-                            HorizonEditorActions(
-                                stringResource(
-                                    if (actionDraft.kind == HorizonForm.Transaction) {
-                                        actionDraft.kind.editorLabel(EditorAction.Save)
-                                    } else if (actionDraft.kind == HorizonForm.Category) {
-                                        R.string.pulse_horizon_save_category
-                                    } else if (actionDraft.kind == HorizonForm.Budget) {
-                                        R.string.pulse_horizon_save_budget
-                                    } else if (actionDraft.id == null) {
-                                        R.string.pulse_horizon_add_subscription
-                                    } else {
-                                        R.string.pulse_horizon_obligation_save_changes
-                                    },
-                                ),
-                                !state.reviewRequired && !state.busy && state.overview.value != null,
-                                state.busy,
-                                vm::save,
-                                cancel,
-                            )
-                        }
-                    } else {
-                        if (state.draft != null &&
-                            !state.reviewRequired
-                        ) {
-                            PulseButton(
-                                stringResource(
-                                    R.string.pulse_horizon_resume_unsaved_edits,
-                                ),
-                                {
-                                    records =
-                                        false
-                                },
-                                style = PulseButtonStyle.Text,
-                            )
-                        }
-                        val canMutate =
-                            !state.busy &&
-                                !state.reviewRequired &&
-                                state.overview.value != null &&
-                                state.draft == null
-                        val edit: (HorizonDraft) -> Unit = {
-                            records = false
-                            vm.edit(it)
-                        }
-                        val create: (HorizonForm) -> Unit = {
-                            records = false
-                            vm.newForm(it)
-                        }
-                        val remove: (
-                            HorizonRecord,
-                            Long,
-                            UiText,
-                        ) -> Unit = { kind, id, body ->
-                            deletion =
-                                HorizonChange.Delete(kind, id) to body
-                        }
-                        when (state.tab) {
-                            HorizonTab.Overview -> {
-                                SectionState(state.overview, vm::refreshOverview) { data ->
-                                    HorizonMetrics(data, canMutate) {
-                                        create(HorizonForm.Config)
-                                    }
-                                    ProjectionCard(data)
+                    val canMutate =
+                        !state.busy &&
+                            !state.reviewRequired &&
+                            state.overview.value != null &&
+                            state.draft == null
+                    val edit: (HorizonDraft) -> Unit = {
+                        records = false
+                        vm.edit(it)
+                    }
+                    val create: (HorizonForm) -> Unit = {
+                        records = false
+                        vm.newForm(it)
+                    }
+                    val remove: (
+                        HorizonRecord,
+                        Long,
+                        UiText,
+                    ) -> Unit = { kind, id, body ->
+                        deletion =
+                            HorizonChange.Delete(kind, id) to body
+                    }
+                    when (state.tab) {
+                        HorizonTab.Overview -> {
+                            SectionState(state.overview, vm::refreshOverview) { data ->
+                                HorizonMetrics(data, canMutate) {
+                                    create(HorizonForm.Config)
                                 }
+                                ProjectionCard(data)
                             }
-                            HorizonTab.Transactions -> {
-                                LedgerFilters(
-                                    state,
-                                    vm,
-                                    ledgerCategory,
-                                    { ledgerCategory = it },
-                                    canMutate = canMutate,
-                                    addCategory = { create(HorizonForm.Category) },
-                                    logTransaction = { create(HorizonForm.Transaction) },
+                        }
+                        HorizonTab.Transactions -> {
+                            LedgerFilters(
+                                state,
+                                vm,
+                                ledgerCategory,
+                                { ledgerCategory = it },
+                                canMutate = canMutate,
+                                addCategory = { create(HorizonForm.Category) },
+                                logTransaction = { create(HorizonForm.Transaction) },
+                            )
+                            SectionState(state.transactions, {
+                                vm.refreshTransactions()
+                            }) { page ->
+                                if (currency.isBlank()) {
+                                    PulseText(stringResource(R.string.pulse_horizon_currency_unavailable), style = PulseTextStyle.Label)
+                                }
+                                HorizonLedger(
+                                    page,
+                                    currency,
+                                    canMutate,
+                                    { edit(it.draft(currency)) },
+                                    { tx ->
+                                        remove(
+                                            HorizonRecord.Transaction,
+                                            tx.id,
+                                            uiText(
+                                                R.string.pulse_horizon_delete_1_s_this_permanently_removes_the_transaction_and,
+                                                tx.name,
+                                            ),
+                                        )
+                                    },
+                                    categoryId = ledgerCategory,
                                 )
-                                SectionState(state.transactions, {
-                                    vm.refreshTransactions()
-                                }) { page ->
-                                    if (currency.isBlank()) {
-                                        PulseText(stringResource(R.string.pulse_horizon_currency_unavailable), style = PulseTextStyle.Label)
-                                    }
-                                    HorizonLedger(
-                                        page,
+                                PageControls(page, state.transactions.loading || state.busy, {
+                                    vm.refreshTransactions(it)
+                                })
+                            }
+                        }
+                        HorizonTab.Budgets -> {
+                            HorizonSectionAction(
+                                R.string.pulse_horizon_budgets_heading,
+                                R.string.pulse_horizon_add_budget,
+                                canMutate,
+                            ) { create(HorizonForm.Budget) }
+                            SectionState(state.overview, vm::refreshOverview) { data ->
+                                if (data.budgets.isEmpty()) {
+                                    PulseEmptyState(
+                                        stringResource(R.string.pulse_horizon_no_budgets_yet),
+                                        stringResource(
+                                            R.string.pulse_horizon_create_a_budget_to_group_related_spending_and_obligations,
+                                        ),
+                                    )
+                                }
+                                BudgetGrid(data.budgets) { budget ->
+                                    BudgetCard(
+                                        budget,
                                         currency,
                                         canMutate,
-                                        { edit(it.draft(currency)) },
-                                        { tx ->
-                                            remove(
-                                                HorizonRecord.Transaction,
-                                                tx.id,
-                                                uiText(
-                                                    R.string.pulse_horizon_delete_1_s_this_permanently_removes_the_transaction_and,
-                                                    tx.name,
+                                        {
+                                            edit(
+                                                HorizonDraft(
+                                                    HorizonForm.Budget,
+                                                    budget.id,
+                                                    budget.name,
+                                                    budget.allocated.toPlainString(),
+                                                    currency,
                                                 ),
                                             )
                                         },
-                                        categoryId = ledgerCategory,
-                                    )
-                                    PageControls(page, state.transactions.loading || state.busy, {
-                                        vm.refreshTransactions(it)
-                                    })
-                                }
-                            }
-                            HorizonTab.Budgets -> {
-                                HorizonSectionAction(
-                                    R.string.pulse_horizon_budgets_heading,
-                                    R.string.pulse_horizon_add_budget,
-                                    canMutate,
-                                ) { create(HorizonForm.Budget) }
-                                SectionState(state.overview, vm::refreshOverview) { data ->
-                                    if (data.budgets.isEmpty()) {
-                                        PulseEmptyState(
-                                            stringResource(R.string.pulse_horizon_no_budgets_yet),
-                                            stringResource(
-                                                R.string.pulse_horizon_create_a_budget_to_group_related_spending_and_obligations,
-                                            ),
-                                        )
-                                    }
-                                    BudgetGrid(data.budgets) { budget ->
-                                        BudgetCard(
-                                            budget,
-                                            currency,
-                                            canMutate,
-                                            {
-                                                edit(
-                                                    HorizonDraft(
-                                                        HorizonForm.Budget,
-                                                        budget.id,
-                                                        budget.name,
-                                                        budget.allocated.toPlainString(),
-                                                        currency,
-                                                    ),
-                                                )
-                                            },
-                                            {
-                                                remove(
-                                                    HorizonRecord.Budget,
-                                                    budget.id,
-                                                    uiText(
-                                                        R.string.pulse_horizon_delete_budget_confirmation,
-                                                        budget.name,
-                                                    ),
-                                                )
-                                            },
-                                        )
-                                    }
-                                }
-                            }
-                            HorizonTab.Obligations -> {
-                                HorizonSectionAction(
-                                    R.string.pulse_horizon_obligations_heading,
-                                    R.string.pulse_horizon_add_obligation,
-                                    canMutate,
-                                ) {
-                                    create(HorizonForm.Deduction)
-                                }
-                                SectionState(state.overview, vm::refreshOverview) { data ->
-                                    val activeSubscriptions = data.subscriptions.filter { it.status == "active" }
-                                    if (data.deductions.isEmpty() && activeSubscriptions.isEmpty()) {
-                                        PulseEmptyState(
-                                            stringResource(
-                                                R.string.pulse_horizon_no_fixed_obligations,
-                                            ),
-                                            stringResource(
-                                                R.string.pulse_horizon_add_recurring_bills_investments_or_other_commitments,
-                                            ),
-                                        )
-                                    }
-                                    ObligationGrid(data.deductions, { it.id }) { item ->
-                                        ObligationCard(
-                                            item = item,
-                                            budgetName =
-                                                item.budgetId?.let { id ->
-                                                    data.budgets.find { it.id == id }?.name
-                                                        ?: stringResource(R.string.pulse_horizon_unavailable)
-                                                },
-                                            enabled = canMutate,
-                                            edit = {
-                                                edit(
-                                                    HorizonDraft(
-                                                        HorizonForm.Deduction,
-                                                        item.id,
-                                                        item.name,
-                                                        item.amount.toPlainString(),
-                                                        currency,
-                                                        category = item.category,
-                                                        dueDay = item.dueDay?.toString().orEmpty(),
-                                                        active = item.active,
-                                                        budgetId = item.budgetId,
-                                                    ),
-                                                )
-                                            },
-                                            delete = {
-                                                remove(
-                                                    HorizonRecord.Deduction,
-                                                    item.id,
-                                                    uiText(
-                                                        R.string.pulse_horizon_delete_1_s_this_removes_the_fixed_obligation_and,
-                                                        item.name,
-                                                    ),
-                                                )
-                                            },
-                                        )
-                                    }
-                                    ObligationGrid(activeSubscriptions, { it.id }) { item ->
-                                        SubscriptionObligationCard(
-                                            item = item,
-                                            budgetName = item.budgetId?.let { id -> data.budgets.find { it.id == id }?.name },
-                                            categoryName = item.categoryId?.let { id -> data.categories.find { it.id == id }?.name },
-                                            enabled = canMutate,
-                                            manage = { edit(item.draft(currency)) },
-                                        )
-                                    }
-                                }
-                            }
-                            HorizonTab.Subscriptions -> {
-                                SectionState(state.overview, vm::refreshOverview) { data ->
-                                    SubscriptionList(
-                                        data = data,
-                                        canMutate = canMutate,
-                                        canViewPayments = !state.busy,
-                                        add = { create(HorizonForm.Subscription) },
-                                        edit = { edit(it.draft(currency)) },
-                                        delete = { item ->
+                                        {
                                             remove(
-                                                HorizonRecord.Subscription,
+                                                HorizonRecord.Budget,
+                                                budget.id,
+                                                uiText(
+                                                    R.string.pulse_horizon_delete_budget_confirmation,
+                                                    budget.name,
+                                                ),
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                        HorizonTab.Obligations -> {
+                            HorizonSectionAction(
+                                R.string.pulse_horizon_obligations_heading,
+                                R.string.pulse_horizon_add_obligation,
+                                canMutate,
+                            ) {
+                                create(HorizonForm.Deduction)
+                            }
+                            SectionState(state.overview, vm::refreshOverview) { data ->
+                                val activeSubscriptions = data.subscriptions.filter { it.status == "active" }
+                                if (data.deductions.isEmpty() && activeSubscriptions.isEmpty()) {
+                                    PulseEmptyState(
+                                        stringResource(
+                                            R.string.pulse_horizon_no_fixed_obligations,
+                                        ),
+                                        stringResource(
+                                            R.string.pulse_horizon_add_recurring_bills_investments_or_other_commitments,
+                                        ),
+                                    )
+                                }
+                                ObligationGrid(data.deductions, { it.id }) { item ->
+                                    ObligationCard(
+                                        item = item,
+                                        budgetName =
+                                            item.budgetId?.let { id ->
+                                                data.budgets.find { it.id == id }?.name
+                                                    ?: stringResource(R.string.pulse_horizon_unavailable)
+                                            },
+                                        enabled = canMutate,
+                                        edit = {
+                                            edit(
+                                                HorizonDraft(
+                                                    HorizonForm.Deduction,
+                                                    item.id,
+                                                    item.name,
+                                                    item.amount.toPlainString(),
+                                                    currency,
+                                                    category = item.category,
+                                                    dueDay = item.dueDay?.toString().orEmpty(),
+                                                    active = item.active,
+                                                    budgetId = item.budgetId,
+                                                ),
+                                            )
+                                        },
+                                        delete = {
+                                            remove(
+                                                HorizonRecord.Deduction,
                                                 item.id,
                                                 uiText(
-                                                    R.string.pulse_horizon_delete_subscription_confirmation,
+                                                    R.string.pulse_horizon_delete_1_s_this_removes_the_fixed_obligation_and,
                                                     item.name,
                                                 ),
                                             )
                                         },
-                                        payments = { vm.showPayments(it.id) },
+                                    )
+                                }
+                                ObligationGrid(activeSubscriptions, { it.id }) { item ->
+                                    SubscriptionObligationCard(
+                                        item = item,
+                                        budgetName = item.budgetId?.let { id -> data.budgets.find { it.id == id }?.name },
+                                        categoryName = item.categoryId?.let { id -> data.categories.find { it.id == id }?.name },
+                                        enabled = canMutate,
+                                        manage = { edit(item.draft(currency)) },
                                     )
                                 }
                             }
-                            HorizonTab.Purchases -> {
-                                SectionState(state.purchases, vm::refreshPurchases) { list ->
-                                    PlannedPurchaseList(
-                                        purchases = list,
-                                        currency = currency,
-                                        enabled = canMutate,
-                                        add = { create(HorizonForm.Purchase) },
-                                        delete = { item ->
-                                            remove(
-                                                HorizonRecord.Purchase,
-                                                item.id,
-                                                uiText(R.string.pulse_horizon_remove_1_s_from_next_month_s_planned_purchases, item.name),
-                                            )
-                                        },
-                                        clear = {
-                                            deletion = HorizonChange.ClearPurchases to
-                                                uiText(R.string.pulse_horizon_permanently_remove_every_purchase_in_next_month_s_list)
-                                        },
-                                    )
-                                }
+                        }
+                        HorizonTab.Subscriptions -> {
+                            SectionState(state.overview, vm::refreshOverview) { data ->
+                                SubscriptionList(
+                                    data = data,
+                                    canMutate = canMutate,
+                                    canViewPayments = !state.busy,
+                                    add = { create(HorizonForm.Subscription) },
+                                    edit = { edit(it.draft(currency)) },
+                                    delete = { item ->
+                                        remove(
+                                            HorizonRecord.Subscription,
+                                            item.id,
+                                            uiText(
+                                                R.string.pulse_horizon_delete_subscription_confirmation,
+                                                item.name,
+                                            ),
+                                        )
+                                    },
+                                    payments = { vm.showPayments(it.id) },
+                                )
+                            }
+                        }
+                        HorizonTab.Purchases -> {
+                            SectionState(state.purchases, vm::refreshPurchases) { list ->
+                                PlannedPurchaseList(
+                                    purchases = list,
+                                    currency = currency,
+                                    enabled = canMutate,
+                                    add = { create(HorizonForm.Purchase) },
+                                    delete = { item ->
+                                        remove(
+                                            HorizonRecord.Purchase,
+                                            item.id,
+                                            uiText(R.string.pulse_horizon_remove_1_s_from_next_month_s_planned_purchases, item.name),
+                                        )
+                                    },
+                                    clear = {
+                                        deletion = HorizonChange.ClearPurchases to
+                                            uiText(R.string.pulse_horizon_permanently_remove_every_purchase_in_next_month_s_list)
+                                    },
+                                )
                             }
                         }
                     }
@@ -518,7 +455,9 @@ internal fun HorizonScreen(
                     Modifier.fillMaxWidth().weight(1f),
                 )
             } else if (state.draft != null && !records) {
-                key(state.draft.kind, state.draft.id) { content() }
+                key(state.draft.kind, state.draft.id) {
+                    HorizonFormScreen(state, vm, width, cancel, review)
+                }
             } else {
                 scrollStates.SaveableStateProvider(state.tab.name) { content() }
             }
@@ -572,6 +511,84 @@ internal fun HorizonScreen(
             },
             { deletion = null },
         )
+    }
+}
+
+@Composable
+private fun HorizonFormScreen(
+    state: HorizonUiState,
+    vm: HorizonViewModel,
+    width: PulseWindowSize,
+    cancel: () -> Unit,
+    review: @Composable () -> Unit,
+) {
+    val draft = checkNotNull(state.draft)
+    val data = state.overview.value
+    val canSave = !state.reviewRequired && !state.busy && data != null
+    val pagePadding = width.pagePadding
+    val bottomPadding = LocalPulseContentPadding.current.calculateBottomPadding()
+    val prefix: @Composable () -> Unit = {
+        review()
+        state.overview.error?.let { PulseErrorState(it.message, vm::refreshOverview) }
+    }
+    if (draft.kind == HorizonForm.Purchase) {
+        Box(Modifier.fillMaxSize().padding(bottom = bottomPadding)) {
+            PlannedPurchaseEditor(
+                draft,
+                data,
+                state.busy,
+                state.formError,
+                state.reviewRequired,
+                vm::update,
+                vm::save,
+                cancel,
+                pagePadding,
+                prefix,
+            )
+        }
+        return
+    }
+
+    val footerWidth = when (draft.kind) {
+        HorizonForm.Config -> PulseTokens.readingWidth
+        HorizonForm.Deduction -> 1000.dp
+        else -> PulseTokens.contentWidth
+    }
+    val keyboard = LocalSoftwareKeyboardController.current
+    PulseFormLayout(
+        modifier = Modifier.padding(bottom = bottomPadding),
+        scrollContentModifier = Modifier.padding(pagePadding),
+        footer = {
+            PulseFormActions(
+                primary = PulseFormAction(
+                    stringResource(CoreUiR.string.pulse_ui_save),
+                    {
+                        keyboard?.hide()
+                        vm.save()
+                    },
+                    enabled = canSave,
+                    loading = state.busy,
+                ),
+                secondary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), cancel, enabled = !state.busy),
+                modifier = Modifier.align(Alignment.Start).padding(horizontal = pagePadding)
+                    .widthIn(max = footerWidth).testTag("horizon-editor-actions"),
+            )
+        },
+    ) {
+        prefix()
+        when (draft.kind) {
+            HorizonForm.Subscription -> SubscriptionEditor(draft, data, state.busy, state.formError, vm::update)
+            HorizonForm.Transaction -> TransactionEditor(draft, data, state.busy, state.formError, vm::update)
+            HorizonForm.Budget -> BudgetEditor(
+                draft, state.busy, state.formError,
+                LocalConfiguration.current.smallestScreenWidthDp >= 600 && width != PulseWindowSize.Compact,
+                canSave, vm::update, vm::save,
+            )
+            HorizonForm.Category -> CategoryEditor(draft, state.busy, state.formError, canSave, vm::update, vm::save)
+            HorizonForm.Deduction -> FixedObligationEditor(draft, data, state.busy, state.formError, vm::update)
+            HorizonForm.Config -> HorizonEditor(draft, data, state.busy, state.formError, vm::update, vm::save)
+            HorizonForm.Purchase -> Unit
+        }
     }
 }
 

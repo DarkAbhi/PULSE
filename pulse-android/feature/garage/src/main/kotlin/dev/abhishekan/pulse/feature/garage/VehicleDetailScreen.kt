@@ -5,7 +5,10 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -33,14 +36,18 @@ import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.GarageRecord
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
+import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
+import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseHideNavigation
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
+import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseTabs
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import dev.abhishekan.pulse.core.ui.uiText
 import org.koin.androidx.compose.koinViewModel
@@ -219,6 +226,27 @@ private fun VehicleDetailScreen(
         state.reminderPage == null && !state.history.loading && !tracker.requested && !editor.busy && editor.draft == null
     val refresh = { if (canRefresh) tracker.request(onRefresh) }
     val refreshLabel = stringResource(R.string.pulse_garage_refresh_vehicle_history)
+    val history = state.history.value
+    val reminder = history?.schedules?.firstOrNull {
+        it.kind == state.reminderPage && (it.kind != "engine_oil" || history.fuelTypes.any { fuel -> fuel != "electric" })
+    }
+    val reminderEditor: (@Composable (Boolean, @Composable () -> Unit) -> Unit)? = reminder?.let { setting ->
+        { enabled, prefix ->
+            PulseAdaptiveLayout(Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).imePadding()) { size ->
+                MaintenanceScheduleEditor(
+                    setting,
+                    enabled,
+                    editor.busy,
+                    size.pagePadding,
+                    {
+                        prefix()
+                        state.history.error?.let { PulseErrorState(it.message, onRefresh) }
+                    },
+                    onBackFromReminder,
+                ) { onMutate(GarageChange.Schedule(vehicle, it)) }
+            }
+        }
+    }
 
     GarageEditorLayout(
         editor = editor,
@@ -234,6 +262,7 @@ private fun VehicleDetailScreen(
         onSave = onSave,
         onRetryCatalog = onRetryCatalog,
         showBusyIndicator = state.progress == null,
+        recordsEditor = reminderEditor,
         bodyModifier =
             Modifier
                 .pullToRefresh(
@@ -308,7 +337,7 @@ private fun VehicleDetailScreen(
                             it.kind != "engine_oil" ||
                                 data.fuelTypes.any { fuel -> fuel != "electric" }
                         }
-                    when (val page = state.reminderPage) {
+                    when (state.reminderPage) {
                         null -> {
                             MaintenanceReminderEntry(enabled) { onReminder("list") }
                             PulseButton(
@@ -333,14 +362,7 @@ private fun VehicleDetailScreen(
                             )
                         }
                         "list" -> MaintenanceReminderTasks(schedules, enabled, onReminder)
-                        else ->
-                            schedules.firstOrNull { it.kind == page }?.let { setting ->
-                                MaintenanceScheduleEditor(
-                                    setting,
-                                    enabled,
-                                    onBackFromReminder,
-                                ) { onMutate(GarageChange.Schedule(vehicle, it)) }
-                            }
+                        else -> Unit
                     }
                 }
                 GarageTab.Air -> {

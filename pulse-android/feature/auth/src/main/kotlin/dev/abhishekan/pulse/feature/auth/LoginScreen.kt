@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -37,8 +38,9 @@ import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
-import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseFormAction
+import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulsePasswordField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
@@ -69,39 +71,57 @@ fun LoginScreen(
     onSubmit: () -> Unit,
     notice: String? = null,
 ) {
+    val keyboard = LocalSoftwareKeyboardController.current
+    val submit = {
+        keyboard?.hide()
+        onSubmit()
+    }
     Scaffold(containerColor = PulseTheme.colors.background, contentColor = PulseTheme.colors.textPrimary) { insets ->
-        PulseAdaptiveLayout(Modifier.fillMaxSize().padding(insets).imePadding()) { size ->
-            Box(
-                Modifier.fillMaxSize().padding(horizontal = size.pagePadding),
-                contentAlignment = Alignment.Center,
+        PulseAdaptiveLayout(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets).imePadding()) { size ->
+            Column(
+                Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize().padding(horizontal = size.pagePadding),
             ) {
-                if (size == PulseWindowSize.Compact) {
-                    Column(
-                        Modifier
-                            .widthIn(
-                                max = PulseTokens.contentWidth - size.pagePadding * 2,
-                            ).fillMaxWidth()
-                            .verticalScroll(rememberScrollState())
-                            .padding(vertical = size.pagePadding),
-                        verticalArrangement = Arrangement.spacedBy(PulseTokens.large),
-                    ) {
-                        BrandIntroduction(false)
-                        LoginForm(state, onUsername, onPassword, onSubmit, notice)
+                Box(
+                    Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (size == PulseWindowSize.Compact) {
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                                .padding(vertical = size.pagePadding),
+                            verticalArrangement = Arrangement.spacedBy(PulseTokens.large),
+                        ) {
+                            BrandIntroduction(false)
+                            LoginForm(state, onUsername, onPassword, submit, notice)
+                        }
+                    } else {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                                .padding(vertical = size.pagePadding),
+                            horizontalArrangement = Arrangement.spacedBy(PulseTokens.large),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Box(Modifier.weight(1f)) { BrandIntroduction(true) }
+                            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                                Box(Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()) {
+                                    LoginForm(state, onUsername, onPassword, submit, notice)
+                                }
+                            }
+                        }
                     }
+                }
+                val continueAction = PulseFormAction(stringResource(R.string.pulse_auth_continue), submit, loading = state.loading)
+                if (size == PulseWindowSize.Compact) {
+                    PulseFormActions(continueAction)
                 } else {
-                    Row(
-                        Modifier
-                            .widthIn(
-                                max = PulseTokens.contentWidth - size.pagePadding * 2,
-                            ).fillMaxWidth()
-                            .verticalScroll(rememberScrollState())
-                            .padding(vertical = size.pagePadding),
-                        horizontalArrangement = Arrangement.spacedBy(PulseTokens.large),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(Modifier.weight(1f)) { BrandIntroduction(true) }
-                        Box(Modifier.weight(1f).widthIn(max = PulseTokens.readingWidth)) {
-                            LoginForm(state, onUsername, onPassword, onSubmit, notice)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PulseTokens.large)) {
+                        Spacer(Modifier.weight(1f))
+                        Box(Modifier.weight(1f)) {
+                            PulseFormActions(continueAction, modifier = Modifier.widthIn(max = PulseTokens.readingWidth))
                         }
                     }
                 }
@@ -141,15 +161,10 @@ private fun LoginForm(
     state: LoginUiState,
     onUsername: (String) -> Unit,
     onPassword: (String) -> Unit,
-    onSubmit: () -> Unit,
+    submit: () -> Unit,
     notice: String?,
 ) {
     val focus = LocalFocusManager.current
-    val keyboard = LocalSoftwareKeyboardController.current
-    val submit = {
-        keyboard?.hide()
-        onSubmit()
-    }
     PulseCard(Modifier.fillMaxWidth()) {
         PulseText(
             stringResource(R.string.pulse_auth_welcome_back),
@@ -214,13 +229,6 @@ private fun LoginForm(
                 color = PulseTheme.colors.error,
             )
         }
-        Spacer(Modifier.height(PulseTokens.small))
-        PulseButton(
-            stringResource(R.string.pulse_auth_continue),
-            submit,
-            Modifier.fillMaxWidth(),
-            loading = state.loading,
-        )
         PulseText(
             stringResource(R.string.pulse_auth_your_account_your_own_quiet_corner),
             color = PulseTheme.colors.textSecondary,

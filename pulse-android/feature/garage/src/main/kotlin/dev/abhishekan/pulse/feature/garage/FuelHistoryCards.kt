@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.FuelFill
+import dev.abhishekan.pulse.core.domain.model.FuelItem
 import dev.abhishekan.pulse.core.domain.model.GarageChange
 import dev.abhishekan.pulse.core.domain.model.GarageRecord
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
@@ -114,34 +115,12 @@ internal fun FuelHistoryCard(
             Icon(painterResource(R.drawable.garage_calendar), null, Modifier.size(PulseTokens.medium), tint = colors.textSecondary)
             PulseText(garageDate(item.date), style = PulseTextStyle.Caption, color = colors.textSecondary)
         }
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            // Reflow rather than shrink design-system typography on narrow screens or large text.
-            if (maxWidth < 280.dp || LocalDensity.current.fontScale > 1.3f) {
-                Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                    FuelOdometer(item)
-                    FuelCost(item)
-                }
-            } else {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium),
-                ) {
-                    Box(Modifier.weight(1f)) { FuelOdometer(item) }
-                    Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) { FuelCost(item) }
-                }
-            }
-        }
-        item.items.forEach { tank ->
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
-            ) {
-                FuelBadge(garageOption(tank.type), accented = true)
-                FuelBadge(garageOption(tank.fill))
-                FuelBadge(stringResource(R.string.pulse_garage_volume_litres, decimal(tank.quantity)))
-            }
-        }
+        item.items.forEach { FuelTankSummary(it) }
+        PulseText(
+            stringResource(R.string.pulse_garage_fuel_history_odometer, decimal(item.odometer)),
+            style = PulseTextStyle.Body2,
+            color = colors.textSecondary,
+        )
         item.station?.takeIf { it.isNotBlank() }?.let { PulseText(it, style = PulseTextStyle.Body2, color = colors.textSecondary) }
         item.notes?.takeIf { it.isNotBlank() }?.let { PulseText(it, style = PulseTextStyle.Body2, color = colors.textSecondary) }
         Box(
@@ -179,47 +158,60 @@ internal fun FuelHistoryCard(
 }
 
 @Composable
-private fun FuelOdometer(item: FuelFill) {
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small), itemVerticalAlignment = Alignment.Bottom) {
-        PulseText(decimal(item.odometer), style = PulseTextStyle.DisplayLarge)
-        PulseText(
-            stringResource(R.string.pulse_garage_km),
-            Modifier.padding(bottom = PulseTokens.small),
-            PulseTextStyle.Body2,
-            color = PulseTheme.colors.textSecondary,
-        )
-    }
-}
-
-@Composable
-private fun FuelCost(item: FuelFill) {
-    // Keep per-tank prices distinct for dual-fuel entries, including incomplete/missed fills.
-    Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
-        item.items.forEach { tank ->
-            PulseText(UserCurrency.format(tank.total), style = PulseTextStyle.Metric, color = PulseTheme.colors.action)
+private fun FuelTankSummary(tank: FuelItem) {
+    val colors = PulseTheme.colors
+    val fuelType = garageOption(tank.type)
+    Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
+            verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
             PulseText(
-                stringResource(R.string.pulse_garage_fuel_cost_caption, UserCurrency.format(tank.price)),
-                style = PulseTextStyle.Caption,
-                color = PulseTheme.colors.textSecondary,
+                tank.quantity?.let { stringResource(R.string.pulse_garage_volume_litres, decimal(it)) } ?: fuelType,
+                style = PulseTextStyle.Heading3,
+                color = colors.action,
             )
+            if (tank.quantity != null) FuelBadge(fuelType)
+            FuelBadge(
+                if (tank.fill == "missed") stringResource(R.string.pulse_garage_missed_fill) else garageOption(tank.fill),
+            )
+        }
+        if (tank.total != null || tank.price != null) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
+                verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
+            ) {
+                tank.total?.let {
+                    PulseText(
+                        stringResource(R.string.pulse_garage_fuel_history_total, UserCurrency.format(it)),
+                        style = PulseTextStyle.Label,
+                        color = colors.textPrimary,
+                    )
+                }
+                tank.price?.let {
+                    PulseText(
+                        stringResource(R.string.pulse_garage_fuel_history_unit_price, UserCurrency.format(it)),
+                        style = PulseTextStyle.Body2,
+                        color = colors.textSecondary,
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun FuelBadge(
-    label: String,
-    accented: Boolean = false,
-) {
+private fun FuelBadge(label: String) {
     val colors = PulseTheme.colors
     Box(
         Modifier
-            .background(if (accented) colors.primarySoft else colors.surfaceMuted, PulseTheme.shapes.pill)
+            .background(colors.surfaceMuted, PulseTheme.shapes.pill)
             .border(
-                BorderStroke(PulseTokens.focusWidth / 2, if (accented) colors.primary.copy(alpha = .25f) else colors.divider),
+                BorderStroke(PulseTokens.focusWidth / 2, colors.divider),
                 PulseTheme.shapes.pill,
             ).padding(horizontal = PulseTheme.spacing.compact, vertical = PulseTokens.tiny),
     ) {
-        PulseText(label, style = PulseTextStyle.Label2, color = if (accented) colors.action else colors.textPrimary)
+        PulseText(label, style = PulseTextStyle.Label2, color = colors.textSecondary)
     }
 }

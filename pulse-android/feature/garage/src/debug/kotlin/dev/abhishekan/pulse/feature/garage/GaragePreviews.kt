@@ -209,7 +209,7 @@ private fun VehicleStepPreview(step: Int) {
 }
 
 @Preview(name = "Fuel history reference", widthDp = 900, heightDp = 380, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Preview(name = "Fuel history phone", widthDp = 393, heightDp = 850)
+@Preview(name = "Fuel history phone", widthDp = 360, heightDp = 850, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Preview(name = "Fuel history large text", widthDp = 360, heightDp = 1100, fontScale = 2f)
 @Composable
 private fun FuelHistoryPreview() {
@@ -228,17 +228,17 @@ private fun FuelHistoryPreview() {
                     listOf(
                         FuelFill(
                             1,
-                            "34820".toBigDecimal(),
-                            Instant.parse("2026-10-04T01:53:00Z"),
+                            "6407.2".toBigDecimal(),
+                            Instant.parse("2026-11-11T11:50:00Z"),
                             null,
                             null,
                             listOf(
                                 FuelItem(
                                     "petrol",
                                     "full",
-                                    "10".toBigDecimal(),
-                                    "100".toBigDecimal(),
-                                    "1000".toBigDecimal(),
+                                    "9.49".toBigDecimal(),
+                                    "110.93".toBigDecimal(),
+                                    "1052.73".toBigDecimal(),
                                 ),
                             ),
                         ),

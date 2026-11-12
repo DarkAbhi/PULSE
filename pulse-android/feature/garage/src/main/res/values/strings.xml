@@ -107,9 +107,15 @@
     <string name="pulse_garage_time_1_s">"Time: %1$s"</string>
     <string name="pulse_garage_station_vendor_optional">"Station / vendor (optional)"</string>
     <string name="pulse_garage_tank_1_s">"Tank %1$s"</string>
-    <string name="pulse_garage_fuel_type_tank_1_s">"Fuel type · tank %1$s"</string>
-    <string name="pulse_garage_fill_type_tank_1_s">"Fill type · tank %1$s"</string>
-    <string name="pulse_garage_enter_any_two_values_pulse_calculates_the_remaining_value">"Enter any two values. Pulse calculates the remaining value on the server."</string>
+    <string name="pulse_garage_fuel_type">Fuel type</string>
+    <string name="pulse_garage_fuel_fill_type">Fill type</string>
+    <string name="pulse_garage_fuel_quantity">Quantity (L)</string>
+    <string name="pulse_garage_fuel_unit_price">Price per litre</string>
+    <string name="pulse_garage_fuel_total_cost">Total cost</string>
+    <string name="pulse_garage_fuel_date">Date</string>
+    <string name="pulse_garage_fuel_time">Time</string>
+    <string name="pulse_garage_fuel_picker_description">%1$s: %2$s</string>
+    <string name="pulse_garage_enter_any_two_values_pulse_calculates_the_remaining_value">"Enter any two values. Pulse calculates the third when you save."</string>
     <string name="pulse_garage_quantity_l_tank_1_s">"Quantity (L) · tank %1$s"</string>
     <string name="pulse_garage_price_per_litre_tank_1_s">"Price per litre (%1$s) · tank %2$s"</string>
     <string name="pulse_garage_total_cost_tank_1_s">"Total cost (%1$s) · tank %2$s"</string>
@@ -170,10 +176,9 @@
         <item quantity="other">"%1$s · %2$s bytes"</item>
     </plurals>
     <string name="pulse_garage_history_counts">"%1$s · %2$s · %3$s"</string>
-    <string name="pulse_garage_fuel_subtitle">A quick pit stop for your fuel history.</string>
     <string name="pulse_garage_trip_details">Trip details</string>
     <string name="pulse_garage_tank_details">Tank details</string>
-    <string name="pulse_garage_additional_information">Additional information</string>
+    <string name="pulse_garage_optional_details">Optional details</string>
     <string name="pulse_garage_hide_notes">Hide notes</string>
     <string name="pulse_garage_missed_fill">Missed fill-up</string>
     <string name="pulse_garage_fill_help">How does this affect efficiency?</string>

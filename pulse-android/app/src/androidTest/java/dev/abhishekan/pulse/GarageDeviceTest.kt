@@ -795,9 +795,9 @@ class GarageDeviceTest {
         field("Odometer (km)", "1500")
         field("Quantity (L) · tank 1", "2.5")
         field("Price per litre (₹) · tank 1", "100")
-        val total = compose.onNodeWithText("Total cost (₹) · tank 1")
+        val total = compose.onNodeWithContentDescription("Total cost (₹) · tank 1")
         assertEquals("", total.fetchSemanticsNode().config[SemanticsProperties.EditableText].text)
-        compose.onNodeWithText("Price per litre (₹) · tank 1").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Price per litre (₹) · tank 1").performScrollTo().performClick()
         compose.onNodeWithText("Save fuel fill-up").assertIsDisplayed()
         screenshot("fuel-cards-keyboard")
         scenario?.onActivity { activity ->
@@ -807,7 +807,7 @@ class GarageDeviceTest {
         }
         tap("Partial")
         tap("How does this affect efficiency?")
-        compose.onNodeWithText("A partial fill counts toward the next full-to-full efficiency interval.").assertIsDisplayed()
+        compose.onNodeWithText("A partial fill counts toward the next full-to-full efficiency interval.").performScrollTo().assertIsDisplayed()
         tap("Missed fill-up")
         compose
             .onNodeWithText(
@@ -822,7 +822,7 @@ class GarageDeviceTest {
         assertEquals(
             "1",
             compose
-                .onNodeWithText(
+                .onNodeWithContentDescription(
                     "Quantity (L) · tank 2",
                 ).fetchSemanticsNode()
                 .config[SemanticsProperties.EditableText]
@@ -1500,7 +1500,7 @@ class GarageDeviceTest {
         field("Odometer (km)", "1234.5")
         field("Quantity (L) · tank 1", "2.5")
         field("Price per litre (₹) · tank 1", "100.1")
-        pick("Fuel type · tank 1", "Petrol", "Diesel")
+        pick("Fuel type", "Petrol", "Diesel")
         screenshot("fuel-editor")
         tap("Save fuel fill-up")
         awaitText("1234.5")
@@ -1518,6 +1518,11 @@ class GarageDeviceTest {
         )
         screenshot("fuel-history")
         action("garage-fuel-102", "Edit")
+        compose.onNodeWithText("Edit fuel fill-up").assertIsDisplayed()
+        assertEquals(
+            "2.5",
+            compose.onNodeWithContentDescription("Quantity (L) · tank 1").fetchSemanticsNode().config[SemanticsProperties.EditableText].text,
+        )
         field("Station / vendor (optional)", "Roadside")
         tap("Save fuel fill-up")
         awaitText("Roadside")

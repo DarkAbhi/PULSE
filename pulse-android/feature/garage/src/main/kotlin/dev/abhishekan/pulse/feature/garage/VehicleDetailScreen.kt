@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
@@ -213,7 +214,9 @@ private fun VehicleDetailScreen(
     val remove: (GarageChange.Delete, UiText) -> Unit = { change, body -> deletion = change to body }
     val refreshState = rememberPullToRefreshState()
     val tracker = rememberPullRefreshTracker(state.history.loading)
-    val canRefresh = state.reminderPage == null && !state.history.loading && !editor.busy && editor.draft == null
+    val pullRefreshing = tracker.requested && state.history.loading
+    val canRefresh =
+        state.reminderPage == null && !state.history.loading && !tracker.requested && !editor.busy && editor.draft == null
     val refresh = { if (canRefresh) tracker.request(onRefresh) }
     val refreshLabel = stringResource(R.string.pulse_garage_refresh_vehicle_history)
 
@@ -221,7 +224,7 @@ private fun VehicleDetailScreen(
         editor = editor,
         title = title,
         backLabel = backLabel,
-        loading = state.history.loading,
+        loading = state.history.loading && state.history.value == null && !pullRefreshing,
         reviewReady = state.history.ready,
         scrollKey = "${state.tab}-${state.reminderPage}",
         onRefresh = onRefresh,
@@ -234,7 +237,7 @@ private fun VehicleDetailScreen(
         bodyModifier =
             Modifier
                 .pullToRefresh(
-                    isRefreshing = tracker.requested && state.history.loading,
+                    isRefreshing = pullRefreshing,
                     state = refreshState,
                     enabled = canRefresh,
                     onRefresh = refresh,
@@ -264,8 +267,11 @@ private fun VehicleDetailScreen(
             if (editor.draft == null) {
                 PullToRefreshDefaults.Indicator(
                     state = refreshState,
-                    isRefreshing = tracker.requested && state.history.loading,
-                    modifier = Modifier.align(Alignment.TopCenter),
+                    isRefreshing = pullRefreshing,
+                    modifier =
+                        Modifier.align(Alignment.TopCenter).then(
+                            if (pullRefreshing) Modifier.testTag("garage-history-refreshing") else Modifier,
+                        ),
                 )
             }
         },

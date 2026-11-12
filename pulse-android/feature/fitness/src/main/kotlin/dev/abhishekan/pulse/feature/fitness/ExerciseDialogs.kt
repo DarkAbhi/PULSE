@@ -50,7 +50,7 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
-import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
@@ -136,15 +136,22 @@ internal fun ExerciseSelector(
                     }
                 },
             )
+            val searchingWithoutResults = editor.searching && editor.candidates.isEmpty()
+            val resultsScroll = rememberScrollState()
             Column(
                 Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .then(if (searchingWithoutResults) Modifier else Modifier.verticalScroll(resultsScroll))
                     .semantics { selectableGroup() },
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
             ) {
-                if (editor.searching) PulseLoadingState(stringResource(R.string.pulse_fitness_finding_exercises))
+                if (editor.searching) {
+                    PulseCenteredLoadingState(
+                        stringResource(R.string.pulse_fitness_finding_exercises),
+                        if (searchingWithoutResults) Modifier.fillMaxSize() else Modifier.fillMaxWidth(),
+                    )
+                }
                 editor.searchError?.let {
                     PulseText(it, color = PulseTheme.colors.error)
                     PulseButton(

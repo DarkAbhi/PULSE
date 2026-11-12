@@ -58,8 +58,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseBottomNavigationBar
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
-import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationItem
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationRail
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbar
@@ -96,9 +96,10 @@ fun PulseApp(
         SessionState.Checking ->
             Scaffold(containerColor = PulseTheme.colors.background, contentColor = PulseTheme.colors.textPrimary) { insets ->
                 PulseAdaptiveLayout(Modifier.fillMaxSize().padding(insets)) { size ->
-                    Box(Modifier.fillMaxSize().padding(size.pagePadding), contentAlignment = Alignment.Center) {
-                        PulseLoadingState(stringResource(R.string.pulse_app_checking_your_session))
-                    }
+                    PulseCenteredLoadingState(
+                        stringResource(R.string.pulse_app_checking_your_session),
+                        Modifier.fillMaxSize().padding(size.pagePadding),
+                    )
                 }
             }
         is SessionState.Unavailable ->

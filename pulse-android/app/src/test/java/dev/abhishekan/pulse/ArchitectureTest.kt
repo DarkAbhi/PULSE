@@ -104,6 +104,29 @@ class ArchitectureTest {
         }
     }
 
+    @Test fun linearProgressRequiresAMeasuredValue() {
+        val components = root.resolve("core/ui/src/main/kotlin/dev/abhishekan/pulse/core/ui/components")
+        val linearProgressCall = Regex("""\bLinearProgressIndicator\s*\(\s*(?!\s*progress\s*=)""")
+        allowed.keys.forEach { module ->
+            root
+                .resolve("$module/src")
+                .listFiles()
+                .orEmpty()
+                .filter { it.name in setOf("main", "debug", "release") }
+                .flatMap { source -> source.walkTopDown().filter { it.extension == "kt" }.toList() }
+                .forEach { file ->
+                    val source = file.readText()
+                    assertFalse("Use circular loading feedback in $file", linearProgressCall.containsMatchIn(source))
+                    if (file != components.resolve("PulseIndicators.kt")) {
+                        assertFalse(
+                            "Use the shared determinate progress component in $file",
+                            "import androidx.compose.material3.LinearProgressIndicator" in source,
+                        )
+                    }
+                }
+        }
+    }
+
     @Test fun moduleDirectionsRemainAcyclic() {
         val pattern = Regex("project\\(\":([^\"]+)\"\\)")
         allowed.forEach { (path, dependencies) ->

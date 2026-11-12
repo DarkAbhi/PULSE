@@ -75,6 +75,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -109,6 +110,9 @@ class GarageDeviceTest {
     private lateinit var overrides: Module
     private lateinit var client: HttpClient
     private lateinit var store: EncryptedSessionStore
+
+    @Volatile private var historyResponseGate: CompletableDeferred<Unit>? = null
+
     private val vehicles = linkedMapOf(1L to "Comet")
     private val vehicleDetails = mutableMapOf<Long, JsonObject>()
     private val fuel = linkedMapOf<Long, JsonObject>()
@@ -320,6 +324,7 @@ class GarageDeviceTest {
                                                 "/history",
                                             )
                                         ) {
+                                            historyResponseGate?.await()
                                             history(path.split('/')[1].toLong())
                                         } else {
                                             error("Unexpected read $path")
@@ -775,9 +780,23 @@ class GarageDeviceTest {
         launchGarage()
         select()
         compose.onNodeWithText("Refresh vehicle history").assertDoesNotExist()
-        compose.runOnIdle { vehicles[1] = "Updated Comet" }
-        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Care, at a glance"))).performTouchInput { swipeDown() }
+        val gate = CompletableDeferred<Unit>()
+        try {
+            compose.runOnIdle {
+                historyResponseGate = gate
+                vehicles[1] = "Updated Comet"
+            }
+            compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Care, at a glance"))).performTouchInput { swipeDown() }
+            compose.onNode(hasTestTag("garage-history-refreshing")).assertIsDisplayed()
+            compose.onNodeWithText("Comet").assertIsDisplayed()
+            compose.onNodeWithText("Care, at a glance").assertExists()
+            compose.onNodeWithText("Loading your garage").assertDoesNotExist()
+        } finally {
+            historyResponseGate = null
+            gate.complete(Unit)
+        }
         awaitText("Updated Comet")
+        compose.onNode(hasTestTag("garage-history-refreshing")).assertDoesNotExist()
         tap("Fuel")
         compose.runOnIdle { vehicles[1] = "Refreshed Comet" }
         compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Fuel history"))).performTouchInput { swipeDown() }

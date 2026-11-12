@@ -68,13 +68,12 @@ import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
-import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulsePasswordField
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
-import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -236,7 +235,8 @@ internal fun ProfileScreen(
     }
     val refreshing = state.loading || state.keysLoading
     val tracker = rememberPullRefreshTracker(refreshing)
-    val canRefresh = !refreshing && !state.busy && state.editor == null && !loggingOut
+    val pullRefreshing = tracker.requested && refreshing
+    val canRefresh = !refreshing && !tracker.requested && !state.busy && state.editor == null && !loggingOut
     val refresh = {
         if (canRefresh) {
             tracker.request {
@@ -247,7 +247,7 @@ internal fun ProfileScreen(
     }
     val refreshLabel = stringResource(R.string.pulse_profile_refresh)
     PullToRefreshBox(
-        isRefreshing = tracker.requested && refreshing,
+        isRefreshing = pullRefreshing,
         onRefresh = refresh,
         modifier =
             Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).semantics {
@@ -265,6 +265,17 @@ internal fun ProfileScreen(
             },
     ) {
         PulseAdaptiveLayout(Modifier.fillMaxSize().imePadding()) { size ->
+            if (state.loading &&
+                state.profile == null &&
+                !state.keysLoaded &&
+                state.editor == null &&
+                state.token == null &&
+                !state.uncertain &&
+                !pullRefreshing
+            ) {
+                PulseCenteredLoadingState(stringResource(R.string.pulse_profile_profile_loading))
+                return@PulseAdaptiveLayout
+            }
             Column(
                 Modifier
                     .widthIn(max = PulseTokens.contentWidth)
@@ -328,12 +339,11 @@ internal fun ProfileScreen(
                             PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
                                 PulseText(state.profile?.name ?: username, Modifier.semantics { heading() }, PulseTextStyle.Display)
                                 PulseText(stringResource(R.string.pulse_profile_username, username))
-                                if (state.loading) {
-                                    if (state.profile == null) {
-                                        PulseLoadingState(stringResource(R.string.pulse_profile_profile_loading))
-                                    } else {
-                                        PulseRefreshIndicator()
-                                    }
+                                if (state.loading && state.profile == null && !pullRefreshing) {
+                                    PulseCenteredLoadingState(
+                                        stringResource(R.string.pulse_profile_profile_loading),
+                                        Modifier.fillMaxWidth(),
+                                    )
                                 }
                                 state.profileError?.let { PulseErrorState(it.message, vm::refreshProfile) }
                                 if (state.profile?.hasProfile == false) PulseText(stringResource(R.string.pulse_profile_profile_fallback))
@@ -378,7 +388,7 @@ internal fun ProfileScreen(
                                     style = PulseButtonStyle.Text,
                                 )
                             }
-                            APIKeysCard(state, vm) { revoke = it }
+                            APIKeysCard(state, vm, pullRefreshing) { revoke = it }
                             PulseCard(Modifier.fillMaxWidth()) {
                                 PulseText(stringResource(R.string.pulse_profile_about), style = PulseTextStyle.Title)
                                 Image(
@@ -596,17 +606,14 @@ private fun AccountForm(
 private fun APIKeysCard(
     state: ProfileUiState,
     vm: ProfileViewModel,
+    pullRefreshing: Boolean,
     revoke: (APIKey) -> Unit,
 ) {
     PulseCard(Modifier.fillMaxWidth()) {
         PulseText(stringResource(R.string.pulse_profile_keys), Modifier.semantics { heading() }, PulseTextStyle.Title)
         PulseText(stringResource(R.string.pulse_profile_keys_description))
-        if (state.keysLoading) {
-            if (state.keysLoaded) {
-                PulseRefreshIndicator()
-            } else {
-                PulseLoadingState(stringResource(R.string.pulse_profile_keys))
-            }
+        if (state.keysLoading && !state.keysLoaded && !pullRefreshing) {
+            PulseCenteredLoadingState(stringResource(R.string.pulse_profile_keys), Modifier.fillMaxWidth())
         }
         state.keysError?.let { PulseErrorState(it.message, vm::refreshKeys) }
         if (state.keysLoaded &&

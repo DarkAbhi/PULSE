@@ -45,6 +45,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseChoiceCard
 import dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs
 import dev.abhishekan.pulse.core.ui.components.PulseSwitch
@@ -142,9 +143,9 @@ internal fun VehicleEditor(
                         if (draft["catalogMode"] == "manual") {
                             when {
                                 match.loading ->
-                                    PulseText(
+                                    PulseCenteredLoadingState(
                                         stringResource(R.string.pulse_garage_checking_match),
-                                        color = colors.textSecondary,
+                                        Modifier.fillMaxWidth(),
                                     )
                                 match.error != null -> {
                                     PulseText(stringResource(R.string.pulse_garage_match_unavailable), color = colors.textSecondary)

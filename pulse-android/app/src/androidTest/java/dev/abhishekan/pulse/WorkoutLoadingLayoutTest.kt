@@ -78,6 +78,10 @@ class WorkoutLoadingLayoutTest {
         val heading = compose.onNodeWithText("Timing and energy data aren’t available for this visit.")
         heading.assertIsDisplayed()
         val beforeRefresh = heading.getUnclippedBoundsInRoot()
+        compose.runOnIdle { state = state.copy(loading = true) }
+        loader.assertDoesNotExist()
+        assertEquals(beforeRefresh, heading.getUnclippedBoundsInRoot())
+        compose.runOnIdle { state = state.copy(loading = false) }
         compose.onNodeWithText("Refresh workout").assertDoesNotExist()
         compose.onNodeWithTag("workout-refresh").performTouchInput { swipeDown() }
         compose.runOnIdle { assertEquals(1, refreshes) }

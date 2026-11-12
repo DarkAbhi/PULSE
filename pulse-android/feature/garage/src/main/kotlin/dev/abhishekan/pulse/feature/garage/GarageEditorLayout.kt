@@ -30,10 +30,10 @@ import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
-import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -150,7 +150,7 @@ internal fun GarageEditorLayout(
                             }
                             content(!editor.busy && !editor.reviewRequired && draft == null)
                         }
-                        if (editor.busy && showBusyIndicator) {
+                        if (editor.busy && showBusyIndicator && showingRecords) {
                             PulseLoadingState(stringResource(R.string.pulse_garage_working_on_your_garage))
                         }
                     }
@@ -167,14 +167,9 @@ internal fun GarageEditorLayout(
                 Box(Modifier.weight(1f).fillMaxWidth().then(bodyModifier)) {
                     when {
                         !editor.reviewRequired && showingRecords && loading ->
-                            PulseLoadingState(
+                            PulseCenteredLoadingState(
                                 stringResource(R.string.pulse_garage_loading_your_garage),
-                                modifier =
-                                    Modifier
-                                        .align(Alignment.Center)
-                                        .padding(LocalPulseContentPadding.current)
-                                        .padding(size.pagePadding),
-                                horizontalAlignment = Alignment.CenterHorizontally,
+                                Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).padding(size.pagePadding),
                             )
                         draft != null && !showingRecords -> key(draft.kind, draft.id) { body() }
                         else -> scrollStates.SaveableStateProvider(scrollKey) { body() }
@@ -245,10 +240,8 @@ private fun GarageReview(
 internal fun <T> GarageSection(
     section: GarageSection<T>,
     retry: () -> Unit,
-    showRefreshIndicator: Boolean = true,
     content: @Composable (T) -> Unit,
 ) {
-    if (showRefreshIndicator && section.loading && section.value != null) PulseRefreshIndicator()
     section.error?.let { PulseErrorState(it.message, retry) }
     section.value?.let { content(it) }
 }

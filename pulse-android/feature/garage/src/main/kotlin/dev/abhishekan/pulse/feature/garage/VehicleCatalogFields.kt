@@ -32,9 +32,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -44,6 +42,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -197,10 +196,9 @@ private fun CatalogPicker(
                 )
                 when {
                     section.loading ->
-                        PulseText(
+                        PulseCenteredLoadingState(
                             stringResource(R.string.pulse_garage_catalog_loading),
-                            Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                            color = PulseTheme.colors.textSecondary,
+                            Modifier.fillMaxWidth(),
                         )
                     section.error != null -> PulseErrorState(section.error.message, retry)
                     options.isEmpty() ->

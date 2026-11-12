@@ -39,10 +39,10 @@ import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
-import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -157,23 +157,19 @@ fun WorkoutScreen(
     var deleteWorkout by rememberSaveable { mutableStateOf(false) }
     var deleteExercise by rememberSaveable { mutableStateOf<Long?>(null) }
     val detail = state.detail
+    val tracker = rememberPullRefreshTracker(state.loading)
+    val pullRefreshing = tracker.requested && state.loading && state.editor == null
     val scroll = key(state.editor != null) { rememberScrollState() }
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
-        if (state.loading && detail == null && state.editor == null) {
-            Box(
+        if (state.loading && detail == null && state.editor == null && !pullRefreshing) {
+            PulseCenteredLoadingState(
+                stringResource(R.string.pulse_fitness_loading_workout),
                 Modifier.fillMaxSize().padding(LocalPulseContentPadding.current),
-                contentAlignment = Alignment.Center,
-            ) {
-                PulseLoadingState(
-                    stringResource(R.string.pulse_fitness_loading_workout),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                )
-            }
+            )
             return@PulseAdaptiveLayout
         }
         val pullState = rememberPullToRefreshState()
-        val tracker = rememberPullRefreshTracker(state.loading)
-        val canRefresh = !state.loading && !state.busy && state.editor == null
+        val canRefresh = !state.loading && !tracker.requested && !state.busy && state.editor == null
         val refreshLabel = stringResource(R.string.pulse_fitness_refresh_workout)
         Box(
             Modifier
@@ -181,7 +177,7 @@ fun WorkoutScreen(
                 .padding(LocalPulseContentPadding.current)
                 .testTag("workout-refresh")
                 .pullToRefresh(
-                    isRefreshing = tracker.requested && state.loading && state.editor == null,
+                    isRefreshing = pullRefreshing,
                     state = pullState,
                     enabled = canRefresh,
                     onRefresh = { tracker.request(onRefresh) },
@@ -251,16 +247,9 @@ fun WorkoutScreen(
             if (state.editor == null) {
                 PullToRefreshDefaults.Indicator(
                     state = pullState,
-                    isRefreshing = tracker.requested && state.loading,
+                    isRefreshing = pullRefreshing,
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
-            }
-        }
-        if (state.loading && state.editor != null) {
-            Box(
-                Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxWidth().padding(LocalPulseContentPadding.current),
-            ) {
-                PulseRefreshIndicator()
             }
         }
     }

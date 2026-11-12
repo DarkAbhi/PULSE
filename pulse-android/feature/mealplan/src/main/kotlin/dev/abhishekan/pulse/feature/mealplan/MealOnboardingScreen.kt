@@ -43,9 +43,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
-import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseSwitch
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -131,7 +131,7 @@ internal fun MealOnboardingScreen(
             if (state.error != null) {
                 PulseErrorState(state.error.message, vm::refresh)
             } else {
-                PulseLoadingState(stringResource(R.string.meal_setup_loading))
+                PulseCenteredLoadingState(stringResource(R.string.meal_setup_loading))
             }
             return@Box
         }

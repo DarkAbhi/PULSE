@@ -36,9 +36,8 @@ import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
-import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
-import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
@@ -104,6 +103,13 @@ fun HomeScreen(
     val colors = PulseTheme.colors
     Box(Modifier.fillMaxSize().background(colors.background).testTag("dashboard-background")) {
         PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
+            if (state.profile == Section.Loading && state.horizon == Section.Loading && state.workout == Section.Loading) {
+                PulseCenteredLoadingState(
+                    stringResource(R.string.pulse_home_loading_your_dashboard),
+                    Modifier.fillMaxSize().padding(LocalPulseContentPadding.current),
+                )
+                return@PulseAdaptiveLayout
+            }
             val compact = size == PulseWindowSize.Compact
             val stackCards = compact || LocalDensity.current.fontScale > 1.3f
             val margin = size.pagePadding
@@ -129,14 +135,14 @@ fun HomeScreen(
                         PulseText(profile.failure.message.asString())
                         PulseButton(stringResource(R.string.pulse_home_retry_profile), retryProfile, style = PulseButtonStyle.Text)
                     }
-                    Section.Loading -> PulseLoadingState(stringResource(R.string.pulse_home_loading_your_profile))
+                    Section.Loading ->
+                        PulseCenteredLoadingState(stringResource(R.string.pulse_home_loading_your_profile), Modifier.fillMaxWidth())
                     else -> Unit
                 }
-                if ("profile" in state.refreshing && state.profile != Section.Loading) PulseRefreshIndicator()
                 state.refreshErrors["profile"]?.let { PulseErrorState(it.message, retryProfile) }
                 DashboardCards(stackCards) {
-                    HorizonCard(state.horizon, retryHorizon, onHorizon, "horizon" in state.refreshing, state.refreshErrors["horizon"])
-                    WorkoutCard(state.workout, retryWorkout, onFitness, "workout" in state.refreshing, state.refreshErrors["workout"])
+                    HorizonCard(state.horizon, retryHorizon, onHorizon, state.refreshErrors["horizon"])
+                    WorkoutCard(state.workout, retryWorkout, onFitness, state.refreshErrors["workout"])
                 }
                 Spacer(Modifier.height(if (compact) 48.dp else 160.dp))
             }

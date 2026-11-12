@@ -51,9 +51,9 @@ import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
-import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -107,17 +107,19 @@ fun FitnessScreen(
         val wide = size == PulseWindowSize.Expanded && LocalDensity.current.fontScale < 1.5f
         val pullState = rememberPullToRefreshState()
         val tracker = rememberPullRefreshTracker(state.loading)
-        val canRefresh = !state.loading && !state.busy
+        val pullRefreshing = tracker.requested && state.loading
+        val initialLoading = state.loading && state.overview == null && !pullRefreshing
+        val canRefresh = !state.loading && !tracker.requested && !state.busy
         val refresh = { if (canRefresh) tracker.request(onRefresh) }
         val refreshLabel = stringResource(R.string.pulse_fitness_refresh_activity)
         PullToRefreshBox(
-            isRefreshing = tracker.requested && state.loading,
+            isRefreshing = pullRefreshing,
             state = pullState,
             indicator = {
-                if (state.overview != null || !state.loading) {
+                if (!initialLoading) {
                     PullToRefreshDefaults.Indicator(
                         state = pullState,
-                        isRefreshing = tracker.requested && state.loading,
+                        isRefreshing = pullRefreshing,
                         modifier = Modifier.align(Alignment.TopCenter),
                     )
                 }
@@ -139,13 +141,8 @@ fun FitnessScreen(
                 },
             contentAlignment = Alignment.TopCenter,
         ) {
-            if (state.loading && state.overview == null) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    PulseLoadingState(
-                        stringResource(R.string.pulse_fitness_refreshing_your_activity),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    )
-                }
+            if (initialLoading) {
+                PulseCenteredLoadingState(stringResource(R.string.pulse_fitness_refreshing_your_activity))
             } else {
                 Column(
                     Modifier

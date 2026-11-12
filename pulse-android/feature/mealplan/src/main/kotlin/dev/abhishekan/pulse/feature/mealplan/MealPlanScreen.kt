@@ -49,11 +49,10 @@ import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseFloatingActionButton
-import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
-import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -144,8 +143,11 @@ internal fun MealPlanScreen(
             !state.meals.loading &&
             state.meals.error == null &&
             state.meals.value != null
-    val tracker = rememberPullRefreshTracker(refreshing)
-    val canRefresh = !state.busy && state.draft == null && !refreshing
+    var refreshMealsWithTimes by remember { mutableStateOf(false) }
+    val pullLoading = state.times.loading || (refreshMealsWithTimes && state.meals.loading)
+    val tracker = rememberPullRefreshTracker(pullLoading)
+    val pullRefreshing = tracker.requested && pullLoading && state.draft == null
+    val canRefresh = !state.busy && state.draft == null && !refreshing && !tracker.requested
     val showAddTimeButton =
         state.managing &&
             state.draft == null &&
@@ -156,7 +158,8 @@ internal fun MealPlanScreen(
     val timeActionClearance = (80 * LocalDensity.current.fontScale.coerceAtLeast(1f)).dp
     val refresh = {
         if (canRefresh) {
-            tracker.request { if (state.managing) vm.refreshTimes() else vm.refresh() }
+            refreshMealsWithTimes = !state.managing
+            tracker.request { if (refreshMealsWithTimes) vm.refresh() else vm.refreshTimes() }
         }
     }
     val refreshLabel = stringResource(R.string.pulse_mealplan_refresh)
@@ -166,7 +169,7 @@ internal fun MealPlanScreen(
                 .fillMaxSize()
                 .padding(LocalPulseContentPadding.current)
                 .pullToRefresh(
-                    isRefreshing = tracker.requested && refreshing && state.draft == null,
+                    isRefreshing = pullRefreshing,
                     state = pullState,
                     enabled = canRefresh,
                     onRefresh = refresh,
@@ -278,7 +281,7 @@ internal fun MealPlanScreen(
                                 flat = size != PulseWindowSize.Compact,
                             )
                         } else if (state.managing) {
-                            MealSectionContent(state.times, vm::refreshTimes, showLoading = false) { times ->
+                            MealSectionContent(state.times, vm::refreshTimes) { times ->
                                 MealTimes(
                                     times,
                                     state.canWrite && state.draft == null,
@@ -322,7 +325,7 @@ internal fun MealPlanScreen(
                             )
                             if (resolvedElsewhere) PulseText(stringResource(R.string.meal_setup_elsewhere))
                             onPreferences?.let { PulseButton(stringResource(R.string.meal_setup_title), it, style = PulseButtonStyle.Text) }
-                            MealSectionContent(state.meals, vm::refreshMeals, showLoading = false) { meals ->
+                            MealSectionContent(state.meals, vm::refreshMeals) { meals ->
                                 MealAgenda(
                                     state.selected,
                                     state.today,
@@ -367,33 +370,29 @@ internal fun MealPlanScreen(
                     Modifier.align(Alignment.BottomEnd).padding(size.pagePadding),
                 )
             }
-            if (state.meals.loading && state.meals.value == null && !state.managing && (state.draft == null || records)) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    PulseLoadingState(
-                        stringResource(R.string.pulse_mealplan_refreshing_meal_plan),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    )
-                }
+            if (!pullRefreshing &&
+                state.meals.loading &&
+                state.meals.value == null &&
+                !state.managing &&
+                (state.draft == null || records)
+            ) {
+                PulseCenteredLoadingState(stringResource(R.string.pulse_mealplan_refreshing_meal_plan))
             }
-            if (state.times.loading &&
+            if (!pullRefreshing &&
+                state.times.loading &&
                 state.times.value == null &&
                 (
                     (state.managing && (state.draft == null || records)) ||
                         (state.draft != null && !records && !state.draft.timeForm)
                 )
             ) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    PulseLoadingState(
-                        stringResource(R.string.pulse_mealplan_loading_meal_times),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    )
-                }
+                PulseCenteredLoadingState(stringResource(R.string.pulse_mealplan_loading_meal_times))
             }
         }
         if (state.draft == null) {
             PullToRefreshDefaults.Indicator(
                 state = pullState,
-                isRefreshing = tracker.requested && refreshing,
+                isRefreshing = pullRefreshing,
                 modifier = Modifier.align(Alignment.TopCenter),
             )
         }
@@ -437,16 +436,8 @@ internal fun MealPlanScreen(
 private fun <T> MealSectionContent(
     section: MealSection<T>,
     retry: () -> Unit,
-    showLoading: Boolean = true,
     content: @Composable (T) -> Unit,
 ) {
-    if (section.loading && showLoading) {
-        if (section.value == null) {
-            PulseLoadingState(stringResource(R.string.pulse_mealplan_refreshing_meal_plan))
-        } else {
-            PulseRefreshIndicator()
-        }
-    }
     section.error?.let { PulseErrorState(it.message, retry) }
     section.value?.let { content(it) }
 }

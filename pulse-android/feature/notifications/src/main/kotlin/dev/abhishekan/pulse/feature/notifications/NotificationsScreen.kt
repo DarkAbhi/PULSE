@@ -40,6 +40,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
@@ -84,12 +85,13 @@ internal fun NotificationsScreen(
     open: (NotificationTarget) -> Unit,
 ) {
     val tracker = rememberPullRefreshTracker(state.loading)
+    val pullRefreshing = tracker.requested && state.loading
     val enabled = !state.busy && !state.loading && !state.uncertain
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         val padding = size.pagePadding
         PullToRefreshBox(
-            isRefreshing = tracker.requested && state.loading,
-            onRefresh = { if (!state.busy && !state.loading) tracker.request(refresh) },
+            isRefreshing = pullRefreshing,
+            onRefresh = { if (!state.busy && !state.loading && !tracker.requested) tracker.request(refresh) },
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopCenter,
         ) {
@@ -216,13 +218,11 @@ internal fun NotificationsScreen(
                     }
                 }
             }
-            if (state.loading && !state.loaded && !state.uncertain) {
-                Box(Modifier.fillMaxSize().padding(LocalPulseContentPadding.current), contentAlignment = Alignment.Center) {
-                    PulseLoadingState(
-                        stringResource(R.string.pulse_notifications_loading),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    )
-                }
+            if (state.loading && !state.loaded && !state.uncertain && !pullRefreshing) {
+                PulseCenteredLoadingState(
+                    stringResource(R.string.pulse_notifications_loading),
+                    Modifier.fillMaxSize().padding(LocalPulseContentPadding.current),
+                )
             }
         }
     }

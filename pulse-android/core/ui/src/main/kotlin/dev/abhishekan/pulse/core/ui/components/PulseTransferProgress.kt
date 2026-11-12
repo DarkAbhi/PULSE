@@ -1,9 +1,10 @@
 package dev.abhishekan.pulse.core.ui.components
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -15,10 +16,14 @@ fun PulseTransferProgress(
     progress: Float,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-        PulseText(stringResource(R.string.pulse_ui_uploading_receipt_1_s, (progress * 100).toInt()))
-        LinearProgressIndicator(progress = {
-            progress
-        }, modifier = Modifier.fillMaxWidth(), color = PulseTheme.colors.action, trackColor = PulseTheme.colors.surfaceStrong)
+    val fraction = progress.coerceIn(0f, 1f)
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(PulseTokens.small), verticalAlignment = Alignment.CenterVertically) {
+        CircularProgressIndicator(
+            progress = { fraction },
+            modifier = Modifier.size(PulseTokens.large),
+            color = PulseTheme.colors.action,
+            trackColor = PulseTheme.colors.surfaceStrong,
+        )
+        PulseText(stringResource(R.string.pulse_ui_uploading_receipt_1_s, (fraction * 100).toInt()))
     }
 }

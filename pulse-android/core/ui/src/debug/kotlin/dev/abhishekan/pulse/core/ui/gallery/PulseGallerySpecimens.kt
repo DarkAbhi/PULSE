@@ -59,7 +59,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseNavigationItem
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationRail
 import dev.abhishekan.pulse.core.ui.components.PulsePasswordField
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
-import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseSwitch
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -322,7 +321,6 @@ internal fun GalleryFeedback(snackbar: SnackbarHostState) {
         }
         PulseTransferProgress(.45f)
     }
-    Specimen("Refresh · indeterminate") { PulseRefreshIndicator() }
     Specimen("Divider") { PulseHorizontalDivider() }
 }
 

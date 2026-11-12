@@ -4,6 +4,7 @@
     <string name="pulse_home_good_to_see_you">"Good to see you,"</string>
     <string name="pulse_home_a_little_perspective_on_your_everyday">"A little perspective on your everyday."</string>
     <string name="pulse_home_retry_profile">"Retry profile"</string>
+    <string name="pulse_home_loading_your_dashboard">Loading your dashboard</string>
     <string name="pulse_home_loading_your_profile">"Loading your profile"</string>
     <string name="pulse_home_loading_your_horizon">"Loading your horizon"</string>
     <string name="pulse_home_no_summary_yet">"No summary yet"</string>

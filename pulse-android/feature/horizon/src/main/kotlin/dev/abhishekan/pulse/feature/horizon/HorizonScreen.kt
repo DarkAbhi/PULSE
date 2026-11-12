@@ -3,7 +3,6 @@ package dev.abhishekan.pulse.feature.horizon
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -23,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
@@ -42,12 +40,12 @@ import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
-import dev.abhishekan.pulse.core.ui.components.PulseRefreshIndicator
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -498,7 +496,7 @@ internal fun HorizonScreen(
                             }
                         }
                     }
-                    if (state.busy) {
+                    if (state.busy && (state.draft == null || records)) {
                         PulseLoadingState(
                             stringResource(R.string.pulse_horizon_saving_your_change),
                         )
@@ -515,12 +513,10 @@ internal fun HorizonScreen(
                 state.draft == null &&
                 !state.reviewRequired
             ) {
-                Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                    PulseLoadingState(
-                        stringResource(R.string.pulse_horizon_loading_your_horizon),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    )
-                }
+                PulseCenteredLoadingState(
+                    stringResource(R.string.pulse_horizon_loading_your_horizon),
+                    Modifier.fillMaxWidth().weight(1f),
+                )
             } else if (state.draft != null && !records) {
                 key(state.draft.kind, state.draft.id) { content() }
             } else {
@@ -585,12 +581,8 @@ internal fun <T> SectionState(
     retry: () -> Unit,
     content: @Composable (T) -> Unit,
 ) {
-    if (section.loading) {
-        if (section.value == null) {
-            PulseLoadingState(stringResource(R.string.pulse_horizon_loading_your_horizon))
-        } else {
-            PulseRefreshIndicator()
-        }
+    if (section.loading && section.value == null) {
+        PulseCenteredLoadingState(stringResource(R.string.pulse_horizon_loading_your_horizon), Modifier.fillMaxWidth())
     }
     section.error?.let { PulseErrorState(it.message, retry) }
     section.value?.let { content(it) }

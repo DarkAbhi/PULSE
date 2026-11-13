@@ -12,6 +12,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
@@ -696,7 +697,7 @@ class GarageDeviceTest {
     @Test fun vehicleDetailSwipesSelectAdjacentTabs() {
         launchGarage()
         select()
-        val overviewBody = compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Care, at a glance")))
+        val overviewBody = vehicleTabBody("Care, at a glance")
         overviewBody.performTouchInput { swipeRight() }
         compose.onNode(hasText("Overview") and isSelectable()).assertIsSelected()
 
@@ -704,7 +705,7 @@ class GarageDeviceTest {
         awaitText("Fuel history")
         compose.onNode(hasText("Fuel") and isSelectable()).assertIsSelected()
 
-        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Fuel history"))).performTouchInput { swipeRight() }
+        vehicleTabBody("Fuel history").performTouchInput { swipeRight() }
         awaitText("Care, at a glance")
         compose.onNode(hasText("Overview") and isSelectable()).assertIsSelected()
     }
@@ -804,7 +805,7 @@ class GarageDeviceTest {
                 historyResponseGate = gate
                 vehicles[1] = "Updated Comet"
             }
-            compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Care, at a glance"))).performTouchInput { swipeDown() }
+            vehicleTabBody("Care, at a glance").performTouchInput { swipeDown() }
             compose.onNode(hasTestTag("garage-history-refreshing")).assertIsDisplayed()
             compose.onNodeWithText("Comet").assertIsDisplayed()
             compose.onNodeWithText("Care, at a glance").assertExists()
@@ -817,9 +818,12 @@ class GarageDeviceTest {
         compose.onNode(hasTestTag("garage-history-refreshing")).assertDoesNotExist()
         tap("Fuel")
         compose.runOnIdle { vehicles[1] = "Refreshed Comet" }
-        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Fuel history"))).performTouchInput { swipeDown() }
+        vehicleTabBody("Fuel history").performTouchInput { swipeDown() }
         awaitText("Refreshed Comet")
     }
+
+    private fun vehicleTabBody(heading: String) =
+        compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange) and hasAnyDescendant(hasText(heading)))
 
     @Test fun fuelCardsKeepInputsManualAndOptionalDetailsAcrossRecreation() {
         launchGarage()

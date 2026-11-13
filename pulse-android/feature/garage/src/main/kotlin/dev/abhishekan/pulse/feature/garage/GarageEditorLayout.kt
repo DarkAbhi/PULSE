@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -27,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
@@ -68,7 +72,8 @@ internal fun GarageEditorLayout(
     header: @Composable (showingRecords: Boolean) -> Unit = {},
     overlay: @Composable BoxScope.() -> Unit = {},
     recordsEditor: (@Composable (enabled: Boolean, prefix: @Composable () -> Unit) -> Unit)? = null,
-    content: @Composable (enabled: Boolean) -> Unit,
+    recordsPager: PagerState? = null,
+    content: @Composable (enabled: Boolean, page: Int?) -> Unit,
 ) {
     var discard by rememberSaveable { mutableStateOf(false) }
     var records by rememberSaveable { mutableStateOf(false) }
@@ -109,7 +114,7 @@ internal fun GarageEditorLayout(
         backEnabled = !editor.busy,
     ) {
         PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
-            val body: @Composable () -> Unit = {
+            val body: @Composable (Int?) -> Unit = { page ->
                 val fuelEditor = draft?.kind == GarageForm.Fuel && !showingRecords
                 val editorScroll = rememberScrollState()
                 LaunchedEffect(draft?.kind, draft?.vehicleStep) {
@@ -170,7 +175,7 @@ internal fun GarageEditorLayout(
                                         style = PulseButtonStyle.Text,
                                     )
                                 }
-                                content(enabled)
+                                content(enabled && (page == null || page == recordsPager?.settledPage), page)
                             }
                             if (editor.busy && showBusyIndicator && showingRecords) {
                                 PulseLoadingState(stringResource(R.string.pulse_garage_working_on_your_garage))
@@ -202,8 +207,25 @@ internal fun GarageEditorLayout(
                                 stringResource(R.string.pulse_garage_loading_your_garage),
                                 Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).padding(size.pagePadding),
                             )
-                        draft != null && !showingRecords -> key(draft.kind, draft.id) { body() }
-                        else -> scrollStates.SaveableStateProvider(scrollKey) { body() }
+                        draft != null && !showingRecords -> key(draft.kind, draft.id) { body(null) }
+                        recordsPager != null -> {
+                            HorizontalPager(
+                                state = recordsPager,
+                                modifier = Modifier.fillMaxSize(),
+                                userScrollEnabled = !editor.busy,
+                            ) { page ->
+                                val semantics =
+                                    if (page == recordsPager.settledPage) {
+                                        Modifier
+                                    } else {
+                                        Modifier.clearAndSetSemantics { hideFromAccessibility() }
+                                    }
+                                Box(Modifier.fillMaxSize().then(semantics)) {
+                                    scrollStates.SaveableStateProvider(page.toString()) { body(page) }
+                                }
+                            }
+                        }
+                        else -> scrollStates.SaveableStateProvider(scrollKey) { body(null) }
                     }
                     overlay()
                 }

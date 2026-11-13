@@ -5,11 +5,11 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -22,18 +22,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.Failure
@@ -56,6 +53,7 @@ import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import dev.abhishekan.pulse.core.ui.uiText
+import kotlinx.coroutines.flow.first
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -234,31 +232,20 @@ private fun VehicleDetailScreen(
     val refreshLabel = stringResource(R.string.pulse_garage_refresh_vehicle_history)
     val history = state.history.value
     val selectTab by rememberUpdatedState(onTab)
-    val tab = state.tab
-    val layoutDirection = LocalLayoutDirection.current
-    val swipeModifier =
-        if (state.reminderPage == null && editor.draft == null && !editor.busy) {
-            Modifier.pointerInput(tab, layoutDirection) {
-                val threshold = 48.dp.toPx()
-                var drag = 0f
-                detectHorizontalDragGestures(
-                    onDragStart = { drag = 0f },
-                    onDragEnd = {
-                        val distance = if (layoutDirection == LayoutDirection.Ltr) drag else -drag
-                        val nextIndex =
-                            when {
-                                distance <= -threshold -> tab.ordinal + 1
-                                distance >= threshold -> tab.ordinal - 1
-                                else -> return@detectHorizontalDragGestures
-                            }
-                        GarageTab.entries.getOrNull(nextIndex)?.let(selectTab)
-                    },
-                    onHorizontalDrag = { _, amount -> drag += amount },
-                )
+    val selectedPage = state.tab.ordinal
+    val pager = remember { PagerState(currentPage = selectedPage) { GarageTab.entries.size } }
+    val showPager = state.reminderPage == null && editor.draft == null
+    LaunchedEffect(pager, selectedPage, showPager, editor.busy) {
+        if (showPager) {
+            if (pager.currentPage != selectedPage || pager.currentPageOffsetFraction != 0f || pager.isScrollInProgress) {
+                pager.scrollToPage(selectedPage)
             }
-        } else {
-            Modifier
+            if (!editor.busy) {
+                val page = snapshotFlow { pager.settledPage }.first { it != selectedPage }
+                selectTab(GarageTab.entries[page])
+            }
         }
+    }
     val reminder =
         history?.schedules?.firstOrNull {
             it.kind == state.reminderPage && (it.kind != "engine_oil" || history.fuelTypes.any { fuel -> fuel != "electric" })
@@ -288,7 +275,7 @@ private fun VehicleDetailScreen(
         backLabel = backLabel,
         loading = state.history.loading && state.history.value == null && !pullRefreshing,
         reviewReady = state.history.ready,
-        scrollKey = "${state.tab}-${state.reminderPage}",
+        scrollKey = state.reminderPage ?: selectedPage.toString(),
         onRefresh = onRefresh,
         onReview = onReview,
         onDiscard = onDiscard,
@@ -297,8 +284,9 @@ private fun VehicleDetailScreen(
         onRetryCatalog = onRetryCatalog,
         showBusyIndicator = state.progress == null,
         recordsEditor = reminderEditor,
+        recordsPager = pager.takeIf { showPager },
         bodyModifier =
-            swipeModifier
+            Modifier
                 .pullToRefresh(
                     isRefreshing = pullRefreshing,
                     state = refreshState,
@@ -338,9 +326,9 @@ private fun VehicleDetailScreen(
                 )
             }
         },
-    ) { enabled ->
+    ) { enabled, page ->
         GarageSection(state.history, onRefresh) { data ->
-            when (state.tab) {
+            when (GarageTab.entries[page ?: selectedPage]) {
                 GarageTab.Overview -> {
                     VehicleIdentityHeader(data, enabled, { onEdit(data.draft(vehicle)) }) {
                         remove(

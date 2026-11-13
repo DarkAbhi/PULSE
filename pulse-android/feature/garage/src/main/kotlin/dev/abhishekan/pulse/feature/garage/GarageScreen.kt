@@ -36,7 +36,7 @@ fun GarageRoute(onOpenVehicle: (Long) -> Unit) {
         onUpdate = viewModel::update,
         onSave = viewModel::save,
         onRetryCatalog = viewModel::retryCatalog,
-    ) { enabled ->
+    ) { enabled, _ ->
         Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
             GarageCollectionHeader(enabled, viewModel::addVehicle)
             GarageSection(vehicles, viewModel::refresh) { items ->

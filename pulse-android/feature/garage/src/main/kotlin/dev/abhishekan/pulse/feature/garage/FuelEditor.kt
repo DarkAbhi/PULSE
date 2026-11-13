@@ -139,7 +139,7 @@ private fun FuelTripDetails(
             numeric = true,
         )
         BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val columns = if (maxWidth / LocalDensity.current.fontScale >= 272.dp) 2 else 1
+            val columns = if (maxWidth >= 360.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) 2 else 1
             FlowRow(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),

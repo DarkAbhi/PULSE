@@ -44,6 +44,8 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.core.content.FileProvider
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -689,6 +691,22 @@ class GarageDeviceTest {
         tap("Fuel")
         compose.onNode(hasText("Fuel") and isSelectable()).assertIsSelected()
         compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("Comet"))).assertIsDisplayed()
+    }
+
+    @Test fun vehicleDetailSwipesSelectAdjacentTabs() {
+        launchGarage()
+        select()
+        val overviewBody = compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Care, at a glance")))
+        overviewBody.performTouchInput { swipeRight() }
+        compose.onNode(hasText("Overview") and isSelectable()).assertIsSelected()
+
+        overviewBody.performTouchInput { swipeLeft() }
+        awaitText("Fuel history")
+        compose.onNode(hasText("Fuel") and isSelectable()).assertIsSelected()
+
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Fuel history"))).performTouchInput { swipeRight() }
+        awaitText("Care, at a glance")
+        compose.onNode(hasText("Overview") and isSelectable()).assertIsSelected()
     }
 
     @Test fun vehicleWizardAppBarBackMatchesSystemBack() {

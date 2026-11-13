@@ -249,20 +249,22 @@ internal fun MealPlanScreen(
                             }
                         }
                         if (state.draft != null && !records) {
-                            if (!state.draft.timeForm) {
+                            if (state.draft.timeForm) {
+                                MealTimeEditor(state.draft, state.busy, state.error, vm::update, save)
+                            } else {
                                 state.times.error?.takeUnless { state.times.loading }?.let {
                                     PulseErrorState(it.message, vm::refreshTimes)
                                 }
+                                MealEditor(
+                                    state.draft,
+                                    selectableTimes,
+                                    state.busy,
+                                    state.error,
+                                    vm::update,
+                                    save,
+                                    flat = size != PulseWindowSize.Compact,
+                                )
                             }
-                            MealEditor(
-                                state.draft,
-                                selectableTimes,
-                                state.busy,
-                                state.error,
-                                vm::update,
-                                save,
-                                flat = size != PulseWindowSize.Compact,
-                            )
                         } else if (state.draft?.timeForm == true) {
                             CustomMealTimes(state, vm, enabled = false)
                         } else {

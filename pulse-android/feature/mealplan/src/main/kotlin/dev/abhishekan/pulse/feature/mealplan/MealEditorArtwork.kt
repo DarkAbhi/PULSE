@@ -27,10 +27,10 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
-internal fun MealEditorHeader(illustrated: Boolean) {
+internal fun MealEditorHeader() {
     val colors = PulseTheme.colors
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val showArt = illustrated && LocalDensity.current.fontScale <= 1.3f
+        val showArt = LocalDensity.current.fontScale <= 1.3f
         val artSize = if (maxWidth < 400.dp) 104.dp else 172.dp
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -47,12 +47,10 @@ internal fun MealEditorHeader(illustrated: Boolean) {
                         )
                     }
                 }
-                if (illustrated) {
-                    PulseText(
-                        stringResource(R.string.pulse_mealplan_editor_subtitle),
-                        color = colors.textSecondary,
-                    )
-                }
+                PulseText(
+                    stringResource(R.string.pulse_mealplan_editor_subtitle),
+                    color = colors.textSecondary,
+                )
             }
             if (showArt) {
                 Image(

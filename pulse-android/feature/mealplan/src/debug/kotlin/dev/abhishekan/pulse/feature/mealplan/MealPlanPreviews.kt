@@ -94,16 +94,11 @@ private fun SavingMeal() {
 private fun InvalidMealTime() {
     PulseTheme(true) {
         PulseFormLayout(footer = { MealEditorFooter(false, false, {}, {}) }) {
-            MealEditor(
-                MealDraft(
-                    timeForm = true,
-                    name = "Snack",
-                ),
-                emptyList(),
+            MealTimeEditor(
+                MealDraft(timeForm = true, name = "Snack"),
                 false,
                 UiText.Literal("Enter a name and valid times."),
-                {
-                },
+                {},
                 {},
             )
         }

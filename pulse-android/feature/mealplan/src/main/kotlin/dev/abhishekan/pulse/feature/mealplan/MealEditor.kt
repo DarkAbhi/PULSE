@@ -31,7 +31,6 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
@@ -40,9 +39,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
-import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import java.time.LocalDate
-import java.time.LocalTime
 import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
@@ -56,23 +53,16 @@ internal fun MealEditor(
     flat: Boolean = false,
 ) {
     var datePicker by rememberSaveable { mutableStateOf(false) }
-    var timePicker by rememberSaveable { mutableStateOf<String?>(null) }
     val focus = LocalFocusManager.current
     val content: @Composable ColumnScope.() -> Unit = {
-        MealEditorHeader(illustrated = !draft.timeForm)
+        MealEditorHeader()
         Spacer(Modifier.height(8.dp))
         PulseTextField(
             draft.name,
             {
                 onUpdate(draft.copy(name = it))
             },
-            if (draft.timeForm) {
-                stringResource(
-                    R.string.pulse_mealplan_meal_time_name,
-                )
-            } else {
-                stringResource(R.string.pulse_mealplan_meal_name)
-            },
+            stringResource(R.string.pulse_mealplan_meal_name),
             Modifier.fillMaxWidth(),
             enabled = !busy,
             error = error,
@@ -84,58 +74,42 @@ internal fun MealEditor(
                 }),
             trailingIcon = { Icon(painterResource(R.drawable.meal_edit), null, Modifier.size(20.dp)) },
         )
-        if (!draft.timeForm && draft.name.isEmpty()) {
+        if (draft.name.isEmpty()) {
             PulseText(
                 stringResource(R.string.pulse_mealplan_name_example),
                 style = PulseTextStyle.Body3,
                 color = PulseTheme.colors.textSecondary,
             )
         }
-        if (draft.timeForm) {
-            PulseButton(stringResource(R.string.pulse_mealplan_start_time_1_s, draft.start), {
+        Spacer(Modifier.height(8.dp))
+        PulseText(stringResource(R.string.pulse_mealplan_meal_date), style = PulseTextStyle.Label)
+        val formattedDate = runCatching { LocalDate.parse(draft.date).format(mealDate) }.getOrDefault(draft.date)
+        val dateLabel = stringResource(R.string.pulse_mealplan_meal_date_1_s, formattedDate)
+        PulseButton(
+            text = formattedDate,
+            onClick = {
                 focus.clearFocus()
-                timePicker =
-                    "start"
-            }, enabled = !busy, style = PulseButtonStyle.Text)
-            PulseButton(stringResource(R.string.pulse_mealplan_end_time_1_s, draft.end), {
-                focus.clearFocus()
-                timePicker =
-                    "end"
-            }, enabled = !busy, style = PulseButtonStyle.Text)
+                datePicker = true
+            },
+            modifier = Modifier.fillMaxWidth().testTag("meal-date").semantics { contentDescription = dateLabel },
+            enabled = !busy,
+            variant = PulseButtonVariant.Secondary,
+            leadingIcon = { Icon(painterResource(R.drawable.meal_date), null, Modifier.size(24.dp)) },
+        )
+        Spacer(Modifier.height(8.dp))
+        PulseText(stringResource(R.string.pulse_mealplan_meal_time), style = PulseTextStyle.Label)
+        MealTimeChips(times, draft.timeId, !busy) {
+            focus.clearFocus()
+            onUpdate(draft.copy(timeId = it.id))
+        }
+        if (draft.originalTimeId !=
+            null
+        ) {
             PulseText(
-                stringResource(R.string.pulse_mealplan_use_24_hour_times_an_end_earlier_than_the),
+                stringResource(
+                    R.string.pulse_mealplan_you_can_change_the_assigned_time_removing_it_from,
+                ),
             )
-        } else {
-            Spacer(Modifier.height(8.dp))
-            PulseText(stringResource(R.string.pulse_mealplan_meal_date), style = PulseTextStyle.Label)
-            val formattedDate = runCatching { LocalDate.parse(draft.date).format(mealDate) }.getOrDefault(draft.date)
-            val dateLabel = stringResource(R.string.pulse_mealplan_meal_date_1_s, formattedDate)
-            PulseButton(
-                text = formattedDate,
-                onClick = {
-                    focus.clearFocus()
-                    datePicker = true
-                },
-                modifier = Modifier.fillMaxWidth().testTag("meal-date").semantics { contentDescription = dateLabel },
-                enabled = !busy,
-                variant = PulseButtonVariant.Secondary,
-                leadingIcon = { Icon(painterResource(R.drawable.meal_date), null, Modifier.size(24.dp)) },
-            )
-            Spacer(Modifier.height(8.dp))
-            PulseText(stringResource(R.string.pulse_mealplan_meal_time), style = PulseTextStyle.Label)
-            MealTimeChips(times, draft.timeId, !busy) {
-                focus.clearFocus()
-                onUpdate(draft.copy(timeId = it.id))
-            }
-            if (draft.originalTimeId !=
-                null
-            ) {
-                PulseText(
-                    stringResource(
-                        R.string.pulse_mealplan_you_can_change_the_assigned_time_removing_it_from,
-                    ),
-                )
-            }
         }
     }
     val modifier = Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth()
@@ -155,21 +129,6 @@ internal fun MealEditor(
             },
             { datePicker = false },
         )
-    }
-    timePicker?.let { which ->
-        PulseTimePickerDialog(LocalTime.parse(if (which == "start") draft.start else draft.end), {
-            onUpdate(
-                if (which ==
-                    "start"
-                ) {
-                    draft.copy(start = it.format(mealClock))
-                } else {
-                    draft.copy(end = it.format(mealClock))
-                },
-            )
-            timePicker =
-                null
-        }, { timePicker = null })
     }
 }
 

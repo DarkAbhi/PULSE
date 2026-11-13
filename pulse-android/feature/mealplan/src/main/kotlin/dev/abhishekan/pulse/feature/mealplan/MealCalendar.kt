@@ -14,9 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -25,19 +24,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
@@ -50,6 +54,12 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pulseWindowSize
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.time.temporal.ChronoUnit
+import java.util.Locale
+
+private val firstMealWeek = LocalDate.of(1, 1, 1)
+private val mealWeekCount = ChronoUnit.WEEKS.between(firstMealWeek, LocalDate.of(9999, 12, 31).minusDays(6)).toInt() + 1
 
 @Composable
 internal fun MealCalendar(
@@ -69,8 +79,20 @@ internal fun MealCalendar(
     val colors = PulseTheme.colors
     var pickingDate by rememberSaveable { mutableStateOf(false) }
     val format = DateTimeFormatter.ofPattern("d MMM yyyy")
-    val scroll = rememberLazyListState()
-    LaunchedEffect(selected) { scroll.animateScrollToItem(selected.dayOfWeek.value - 1) }
+    val weekPage = ChronoUnit.WEEKS.between(firstMealWeek, week).toInt()
+    // The selected date already survives recreation. Start on its week even if a swipe was interrupted.
+    val pager = remember { PagerState(currentPage = weekPage) { mealWeekCount } }
+    val onSelect by rememberUpdatedState(select)
+    LaunchedEffect(pager, weekPage, selected, enabled) {
+        if (pager.currentPage != weekPage || pager.currentPageOffsetFraction != 0f || pager.isScrollInProgress) {
+            pager.scrollToPage(weekPage)
+        }
+        if (enabled) {
+            snapshotFlow { pager.settledPage }.collect { page ->
+                if (page != weekPage) onSelect(selected.plusWeeks((page - weekPage).toLong()))
+            }
+        }
+    }
     val todayButton: @Composable () -> Unit = {
         PulseButton(
             text = stringResource(R.string.pulse_mealplan_today_label),
@@ -117,13 +139,18 @@ internal fun MealCalendar(
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val compact = pulseWindowSize(maxWidth) == PulseWindowSize.Compact
         val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
-        val dayWidth =
-            if (compact && fontScale == 1f) {
-                minOf(48.dp, ((maxWidth - 24.dp) / 7) - 1.dp).coerceAtLeast(40.dp)
-            } else if (compact) {
-                48.dp * fontScale
-            } else {
-                80.dp
+        val calendarWidth = minOf(maxWidth, if (compact) 476.dp else 680.dp)
+        val daySpacing = if (compact) 4.dp else 12.dp
+        val dayWidth = with(LocalDensity.current) {
+            val available = (calendarWidth.roundToPx() - 6 * daySpacing.roundToPx()).coerceAtLeast(0)
+            minOf(if (compact) 48.dp * fontScale else 80.dp, (available / 7).toDp())
+        }
+        val weekdayStyle = if (dayWidth < 36.dp * fontScale) TextStyle.NARROW else TextStyle.SHORT
+        val dayNumberStyle =
+            when {
+                dayWidth < 32.dp * fontScale -> PulseTextStyle.Body2
+                compact -> PulseTextStyle.Title3
+                else -> PulseTextStyle.Title
             }
         val wide = maxWidth / LocalDensity.current.fontScale >= 840.dp
         Column(
@@ -196,47 +223,55 @@ internal fun MealCalendar(
                 startAction = if (wide) preferences else null,
                 endAction = if (wide) mealTimes else null,
             ) {
-                LazyRow(
-                    Modifier.widthIn(max = if (compact) 476.dp else 680.dp).fillMaxWidth(),
-                    state = scroll,
-                    horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 12.dp, Alignment.CenterHorizontally),
-                ) {
-                    items((0L..6L).map(week::plusDays), key = { it.toEpochDay() }) { day ->
-                        val active = day == selected
-                        val description =
-                            if (day ==
-                                today
+                HorizontalPager(
+                    state = pager,
+                    modifier = Modifier.width(calendarWidth).testTag("meal-week-pager"),
+                    userScrollEnabled = enabled,
+                ) { page ->
+                    val pageWeek = firstMealWeek.plusWeeks(page.toLong())
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(daySpacing, Alignment.CenterHorizontally),
+                    ) {
+                        repeat(7) { offset ->
+                            val day = pageWeek.plusDays(offset.toLong())
+                            val active = day == selected
+                            val description =
+                                if (day == today) {
+                                    stringResource(R.string.pulse_mealplan_today_date_description, day.format(mealDate))
+                                } else {
+                                    day.format(mealDate)
+                                }
+                            Surface(
+                                onClick = { select(day) },
+                                modifier =
+                                    Modifier.width(dayWidth).semantics {
+                                        this.selected = active
+                                        contentDescription = description
+                                    },
+                                enabled = enabled && page == weekPage,
+                                shape = RoundedCornerShape(if (compact) 12.dp else 20.dp),
+                                color = if (active) colors.primary else colors.surface,
+                                contentColor = if (active) colors.onPrimary else colors.textPrimary,
+                                border = BorderStroke(1.dp, if (active) colors.primary else colors.border),
                             ) {
-                                stringResource(R.string.pulse_mealplan_today_date_description, day.format(mealDate))
-                            } else {
-                                day.format(mealDate)
-                            }
-                        Surface(
-                            onClick = { select(day) },
-                            modifier =
-                                Modifier.width(dayWidth).semantics {
-                                    this.selected = active
-                                    contentDescription = description
-                                },
-                            enabled = enabled,
-                            shape = RoundedCornerShape(if (compact) 12.dp else 20.dp),
-                            color = if (active) colors.primary else colors.surface,
-                            contentColor = if (active) colors.onPrimary else colors.textPrimary,
-                            border = BorderStroke(1.dp, if (active) colors.primary else colors.border),
-                        ) {
-                            Column(
-                                Modifier.padding(vertical = if (compact) 8.dp else 12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                PulseText(
-                                    day.format(DateTimeFormatter.ofPattern("EEE")),
-                                    style = if (compact) PulseTextStyle.Caption else PulseTextStyle.Body2,
-                                )
-                                PulseText(
-                                    day.dayOfMonth.toString(),
-                                    style = if (compact) PulseTextStyle.Title3 else PulseTextStyle.Title,
-                                )
+                                Column(
+                                    Modifier.padding(vertical = if (compact) 8.dp else 12.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    PulseText(
+                                        day.dayOfWeek.getDisplayName(weekdayStyle, Locale.getDefault()),
+                                        style = if (compact) PulseTextStyle.Caption else PulseTextStyle.Body2,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    PulseText(
+                                        day.dayOfMonth.toString(),
+                                        style = dayNumberStyle,
+                                        maxLines = 1,
+                                    )
+                                }
                             }
                         }
                     }

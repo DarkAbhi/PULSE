@@ -4,9 +4,7 @@ import android.os.ParcelFileDescriptor
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.ComposeTimeoutException
-import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -32,12 +30,13 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
@@ -631,7 +630,7 @@ class MealPlanDeviceTest {
         awaitText("Updated evening bowl")
     }
 
-    @Test fun compactWeekFitsPhoneScrollsOnNarrowScreensAndKeepsTabletDatesLarge() {
+    @Test fun fullWeekFitsNarrowPhonesAndKeepsTabletDatesLarge() {
         val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
         val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
 
@@ -660,35 +659,30 @@ class MealPlanDeviceTest {
             compose.onNodeWithText("Sun").assertIsDisplayed().performClick()
             shell("wm size 640x1800")
             awaitWindow(640, 1800, 320)
-            val week =
-                compose.onNode(
-                    SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange) and
-                        hasAnyDescendant(hasText("Mon") or hasText("Sun")),
-                )
-            week.performScrollToIndex(0)
-            compose.onNodeWithText("Mon").assertIsDisplayed()
-            week.performScrollToIndex(6)
-            compose.onNodeWithText("Sun").assertIsDisplayed().performClick()
+            val monday = day.with(DayOfWeek.MONDAY)
+            val dateFormat = DateTimeFormatter.ofPattern("EEEE, d MMM yyyy")
+            for (offset in 0L..6L) {
+                val date = monday.plusDays(offset)
+                compose.onNode(hasContentDescription(date.format(dateFormat), substring = true)).assertIsDisplayed()
+            }
             screenshot("narrow-week")
             // A smaller landscape tablet enters the wide layout but cannot fit a trailing action beside the centered week.
             shell("wm size 1920x1200")
             shell("wm density 280")
             awaitWindow(1920, 1200, 280)
-            week.performScrollToIndex(0)
             assertCalendarActionsShareRow()
             assertMealTimesClearOfDates(stacked = true)
             screenshot("small-landscape-week")
             shell("wm size 2560x1800")
             shell("wm density 320")
             awaitWindow(2560, 1800, 320)
-            week.performScrollToIndex(0)
             listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
                 val bounds = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
                 assertEquals("$label keeps its tablet width", 80.dp, bounds.right - bounds.left)
             }
-            val monday = compose.onNodeWithText("Mon").getUnclippedBoundsInRoot()
+            val mondayBounds = compose.onNodeWithText("Mon").getUnclippedBoundsInRoot()
             val tuesday = compose.onNodeWithText("Tue").getUnclippedBoundsInRoot()
-            assertEquals("Tablet dates keep their original spacing", 12.dp, tuesday.left - monday.right)
+            assertEquals("Tablet dates keep their original spacing", 12.dp, tuesday.left - mondayBounds.right)
             assertCalendarActionsShareRow()
             assertMealTimesClearOfDates(stacked = false)
             screenshot("tablet-week")
@@ -697,6 +691,26 @@ class MealPlanDeviceTest {
             shell("wm density ${density ?: "reset"}")
             compose.waitForIdle()
         }
+    }
+
+    @Test fun swipingDatesSnapsByOneWeekAndKeepsTheSelectedWeekday() {
+        launchPlanner()
+        val dateFormat = DateTimeFormatter.ofPattern("EEEE, d MMM yyyy")
+        val week = compose.onNodeWithTag("meal-week-pager")
+
+        week.performTouchInput { swipeLeft() }
+        awaitText("No meals planned for this day")
+        compose.onNode(hasContentDescription(day.plusWeeks(1).format(dateFormat))).assertIsSelected()
+
+        week.performTouchInput { swipeRight() }
+        awaitText("Soup")
+        compose.onNode(hasContentDescription(day.format(dateFormat), substring = true)).assertIsSelected()
+
+        tap("Previous week")
+        awaitText("No meals planned for this day")
+        compose.onNode(hasContentDescription(day.minusWeeks(1).format(dateFormat))).assertIsSelected()
+        week.performTouchInput { swipeLeft() }
+        awaitText("Soup")
     }
 
     private fun assertCalendarActionsShareRow() {

@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse.feature.fitness
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -7,14 +8,20 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -25,6 +32,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -41,6 +49,11 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
+import java.time.temporal.ChronoField
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+
+private const val CalendarMonthCount = 10_000 * 12
 
 @Composable
 internal fun FitnessCalendar(
@@ -51,6 +64,21 @@ internal fun FitnessCalendar(
     modifier: Modifier = Modifier,
 ) {
     val locale = LocalConfiguration.current.locales[0]
+    val selectedPage = state.month.getLong(ChronoField.PROLEPTIC_MONTH).toInt()
+    // The selected date is already restored by the ViewModel.
+    val pager = remember { PagerState(currentPage = selectedPage) { CalendarMonthCount } }
+    val scope = rememberCoroutineScope()
+    val currentOnMonth by rememberUpdatedState(onMonth)
+    LaunchedEffect(pager, state.selected, selectedPage, state.busy) {
+        // Today, the date picker and out-of-month dates can select a month directly.
+        if (pager.currentPage != selectedPage || pager.currentPageOffsetFraction != 0f || pager.isScrollInProgress) {
+            pager.scrollToPage(selectedPage)
+        }
+        if (!state.busy) {
+            val page = snapshotFlow { pager.settledPage }.first { it != selectedPage }
+            currentOnMonth((page - selectedPage).toLong())
+        }
+    }
     var choosing by rememberSaveable { mutableStateOf(false) }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
         BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
@@ -73,15 +101,15 @@ internal fun FitnessCalendar(
                     CalendarControl(
                         stringResource(R.string.pulse_fitness_previous_month),
                         FitnessSymbol.Previous,
-                        !state.busy && state.month > YearMonth.of(0, 1),
+                        !state.busy && selectedPage > 0,
                         compact = compact && inline,
-                    ) { onMonth(-1) }
+                    ) { scope.launch { pager.animateScrollToPage(pager.targetPage - 1) } }
                     CalendarControl(
                         stringResource(R.string.pulse_fitness_next_month),
                         FitnessSymbol.Next,
-                        !state.busy && state.month < YearMonth.of(9999, 12),
+                        !state.busy && selectedPage < CalendarMonthCount - 1,
                         compact = compact && inline,
-                    ) { onMonth(1) }
+                    ) { scope.launch { pager.animateScrollToPage(pager.targetPage + 1) } }
                     if (compact && inline) {
                         CompactTodayControl(stringResource(R.string.pulse_fitness_today), !state.busy, onToday)
                     } else {
@@ -116,13 +144,14 @@ internal fun FitnessCalendar(
                 }
             }
         }
-        val days = remember(state.month) { FitnessDates.calendar(state.month) }
         val workouts =
-            state.overview
-                ?.workouts
-                .orEmpty()
-                .groupingBy { it.date }
-                .eachCount()
+            remember(state.overview) {
+                state.overview
+                    ?.workouts
+                    .orEmpty()
+                    .groupingBy { it.date }
+                    .eachCount()
+            }
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val weekdayStyle = if (maxWidth / 7 < 28.dp * LocalDensity.current.fontScale) TextStyle.NARROW else TextStyle.SHORT
             // Seven columns still have 44dp targets at 320dp; avoid Material's 48dp
@@ -142,40 +171,56 @@ internal fun FitnessCalendar(
                                 }
                             }
                     }
-                    days.chunked(7).forEach { week ->
-                        Row(Modifier.fillMaxWidth()) {
-                            week.forEach { date ->
-                                val count = workouts[date] ?: 0
-                                val today = date == state.overview?.today
-                                val description =
-                                    pluralStringResource(
-                                        if (today) {
-                                            R.plurals.pulse_fitness_today_calendar_workouts
-                                        } else {
-                                            R.plurals.pulse_fitness_calendar_workouts
-                                        },
-                                        count,
-                                        date.format(
-                                            DateTimeFormatter
-                                                .ofPattern(
-                                                    "EEEE, d MMMM yyyy",
-                                                ).withLocale(locale),
-                                        ),
-                                        count,
-                                    )
-                                FitnessCalendarDay(
-                                    date.dayOfMonth.toString(),
-                                    description,
-                                    date == state.selected,
-                                    today,
-                                    count > 0,
-                                    { onDate(date) },
-                                    Modifier.weight(1f),
-                                    enabled =
-                                        !state.busy && date.year in 0..9999,
-                                    inMonth =
-                                        YearMonth.from(date) == state.month,
-                                )
+                    val dateFormatter = remember(locale) { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale) }
+                    HorizontalPager(
+                        state = pager,
+                        modifier = Modifier.fillMaxWidth(),
+                        userScrollEnabled = !state.busy,
+                        beyondViewportPageCount = 1,
+                    ) { page ->
+                        val month = YearMonth.of(page / 12, page % 12 + 1)
+                        val weeks =
+                            remember(month) {
+                                // Six weeks keep the pager height constant throughout a drag.
+                                val first = FitnessDates.calendar(month).first()
+                                List(42) { first.plusDays(it.toLong()) }.chunked(7)
+                            }
+                        val active = page == selectedPage
+                        Column(
+                            modifier = if (active) Modifier else Modifier.clearAndSetSemantics { hideFromAccessibility() },
+                            verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
+                        ) {
+                            weeks.forEach { week ->
+                                Row(Modifier.fillMaxWidth()) {
+                                    week.forEach { date ->
+                                        val count = workouts[date] ?: 0
+                                        val today = date == state.overview?.today
+                                        val description =
+                                            pluralStringResource(
+                                                if (today) {
+                                                    R.plurals.pulse_fitness_today_calendar_workouts
+                                                } else {
+                                                    R.plurals.pulse_fitness_calendar_workouts
+                                                },
+                                                count,
+                                                date.format(dateFormatter),
+                                                count,
+                                            )
+                                        FitnessCalendarDay(
+                                            date.dayOfMonth.toString(),
+                                            description,
+                                            date == state.selected,
+                                            today,
+                                            count > 0,
+                                            { onDate(date) },
+                                            Modifier.weight(1f),
+                                            enabled =
+                                                active && !state.busy && date.year in 0..9999,
+                                            inMonth =
+                                                YearMonth.from(date) == month,
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

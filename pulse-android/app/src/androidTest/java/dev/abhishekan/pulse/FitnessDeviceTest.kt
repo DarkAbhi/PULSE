@@ -3,10 +3,13 @@ import android.graphics.Bitmap
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
@@ -31,6 +34,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
@@ -559,6 +564,27 @@ class FitnessDeviceTest {
         }
         compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("SELECTED DAY"))).performTouchInput { swipeDown() }
         awaitText("Workout")
+    }
+
+    @Test fun calendarSwipesAndArrowsKeepTheMonthAndSelectedDateInSync() {
+        launchFitness()
+        val pager = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange))
+        val month = YearMonth.from(backend.today)
+        val monthFormat = DateTimeFormatter.ofPattern("MMMM yyyy")
+        val dateFormat = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy")
+
+        pager.performTouchInput { swipeLeft() }
+        val next = month.plusMonths(1)
+        compose.onNodeWithContentDescription(next.format(monthFormat)).assertIsDisplayed()
+        compose.onNodeWithContentDescription(next.atDay(1).format(dateFormat), substring = true).assertIsSelected()
+
+        pager.performTouchInput { swipeRight() }
+        compose.onNodeWithContentDescription(month.format(monthFormat)).assertIsDisplayed()
+
+        tap("Previous month")
+        val previous = month.minusMonths(1)
+        compose.onNodeWithContentDescription(previous.format(monthFormat)).assertIsDisplayed()
+        compose.onNodeWithContentDescription(previous.atDay(1).format(dateFormat), substring = true).assertIsSelected()
     }
 
     @Test fun calendarAndExerciseCrudRefreshHomeWithoutRestart() {

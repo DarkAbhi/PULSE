@@ -42,7 +42,6 @@ class MealPlanViewModel(
                 calendar.today(),
                 initialDay,
                 calendar.monday(initialDay),
-                managing = saved["managing"] ?: false,
                 draft = saved.get<ArrayList<String>>("draft")?.let(MealDraft::restore),
                 reviewRequired =
                     saved["pending"] ?: false,
@@ -146,15 +145,6 @@ class MealPlanViewModel(
         select(calendar.today())
     }
 
-    fun manage(value: Boolean) {
-        if (state.value.draft == null &&
-            !state.value.busy
-        ) {
-            saved["managing"] = value
-            state.update { it.copy(managing = value) }
-        }
-    }
-
     fun edit(draft: MealDraft) {
         if (state.value.canWrite &&
             state.value.draft == null
@@ -180,7 +170,7 @@ class MealPlanViewModel(
         if (!state.value.busy) store(null)
     }
 
-    fun save() {
+    fun save(selectableTimeIds: Set<Long>? = null) {
         if (!state.value.canWrite) return
         val draft = state.value.draft ?: return
         val change =
@@ -190,7 +180,9 @@ class MealPlanViewModel(
                 null
             }
         val cannotClear = draft.id != null && draft.originalTimeId != null && draft.timeId == null
-        if (change == null || !apply.valid(change) || cannotClear) {
+        val unavailable = !draft.timeForm && draft.timeId != null &&
+            selectableTimeIds != null && draft.timeId !in selectableTimeIds
+        if (change == null || !apply.valid(change) || cannotClear || unavailable) {
             state.update {
                 it.copy(
                     error =
@@ -198,7 +190,7 @@ class MealPlanViewModel(
                             uiText(
                                 R.string.pulse_mealplan_choose_another_meal_time_removing_an_assigned_time_is,
                             )
-                        } else if (!draft.timeForm && draft.timeId == null) {
+                        } else if ((!draft.timeForm && draft.timeId == null) || unavailable) {
                             uiText(R.string.pulse_mealplan_select_meal_time)
                         } else if (draft.timeForm) {
                             uiText(R.string.pulse_mealplan_enter_a_name_1_100_characters_and_valid_24)

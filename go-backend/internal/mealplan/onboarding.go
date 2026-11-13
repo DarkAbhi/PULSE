@@ -18,19 +18,20 @@ var goalCodes = []string{"feel_satisfied", "food_calm", "nourish_without_dieting
 var dietCodes = []string{"no_preference", "vegetarian", "vegan", "pescatarian"}
 var barrierCodes = []string{"hungry_again", "too_tired", "unsure_what_to_add", "food_advice_overwhelming"}
 var avoidanceCodes = []string{"shellfish", "fish", "peanuts", "tree_nuts", "dairy", "eggs", "gluten", "soy", "sesame", "pork", "beef", "poultry", "mushrooms", "onion_garlic", "spicy_food", "alcohol"}
-var mealKindCodes = []string{"breakfast", "lunch", "dinner"}
+var mealKindCodes = []string{"breakfast", "lunch", "evening_snacks", "dinner"}
 
 type MealPreferenceTime struct {
-	Kind      string `json:"kind" enums:"breakfast,lunch,dinner"`
+	Kind      string `json:"kind" enums:"breakfast,lunch,evening_snacks,dinner"`
 	UsualTime string `json:"usual_time" example:"09:00"`
 }
 
 type MealPreferences struct {
-	Goal           string               `json:"goal" enums:"feel_satisfied,food_calm,nourish_without_dieting"`
-	Barriers       []string             `json:"barriers"`
-	DietaryPattern string               `json:"dietary_pattern" enums:"no_preference,vegetarian,vegan,pescatarian"`
-	FoodAvoidances []string             `json:"food_avoidances"`
-	Meals          []MealPreferenceTime `json:"meals"`
+	Goal                    string               `json:"goal" enums:"feel_satisfied,food_calm,nourish_without_dieting"`
+	Barriers                []string             `json:"barriers"`
+	DietaryPattern          string               `json:"dietary_pattern" enums:"no_preference,vegetarian,vegan,pescatarian"`
+	FoodAvoidances          []string             `json:"food_avoidances"`
+	Meals                   []MealPreferenceTime `json:"meals"`
+	PlanningSlotsConfigured bool                 `json:"planning_slots_configured,omitempty"`
 }
 
 type OnboardingState struct {
@@ -73,7 +74,7 @@ func validatePreferences(p *MealPreferences) error {
 	if p.FoodAvoidances == nil || !validSelections(p.FoodAvoidances, avoidanceCodes) {
 		return ValidationError{"food avoidances must be an array of unique valid choices"}
 	}
-	if len(p.Meals) < 1 || len(p.Meals) > 3 {
+	if len(p.Meals) < 1 || len(p.Meals) > len(mealKindCodes) {
 		return ValidationError{"choose at least one meal"}
 	}
 	kinds := make([]string, 0, len(p.Meals))

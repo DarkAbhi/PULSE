@@ -300,14 +300,12 @@ class MealPlanViewModelTest {
                             "selected" to "2024-02-29",
                             "draft" to draft.saved(),
                             "pending" to true,
-                            "managing" to true,
                         ),
                     ),
                 )
             runCurrent()
             assertEquals(draft, vm.uiState.value.draft)
             assertEquals(LocalDate.parse("2024-02-26"), vm.uiState.value.week)
-            assertTrue(vm.uiState.value.managing)
             assertTrue(vm.uiState.value.reviewRequired)
             vm.save()
             runCurrent()

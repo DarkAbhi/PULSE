@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -114,6 +115,7 @@ private val choiceLabels =
         "alcohol" to R.string.meal_avoid_alcohol,
         "breakfast" to R.string.meal_setup_breakfast,
         "lunch" to R.string.meal_setup_lunch,
+        "evening_snacks" to R.string.meal_setup_evening_snacks,
         "dinner" to R.string.meal_setup_dinner,
     )
 
@@ -124,6 +126,7 @@ private fun choiceLabel(code: String) = choiceLabels[code]?.let { stringResource
 internal fun MealOnboardingScreen(
     state: MealOnboardingUiState,
     vm: MealOnboardingViewModel,
+    customMealTimes: @Composable () -> Unit = {},
 ) {
     BackHandler(state.saving || (state.showJourney && (state.step > 0 || state.editing))) { if (!state.saving) vm.back() }
     Box(Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).imePadding().padding(PulseTokens.medium)) {
@@ -187,6 +190,7 @@ internal fun MealOnboardingScreen(
                             )
                         }
                         MealSetupQuestion(state, vm)
+                        if (state.step == 4) customMealTimes()
                         state.invalidStep?.let {
                             PulseText(
                                 stringResource(
@@ -258,7 +262,7 @@ private fun MealSetupQuestion(
 ) {
     val p = state.draft
     var timeKind by remember { mutableStateOf<String?>(null) }
-    val timeDrafts = remember { mutableMapOf<String, LocalTime>() }
+    val timeDrafts = rememberSaveable { hashMapOf<String, LocalTime>() }
 
     fun toggle(
         values: List<String>,
@@ -311,7 +315,10 @@ private fun MealSetupQuestion(
                         }, choiceLabel(code), Modifier.fillMaxWidth(), enabled = !state.saving)
                     }
                 }
-            4 ->
+            4 -> {
+                if (state.record?.preferences?.planningSlotsConfigured == false && !p.planningSlotsConfigured) {
+                    PulseText(stringResource(R.string.meal_setup_existing_planning_slots), style = PulseTextStyle.Caption)
+                }
                 MealPreferenceChoices.meals.forEach { kind ->
                     PulseCard(Modifier.fillMaxWidth(), contentPadding = PulseTokens.medium) {
                         PulseSwitch(p.meals.any { it.kind == kind }, { checked ->
@@ -325,10 +332,16 @@ private fun MealSetupQuestion(
                                             kind
                                     }
                                 }
-                            vm.update(p.copy(meals = meals.sortedBy { MealPreferenceChoices.meals.indexOf(it.kind) }))
+                            vm.update(
+                                p.copy(
+                                    meals = meals.sortedBy { MealPreferenceChoices.meals.indexOf(it.kind) },
+                                    planningSlotsConfigured = true,
+                                ),
+                            )
                         }, choiceLabel(kind), Modifier.fillMaxWidth(), enabled = !state.saving, switchAtEnd = true)
                     }
                 }
+            }
             5 -> {
                 PulseText(stringResource(R.string.meal_setup_timezone, UserTimeZone.zone.id), style = PulseTextStyle.Caption)
                 p.meals.forEach { meal ->
@@ -430,6 +443,7 @@ private object MealPreferencesDefaults {
         when (kind) {
             "breakfast" -> LocalTime.of(9, 0)
             "lunch" -> LocalTime.of(12, 30)
+            "evening_snacks" -> LocalTime.of(17, 30)
             else -> LocalTime.of(19, 30)
         }
 }

@@ -1089,6 +1089,7 @@ definitions:
         enum:
         - breakfast
         - lunch
+        - evening_snacks
         - dinner
         type: string
       usual_time:
@@ -1122,6 +1123,8 @@ definitions:
         items:
           $ref: '#/definitions/mealplan.MealPreferenceTime'
         type: array
+      planning_slots_configured:
+        type: boolean
     type: object
   mealplan.OnboardingConflictResponse:
     properties:
@@ -2503,6 +2506,11 @@ paths:
       - horizon
   /api/meal-plan-onboarding:
     get:
+      parameters:
+      - description: Send 1 to include Evening Snacks and planning-slot settings
+        in: query
+        name: planning_slots
+        type: integer
       produces:
       - application/json
       responses:
@@ -2535,6 +2543,10 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/mealplan.OnboardingInput'
+      - description: Send 1 to include Evening Snacks and planning-slot settings
+        in: query
+        name: planning_slots
+        type: integer
       produces:
       - application/json
       responses:
@@ -2815,6 +2827,10 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/mealplan.MealPreferences'
+      - description: Send 1 to include Evening Snacks and planning-slot settings
+        in: query
+        name: planning_slots
+        type: integer
       produces:
       - application/json
       responses:

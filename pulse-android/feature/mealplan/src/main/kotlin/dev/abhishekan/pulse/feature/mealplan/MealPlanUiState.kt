@@ -17,7 +17,6 @@ data class MealPlanUiState(
     val week: LocalDate,
     val meals: MealSection<List<PlannedMeal>> = MealSection(),
     val times: MealSection<List<MealTime>> = MealSection(),
-    val managing: Boolean = false,
     val draft: MealDraft? = null,
     val busy: Boolean = false,
     val reviewRequired: Boolean = false,

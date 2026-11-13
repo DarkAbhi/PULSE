@@ -2,7 +2,7 @@
 
 import Select from "@/app/components/design-system/select";
 import type { MealPreferences } from "./onboarding/types";
-import { standardMealKind } from "./onboarding/questionnaire";
+import { isMealTimeEnabled, standardMealKind } from "./onboarding/questionnaire";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { useTimeZone } from "@/app/components/time-zone-provider";
@@ -20,7 +20,6 @@ import {
   Trash2,
   Utensils,
   Clock,
-  Settings2,
   Loader2,
   Check,
 } from "lucide-react";
@@ -32,8 +31,6 @@ import {
   addMealPlanAction,
   deleteMealPlanAction,
   getMealPlansAction,
-  createMealTimeAction,
-  deleteMealTimeAction,
   updateMealPlanConsumedAction,
 } from "./actions";
 
@@ -103,7 +100,7 @@ export default function MealPlanClient({
     () => initialTodayStr ?? dateKey(new Date(), timeZone)
   );
   const [meals, setMeals] = useState<MealPlan[]>(initialMeals);
-  const [mealTimes, setMealTimes] = useState<MealTime[]>(initialMealTimes);
+  const mealTimes = initialMealTimes;
   const [isLoadingWeek, setIsLoadingWeek] = useState(false);
 
   // Meal form state
@@ -113,25 +110,13 @@ export default function MealPlanClient({
   const [mealModalError, setMealModalError] = useState("");
 
   // New meal time Meal Time Modal state
-  const [isAddMealTimeOpen, setIsAddMealTimeOpen] = useState(false);
-  const [newMealTimeName, setNewMealTimeName] = useState("");
-  const [newStartTime, setNewStartTime] = useState("16:00");
-  const [newEndTime, setNewEndTime] = useState("17:00");
-  const [mealTimeModalError, setMealTimeModalError] = useState("");
-
-  // Manage Meal Times Modal state
-  const [isManageMealTimesOpen, setIsManageMealTimesOpen] = useState(false);
-
   // Deletion confirmation state
   const [mealToDelete, setMealToDelete] = useState<MealPlan | null>(null);
-  const [mealTimeToDelete, setMealTimeToDelete] = useState<MealTime | null>(null);
 
   const [isPending, startTransition] = useTransition();
 
   const [deleteError, setDeleteError] = useState("");
   const addMealTitleId = useId();
-  const addMealTimeTitleId = useId();
-  const manageMealTimesTitleId = useId();
 
   const currentMonday = getMonday(parseYMD(selectedDate));
   const weekDays = Array.from({ length: 7 }, (_, i) => {
@@ -174,6 +159,7 @@ export default function MealPlanClient({
   const selectedDay = weekDays.find((day) => day.isSelected)!;
   const dayMeals = meals.filter((meal) => meal.date === selectedDate);
   const orderedMealTimes = [...mealTimes].sort((a, b) => a.start_time.localeCompare(b.start_time));
+  const enabledMealTimes = orderedMealTimes.filter(time => isMealTimeEnabled(time, preferences));
   const otherMeals = dayMeals.filter((meal) => !mealTimes.some((time) => time.id === meal.meal_time_id));
   const eatenCount = dayMeals.filter((meal) => meal.is_consumed).length;
 
@@ -181,7 +167,7 @@ export default function MealPlanClient({
   const handleOpenAddMeal = (mealTimeID?: number) => {
     setMealName("");
     setMealModalError("");
-    setSelectedMealTimeID(mealTimeID ?? orderedMealTimes[0]?.id ?? null);
+    setSelectedMealTimeID(enabledMealTimes.find(time => time.id === mealTimeID)?.id ?? enabledMealTimes[0]?.id ?? null);
     setIsAddMealOpen(true);
   };
 
@@ -196,6 +182,10 @@ export default function MealPlanClient({
     const trimmed = mealName.trim();
     if (!trimmed) {
       setMealModalError("Please enter a meal name.");
+      return;
+    }
+    if (!enabledMealTimes.some(time => time.id === selectedMealTimeID)) {
+      setMealModalError("Choose an available meal time.");
       return;
     }
 
@@ -240,61 +230,6 @@ export default function MealPlanClient({
         setMeals((prev) =>
           prev.map((m) => (m.id === meal.id ? { ...m, is_consumed: !nextConsumed } : m))
         );
-      }
-    });
-  };
-
-  // New meal time Meal Time handlers
-  const handleOpenAddMealTime = () => {
-    setNewMealTimeName("");
-    setNewStartTime("16:00");
-    setNewEndTime("17:00");
-    setMealTimeModalError("");
-    setIsAddMealTimeOpen(true);
-  };
-
-  const handleCloseAddMealTime = () => {
-    setIsAddMealTimeOpen(false);
-    setNewMealTimeName("");
-    setMealTimeModalError("");
-  };
-
-  const handleSubmitAddMealTime = (e: React.FormEvent) => {
-    e.preventDefault();
-    const name = newMealTimeName.trim();
-    if (!name) {
-      setMealTimeModalError("Please enter a meal time name.");
-      return;
-    }
-    if (!newStartTime || !newEndTime) {
-      setMealTimeModalError("Please provide both start and end times.");
-      return;
-    }
-
-    startTransition(async () => {
-      setMealTimeModalError("");
-      const res = await createMealTimeAction(name, newStartTime, newEndTime);
-      if (!res.ok || !res.mealTime) {
-        setMealTimeModalError(res.error ?? "Failed to create meal time.");
-        return;
-      }
-
-      setMealTimes((prev) => [...prev, res.mealTime!]);
-      setSelectedMealTimeID(res.mealTime!.id);
-      handleCloseAddMealTime();
-    });
-  };
-
-  const handleConfirmDeleteMealTime = () => {
-    if (!mealTimeToDelete) return;
-    setDeleteError("");
-    startTransition(async () => {
-      const res = await deleteMealTimeAction(mealTimeToDelete.id);
-      if (res.ok) {
-        setMealTimes((prev) => prev.filter((mt) => mt.id !== mealTimeToDelete.id));
-        setMealTimeToDelete(null);
-      } else {
-        setDeleteError(res.error ?? "Could not remove the meal time.");
       }
     });
   };
@@ -345,7 +280,7 @@ export default function MealPlanClient({
 
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
-      <div className="mx-auto max-w-5xl" inert={isAddMealOpen || isAddMealTimeOpen || isManageMealTimesOpen || mealToDelete !== null || mealTimeToDelete !== null}>
+      <div className="mx-auto max-w-5xl" inert={isAddMealOpen || mealToDelete !== null}>
         <BackLink href="/dashboard">Dashboard</BackLink>
 
         <PulseCard as="section" aria-labelledby="meal-plan-title" className="mt-5 overflow-hidden">
@@ -355,10 +290,7 @@ export default function MealPlanClient({
               <p className="mt-2 text-sm">Plan your week, one meal at a time.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-            {onEditPreferences && <Button variant="secondary" onClick={onEditPreferences}>Meal preferences</Button>}
-            <Button variant="secondary" onClick={() => setIsManageMealTimesOpen(true)}>
-              <Settings2 className="size-4" aria-hidden="true" /> Meal times
-            </Button>
+              {onEditPreferences && <Button variant="secondary" onClick={onEditPreferences}>Meal preferences</Button>}
             </div>
           </div>
 
@@ -422,6 +354,8 @@ export default function MealPlanClient({
             <div className="divide-y divide-divider">
               {orderedMealTimes.map((time) => {
                 const items = dayMeals.filter((meal) => meal.meal_time_id === time.id);
+                const enabled = isMealTimeEnabled(time, preferences);
+                if (!enabled && items.length === 0) return null;
                 const usualTime = preferences?.meals.find(meal => meal.kind === standardMealKind(time))?.usual_time;
                 return (
                   <section key={time.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-5 gap-y-3 px-4 py-4 sm:grid-cols-[12rem_minmax(0,1fr)_auto] sm:items-start sm:px-6">
@@ -438,13 +372,13 @@ export default function MealPlanClient({
                     <div className="col-span-2 row-start-2 min-w-0 sm:col-span-1 sm:col-start-2 sm:row-start-1">
                       {items.length ? renderMeals(items) : <p className="py-2 text-sm text-muted-foreground">Nothing planned</p>}
                     </div>
-                    <Button variant="secondary" size="sm" className="col-start-2 row-start-1 justify-self-end sm:col-start-3"
+                    {enabled && <Button variant="secondary" size="sm" className="col-start-2 row-start-1 justify-self-end sm:col-start-3"
                       onClick={() => handleOpenAddMeal(time.id)}
                       aria-label={`Add meal to ${time.name}`}
                       disabled={isLoadingWeek}
                     >
                       <Plus className="size-3.5" aria-hidden="true" /> Add
-                    </Button>
+                    </Button>}
                   </section>
                 );
               })}
@@ -459,7 +393,7 @@ export default function MealPlanClient({
                   {renderMeals(otherMeals)}
                 </section>
               )}
-              {orderedMealTimes.length === 0 && otherMeals.length === 0 && (
+              {enabledMealTimes.length === 0 && dayMeals.length === 0 && (
                 <p className="px-4 py-8 text-sm text-muted-foreground sm:px-6">
                   Add a meal to start planning this day.
                 </p>
@@ -470,7 +404,7 @@ export default function MealPlanClient({
       </div>
 
       {/* Add meal Modal Dialog */}
-      {isAddMealOpen && !isAddMealTimeOpen && (
+      {isAddMealOpen && (
         <Dialog
           labelledBy={addMealTitleId}
           onBackdropClick={(e) => {
@@ -534,13 +468,6 @@ export default function MealPlanClient({
                 >
                   Meal time
                 </label>
-                <Button variant="tertiary" size="sm"
-                  icon={<Plus className="h-3 w-3" />}
-                  type="button"
-                  onClick={handleOpenAddMealTime}
-                >
-                  New meal time
-                </Button>
               </div>
               <Select
                 id="meal-time-select"
@@ -550,8 +477,8 @@ export default function MealPlanClient({
                 }
                 className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground"
               >
-                {orderedMealTimes.length === 0 && <option value="">Other meals</option>}
-                {orderedMealTimes.map((mt) => (
+                {enabledMealTimes.length === 0 && <option value="">No meal times available</option>}
+                {enabledMealTimes.map((mt) => (
                   <option key={mt.id} value={mt.id}>
                     {mt.name} ({formatTimeDisplay(mt.start_time)} – {formatTimeDisplay(mt.end_time)})
                   </option>
@@ -586,197 +513,6 @@ export default function MealPlanClient({
         </Dialog>
       )}
 
-      {/* New meal time dialog */}
-      {isAddMealTimeOpen && (
-        <Dialog
-          labelledBy={addMealTimeTitleId}
-          onBackdropClick={(e) => {
-            if (!isPending && e.target === e.currentTarget) handleCloseAddMealTime();
-          }}
-          size="sm"
-        >
-          <form onSubmit={handleSubmitAddMealTime}>
-            <div className="mb-5 flex items-start gap-3 border-b border-divider pb-4">
-              <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 id={addMealTimeTitleId} className="text-xl font-bold tracking-tight text-foreground">
-                  New meal time
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Set the hours when this meal time appears in your daily plan.
-                </p>
-              </div>
-            </div>
-
-            {mealTimeModalError && (
-              <div
-                className="mb-4 rounded-lg bg-destructive/10 p-3 text-xs text-destructive"
-                role="alert"
-              >
-                {mealTimeModalError}
-              </div>
-            )}
-
-            <div className="space-y-3">
-              <div>
-                <label
-                  htmlFor="meal-time-name-input"
-                  className="block text-sm font-semibold text-foreground mb-1"
-                >
-                  Meal time name
-                </label>
-                <input
-                  id="meal-time-name-input"
-                  type="text"
-                  autoFocus
-                  value={newMealTimeName}
-                  onChange={(e) => setNewMealTimeName(e.target.value)}
-                  placeholder="e.g. Afternoon snack"
-                  className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label
-                    htmlFor="start-time-input"
-                    className="block text-sm font-semibold text-foreground mb-1"
-                  >
-                    Starts
-                  </label>
-                  <input
-                    id="start-time-input"
-                    type="time"
-                    value={newStartTime}
-                    onChange={(e) => setNewStartTime(e.target.value)}
-                    className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="end-time-input"
-                    className="block text-sm font-semibold text-foreground mb-1"
-                  >
-                    Ends
-                  </label>
-                  <input
-                    id="end-time-input"
-                    type="time"
-                    value={newEndTime}
-                    onChange={(e) => setNewEndTime(e.target.value)}
-                    className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <DialogActions className="border-t border-divider pt-4">
-              <DialogAction
-                type="button"
-                variant="secondary"
-                onClick={handleCloseAddMealTime}
-                disabled={isPending}
-              >
-                Cancel
-              </DialogAction>
-              <DialogAction
-                type="submit"
-                variant="primary"
-                disabled={isPending || !newMealTimeName.trim()}
-              >
-                {isPending ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Saving...
-                  </span>
-                ) : (
-                  "Create meal time"
-                )}
-              </DialogAction>
-            </DialogActions>
-          </form>
-        </Dialog>
-      )}
-
-      {/* Manage Meal Times Modal Dialog */}
-      {isManageMealTimesOpen && !isAddMealTimeOpen && !mealTimeToDelete && (
-        <Dialog
-          labelledBy={manageMealTimesTitleId}
-          onBackdropClick={(e) => {
-            if (e.target === e.currentTarget) setIsManageMealTimesOpen(false);
-          }}
-          size="md"
-        >
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-divider pb-4">
-            <div className="flex items-center gap-3">
-              <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
-                <Settings2 className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 id={manageMealTimesTitleId} className="text-xl font-bold tracking-tight text-foreground">
-                  Meal times
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Set up the time slots in your daily plan.
-                </p>
-              </div>
-            </div>
-            <Button variant="primary" size="sm"
-              onClick={handleOpenAddMealTime}
-              autoFocus
-            >
-              <Plus className="h-3.5 w-3.5" />
-              New meal time
-            </Button>
-          </div>
-
-          {orderedMealTimes.length === 0 && <p className="text-sm text-muted-foreground">Add a meal time to organize your daily plan.</p>}
-          <ul className="divide-y divide-divider rounded-xl bg-background px-3 empty:hidden">
-            {orderedMealTimes.map((mt) => (
-              <li key={mt.id} className="flex items-center justify-between gap-2 py-3">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="wrap-anywhere font-semibold text-sm text-foreground">{mt.name}</span>
-                    {mt.is_default && (
-                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-secondary-foreground">
-                        Default
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                    <Clock className="h-3 w-3" />
-                    <span>
-                      {formatTimeDisplay(mt.start_time)} – {formatTimeDisplay(mt.end_time)}
-                    </span>
-                  </div>
-                </div>
-
-                {!mt.is_default && (
-                  <Button variant="iconDanger" size="sm"
-                    onClick={() => { setDeleteError(""); setMealTimeToDelete(mt); }}
-                    aria-label={`Delete ${mt.name}`}
-                    disabled={isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
-
-          <DialogActions className="border-t border-divider pt-4 sm:flex sm:justify-end">
-            <DialogAction
-              type="button"
-              variant="secondary"
-              onClick={() => setIsManageMealTimesOpen(false)}
-            >
-              Done
-            </DialogAction>
-          </DialogActions>
-        </Dialog>
-      )}
-
       {/* Delete Meal Confirmation Dialog */}
       <ConfirmationDialog
         isOpen={mealToDelete !== null}
@@ -797,25 +533,6 @@ export default function MealPlanClient({
         variant="destructive"
       />
 
-      {/* Delete Meal Time Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={mealTimeToDelete !== null}
-        onClose={() => setMealTimeToDelete(null)}
-        onConfirm={handleConfirmDeleteMealTime}
-        title="Remove this meal time?"
-        description={
-          mealTimeToDelete ? (
-            <span>
-              Meals scheduled for <strong>{mealTimeToDelete.name}</strong> will move to Other meals.
-            </span>
-          ) : null
-        }
-        confirmText="Remove meal time"
-        confirmLoadingText="Removing…"
-        error={deleteError}
-        isLoading={isPending}
-        variant="destructive"
-      />
     </main>
   );
 }

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { initialPreferences, firstInvalidStep, stepError, shouldShowOnboarding, toggleChoice, standardMealKind } from "./questionnaire.ts";
+import { initialPreferences, firstInvalidStep, stepError, shouldShowOnboarding, toggleChoice, standardMealKind, isMealTimeEnabled } from "./questionnaire.ts";
 
 test("only explicit terminal server states suppress setup", () => {
   assert.equal(shouldShowOnboarding({ status: "pending" }), true);
@@ -38,5 +38,14 @@ test("editing clones saved answers and multi-select toggles preserve other choic
 test("usual meal preferences apply only to the matching system slots", () => {
   assert.equal(standardMealKind({ is_default: true, name: "Lunch" }), "lunch");
   assert.equal(standardMealKind({ is_default: false, name: "Lunch" }), undefined);
-  assert.equal(standardMealKind({ is_default: true, name: "Evening Snacks" }), undefined);
+  assert.equal(standardMealKind({ is_default: true, name: "Evening Snacks" }), "evening_snacks");
+  assert.deepEqual(initialPreferences().meals[2], { kind: "evening_snacks", usual_time: "17:30" });
+});
+
+test("switches take effect after saving planning choices and leave custom slots available", () => {
+  const slot = { is_default: true, name: "Evening Snacks" };
+  const preferences = { ...initialPreferences(), meals: [{ kind: "lunch", usual_time: "12:30" }] };
+  assert.equal(isMealTimeEnabled(slot, preferences), true);
+  assert.equal(isMealTimeEnabled(slot, { ...preferences, planning_slots_configured: true }), false);
+  assert.equal(isMealTimeEnabled({ ...slot, is_default: false }, { ...preferences, planning_slots_configured: true }), true);
 });

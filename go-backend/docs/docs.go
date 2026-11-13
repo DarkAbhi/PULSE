@@ -1942,6 +1942,14 @@ const docTemplate = `{
                     "meal-plan"
                 ],
                 "summary": "Read meal setup and preferences",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Send 1 to include Evening Snacks and planning-slot settings",
+                        "name": "planning_slots",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1989,6 +1997,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/mealplan.OnboardingInput"
                         }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Send 1 to include Evening Snacks and planning-slot settings",
+                        "name": "planning_slots",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2428,6 +2442,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/mealplan.MealPreferences"
                         }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Send 1 to include Evening Snacks and planning-slot settings",
+                        "name": "planning_slots",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -6986,6 +7006,7 @@ const docTemplate = `{
                     "enum": [
                         "breakfast",
                         "lunch",
+                        "evening_snacks",
                         "dinner"
                     ]
                 },
@@ -7032,6 +7053,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/mealplan.MealPreferenceTime"
                     }
+                },
+                "planning_slots_configured": {
+                    "type": "boolean"
                 }
             }
         },

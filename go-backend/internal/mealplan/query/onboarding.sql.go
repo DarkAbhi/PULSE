@@ -69,14 +69,15 @@ func (q *Queries) GetMealOnboarding(ctx context.Context, userID int64) (GetMealO
 }
 
 const getMealPreferences = `-- name: GetMealPreferences :one
-SELECT goal, dietary_pattern, barriers, food_avoidances FROM meal_preferences WHERE user_id = $1
+SELECT goal, dietary_pattern, barriers, food_avoidances, planning_slots_configured FROM meal_preferences WHERE user_id = $1
 `
 
 type GetMealPreferencesRow struct {
-	Goal           string
-	DietaryPattern string
-	Barriers       []string
-	FoodAvoidances []string
+	Goal                    string
+	DietaryPattern          string
+	Barriers                []string
+	FoodAvoidances          []string
+	PlanningSlotsConfigured bool
 }
 
 func (q *Queries) GetMealPreferences(ctx context.Context, userID int64) (GetMealPreferencesRow, error) {
@@ -87,6 +88,7 @@ func (q *Queries) GetMealPreferences(ctx context.Context, userID int64) (GetMeal
 		&i.DietaryPattern,
 		&i.Barriers,
 		&i.FoodAvoidances,
+		&i.PlanningSlotsConfigured,
 	)
 	return i, err
 }
@@ -94,7 +96,7 @@ func (q *Queries) GetMealPreferences(ctx context.Context, userID int64) (GetMeal
 const listMealPreferenceTimes = `-- name: ListMealPreferenceTimes :many
 SELECT meal_kind, to_char(usual_time, 'HH24:MI')::TEXT AS usual_time
 FROM meal_preference_times WHERE user_id = $1
-ORDER BY CASE meal_kind WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 ELSE 3 END
+ORDER BY CASE meal_kind WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'evening_snacks' THEN 3 ELSE 4 END
 `
 
 type ListMealPreferenceTimesRow struct {
@@ -134,19 +136,21 @@ func (q *Queries) LockMealPreferenceUser(ctx context.Context, id int64) (int64, 
 }
 
 const upsertMealPreferences = `-- name: UpsertMealPreferences :exec
-INSERT INTO meal_preferences (user_id, goal, dietary_pattern, barriers, food_avoidances)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO meal_preferences (user_id, goal, dietary_pattern, barriers, food_avoidances, planning_slots_configured)
+VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (user_id) DO UPDATE SET goal = EXCLUDED.goal,
 dietary_pattern = EXCLUDED.dietary_pattern, barriers = EXCLUDED.barriers,
-food_avoidances = EXCLUDED.food_avoidances, updated_at = CURRENT_TIMESTAMP
+food_avoidances = EXCLUDED.food_avoidances, planning_slots_configured = EXCLUDED.planning_slots_configured,
+updated_at = CURRENT_TIMESTAMP
 `
 
 type UpsertMealPreferencesParams struct {
-	UserID         int64
-	Goal           string
-	DietaryPattern string
-	Barriers       []string
-	FoodAvoidances []string
+	UserID                  int64
+	Goal                    string
+	DietaryPattern          string
+	Barriers                []string
+	FoodAvoidances          []string
+	PlanningSlotsConfigured bool
 }
 
 func (q *Queries) UpsertMealPreferences(ctx context.Context, arg UpsertMealPreferencesParams) error {
@@ -156,6 +160,7 @@ func (q *Queries) UpsertMealPreferences(ctx context.Context, arg UpsertMealPrefe
 		arg.DietaryPattern,
 		arg.Barriers,
 		arg.FoodAvoidances,
+		arg.PlanningSlotsConfigured,
 	)
 	return err
 }

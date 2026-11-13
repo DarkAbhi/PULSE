@@ -33,7 +33,11 @@ func readOnboarding(ctx context.Context, q *query.Queries, userID int64) (Onboar
 	if err != nil {
 		return state, err
 	}
-	state.Preferences = &MealPreferences{Goal: p.Goal, DietaryPattern: p.DietaryPattern, Barriers: p.Barriers, FoodAvoidances: p.FoodAvoidances, Meals: make([]MealPreferenceTime, 0, len(times))}
+	state.Preferences = &MealPreferences{
+		Goal: p.Goal, DietaryPattern: p.DietaryPattern, Barriers: p.Barriers, FoodAvoidances: p.FoodAvoidances,
+		PlanningSlotsConfigured: p.PlanningSlotsConfigured,
+		Meals:                   make([]MealPreferenceTime, 0, len(times)),
+	}
 	for _, t := range times {
 		state.Preferences.Meals = append(state.Preferences.Meals, MealPreferenceTime{Kind: t.MealKind, UsualTime: t.UsualTime})
 	}
@@ -67,7 +71,10 @@ func (r *Repository) GetOnboarding(ctx context.Context, userID int64) (Onboardin
 }
 
 func writePreferences(ctx context.Context, q *query.Queries, userID int64, p MealPreferences) error {
-	if err := q.UpsertMealPreferences(ctx, query.UpsertMealPreferencesParams{UserID: userID, Goal: p.Goal, DietaryPattern: p.DietaryPattern, Barriers: p.Barriers, FoodAvoidances: p.FoodAvoidances}); err != nil {
+	if err := q.UpsertMealPreferences(ctx, query.UpsertMealPreferencesParams{
+		UserID: userID, Goal: p.Goal, DietaryPattern: p.DietaryPattern, Barriers: p.Barriers, FoodAvoidances: p.FoodAvoidances,
+		PlanningSlotsConfigured: p.PlanningSlotsConfigured,
+	}); err != nil {
 		return err
 	}
 	if err := q.DeleteMealPreferenceTimes(ctx, userID); err != nil {
@@ -113,6 +120,9 @@ func (r *Repository) SavePreferences(ctx context.Context, userID int64, p MealPr
 		}
 		if state.Status == "pending" {
 			return state, ErrOnboardingPending
+		}
+		if state.Preferences != nil && state.Preferences.PlanningSlotsConfigured && !p.PlanningSlotsConfigured {
+			return state, ValidationError{"update Pulse to edit these meal preferences"}
 		}
 		if err = writePreferences(ctx, q, userID, p); err != nil {
 			return state, err

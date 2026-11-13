@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, Moon, Sun, Sunrise, Utensils } from "lucide-react";
+import { ArrowLeft, Check, Moon, Sun, Sunrise, Sunset, Utensils } from "lucide-react";
 import Button from "@/app/components/design-system/button";
 import BackLink from "@/app/components/design-system/back-link";
 import PulseCard from "@/app/components/design-system/pulse-card";
@@ -13,10 +13,13 @@ import { useTimeZone } from "@/app/components/time-zone-provider";
 import { getMealOnboardingAction, resolveMealOnboardingAction, saveMealPreferencesAction } from "./actions";
 import { avoidances, barriers, choiceLabel, diets, firstInvalidStep, goals, initialPreferences, mealKinds, questions, stepError } from "./questionnaire";
 import type { MealPreferences, OnboardingState } from "./types";
+import type { MealTime } from "../actions";
+import CustomMealTimes from "./custom-meal-times";
 
-const mealIcons = { breakfast: Sunrise, lunch: Sun, dinner: Moon };
-export default function MealOnboarding({ initial, editing = false, onDone, onCancel, onNotice }: {
+const mealIcons = { breakfast: Sunrise, lunch: Sun, evening_snacks: Sunset, dinner: Moon };
+export default function MealOnboarding({ initial, editing = false, onDone, onCancel, onNotice, times, onCreated, onDeleted }: {
   initial: MealPreferences | null; editing?: boolean; onDone: (state: OnboardingState) => void; onCancel: () => void; onNotice: (message: string) => void;
+  times: MealTime[]; onCreated: (time: MealTime) => void; onDeleted: (id: number) => void;
 }) {
   const [preferences, setPreferences] = useState(() => initialPreferences(initial));
   const [step, setStep] = useState(0);
@@ -75,7 +78,7 @@ export default function MealOnboarding({ initial, editing = false, onDone, onCan
   ];
 
   return <main className="min-h-screen bg-background text-foreground">
-    <div className="mx-auto max-w-6xl px-4 pt-5 sm:px-8 sm:pt-8">
+    <div id="meal-setup-journey" className="mx-auto max-w-6xl px-4 pt-5 sm:px-8 sm:pt-8">
       <header className="flex items-center justify-between gap-4">
         <BackLink href="/dashboard">Dashboard</BackLink>
         {editing ? <Button variant="tertiary" onClick={onCancel} disabled={busy}>Cancel editing</Button> : <Button variant="tertiary" onClick={() => commit(true)} disabled={busy}>{busy ? "Saving…" : "Skip setup"}</Button>}
@@ -106,13 +109,18 @@ export default function MealOnboarding({ initial, editing = false, onDone, onCan
               {step === 1 && <ChoiceGroup multiple label="What gets in the way" value={preferences.barriers} options={barriers.map(([value, label]) => ({ value, label }))} onChange={barriers => patch({ barriers })} />}
               {step === 2 && <ChoiceGroup label="Eating style" value={preferences.dietary_pattern} options={diets.map(([value, label]) => ({ value, label }))} onChange={dietary_pattern => patch({ dietary_pattern })} />}
               {step === 3 && <ChoiceGroup multiple columns label="Foods to avoid" value={preferences.food_avoidances} options={avoidances.map(([value, label, icon]) => ({ value, label, icon }))} onChange={food_avoidances => patch({ food_avoidances })} />}
-              {step === 4 && <div className="grid gap-3">{mealKinds.map(meal => {
+              {step === 4 && <div className="grid gap-3">
+                {initial && !initial.planning_slots_configured && !preferences.planning_slots_configured &&
+                  <p className="text-sm text-muted-foreground">All meal times are currently available in Add Meal. Change a switch and save to use these selections.</p>}
+                {mealKinds.map(meal => {
                 const Icon = mealIcons[meal.kind];
                 return <Switch key={meal.kind} checked={preferences.meals.some(m => m.kind === meal.kind)} onChange={selected => {
                   const meals = selected ? [...preferences.meals, { kind: meal.kind, usual_time: timeDrafts.current[meal.kind] ?? meal.defaultTime }] : preferences.meals.filter(m => m.kind !== meal.kind);
-                  patch({ meals: mealKinds.flatMap(k => meals.filter(m => m.kind === k.kind)) });
+                  patch({ meals: mealKinds.flatMap(k => meals.filter(m => m.kind === k.kind)), planning_slots_configured: true });
                 }}><Icon className="size-6 text-action" aria-hidden="true" />{meal.label}</Switch>;
-              })}</div>}
+              })}
+                <CustomMealTimes times={times} onCreated={onCreated} onDeleted={onDeleted} />
+              </div>}
               {step === 5 && <div className="grid gap-3">
                 <p className="mb-1 text-sm text-muted-foreground">Local times in {timeZone}</p>
                 {preferences.meals.map(meal => <TimeInput key={meal.kind} label={mealKinds.find(m => m.kind === meal.kind)!.label} value={meal.usual_time} onChange={usual_time => {

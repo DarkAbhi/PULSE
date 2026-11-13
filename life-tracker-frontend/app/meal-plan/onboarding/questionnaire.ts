@@ -21,6 +21,7 @@ export const avoidances = [
 export const mealKinds: { kind: MealKind; label: string; defaultTime: string }[] = [
   { kind: "breakfast", label: "Breakfast", defaultTime: "09:00" },
   { kind: "lunch", label: "Lunch", defaultTime: "12:30" },
+  { kind: "evening_snacks", label: "Evening Snacks", defaultTime: "17:30" },
   { kind: "dinner", label: "Dinner", defaultTime: "19:30" },
 ];
 export const questions = [
@@ -28,7 +29,7 @@ export const questions = [
   { title: "What gets in the way?", description: "Pick any that sound familiar. You can leave this blank." },
   { title: "How do you like to eat?", description: "Choose what fits. There's no right answer." },
   { title: "Anything to avoid?", description: "Select any allergies or foods you dislike. You can leave this blank." },
-  { title: "Where would a little help go furthest?", description: "Choose the meals you'd like help planning. Pick at least one." },
+  { title: "Which meals do you want to plan?", description: "Enabled meals appear in Add Meal. Pick at least one." },
   { title: "When do you usually eat these meals?", description: "Set a usual time for each meal. You can change these anytime." },
 ];
 export function initialPreferences(saved?: MealPreferences | null): MealPreferences {
@@ -50,5 +51,10 @@ export function choiceLabel(options: readonly (readonly string[])[], code: strin
 // independent and must never inherit the system Lunch preference.
 export function standardMealKind(slot: { is_default: boolean; name: string }): MealKind | undefined {
   if (!slot.is_default) return undefined;
-  return ({ Breakfast: "breakfast", Lunch: "lunch", Dinner: "dinner" } as const)[slot.name as "Breakfast" | "Lunch" | "Dinner"];
+  return mealKinds.find(meal => meal.label === slot.name)?.kind;
+}
+
+export function isMealTimeEnabled(slot: { is_default: boolean; name: string }, preferences?: MealPreferences | null) {
+  const kind = standardMealKind(slot);
+  return !preferences?.planning_slots_configured || !kind || preferences.meals.some(meal => meal.kind === kind);
 }

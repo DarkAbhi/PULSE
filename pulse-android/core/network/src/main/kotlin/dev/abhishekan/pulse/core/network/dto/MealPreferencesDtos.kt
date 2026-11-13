@@ -16,6 +16,7 @@ data class MealPreferencesDto(
     @SerialName("dietary_pattern") val dietaryPattern: String,
     @SerialName("food_avoidances") val foodAvoidances: List<String>,
     val meals: List<MealPreferenceTimeDto>,
+    @SerialName("planning_slots_configured") val planningSlotsConfigured: Boolean = false,
 )
 
 @Serializable

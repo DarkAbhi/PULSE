@@ -47,8 +47,10 @@
     <string name="meal_setup_diet_description">Choose what fits. There’s no right answer.</string>
     <string name="meal_setup_avoid_title">Anything to avoid?</string>
     <string name="meal_setup_avoid_description">Select any allergies or foods you dislike. You can leave this blank.</string>
-    <string name="meal_setup_meals_title">Where would a little help go furthest?</string>
-    <string name="meal_setup_meals_description">Choose the meals you’d like help planning. Pick at least one.</string>
+    <string name="meal_setup_meals_title">Which meals do you want to plan?</string>
+    <string name="meal_setup_meals_description">Enabled meals appear in Add Meal. Pick at least one.</string>
+    <string name="meal_setup_back_to_preferences">Back to meal preferences</string>
+    <string name="meal_setup_existing_planning_slots">All meal times are currently available in Add Meal. Change a switch and save to use these selections.</string>
     <string name="meal_setup_times_title">When do you usually eat these meals?</string>
     <string name="meal_setup_times_description">Set a usual time for each meal. You can change these anytime.</string>
     <string name="meal_setup_timezone">Local times in %1$s</string>
@@ -86,6 +88,7 @@
     <string name="meal_avoid_spicy">Spicy food</string>
     <string name="meal_avoid_alcohol">Alcohol</string>
     <string name="meal_setup_breakfast">Breakfast</string>
+    <string name="meal_setup_evening_snacks">Evening Snacks</string>
     <string name="meal_setup_lunch">Lunch</string>
     <string name="meal_setup_dinner">Dinner</string>
 </resources>

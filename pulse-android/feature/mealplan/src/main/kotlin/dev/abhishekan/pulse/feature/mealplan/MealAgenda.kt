@@ -33,7 +33,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -41,7 +40,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
-import dev.abhishekan.pulse.core.ui.components.PulseExtendedFloatingActionButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.time.LocalDate
@@ -228,102 +226,4 @@ private fun MealIllustratedCard(
             }
         }
     }
-}
-
-@Composable
-internal fun MealTimes(
-    times: List<MealTime>,
-    enabled: Boolean,
-    onDelete: (MealTime) -> Unit,
-) {
-    PulseText(
-        stringResource(R.string.pulse_mealplan_your_daily_rhythm),
-        Modifier.semantics {
-            heading()
-        },
-        PulseTextStyle.Display,
-    )
-    PulseText(
-        stringResource(R.string.pulse_mealplan_default_and_custom_meal_times_meals_can_also_be),
-    )
-    if (times.isEmpty()) {
-        PulseEmptyState(
-            stringResource(R.string.pulse_mealplan_no_meal_times_available),
-            stringResource(R.string.pulse_mealplan_create_a_custom_time_or_add_meals_without_one),
-        )
-    }
-    times.forEach { time ->
-        PulseCard(Modifier.fillMaxWidth()) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                Icon(
-                    painterResource(
-                        when (time.start.hour) {
-                            in 5..10 -> R.drawable.meal_sun
-                            in 11..15 -> R.drawable.meal_sun
-                            in 16..18 -> R.drawable.meal_sunset
-                            else -> R.drawable.meal_moon
-                        },
-                    ),
-                    null,
-                    Modifier.background(PulseTheme.colors.primarySoft, RoundedCornerShape(12.dp)).padding(12.dp).size(24.dp),
-                    tint = PulseTheme.colors.primary,
-                )
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PulseText(time.name, style = PulseTextStyle.Title)
-                    PulseText(
-                        stringResource(
-                            if (time.end <
-                                time.start
-                            ) {
-                                R.string.pulse_mealplan_overnight_time_range
-                            } else {
-                                R.string.pulse_mealplan_time_range
-                            },
-                            time.start.format(mealClock),
-                            time.end.format(mealClock),
-                        ),
-                    )
-                    if (time.isDefault) {
-                        PulseText(
-                            stringResource(R.string.pulse_mealplan_default_protected),
-                            style = PulseTextStyle.Label,
-                        )
-                    } else {
-                        PulseButton(
-                            stringResource(
-                                R.string.pulse_mealplan_delete_time_1_s,
-                                time.name,
-                            ),
-                            {
-                                onDelete(time)
-                            },
-                            enabled = enabled,
-                            style = PulseButtonStyle.Text,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-internal fun AddMealTimeButton(
-    onAdd: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    PulseExtendedFloatingActionButton(
-        onClick = onAdd,
-        modifier = modifier.widthIn(max = 280.dp),
-        icon = { Icon(painterResource(R.drawable.meal_add), null, Modifier.size(24.dp)) },
-        text = {
-            PulseText(
-                stringResource(R.string.pulse_mealplan_add_custom_meal_time),
-                style = PulseTextStyle.Label,
-            )
-        },
-    )
 }

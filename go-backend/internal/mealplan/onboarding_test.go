@@ -89,6 +89,32 @@ func TestOnboardingRejectsInvalidDecisionBeforeWriting(t *testing.T) {
 	}
 }
 
+func TestOnboardingResponseSupportsLegacyClients(t *testing.T) {
+	preferences := validMealPreferences()
+	preferences.PlanningSlotsConfigured = true
+	preferences.Meals = []MealPreferenceTime{{Kind: "evening_snacks", UsualTime: "17:30"}}
+	state := OnboardingState{Status: "completed", QuestionnaireVersion: 1, Preferences: &preferences}
+	for _, tc := range []struct {
+		query      string
+		kind       string
+		configured bool
+	}{
+		{"", "breakfast", false},
+		{"?planning_slots=1", "evening_snacks", true},
+	} {
+		w := httptest.NewRecorder()
+		writeOnboardingResult(w, httptest.NewRequest("GET", "/meal-plan-onboarding"+tc.query, nil), state, nil)
+		var got OnboardingState
+		if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+			t.Fatal(err)
+		}
+		if got.Preferences == nil || len(got.Preferences.Meals) != 1 ||
+			got.Preferences.Meals[0].Kind != tc.kind || got.Preferences.PlanningSlotsConfigured != tc.configured {
+			t.Fatalf("unexpected response: %s", w.Body.String())
+		}
+	}
+}
+
 func TestOnboardingHandlerAuthenticationAndStrictJSON(t *testing.T) {
 	for _, methodPath := range [][2]string{{"GET", "/meal-plan-onboarding"}, {"PUT", "/meal-plan-onboarding"}, {"PUT", "/meal-preferences"}} {
 		r := chi.NewRouter()
@@ -170,10 +196,14 @@ func TestMealOnboardingPersistence(t *testing.T) {
 	if err != nil || state.Status != "skipped" || !reflect.DeepEqual(state.Preferences, &p) {
 		t.Fatalf("settings after skip: %+v %v", state, err)
 	}
-	p.Meals = []MealPreferenceTime{{Kind: "dinner", UsualTime: "23:59"}}
+	p.Meals = []MealPreferenceTime{{Kind: "evening_snacks", UsualTime: "17:30"}, {Kind: "dinner", UsualTime: "23:59"}}
+	p.PlanningSlotsConfigured = true
 	state, err = service.SavePreferences(ctx, first, p)
 	if err != nil || !reflect.DeepEqual(state.Preferences, &p) || !stamp.Equal(*state.DecidedAt) {
 		t.Fatalf("replace settings: %+v %v", state, err)
+	}
+	if _, err := service.SavePreferences(ctx, first, validMealPreferences()); err == nil {
+		t.Fatal("older clients must not overwrite configured slots")
 	}
 
 	t.Run("HTTP returns authoritative saved state", func(t *testing.T) {

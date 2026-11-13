@@ -4,6 +4,8 @@ import http from "node:http";
 const states = new Map();
 const failures = new Map();
 const writes = new Map();
+const customTimes = new Map();
+let nextTimeId = 5;
 const pending = () => ({ status: "pending", questionnaire_version: 1, preferences: null });
 const times = [
   { id: 1, name: "Breakfast", start_time: "07:00", end_time: "10:00", is_default: true },
@@ -22,7 +24,21 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/__test/state") return send(200, { state: states.get(token) ?? pending(), writes: writes.get(token) ?? 0 });
   if (url.pathname === "/api/auth/session") return send(200, { username: token });
   if (url.pathname === "/api/profile") return send(200, { name: "Browser test", timezone: "Asia/Kolkata", currency: "INR" });
-  if (url.pathname === "/api/meal-times") return send(200, times);
+  if (url.pathname === "/api/meal-times") {
+    const existing = customTimes.get(token) ?? [];
+    if (req.method === "GET") return send(200, [...times, ...existing]);
+    if (req.method === "POST") {
+      const time = { id: nextTimeId++, is_default: false, ...body };
+      customTimes.set(token, [...existing, time]);
+      return send(201, time);
+    }
+  }
+  if (url.pathname.startsWith("/api/meal-times/") && req.method === "DELETE") {
+    const id = Number(url.pathname.split("/").at(-1));
+    customTimes.set(token, (customTimes.get(token) ?? []).filter(time => time.id !== id));
+    res.writeHead(204).end();
+    return;
+  }
   if (url.pathname === "/api/meal-plans") return send(200, []);
   if (url.pathname === "/api/meal-plan-onboarding" && req.method === "GET") {
     if (failures.get(token) === "read") return send(503, { error: "Unable to load preferences" });

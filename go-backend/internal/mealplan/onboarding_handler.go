@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"slices"
 
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
@@ -24,8 +25,20 @@ func decodePreferences(w http.ResponseWriter, r *http.Request, value any) bool {
 	return true
 }
 
-func writeOnboardingResult(w http.ResponseWriter, state OnboardingState, err error) {
+func writeOnboardingResult(w http.ResponseWriter, r *http.Request, state OnboardingState, err error) {
 	w.Header().Set("Cache-Control", "no-store")
+	// Older Android releases reject responses with a fourth meal kind.
+	if state.Preferences != nil && r.URL.Query().Get("planning_slots") != "1" {
+		preferences := *state.Preferences
+		preferences.PlanningSlotsConfigured = false
+		preferences.Meals = slices.DeleteFunc(slices.Clone(preferences.Meals), func(meal MealPreferenceTime) bool {
+			return meal.Kind == "evening_snacks"
+		})
+		if len(preferences.Meals) == 0 {
+			preferences.Meals = []MealPreferenceTime{{Kind: "breakfast", UsualTime: "09:00"}}
+		}
+		state.Preferences = &preferences
+	}
 	if errors.Is(err, ErrOnboardingConflict) || errors.Is(err, ErrOnboardingPending) {
 		webutil.WriteJSON(w, http.StatusConflict, OnboardingConflictResponse{Error: err.Error(), State: state})
 		return
@@ -42,6 +55,7 @@ func writeOnboardingResult(w http.ResponseWriter, state OnboardingState, err err
 // @Tags meal-plan
 // @Produce json
 // @Security SessionBearer
+// @Param planning_slots query int false "Send 1 to include Evening Snacks and planning-slot settings"
 // @Success 200 {object} OnboardingState
 // @Failure 401 {object} apidoc.Error
 // @Failure 500 {object} apidoc.Error
@@ -52,7 +66,7 @@ func (h *Handler) GetOnboarding(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	state, err := h.service.GetOnboarding(r.Context(), id)
-	writeOnboardingResult(w, state, err)
+	writeOnboardingResult(w, r, state, err)
 }
 
 // ResolveOnboarding commits an explicit skip or a complete questionnaire atomically.
@@ -63,6 +77,7 @@ func (h *Handler) GetOnboarding(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Security SessionBearer
 // @Param body body OnboardingInput true "Explicit decision; completed requires preferences"
+// @Param planning_slots query int false "Send 1 to include Evening Snacks and planning-slot settings"
 // @Success 200 {object} OnboardingState
 // @Failure 400 {object} apidoc.Error
 // @Failure 401 {object} apidoc.Error
@@ -79,7 +94,7 @@ func (h *Handler) ResolveOnboarding(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	state, err := h.service.ResolveOnboarding(r.Context(), id, in)
-	writeOnboardingResult(w, state, err)
+	writeOnboardingResult(w, r, state, err)
 }
 
 type OnboardingConflictResponse struct {
@@ -94,6 +109,7 @@ type OnboardingConflictResponse struct {
 // @Produce json
 // @Security SessionBearer
 // @Param body body MealPreferences true "Complete replacement preferences"
+// @Param planning_slots query int false "Send 1 to include Evening Snacks and planning-slot settings"
 // @Success 200 {object} OnboardingState
 // @Failure 400 {object} apidoc.Error
 // @Failure 401 {object} apidoc.Error
@@ -110,5 +126,5 @@ func (h *Handler) SavePreferences(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	state, err := h.service.SavePreferences(r.Context(), id, in)
-	writeOnboardingResult(w, state, err)
+	writeOnboardingResult(w, r, state, err)
 }

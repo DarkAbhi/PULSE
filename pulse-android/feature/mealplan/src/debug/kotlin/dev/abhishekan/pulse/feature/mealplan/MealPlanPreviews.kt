@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse.feature.mealplan
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,17 +8,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
-import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -66,7 +61,7 @@ private fun PlannerPreview(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(PulseTokens.cardPadding),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.large),
             ) {
-                MealCalendar(day.minusDays(6), day, day, true, {}, {}, {}, {}, {}, true, 4)
+                MealCalendar(day.minusDays(6), day, day, true, {}, {}, {}, {}, {})
                 MealAgenda(day, day, meals, true, {}, {}, {}, Modifier.fillMaxWidth())
             }
         }
@@ -111,43 +106,6 @@ private fun InvalidMealTime() {
                 },
                 {},
             )
-        }
-    }
-}
-
-@Preview(name = "Meal times", widthDp = 360, heightDp = 800)
-@Preview(name = "Meal times large text", widthDp = 360, heightDp = 800, fontScale = 2f)
-@Composable
-private fun MealTimesPreview() {
-    PulseTheme(false) { MealTimesPreviewContent() }
-}
-
-@Preview(name = "Meal times dark", widthDp = 360, heightDp = 800)
-@Composable
-private fun MealTimesDarkPreview() {
-    PulseTheme(true) { MealTimesPreviewContent() }
-}
-
-@Composable
-private fun MealTimesPreviewContent() {
-    PulseScreenScaffold("Meal times", backLabel = "Back to planner") {
-        Box(Modifier.fillMaxSize()) {
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
-                    .padding(bottom = 160.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                MealTimes(
-                    fixtures.map { MealTime(it.timeId!!, it.timeName!!, it.start!!, it.end!!, true) }.distinctBy { it.id } +
-                        MealTime(6, "After workout", LocalTime.of(21, 0), LocalTime.of(22, 0), false),
-                    true,
-                    {},
-                )
-            }
-            AddMealTimeButton({}, Modifier.align(Alignment.BottomEnd).padding(16.dp))
         }
     }
 }

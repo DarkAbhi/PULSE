@@ -13,9 +13,11 @@ async function completeQuestions(page: Page) {
   await page.getByRole("checkbox", { name: "Peanuts", exact: true }).check();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("switch", { name: "Breakfast", exact: true }).uncheck();
+  await expect(page.getByRole("switch", { name: "Evening Snacks", exact: true })).toBeChecked();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByLabel("Breakfast", { exact: true })).toHaveCount(0);
   await page.getByLabel("Lunch", { exact: true }).fill("13:15");
+  await expect(page.getByLabel("Evening Snacks", { exact: true })).toHaveValue("17:30");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByRole("heading", { name: "A plan that feels like you." })).toBeVisible();
 }
@@ -44,8 +46,12 @@ test("save round-trips answers, suppresses onboarding and supports later edits",
   await page.getByRole("button", { name: "Save preferences", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Meal Plan", exact: true })).toBeVisible();
   const saved = (await fixture(page, user)).state;
-  expect(saved.preferences).toEqual({ goal: "feel_satisfied", barriers: ["too_tired"], dietary_pattern: "vegetarian", food_avoidances: ["peanuts"], meals: [{ kind: "lunch", usual_time: "13:15" }, { kind: "dinner", usual_time: "19:30" }] });
+  expect(saved.preferences).toEqual({ goal: "feel_satisfied", barriers: ["too_tired"], dietary_pattern: "vegetarian", food_avoidances: ["peanuts"], planning_slots_configured: true, meals: [{ kind: "lunch", usual_time: "13:15" }, { kind: "evening_snacks", usual_time: "17:30" }, { kind: "dinner", usual_time: "19:30" }] });
   await expect(page.getByText("Your usual time: 1:15 PM")).toBeVisible();
+  await page.getByRole("button", { name: "Add meal", exact: true }).click();
+  await expect(page.getByRole("option", { name: /Breakfast/ })).toHaveCount(0);
+  await expect(page.getByRole("option", { name: /Evening Snacks/ })).toHaveCount(1);
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
   const fresh = await browser.newContext(); await account(fresh, user); const returned = await fresh.newPage(); await returned.goto("http://localhost:3107/meal-plan");
   await expect(returned.getByRole("heading", { name: "Meal Plan", exact: true })).toBeVisible();
   await returned.getByRole("button", { name: "Meal preferences", exact: true }).click();
@@ -55,6 +61,28 @@ test("save round-trips answers, suppresses onboarding and supports later edits",
   await returned.getByRole("button", { name: "Save preferences", exact: true }).click();
   await expect(returned.getByRole("heading", { name: "Meal Plan", exact: true })).toBeVisible();
   expect((await fixture(returned, user)).state.preferences.goal).toBe("food_calm"); await fresh.close();
+});
+
+test("custom slots can be created and removed from the meal switches", async ({ page, context }) => {
+  await account(context, "custom-slots");
+  await page.goto("/meal-plan");
+  await page.getByRole("button", { name: "Skip setup" }).click();
+  await page.getByRole("button", { name: "Meal preferences" }).click();
+  await page.getByRole("radio", { name: "Feel full and satisfied", exact: true }).check();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("radio", { name: "Vegetarian", exact: true }).check();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("switch", { name: "Lunch", exact: true }).uncheck();
+  await page.getByRole("button", { name: "Add custom meal time" }).click();
+  await page.getByLabel("Meal time name").fill("After training");
+  await page.getByRole("button", { name: "Create meal time" }).click();
+  await expect(page.getByText("After training", { exact: true })).toBeVisible();
+  await expect(page.getByRole("switch", { name: "Lunch", exact: true })).not.toBeChecked();
+  await page.getByRole("button", { name: "Delete After training" }).click();
+  await page.getByRole("button", { name: "Remove meal time", exact: true }).click();
+  await expect(page.getByText("After training", { exact: true })).toHaveCount(0);
 });
 
 test("skip persists across sessions; account switching does not share dismissal", async ({ page, context, browser }) => {

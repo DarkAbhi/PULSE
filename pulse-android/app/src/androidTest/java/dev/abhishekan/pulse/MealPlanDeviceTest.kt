@@ -473,6 +473,21 @@ class MealPlanDeviceTest {
         assertEquals(0, mutations)
     }
 
+    @Test fun configuredMealSlotsFilterAddMealAndKeepExistingMeals() {
+        setupRecord = obj(
+            """
+            {"status":"completed","questionnaire_version":1,"preferences":{
+            "goal":"food_calm","barriers":[],"dietary_pattern":"vegan","food_avoidances":[],
+            "planning_slots_configured":true,"meals":[{"kind":"evening_snacks","usual_time":"17:30"}]}}
+            """.trimIndent(),
+        )
+        launchPlanner()
+        awaitText("Soup")
+        tap("Add meal")
+        compose.onNodeWithText("Lunch").assertDoesNotExist()
+        compose.onNodeWithText("Evening bowl").assertExists()
+    }
+
     @Test fun mealSetupTabletAndLargeTextKeepChoicesReachable() {
         val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
         val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
@@ -521,9 +536,10 @@ class MealPlanDeviceTest {
         tap("Peanuts")
         screenshot("onboarding-avoidances")
         tap("Next")
-        awaitText("Where would a little help go furthest?")
+        awaitText("Which meals do you want to plan?")
         tap("Next")
         awaitText("When do you usually eat these meals?")
+        awaitText("Evening Snacks · 17:30")
         screenshot("onboarding-times")
         tap("Next")
         awaitText("A plan that feels like you.")
@@ -581,13 +597,12 @@ class MealPlanDeviceTest {
     @Test fun nestedMealPagesHaveOneTitledBarAndBackReturnsToTheirParent() {
         launchPlanner()
         compose.onNode(hasTestTag("pulse-top-app-bar")).assertDoesNotExist()
-        tap("Meal times")
-        compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("Meal times"))).assertIsDisplayed()
+        openMealSwitches()
         tap("Add custom meal time")
         compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("New meal time"))).assertIsDisplayed()
-        compose.onNode(hasContentDescription("Back to meal times")).performClick()
-        compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("Meal times"))).assertIsDisplayed()
-        compose.onNode(hasContentDescription("Back to planner")).performClick()
+        compose.onNode(hasContentDescription("Back to meal preferences")).performClick()
+        awaitText("Which meals do you want to plan?")
+        tap("Cancel")
         compose.onNode(hasTestTag("pulse-top-app-bar")).assertDoesNotExist()
         tap("Add meal")
         compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("Plan a meal"))).assertIsDisplayed()
@@ -612,24 +627,6 @@ class MealPlanDeviceTest {
         awaitText("Updated soup")
     }
 
-    @Test fun pullToRefreshKeepsAddCustomMealTimeAvailable() {
-        launchPlanner()
-        tap("Meal times")
-        awaitText("Add custom meal time")
-        compose.runOnIdle {
-            times[2] = JsonObject(times.getValue(2) + ("name" to JsonPrimitive("Updated evening bowl")))
-        }
-        val read = PausedRead("meal-times").also { pausedRead = it }
-        try {
-            compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Evening bowl"))).performTouchInput { swipeDown() }
-            compose.waitUntil(5_000) { read.started.isCompleted }
-            compose.onNodeWithText("Add custom meal time").assertIsDisplayed().assertIsEnabled()
-        } finally {
-            read.release.complete(Unit)
-        }
-        awaitText("Updated evening bowl")
-    }
-
     @Test fun fullWeekFitsNarrowPhonesAndKeepsTabletDatesLarge() {
         val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
         val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
@@ -646,7 +643,7 @@ class MealPlanDeviceTest {
             shell("wm density 320")
             launchPlanner()
             awaitWindow(800, 1800, 320)
-            assertCalendarActionsShareRow()
+            compose.onNode(hasText("Preferences") and hasClickAction()).assertIsDisplayed()
             val root = compose.onRoot().getUnclippedBoundsInRoot()
             listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
                 val date = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed()
@@ -670,8 +667,8 @@ class MealPlanDeviceTest {
             shell("wm size 1920x1200")
             shell("wm density 280")
             awaitWindow(1920, 1200, 280)
-            assertCalendarActionsShareRow()
-            assertMealTimesClearOfDates(stacked = true)
+            compose.onNode(hasText("Preferences") and hasClickAction()).assertIsDisplayed()
+            assertPreferencesClearOfDates(stacked = true)
             screenshot("small-landscape-week")
             shell("wm size 2560x1800")
             shell("wm density 320")
@@ -683,8 +680,8 @@ class MealPlanDeviceTest {
             val mondayBounds = compose.onNodeWithText("Mon").getUnclippedBoundsInRoot()
             val tuesday = compose.onNodeWithText("Tue").getUnclippedBoundsInRoot()
             assertEquals("Tablet dates keep their original spacing", 12.dp, tuesday.left - mondayBounds.right)
-            assertCalendarActionsShareRow()
-            assertMealTimesClearOfDates(stacked = false)
+            compose.onNode(hasText("Preferences") and hasClickAction()).assertIsDisplayed()
+            assertPreferencesClearOfDates(stacked = false)
             screenshot("tablet-week")
         } finally {
             shell("wm size ${size ?: "reset"}")
@@ -713,28 +710,21 @@ class MealPlanDeviceTest {
         awaitText("Soup")
     }
 
-    private fun assertCalendarActionsShareRow() {
-        val preferences = compose.onNode(hasText("Preferences") and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
-        val times = compose.onNode(hasText("Meal times") and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
-        assertTrue("Preferences is left of Meal times", preferences.right <= times.left)
-        assertTrue("Preferences is aligned with Meal times", preferences.top < times.bottom && preferences.bottom > times.top)
-    }
-
-    private fun assertMealTimesClearOfDates(stacked: Boolean) {
-        val action = compose.onNode(hasText("Meal times") and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
+    private fun assertPreferencesClearOfDates(stacked: Boolean) {
+        val action = compose.onNode(hasText("Preferences") and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
         listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
             val date = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
             assertTrue(
-                "Meal times must not cover $label",
+                "Preferences must not cover $label",
                 action.right <= date.left || action.left >= date.right || action.bottom <= date.top || action.top >= date.bottom,
             )
             if (stacked) {
                 assertTrue(
-                    "Meal times moves above the week when space is tight: action=$action, $label=$date",
+                    "Preferences moves above the week when space is tight: action=$action, $label=$date",
                     action.bottom + 15.dp <= date.top,
                 )
             } else {
-                assertTrue("Meal times stays beside the week when space permits", action.top < date.bottom && action.bottom > date.top)
+                assertTrue("Preferences stays beside the week when space permits", action.top < date.bottom && action.bottom > date.top)
             }
         }
     }
@@ -744,7 +734,6 @@ class MealPlanDeviceTest {
         val todayAction = hasText("Today") and hasClickAction()
         compose.onNode(todayAction).assertDoesNotExist()
         compose.onNodeWithText("Meal Plan").assertDoesNotExist()
-        compose.onNodeWithText("2 slots").assertIsDisplayed()
         val other = if (day.dayOfWeek.value == 1) day.plusDays(1) else day.minusDays(1)
         val description =
             other.format(
@@ -959,10 +948,21 @@ class MealPlanDeviceTest {
         assertEquals(1, meals.size)
     }
 
+    private fun openMealSwitches() {
+        tap("Preferences")
+        tap("Feel full and satisfied")
+        tap("Next")
+        tap("Next")
+        tap("Vegetarian")
+        tap("Next")
+        tap("Next")
+        awaitText("Which meals do you want to plan?")
+    }
+
     @Test fun customMealTimesAndDeletionKeepAssociatedMeals() {
         launchPlanner()
-        tap("Meal times")
-        awaitText("Default · protected")
+        openMealSwitches()
+        awaitText("Evening bowl")
         assertTrue(compose.onAllNodesWithText("Delete time Lunch").fetchSemanticsNodes().isEmpty())
         tap("Add custom meal time")
         field("Meal time name", "Night snack")
@@ -977,21 +977,21 @@ class MealPlanDeviceTest {
             compose.onAllNodesWithText("Saved. Your meal plan is up to date.").fetchSemanticsNodes().isEmpty()
         }
         screenshot("times")
-        compose.onNode(hasContentDescription("Back to planner")).assertIsDisplayed().performClick()
+        tap("Cancel")
         tap("Add meal")
         field("Meal name", "Oats")
         tap("Evening bowl")
         tap("Save")
         awaitText("Oats")
-        tap("Meal times")
+        openMealSwitches()
         tap("Delete time Evening bowl")
         confirm("Delete")
-        compose.onNode(hasContentDescription("Back to planner")).assertIsDisplayed().performClick()
+        tap("Cancel")
         awaitText("Other meals")
         awaitText("Oats")
         assertEquals(2, meals.size)
         assertFalse(times.containsKey(2))
-        tap("Meal times")
+        openMealSwitches()
         tap("Delete time Night snack")
         confirm("Delete")
         compose.waitUntil(20_000) {

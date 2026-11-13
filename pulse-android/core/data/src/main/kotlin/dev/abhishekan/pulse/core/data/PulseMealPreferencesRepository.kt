@@ -51,7 +51,7 @@ class PulseMealPreferencesRepository(
                             "completed"
                         },
                         questionnaireVersion = 1,
-                        preferences = preferences?.dto(),
+                        preferences = preferences?.copy(planningSlotsConfigured = true)?.dto(),
                     ),
                 )
             } catch (error: ResponseException) {
@@ -81,6 +81,7 @@ private fun MealPreferences.dto() =
         meals.map {
             MealPreferenceTimeDto(it.kind, it.time.format(preferenceTimeFormat))
         },
+        planningSlotsConfigured = planningSlotsConfigured,
     )
 
 private fun MealOnboardingDto.domain(): MealOnboarding {
@@ -103,6 +104,7 @@ private fun MealOnboardingDto.domain(): MealOnboarding {
                     require(Regex("([01]\\d|2[0-3]):[0-5]\\d").matches(it.usualTime))
                     MealPreferenceTime(it.kind, LocalTime.parse(it.usualTime))
                 },
+                planningSlotsConfigured = dto.planningSlotsConfigured,
             ).also { require(it.invalidStep() == null) }
         }
     require(status != MealOnboardingStatus.Completed || p != null)

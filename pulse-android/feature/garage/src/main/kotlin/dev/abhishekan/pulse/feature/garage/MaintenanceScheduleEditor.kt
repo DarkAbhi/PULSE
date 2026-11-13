@@ -213,7 +213,7 @@ internal fun MaintenanceScheduleEditor(
                             )
                         }
                     }
-                    if (maxWidth >= 300.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
+                    if (maxWidth >= 400.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)) {
                         Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             option("personal", Modifier.weight(1f))
                             option("manual", Modifier.weight(1f))

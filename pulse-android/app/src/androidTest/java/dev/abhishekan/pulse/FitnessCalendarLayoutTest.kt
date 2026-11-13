@@ -168,8 +168,5 @@ class FitnessCalendarLayoutTest {
             compose.onNode(hasSetTextAction()).assertIsDisplayed()
             compose.onNodeWithText("Cancel").performClick()
         }
-        val shortcut = compose.onNode(hasText("View selected day") and hasClickAction())
-        shortcut.performScrollTo().performClick()
-        compose.onNodeWithContentDescription("${today.format(formatter)}, 1 workout").assertIsDisplayed()
     }
 }

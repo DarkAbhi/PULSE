@@ -20,7 +20,6 @@
     <string name="pulse_fitness_previous_week">Previous week</string>
     <string name="pulse_fitness_next_week">Next week</string>
     <string name="pulse_fitness_week_position">Week %1$d of %2$d</string>
-    <string name="pulse_fitness_view_selected_day">View selected day</string>
     <string name="pulse_fitness_selected_day_summary">%1$s, %2$s</string>
     <string name="pulse_fitness_border_today_filled_selected_dot_workout_recorded">"Border: today · Filled: selected · Dot: workout recorded"</string>
     <string name="pulse_fitness_fitness">"FITNESS"</string>

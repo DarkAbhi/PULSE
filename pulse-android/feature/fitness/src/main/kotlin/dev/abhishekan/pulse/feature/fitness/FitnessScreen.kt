@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -25,8 +23,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,7 +52,6 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
@@ -68,7 +63,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.pulseDescription
 import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -113,8 +107,6 @@ fun FitnessScreen(
 ) {
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         val wide = size == PulseWindowSize.Expanded && LocalDensity.current.fontScale < 1.5f
-        val selectedDayRequester = remember { BringIntoViewRequester() }
-        val scope = rememberCoroutineScope()
         val pullState = rememberPullToRefreshState()
         val tracker = rememberPullRefreshTracker(state.loading)
         val pullRefreshing = tracker.requested && state.loading
@@ -192,13 +184,7 @@ fun FitnessScreen(
                             }
                         } else {
                             FitnessCalendar(state, onDate, onMonth, onToday, Modifier.padding(horizontal = PulseTokens.tiny))
-                            PulseButton(
-                                stringResource(R.string.pulse_fitness_view_selected_day),
-                                { scope.launch { selectedDayRequester.bringIntoView() } },
-                                Modifier.padding(horizontal = size.pagePadding),
-                                style = PulseButtonStyle.Text,
-                            )
-                            Box(Modifier.padding(horizontal = size.pagePadding).bringIntoViewRequester(selectedDayRequester)) {
+                            Box(Modifier.padding(horizontal = size.pagePadding)) {
                                 SelectedDay(state, onRecord, onWorkout)
                             }
                         }

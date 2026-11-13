@@ -360,15 +360,16 @@ internal fun PressureCard(
             },
             confirmButton = {
                 PulseFormActions(
-                    primary = PulseFormAction(
-                        stringResource(CoreUiR.string.pulse_ui_record),
-                        {
-                            confirmFill = false
-                            if (fillWithOdometer != null) fillWithOdometer(mileage) else fill()
-                            odometer = ""
-                        },
-                        enabled = valid,
-                    ),
+                    primary =
+                        PulseFormAction(
+                            stringResource(CoreUiR.string.pulse_ui_record),
+                            {
+                                confirmFill = false
+                                if (fillWithOdometer != null) fillWithOdometer(mileage) else fill()
+                                odometer = ""
+                            },
+                            enabled = valid,
+                        ),
                     secondary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), { confirmFill = false }),
                 )
             },

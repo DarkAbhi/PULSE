@@ -32,6 +32,7 @@ data class GarageDraft(
     val vehicleStep get() = get("vehicleStep").toIntOrNull()?.coerceIn(0, 2) ?: 0
 
     fun withVehicleStep(step: Int) = copy(fields = fields + ("vehicleStep" to step.toString()))
+
     val vehicleIdentityValid get() =
         get("vehicleKind") in garageVehicleKinds &&
             get("name").isNotBlank() &&

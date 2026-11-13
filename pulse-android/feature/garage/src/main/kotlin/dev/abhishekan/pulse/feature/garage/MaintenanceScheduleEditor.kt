@@ -147,32 +147,34 @@ internal fun MaintenanceScheduleEditor(
         scrollContentModifier = Modifier.padding(pagePadding),
         footer = {
             PulseFormActions(
-                primary = PulseFormAction(
-                    stringResource(CoreUiR.string.pulse_ui_save),
-                    {
-                        focus.clearFocus()
-                        keyboard?.hide()
-                        save(setting.copy(activeSource = source, personal = personal!!, manual = manual!!, manualReference = reference))
-                    },
-                    enabled = enabled && valid,
-                    loading = busy,
-                    modifier = Modifier.testTag("schedule-save-${setting.kind}"),
-                ),
-                secondary = PulseFormAction(
-                    stringResource(CoreUiR.string.pulse_ui_cancel),
-                    {
-                        focus.clearFocus()
-                        keyboard?.hide()
-                        source = setting.activeSource
-                        personalKm = setting.personal.kilometers.input()
-                        personalTime = setting.personal.duration.input()
-                        manualKm = setting.manual.kilometers.input()
-                        manualTime = setting.manual.duration.input()
-                        reference = setting.manualReference
-                        cancel()
-                    },
-                    enabled = enabled,
-                ),
+                primary =
+                    PulseFormAction(
+                        stringResource(CoreUiR.string.pulse_ui_save),
+                        {
+                            focus.clearFocus()
+                            keyboard?.hide()
+                            save(setting.copy(activeSource = source, personal = personal!!, manual = manual!!, manualReference = reference))
+                        },
+                        enabled = enabled && valid,
+                        loading = busy,
+                        modifier = Modifier.testTag("schedule-save-${setting.kind}"),
+                    ),
+                secondary =
+                    PulseFormAction(
+                        stringResource(CoreUiR.string.pulse_ui_cancel),
+                        {
+                            focus.clearFocus()
+                            keyboard?.hide()
+                            source = setting.activeSource
+                            personalKm = setting.personal.kilometers.input()
+                            personalTime = setting.personal.duration.input()
+                            manualKm = setting.manual.kilometers.input()
+                            manualTime = setting.manual.duration.input()
+                            reference = setting.manualReference
+                            cancel()
+                        },
+                        enabled = enabled,
+                    ),
                 modifier = Modifier.align(Alignment.Start).padding(horizontal = pagePadding).widthIn(max = 760.dp),
             )
         },

@@ -60,7 +60,11 @@ fun PulseFormActions(
 }
 
 @Composable
-private fun FormButton(action: PulseFormAction, modifier: Modifier, variant: PulseButtonVariant) {
+private fun FormButton(
+    action: PulseFormAction,
+    modifier: Modifier,
+    variant: PulseButtonVariant,
+) {
     PulseButton(
         action.label,
         action.onClick,
@@ -81,7 +85,11 @@ fun PulseFormLayout(
 ) {
     Column(modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
         Column(
-            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).then(scrollContentModifier),
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .then(scrollContentModifier),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
             content = content,
         )

@@ -1192,8 +1192,7 @@ class HorizonDeviceTest {
         compose
             .onNode(
                 hasText("Save") and hasClickAction(),
-            )
-            .assertIsDisplayed()
+            ).assertIsDisplayed()
             .performSemanticsAction(SemanticsActions.OnClick) {
                 it()
             }
@@ -1220,8 +1219,7 @@ class HorizonDeviceTest {
         compose
             .onNodeWithText(
                 "Save",
-            )
-            .assertIsDisplayed()
+            ).assertIsDisplayed()
             .performSemanticsAction(SemanticsActions.OnClick) {
                 it()
             }
@@ -1480,8 +1478,7 @@ class HorizonDeviceTest {
             compose
                 .onNodeWithText(
                     "Save",
-                )
-                .performSemanticsAction(SemanticsActions.OnClick) {
+                ).performSemanticsAction(SemanticsActions.OnClick) {
                     it()
                 }
             compose.onNode(hasTestTag("budget-name")).assertIsFocused()
@@ -1512,8 +1509,7 @@ class HorizonDeviceTest {
             compose
                 .onNodeWithText(
                     "Save",
-                )
-                .performSemanticsAction(SemanticsActions.OnClick) {
+                ).performSemanticsAction(SemanticsActions.OnClick) {
                     it()
                 }
             compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("budget-editor")).fetchSemanticsNodes().isEmpty() }

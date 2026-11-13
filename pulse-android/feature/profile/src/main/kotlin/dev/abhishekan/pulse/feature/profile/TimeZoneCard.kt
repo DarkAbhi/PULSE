@@ -76,14 +76,15 @@ internal fun TimeZoneCard(
             },
             confirmButton = {
                 PulseFormActions(
-                    primary = PulseFormAction(
-                        stringResource(CoreUiR.string.pulse_ui_save),
-                        {
-                            open = false
-                            onSave(selected)
-                        },
-                        enabled = selected != current,
-                    ),
+                    primary =
+                        PulseFormAction(
+                            stringResource(CoreUiR.string.pulse_ui_save),
+                            {
+                                open = false
+                                onSave(selected)
+                            },
+                            enabled = selected != current,
+                        ),
                     secondary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), { open = false }),
                 )
             },

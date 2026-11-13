@@ -549,29 +549,35 @@ private fun HorizonFormScreen(
         return
     }
 
-    val footerWidth = when (draft.kind) {
-        HorizonForm.Config -> PulseTokens.readingWidth
-        HorizonForm.Deduction -> 1000.dp
-        else -> PulseTokens.contentWidth
-    }
+    val footerWidth =
+        when (draft.kind) {
+            HorizonForm.Config -> PulseTokens.readingWidth
+            HorizonForm.Deduction -> 1000.dp
+            else -> PulseTokens.contentWidth
+        }
     val keyboard = LocalSoftwareKeyboardController.current
     PulseFormLayout(
         modifier = Modifier.padding(bottom = bottomPadding),
         scrollContentModifier = Modifier.padding(pagePadding),
         footer = {
             PulseFormActions(
-                primary = PulseFormAction(
-                    stringResource(CoreUiR.string.pulse_ui_save),
-                    {
-                        keyboard?.hide()
-                        vm.save()
-                    },
-                    enabled = canSave,
-                    loading = state.busy,
-                ),
+                primary =
+                    PulseFormAction(
+                        stringResource(CoreUiR.string.pulse_ui_save),
+                        {
+                            keyboard?.hide()
+                            vm.save()
+                        },
+                        enabled = canSave,
+                        loading = state.busy,
+                    ),
                 secondary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), cancel, enabled = !state.busy),
-                modifier = Modifier.align(Alignment.Start).padding(horizontal = pagePadding)
-                    .widthIn(max = footerWidth).testTag("horizon-editor-actions"),
+                modifier =
+                    Modifier
+                        .align(Alignment.Start)
+                        .padding(horizontal = pagePadding)
+                        .widthIn(max = footerWidth)
+                        .testTag("horizon-editor-actions"),
             )
         },
     ) {
@@ -579,11 +585,16 @@ private fun HorizonFormScreen(
         when (draft.kind) {
             HorizonForm.Subscription -> SubscriptionEditor(draft, data, state.busy, state.formError, vm::update)
             HorizonForm.Transaction -> TransactionEditor(draft, data, state.busy, state.formError, vm::update)
-            HorizonForm.Budget -> BudgetEditor(
-                draft, state.busy, state.formError,
-                LocalConfiguration.current.smallestScreenWidthDp >= 600 && width != PulseWindowSize.Compact,
-                canSave, vm::update, vm::save,
-            )
+            HorizonForm.Budget ->
+                BudgetEditor(
+                    draft,
+                    state.busy,
+                    state.formError,
+                    LocalConfiguration.current.smallestScreenWidthDp >= 600 && width != PulseWindowSize.Compact,
+                    canSave,
+                    vm::update,
+                    vm::save,
+                )
             HorizonForm.Category -> CategoryEditor(draft, state.busy, state.formError, canSave, vm::update, vm::save)
             HorizonForm.Deduction -> FixedObligationEditor(draft, data, state.busy, state.formError, vm::update)
             HorizonForm.Config -> HorizonEditor(draft, data, state.busy, state.formError, vm::update, vm::save)

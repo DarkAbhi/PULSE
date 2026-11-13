@@ -25,13 +25,14 @@ data class MealPreferences(
 ) {
     fun allows(time: MealTime): Boolean {
         if (!planningSlotsConfigured || !time.isDefault) return true
-        val kind = when (time.name) {
-            "Breakfast" -> "breakfast"
-            "Lunch" -> "lunch"
-            "Evening Snacks" -> "evening_snacks"
-            "Dinner" -> "dinner"
-            else -> return true
-        }
+        val kind =
+            when (time.name) {
+                "Breakfast" -> "breakfast"
+                "Lunch" -> "lunch"
+                "Evening Snacks" -> "evening_snacks"
+                "Dinner" -> "dinner"
+                else -> return true
+            }
         return meals.any { it.kind == kind }
     }
 

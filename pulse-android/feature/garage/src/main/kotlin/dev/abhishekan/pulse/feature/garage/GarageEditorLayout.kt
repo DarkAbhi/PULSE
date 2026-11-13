@@ -184,7 +184,8 @@ internal fun GarageEditorLayout(
                                 changeStep,
                                 onSave,
                                 cancel,
-                                Modifier.align(if (fuelEditor) Alignment.CenterHorizontally else Alignment.Start)
+                                Modifier
+                                    .align(if (fuelEditor) Alignment.CenterHorizontally else Alignment.Start)
                                     .padding(horizontal = size.pagePadding),
                             )
                         }
@@ -238,38 +239,43 @@ internal fun GarageFormFooter(
     val focus = LocalFocusManager.current
     val step = draft.vehicleStep.takeIf { draft.kind == GarageForm.Vehicle }
     val advancing = step != null && step < 2
-    val canSubmit = when (step) {
-        0 -> draft.vehicleIdentityValid
-        1 -> draft.vehicleFuelValid
-        2 -> !blocked && draft.vehicleIdentityValid && draft.vehicleFuelValid
-        else -> !blocked
-    }
-    val cancelAction = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), {
-        focus.clearFocus()
-        cancel()
-    }, enabled = !busy)
-    val back = step?.takeIf { it > 0 }?.let {
-        PulseFormAction(stringResource(CoreUiR.string.pulse_ui_back), { changeStep(it - 1) }, enabled = !busy)
-    }
-    val primary = PulseFormAction(
-        stringResource(if (advancing) CoreUiR.string.pulse_ui_next else CoreUiR.string.pulse_ui_save),
-        {
-            if (step != null && advancing) {
-                changeStep(step + 1)
-            } else {
-                focus.clearFocus()
-                save()
-            }
-        },
-        enabled = !busy && canSubmit,
-        loading = busy && !advancing,
-    )
-    val footerWidth = when (draft.kind) {
-        GarageForm.Fuel -> fuelFormWidth
-        GarageForm.Vehicle -> 1200.dp
-        GarageForm.Care -> 760.dp
-        GarageForm.Pressure -> PulseTokens.readingWidth
-    }
+    val canSubmit =
+        when (step) {
+            0 -> draft.vehicleIdentityValid
+            1 -> draft.vehicleFuelValid
+            2 -> !blocked && draft.vehicleIdentityValid && draft.vehicleFuelValid
+            else -> !blocked
+        }
+    val cancelAction =
+        PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), {
+            focus.clearFocus()
+            cancel()
+        }, enabled = !busy)
+    val back =
+        step?.takeIf { it > 0 }?.let {
+            PulseFormAction(stringResource(CoreUiR.string.pulse_ui_back), { changeStep(it - 1) }, enabled = !busy)
+        }
+    val primary =
+        PulseFormAction(
+            stringResource(if (advancing) CoreUiR.string.pulse_ui_next else CoreUiR.string.pulse_ui_save),
+            {
+                if (step != null && advancing) {
+                    changeStep(step + 1)
+                } else {
+                    focus.clearFocus()
+                    save()
+                }
+            },
+            enabled = !busy && canSubmit,
+            loading = busy && !advancing,
+        )
+    val footerWidth =
+        when (draft.kind) {
+            GarageForm.Fuel -> fuelFormWidth
+            GarageForm.Vehicle -> 1200.dp
+            GarageForm.Care -> 760.dp
+            GarageForm.Pressure -> PulseTokens.readingWidth
+        }
     BoxWithConstraints(modifier.widthIn(max = footerWidth).fillMaxWidth()) {
         if (step != null && maxWidth >= 840.dp && LocalDensity.current.fontScale <= 1.3f) {
             Row(horizontalArrangement = Arrangement.spacedBy(PulseTheme.spacing.large)) {

@@ -293,12 +293,18 @@ private fun SignedInApp(
                             startDestination = AppDestination.Home.route,
                             modifier = Modifier.padding(insets).consumeWindowInsets(insets),
                             enterTransition = {
-                                if (isTabTransition(initialState.destination.route, targetState.destination.route)) EnterTransition.None
-                                else fadeIn(animationSpec = tween(700))
+                                if (isTabTransition(initialState.destination.route, targetState.destination.route)) {
+                                    EnterTransition.None
+                                } else {
+                                    fadeIn(animationSpec = tween(700))
+                                }
                             },
                             exitTransition = {
-                                if (isTabTransition(initialState.destination.route, targetState.destination.route)) ExitTransition.None
-                                else fadeOut(animationSpec = tween(700))
+                                if (isTabTransition(initialState.destination.route, targetState.destination.route)) {
+                                    ExitTransition.None
+                                } else {
+                                    fadeOut(animationSpec = tween(700))
+                                }
                             },
                         ) {
                             composable(AppDestination.Home.route) {

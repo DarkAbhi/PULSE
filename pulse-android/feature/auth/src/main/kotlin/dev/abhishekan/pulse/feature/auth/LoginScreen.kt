@@ -77,7 +77,13 @@ fun LoginScreen(
         onSubmit()
     }
     Scaffold(containerColor = PulseTheme.colors.background, contentColor = PulseTheme.colors.textPrimary) { insets ->
-        PulseAdaptiveLayout(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets).imePadding()) { size ->
+        PulseAdaptiveLayout(
+            Modifier
+                .fillMaxSize()
+                .padding(insets)
+                .consumeWindowInsets(insets)
+                .imePadding(),
+        ) { size ->
             Column(
                 Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize().padding(horizontal = size.pagePadding),
             ) {

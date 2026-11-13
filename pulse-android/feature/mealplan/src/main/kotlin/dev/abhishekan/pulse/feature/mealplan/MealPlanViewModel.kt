@@ -180,8 +180,11 @@ class MealPlanViewModel(
                 null
             }
         val cannotClear = draft.id != null && draft.originalTimeId != null && draft.timeId == null
-        val unavailable = !draft.timeForm && draft.timeId != null &&
-            selectableTimeIds != null && draft.timeId !in selectableTimeIds
+        val unavailable =
+            !draft.timeForm &&
+                draft.timeId != null &&
+                selectableTimeIds != null &&
+                draft.timeId !in selectableTimeIds
         if (change == null || !apply.valid(change) || cannotClear || unavailable) {
             state.update {
                 it.copy(

@@ -21,16 +21,18 @@ class MealPlanApi(
     suspend fun onboarding(): MealOnboardingDto = client.get("meal-plan-onboarding") { parameter("planning_slots", 1) }.body()
 
     suspend fun resolveOnboarding(input: MealOnboardingInput): MealOnboardingDto =
-        client.put("meal-plan-onboarding") {
-            parameter("planning_slots", 1)
-            setBody(input)
-        }.body()
+        client
+            .put("meal-plan-onboarding") {
+                parameter("planning_slots", 1)
+                setBody(input)
+            }.body()
 
     suspend fun savePreferences(input: MealPreferencesDto): MealOnboardingDto =
-        client.put("meal-preferences") {
-            parameter("planning_slots", 1)
-            setBody(input)
-        }.body()
+        client
+            .put("meal-preferences") {
+                parameter("planning_slots", 1)
+                setBody(input)
+            }.body()
 
     suspend fun meals(
         start: String,

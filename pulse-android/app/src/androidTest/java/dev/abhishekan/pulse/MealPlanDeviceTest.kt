@@ -24,6 +24,7 @@ import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -123,7 +124,9 @@ class MealPlanDeviceTest {
     @Volatile private var failToggle = false
     private var mutations = 0
 
-    private class PausedRead(val path: String) {
+    private class PausedRead(
+        val path: String,
+    ) {
         val started = CompletableDeferred<Unit>()
         val release = CompletableDeferred<Unit>()
     }
@@ -474,13 +477,14 @@ class MealPlanDeviceTest {
     }
 
     @Test fun configuredMealSlotsFilterAddMealAndKeepExistingMeals() {
-        setupRecord = obj(
-            """
-            {"status":"completed","questionnaire_version":1,"preferences":{
-            "goal":"food_calm","barriers":[],"dietary_pattern":"vegan","food_avoidances":[],
-            "planning_slots_configured":true,"meals":[{"kind":"evening_snacks","usual_time":"17:30"}]}}
-            """.trimIndent(),
-        )
+        setupRecord =
+            obj(
+                """
+                {"status":"completed","questionnaire_version":1,"preferences":{
+                "goal":"food_calm","barriers":[],"dietary_pattern":"vegan","food_avoidances":[],
+                "planning_slots_configured":true,"meals":[{"kind":"evening_snacks","usual_time":"17:30"}]}}
+                """.trimIndent(),
+            )
         launchPlanner()
         awaitText("Soup")
         tap("Add meal")
@@ -643,7 +647,7 @@ class MealPlanDeviceTest {
             shell("wm density 320")
             launchPlanner()
             awaitWindow(800, 1800, 320)
-            compose.onNode(hasText("Preferences") and hasClickAction()).assertIsDisplayed()
+            assertPreferencesAfterNextWeek()
             val root = compose.onRoot().getUnclippedBoundsInRoot()
             listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
                 val date = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed()
@@ -656,6 +660,7 @@ class MealPlanDeviceTest {
             compose.onNodeWithText("Sun").assertIsDisplayed().performClick()
             shell("wm size 640x1800")
             awaitWindow(640, 1800, 320)
+            assertPreferencesAfterNextWeek()
             val monday = day.with(DayOfWeek.MONDAY)
             val dateFormat = DateTimeFormatter.ofPattern("EEEE, d MMM yyyy")
             for (offset in 0L..6L) {
@@ -663,12 +668,10 @@ class MealPlanDeviceTest {
                 compose.onNode(hasContentDescription(date.format(dateFormat), substring = true)).assertIsDisplayed()
             }
             screenshot("narrow-week")
-            // A smaller landscape tablet enters the wide layout but cannot fit a trailing action beside the centered week.
             shell("wm size 1920x1200")
             shell("wm density 280")
             awaitWindow(1920, 1200, 280)
-            compose.onNode(hasText("Preferences") and hasClickAction()).assertIsDisplayed()
-            assertPreferencesClearOfDates(stacked = true)
+            assertPreferencesAfterNextWeek()
             screenshot("small-landscape-week")
             shell("wm size 2560x1800")
             shell("wm density 320")
@@ -680,8 +683,7 @@ class MealPlanDeviceTest {
             val mondayBounds = compose.onNodeWithText("Mon").getUnclippedBoundsInRoot()
             val tuesday = compose.onNodeWithText("Tue").getUnclippedBoundsInRoot()
             assertEquals("Tablet dates keep their original spacing", 12.dp, tuesday.left - mondayBounds.right)
-            compose.onNode(hasText("Preferences") and hasClickAction()).assertIsDisplayed()
-            assertPreferencesClearOfDates(stacked = false)
+            assertPreferencesAfterNextWeek()
             screenshot("tablet-week")
         } finally {
             shell("wm size ${size ?: "reset"}")
@@ -710,28 +712,20 @@ class MealPlanDeviceTest {
         awaitText("Soup")
     }
 
-    private fun assertPreferencesClearOfDates(stacked: Boolean) {
-        val action = compose.onNode(hasText("Preferences") and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
-        listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
-            val date = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
-            assertTrue(
-                "Preferences must not cover $label",
-                action.right <= date.left || action.left >= date.right || action.bottom <= date.top || action.top >= date.bottom,
-            )
-            if (stacked) {
-                assertTrue(
-                    "Preferences moves above the week when space is tight: action=$action, $label=$date",
-                    action.bottom + 15.dp <= date.top,
-                )
-            } else {
-                assertTrue("Preferences stays beside the week when space permits", action.top < date.bottom && action.bottom > date.top)
-            }
-        }
+    private fun assertPreferencesAfterNextWeek() {
+        val preferences = compose.onNodeWithContentDescription("Preferences").assertIsDisplayed().getUnclippedBoundsInRoot()
+        val next = compose.onNodeWithContentDescription("Next week").assertIsDisplayed().getUnclippedBoundsInRoot()
+        assertTrue("Preferences sits after the next week button", preferences.left >= next.right)
+        assertEquals("Preferences shares the navigation row", next.top, preferences.top)
+        assertTrue(
+            "Preferences keeps its tap target",
+            preferences.right - preferences.left >= 48.dp && preferences.bottom - preferences.top >= 48.dp,
+        )
     }
 
     @Test fun contextualTodayAndWeekDatePicker() {
         launchPlanner()
-        val todayAction = hasText("Today") and hasClickAction()
+        val todayAction = hasContentDescription("Jump to today") and hasClickAction()
         compose.onNode(todayAction).assertDoesNotExist()
         compose.onNodeWithText("Meal Plan").assertDoesNotExist()
         val other = if (day.dayOfWeek.value == 1) day.plusDays(1) else day.minusDays(1)
@@ -741,7 +735,12 @@ class MealPlanDeviceTest {
                     .ofPattern("EEEE, d MMM yyyy"),
             )
         tap(description)
-        compose.onNode(todayAction).assertIsDisplayed().performClick()
+        val todayButton = compose.onNode(todayAction).assertIsDisplayed()
+        val todayBounds = todayButton.getUnclippedBoundsInRoot()
+        val previousBounds = compose.onNodeWithContentDescription("Previous week").getUnclippedBoundsInRoot()
+        assertTrue("Jump to today sits before the previous week button", todayBounds.right <= previousBounds.left)
+        assertEquals("Jump to today shares the navigation row", previousBounds.top, todayBounds.top)
+        todayButton.performClick()
         awaitText("Soup")
         compose.onNode(todayAction).assertDoesNotExist()
         tap("Next week")
@@ -903,7 +902,7 @@ class MealPlanDeviceTest {
         awaitText("No meals planned for this day")
         tap("Previous week")
         awaitText("Soup")
-        compose.onNode(hasText("Today") and hasClickAction()).assertDoesNotExist()
+        compose.onNode(hasContentDescription("Jump to today") and hasClickAction()).assertDoesNotExist()
         tap("Add meal")
         field("Meal name", "Rice bowl")
         tap("Lunch")

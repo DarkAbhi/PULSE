@@ -24,7 +24,7 @@
     <string name="pulse_mealplan_create_a_custom_time_or_add_meals_without_one">"Create a custom time, or add meals without one."</string>
     <string name="pulse_mealplan_default_protected">"Default · protected"</string>
     <string name="pulse_mealplan_delete_time_1_s">"Delete time %1$s"</string>
-    <string name="pulse_mealplan_today_label">"Today"</string>
+    <string name="pulse_mealplan_today_label">"Jump to today"</string>
     <string name="pulse_mealplan_selected">"Selected"</string>
     <string name="pulse_mealplan_no_meals_yet">"No meals yet"</string>
     <string name="pulse_mealplan_view_1_s">"View %1$s"</string>

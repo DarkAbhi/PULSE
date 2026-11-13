@@ -129,7 +129,13 @@ internal fun MealOnboardingScreen(
     customMealTimes: @Composable () -> Unit = {},
 ) {
     BackHandler(state.saving || (state.showJourney && (state.step > 0 || state.editing))) { if (!state.saving) vm.back() }
-    Box(Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).imePadding().padding(PulseTokens.medium)) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .padding(LocalPulseContentPadding.current)
+            .imePadding()
+            .padding(PulseTokens.medium),
+    ) {
         if (state.record == null) {
             if (state.error != null) {
                 PulseErrorState(state.error.message, vm::refresh)
@@ -217,34 +223,37 @@ internal fun MealOnboardingScreen(
                         Modifier.fillMaxWidth().padding(top = PulseTokens.medium),
                         verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
                     ) {
-                        val leave = PulseFormAction(
-                            stringResource(if (state.editing) CoreUiR.string.pulse_ui_cancel else CoreUiR.string.pulse_ui_skip),
-                            { if (state.editing) vm.cancelEditing() else vm.skip() },
-                            enabled = !state.saving,
-                        )
-                        val back = if (state.step > 0) {
+                        val leave =
                             PulseFormAction(
-                                stringResource(CoreUiR.string.pulse_ui_back),
-                                vm::back,
+                                stringResource(if (state.editing) CoreUiR.string.pulse_ui_cancel else CoreUiR.string.pulse_ui_skip),
+                                { if (state.editing) vm.cancelEditing() else vm.skip() },
                                 enabled = !state.saving,
-                                modifier = Modifier.testTag("meal-setup-back"),
                             )
-                        } else {
-                            null
-                        }
+                        val back =
+                            if (state.step > 0) {
+                                PulseFormAction(
+                                    stringResource(CoreUiR.string.pulse_ui_back),
+                                    vm::back,
+                                    enabled = !state.saving,
+                                    modifier = Modifier.testTag("meal-setup-back"),
+                                )
+                            } else {
+                                null
+                            }
                         PulseFormActions(
-                            primary = PulseFormAction(
-                                stringResource(
-                                    when {
-                                        state.step == 6 -> CoreUiR.string.pulse_ui_save
-                                        state.returnToReview -> CoreUiR.string.pulse_ui_review
-                                        else -> CoreUiR.string.pulse_ui_next
-                                    },
+                            primary =
+                                PulseFormAction(
+                                    stringResource(
+                                        when {
+                                            state.step == 6 -> CoreUiR.string.pulse_ui_save
+                                            state.returnToReview -> CoreUiR.string.pulse_ui_review
+                                            else -> CoreUiR.string.pulse_ui_next
+                                        },
+                                    ),
+                                    { if (state.step == 6) vm.save() else vm.next() },
+                                    enabled = !state.saving,
+                                    loading = state.saving,
                                 ),
-                                { if (state.step == 6) vm.save() else vm.next() },
-                                enabled = !state.saving,
-                                loading = state.saving,
-                            ),
                             secondary = back ?: leave,
                             additional = if (back != null) leave else null,
                         )

@@ -132,9 +132,10 @@ internal fun MealPlanScreen(
     preferences: MealPreferences? = null,
 ) {
     val draft = state.draft
-    val selectableTimes = state.times.value.orEmpty().filter { time ->
-        time.id == draft?.originalTimeId || preferences?.allows(time) != false
-    }
+    val selectableTimes =
+        state.times.value.orEmpty().filter { time ->
+            time.id == draft?.originalTimeId || preferences?.allows(time) != false
+        }
     val save = { vm.save(selectableTimes.map { it.id }.toSet()) }
     var discard by rememberSaveable { mutableStateOf(false) }
     var records by rememberSaveable { mutableStateOf(false) }
@@ -349,7 +350,9 @@ internal fun MealPlanScreen(
             if (!pullRefreshing &&
                 state.times.loading &&
                 state.times.value == null &&
-                state.draft != null && !records && !state.draft.timeForm
+                state.draft != null &&
+                !records &&
+                !state.draft.timeForm
             ) {
                 PulseCenteredLoadingState(stringResource(R.string.pulse_mealplan_loading_meal_times))
             }

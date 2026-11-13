@@ -44,16 +44,16 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.time.temporal.ChronoField
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
-private const val CalendarMonthCount = 10_000 * 12
+private const val CALENDAR_MONTH_COUNT = 10_000 * 12
 
 @Composable
 internal fun FitnessCalendar(
@@ -66,7 +66,7 @@ internal fun FitnessCalendar(
     val locale = LocalConfiguration.current.locales[0]
     val selectedPage = state.month.getLong(ChronoField.PROLEPTIC_MONTH).toInt()
     // The selected date is already restored by the ViewModel.
-    val pager = remember { PagerState(currentPage = selectedPage) { CalendarMonthCount } }
+    val pager = remember { PagerState(currentPage = selectedPage) { CALENDAR_MONTH_COUNT } }
     val scope = rememberCoroutineScope()
     val currentOnMonth by rememberUpdatedState(onMonth)
     LaunchedEffect(pager, state.selected, selectedPage, state.busy) {
@@ -107,7 +107,7 @@ internal fun FitnessCalendar(
                     CalendarControl(
                         stringResource(R.string.pulse_fitness_next_month),
                         FitnessSymbol.Next,
-                        !state.busy && selectedPage < CalendarMonthCount - 1,
+                        !state.busy && selectedPage < CALENDAR_MONTH_COUNT - 1,
                         compact = compact && inline,
                     ) { scope.launch { pager.animateScrollToPage(pager.targetPage + 1) } }
                     if (compact && inline) {

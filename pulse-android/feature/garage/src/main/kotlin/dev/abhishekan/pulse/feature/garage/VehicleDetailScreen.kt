@@ -227,26 +227,28 @@ private fun VehicleDetailScreen(
     val refresh = { if (canRefresh) tracker.request(onRefresh) }
     val refreshLabel = stringResource(R.string.pulse_garage_refresh_vehicle_history)
     val history = state.history.value
-    val reminder = history?.schedules?.firstOrNull {
-        it.kind == state.reminderPage && (it.kind != "engine_oil" || history.fuelTypes.any { fuel -> fuel != "electric" })
-    }
-    val reminderEditor: (@Composable (Boolean, @Composable () -> Unit) -> Unit)? = reminder?.let { setting ->
-        { enabled, prefix ->
-            PulseAdaptiveLayout(Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).imePadding()) { size ->
-                MaintenanceScheduleEditor(
-                    setting,
-                    enabled,
-                    editor.busy,
-                    size.pagePadding,
-                    {
-                        prefix()
-                        state.history.error?.let { PulseErrorState(it.message, onRefresh) }
-                    },
-                    onBackFromReminder,
-                ) { onMutate(GarageChange.Schedule(vehicle, it)) }
+    val reminder =
+        history?.schedules?.firstOrNull {
+            it.kind == state.reminderPage && (it.kind != "engine_oil" || history.fuelTypes.any { fuel -> fuel != "electric" })
+        }
+    val reminderEditor: (@Composable (Boolean, @Composable () -> Unit) -> Unit)? =
+        reminder?.let { setting ->
+            { enabled, prefix ->
+                PulseAdaptiveLayout(Modifier.fillMaxSize().padding(LocalPulseContentPadding.current).imePadding()) { size ->
+                    MaintenanceScheduleEditor(
+                        setting,
+                        enabled,
+                        editor.busy,
+                        size.pagePadding,
+                        {
+                            prefix()
+                            state.history.error?.let { PulseErrorState(it.message, onRefresh) }
+                        },
+                        onBackFromReminder,
+                    ) { onMutate(GarageChange.Schedule(vehicle, it)) }
+                }
             }
         }
-    }
 
     GarageEditorLayout(
         editor = editor,

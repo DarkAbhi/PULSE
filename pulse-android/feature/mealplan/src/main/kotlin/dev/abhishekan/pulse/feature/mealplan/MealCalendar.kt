@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,8 +19,10 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,7 +35,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -39,13 +42,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
-import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -88,34 +92,17 @@ internal fun MealCalendar(
             }
         }
     }
-    val todayButton: @Composable () -> Unit = {
-        PulseButton(
-            text = stringResource(R.string.pulse_mealplan_today_label),
-            onClick = jumpToToday,
-            enabled = enabled,
-            variant = PulseButtonVariant.Secondary,
-            leadingIcon = { Icon(painterResource(R.drawable.meal_today), null, Modifier.size(20.dp)) },
-        )
-    }
-    val preferences: (@Composable () -> Unit)? =
-        onPreferences?.let { openPreferences ->
-            {
-                PulseButton(
-                    text = stringResource(R.string.meal_setup_preferences),
-                    onClick = openPreferences,
-                    style = PulseButtonStyle.Text,
-                )
-            }
-        }
+    val weekButton = Modifier.background(colors.surface, CircleShape).border(1.dp, colors.border, CircleShape)
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val compact = pulseWindowSize(maxWidth) == PulseWindowSize.Compact
         val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
         val calendarWidth = minOf(maxWidth, if (compact) 476.dp else 680.dp)
         val daySpacing = if (compact) 4.dp else 12.dp
-        val dayWidth = with(LocalDensity.current) {
-            val available = (calendarWidth.roundToPx() - 6 * daySpacing.roundToPx()).coerceAtLeast(0)
-            minOf(if (compact) 48.dp * fontScale else 80.dp, (available / 7).toDp())
-        }
+        val dayWidth =
+            with(LocalDensity.current) {
+                val available = (calendarWidth.roundToPx() - 6 * daySpacing.roundToPx()).coerceAtLeast(0)
+                minOf(if (compact) 48.dp * fontScale else 80.dp, (available / 7).toDp())
+            }
         val weekdayStyle = if (dayWidth < 36.dp * fontScale) TextStyle.NARROW else TextStyle.SHORT
         val dayNumberStyle =
             when {
@@ -134,107 +121,126 @@ internal fun MealCalendar(
                 shape = RoundedCornerShape(20.dp),
                 color = if (wide) colors.background else colors.surface.copy(alpha = 0.6f),
             ) {
-                Column(Modifier.padding(if (wide) 0.dp else 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        PulseButton(
-                            stringResource(R.string.pulse_mealplan_previous_week),
-                            previous,
-                            Modifier.background(colors.surface, CircleShape).border(1.dp, colors.border, CircleShape),
-                            enabled = enabled,
-                            style = PulseButtonStyle.Icon,
-                        ) {
-                            Icon(painterResource(R.drawable.meal_next), null, Modifier.rotate(180f))
-                        }
-                        Row(
-                            Modifier.weight(1f),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(if (wide) 0.dp else 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(Modifier.width(PulseTokens.target)) {
+                        if (selected != today) {
                             PulseButton(
-                                text =
-                                    stringResource(
-                                        R.string.pulse_mealplan_week_range,
-                                        week.format(DateTimeFormatter.ofPattern("d MMM")),
-                                        week.plusDays(6).format(format),
-                                    ),
-                                onClick = { pickingDate = true },
+                                stringResource(R.string.pulse_mealplan_today_label),
+                                jumpToToday,
+                                weekButton,
                                 enabled = enabled,
-                                style = PulseButtonStyle.Text,
-                            )
-                            if (wide && selected != today) todayButton()
-                        }
-                        PulseButton(
-                            stringResource(R.string.pulse_mealplan_next_week),
-                            next,
-                            Modifier.background(colors.surface, CircleShape).border(1.dp, colors.border, CircleShape),
-                            enabled = enabled,
-                            style = PulseButtonStyle.Icon,
-                        ) {
-                            Icon(painterResource(R.drawable.meal_next), null)
+                                style = PulseButtonStyle.Icon,
+                            ) {
+                                Icon(painterResource(R.drawable.meal_today), null, Modifier.size(20.dp))
+                            }
                         }
                     }
-                    if (!wide) {
-                        if (selected != today) todayButton()
-                        preferences?.invoke()
+                    PulseButton(
+                        stringResource(R.string.pulse_mealplan_previous_week),
+                        previous,
+                        weekButton,
+                        enabled = enabled,
+                        style = PulseButtonStyle.Icon,
+                    ) {
+                        Icon(painterResource(R.drawable.meal_next), null, Modifier.rotate(180f))
+                    }
+                    TextButton(
+                        onClick = { pickingDate = true },
+                        modifier = Modifier.weight(1f).heightIn(min = PulseTokens.target),
+                        enabled = enabled,
+                        shape = PulseTheme.shapes.small,
+                        colors =
+                            ButtonDefaults.textButtonColors(
+                                contentColor = colors.action,
+                                disabledContentColor = colors.textSecondary,
+                            ),
+                        contentPadding = PaddingValues(vertical = 4.dp),
+                    ) {
+                        PulseText(
+                            stringResource(
+                                R.string.pulse_mealplan_week_range,
+                                week.format(DateTimeFormatter.ofPattern("d MMM")),
+                                week.plusDays(6).format(format),
+                            ),
+                            style = PulseTextStyle.Label,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                    PulseButton(
+                        stringResource(R.string.pulse_mealplan_next_week),
+                        next,
+                        weekButton,
+                        enabled = enabled,
+                        style = PulseButtonStyle.Icon,
+                    ) {
+                        Icon(painterResource(R.drawable.meal_next), null)
+                    }
+                    Box(Modifier.width(PulseTokens.target)) {
+                        onPreferences?.let { openPreferences ->
+                            PulseButton(
+                                stringResource(R.string.meal_setup_preferences),
+                                openPreferences,
+                                weekButton,
+                                style = PulseButtonStyle.Icon,
+                            ) {
+                                Icon(painterResource(R.drawable.meal_preferences), null, tint = colors.action)
+                            }
+                        }
                     }
                 }
             }
-            MealCalendarDateRow(
-                startAction = if (wide) preferences else null,
-            ) {
-                HorizontalPager(
-                    state = pager,
-                    modifier = Modifier.width(calendarWidth).testTag("meal-week-pager"),
-                    userScrollEnabled = enabled,
-                ) { page ->
-                    val pageWeek = firstMealWeek.plusWeeks(page.toLong())
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(daySpacing, Alignment.CenterHorizontally),
-                    ) {
-                        repeat(7) { offset ->
-                            val day = pageWeek.plusDays(offset.toLong())
-                            val active = day == selected
-                            val description =
-                                if (day == today) {
-                                    stringResource(R.string.pulse_mealplan_today_date_description, day.format(mealDate))
-                                } else {
-                                    day.format(mealDate)
-                                }
-                            Surface(
-                                onClick = { select(day) },
-                                modifier =
-                                    Modifier.width(dayWidth).semantics {
-                                        this.selected = active
-                                        contentDescription = description
-                                    },
-                                enabled = enabled && page == weekPage,
-                                shape = RoundedCornerShape(if (compact) 12.dp else 20.dp),
-                                color = if (active) colors.primary else colors.surface,
-                                contentColor = if (active) colors.onPrimary else colors.textPrimary,
-                                border = BorderStroke(1.dp, if (active) colors.primary else colors.border),
+            HorizontalPager(
+                state = pager,
+                modifier = Modifier.width(calendarWidth).testTag("meal-week-pager"),
+                userScrollEnabled = enabled,
+            ) { page ->
+                val pageWeek = firstMealWeek.plusWeeks(page.toLong())
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(daySpacing, Alignment.CenterHorizontally),
+                ) {
+                    repeat(7) { offset ->
+                        val day = pageWeek.plusDays(offset.toLong())
+                        val active = day == selected
+                        val description =
+                            if (day == today) {
+                                stringResource(R.string.pulse_mealplan_today_date_description, day.format(mealDate))
+                            } else {
+                                day.format(mealDate)
+                            }
+                        Surface(
+                            onClick = { select(day) },
+                            modifier =
+                                Modifier.width(dayWidth).semantics {
+                                    this.selected = active
+                                    contentDescription = description
+                                },
+                            enabled = enabled && page == weekPage,
+                            shape = RoundedCornerShape(if (compact) 12.dp else 20.dp),
+                            color = if (active) colors.primary else colors.surface,
+                            contentColor = if (active) colors.onPrimary else colors.textPrimary,
+                            border = BorderStroke(1.dp, if (active) colors.primary else colors.border),
+                        ) {
+                            Column(
+                                Modifier.padding(vertical = if (compact) 8.dp else 12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
-                                Column(
-                                    Modifier.padding(vertical = if (compact) 8.dp else 12.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    PulseText(
-                                        day.dayOfWeek.getDisplayName(weekdayStyle, Locale.getDefault()),
-                                        style = if (compact) PulseTextStyle.Caption else PulseTextStyle.Body2,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    PulseText(
-                                        day.dayOfMonth.toString(),
-                                        style = dayNumberStyle,
-                                        maxLines = 1,
-                                    )
-                                }
+                                PulseText(
+                                    day.dayOfWeek.getDisplayName(weekdayStyle, Locale.getDefault()),
+                                    style = if (compact) PulseTextStyle.Caption else PulseTextStyle.Body2,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                PulseText(
+                                    day.dayOfMonth.toString(),
+                                    style = dayNumberStyle,
+                                    maxLines = 1,
+                                )
                             }
                         }
                     }
@@ -247,41 +253,5 @@ internal fun MealCalendar(
             select(it)
             pickingDate = false
         }, { pickingDate = false })
-    }
-}
-
-/** Keeps the week centered and moves preferences above it when space is tight. */
-@Composable
-private fun MealCalendarDateRow(
-    startAction: (@Composable () -> Unit)?,
-    dates: @Composable () -> Unit,
-) {
-    Layout(
-        modifier = Modifier.fillMaxWidth(),
-        content = {
-            dates()
-            startAction?.invoke()
-        },
-    ) { measurables, constraints ->
-        val loose = constraints.copy(minWidth = 0, minHeight = 0)
-        val calendar = measurables[0].measure(loose)
-        val width = constraints.maxWidth
-        val gap = 16.dp.roundToPx()
-        val actionConstraints = loose.copy(maxWidth = (width - gap).coerceAtLeast(0) / 2)
-        val start = if (startAction != null) measurables[1].measure(actionConstraints) else null
-        val actionWidth = start?.width ?: 0
-        val actionHeight = start?.height ?: 0
-        // Reserve equal space on both sides so the week stays centered on larger tablets.
-        val beside = actionWidth > 0 && calendar.width + 2 * (actionWidth + gap) <= width
-        val calendarTop = if (actionHeight > 0 && !beside) actionHeight + gap else 0
-        val height = if (beside) maxOf(calendar.height, actionHeight) else calendarTop + calendar.height
-        layout(width, height) {
-            calendar.placeRelative(
-                (width - calendar.width) / 2,
-                if (beside) (height - calendar.height) / 2 else calendarTop,
-            )
-            val actionRowHeight = if (beside) height else actionHeight
-            start?.placeRelative(0, (actionRowHeight - start.height) / 2)
-        }
     }
 }

@@ -818,7 +818,8 @@ class GarageDeviceTest {
         assertTrue(cancelBounds.right < saveBounds.left)
         compose.onNodeWithText("Trip details").assertIsDisplayed()
         compose.onAllNodesWithText("Remove second tank").assertCountEquals(0)
-        compose.onNode((hasText("Notes (optional)") or hasContentDescription("Notes (optional)")) and hasSetTextAction())
+        compose
+            .onNode((hasText("Notes (optional)") or hasContentDescription("Notes (optional)")) and hasSetTextAction())
             .performScrollTo()
         assertEquals(saveBounds, saveButton.assertIsDisplayed().fetchSemanticsNode().boundsInRoot)
         assertEquals(cancelBounds, cancelButton.assertIsDisplayed().fetchSemanticsNode().boundsInRoot)
@@ -848,8 +849,7 @@ class GarageDeviceTest {
             .onNode(
                 hasText("A missed fill resets the efficiency baseline. The next full tank starts a new interval.") and
                     hasAnyAncestor(isDialog()),
-            )
-            .assertIsDisplayed()
+            ).assertIsDisplayed()
         confirm("OK")
         tap("Full")
         tap("Add second fuel tank")
@@ -1554,7 +1554,12 @@ class GarageDeviceTest {
         compose.onNodeWithText("Edit fuel fill-up").assertIsDisplayed()
         assertEquals(
             "2.5",
-            compose.onNodeWithContentDescription("Quantity (L) · tank 1").fetchSemanticsNode().config[SemanticsProperties.EditableText].text,
+            compose
+                .onNodeWithContentDescription(
+                    "Quantity (L) · tank 1",
+                ).fetchSemanticsNode()
+                .config[SemanticsProperties.EditableText]
+                .text,
         )
         field("Station / vendor (optional)", "Roadside")
         tap("Save")

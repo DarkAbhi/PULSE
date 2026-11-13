@@ -208,7 +208,11 @@ fun WorkoutScreen(
                     .imePadding(),
             ) {
                 Column(
-                    Modifier.weight(1f).fillMaxWidth().verticalScroll(scroll).padding(size.pagePadding),
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(scroll)
+                        .padding(size.pagePadding),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                 ) {
                     state.error?.let { PulseErrorState(fitnessFailureMessage(it), onRefresh) }
@@ -250,20 +254,22 @@ fun WorkoutScreen(
                     val keyboard = LocalSoftwareKeyboardController.current
                     val busy = state.busy || state.loading
                     PulseFormActions(
-                        primary = PulseFormAction(
-                            stringResource(CoreUiR.string.pulse_ui_save),
-                            {
-                                keyboard?.hide()
-                                onSave()
-                            },
-                            enabled = state.editor.draft.issue == null && !state.needsReview && !busy,
-                            loading = busy,
-                        ),
-                        secondary = PulseFormAction(
-                            stringResource(CoreUiR.string.pulse_ui_cancel),
-                            onCancel,
-                            enabled = !busy,
-                        ),
+                        primary =
+                            PulseFormAction(
+                                stringResource(CoreUiR.string.pulse_ui_save),
+                                {
+                                    keyboard?.hide()
+                                    onSave()
+                                },
+                                enabled = state.editor.draft.issue == null && !state.needsReview && !busy,
+                                loading = busy,
+                            ),
+                        secondary =
+                            PulseFormAction(
+                                stringResource(CoreUiR.string.pulse_ui_cancel),
+                                onCancel,
+                                enabled = !busy,
+                            ),
                         modifier = Modifier.padding(horizontal = size.pagePadding),
                     )
                 }

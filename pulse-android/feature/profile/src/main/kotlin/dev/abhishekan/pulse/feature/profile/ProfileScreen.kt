@@ -284,17 +284,21 @@ internal fun ProfileScreen(
                 footer = {
                     state.editor?.let { editor ->
                         PulseFormActions(
-                            primary = PulseFormAction(
-                                stringResource(
-                                    if (editor == AccountEditor.Key) CoreUiR.string.pulse_ui_create else CoreUiR.string.pulse_ui_save,
+                            primary =
+                                PulseFormAction(
+                                    stringResource(
+                                        if (editor == AccountEditor.Key) CoreUiR.string.pulse_ui_create else CoreUiR.string.pulse_ui_save,
+                                    ),
+                                    vm::save,
+                                    enabled = !state.busy && !state.uncertain,
+                                    loading = state.busy,
                                 ),
-                                vm::save,
-                                enabled = !state.busy && !state.uncertain,
-                                loading = state.busy,
-                            ),
                             secondary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), cancel, enabled = !state.busy),
-                            modifier = Modifier.align(Alignment.Start).padding(horizontal = size.pagePadding)
-                                .widthIn(max = PulseTokens.readingWidth),
+                            modifier =
+                                Modifier
+                                    .align(Alignment.Start)
+                                    .padding(horizontal = size.pagePadding)
+                                    .widthIn(max = PulseTokens.readingWidth),
                         )
                     }
                 },

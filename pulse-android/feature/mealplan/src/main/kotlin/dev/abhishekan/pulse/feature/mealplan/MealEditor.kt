@@ -183,23 +183,25 @@ internal fun MealEditorFooter(
 ) {
     val focus = LocalFocusManager.current
     PulseFormActions(
-        primary = PulseFormAction(
-            stringResource(CoreUiR.string.pulse_ui_save),
-            {
-                focus.clearFocus()
-                onSave()
-            },
-            enabled = !blocked,
-            loading = busy,
-        ),
-        secondary = PulseFormAction(
-            stringResource(CoreUiR.string.pulse_ui_cancel),
-            {
-                focus.clearFocus()
-                onCancel()
-            },
-            enabled = !busy,
-        ),
+        primary =
+            PulseFormAction(
+                stringResource(CoreUiR.string.pulse_ui_save),
+                {
+                    focus.clearFocus()
+                    onSave()
+                },
+                enabled = !blocked,
+                loading = busy,
+            ),
+        secondary =
+            PulseFormAction(
+                stringResource(CoreUiR.string.pulse_ui_cancel),
+                {
+                    focus.clearFocus()
+                    onCancel()
+                },
+                enabled = !busy,
+            ),
         modifier = modifier.widthIn(max = PulseTokens.readingWidth),
     )
 }

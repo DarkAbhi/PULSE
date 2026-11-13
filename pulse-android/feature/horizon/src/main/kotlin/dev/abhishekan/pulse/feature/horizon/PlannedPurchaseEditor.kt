@@ -95,12 +95,13 @@ internal fun PlannedPurchaseEditor(
         scrollContentModifier = Modifier.padding(pagePadding),
         footer = {
             PulseFormActions(
-                primary = PulseFormAction(
-                    stringResource(CoreUiR.string.pulse_ui_save),
-                    save,
-                    enabled = !busy && !blocked && data != null,
-                    loading = busy,
-                ),
+                primary =
+                    PulseFormAction(
+                        stringResource(CoreUiR.string.pulse_ui_save),
+                        save,
+                        enabled = !busy && !blocked && data != null,
+                        loading = busy,
+                    ),
                 secondary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), onCancel, enabled = !busy),
                 modifier = Modifier.padding(horizontal = pagePadding).widthIn(max = PulseTokens.readingWidth),
             )
@@ -108,7 +109,8 @@ internal fun PlannedPurchaseEditor(
     ) {
         prefix()
         Column(
-            Modifier.align(Alignment.CenterHorizontally)
+            Modifier
+                .align(Alignment.CenterHorizontally)
                 .widthIn(max = PulseTokens.readingWidth)
                 .fillMaxWidth()
                 .testTag("planned-purchase-editor"),

@@ -331,7 +331,14 @@ private fun FuelInput(
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text,
-                    imeAction = if (numeric) ImeAction.Next else if (multiline) ImeAction.Default else ImeAction.Done,
+                    imeAction =
+                        if (numeric) {
+                            ImeAction.Next
+                        } else if (multiline) {
+                            ImeAction.Default
+                        } else {
+                            ImeAction.Done
+                        },
                 ),
             keyboardActions =
                 KeyboardActions(

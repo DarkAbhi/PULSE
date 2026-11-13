@@ -43,7 +43,10 @@ internal enum class AppDestination(
 
 internal fun NavController.navigateSingleTop(route: String) = navigate(route) { launchSingleTop = true }
 
-internal fun isTabTransition(fromRoute: String?, toRoute: String?): Boolean =
+internal fun isTabTransition(
+    fromRoute: String?,
+    toRoute: String?,
+): Boolean =
     AppDestination.fromRoute(fromRoute) in AppDestination.tabs &&
         AppDestination.fromRoute(toRoute) in AppDestination.tabs
 

@@ -17,6 +17,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.R
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,14 +27,11 @@ fun PulseDatePickerDialog(
     onSelected: (LocalDate) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    displayedMonth: YearMonth = YearMonth.from(selected),
 ) {
     val density = LocalDensity.current
-    val windowHeight =
-        with(density) {
-            LocalWindowInfo.current.containerSize.height
-                .toDp()
-        }
-    val inputMode = windowHeight < 500.dp || density.fontScale > 1.5f
+    val windowSize = LocalWindowInfo.current.containerSize
+    val inputMode = with(density) { windowSize.width.toDp() < 360.dp || windowSize.height.toDp() < 500.dp } || density.fontScale > 1.5f
     val state =
         rememberDatePickerState(
             initialSelectedDateMillis =
@@ -42,29 +40,30 @@ fun PulseDatePickerDialog(
                         ZoneOffset.UTC,
                     ).toInstant()
                     .toEpochMilli(),
+            initialDisplayedMonthMillis =
+                displayedMonth
+                    .atDay(1)
+                    .atStartOfDay(ZoneOffset.UTC)
+                    .toInstant()
+                    .toEpochMilli(),
             yearRange = 0..9999,
             initialDisplayMode = if (inputMode) DisplayMode.Input else DisplayMode.Picker,
         )
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        modifier = modifier,
-        shape = PulseTheme.shapes.extraLarge,
-        tonalElevation = PulseTheme.elevation.none,
-        colors = DatePickerDefaults.colors(containerColor = PulseTheme.colors.surface),
-        confirmButton = {
-            PulseButton(stringResource(R.string.pulse_ui_choose_date), {
-                state.selectedDateMillis?.let {
-                    onSelected(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate())
-                }
-            }, enabled = state.selectedDateMillis != null, style = PulseButtonStyle.Text)
-        },
-        dismissButton = {
-            PulseButton(stringResource(R.string.pulse_ui_cancel), onDismiss, style = PulseButtonStyle.Text)
-        },
-    ) {
+    val confirm: @Composable () -> Unit = {
+        PulseButton(stringResource(R.string.pulse_ui_choose_date), {
+            state.selectedDateMillis?.let {
+                onSelected(Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate())
+            }
+        }, enabled = state.selectedDateMillis != null, style = PulseButtonStyle.Text)
+    }
+    val cancel: @Composable () -> Unit = {
+        PulseButton(stringResource(R.string.pulse_ui_cancel), onDismiss, style = PulseButtonStyle.Text)
+    }
+    val picker: @Composable () -> Unit = {
         DatePicker(
             state,
             Modifier.verticalScroll(rememberScrollState()),
+            showModeToggle = !inputMode,
             colors =
                 DatePickerDefaults.colors(
                     containerColor = PulseTheme.colors.surface,
@@ -74,5 +73,18 @@ fun PulseDatePickerDialog(
                     todayDateBorderColor = PulseTheme.colors.action,
                 ),
         )
+    }
+    if (inputMode) {
+        PulseDialog(onDismiss, confirm, modifier, dismissButton = cancel, text = picker)
+    } else {
+        DatePickerDialog(
+            onDismissRequest = onDismiss,
+            modifier = modifier,
+            shape = PulseTheme.shapes.extraLarge,
+            tonalElevation = PulseTheme.elevation.none,
+            colors = DatePickerDefaults.colors(containerColor = PulseTheme.colors.surface),
+            confirmButton = confirm,
+            dismissButton = cancel,
+        ) { picker() }
     }
 }

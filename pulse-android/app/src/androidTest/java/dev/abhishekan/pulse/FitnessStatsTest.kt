@@ -16,6 +16,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
 import androidx.test.platform.app.InstrumentationRegistry
@@ -44,7 +45,7 @@ class FitnessStatsTest {
             FitnessMetric("trained", "Total trained", "8h 43m", "This year", "2 days missing timing"),
             FitnessMetric("volume", "Volume lifted", "1,615 kg", "recorded sets this year · 2 sets missing weight", null),
             FitnessMetric("sets", "Sets", "16", "recorded this year", null),
-            FitnessMetric("preference", "Preferred workout time", "Afternoon", "from recorded starts this year", null),
+            FitnessMetric("preference", "Most common workout time", "Afternoon", "from recorded starts this year", null),
         )
 
     private fun show(
@@ -130,8 +131,9 @@ class FitnessStatsTest {
         var state by mutableStateOf(
             FitnessUiState(today, YearMonth.from(today), FitnessOverview(today, metrics, emptyList()), loading = false),
         )
+        var refreshes = 0
         compose.setContent {
-            PulseTheme(false) { FitnessScreen(state, {}, {}, {}, {}, {}, {}, {}) }
+            PulseTheme(false) { FitnessScreen(state, {}, {}, {}, { refreshes++ }, {}, {}, {}) }
         }
         compose.runOnIdle { state = state.copy(loading = true) }
         compose.onNodeWithText("1,615 kg", useUnmergedTree = true).assertExists()
@@ -139,7 +141,9 @@ class FitnessStatsTest {
             state = state.copy(loading = false, overview = FitnessOverview(today, emptyList(), emptyList()))
         }
         compose.onNodeWithText("1,615 kg", useUnmergedTree = true).assertDoesNotExist()
-        compose.onNodeWithText("Stats are unavailable right now. Pull to refresh to try again.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Stats are unavailable right now.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Retry stats").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals(1, refreshes) }
     }
 
     private fun screenshot(name: String) {

@@ -10,11 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -24,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
@@ -41,6 +41,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseCalendarDay
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -80,6 +81,11 @@ internal fun FitnessCalendar(
         }
     }
     var choosing by rememberSaveable { mutableStateOf(false) }
+    var weekReset by rememberSaveable { mutableIntStateOf(0) }
+    val jumpToToday = {
+        weekReset++
+        onToday()
+    }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
         BoxWithConstraints(Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
             val compact = maxWidth < 480.dp
@@ -97,25 +103,25 @@ internal fun FitnessCalendar(
                 )
             }
             val controls: @Composable () -> Unit = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                FlowRow {
                     CalendarControl(
                         stringResource(R.string.pulse_fitness_previous_month),
                         FitnessSymbol.Previous,
                         !state.busy && selectedPage > 0,
                         compact = compact && inline,
-                    ) { scope.launch { pager.animateScrollToPage(pager.targetPage - 1) } }
+                    ) { scope.launch { pager.animateScrollToPage((pager.targetPage - 1).coerceAtLeast(0)) } }
                     CalendarControl(
                         stringResource(R.string.pulse_fitness_next_month),
                         FitnessSymbol.Next,
                         !state.busy && selectedPage < CALENDAR_MONTH_COUNT - 1,
                         compact = compact && inline,
-                    ) { scope.launch { pager.animateScrollToPage(pager.targetPage + 1) } }
+                    ) { scope.launch { pager.animateScrollToPage((pager.targetPage + 1).coerceAtMost(CALENDAR_MONTH_COUNT - 1)) } }
                     if (compact && inline) {
-                        CompactTodayControl(stringResource(R.string.pulse_fitness_today), !state.busy, onToday)
+                        CompactTodayControl(stringResource(R.string.pulse_fitness_today), !state.busy, jumpToToday)
                     } else {
                         PulseButton(
                             stringResource(R.string.pulse_fitness_today),
-                            onToday,
+                            jumpToToday,
                             enabled = !state.busy,
                             style = PulseButtonStyle.Text,
                         )
@@ -153,75 +159,95 @@ internal fun FitnessCalendar(
                     .eachCount()
             }
         BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val grid = with(LocalDensity.current) { constraints.maxWidth >= PulseTokens.target.roundToPx() * 7 }
             val weekdayStyle = if (maxWidth / 7 < 28.dp * LocalDensity.current.fontScale) TextStyle.NARROW else TextStyle.SHORT
-            // Seven columns still have 44dp targets at 320dp; avoid Material's 48dp
-            // layout minimum expanding neighboring cells into each other on small phones.
-            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 44.dp) {
-                Column(
-                    Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
-                ) {
+            val dateFormatter = remember(locale) { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale) }
+            val adjacentMonthFormatter = remember(locale) { DateTimeFormatter.ofPattern("EEEE, MMMM", locale) }
+            Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
+                if (grid) {
                     Row(Modifier.fillMaxWidth().clearAndSetSemantics { }) {
-                        DayOfWeek.entries
-                            .map {
-                                it.getDisplayName(weekdayStyle, locale)
-                            }.forEach { day ->
-                                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                                    PulseText(day, style = PulseTextStyle.Label)
-                                }
+                        DayOfWeek.entries.forEach { day ->
+                            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                PulseText(day.getDisplayName(weekdayStyle, locale), style = PulseTextStyle.Label)
                             }
+                        }
                     }
-                    val dateFormatter = remember(locale) { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale) }
-                    HorizontalPager(
-                        state = pager,
-                        modifier = Modifier.fillMaxWidth(),
-                        userScrollEnabled = !state.busy,
-                        beyondViewportPageCount = 1,
-                    ) { page ->
-                        val month = YearMonth.of(page / 12, page % 12 + 1)
-                        val weeks =
-                            remember(month) {
-                                // Six weeks keep the pager height constant throughout a drag.
-                                val first = FitnessDates.calendar(month).first()
-                                List(42) { first.plusDays(it.toLong()) }.chunked(7)
-                            }
-                        val active = page == selectedPage
-                        Column(
-                            modifier = if (active) Modifier else Modifier.clearAndSetSemantics { hideFromAccessibility() },
-                            verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
-                        ) {
+                }
+                HorizontalPager(
+                    state = pager,
+                    modifier = Modifier.fillMaxWidth(),
+                    userScrollEnabled = !state.busy,
+                ) { page ->
+                    val month = YearMonth.of(page / 12, page % 12 + 1)
+                    val weeks = remember(month) { FitnessDates.calendar(month).chunked(7) }
+                    val active = page == selectedPage
+                    val enabled = active && !state.busy
+                    val day: @Composable (LocalDate, Modifier) -> Unit = { date, dayModifier ->
+                        val count = workouts[date] ?: 0
+                        val today = date == state.overview?.today
+                        val fullDate = date.format(dateFormatter)
+                        val inMonth = YearMonth.from(date) == month
+                        val description =
+                            pluralStringResource(
+                                if (today) R.plurals.pulse_fitness_today_calendar_workouts else R.plurals.pulse_fitness_calendar_workouts,
+                                count,
+                                fullDate,
+                                count,
+                            )
+                        PulseCalendarDay(
+                            date.dayOfMonth.toString(),
+                            description,
+                            date == state.selected,
+                            today,
+                            count > 0,
+                            { onDate(date) },
+                            dayModifier,
+                            enabled = enabled && date.year in 0..9999,
+                            inMonth = inMonth,
+                            dateLabel =
+                                when {
+                                    grid -> null
+                                    inMonth -> date.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
+                                    else -> date.format(adjacentMonthFormatter)
+                                },
+                        )
+                    }
+                    Column(
+                        modifier = if (active) Modifier else Modifier.clearAndSetSemantics { hideFromAccessibility() },
+                        verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
+                    ) {
+                        if (grid) {
                             weeks.forEach { week ->
                                 Row(Modifier.fillMaxWidth()) {
-                                    week.forEach { date ->
-                                        val count = workouts[date] ?: 0
-                                        val today = date == state.overview?.today
-                                        val description =
-                                            pluralStringResource(
-                                                if (today) {
-                                                    R.plurals.pulse_fitness_today_calendar_workouts
-                                                } else {
-                                                    R.plurals.pulse_fitness_calendar_workouts
-                                                },
-                                                count,
-                                                date.format(dateFormatter),
-                                                count,
-                                            )
-                                        FitnessCalendarDay(
-                                            date.dayOfMonth.toString(),
-                                            description,
-                                            date == state.selected,
-                                            today,
-                                            count > 0,
-                                            { onDate(date) },
-                                            Modifier.weight(1f),
-                                            enabled =
-                                                active && !state.busy && date.year in 0..9999,
-                                            inMonth =
-                                                YearMonth.from(date) == month,
-                                        )
-                                    }
+                                    week.forEach { date -> day(date, Modifier.weight(1f)) }
                                 }
                             }
+                        } else {
+                            val selectedWeek = weeks.indexOfFirst { state.selected in it }.coerceAtLeast(0)
+                            var weekIndex by rememberSaveable(page, state.selected, weekReset) { mutableIntStateOf(selectedWeek) }
+                            FlowRow(
+                                Modifier.fillMaxWidth().padding(horizontal = PulseTokens.small),
+                                verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
+                            ) {
+                                CalendarControl(
+                                    stringResource(R.string.pulse_fitness_previous_week),
+                                    FitnessSymbol.Previous,
+                                    enabled && weekIndex > 0,
+                                    compact = true,
+                                ) { weekIndex-- }
+                                PulseText(
+                                    stringResource(R.string.pulse_fitness_week_position, weekIndex + 1, weeks.size),
+                                    Modifier.align(Alignment.CenterVertically).semantics { liveRegion = LiveRegionMode.Polite },
+                                    style = PulseTextStyle.Label,
+                                )
+                                CalendarControl(
+                                    stringResource(R.string.pulse_fitness_next_week),
+                                    FitnessSymbol.Next,
+                                    enabled && weekIndex < weeks.lastIndex,
+                                    compact = true,
+                                ) { weekIndex++ }
+                            }
+                            weeks[weekIndex].forEach { date -> day(date, Modifier.fillMaxWidth()) }
                         }
                     }
                 }
@@ -233,17 +259,24 @@ internal fun FitnessCalendar(
             verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
         ) {
             CalendarLegend(stringResource(R.string.pulse_fitness_workout_recorded_legend), PulseTheme.colors.success)
-            CalendarLegend(stringResource(R.string.pulse_fitness_selected_day_legend), PulseTheme.colors.primary)
-            CalendarLegend(stringResource(R.string.pulse_fitness_today), PulseTheme.colors.action, outlined = true)
+            CalendarLegend(
+                stringResource(R.string.pulse_fitness_selected_day_legend),
+                PulseTheme.colors.primary,
+                outline = PulseTheme.colors.action.takeUnless { PulseTheme.isDark },
+            )
+            CalendarLegend(stringResource(R.string.pulse_fitness_today), Color.Transparent, outline = PulseTheme.colors.action)
         }
     }
     if (choosing) {
-        PulseDatePickerDialog(state.selected, {
-            onDate(it)
-            choosing = false
-        }, {
-            choosing =
-                false
-        })
+        PulseDatePickerDialog(
+            state.selected,
+            onSelected = {
+                weekReset++
+                onDate(it)
+                choosing = false
+            },
+            onDismiss = { choosing = false },
+            displayedMonth = state.month,
+        )
     }
 }

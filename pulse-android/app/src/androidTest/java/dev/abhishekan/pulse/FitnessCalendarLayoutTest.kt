@@ -1,23 +1,29 @@
 package dev.abhishekan.pulse
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -32,7 +38,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -41,7 +46,9 @@ import java.util.Locale
 class FitnessCalendarLayoutTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun allSevenColumnsFitOnSmallPhones() = verifyFullWeek(320.dp)
+    @Test fun narrowPhonesUseFullWidthDateRows() = verifyFullWeek(320.dp)
+
+    @Test fun sevenColumnsFitAtTheMinimumGridWidth() = verifyFullWeek(344.dp)
 
     @Test fun allSevenColumnsFitAtS21Width() = verifyFullWeek(360.dp)
 
@@ -49,7 +56,7 @@ class FitnessCalendarLayoutTest {
 
     @Test fun calendarRendersInLightTheme() = verifyFullWeek(360.dp, dark = false)
 
-    @Test fun largeTextKeepsTheFullWeekAndDateSelection() = verifyFullWeek(320.dp, fontScale = 2f)
+    @Test fun largeTextKeepsDateRowsAndDateSelection() = verifyFullWeek(320.dp, fontScale = 2f)
 
     private fun verifyFullWeek(
         width: Dp,
@@ -98,36 +105,71 @@ class FitnessCalendarLayoutTest {
         }
         val viewport = compose.onNodeWithTag("viewport").getUnclippedBoundsInRoot()
         val formatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.getDefault())
-        FitnessDates.calendar(month).chunked(7).forEach { week ->
-            val bounds =
-                week.map { date ->
-                    val node = compose.onNodeWithContentDescription(date.format(formatter), substring = true)
-                    node.assertIsDisplayed()
-                    node.getUnclippedBoundsInRoot().also {
-                        assertTrue("$date extends past the left edge", it.left >= viewport.left)
-                        assertTrue("$date extends past the right edge", it.right <= viewport.right)
-                        assertTrue("$date must have a usable tap target", it.right - it.left >= 44.dp && it.bottom - it.top >= 48.dp)
-                    }
-                }
-            bounds.zipWithNext().forEach { (left, right) ->
-                assertEquals(left.top.value, right.top.value, 0.5f)
-                assertTrue("Day columns must not overlap: $left, $right", left.right <= right.left + 0.5.dp)
+        val grid = width >= 344.dp
+        val weeks = FitnessDates.calendar(month).chunked(7)
+        val deviceDensity =
+            InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext.resources.displayMetrics.density
+
+        fun dateNode(date: LocalDate) =
+            compose.onNode(hasContentDescription(date.format(formatter) + ",", substring = true) and hasClickAction())
+
+        if (!grid) {
+            repeat(weeks.indexOfFirst { today in it }) {
+                compose.onNodeWithContentDescription("Previous week").performScrollTo().performClick()
             }
         }
-        val sunday = LocalDate.of(2026, 10, 4)
-        compose.onNodeWithContentDescription(sunday.format(formatter), substring = true).performClick()
-        compose.runOnIdle { assertEquals(sunday, selected) }
+        weeks.forEachIndexed { index, week ->
+            val bounds =
+                week.map { date ->
+                    val node = dateNode(date)
+                    node.performScrollTo().assertIsDisplayed()
+                    val layout = node.getUnclippedBoundsInRoot()
+                    val touch = node.fetchSemanticsNode().touchBoundsInRoot
+                    assertTrue("$date extends past the viewport", layout.left >= viewport.left && layout.right <= viewport.right)
+                    assertTrue(
+                        "$date needs 48 dp layout bounds",
+                        layout.right - layout.left >= 48.dp && layout.bottom - layout.top >= 48.dp,
+                    )
+                    assertTrue("$date needs 48 dp touch bounds", touch.width >= 48 * deviceDensity && touch.height >= 48 * deviceDensity)
+                    layout
+                }
+            bounds.zipWithNext().forEach { (first, second) ->
+                if (grid) {
+                    assertEquals(first.top.value, second.top.value, 0.5f)
+                    assertTrue("Day columns must not overlap", first.right <= second.left)
+                } else {
+                    assertEquals(first.left.value, second.left.value, 0.5f)
+                    assertTrue("Date rows must not overlap", first.bottom <= second.top)
+                }
+            }
+            val first = week.first()
+            dateNode(first).performScrollTo().performTouchInput {
+                click(if (grid) Offset(right - 2f, center.y) else Offset(center.x, bottom - 2f))
+            }
+            compose.runOnIdle { assertEquals(first, selected) }
+            if (!grid && index < weeks.lastIndex) {
+                compose.onNodeWithContentDescription("Next week").performScrollTo().performClick()
+            }
+        }
+        compose.onNodeWithContentDescription("Choose date").performScrollTo()
+        if (!grid) {
+            compose.onNodeWithContentDescription("Previous week").performScrollTo().performClick()
+            compose.onNode(hasText("Today") and hasClickAction()).performScrollTo().performClick()
+            dateNode(today).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithContentDescription("Choose date").performScrollTo()
+        }
         compose.onNodeWithText("Swipe the calendar sideways", substring = true).assertDoesNotExist()
         compose.onNodeWithContentDescription("Choose date").assertIsDisplayed()
-        compose.mainClock.advanceTimeBy(500)
-        compose.waitForIdle()
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        File(context.getExternalFilesDir(null), "calendar-${width.value.toInt()}-$fontScale-$dark.png").outputStream().use {
-            compose
-                .onNodeWithTag("viewport")
-                .captureToImage()
-                .asAndroidBitmap()
-                .compress(Bitmap.CompressFormat.PNG, 100, it)
+        if (fontScale == 2f) {
+            compose.onNodeWithContentDescription("Choose date").performClick()
+            compose.onNode(isDialog()).assertExists()
+            compose.onNode(hasSetTextAction()).assertIsDisplayed()
+            compose.onNodeWithText("Cancel").performClick()
         }
+        val shortcut = compose.onNode(hasText("View selected day") and hasClickAction())
+        shortcut.performScrollTo().performClick()
+        compose.onNodeWithContentDescription("${today.format(formatter)}, 1 workout").assertIsDisplayed()
     }
 }

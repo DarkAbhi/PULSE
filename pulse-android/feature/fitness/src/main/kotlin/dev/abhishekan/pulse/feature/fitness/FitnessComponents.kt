@@ -17,12 +17,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
-import dev.abhishekan.pulse.core.ui.components.PulseCalendarDay
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
@@ -49,7 +49,7 @@ internal fun FitnessGlyph(
                 drawLine(color, Offset(size.width * x, size.height * .15f), Offset(size.width * x, size.height * .32f), stroke)
             }
         } else {
-            val direction = if (symbol == FitnessSymbol.Next) 1 else -1
+            val direction = if ((symbol == FitnessSymbol.Next) == (layoutDirection == LayoutDirection.Ltr)) 1 else -1
             val start = size.width * (.5f - .12f * direction)
             val end = size.width * (.5f + .12f * direction)
             drawLine(color, Offset(start, size.height * .3f), Offset(end, size.height * .5f), stroke)
@@ -100,42 +100,17 @@ internal fun CalendarControl(
 internal fun CalendarLegend(
     label: String,
     color: Color,
-    outlined: Boolean = false,
+    outline: Color? = null,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small), verticalAlignment = Alignment.CenterVertically) {
         Surface(
-            Modifier.size(if (outlined) 16.dp else 8.dp),
+            Modifier.size(if (outline != null || color == PulseTheme.colors.primary) 16.dp else 8.dp),
             shape = CircleShape,
-            color = if (outlined) Color.Transparent else color,
-            border = if (outlined) BorderStroke(1.dp, color) else null,
+            color = color,
+            border = outline?.let { BorderStroke(PulseTokens.focusWidth, it) },
         ) {}
         PulseText(label, style = PulseTextStyle.Caption, color = PulseTheme.colors.textSecondary)
     }
-}
-
-@Composable
-internal fun FitnessCalendarDay(
-    label: String,
-    description: String,
-    selected: Boolean,
-    today: Boolean,
-    hasActivity: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    inMonth: Boolean = true,
-) {
-    PulseCalendarDay(
-        label = label,
-        description = description,
-        selected = selected,
-        today = today,
-        hasActivity = hasActivity,
-        onClick = onClick,
-        modifier = modifier,
-        enabled = enabled,
-        inMonth = inMonth,
-    )
 }
 
 @Composable

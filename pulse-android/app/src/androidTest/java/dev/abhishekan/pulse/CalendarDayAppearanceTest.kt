@@ -69,10 +69,11 @@ class CalendarDayAppearanceTest {
                     1 -> colors.successSoft
                     else -> colors.primary
                 },
-                colorAt(40, 12),
+                colorAt(40, 14),
             )
-            if (state == 1 || state == 3) assertEquals(colors.success, colorAt(40, 48))
-            if (state == 3) assertEquals(colors.action, colorAt(40, 7))
+            if (state == 1 || state == 3) assertEquals(colors.success, colorAt(40, 49))
+            if (state >= 2 && !dark) assertEquals(colors.action, colorAt(40, 9))
+            if (state == 3) assertEquals(colors.action, colorAt(40, 5))
             if (state >= 2) node.assertIsSelected()
             node.performClick()
         }

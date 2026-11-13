@@ -9,7 +9,6 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
@@ -576,7 +575,7 @@ class FitnessDeviceTest {
         pager.performTouchInput { swipeLeft() }
         val next = month.plusMonths(1)
         compose.onNodeWithContentDescription(next.format(monthFormat)).assertIsDisplayed()
-        compose.onNodeWithContentDescription(next.atDay(1).format(dateFormat), substring = true).assertIsSelected()
+        compose.onNodeWithContentDescription("${backend.today.format(dateFormat)}, 0 workouts").assertExists()
 
         pager.performTouchInput { swipeRight() }
         compose.onNodeWithContentDescription(month.format(monthFormat)).assertIsDisplayed()
@@ -584,7 +583,7 @@ class FitnessDeviceTest {
         tap("Previous month")
         val previous = month.minusMonths(1)
         compose.onNodeWithContentDescription(previous.format(monthFormat)).assertIsDisplayed()
-        compose.onNodeWithContentDescription(previous.atDay(1).format(dateFormat), substring = true).assertIsSelected()
+        compose.onNodeWithContentDescription("${backend.today.format(dateFormat)}, 0 workouts").assertExists()
     }
 
     @Test fun calendarAndExerciseCrudRefreshHomeWithoutRestart() {
@@ -609,7 +608,10 @@ class FitnessDeviceTest {
         assertTrue((bounds.right - bounds.left).value >= 48f)
         assertTrue((bounds.bottom - bounds.top).value >= 48f)
         compose.onNodeWithText("SELECTED DAY").assertExists()
-        compose.onNodeWithText("0 workouts").assertExists()
+        compose
+            .onNodeWithContentDescription(
+                "${backend.today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"))}, 0 workouts",
+            ).assertExists()
         compose.onNodeWithText("No workouts logged.").assertExists()
         compose.onNodeWithText("Total duration").assertDoesNotExist()
         compose.onNodeWithText("Moderate").assertDoesNotExist()
@@ -800,6 +802,7 @@ class FitnessDeviceTest {
                 .from(backend.today)
                 .plusMonths(1)
                 .atDay(1)
+        selectCalendarDate("${expected.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"))}, 0 workouts recorded")
         tap("Choose date")
         compose.onNode(isDialog()).assertExists()
         confirm("Choose date")

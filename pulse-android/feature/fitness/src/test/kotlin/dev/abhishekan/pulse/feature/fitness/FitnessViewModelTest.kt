@@ -25,6 +25,7 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneOffset
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -149,15 +150,27 @@ class FitnessViewModelTest {
             val saved = SavedStateHandle()
             var vm = vm(saved)
             runCurrent()
-            vm.select(LocalDate.of(2025, 12, 31))
+            val selected = LocalDate.of(2025, 12, 31)
+            val browsed = YearMonth.of(2026, 1)
+            vm.select(selected)
             vm.shiftMonth(1)
-            assertEquals(LocalDate.of(2026, 1, 1), vm.uiState.value.selected)
-            vm = vm(SavedStateHandle(mapOf("selected" to saved.get<String>("selected"))))
+            assertEquals(selected, vm.uiState.value.selected)
+            assertEquals(browsed, vm.uiState.value.month)
+            vm =
+                vm(
+                    SavedStateHandle(
+                        mapOf(
+                            "selected" to saved.get<String>("selected"),
+                            "browsedMonth" to saved.get<String>("browsedMonth"),
+                        ),
+                    ),
+                )
             runCurrent()
-            assertEquals(LocalDate.of(2026, 1, 1), vm.uiState.value.selected)
+            assertEquals(selected, vm.uiState.value.selected)
+            assertEquals(browsed, vm.uiState.value.month)
             vm.recordSelected()
             runCurrent()
-            assertEquals(LocalDate.of(2026, 1, 1), repo.selectedDate)
+            assertEquals(selected, repo.selectedDate)
         }
 
     @Test fun todayUsesServerTodayEndpointAndDuplicateTapsDoNotQueueWrites() =
@@ -276,6 +289,22 @@ class FitnessViewModelTest {
             vm.recordSelected()
             runCurrent()
             assertEquals(nextDay, repo.selectedDate)
+        }
+
+    @Test fun todaySelectsImmediatelyEvenWhenRefreshFails() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            vm.select(repo.today.minusDays(1))
+            vm.shiftMonth(-1)
+            val gate = CompletableDeferred<Outcome<FitnessOverview>>()
+            repo.overviewRead = { gate.await() }
+            vm.selectToday()
+            assertEquals(repo.today, vm.uiState.value.selected)
+            assertEquals(YearMonth.from(repo.today), vm.uiState.value.month)
+            gate.complete(Outcome.Error(Failure.Connection))
+            runCurrent()
+            assertEquals(repo.today, vm.uiState.value.selected)
         }
 
     @Test fun slowerTodayRefreshCannotOverrideALaterDateSelection() =

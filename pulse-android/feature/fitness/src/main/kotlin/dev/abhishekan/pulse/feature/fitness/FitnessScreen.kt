@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -23,6 +25,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,6 +38,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
@@ -50,6 +56,7 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
@@ -61,6 +68,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.pulseDescription
 import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -105,6 +113,8 @@ fun FitnessScreen(
 ) {
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         val wide = size == PulseWindowSize.Expanded && LocalDensity.current.fontScale < 1.5f
+        val selectedDayRequester = remember { BringIntoViewRequester() }
+        val scope = rememberCoroutineScope()
         val pullState = rememberPullToRefreshState()
         val tracker = rememberPullRefreshTracker(state.loading)
         val pullRefreshing = tracker.requested && state.loading
@@ -182,12 +192,18 @@ fun FitnessScreen(
                             }
                         } else {
                             FitnessCalendar(state, onDate, onMonth, onToday, Modifier.padding(horizontal = PulseTokens.tiny))
-                            Box(Modifier.padding(horizontal = size.pagePadding)) {
+                            PulseButton(
+                                stringResource(R.string.pulse_fitness_view_selected_day),
+                                { scope.launch { selectedDayRequester.bringIntoView() } },
+                                Modifier.padding(horizontal = size.pagePadding),
+                                style = PulseButtonStyle.Text,
+                            )
+                            Box(Modifier.padding(horizontal = size.pagePadding).bringIntoViewRequester(selectedDayRequester)) {
                                 SelectedDay(state, onRecord, onWorkout)
                             }
                         }
                         Box(Modifier.padding(horizontal = size.pagePadding)) {
-                            FitnessStats(state.overview)
+                            FitnessStats(state.overview, canRefresh, refresh)
                         }
                     }
                 }
@@ -205,6 +221,10 @@ private fun SelectedDay(
     val overview = checkNotNull(state.overview)
     val locale = LocalConfiguration.current.locales[0]
     val workouts = overview.workouts.filter { it.date == state.selected }
+    val dateLabel = state.selected.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale))
+    val countLabel = pluralStringResource(R.plurals.pulse_fitness_workout_count, workouts.size, workouts.size)
+    val selectedSummary = stringResource(R.string.pulse_fitness_selected_day_summary, dateLabel, countLabel)
+    val largeText = LocalDensity.current.fontScale >= 1.5f
     var confirmRecord by rememberSaveable(state.selected) { mutableStateOf(false) }
     if (confirmRecord && state.canRecord) {
         PulseDialog(
@@ -212,7 +232,7 @@ private fun SelectedDay(
             message =
                 stringResource(
                     R.string.pulse_fitness_confirm_record_message,
-                    state.selected.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale)),
+                    dateLabel,
                 ),
             confirmLabel = stringResource(R.string.pulse_fitness_record_workout),
             onConfirm = {
@@ -241,16 +261,20 @@ private fun SelectedDay(
                     contentColor = PulseTheme.colors.action,
                 ) {
                     PulseText(
-                        pluralStringResource(R.plurals.pulse_fitness_workout_count, workouts.size, workouts.size),
-                        Modifier.padding(horizontal = PulseTokens.small, vertical = PulseTokens.tiny),
+                        countLabel,
+                        Modifier.padding(horizontal = PulseTokens.small, vertical = PulseTokens.tiny).clearAndSetSemantics {},
                         style = PulseTextStyle.Caption,
                         color = PulseTheme.colors.action,
                     )
                 }
             }
             PulseText(
-                state.selected.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale)),
-                Modifier.semantics { heading() },
+                dateLabel,
+                Modifier.clearAndSetSemantics {
+                    heading()
+                    liveRegion = LiveRegionMode.Polite
+                    contentDescription = selectedSummary
+                },
                 style = PulseTextStyle.Title,
             )
             if (workouts.isEmpty()) {
@@ -286,7 +310,7 @@ private fun SelectedDay(
                         horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        WorkoutBadge()
+                        if (!largeText) WorkoutBadge()
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
                             PulseText(
                                 if (workouts.size == 1) {
@@ -298,7 +322,7 @@ private fun SelectedDay(
                             )
                             PulseText(workout.timeLabel, color = PulseTheme.colors.textSecondary)
                         }
-                        FitnessGlyph(FitnessSymbol.Next, PulseTheme.colors.textSecondary)
+                        if (!largeText) FitnessGlyph(FitnessSymbol.Next, PulseTheme.colors.textSecondary)
                     }
                 }
             }

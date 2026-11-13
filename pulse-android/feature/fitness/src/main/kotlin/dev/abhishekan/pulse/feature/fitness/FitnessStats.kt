@@ -31,11 +31,17 @@ import dev.abhishekan.pulse.core.domain.model.FitnessMetric
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
 @Composable
-internal fun FitnessStats(overview: FitnessOverview) {
+internal fun FitnessStats(
+    overview: FitnessOverview,
+    canRefresh: Boolean,
+    onRefresh: () -> Unit,
+) {
     Column(
         Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
@@ -56,6 +62,12 @@ internal fun FitnessStats(overview: FitnessOverview) {
             PulseText(
                 stringResource(R.string.pulse_fitness_stats_unavailable),
                 color = PulseTheme.colors.textSecondary,
+            )
+            PulseButton(
+                stringResource(R.string.pulse_fitness_retry_stats),
+                onRefresh,
+                enabled = canRefresh,
+                style = PulseButtonStyle.Text,
             )
         } else {
             BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -100,7 +112,10 @@ private fun FitnessStatCard(
             Surface(shape = PulseTokens.controlShape, color = colors.primarySoft) {
                 StatGlyph(metric.id, Modifier.padding(PulseTokens.small).size(24.dp))
             }
-            PulseText(metric.label, style = PulseTextStyle.Label)
+            PulseText(
+                if (metric.id == "preference") stringResource(R.string.pulse_fitness_most_common_workout_time) else metric.label,
+                style = PulseTextStyle.Label,
+            )
             PulseText(
                 metric.value,
                 style = if (metric.id == "preference" || metric.value.length > 14) PulseTextStyle.Heading3 else PulseTextStyle.Metric,

@@ -1,9 +1,12 @@
 package dev.abhishekan.pulse.core.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
@@ -33,16 +36,17 @@ fun PulseCalendarDay(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     inMonth: Boolean = true,
+    dateLabel: String? = null,
 ) {
     val colors = PulseTheme.colors
     Surface(
         onClick = onClick,
         enabled = enabled,
-        shape = CircleShape,
+        shape = if (dateLabel == null) CircleShape else PulseTokens.controlShape,
         modifier =
             modifier
                 .defaultMinSize(
-                    minWidth = 44.dp,
+                    minWidth = PulseTokens.target,
                     minHeight = 56.dp,
                 ).clearAndSetSemantics {
                     contentDescription = description
@@ -60,13 +64,22 @@ fun PulseCalendarDay(
         color = Color.Transparent,
     ) {
         // The column owns the tap target; the marker stays circular at every width.
-        Box(contentAlignment = Alignment.Center) {
+        Row(
+            modifier = if (dateLabel == null) Modifier else Modifier.padding(horizontal = PulseTokens.small),
+            horizontalArrangement =
+                if (dateLabel == null) {
+                    Arrangement.Center
+                } else {
+                    Arrangement.spacedBy(PulseTokens.small)
+                },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(
-                Modifier.size(44.dp),
+                Modifier.size(PulseTokens.target),
                 contentAlignment = Alignment.Center,
             ) {
                 if (today) {
-                    Box(Modifier.size(44.dp).border(PulseTokens.focusWidth, colors.action, CircleShape))
+                    Box(Modifier.size(PulseTokens.target).border(PulseTokens.focusWidth, colors.action, CircleShape))
                 }
                 Surface(
                     Modifier.size(40.dp),
@@ -84,7 +97,12 @@ fun PulseCalendarDay(
                             inMonth -> colors.textPrimary
                             else -> colors.textSecondary
                         },
-                    border = if (hasActivity && !selected) BorderStroke(PulseTokens.focusWidth, colors.success) else null,
+                    border =
+                        when {
+                            selected && !PulseTheme.isDark -> BorderStroke(PulseTokens.focusWidth, colors.action)
+                            hasActivity && !selected -> BorderStroke(PulseTokens.focusWidth, colors.success)
+                            else -> null
+                        },
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         PulseText(label, style = PulseTextStyle.Label)
@@ -93,12 +111,15 @@ fun PulseCalendarDay(
                 // Overlay the dot so activity never shifts the number off center.
                 if (hasActivity) {
                     Surface(
-                        Modifier.align(Alignment.BottomCenter).offset(y = 2.dp).size(8.dp),
+                        Modifier.align(Alignment.BottomCenter).offset(y = 1.dp).size(8.dp),
                         shape = CircleShape,
                         color = colors.success,
                         border = BorderStroke(2.dp, colors.surface),
                     ) {}
                 }
+            }
+            if (dateLabel != null) {
+                PulseText(dateLabel, Modifier.weight(1f), style = PulseTextStyle.Label)
             }
         }
     }

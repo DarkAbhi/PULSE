@@ -30,7 +30,7 @@ class FitnessViewModel(
         MutableStateFlow(
             FitnessUiState(
                 selected,
-                YearMonth.from(selected),
+                saved.get<String>("browsedMonth")?.let(YearMonth::parse) ?: YearMonth.from(selected),
                 needsReview =
                     saved["pending"] ?: false,
             ),
@@ -55,8 +55,10 @@ class FitnessViewModel(
 
     fun select(date: LocalDate) {
         if (state.value.busy) return
+        firstLoad = false
         selectionVersion++
         saved["selected"] = date.toString()
+        saved.remove<String>("browsedMonth")
         state.update {
             it.copy(
                 selected = date,
@@ -68,23 +70,28 @@ class FitnessViewModel(
     }
 
     fun shiftMonth(offset: Long) {
-        val next = state.value.month.plusMonths(offset)
-        if (next.year in 0..9999) select(next.atDay(1))
+        val current = state.value
+        if (current.busy) return
+        val next = current.month.plusMonths(offset)
+        if (next == current.month || next.year !in 0..9999) return
+        selectionVersion++
+        saved["browsedMonth"] = next.toString()
+        state.update { it.copy(month = next) }
     }
 
     fun selectToday() {
         val current = state.value
         if (current.busy) return
         val today = FitnessDates.today(clock)
-        if (current.selected == today && current.overview?.today == today) return
+        if (current.selected == today && current.month == YearMonth.from(today) && current.overview?.today == today) return
+        select(today)
         loadJob?.cancel()
         val version = selectionVersion
         loadJob =
             viewModelScope.launch {
-                if (load() &&
-                    version == selectionVersion
-                ) {
-                    select(checkNotNull(state.value.overview).today)
+                if (load() && version == selectionVersion) {
+                    val serverToday = checkNotNull(state.value.overview).today
+                    if (serverToday != today) select(serverToday)
                 }
             }
     }
@@ -180,6 +187,12 @@ class FitnessViewModel(
 
     private fun selectAfterRecord(date: LocalDate) {
         saved["selected"] = date.toString()
-        state.update { it.copy(selected = date, month = YearMonth.from(date)) }
+        state.update {
+            if (saved.get<String>("browsedMonth") != null) {
+                it.copy(selected = date)
+            } else {
+                it.copy(selected = date, month = YearMonth.from(date))
+            }
+        }
     }
 }

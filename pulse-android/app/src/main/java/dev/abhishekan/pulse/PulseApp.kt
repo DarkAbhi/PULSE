@@ -1,4 +1,9 @@
 package dev.abhishekan.pulse
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -287,6 +292,14 @@ private fun SignedInApp(
                             nav,
                             startDestination = AppDestination.Home.route,
                             modifier = Modifier.padding(insets).consumeWindowInsets(insets),
+                            enterTransition = {
+                                if (isTabTransition(initialState.destination.route, targetState.destination.route)) EnterTransition.None
+                                else fadeIn(animationSpec = tween(700))
+                            },
+                            exitTransition = {
+                                if (isTabTransition(initialState.destination.route, targetState.destination.route)) ExitTransition.None
+                                else fadeOut(animationSpec = tween(700))
+                            },
                         ) {
                             composable(AppDestination.Home.route) {
                                 HomeRoute(

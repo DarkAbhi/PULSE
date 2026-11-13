@@ -341,7 +341,6 @@
     <string name="pulse_garage_custom_component">Custom component</string>
     <string name="pulse_garage_custom_component_hint">Use a short name, for example left switch. Names use letters, numbers and underscores.</string>
     <string name="pulse_garage_coming_up">Coming up</string>
-    <string name="pulse_garage_upcoming_estimates">Uses the active schedule shown for each task. Mileage uses the last recorded reading.</string>
     <string name="pulse_garage_upcoming_oil">Oil change</string>
     <string name="pulse_garage_upcoming_pressure">Check tire pressure</string>
     <string name="pulse_garage_upcoming_service">Service check</string>

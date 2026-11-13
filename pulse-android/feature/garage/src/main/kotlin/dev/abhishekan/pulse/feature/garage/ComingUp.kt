@@ -106,11 +106,6 @@ internal fun ComingUp(
                 Icon(painterResource(R.drawable.garage_chevron_right), null, Modifier.size(20.dp), tint = PulseTheme.colors.textSecondary)
             }
         }
-        PulseText(
-            stringResource(R.string.pulse_garage_upcoming_estimates),
-            style = PulseTextStyle.Caption,
-            color = PulseTheme.colors.textSecondary,
-        )
     }
 }
 

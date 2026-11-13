@@ -153,7 +153,7 @@ fun FitnessScreen(
                         .padding(vertical = size.pagePadding),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                 ) {
-                    state.error?.let {
+                    state.error?.takeUnless { state.loading }?.let {
                         Box(Modifier.padding(horizontal = size.pagePadding)) {
                             PulseErrorState(fitnessFailureMessage(it), onRefresh)
                         }
@@ -206,8 +206,7 @@ private fun SelectedDay(
     val locale = LocalConfiguration.current.locales[0]
     val workouts = overview.workouts.filter { it.date == state.selected }
     var confirmRecord by rememberSaveable(state.selected) { mutableStateOf(false) }
-    val canRecord = !state.loading && !state.busy && state.error == null && !state.needsReview
-    if (confirmRecord && canRecord) {
+    if (confirmRecord && state.canRecord) {
         PulseDialog(
             title = stringResource(R.string.pulse_fitness_confirm_record_title),
             message =
@@ -307,7 +306,7 @@ private fun SelectedDay(
                 stringResource(R.string.pulse_fitness_add_workout),
                 { confirmRecord = true },
                 Modifier.fillMaxWidth().padding(top = PulseTokens.small),
-                enabled = !state.loading && state.error == null && !state.needsReview,
+                enabled = state.canRecord,
                 loading = state.busy,
             )
         }

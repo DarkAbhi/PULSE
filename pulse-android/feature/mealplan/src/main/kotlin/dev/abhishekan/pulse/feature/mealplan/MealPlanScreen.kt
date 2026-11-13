@@ -140,7 +140,6 @@ internal fun MealPlanScreen(
         !state.managing &&
             state.draft == null &&
             state.canWrite &&
-            !state.meals.loading &&
             state.meals.error == null &&
             state.meals.value != null
     var refreshMealsWithTimes by remember { mutableStateOf(false) }
@@ -152,7 +151,6 @@ internal fun MealPlanScreen(
         state.managing &&
             state.draft == null &&
             state.canWrite &&
-            !state.times.loading &&
             state.times.error == null &&
             state.times.value != null
     val timeActionClearance = (80 * LocalDensity.current.fontScale.coerceAtLeast(1f)).dp
@@ -266,7 +264,9 @@ internal fun MealPlanScreen(
                         }
                         if (state.draft != null && !records) {
                             if (!state.draft.timeForm) {
-                                state.times.error?.let { PulseErrorState(it.message, vm::refreshTimes) }
+                                state.times.error?.takeUnless { state.times.loading }?.let {
+                                    PulseErrorState(it.message, vm::refreshTimes)
+                                }
                             }
                             MealEditor(
                                 state.draft,
@@ -444,6 +444,6 @@ private fun <T> MealSectionContent(
     retry: () -> Unit,
     content: @Composable (T) -> Unit,
 ) {
-    section.error?.let { PulseErrorState(it.message, retry) }
+    section.error?.takeUnless { section.loading }?.let { PulseErrorState(it.message, retry) }
     section.value?.let { content(it) }
 }

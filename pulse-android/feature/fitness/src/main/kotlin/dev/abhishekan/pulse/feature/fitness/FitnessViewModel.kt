@@ -100,11 +100,11 @@ class FitnessViewModel(
     }
 
     private suspend fun load(): Boolean {
-        state.update { it.copy(loading = true, error = null, reviewReady = false) }
+        state.update { it.copy(loading = true, reviewReady = false) }
         return when (val result = fitness.overview()) {
             is Outcome.Success -> {
                 state.update {
-                    it.copy(overview = result.value, loading = false, reviewReady = it.needsReview)
+                    it.copy(overview = result.value, loading = false, error = null, reviewReady = it.needsReview)
                 }
                 if (firstLoad) {
                     firstLoad = false
@@ -127,19 +127,13 @@ class FitnessViewModel(
 
     fun recordSelected() {
         val input = state.value
-        if (input.busy ||
-            input.loading ||
-            input.needsReview ||
-            input.overview == null ||
-            input.error != null
-        ) {
-            return
-        }
+        val overview = input.overview ?: return
+        if (!input.canRecord) return
         loadJob?.cancel()
         val todayAction =
-            input.selected == input.overview.today && input.selected == FitnessDates.today(clock)
+            input.selected == overview.today && input.selected == FitnessDates.today(clock)
         saved["pending"] = true
-        state.update { it.copy(busy = true, message = null, createdId = null) }
+        state.update { it.copy(busy = true, loading = false, message = null, createdId = null) }
         viewModelScope.launch {
             when (val result = record(if (todayAction) null else input.selected)) {
                 is Outcome.Success -> {

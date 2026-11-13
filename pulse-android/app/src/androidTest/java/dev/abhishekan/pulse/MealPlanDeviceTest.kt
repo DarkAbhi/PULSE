@@ -9,6 +9,7 @@ import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.captureToImage
@@ -69,6 +70,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -121,6 +123,13 @@ class MealPlanDeviceTest {
 
     @Volatile private var failToggle = false
     private var mutations = 0
+
+    private class PausedRead(val path: String) {
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+    }
+
+    @Volatile private var pausedRead: PausedRead? = null
 
     @Volatile private var setupRecord =
         Json
@@ -190,6 +199,10 @@ class MealPlanDeviceTest {
                         var status = HttpStatusCode.OK
                         val body =
                             if (request.method == HttpMethod.Get) {
+                                pausedRead?.takeIf { it.path == path }?.let {
+                                    it.started.complete(Unit)
+                                    it.release.await()
+                                }
                                 when (path) {
                                     "auth/session" -> """{"username":"meal-fixture"}"""
                                     "profile" -> """{"has_profile":true,"name":"Asha","timezone":"${plannerZone.id}"}"""
@@ -589,8 +602,33 @@ class MealPlanDeviceTest {
         compose.runOnIdle {
             meals[10] = obj("""{"id":10,"date":"$day","name":"Updated soup","meal_time_id":1,"is_consumed":false}""")
         }
-        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Soup"))).performTouchInput { swipeDown() }
+        val read = PausedRead("meal-plans").also { pausedRead = it }
+        try {
+            compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Soup"))).performTouchInput { swipeDown() }
+            compose.waitUntil(5_000) { read.started.isCompleted }
+            compose.onNode(hasContentDescription("Add meal")).assertIsDisplayed().assertIsEnabled()
+        } finally {
+            read.release.complete(Unit)
+        }
         awaitText("Updated soup")
+    }
+
+    @Test fun pullToRefreshKeepsAddCustomMealTimeAvailable() {
+        launchPlanner()
+        tap("Meal times")
+        awaitText("Add custom meal time")
+        compose.runOnIdle {
+            times[2] = JsonObject(times.getValue(2) + ("name" to JsonPrimitive("Updated evening bowl")))
+        }
+        val read = PausedRead("meal-times").also { pausedRead = it }
+        try {
+            compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Evening bowl"))).performTouchInput { swipeDown() }
+            compose.waitUntil(5_000) { read.started.isCompleted }
+            compose.onNodeWithText("Add custom meal time").assertIsDisplayed().assertIsEnabled()
+        } finally {
+            read.release.complete(Unit)
+        }
+        awaitText("Updated evening bowl")
     }
 
     @Test fun compactWeekFitsPhoneScrollsOnNarrowScreensAndKeepsTabletDatesLarge() {

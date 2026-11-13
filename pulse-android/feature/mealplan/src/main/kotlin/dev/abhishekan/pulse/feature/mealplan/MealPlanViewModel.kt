@@ -80,7 +80,7 @@ class MealPlanViewModel(
     fun refreshMeals() {
         mealsJob?.cancel()
         val week = state.value.week
-        state.update { it.copy(meals = it.meals.copy(loading = true, error = null)) }
+        state.update { it.copy(meals = it.meals.copy(loading = true)) }
         mealsJob =
             viewModelScope.launch {
                 when (val result = getWeek(week)) {
@@ -98,7 +98,7 @@ class MealPlanViewModel(
 
     fun refreshTimes() {
         timesJob?.cancel()
-        state.update { it.copy(times = it.times.copy(loading = true, error = null)) }
+        state.update { it.copy(times = it.times.copy(loading = true)) }
         timesJob =
             viewModelScope.launch {
                 when (val result = mealPlan.times()) {

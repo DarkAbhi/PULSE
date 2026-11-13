@@ -84,6 +84,7 @@ class FitnessViewModelTest {
             runCurrent()
             assertTrue(vm.uiState.value.loading)
             assertEquals(previous, vm.uiState.value.overview)
+            assertTrue(vm.uiState.value.canRecord)
             vm.refresh()
             runCurrent()
             assertEquals(listOf("overview", "overview"), repo.trace)
@@ -92,6 +93,43 @@ class FitnessViewModelTest {
             assertFalse(vm.uiState.value.loading)
             assertEquals(previous, vm.uiState.value.overview)
             assertEquals(Failure.Connection, vm.uiState.value.error)
+            assertFalse(vm.uiState.value.canRecord)
+            val retry = CompletableDeferred<Outcome<FitnessOverview>>()
+            repo.overviewRead = { retry.await() }
+            vm.refresh()
+            runCurrent()
+            assertFalse(vm.uiState.value.canRecord)
+            retry.complete(Outcome.Success(repo.overviewValue))
+            runCurrent()
+            assertTrue(vm.uiState.value.canRecord)
+        }
+
+    @Test fun recordingDuringRefreshCancelsTheReadAndReloadsAfterWriting() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            val refresh = CompletableDeferred<Outcome<FitnessOverview>>()
+            val write = CompletableDeferred<Outcome<Unit>>()
+            repo.overviewRead = { refresh.await() }
+            repo.write = { write.await() }
+            vm.refresh()
+            runCurrent()
+
+            vm.recordSelected()
+            runCurrent()
+            assertEquals(1, repo.records)
+            assertTrue(vm.uiState.value.busy)
+            assertFalse(vm.uiState.value.loading)
+            assertFalse(vm.uiState.value.canRecord)
+
+            refresh.complete(Outcome.Error(Failure.Connection))
+            runCurrent()
+            assertNull(vm.uiState.value.error)
+            repo.overviewRead = null
+            write.complete(Outcome.Success(Unit))
+            runCurrent()
+            assertEquals(listOf("overview", "overview", "record", "overview"), repo.trace)
+            assertTrue(vm.uiState.value.canRecord)
         }
 
     @Test fun firstResumeDuringInitialLoadDoesNotQueueAnotherRequest() =

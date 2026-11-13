@@ -16,4 +16,6 @@ data class FitnessUiState(
     val needsReview: Boolean = false,
     val reviewReady: Boolean = false,
     val createdId: Long? = null,
-)
+) {
+    val canRecord get() = overview != null && error == null && !busy && !needsReview
+}

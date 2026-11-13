@@ -452,8 +452,9 @@ class MealPlanDeviceTest {
             )
         launchPlanner()
         compose.onNodeWithText("What’s your goal?").assertDoesNotExist()
-        tap("Meal preferences")
+        tap("Preferences")
         awaitText("What’s your goal?")
+        compose.onNodeWithText("Save at the end. Edit anytime.").assertDoesNotExist()
         compose.onNodeWithText("Find more calm around food").assertIsSelected()
         tap("Cancel")
         awaitText("Soup")
@@ -601,13 +602,14 @@ class MealPlanDeviceTest {
             height: Int,
             densityDpi: Int,
         ) {
-            compose.awaitWindowConfiguration(scenario!!, width, height, densityDpi)
+            compose.awaitWindowConfiguration(scenario!!, width, height, densityDpi, requireWindowFocus = false)
         }
         try {
             shell("wm size 800x1800")
             shell("wm density 320")
             launchPlanner()
             awaitWindow(800, 1800, 320)
+            assertCalendarActionsShareRow()
             val root = compose.onRoot().getUnclippedBoundsInRoot()
             listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { label ->
                 val date = compose.onNode(hasText(label) and hasClickAction()).assertIsDisplayed()
@@ -635,6 +637,7 @@ class MealPlanDeviceTest {
             shell("wm density 280")
             awaitWindow(1920, 1200, 280)
             week.performScrollToIndex(0)
+            assertCalendarActionsShareRow()
             assertMealTimesClearOfDates(stacked = true)
             screenshot("small-landscape-week")
             shell("wm size 2560x1800")
@@ -648,6 +651,7 @@ class MealPlanDeviceTest {
             val monday = compose.onNodeWithText("Mon").getUnclippedBoundsInRoot()
             val tuesday = compose.onNodeWithText("Tue").getUnclippedBoundsInRoot()
             assertEquals("Tablet dates keep their original spacing", 12.dp, tuesday.left - monday.right)
+            assertCalendarActionsShareRow()
             assertMealTimesClearOfDates(stacked = false)
             screenshot("tablet-week")
         } finally {
@@ -655,6 +659,13 @@ class MealPlanDeviceTest {
             shell("wm density ${density ?: "reset"}")
             compose.waitForIdle()
         }
+    }
+
+    private fun assertCalendarActionsShareRow() {
+        val preferences = compose.onNode(hasText("Preferences") and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
+        val times = compose.onNode(hasText("Meal times") and hasClickAction()).assertIsDisplayed().getUnclippedBoundsInRoot()
+        assertTrue("Preferences is left of Meal times", preferences.right <= times.left)
+        assertTrue("Preferences is aligned with Meal times", preferences.top < times.bottom && preferences.bottom > times.top)
     }
 
     private fun assertMealTimesClearOfDates(stacked: Boolean) {

@@ -244,11 +244,6 @@ internal fun MealOnboardingScreen(
                             secondary = back ?: leave,
                             additional = if (back != null) leave else null,
                         )
-                        PulseText(
-                            stringResource(R.string.meal_setup_footer_hint),
-                            style = PulseTextStyle.Caption,
-                            color = PulseTheme.colors.textSecondary,
-                        )
                     }
                 }
             }

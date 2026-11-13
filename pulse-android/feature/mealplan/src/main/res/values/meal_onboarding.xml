@@ -1,11 +1,11 @@
 <resources>
     <string name="meal_setup_title">Meal preferences</string>
+    <string name="meal_setup_preferences">Preferences</string>
     <string name="meal_setup_skip">Skip setup</string>
     <string name="meal_setup_cancel">Cancel editing</string>
     <string name="meal_setup_back">Previous question</string>
     <string name="meal_setup_counter">%1$d of 6</string>
     <string name="meal_setup_review_counter">Review</string>
-    <string name="meal_setup_footer_hint">Save at the end. Edit anytime.</string>
     <string name="meal_setup_chapter_you">You</string>
     <string name="meal_setup_chapter_food">Food</string>
     <string name="meal_setup_chapter_rhythm">Rhythm</string>

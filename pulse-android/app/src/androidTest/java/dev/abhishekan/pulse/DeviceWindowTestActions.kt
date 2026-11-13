@@ -95,6 +95,7 @@ internal fun <A : Activity> ComposeTestRule.awaitWindowConfiguration(
     height: Int,
     densityDpi: Int,
     fontScale: Float? = null,
+    requireWindowFocus: Boolean = true,
 ) {
     // Compose idleness alone does not wait for Android's display override to arrive.
     waitUntil(15_000) {
@@ -110,6 +111,6 @@ internal fun <A : Activity> ComposeTestRule.awaitWindowConfiguration(
         }
         settled
     }
-    awaitAppWindowFocus(scenario)
+    if (requireWindowFocus) awaitAppWindowFocus(scenario)
     waitForIdle()
 }

@@ -319,9 +319,9 @@ internal fun MealPlanScreen(
                                 { vm.manage(true) },
                                 !state.busy && state.draft == null,
                                 state.times.value?.size,
+                                onPreferences = onPreferences,
                             )
                             if (resolvedElsewhere) PulseText(stringResource(R.string.meal_setup_elsewhere))
-                            onPreferences?.let { PulseButton(stringResource(R.string.meal_setup_title), it, style = PulseButtonStyle.Text) }
                             MealSectionContent(state.meals, vm::refreshMeals) { meals ->
                                 MealAgenda(
                                     state.selected,

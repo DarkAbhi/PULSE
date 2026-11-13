@@ -4,9 +4,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -64,6 +64,7 @@ internal fun MealCalendar(
     manageTimes: () -> Unit,
     canManageTimes: Boolean,
     timeCount: Int?,
+    onPreferences: (() -> Unit)? = null,
 ) {
     val colors = PulseTheme.colors
     var pickingDate by rememberSaveable { mutableStateOf(false) }
@@ -103,6 +104,16 @@ internal fun MealCalendar(
             }
         }
     }
+    val preferences: (@Composable () -> Unit)? =
+        onPreferences?.let { openPreferences ->
+            {
+                PulseButton(
+                    text = stringResource(R.string.meal_setup_preferences),
+                    onClick = openPreferences,
+                    style = PulseButtonStyle.Text,
+                )
+            }
+        }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val compact = pulseWindowSize(maxWidth) == PulseWindowSize.Compact
         val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
@@ -169,18 +180,22 @@ internal fun MealCalendar(
                         }
                     }
                     if (!wide) {
-                        FlowRow(
+                        if (selected != today) todayButton()
+                        Row(
                             Modifier.fillMaxWidth(),
-                            horizontalArrangement = if (selected == today) Arrangement.End else Arrangement.SpaceBetween,
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            if (selected != today) todayButton()
-                            mealTimes()
+                            Box(Modifier.weight(1f)) { preferences?.invoke() }
+                            Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) { mealTimes() }
                         }
                     }
                 }
             }
-            MealCalendarDateRow(action = if (wide) mealTimes else null) {
+            MealCalendarDateRow(
+                startAction = if (wide) preferences else null,
+                endAction = if (wide) mealTimes else null,
+            ) {
                 LazyRow(
                     Modifier.widthIn(max = if (compact) 476.dp else 680.dp).fillMaxWidth(),
                     state = scroll,
@@ -237,35 +252,42 @@ internal fun MealCalendar(
     }
 }
 
-/** Keeps the week centered and gives the action a separate row whenever its measured width needs it. */
+/** Keeps the week centered and moves its actions above the dates when either side needs more room. */
 @Composable
 private fun MealCalendarDateRow(
-    action: (@Composable () -> Unit)?,
+    startAction: (@Composable () -> Unit)?,
+    endAction: (@Composable () -> Unit)?,
     dates: @Composable () -> Unit,
 ) {
     Layout(
         modifier = Modifier.fillMaxWidth(),
         content = {
             dates()
-            action?.invoke()
+            startAction?.invoke()
+            endAction?.invoke()
         },
     ) { measurables, constraints ->
         val loose = constraints.copy(minWidth = 0, minHeight = 0)
         val calendar = measurables[0].measure(loose)
-        val button = measurables.getOrNull(1)?.measure(loose)
         val width = constraints.maxWidth
         val gap = 16.dp.roundToPx()
+        val actionConstraints = loose.copy(maxWidth = (width - gap).coerceAtLeast(0) / 2)
+        val start = if (startAction != null) measurables[1].measure(actionConstraints) else null
+        val end = if (endAction != null) measurables.last().measure(actionConstraints) else null
+        val actionWidth = maxOf(start?.width ?: 0, end?.width ?: 0)
+        val actionHeight = maxOf(start?.height ?: 0, end?.height ?: 0)
         // Reserve equal space on both sides so the week stays centered on larger tablets.
-        val beside = button != null && calendar.width + 2 * (button.width + gap) <= width
-        val stacked = button != null && !beside
-        val calendarTop = if (stacked) button.height + gap else 0
-        val height = if (beside) maxOf(calendar.height, button.height) else calendarTop + calendar.height
+        val beside = actionWidth > 0 && calendar.width + 2 * (actionWidth + gap) <= width
+        val calendarTop = if (actionHeight > 0 && !beside) actionHeight + gap else 0
+        val height = if (beside) maxOf(calendar.height, actionHeight) else calendarTop + calendar.height
         layout(width, height) {
             calendar.placeRelative(
                 (width - calendar.width) / 2,
                 if (beside) (height - calendar.height) / 2 else calendarTop,
             )
-            button?.placeRelative(width - button.width, if (beside) (height - button.height) / 2 else 0)
+            val actionRowHeight = if (beside) height else actionHeight
+            start?.placeRelative(0, (actionRowHeight - start.height) / 2)
+            end?.placeRelative(width - end.width, (actionRowHeight - end.height) / 2)
         }
     }
 }

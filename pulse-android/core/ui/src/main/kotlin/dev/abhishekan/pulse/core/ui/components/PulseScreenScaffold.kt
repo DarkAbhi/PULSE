@@ -21,6 +21,7 @@ fun PulseScreenScaffold(
     backLabel: String? = null,
     backEnabled: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {},
+    onBack: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
@@ -35,7 +36,7 @@ fun PulseScreenScaffold(
                         if (backLabel != null) {
                             PulseButton(
                                 backLabel,
-                                { backDispatcher?.onBackPressed() },
+                                { if (onBack != null) onBack() else backDispatcher?.onBackPressed() },
                                 enabled = backEnabled,
                                 style = PulseButtonStyle.Icon,
                             ) { Icon(painterResource(R.drawable.pulse_back), null) }

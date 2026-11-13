@@ -112,6 +112,7 @@ internal fun GarageEditorLayout(
         showTopBar = draft != null || backLabel != null,
         backLabel = if (draft != null) stringResource(R.string.pulse_garage_back_to_garage) else backLabel,
         backEnabled = !editor.busy,
+        onBack = if (vehicleStep != null) cancel else null,
     ) {
         PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
             val body: @Composable (Int?) -> Unit = { page ->
@@ -302,10 +303,10 @@ internal fun GarageFormFooter(
         if (step != null && maxWidth >= 840.dp && LocalDensity.current.fontScale <= 1.3f) {
             Row(horizontalArrangement = Arrangement.spacedBy(PulseTheme.spacing.large)) {
                 Box(Modifier.weight(0.7f))
-                PulseFormActions(primary, back ?: cancelAction, Modifier.weight(1.3f), additional = cancelAction.takeIf { back != null })
+                PulseFormActions(primary, back ?: cancelAction, Modifier.weight(1.3f))
             }
         } else {
-            PulseFormActions(primary, back ?: cancelAction, additional = cancelAction.takeIf { back != null })
+            PulseFormActions(primary, back ?: cancelAction)
         }
     }
 }

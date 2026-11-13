@@ -218,11 +218,6 @@ private fun FuelTankDetails(
             if (selection != fill) change(draft.set("fill$tank", selection))
         }
         Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-            PulseText(
-                stringResource(R.string.pulse_garage_enter_any_two_values_pulse_calculates_the_remaining_value),
-                style = PulseTextStyle.Body2,
-                color = PulseTheme.colors.textSecondary,
-            )
             FuelValues(draft, tank, enabled, change)
             if (fuel == "cng" || fuel == "electric") {
                 PulseText(
@@ -271,7 +266,7 @@ private fun FuelValues(
         ) {
             FuelInput(
                 draft["quantity$tank"],
-                { change(draft.set("quantity$tank", it)) },
+                { change(draft.setFuelValue(tank, "quantity", it)) },
                 stringResource(R.string.pulse_garage_fuel_quantity),
                 enabled,
                 Modifier.weight(1f),
@@ -280,7 +275,7 @@ private fun FuelValues(
             )
             FuelInput(
                 draft["price$tank"],
-                { change(draft.set("price$tank", it)) },
+                { change(draft.setFuelValue(tank, "price", it)) },
                 stringResource(R.string.pulse_garage_fuel_unit_price),
                 enabled,
                 Modifier.weight(1f),

@@ -825,7 +825,7 @@ class GarageDeviceTest {
     private fun vehicleTabBody(heading: String) =
         compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange) and hasAnyDescendant(hasText(heading)))
 
-    @Test fun fuelCardsKeepInputsManualAndOptionalDetailsAcrossRecreation() {
+    @Test fun fuelCardsCalculateTotalAndKeepOptionalDetailsAcrossRecreation() {
         launchGarage()
         select()
         tap("Fuel")
@@ -849,7 +849,7 @@ class GarageDeviceTest {
         field("Quantity (L) · tank 1", "2.5")
         field("Price per litre (₹) · tank 1", "100")
         val total = compose.onNodeWithContentDescription("Total cost (₹) · tank 1")
-        assertEquals("", total.fetchSemanticsNode().config[SemanticsProperties.EditableText].text)
+        assertEquals("250", total.fetchSemanticsNode().config[SemanticsProperties.EditableText].text)
         compose.onNodeWithContentDescription("Price per litre (₹) · tank 1").performScrollTo().performClick()
         compose.onNodeWithText("Save").assertIsDisplayed()
         compose.onNodeWithText("Cancel").assertIsDisplayed()

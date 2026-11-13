@@ -115,7 +115,6 @@
     <string name="pulse_garage_fuel_date">Date</string>
     <string name="pulse_garage_fuel_time">Time</string>
     <string name="pulse_garage_fuel_picker_description">%1$s: %2$s</string>
-    <string name="pulse_garage_enter_any_two_values_pulse_calculates_the_remaining_value">"Enter any two values. Pulse calculates the third when you save."</string>
     <string name="pulse_garage_quantity_l_tank_1_s">"Quantity (L) · tank %1$s"</string>
     <string name="pulse_garage_price_per_litre_tank_1_s">"Price per litre (%1$s) · tank %2$s"</string>
     <string name="pulse_garage_total_cost_tank_1_s">"Total cost (%1$s) · tank %2$s"</string>

@@ -96,6 +96,24 @@ data class GarageDraft(
             dirty = true,
         )
 
+    fun setFuelValue(
+        tank: Int,
+        key: String,
+        value: String,
+    ): GarageDraft {
+        fun product(draft: GarageDraft) =
+            draft["quantity$tank"].toBigDecimalOrNull()?.let { quantity ->
+                draft["price$tank"].toBigDecimalOrNull()?.let { quantity * it }
+            }
+        val updated = set("$key$tank", value)
+        val total = product(updated)
+        return when {
+            total != null -> updated.set("total$tank", total.stripTrailingZeros().toPlainString())
+            product(this)?.compareTo(get("total$tank").toBigDecimalOrNull() ?: return updated) == 0 -> updated.set("total$tank", "")
+            else -> updated
+        }
+    }
+
     fun chooseModel(option: VehicleCatalogOption): GarageDraft {
         val defaultName = listOf(get("makeName"), option.name).filter(String::isNotBlank).joinToString(" ")
         val previousDefault = listOf(get("makeName"), get("modelName")).filter(String::isNotBlank).joinToString(" ")

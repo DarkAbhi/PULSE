@@ -1,0 +1,262 @@
+package dev.abhishekan.pulse.feature.horizon
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
+import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.PulseWindowSize
+import dev.abhishekan.pulse.core.ui.components.PulseText
+
+internal val PulseWindowSize.horizonGutter
+    get() =
+        when (this) {
+            PulseWindowSize.Compact -> 20.dp
+            PulseWindowSize.Medium -> 32.dp
+            PulseWindowSize.Expanded -> 48.dp
+        }
+
+@Composable
+internal fun HorizonTabs(
+    current: HorizonTab,
+    enabled: Boolean,
+    width: PulseWindowSize,
+    onSelect: (HorizonTab) -> Unit,
+) {
+    val colors = PulseTheme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = width.horizonGutter)
+            .padding(top = if (width == PulseWindowSize.Compact) 16.dp else 32.dp)
+            .selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        HorizonTab.entries.forEach { tab ->
+            val selected = tab == current
+            Surface(
+                selected = selected,
+                onClick = { onSelect(tab) },
+                modifier = Modifier.semantics { role = Role.Tab },
+                enabled = enabled,
+                shape = PulseTheme.shapes.pill,
+                color = if (selected) colors.primary else colors.surface,
+                contentColor = if (selected) colors.onPrimary else colors.textPrimary,
+                border = if (selected) null else BorderStroke(1.5.dp, colors.divider),
+            ) {
+                Box(
+                    Modifier.heightIn(min = 48.dp).padding(horizontal = 24.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    PulseText(
+                        stringResource(tab.label),
+                        style = PulseTheme.typography.title3.copy(fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun RecentTransactionsHeading(width: PulseWindowSize) {
+    PulseText(
+        stringResource(R.string.pulse_horizon_recent_transactions),
+        Modifier.semantics { heading() },
+        style =
+            if (width == PulseWindowSize.Compact) {
+                PulseTheme.typography.heading2.copy(fontSize = 29.sp)
+            } else {
+                PulseTheme.typography.heading1
+            },
+        color = PulseTheme.colors.textPrimary,
+    )
+}
+
+@Composable
+internal fun EmptyRecentTransactions(
+    width: PulseWindowSize,
+    enabled: Boolean,
+    onLog: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val wide = width != PulseWindowSize.Compact
+    Column(
+        modifier
+            .fillMaxWidth()
+            .padding(horizontal = width.horizonGutter)
+            .padding(
+                top = if (wide) 28.dp else 24.dp,
+                bottom = LocalPulseContentPadding.current.calculateBottomPadding(),
+            ),
+    ) {
+        RecentTransactionsHeading(width)
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = maxHeight)
+                    .padding(vertical = 20.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (wide) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(if (width == PulseWindowSize.Expanded) 56.dp else 32.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TransactionGhostRows(Modifier.weight(1f).padding(bottom = 80.dp), wide = true)
+                        FirstTransactionPrompt(enabled, onLog, Modifier.weight(1f), wide = true)
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
+                        TransactionGhostRows(Modifier.fillMaxWidth(), wide = false)
+                        FirstTransactionPrompt(enabled, onLog, Modifier.fillMaxWidth(), wide = false)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FirstTransactionPrompt(
+    enabled: Boolean,
+    onLog: () -> Unit,
+    modifier: Modifier,
+    wide: Boolean,
+) {
+    val colors = PulseTheme.colors
+    val typography = PulseTheme.typography
+    Column(modifier) {
+        PulseText(
+            stringResource(R.string.pulse_horizon_nothing_logged_yet),
+            Modifier.semantics { heading() },
+            style =
+                if (wide) {
+                    typography.heading1.copy(fontSize = 34.sp, fontWeight = FontWeight.Bold)
+                } else {
+                    typography.heading3.copy(fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                },
+            color = colors.textPrimary,
+        )
+        PulseText(
+            stringResource(R.string.pulse_horizon_log_first_transaction),
+            Modifier.padding(top = if (wide) 20.dp else 14.dp, bottom = 26.dp),
+            style = typography.body1.copy(fontSize = if (wide) 18.sp else 16.5.sp, lineHeight = if (wide) 28.sp else 25.sp),
+            color = colors.textSecondary,
+        )
+        Button(
+            onClick = onLog,
+            modifier = if (wide) Modifier.heightIn(min = 56.dp) else Modifier.fillMaxWidth().heightIn(min = 56.dp),
+            enabled = enabled,
+            shape = PulseTheme.shapes.large,
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = colors.primary,
+                    contentColor = colors.onPrimary,
+                    disabledContainerColor = colors.surfaceMuted,
+                    disabledContentColor = colors.textSecondary,
+                ),
+            contentPadding = PaddingValues(horizontal = if (wide) 36.dp else 20.dp, vertical = 12.dp),
+        ) {
+            PulseText(
+                stringResource(R.string.pulse_horizon_log_transaction),
+                style = typography.title3.copy(fontWeight = FontWeight.Bold),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TransactionGhostRows(
+    modifier: Modifier,
+    wide: Boolean,
+) {
+    val colors = PulseTheme.colors
+    val gap = if (wide) 12.dp else 10.dp
+    val rowHeight = 74.dp
+    // The drawing has no text, actions, or accessibility semantics.
+    Canvas(modifier.height(rowHeight * 3 + gap * 2)) {
+        val strokeWidth = 1.5.dp.toPx()
+        val inset = strokeWidth / 2
+        val dash = 3.dp.toPx()
+        val stroke = Stroke(strokeWidth, pathEffect = PathEffect.dashPathEffect(floatArrayOf(dash, dash / 2)))
+        val outerRadius = CornerRadius(16.dp.toPx())
+        val height = rowHeight.toPx()
+        val iconLeft = minOf(17.dp.toPx(), size.width * 0.05f)
+        val iconRadius = minOf(21.dp.toPx(), size.width * 0.07f)
+        val amountWidth = minOf(56.dp.toPx(), size.width * 0.16f)
+        val amountLeft = size.width - iconLeft - amountWidth
+        val textLeft = iconLeft + iconRadius * 2 + 12.dp.toPx()
+        val textWidth = (amountLeft - textLeft).coerceAtLeast(0f)
+        val levels = if (wide) listOf(1f, 0.62f, 0.30f) else listOf(1f, 0.52f, 0.10f)
+        levels.forEachIndexed { index, alpha ->
+            val top = index * (height + gap.toPx())
+            val center = top + height / 2
+            val outline = colors.border.copy(alpha = alpha)
+            val fill = colors.surfaceMuted.copy(alpha = alpha)
+            drawRoundRect(
+                outline,
+                Offset(inset, top + inset),
+                Size(size.width - strokeWidth, height - strokeWidth),
+                outerRadius,
+                style = stroke,
+            )
+            drawCircle(outline, iconRadius, Offset(iconLeft + iconRadius, center), style = stroke)
+            val titleWidth =
+                when (index) {
+                    0 -> 0.60f
+                    1 -> 0.46f
+                    else -> 0.68f
+                }
+            drawRoundRect(
+                fill,
+                Offset(textLeft, center - 13.dp.toPx()),
+                Size(textWidth * titleWidth, 10.dp.toPx()),
+                CornerRadius(5.dp.toPx()),
+            )
+            drawRoundRect(
+                fill.copy(alpha = alpha * 0.72f),
+                Offset(textLeft, center + 5.dp.toPx()),
+                Size(textWidth * 0.43f, 8.dp.toPx()),
+                CornerRadius(4.dp.toPx()),
+            )
+            drawRoundRect(fill, Offset(amountLeft, center - 6.dp.toPx()), Size(amountWidth, 12.dp.toPx()), CornerRadius(6.dp.toPx()))
+        }
+    }
+}

@@ -4,9 +4,13 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
@@ -27,6 +31,7 @@ import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isPopup
+import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -38,6 +43,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
@@ -932,6 +938,24 @@ class HorizonDeviceTest {
         awaitText("Rent")
         assertEquals(1, backend.items("deductions").size)
         compose.onNode(hasTestTag("fixed-obligation-editor")).assertDoesNotExist()
+    }
+
+    @Test fun emptyRecentTransactionsOfferLoggingAndHideHistory() {
+        backend.items("transactions").clear()
+        launchHorizon()
+        tap("Transactions")
+        awaitText("Nothing logged yet")
+        compose.onNodeWithText("View all").assertDoesNotExist()
+        compose.onNode(hasText("Transactions") and isSelectable()).assertIsSelected()
+        compose.onNode(hasText("Horizon") and isSelectable()).assertIsSelected()
+        compose
+            .onNodeWithText("Log a transaction")
+            .performScrollTo()
+            .assertHeightIsAtLeast(56.dp)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+        screenshot("recent-transactions-empty")
+        tap("Log a transaction")
+        awaitText("Add transaction")
     }
 
     @Test fun transactionLedgerAdaptsBetweenPhoneAndTablet() {

@@ -1,13 +1,11 @@
 package dev.abhishekan.pulse.feature.horizon
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -56,7 +54,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
-import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseFormAction
 import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
@@ -175,24 +172,7 @@ internal fun HorizonScreen(
         ) {
             val showHistory = state.historyOpen && (state.draft == null || records)
             if (!showHistory && (state.draft == null || records)) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(
-                            rememberScrollState(),
-                        ).padding(start = width.pagePadding, top = width.pagePadding, end = width.pagePadding),
-                    horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                ) {
-                    HorizonTab.entries.forEach { tab ->
-                        PulseFilterChip(
-                            stringResource(tab.label),
-                            tab == state.tab,
-                            { vm.tab(tab) },
-                            enabled = !state.busy,
-                            showSelectedIcon = false,
-                        )
-                    }
-                }
+                HorizonTabs(state.tab, !state.busy, width, vm::tab)
             }
             val review: @Composable () -> Unit = {
                 if (state.reviewRequired) {
@@ -258,7 +238,7 @@ internal fun HorizonScreen(
                         .fillMaxWidth()
                         .verticalScroll(scroll)
                         .padding(bottom = LocalPulseContentPadding.current.calculateBottomPadding())
-                        .padding(width.pagePadding),
+                        .padding(if (state.tab == HorizonTab.Transactions) width.horizonGutter else width.pagePadding),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                 ) {
                     review()
@@ -295,10 +275,7 @@ internal fun HorizonScreen(
                             }
                         }
                         HorizonTab.Transactions -> {
-                            PulseText(
-                                stringResource(R.string.pulse_horizon_recent_transactions),
-                                style = PulseTextStyle.Heading2,
-                            )
+                            RecentTransactionsHeading(width)
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
                                 verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
@@ -308,12 +285,17 @@ internal fun HorizonScreen(
                                     { create(HorizonForm.Transaction) },
                                     enabled = canMutate,
                                 )
-                                PulseButton(
-                                    stringResource(R.string.pulse_horizon_view_all_transactions),
-                                    vm::openHistory,
-                                    enabled = !state.busy && state.draft == null,
-                                    variant = PulseButtonVariant.Secondary,
-                                )
+                                if (state.recent.value
+                                        ?.items
+                                        ?.isNotEmpty() == true
+                                ) {
+                                    PulseButton(
+                                        stringResource(R.string.pulse_horizon_view_all_transactions),
+                                        vm::openHistory,
+                                        enabled = !state.busy && state.draft == null,
+                                        variant = PulseButtonVariant.Secondary,
+                                    )
+                                }
                             }
                             SectionState(state.recent, vm::refreshRecent) { page ->
                                 if (currency.isBlank()) {
@@ -322,7 +304,7 @@ internal fun HorizonScreen(
                                 val recent = page.items.take(5)
                                 if (recent.isEmpty()) {
                                     PulseEmptyState(
-                                        stringResource(R.string.pulse_horizon_no_transactions),
+                                        stringResource(R.string.pulse_horizon_nothing_logged_yet),
                                         stringResource(R.string.pulse_horizon_log_first_transaction),
                                     )
                                 } else {
@@ -536,6 +518,22 @@ internal fun HorizonScreen(
             } else if (state.draft != null && !records) {
                 key(state.draft.kind, state.draft.id) {
                     HorizonFormScreen(state, vm, width, cancel, review)
+                }
+            } else if (state.tab == HorizonTab.Transactions &&
+                state.draft == null &&
+                !state.reviewRequired &&
+                state.recent.error == null &&
+                state.recent.value
+                    ?.items
+                    ?.isEmpty() == true
+            ) {
+                scrollStates.SaveableStateProvider("empty-transactions") {
+                    EmptyRecentTransactions(
+                        width,
+                        canMutate,
+                        { vm.newForm(HorizonForm.Transaction) },
+                        Modifier.weight(1f),
+                    )
                 }
             } else {
                 scrollStates.SaveableStateProvider((if (state.draft == null) "root-" else "review-") + state.tab.name) { content() }

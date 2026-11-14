@@ -363,7 +363,8 @@
     <string name="pulse_horizon_recent_transactions">Recent transactions</string>
     <string name="pulse_horizon_all_transactions">All transactions</string>
     <string name="pulse_horizon_view_all_transactions">View all</string>
-    <string name="pulse_horizon_log_first_transaction">Log your first transaction to see it here.</string>
+    <string name="pulse_horizon_nothing_logged_yet">Nothing logged yet</string>
+    <string name="pulse_horizon_log_first_transaction">Add your first transaction and watch your room to move update. Spending and income both count.</string>
     <string name="pulse_horizon_loading_transactions">Loading transactions</string>
     <string name="pulse_horizon_back_to_transactions">Back to transactions</string>
     <string name="pulse_horizon_back_to_history">Back to all transactions</string>

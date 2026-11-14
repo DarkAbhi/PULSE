@@ -1,8 +1,6 @@
 package dev.abhishekan.pulse.feature.horizon
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,11 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,9 +22,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,6 +30,9 @@ import androidx.compose.ui.unit.sp
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseTabs
 import dev.abhishekan.pulse.core.ui.components.PulseText
 
 internal val PulseWindowSize.horizonGutter
@@ -55,40 +50,15 @@ internal fun HorizonTabs(
     width: PulseWindowSize,
     onSelect: (HorizonTab) -> Unit,
 ) {
-    val colors = PulseTheme.colors
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = width.horizonGutter)
-            .padding(top = if (width == PulseWindowSize.Compact) 16.dp else 32.dp)
-            .selectableGroup(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        HorizonTab.entries.forEach { tab ->
-            val selected = tab == current
-            Surface(
-                selected = selected,
-                onClick = { onSelect(tab) },
-                modifier = Modifier.semantics { role = Role.Tab },
-                enabled = enabled,
-                shape = PulseTheme.shapes.pill,
-                color = if (selected) colors.primary else colors.surface,
-                contentColor = if (selected) colors.onPrimary else colors.textPrimary,
-                border = if (selected) null else BorderStroke(1.5.dp, colors.divider),
-            ) {
-                Box(
-                    Modifier.heightIn(min = 48.dp).padding(horizontal = 24.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    PulseText(
-                        stringResource(tab.label),
-                        style = PulseTheme.typography.title3.copy(fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal),
-                    )
-                }
-            }
-        }
-    }
+    PulseTabs(
+        labels = HorizonTab.entries.map { stringResource(it.label) },
+        selectedIndex = current.ordinal,
+        onSelect = { onSelect(HorizonTab.entries[it]) },
+        modifier = Modifier.fillMaxWidth().padding(top = if (width == PulseWindowSize.Compact) 16.dp else 32.dp),
+        enabled = enabled,
+        pills = true,
+        edgePadding = width.horizonGutter,
+    )
 }
 
 @Composable
@@ -180,25 +150,14 @@ private fun FirstTransactionPrompt(
             style = typography.body1.copy(fontSize = if (wide) 18.sp else 16.5.sp, lineHeight = if (wide) 28.sp else 25.sp),
             color = colors.textSecondary,
         )
-        Button(
+        PulseButton(
+            text = stringResource(R.string.pulse_horizon_log_transaction),
             onClick = onLog,
-            modifier = if (wide) Modifier.heightIn(min = 56.dp) else Modifier.fillMaxWidth().heightIn(min = 56.dp),
+            modifier = if (wide) Modifier else Modifier.fillMaxWidth(),
             enabled = enabled,
-            shape = PulseTheme.shapes.large,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = colors.primary,
-                    contentColor = colors.onPrimary,
-                    disabledContainerColor = colors.surfaceMuted,
-                    disabledContentColor = colors.textSecondary,
-                ),
+            style = PulseButtonStyle.Large,
             contentPadding = PaddingValues(horizontal = if (wide) 36.dp else 20.dp, vertical = 12.dp),
-        ) {
-            PulseText(
-                stringResource(R.string.pulse_horizon_log_transaction),
-                style = typography.title3.copy(fontWeight = FontWeight.Bold),
-            )
-        }
+        )
     }
 }
 

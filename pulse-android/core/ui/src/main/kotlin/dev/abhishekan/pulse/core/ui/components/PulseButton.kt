@@ -25,6 +25,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.R
@@ -32,7 +34,7 @@ import dev.abhishekan.pulse.core.ui.R
 enum class PulseButtonVariant { Primary, Secondary, Tertiary, Destructive, Soft, DestructiveSoft }
 
 /** Presentation is independent of the action's visual emphasis ([PulseButtonVariant]). */
-enum class PulseButtonStyle { Standard, Text, Icon }
+enum class PulseButtonStyle { Standard, Text, Icon, Large }
 
 /**
  * Shared action component. [text] is the accessibility label for [PulseButtonStyle.Icon].
@@ -92,7 +94,12 @@ fun PulseButton(
         PulseText(
             text,
             modifier = if (trailingIcon != null) Modifier.weight(1f, fill = false) else Modifier,
-            style = PulseTextStyle.Label,
+            style =
+                if (style == PulseButtonStyle.Large) {
+                    PulseTheme.typography.title3.copy(fontWeight = FontWeight.Bold)
+                } else {
+                    PulseTheme.typography.label1
+                },
         )
         if (trailingIcon != null && !loading) {
             Spacer(Modifier.width(PulseTokens.small))
@@ -134,9 +141,9 @@ fun PulseButton(
         }
     Button(
         onClick,
-        actionModifier.defaultMinSize(minHeight = PulseTokens.target),
+        actionModifier.defaultMinSize(minHeight = if (style == PulseButtonStyle.Large) 56.dp else PulseTokens.target),
         enabled = enabled && !loading,
-        shape = PulseTheme.shapes.small,
+        shape = if (style == PulseButtonStyle.Large) PulseTheme.shapes.large else PulseTheme.shapes.small,
         interactionSource = interaction,
         colors =
             ButtonDefaults.buttonColors(

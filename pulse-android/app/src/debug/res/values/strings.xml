@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="debug_local_network_required">Allow local network access to connect to your development server.</string>
+    <string name="debug_allow_local_network">Allow local network access</string>
+    <string name="debug_open_app_settings">Open app settings</string>
+</resources>

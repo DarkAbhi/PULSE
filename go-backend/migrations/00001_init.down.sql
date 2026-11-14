@@ -1,0 +1,16 @@
+DROP TABLE IF EXISTS gym_reminder_deliveries;
+DROP TABLE IF EXISTS next_month_purchases;
+DROP TABLE IF EXISTS vehicle_fuel_items;
+DROP TABLE IF EXISTS vehicle_fuel_fillups;
+DROP TABLE IF EXISTS vehicle_air_fills;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS vehicles;
+DROP TABLE IF EXISTS sports;
+DROP TABLE IF EXISTS credit_cards;
+DROP TABLE IF EXISTS gym_exercise_sets;
+DROP TABLE IF EXISTS gym_visit_exercises;
+DROP TABLE IF EXISTS gym_visits;
+DROP TABLE IF EXISTS meditations;
+DROP TABLE IF EXISTS user_profiles;
+DROP TABLE IF EXISTS user_sessions;
+DROP TABLE IF EXISTS users;

@@ -1,0 +1,538 @@
+"use client";
+
+import Select from "@/app/components/design-system/select";
+import type { MealPreferences } from "./onboarding/types";
+import { isMealTimeEnabled, standardMealKind } from "./onboarding/questionnaire";
+import PulseCard from "@/app/components/design-system/pulse-card";
+
+import { useTimeZone } from "@/app/components/time-zone-provider";
+
+import { dateKey } from "@/app/lib/time-zone.mjs";
+
+import Button from "@/app/components/design-system/button";
+
+import { useState, useEffect, useTransition, useId } from "react";
+import BackLink from "@/app/components/design-system/back-link";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Trash2,
+  Utensils,
+  Clock,
+  Loader2,
+  Check,
+} from "lucide-react";
+import Dialog, { DialogActions, DialogAction } from "@/app/components/design-system/dialog";
+import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import {
+  MealPlan,
+  MealTime,
+  addMealPlanAction,
+  deleteMealPlanAction,
+  getMealPlansAction,
+  updateMealPlanConsumedAction,
+} from "./actions";
+
+interface MealPlanClientProps {
+  preferences?: MealPreferences | null;
+  onEditPreferences?: () => void;
+  initialMeals: MealPlan[];
+  initialMealTimes: MealTime[];
+  initialTodayStr?: string;
+}
+
+
+function parseYMD(dateStr: string): Date {
+  return new Date(`${dateStr}T00:00:00Z`);
+}
+
+function formatYMD(d: Date): string {
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getMonday(d: Date): Date {
+  const date = new Date(d);
+  const day = date.getUTCDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  date.setUTCDate(date.getUTCDate() + diff);
+  date.setUTCHours(0, 0, 0, 0);
+  return date;
+}
+
+function addDays(d: Date, days: number): Date {
+  const res = new Date(d);
+  res.setUTCDate(res.getUTCDate() + days);
+  return res;
+}
+
+function formatTimeDisplay(timeStr?: string): string {
+  if (!timeStr) return "";
+  const parts = timeStr.split(":");
+  if (parts.length < 2) return timeStr;
+  const hours = parseInt(parts[0], 10);
+  const minutes = parts[1];
+  const ampm = hours >= 12 ? "PM" : "AM";
+  const formattedHours = hours % 12 === 0 ? 12 : hours % 12;
+  return `${formattedHours}:${minutes} ${ampm}`;
+}
+
+export default function MealPlanClient({
+  preferences,
+  onEditPreferences,
+  initialMeals,
+  initialMealTimes,
+  initialTodayStr,
+}: MealPlanClientProps) {
+  const { timeZone } = useTimeZone();
+  const [todayStr, setTodayStr] = useState(() => initialTodayStr ?? dateKey(new Date(), timeZone));
+  useEffect(() => {
+    const update = () => setTodayStr(dateKey(new Date(), timeZone));
+    update();
+    const timer = window.setInterval(update, 60000);
+    window.addEventListener("focus", update);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", update); };
+  }, [timeZone]);
+  const [selectedDate, setSelectedDate] = useState(
+    () => initialTodayStr ?? dateKey(new Date(), timeZone)
+  );
+  const [meals, setMeals] = useState<MealPlan[]>(initialMeals);
+  const mealTimes = initialMealTimes;
+  const [isLoadingWeek, setIsLoadingWeek] = useState(false);
+
+  // Meal form state
+  const [isAddMealOpen, setIsAddMealOpen] = useState(false);
+  const [selectedMealTimeID, setSelectedMealTimeID] = useState<number | null>(null);
+  const [mealName, setMealName] = useState("");
+  const [mealModalError, setMealModalError] = useState("");
+
+  // New meal time Meal Time Modal state
+  // Deletion confirmation state
+  const [mealToDelete, setMealToDelete] = useState<MealPlan | null>(null);
+
+  const [isPending, startTransition] = useTransition();
+
+  const [deleteError, setDeleteError] = useState("");
+  const addMealTitleId = useId();
+
+  const currentMonday = getMonday(parseYMD(selectedDate));
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = addDays(currentMonday, i);
+    const dateStr = formatYMD(d);
+    return {
+      date: d,
+      dateStr,
+      dayShort: d.toLocaleDateString("en-IN", { timeZone: "UTC", weekday: "short" }),
+      dayFull: d.toLocaleDateString("en-IN", { timeZone: "UTC", weekday: "long" }),
+      monthDay: d.toLocaleDateString("en-IN", { timeZone: "UTC", month: "short", day: "numeric" }),
+      isToday: dateStr === todayStr,
+      isSelected: dateStr === selectedDate,
+    };
+  });
+
+  const weekStartStr = formatYMD(currentMonday);
+  const weekEndStr = formatYMD(addDays(currentMonday, 6));
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoadingWeek(true);
+
+    getMealPlansAction(weekStartStr, weekEndStr).then((res) => {
+      if (cancelled) return;
+      setIsLoadingWeek(false);
+      if (res.ok && res.meals) {
+        setMeals(res.meals);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [weekStartStr, weekEndStr]);
+
+  const moveWeek = (days: number) => setSelectedDate((date) => formatYMD(addDays(parseYMD(date), days)));
+  const handleToday = () => setSelectedDate(dateKey(new Date(), timeZone));
+
+  const selectedDay = weekDays.find((day) => day.isSelected)!;
+  const dayMeals = meals.filter((meal) => meal.date === selectedDate);
+  const orderedMealTimes = [...mealTimes].sort((a, b) => a.start_time.localeCompare(b.start_time));
+  const enabledMealTimes = orderedMealTimes.filter(time => isMealTimeEnabled(time, preferences));
+  const otherMeals = dayMeals.filter((meal) => !mealTimes.some((time) => time.id === meal.meal_time_id));
+  const eatenCount = dayMeals.filter((meal) => meal.is_consumed).length;
+
+  // Open add meal modal, optionally preselecting a meal time slot
+  const handleOpenAddMeal = (mealTimeID?: number) => {
+    setMealName("");
+    setMealModalError("");
+    setSelectedMealTimeID(enabledMealTimes.find(time => time.id === mealTimeID)?.id ?? enabledMealTimes[0]?.id ?? null);
+    setIsAddMealOpen(true);
+  };
+
+  const handleCloseAddMeal = () => {
+    setIsAddMealOpen(false);
+    setMealName("");
+    setMealModalError("");
+  };
+
+  const handleSubmitAddMeal = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = mealName.trim();
+    if (!trimmed) {
+      setMealModalError("Please enter a meal name.");
+      return;
+    }
+    if (!enabledMealTimes.some(time => time.id === selectedMealTimeID)) {
+      setMealModalError("Choose an available meal time.");
+      return;
+    }
+
+    startTransition(async () => {
+      setMealModalError("");
+      const res = await addMealPlanAction(selectedDate, trimmed, selectedMealTimeID ?? undefined);
+      if (!res.ok || !res.meal) {
+        setMealModalError(res.error ?? "Failed to add meal.");
+        return;
+      }
+
+      setMeals((prev) => [...prev, res.meal!]);
+      handleCloseAddMeal();
+    });
+  };
+
+  const handleConfirmDeleteMeal = () => {
+    if (!mealToDelete) return;
+    setDeleteError("");
+    startTransition(async () => {
+      const res = await deleteMealPlanAction(mealToDelete.id);
+      if (res.ok) {
+        setMeals((prev) => prev.filter((m) => m.id !== mealToDelete.id));
+        setMealToDelete(null);
+      } else {
+        setDeleteError(res.error ?? "Could not remove the meal.");
+      }
+    });
+  };
+
+  const handleToggleConsumed = (meal: MealPlan) => {
+    const nextConsumed = !meal.is_consumed;
+    // Optimistic update
+    setMeals((prev) =>
+      prev.map((m) => (m.id === meal.id ? { ...m, is_consumed: nextConsumed } : m))
+    );
+
+    startTransition(async () => {
+      const res = await updateMealPlanConsumedAction(meal.id, nextConsumed);
+      if (!res.ok) {
+        // Revert on failure
+        setMeals((prev) =>
+          prev.map((m) => (m.id === meal.id ? { ...m, is_consumed: !nextConsumed } : m))
+        );
+      }
+    });
+  };
+
+  const formattedWeekRange = `${currentMonday.toLocaleDateString("en-IN", { timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+  })} – ${addDays(currentMonday, 6).toLocaleDateString("en-IN", { timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })}`;
+
+  const renderMeals = (items: MealPlan[]) => (
+    <ul className="divide-y divide-divider/60">
+      {items.map((meal) => (
+        <li key={meal.id} className="flex items-center gap-2 py-2 first:pt-0 last:pb-0">
+          <Button
+            variant={meal.is_consumed ? "soft" : "tertiary"}
+            size="sm"
+            type="button"
+            role="checkbox"
+            aria-checked={meal.is_consumed}
+            aria-label={`Eaten: ${meal.name}`}
+            onClick={() => handleToggleConsumed(meal)}
+            disabled={isPending}
+            className="min-w-0 flex-1 justify-start! text-left"
+          >
+            <span className="flex size-4 shrink-0 items-center justify-center rounded">
+              {meal.is_consumed && <Check className="size-3" aria-hidden="true" />}
+            </span>
+            <span className={`min-w-0 wrap-anywhere text-sm ${meal.is_consumed ? "text-muted-foreground line-through" : "text-foreground"}`}>
+              {meal.name}
+            </span>
+          </Button>
+          <Button variant="iconDanger" size="md" type="button"
+            onClick={() => { setDeleteError(""); setMealToDelete(meal); }}
+            aria-label={`Delete ${meal.name}`}
+            disabled={isPending}
+            className="shrink-0"
+          >
+            <Trash2 className="size-4" aria-hidden="true" />
+          </Button>
+        </li>
+      ))}
+    </ul>
+  );
+
+  return (
+    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
+      <div className="mx-auto max-w-5xl" inert={isAddMealOpen || mealToDelete !== null}>
+        <BackLink href="/dashboard">Dashboard</BackLink>
+
+        <PulseCard as="section" aria-labelledby="meal-plan-title" className="mt-5 overflow-hidden">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-divider bg-accent px-4 py-6 text-accent-foreground sm:px-7 sm:py-8">
+            <div>
+              <h1 id="meal-plan-title" className="text-4xl font-bold tracking-tight sm:text-5xl">Meal Plan</h1>
+              <p className="mt-2 text-sm">Plan your week, one meal at a time.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {onEditPreferences && <Button variant="secondary" onClick={onEditPreferences}>Meal preferences</Button>}
+            </div>
+          </div>
+
+          <div className="p-3 sm:p-6">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
+              <h2 className="text-sm font-semibold sm:text-base">{formattedWeekRange}</h2>
+              <div className="flex items-center gap-1">
+                <Button variant="tertiary" size="sm" onClick={handleToday}>Today</Button>
+                <Button variant="iconSecondary" size="sm" onClick={() => moveWeek(-7)} aria-label="Previous week">
+                  <ChevronLeft className="size-4" aria-hidden="true" />
+                </Button>
+                <Button variant="iconSecondary" size="sm" onClick={() => moveWeek(7)} aria-label="Next week">
+                  <ChevronRight className="size-4" aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 sm:gap-2" role="group" aria-label="Days of the week">
+              {weekDays.map((day) => (
+                <Button
+                  key={day.dateStr}
+                  variant={day.isSelected ? "primary" : "iconSecondary"}
+                  aria-label={`${day.dayFull}, ${day.monthDay}`}
+                  aria-pressed={day.isSelected}
+                  aria-current={day.isToday ? "date" : undefined}
+                  onClick={() => setSelectedDate(day.dateStr)}
+                  className="h-auto min-h-16 w-full min-w-0 flex-col px-0 py-2 sm:min-h-20"
+                >
+                  <span className="text-xs font-medium">{day.dayShort}</span>
+                  <span className="text-lg leading-none tabular-nums sm:text-2xl">{day.date.getUTCDate()}</span>
+                  <span aria-hidden="true" className={`size-1 rounded-full ${day.isToday ? "bg-current" : "invisible"}`} />
+                </Button>
+              ))}
+            </div>
+          </div>
+        </PulseCard>
+
+        <section aria-labelledby="meal-agenda-title" className="mt-7 sm:mt-9">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 id="meal-agenda-title" className="text-2xl font-bold tracking-tight sm:text-3xl">
+                {selectedDay.dayFull}, {selectedDay.monthDay}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground" role="status">
+                {isLoadingWeek ? "Loading meals…" : dayMeals.length ? `${eatenCount} of ${dayMeals.length} meals eaten` : "No meals planned yet"}
+              </p>
+            </div>
+            <Button onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek}>
+              <Plus className="size-4" aria-hidden="true" /> Add meal
+            </Button>
+          </div>
+
+          <PulseCard className="overflow-hidden" aria-busy={isLoadingWeek}>
+            {!isLoadingWeek && dayMeals.length === 0 && preferences && <div className="flex flex-wrap items-center gap-2 border-b border-divider px-4 py-4 sm:px-6">
+              <span className="mr-1 text-sm text-muted-foreground">Start with your usual meals</span>
+              {preferences.meals.map(preference => {
+                const slot = mealTimes.find(time => standardMealKind(time) === preference.kind);
+                return slot ? <Button key={preference.kind} variant="soft" size="sm" onClick={() => handleOpenAddMeal(slot.id)}>Plan {slot.name.toLowerCase()} · {formatTimeDisplay(preference.usual_time)}</Button> : null;
+              })}
+            </div>}
+            <div className="divide-y divide-divider">
+              {orderedMealTimes.map((time) => {
+                const items = dayMeals.filter((meal) => meal.meal_time_id === time.id);
+                const enabled = isMealTimeEnabled(time, preferences);
+                if (!enabled && items.length === 0) return null;
+                const usualTime = preferences?.meals.find(meal => meal.kind === standardMealKind(time))?.usual_time;
+                return (
+                  <section key={time.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-5 gap-y-3 px-4 py-4 sm:grid-cols-[12rem_minmax(0,1fr)_auto] sm:items-start sm:px-6">
+                    <div className="col-start-1 row-start-1 flex min-w-0 items-start gap-3">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
+                        <Clock className="size-4" aria-hidden="true" />
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold wrap-anywhere">{time.name}</h3>
+                        <p className="text-xs text-muted-foreground">{formatTimeDisplay(time.start_time)} – {formatTimeDisplay(time.end_time)}</p>
+                        {usualTime && <p className="mt-1 text-xs text-action">Your usual time: {formatTimeDisplay(usualTime)}</p>}
+                      </div>
+                    </div>
+                    <div className="col-span-2 row-start-2 min-w-0 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+                      {items.length ? renderMeals(items) : <p className="py-2 text-sm text-muted-foreground">Nothing planned</p>}
+                    </div>
+                    {enabled && <Button variant="secondary" size="sm" className="col-start-2 row-start-1 justify-self-end sm:col-start-3"
+                      onClick={() => handleOpenAddMeal(time.id)}
+                      aria-label={`Add meal to ${time.name}`}
+                      disabled={isLoadingWeek}
+                    >
+                      <Plus className="size-3.5" aria-hidden="true" /> Add
+                    </Button>}
+                  </section>
+                );
+              })}
+              {otherMeals.length > 0 && (
+                <section className="grid gap-3 px-4 py-4 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-5 sm:px-6">
+                  <h3 className="flex items-center gap-3 font-semibold">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary">
+                      <Utensils className="size-4" aria-hidden="true" />
+                    </span>
+                    Other meals
+                  </h3>
+                  {renderMeals(otherMeals)}
+                </section>
+              )}
+              {enabledMealTimes.length === 0 && dayMeals.length === 0 && (
+                <p className="px-4 py-8 text-sm text-muted-foreground sm:px-6">
+                  Add a meal to start planning this day.
+                </p>
+              )}
+            </div>
+          </PulseCard>
+        </section>
+      </div>
+
+      {/* Add meal Modal Dialog */}
+      {isAddMealOpen && (
+        <Dialog
+          labelledBy={addMealTitleId}
+          onBackdropClick={(e) => {
+            if (!isPending && e.target === e.currentTarget) handleCloseAddMeal();
+          }}
+          size="sm"
+        >
+          <form onSubmit={handleSubmitAddMeal}>
+            <div className="mb-5 flex items-start gap-3 border-b border-divider pb-4">
+              <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
+                <Utensils className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 id={addMealTitleId} className="text-xl font-bold tracking-tight text-foreground">
+                  Add meal
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  For {selectedDay.dayFull},{" "}
+                  {parseYMD(selectedDate).toLocaleDateString("en-IN", { timeZone: "UTC",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+            </div>
+
+            {mealModalError && (
+              <div
+                className="mb-4 rounded-lg bg-destructive/10 p-3 text-xs text-destructive"
+                role="alert"
+              >
+                {mealModalError}
+              </div>
+            )}
+
+            {/* Meal name Input */}
+            <div className="mb-4 space-y-1.5">
+              <label
+                htmlFor="meal-name-input"
+                className="block text-sm font-semibold text-foreground"
+              >
+                Meal name
+              </label>
+              <input
+                id="meal-name-input"
+                type="text"
+                autoFocus
+                value={mealName}
+                onChange={(e) => setMealName(e.target.value)}
+                placeholder="e.g. Scrambled eggs on toast"
+                className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+
+            {/* Meal Time Selector */}
+            <div className="space-y-1.5 mb-4">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="meal-time-select"
+                  className="block text-sm font-semibold text-foreground"
+                >
+                  Meal time
+                </label>
+              </div>
+              <Select
+                id="meal-time-select"
+                value={selectedMealTimeID ?? ""}
+                onChange={(e) =>
+                  setSelectedMealTimeID(e.target.value ? parseInt(e.target.value, 10) : null)
+                }
+                className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground"
+              >
+                {enabledMealTimes.length === 0 && <option value="">No meal times available</option>}
+                {enabledMealTimes.map((mt) => (
+                  <option key={mt.id} value={mt.id}>
+                    {mt.name} ({formatTimeDisplay(mt.start_time)} – {formatTimeDisplay(mt.end_time)})
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            <DialogActions className="border-t border-divider pt-4">
+              <DialogAction
+                type="button"
+                variant="secondary"
+                onClick={handleCloseAddMeal}
+                disabled={isPending}
+              >
+                Cancel
+              </DialogAction>
+              <DialogAction
+                type="submit"
+                variant="primary"
+                disabled={isPending || !mealName.trim()}
+              >
+                {isPending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Adding...
+                  </span>
+                ) : (
+                  "Add meal"
+                )}
+              </DialogAction>
+            </DialogActions>
+          </form>
+        </Dialog>
+      )}
+
+      {/* Delete Meal Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={mealToDelete !== null}
+        onClose={() => setMealToDelete(null)}
+        onConfirm={handleConfirmDeleteMeal}
+        title="Remove this meal?"
+        description={
+          mealToDelete ? (
+            <span>
+              <strong>{mealToDelete.name}</strong> will be removed from your plan for {selectedDay.dayFull}, {selectedDay.monthDay}.
+            </span>
+          ) : null
+        }
+        confirmText="Remove meal"
+        confirmLoadingText="Removing…"
+        error={deleteError}
+        isLoading={isPending}
+        variant="destructive"
+      />
+
+    </main>
+  );
+}

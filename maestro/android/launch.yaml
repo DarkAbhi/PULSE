@@ -1,0 +1,9 @@
+appId: dev.abhishekan.pulse
+name: Android sign-in screen
+---
+- launchApp:
+    clearState: true
+- assertVisible: Welcome back
+- assertVisible: Username
+- assertVisible: Password
+- assertVisible: Continue

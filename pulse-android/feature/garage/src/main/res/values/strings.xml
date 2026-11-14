@@ -272,7 +272,6 @@
     <string name="pulse_garage_continue_tyres">Continue to tyres</string>
     <string name="pulse_garage_step_back">Back</string>
     <string name="pulse_garage_review">Review</string>
-    <string name="pulse_garage_name_hint">Suggested from make and model. Edit anytime.</string>
     <string name="pulse_garage_two_fuels_hint">Hybrid, bi-fuel or converted? Add a second fuel.</string>
     <string name="pulse_garage_checking_match">Checking the catalogue…</string>
     <string name="pulse_garage_match_unavailable">Catalogue matching is unavailable. You can continue manually.</string>

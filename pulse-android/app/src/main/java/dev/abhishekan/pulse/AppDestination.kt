@@ -2,6 +2,7 @@ package dev.abhishekan.pulse
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import dev.abhishekan.pulse.core.ui.R as UiR
@@ -44,11 +45,17 @@ internal enum class AppDestination(
 internal fun NavController.navigateSingleTop(route: String) = navigate(route) { launchSingleTop = true }
 
 internal fun isTabTransition(
-    fromRoute: String?,
-    toRoute: String?,
-): Boolean =
-    AppDestination.fromRoute(fromRoute) in AppDestination.tabs &&
-        AppDestination.fromRoute(toRoute) in AppDestination.tabs
+    from: NavBackStackEntry,
+    to: NavBackStackEntry,
+): Boolean = from.isTabRoot() && to.isTabRoot()
+
+private fun NavBackStackEntry.isTabRoot(): Boolean =
+    isTabRoot(AppDestination.fromRoute(destination.route), arguments?.getBoolean("editName") == true)
+
+internal fun isTabRoot(
+    destination: AppDestination?,
+    editName: Boolean,
+): Boolean = destination in AppDestination.tabs && !(destination == AppDestination.Profile && editName)
 
 internal fun NavController.navigateToTab(destination: AppDestination) =
     navigate(destination.path) {

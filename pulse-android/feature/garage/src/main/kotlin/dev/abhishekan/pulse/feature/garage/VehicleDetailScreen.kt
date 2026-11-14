@@ -347,7 +347,6 @@ private fun VehicleDetailScreen(
                         { onTab(GarageTab.Care) },
                         { onTab(GarageTab.Air) },
                     )
-                    VehicleDataCredits()
                 }
                 GarageTab.Fuel -> {
                     FuelHistoryHeader(data.fuel.size, enabled) { onCreate(GarageForm.Fuel) }

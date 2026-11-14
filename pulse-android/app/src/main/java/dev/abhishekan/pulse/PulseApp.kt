@@ -1,9 +1,15 @@
 package dev.abhishekan.pulse
+
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.PathEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -37,12 +43,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -86,6 +98,19 @@ import dev.abhishekan.pulse.feature.profile.ProfileRoute
 import dev.abhishekan.pulse.feature.profile.ProfileSetupPrompt
 import org.koin.androidx.compose.koinViewModel
 import dev.abhishekan.pulse.feature.profile.R as FeatureProfileR
+
+// Android 14's Activity open/close translation curve.
+private val activitySlide =
+    tween<IntOffset>(
+        durationMillis = 450,
+        easing =
+            PathEasing(
+                Path().apply {
+                    cubicTo(0.05f, 0f, 0.133333f, 0.06f, 0.166666f, 0.4f)
+                    cubicTo(0.208333f, 0.82f, 0.25f, 1f, 1f, 1f)
+                },
+            ),
+    )
 
 @Composable
 fun PulseApp(
@@ -215,6 +240,22 @@ private fun SignedInApp(
     val nav = rememberNavController()
     val shell = rememberSaveable(saver = ShellState.Saver) { ShellState() }
     val isTablet = LocalConfiguration.current.smallestScreenWidthDp >= 600
+    val direction = if (LocalLayoutDirection.current == LayoutDirection.Ltr) 1 else -1
+    val backEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
+        if (isTabTransition(initialState, targetState)) {
+            EnterTransition.None
+        } else {
+            slideInHorizontally(activitySlide) { -direction * it / 10 }
+        }
+    }
+    val backExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
+        if (isTabTransition(initialState, targetState)) {
+            ExitTransition.None
+        } else {
+            slideOutHorizontally(activitySlide) { direction * it / 10 } +
+                fadeOut(tween(durationMillis = 83, delayMillis = 35, easing = LinearEasing))
+        }
+    }
     val hidingScreens = remember { mutableStateMapOf<Any, Unit>() }
     val entry by nav.currentBackStackEntryAsState()
     val destination = AppDestination.fromRoute(entry?.destination?.route)
@@ -291,21 +332,26 @@ private fun SignedInApp(
                         NavHost(
                             nav,
                             startDestination = AppDestination.Home.route,
-                            modifier = Modifier.padding(insets).consumeWindowInsets(insets),
+                            modifier = Modifier.padding(insets).consumeWindowInsets(insets).clipToBounds(),
                             enterTransition = {
-                                if (isTabTransition(initialState.destination.route, targetState.destination.route)) {
+                                if (isTabTransition(initialState, targetState)) {
                                     EnterTransition.None
                                 } else {
-                                    fadeIn(animationSpec = tween(700))
+                                    slideInHorizontally(activitySlide) { direction * it / 10 } +
+                                        fadeIn(tween(durationMillis = 83, delayMillis = 50, easing = LinearEasing))
                                 }
                             },
                             exitTransition = {
-                                if (isTabTransition(initialState.destination.route, targetState.destination.route)) {
+                                if (isTabTransition(initialState, targetState)) {
                                     ExitTransition.None
                                 } else {
-                                    fadeOut(animationSpec = tween(700))
+                                    slideOutHorizontally(activitySlide) { -direction * it / 10 }
                                 }
                             },
+                            popEnterTransition = backEnter,
+                            popExitTransition = backExit,
+                            predictivePopEnterTransition = { backEnter() },
+                            predictivePopExitTransition = { backExit() },
                         ) {
                             composable(AppDestination.Home.route) {
                                 HomeRoute(

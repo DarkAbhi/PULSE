@@ -170,7 +170,6 @@ internal fun VehicleEditor(
                             stringResource(R.string.pulse_garage_vehicle_name),
                             Modifier.fillMaxWidth(),
                             enabled = !busy,
-                            supportingText = { PulseText(stringResource(R.string.pulse_garage_name_hint)) },
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                             keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Next) }),
                         )

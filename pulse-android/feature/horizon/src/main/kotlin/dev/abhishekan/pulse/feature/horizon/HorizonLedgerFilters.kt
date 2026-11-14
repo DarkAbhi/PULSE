@@ -153,8 +153,8 @@ internal fun LedgerFilters(
 private fun ledgerTypeLabel(type: String?): String =
     stringResource(
         when (type) {
-            "debit" -> R.string.pulse_horizon_debit
-            "credit" -> R.string.pulse_horizon_credit
+            "debit" -> R.string.pulse_horizon_ledger_spending
+            "credit" -> R.string.pulse_horizon_ledger_income
             else -> R.string.pulse_horizon_all_types
         },
     )

@@ -1,16 +1,21 @@
 package dev.abhishekan.pulse.feature.horizon
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,37 +27,43 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.components.PulseTopAppBar
 import dev.abhishekan.pulse.core.ui.message
 import kotlinx.coroutines.delay
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 internal fun TransactionHistory(
     state: HorizonUiState,
     vm: HorizonViewModel,
     active: Boolean,
-    searchOpen: Boolean,
-    focusSearch: Boolean,
-    onSearchFocused: () -> Unit,
     padding: PaddingValues,
+    tablet: Boolean,
     wide: Boolean,
+    canLog: Boolean,
     select: (HorizonTransaction) -> Unit,
     review: @Composable () -> Unit,
 ) {
@@ -64,29 +75,92 @@ internal fun TransactionHistory(
         }
     }
 
+    var searchOpen by rememberSaveable { mutableStateOf(false) }
+    var focusSearch by remember { mutableStateOf(false) }
+    val focus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val clearSearch: () -> Unit = {
+        search = ""
+        vm.filterHistory("", state.historyType, state.historyCategoryId)
+        focusManager.clearFocus()
+        keyboard?.hide()
+    }
+    val searchField: @Composable (Modifier) -> Unit = { modifier ->
+        val label = stringResource(R.string.pulse_horizon_search_transactions)
+        PulseTextField(
+            search,
+            { search = it },
+            label,
+            modifier.focusRequester(focus),
+            enabled = !state.busy,
+            leadingIcon = { Icon(painterResource(R.drawable.pulse_horizon_search), null, tint = PulseTheme.colors.textSecondary) },
+            trailingIcon =
+                if (search.isNotEmpty()) {
+                    {
+                        PulseButton(
+                            stringResource(R.string.pulse_horizon_clear_search),
+                            clearSearch,
+                            style = PulseButtonStyle.Icon,
+                            enabled = !state.busy,
+                        ) { Icon(painterResource(R.drawable.pulse_purchase_clear), null) }
+                    }
+                } else {
+                    null
+                },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions =
+                KeyboardActions(onSearch = {
+                    vm.filterHistory(search, state.historyType, state.historyCategoryId)
+                    focusManager.clearFocus()
+                    keyboard?.hide()
+                }),
+        )
+        LaunchedEffect(focusSearch, active) {
+            if (focusSearch && active) {
+                focus.requestFocus()
+                keyboard?.show()
+                focusSearch = false
+            }
+        }
+    }
+
     Column(Modifier.fillMaxSize()) {
+        if (state.draft == null) {
+            PulseTopAppBar(
+                stringResource(R.string.pulse_horizon_all_transactions),
+                navigationIcon = {
+                    PulseButton(
+                        stringResource(R.string.pulse_horizon_back_to_transactions),
+                        vm::closeHistory,
+                        enabled = !state.busy,
+                        style = PulseButtonStyle.Icon,
+                    ) { Icon(painterResource(CoreUiR.drawable.pulse_back), null) }
+                },
+                actions = {
+                    if (tablet) {
+                        searchField(Modifier.fillMaxWidth(0.38f).padding(end = PulseTokens.medium))
+                    } else {
+                        PulseButton(
+                            stringResource(R.string.pulse_horizon_search_transactions),
+                            {
+                                searchOpen = true
+                                focusSearch = true
+                            },
+                            enabled = !state.busy,
+                            style = PulseButtonStyle.Icon,
+                        ) { Icon(painterResource(R.drawable.pulse_horizon_search), null) }
+                    }
+                },
+            )
+        }
         val direction = LocalLayoutDirection.current
         Column(
             Modifier.padding(start = padding.calculateStartPadding(direction), end = padding.calculateEndPadding(direction)),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
         ) {
-            if (searchOpen || search.isNotEmpty()) {
-                val focus = remember { FocusRequester() }
-                val keyboard = LocalSoftwareKeyboardController.current
-                PulseTextField(
-                    search,
-                    { search = it },
-                    stringResource(R.string.pulse_horizon_search_transactions),
-                    Modifier.fillMaxWidth().focusRequester(focus),
-                    enabled = !state.busy,
-                )
-                LaunchedEffect(focusSearch) {
-                    if (focusSearch) {
-                        focus.requestFocus()
-                        keyboard?.show()
-                        onSearchFocused()
-                    }
-                }
+            if ((!tablet || state.draft != null) && (searchOpen || search.isNotEmpty())) {
+                searchField(Modifier.fillMaxWidth())
             }
             LedgerFilters(state, vm, search)
         }
@@ -95,49 +169,66 @@ internal fun TransactionHistory(
         val page = history.value
         val months = remember(page) { ledgerMonths(page?.items.orEmpty()) }
         val monthFormat = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
-        key(state.historySearch, state.historyType, state.historyCategoryId) {
-            LazyColumn(
-                Modifier.fillMaxWidth().weight(1f).testTag("transaction-history-list"),
-                state = rememberLazyListState(),
-                contentPadding = padding,
-            ) {
-                if (state.reviewRequired || state.draft != null) item("review") { review() }
-                if (history.loading && page == null) {
-                    item("loading") {
-                        PulseCenteredLoadingState(stringResource(R.string.pulse_horizon_loading_transactions), Modifier.fillMaxWidth())
-                    }
-                }
-                if (page != null && page.items.isEmpty() && history.error == null && !history.loading) {
-                    item("empty") {
-                        PulseEmptyState(
-                            stringResource(R.string.pulse_horizon_no_transactions),
-                            stringResource(R.string.pulse_horizon_try_another_filter_or_record_your_first_transaction),
-                        )
-                    }
-                }
-                months.forEach { (month, transactions) ->
-                    item(month.toString()) {
-                        PulseText(
-                            month.format(monthFormat),
-                            Modifier.padding(top = PulseTokens.medium).semantics { heading() },
-                            style = PulseTextStyle.Title,
-                        )
-                    }
-                    items(transactions, key = { it.id }) { tx ->
-                        LedgerRow(tx, wide, open = if (search == state.historySearch) ({ select(tx) }) else null)
-                        PulseHorizontalDivider()
-                    }
-                }
-                if (history.error != null) {
-                    item("error") {
-                        PulseErrorState(history.error.message, vm::retryHistory)
-                    }
-                } else if (page != null && (history.loading || page.page < page.totalPages)) {
-                    item("more") {
-                        LaunchedEffect(active, page.page, history.loading) {
-                            if (active && !history.loading) vm.loadMoreHistory()
+        BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+            val emptyHeight = maxHeight * 0.9f
+            key(state.historySearch, state.historyType, state.historyCategoryId) {
+                LazyColumn(
+                    Modifier.fillMaxSize().testTag("transaction-history-list"),
+                    state = rememberLazyListState(),
+                    contentPadding = padding,
+                ) {
+                    if (state.reviewRequired || state.draft != null) item("review") { review() }
+                    if (history.loading && page == null) {
+                        item("loading") {
+                            PulseCenteredLoadingState(stringResource(R.string.pulse_horizon_loading_transactions), Modifier.fillMaxWidth())
                         }
-                        PulseLoadingState(stringResource(R.string.pulse_horizon_loading_transactions))
+                    }
+                    if (page != null &&
+                        page.items.isEmpty() &&
+                        history.error == null &&
+                        !history.loading &&
+                        search == state.historySearch
+                    ) {
+                        item("empty") {
+                            EmptyTransactionHistory(
+                                state = state,
+                                tablet = tablet,
+                                canLog = canLog,
+                                clearSearch = clearSearch,
+                                clearFilters = { vm.filterHistory(search, null, null) },
+                                log = {
+                                    keyboard?.hide()
+                                    vm.newForm(HorizonForm.Transaction)
+                                },
+                                modifier =
+                                    if (state.draft == null && !state.reviewRequired) Modifier.heightIn(min = emptyHeight) else Modifier,
+                            )
+                        }
+                    }
+                    months.forEach { (month, transactions) ->
+                        item(month.toString()) {
+                            PulseText(
+                                month.format(monthFormat),
+                                Modifier.padding(top = PulseTokens.medium).semantics { heading() },
+                                style = PulseTextStyle.Title,
+                            )
+                        }
+                        items(transactions, key = { it.id }) { tx ->
+                            LedgerRow(tx, wide, open = if (search == state.historySearch) ({ select(tx) }) else null)
+                            PulseHorizontalDivider()
+                        }
+                    }
+                    if (history.error != null) {
+                        item("error") {
+                            PulseErrorState(history.error.message, vm::retryHistory)
+                        }
+                    } else if (page != null && (history.loading || page.page < page.totalPages)) {
+                        item("more") {
+                            LaunchedEffect(active, page.page, history.loading) {
+                                if (active && !history.loading) vm.loadMoreHistory()
+                            }
+                            PulseLoadingState(stringResource(R.string.pulse_horizon_loading_transactions))
+                        }
                     }
                 }
             }

@@ -61,7 +61,6 @@
     <string name="pulse_horizon_add_transaction">"Add transaction"</string>
     <string name="pulse_horizon_create_category">"Create category"</string>
     <string name="pulse_horizon_no_transactions">"No transactions"</string>
-    <string name="pulse_horizon_try_another_filter_or_record_your_first_transaction">"Try another filter or record your first transaction."</string>
     <string name="pulse_horizon_delete_1_s_this_permanently_removes_the_transaction_and">"Delete “%1$s”? This permanently removes the transaction and its budget/subscription association. Budgets and subscriptions stay."</string>
     <string name="pulse_horizon_give_every_priority_room">"Give every priority room"</string>
     <string name="pulse_horizon_add_budget">"Add budget"</string>
@@ -127,6 +126,17 @@
     <string name="pulse_horizon_category_1_s">"Category: %1$s"</string>
     <string name="pulse_horizon_subscription_1_s">"Subscription: %1$s"</string>
     <string name="pulse_horizon_edit_1_s">"Edit %1$s"</string>
+    <string name="pulse_horizon_clear_search">Clear search</string>
+    <string name="pulse_horizon_clear_filters">Clear filters</string>
+    <string name="pulse_horizon_no_search_results">No results for “%1$s”</string>
+    <string name="pulse_horizon_no_search_results_help">Check the spelling or try a shorter word. We searched all transactions.</string>
+    <string name="pulse_horizon_no_search_results_filtered_help">Check the spelling, try a shorter word, or loosen a filter.</string>
+    <string name="pulse_horizon_no_filter_matches">No matches for these filters</string>
+    <string name="pulse_horizon_no_filter_matches_help">Loosen a filter, or log a transaction now.</string>
+    <string name="pulse_horizon_no_income_in_category">You have no income under %1$s yet. Loosen a filter, or log one now.</string>
+    <string name="pulse_horizon_no_spending_in_category">You have no spending under %1$s yet. Loosen a filter, or log one now.</string>
+    <string name="pulse_horizon_ledger_income">Income</string>
+    <string name="pulse_horizon_ledger_spending">Spending</string>
     <string name="pulse_horizon_search_transactions">"Search transactions"</string>
     <string name="pulse_horizon_filter">"Filter"</string>
     <string name="pulse_horizon_all_types">"All types"</string>

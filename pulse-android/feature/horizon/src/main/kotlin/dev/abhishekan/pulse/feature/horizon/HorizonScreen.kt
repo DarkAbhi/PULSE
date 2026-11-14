@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,7 +29,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -76,8 +74,6 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var searchOpen by rememberSaveable(state.historyOpen) { mutableStateOf(false) }
-    var focusSearch by remember { mutableStateOf(false) }
     PulseHideNavigation(state.draft != null || state.subscriptionId != null || state.historyOpen)
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     val scrollStates = rememberSaveableStateHolder()
@@ -96,37 +92,24 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
             title =
                 when {
                     screen.draft != null -> stringResource(screen.draft.topBarTitle())
-                    screen.historyOpen -> stringResource(R.string.pulse_horizon_all_transactions)
                     else -> ""
                 },
-            showTopBar = screen.draft != null || screen.historyOpen,
+            showTopBar = screen.draft != null,
             backLabel =
                 stringResource(
                     when {
                         screen.transactionDraft != null -> R.string.pulse_horizon_back_to_transaction
                         screen.draft != null && screen.historyOpen -> R.string.pulse_horizon_back_to_history
-                        screen.historyOpen -> R.string.pulse_horizon_back_to_transactions
                         else -> R.string.pulse_horizon_back_to_horizon
                     },
                 ),
             backEnabled = !screen.busy,
             actions = {
-                if (screen.draft == null && screen.historyOpen) {
-                    PulseButton(
-                        stringResource(R.string.pulse_horizon_search_transactions),
-                        {
-                            searchOpen = true
-                            focusSearch = true
-                        },
-                        enabled = !screen.busy,
-                        style = PulseButtonStyle.Icon,
-                    ) { Icon(painterResource(R.drawable.pulse_horizon_search), null) }
-                }
                 HorizonTopBarActions(screen, viewModel::deleteObligation, viewModel::addTransactionCategory)
             },
         ) {
             key(timeZone, accountCurrency) {
-                HorizonScreen(screen, viewModel, scrollStates, active, searchOpen, focusSearch) { focusSearch = false }
+                HorizonScreen(screen, viewModel, scrollStates, active)
             }
         }
     }
@@ -138,9 +121,6 @@ internal fun HorizonScreen(
     vm: HorizonViewModel,
     scrollStates: SaveableStateHolder,
     active: Boolean,
-    searchOpen: Boolean,
-    focusSearch: Boolean,
-    onSearchFocused: () -> Unit,
 ) {
     var discard by rememberSaveable { mutableStateOf(false) }
     var records by rememberSaveable { mutableStateOf(false) }
@@ -496,12 +476,11 @@ internal fun HorizonScreen(
                         state,
                         vm,
                         active && state.draft == null,
-                        searchOpen,
-                        active && focusSearch,
-                        onSearchFocused,
-                        PaddingValues(start = width.pagePadding, end = width.pagePadding, top = PulseTokens.small, bottom = bottom),
-                        wide,
-                        { selectedTransaction = it.id },
+                        PaddingValues(start = width.horizonGutter, end = width.horizonGutter, top = PulseTokens.small, bottom = bottom),
+                        tablet = width != PulseWindowSize.Compact,
+                        wide = wide,
+                        canLog = canMutate,
+                        select = { selectedTransaction = it.id },
                     ) {
                         review()
                         resumeDraft()

@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse.feature.horizon
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,8 +33,7 @@ import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
-import dev.abhishekan.pulse.core.ui.components.PulseTabs
+import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseText
 
 internal val PulseWindowSize.horizonGutter
@@ -50,15 +51,25 @@ internal fun HorizonTabs(
     width: PulseWindowSize,
     onSelect: (HorizonTab) -> Unit,
 ) {
-    PulseTabs(
-        labels = HorizonTab.entries.map { stringResource(it.label) },
-        selectedIndex = current.ordinal,
-        onSelect = { onSelect(HorizonTab.entries[it]) },
-        modifier = Modifier.fillMaxWidth().padding(top = if (width == PulseWindowSize.Compact) 16.dp else 32.dp),
-        enabled = enabled,
-        pills = true,
-        edgePadding = width.horizonGutter,
-    )
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = width.horizonGutter)
+            .padding(top = if (width == PulseWindowSize.Compact) 16.dp else 32.dp)
+            .selectableGroup(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        HorizonTab.entries.forEach { tab ->
+            PulseFilterChip(
+                label = stringResource(tab.label),
+                selected = tab == current,
+                onClick = { onSelect(tab) },
+                enabled = enabled,
+                showSelectedIcon = false,
+            )
+        }
+    }
 }
 
 @Composable
@@ -153,9 +164,8 @@ private fun FirstTransactionPrompt(
         PulseButton(
             text = stringResource(R.string.pulse_horizon_log_transaction),
             onClick = onLog,
-            modifier = if (wide) Modifier else Modifier.fillMaxWidth(),
+            modifier = Modifier.heightIn(min = 56.dp).then(if (wide) Modifier else Modifier.fillMaxWidth()),
             enabled = enabled,
-            style = PulseButtonStyle.Large,
             contentPadding = PaddingValues(horizontal = if (wide) 36.dp else 20.dp, vertical = 12.dp),
         )
     }

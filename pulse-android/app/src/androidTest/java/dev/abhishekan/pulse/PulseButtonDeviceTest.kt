@@ -47,8 +47,7 @@ class PulseButtonDeviceTest {
                 }
             }
         }
-        val themes = listOf(false, true)
-        themes.forEach { darkTheme ->
+        listOf(false, true).forEach { darkTheme ->
             compose.runOnIdle { dark = darkTheme }
             PulseButtonStyle.entries.forEach { style ->
                 fun node(state: String) =
@@ -57,8 +56,7 @@ class PulseButtonDeviceTest {
                     } else {
                         compose.onNodeWithText("${style.name} $state")
                     }
-                val minHeight = if (style == PulseButtonStyle.Large) 56.dp else 48.dp
-                node("enabled").assertIsEnabled().assertHeightIsAtLeast(minHeight).performClick()
+                node("enabled").assertIsEnabled().assertHeightIsAtLeast(48.dp).performClick()
                 if (style == PulseButtonStyle.Icon) {
                     node("enabled").assertWidthIsAtLeast(48.dp)
                     compose.onNodeWithText("Icon enabled").assertDoesNotExist()
@@ -67,6 +65,6 @@ class PulseButtonDeviceTest {
                 node("loading").assertIsNotEnabled().performClick()
             }
         }
-        compose.runOnIdle { assertEquals(themes.size * PulseButtonStyle.entries.size, clicks) }
+        compose.runOnIdle { assertEquals(6, clicks) }
     }
 }

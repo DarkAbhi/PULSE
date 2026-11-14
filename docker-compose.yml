@@ -92,7 +92,6 @@ services:
       NODE_ENV: production
       PORT: 3000
       INTERNAL_API_BASE_URL: http://backend:8080
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     ports:
       - "3100:3000"
     restart: unless-stopped

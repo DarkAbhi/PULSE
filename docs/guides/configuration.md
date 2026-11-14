@@ -38,7 +38,6 @@ The first migration creates `admin` / `password`. Change that password before ex
 
 | Integration | Settings | Setup |
 | --- | --- | --- |
-| PDF statement extraction | `GEMINI_API_KEY` | Server-side key used by Next.js; never expose through `NEXT_PUBLIC_*`. |
 | Garage receipts | `S3_BUCKET`, `AWS_REGION`, standard AWS credentials or an IAM role | Optional `AWS_SESSION_TOKEN`; S3-compatible storage can use `S3_ENDPOINT` and `S3_FORCE_PATH_STYLE=true`. Backend only. |
 | Rust production tunnel | `CLOUDFLARE_TUNNEL_TOKEN` | Configure the named hostname to route to `http://rust-backend:8083`, or the chosen `RUST_PORT`. |
 | Rust development tunnel | None | Started by `make dev`; `make dev-tunnel-url` prints the temporary HTTPS address. |

@@ -118,7 +118,6 @@ services:
       NODE_ENV: development
       PORT: 3000
       INTERNAL_API_BASE_URL: http://backend-dev:8080
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       # Windows bind mounts may not forward file events into the Linux container.
       # This is consumed by Webpack/Watchpack (not Turbopack).
       WATCHPACK_POLLING: "1000"

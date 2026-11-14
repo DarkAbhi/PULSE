@@ -6,7 +6,7 @@ Start with the [root README](../README.md) for project structure, development/pr
 
 | Guide | Topic |
 | --- | --- |
-| [Configuration and access](guides/configuration.md) | PostgreSQL, sessions, network access, optional Gemini/S3/Cloudflare/MCP settings and startup troubleshooting. |
+| [Configuration and access](guides/configuration.md) | PostgreSQL, sessions, network access, optional S3/Cloudflare/MCP settings and startup troubleshooting. |
 | [Monitoring and logs](guides/monitoring.md) | Grafana dashboards, Tailscale, metrics, Loki/Alloy and troubleshooting. |
 | [Testing and CI](guides/testing.md) | Local suites, reports, CI coverage, disposable databases and code generation. |
 | [Pre-commit checks](guides/pre-commit.md) | Installation, formatting, secret scanning and commit-time tests. |

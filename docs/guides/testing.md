@@ -119,7 +119,7 @@ credentials or repository secrets are required. Jobs run independently so a
 failure in one module does not cancel the other suites. Monitoring and Compose
 configuration have no dedicated test suites; these checks cover the existing
 code and browser suites, not every production integration (such as live S3,
-Gemini, Cloudflare, or Hermes Telegram).
+Cloudflare, or Hermes Telegram).
 
 ## Generated Go code
 

@@ -14,7 +14,6 @@ import {
   Upload,
   FileText,
   Sparkles,
-  CheckCircle2,
   AlertCircle,
   Copy,
   Check,
@@ -23,11 +22,7 @@ import {
   Plus,
   Loader2,
 } from "lucide-react";
-import type {
-  StatementExtractionResponse,
-  StatementTransaction,
-} from "@/services/credit-card-statement-extractor";
-import { extractStatementAction } from "@/app/financial-horizon/extract-statement";
+import { extractStatement, type StatementExtractionResponse } from "@/app/financial-horizon/extract-statement";
 import { CategoryItem } from "@/app/dashboard/financial-horizon-card";
 import Dialog from "@/app/components/design-system/dialog";
 
@@ -104,10 +99,7 @@ export default function StatementUploadDialog({
     setError(null);
 
     try {
-      const categoryNames = categories.map((c) => c.name);
-      const formData = new FormData();
-      formData.set("statement", selectedFile);
-      const res = await extractStatementAction(formData, categoryNames);
+      const res = await extractStatement(selectedFile);
 
       setExtractionResult(res);
       // Pre-select all extracted transactions for preview import
@@ -134,8 +126,8 @@ export default function StatementUploadDialog({
         });
         setSelectedCategoryMap(initialCategoryMap);
       }
-    } catch (err: any) {
-      setError(err?.message || "Failed to extract statement data. Please try another PDF.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to extract statement data. Please try another PDF.");
     } finally {
       setIsLoading(false);
     }
@@ -204,7 +196,7 @@ export default function StatementUploadDialog({
             <div>
               <h3 className="text-lg font-bold text-foreground">Import Statement PDF</h3>
               <p className="text-xs text-muted-foreground">
-                Extract transactions from credit card, debit card, or bank statements via Gemini Gen AI
+                Extract transactions from credit card, debit card, or bank statements
               </p>
             </div>
           </div>
@@ -277,7 +269,7 @@ export default function StatementUploadDialog({
 
           {/* Error Message */}
           {error && (
-            <div className="flex items-center gap-2.5 rounded-2xl bg-destructive/10 p-4 text-xs text-destructive">
+            <div role="alert" className="flex items-center gap-2.5 rounded-2xl bg-destructive/10 p-4 text-xs text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -288,7 +280,7 @@ export default function StatementUploadDialog({
             <div className="flex flex-col items-center justify-center py-10 space-y-3">
               <Loader2 className="h-8 w-8 animate-spin text-action" />
               <p className="text-sm font-semibold text-foreground">
-                Analyzing statement with Google Gemini Gen AI...
+                Analyzing statement...
               </p>
               <p className="text-xs text-muted-foreground">
                 Extracting transactions and account summary into structured JSON

@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
@@ -38,6 +39,7 @@ import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseHideNavigation
+import dev.abhishekan.pulse.core.ui.PulseScreenTransition
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
@@ -73,15 +75,19 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PulseHideNavigation(state.draft != null || state.subscriptionId != null)
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
-    PulseScreenScaffold(
-        title = stringResource(state.draft.topBarTitle()),
-        showTopBar = state.draft != null,
-        backLabel = stringResource(R.string.pulse_horizon_back_to_horizon),
-        backEnabled = !state.busy || state.draft == null,
-        actions = { HorizonTopBarActions(state, viewModel::deleteObligation) },
-    ) {
-        key(timeZone, accountCurrency) {
-            HorizonScreen(state, viewModel)
+    val scrollStates = rememberSaveableStateHolder()
+    var ledgerCategory by rememberSaveable { mutableStateOf<Long?>(null) }
+    PulseScreenTransition(state, screenDepth = { if (it.draft == null) 0 else 1 }) { screen, active ->
+        PulseScreenScaffold(
+            title = stringResource(screen.draft.topBarTitle()),
+            showTopBar = screen.draft != null,
+            backLabel = stringResource(R.string.pulse_horizon_back_to_horizon),
+            backEnabled = !screen.busy || screen.draft == null,
+            actions = { HorizonTopBarActions(screen, viewModel::deleteObligation) },
+        ) {
+            key(timeZone, accountCurrency) {
+                HorizonScreen(screen, viewModel, scrollStates, active, ledgerCategory) { ledgerCategory = it }
+            }
         }
     }
 }
@@ -90,14 +96,16 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
 internal fun HorizonScreen(
     state: HorizonUiState,
     vm: HorizonViewModel,
+    scrollStates: SaveableStateHolder,
+    active: Boolean,
+    ledgerCategory: Long?,
+    onLedgerCategory: (Long?) -> Unit,
 ) {
-    val scrollStates = rememberSaveableStateHolder()
     var discard by rememberSaveable { mutableStateOf(false) }
     var records by rememberSaveable { mutableStateOf(false) }
-    var ledgerCategory by rememberSaveable { mutableStateOf<Long?>(null) }
     var deletion by remember { mutableStateOf<Pair<HorizonChange, UiText>?>(null) }
     val cancel = { if (state.draft?.dirty == true) discard = true else vm.discard() }
-    BackHandler(state.draft != null || state.busy || state.subscriptionId != null) {
+    BackHandler(active && (state.draft != null || state.busy || state.subscriptionId != null)) {
         when {
             state.busy -> Unit
             state.draft != null -> cancel()
@@ -244,7 +252,7 @@ internal fun HorizonScreen(
                                 state,
                                 vm,
                                 ledgerCategory,
-                                { ledgerCategory = it },
+                                onLedgerCategory,
                                 canMutate = canMutate,
                                 addCategory = { create(HorizonForm.Category) },
                                 logTransaction = { create(HorizonForm.Transaction) },
@@ -459,17 +467,17 @@ internal fun HorizonScreen(
                     HorizonFormScreen(state, vm, width, cancel, review)
                 }
             } else {
-                scrollStates.SaveableStateProvider(state.tab.name) { content() }
+                scrollStates.SaveableStateProvider((if (state.draft == null) "root-" else "review-") + state.tab.name) { content() }
             }
         }
     }
-    if (state.tab == HorizonTab.Subscriptions && state.subscriptionId != null && state.draft == null) {
+    if (active && state.tab == HorizonTab.Subscriptions && state.subscriptionId != null && state.draft == null) {
         SubscriptionPaymentsSheet(state, vm, !state.busy && !state.reviewRequired && state.overview.value != null) { id ->
             deletion = HorizonChange.LinkPayment(state.subscriptionId, id) to
                 uiText(R.string.pulse_horizon_link_this_debit_to_the_subscription_the_transaction_remains)
         }
     }
-    if (discard) {
+    if (active && discard) {
         PulseDialog(
             stringResource(R.string.pulse_horizon_discard_unsaved_changes),
             stringResource(R.string.pulse_horizon_your_edits_have_not_been_saved_leaving_this_form),
@@ -482,7 +490,7 @@ internal fun HorizonScreen(
             { discard = false },
         )
     }
-    deletion?.let { (change, body) ->
+    deletion?.takeIf { active }?.let { (change, body) ->
         PulseDialog(
             if (change is HorizonChange.LinkPayment) {
                 stringResource(

@@ -126,9 +126,10 @@ private fun choiceLabel(code: String) = choiceLabels[code]?.let { stringResource
 internal fun MealOnboardingScreen(
     state: MealOnboardingUiState,
     vm: MealOnboardingViewModel,
+    active: Boolean,
     customMealTimes: @Composable () -> Unit = {},
 ) {
-    BackHandler(state.saving || (state.showJourney && (state.step > 0 || state.editing))) { if (!state.saving) vm.back() }
+    BackHandler(active && (state.saving || (state.showJourney && (state.step > 0 || state.editing)))) { if (!state.saving) vm.back() }
     Box(
         Modifier
             .fillMaxSize()

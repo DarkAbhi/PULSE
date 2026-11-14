@@ -21,8 +21,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +56,8 @@ import dev.abhishekan.pulse.core.ui.R as CoreUiR
 @Composable
 internal fun GarageEditorLayout(
     editor: GarageEditorState,
+    active: Boolean,
+    scrollStates: SaveableStateHolder,
     title: String,
     backLabel: String?,
     loading: Boolean,
@@ -95,7 +97,7 @@ internal fun GarageEditorLayout(
         draft?.let { onUpdate(it.withVehicleStep(step)) }
     }
     val vehicleStep = draft?.takeIf { it.kind == GarageForm.Vehicle && !records }?.vehicleStep
-    BackHandler(draft != null || editor.busy) {
+    BackHandler(active && (draft != null || editor.busy)) {
         if (!editor.busy) {
             if (vehicleStep != null && vehicleStep > 0) changeStep(vehicleStep - 1) else cancel()
         }
@@ -106,12 +108,11 @@ internal fun GarageEditorLayout(
             val action = if (it.id == null && it.kind != GarageForm.Pressure) EditorAction.Add else EditorAction.Edit
             stringResource(it.kind.editorLabel(action))
         }
-    val scrollStates = rememberSaveableStateHolder()
     PulseScreenScaffold(
         title = editorTitle ?: title,
         showTopBar = draft != null || backLabel != null,
         backLabel = if (draft != null) stringResource(R.string.pulse_garage_back_to_garage) else backLabel,
-        backEnabled = !editor.busy,
+        backEnabled = active && !editor.busy,
         onBack = if (vehicleStep != null) cancel else null,
     ) {
         PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
@@ -121,7 +122,7 @@ internal fun GarageEditorLayout(
                 LaunchedEffect(draft?.kind, draft?.vehicleStep) {
                     if (draft?.kind == GarageForm.Vehicle) editorScroll.scrollTo(0)
                 }
-                val enabled = !editor.busy && !editor.reviewRequired && draft == null
+                val enabled = active && !editor.busy && !editor.reviewRequired && draft == null
                 val review: @Composable () -> Unit = {
                     if (editor.reviewRequired) {
                         GarageReview(
@@ -226,7 +227,7 @@ internal fun GarageEditorLayout(
                                 }
                             }
                         }
-                        else -> scrollStates.SaveableStateProvider(scrollKey) { body(null) }
+                        else -> scrollStates.SaveableStateProvider(if (draft == null) scrollKey else "review-$scrollKey") { body(null) }
                     }
                     overlay()
                 }
@@ -234,7 +235,7 @@ internal fun GarageEditorLayout(
         }
     }
 
-    if (discard) {
+    if (active && discard) {
         PulseDialog(
             stringResource(R.string.pulse_garage_discard_unsaved_changes),
             stringResource(R.string.pulse_garage_your_edits_have_not_been_saved_discard_this_device),

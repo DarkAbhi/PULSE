@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
@@ -42,6 +43,7 @@ import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseHideNavigation
+import dev.abhishekan.pulse.core.ui.PulseScreenTransition
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.UiText
@@ -79,46 +81,64 @@ fun MealPlanRoute(
     PulseHideNavigation(setup.record == null || setup.showJourney || state.draft != null)
     val timeForm = state.draft?.timeForm == true
     val onboardingStateHolder = rememberSaveableStateHolder()
+    val plannerScrollStates = rememberSaveableStateHolder()
     LaunchedEffect(setup.showJourney, timeForm) {
         if (!setup.showJourney && !timeForm) onboardingStateHolder.removeState("meal-preferences")
     }
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
-    if (!timeForm && (setup.record == null || setup.showJourney)) {
-        PulseScreenScaffold(title = stringResource(R.string.meal_setup_title), showTopBar = false) {
-            onboardingStateHolder.SaveableStateProvider("meal-preferences") {
-                MealOnboardingScreen(setup, onboarding) {
-                    CustomMealTimes(state, viewModel, enabled = !setup.saving)
+    if (timeForm || (setup.record != null && !setup.showJourney)) {
+        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
+    }
+    // Loading and first-run setup share the root depth with the planner.
+    PulseScreenTransition(
+        setup to state,
+        screenDepth = { (preferences, planner) ->
+            when {
+                planner.draft?.timeForm == true -> 2
+                preferences.editing || planner.draft != null -> 1
+                else -> 0
+            }
+        },
+    ) { (preferences, planner), active ->
+        val timeEditor = planner.draft?.timeForm == true
+        if (!timeEditor && (preferences.record == null || preferences.showJourney)) {
+            PulseScreenScaffold(title = stringResource(R.string.meal_setup_title), showTopBar = false) {
+                onboardingStateHolder.SaveableStateProvider("meal-preferences") {
+                    MealOnboardingScreen(preferences, onboarding, active = active) {
+                        CustomMealTimes(planner, viewModel, enabled = !preferences.saving)
+                    }
                 }
             }
-        }
-        return
-    }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.resume() }
-    PulseScreenScaffold(
-        title =
-            stringResource(
-                when {
-                    state.draft?.timeForm == true -> R.string.pulse_mealplan_new_meal_time
-                    state.draft != null ->
-                        if (state.draft?.id ==
-                            null
-                        ) {
-                            R.string.pulse_mealplan_plan_a_meal
-                        } else {
-                            R.string.pulse_mealplan_edit_meal
-                        }
-                    else -> R.string.meal_setup_title
-                },
-            ),
-        showTopBar = state.draft != null,
-        backLabel =
-            stringResource(
-                if (timeForm) R.string.meal_setup_back_to_preferences else R.string.pulse_mealplan_back_to_planner,
-            ),
-        backEnabled = !state.busy,
-    ) {
-        key(timeZone) {
-            MealPlanScreen(state, viewModel, onboarding::editPreferences, setup.resolvedElsewhere, setup.record?.preferences)
+        } else {
+            PulseScreenScaffold(
+                title =
+                    stringResource(
+                        when {
+                            timeEditor -> R.string.pulse_mealplan_new_meal_time
+                            planner.draft == null -> R.string.meal_setup_title
+                            planner.draft.id == null -> R.string.pulse_mealplan_plan_a_meal
+                            else -> R.string.pulse_mealplan_edit_meal
+                        },
+                    ),
+                showTopBar = planner.draft != null,
+                backLabel =
+                    stringResource(
+                        if (timeEditor) R.string.meal_setup_back_to_preferences else R.string.pulse_mealplan_back_to_planner,
+                    ),
+                backEnabled = !planner.busy,
+            ) {
+                key(timeZone) {
+                    MealPlanScreen(
+                        planner,
+                        viewModel,
+                        plannerScrollStates,
+                        active,
+                        onboarding::editPreferences,
+                        preferences.resolvedElsewhere,
+                        preferences.record?.preferences,
+                    )
+                }
+            }
         }
     }
 }
@@ -127,6 +147,8 @@ fun MealPlanRoute(
 internal fun MealPlanScreen(
     state: MealPlanUiState,
     vm: MealPlanViewModel,
+    holder: SaveableStateHolder,
+    active: Boolean,
     onPreferences: (() -> Unit)? = null,
     resolvedElsewhere: Boolean = false,
     preferences: MealPreferences? = null,
@@ -142,10 +164,9 @@ internal fun MealPlanScreen(
     LaunchedEffect(state.draft == null) { if (state.draft == null) records = false }
     var deletion by remember { mutableStateOf<Pair<MealChange, UiText>?>(null) }
     val cancel = { if (state.draft?.dirty == true) discard = true else vm.discard() }
-    BackHandler(state.draft != null || state.busy) {
+    BackHandler(active && (state.draft != null || state.busy)) {
         if (!state.busy && state.draft != null) cancel()
     }
-    val holder = rememberSaveableStateHolder()
     val pullState = rememberPullToRefreshState()
     val refreshing = state.meals.loading || state.times.loading
     val showAddButton =
@@ -187,9 +208,9 @@ internal fun MealPlanScreen(
                 if (state.draft != null &&
                     !records
                 ) {
-                    "editor"
+                    if (draft.timeForm) "time-editor" else "editor"
                 } else {
-                    state.selected.toString()
+                    if (draft == null) state.selected.toString() else "review-${state.selected}"
                 },
             ) {
                 Column(Modifier.fillMaxSize().imePadding()) {
@@ -367,7 +388,7 @@ internal fun MealPlanScreen(
             )
         }
     }
-    if (discard) {
+    if (active && discard) {
         PulseDialog(
             stringResource(
                 R.string.pulse_mealplan_discard_meal_changes,
@@ -385,7 +406,7 @@ internal fun MealPlanScreen(
             { discard = false },
         )
     }
-    deletion?.let { (change, text) ->
+    deletion?.takeIf { active }?.let { (change, text) ->
         PulseDialog(
             stringResource(
                 R.string.pulse_mealplan_delete_from_meal_plan,

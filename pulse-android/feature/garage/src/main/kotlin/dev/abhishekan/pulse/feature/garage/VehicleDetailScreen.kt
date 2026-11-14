@@ -20,7 +20,9 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -42,6 +44,7 @@ import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseHideNavigation
+import dev.abhishekan.pulse.core.ui.PulseScreenTransition
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -131,69 +134,85 @@ fun VehicleDetailRoute(
         }
     }
 
-    val title =
-        state.reminderPage?.let { reminderPageTitle(it) }
-            ?: state.history.value?.name
-            ?: stringResource(R.string.pulse_garage_screen_title)
-    val detailBackLabel =
-        when (state.reminderPage) {
-            null -> backLabel ?: stringResource(R.string.pulse_garage_back_to_collection)
-            "list" -> stringResource(R.string.pulse_garage_reminder_back_maintenance)
-            else -> stringResource(R.string.pulse_garage_reminder_back_settings)
-        }
+    val scrollStates = rememberSaveableStateHolder()
+    PulseScreenTransition(
+        state to editor,
+        screenDepth = { (detail, edit) ->
+            val reminderDepth =
+                when (detail.reminderPage) {
+                    null -> 0
+                    "list" -> 1
+                    else -> 2
+                }
+            reminderDepth + if (edit.draft == null) 0 else 1
+        },
+    ) { (detail, edit), active ->
+        val title =
+            detail.reminderPage?.let { reminderPageTitle(it) }
+                ?: detail.history.value?.name
+                ?: stringResource(R.string.pulse_garage_screen_title)
+        val detailBackLabel =
+            when (detail.reminderPage) {
+                null -> backLabel ?: stringResource(R.string.pulse_garage_back_to_collection)
+                "list" -> stringResource(R.string.pulse_garage_reminder_back_maintenance)
+                else -> stringResource(R.string.pulse_garage_reminder_back_settings)
+            }
 
-    key(timeZone, currency) {
-        VehicleDetailScreen(
-            state = state,
-            editor = editor,
-            title = title,
-            backLabel = detailBackLabel,
-            onRefresh = viewModel::refresh,
-            onReview = viewModel::acknowledgeReview,
-            onDiscard = viewModel::discard,
-            onUpdate = viewModel::update,
-            onSave = viewModel::save,
-            onRetryCatalog = viewModel::retryCatalog,
-            onCreate = viewModel::create,
-            onEdit = viewModel::edit,
-            onTab = viewModel::tab,
-            onReminder = viewModel::reminders,
-            onBackFromReminder = viewModel::backFromReminder,
-            onPressure = viewModel::pressure,
-            onMutate = viewModel::mutate,
-            onOpenReceipt = { record, receipt -> viewModel.download(record, receipt) },
-            onUpload = { record ->
-                pickerRecord = record
-                try {
-                    pick.launch(arrayOf("*/*"))
-                } catch (
-                    _: ActivityNotFoundException,
-                ) {
-                    viewModel.fileMessage(
-                        uiText(R.string.pulse_garage_a_system_file_picker_is_unavailable_on_this_device),
-                    )
-                }
-            },
-            onDownload = { record, receipt ->
-                downloadRecord = record
-                downloadReceipt =
-                    arrayListOf(
-                        receipt.id.toString(),
-                        receipt.name,
-                        receipt.contentType,
-                        receipt.size.toString(),
-                    )
-                try {
-                    download.launch(receipt.name)
-                } catch (
-                    _: ActivityNotFoundException,
-                ) {
-                    viewModel.fileMessage(
-                        uiText(R.string.pulse_garage_a_system_document_picker_is_unavailable_on_this_device),
-                    )
-                }
-            },
-        )
+        key(timeZone, currency) {
+            VehicleDetailScreen(
+                state = detail,
+                editor = edit,
+                active = active,
+                scrollStates = scrollStates,
+                title = title,
+                backLabel = detailBackLabel,
+                onRefresh = viewModel::refresh,
+                onReview = viewModel::acknowledgeReview,
+                onDiscard = viewModel::discard,
+                onUpdate = viewModel::update,
+                onSave = viewModel::save,
+                onRetryCatalog = viewModel::retryCatalog,
+                onCreate = viewModel::create,
+                onEdit = viewModel::edit,
+                onTab = viewModel::tab,
+                onReminder = viewModel::reminders,
+                onBackFromReminder = viewModel::backFromReminder,
+                onPressure = viewModel::pressure,
+                onMutate = viewModel::mutate,
+                onOpenReceipt = { record, receipt -> viewModel.download(record, receipt) },
+                onUpload = { record ->
+                    pickerRecord = record
+                    try {
+                        pick.launch(arrayOf("*/*"))
+                    } catch (
+                        _: ActivityNotFoundException,
+                    ) {
+                        viewModel.fileMessage(
+                            uiText(R.string.pulse_garage_a_system_file_picker_is_unavailable_on_this_device),
+                        )
+                    }
+                },
+                onDownload = { record, receipt ->
+                    downloadRecord = record
+                    downloadReceipt =
+                        arrayListOf(
+                            receipt.id.toString(),
+                            receipt.name,
+                            receipt.contentType,
+                            receipt.size.toString(),
+                        )
+                    try {
+                        download.launch(receipt.name)
+                    } catch (
+                        _: ActivityNotFoundException,
+                    ) {
+                        viewModel.fileMessage(
+                            uiText(R.string.pulse_garage_a_system_document_picker_is_unavailable_on_this_device),
+                        )
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -201,6 +220,8 @@ fun VehicleDetailRoute(
 private fun VehicleDetailScreen(
     state: VehicleDetailUiState,
     editor: GarageEditorState,
+    active: Boolean,
+    scrollStates: SaveableStateHolder,
     title: String,
     backLabel: String,
     onRefresh: () -> Unit,
@@ -235,8 +256,8 @@ private fun VehicleDetailScreen(
     val selectedPage = state.tab.ordinal
     val pager = remember { PagerState(currentPage = selectedPage) { GarageTab.entries.size } }
     val showPager = state.reminderPage == null && editor.draft == null
-    LaunchedEffect(pager, selectedPage, showPager, editor.busy) {
-        if (showPager) {
+    LaunchedEffect(pager, selectedPage, showPager, editor.busy, active) {
+        if (active && showPager) {
             if (pager.currentPage != selectedPage || pager.currentPageOffsetFraction != 0f || pager.isScrollInProgress) {
                 pager.scrollToPage(selectedPage)
             }
@@ -271,6 +292,8 @@ private fun VehicleDetailScreen(
 
     GarageEditorLayout(
         editor = editor,
+        active = active,
+        scrollStates = scrollStates,
         title = title,
         backLabel = backLabel,
         loading = state.history.loading && state.history.value == null && !pullRefreshing,
@@ -400,7 +423,7 @@ private fun VehicleDetailScreen(
             }
         }
     }
-    deletion?.let { (change, body) ->
+    deletion?.takeIf { active }?.let { (change, body) ->
         PulseDialog(
             stringResource(R.string.pulse_garage_confirm_deletion),
             body.asString(),

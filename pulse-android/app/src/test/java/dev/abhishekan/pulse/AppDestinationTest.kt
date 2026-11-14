@@ -8,6 +8,7 @@ class AppDestinationTest {
     @Test fun onlyRootScreensUseTabTransitions() {
         AppDestination.tabs.forEach { assertTrue(isTabRoot(it, editName = false)) }
         assertFalse(isTabRoot(AppDestination.Profile, editName = true))
+        assertFalse(isTabRoot(AppDestination.Profile, editName = false, fromHome = true))
         assertFalse(isTabRoot(AppDestination.Vehicle, editName = false))
         assertFalse(isTabRoot(AppDestination.Notifications, editName = false))
     }

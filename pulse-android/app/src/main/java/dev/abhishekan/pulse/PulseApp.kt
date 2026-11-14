@@ -3,13 +3,6 @@ package dev.abhishekan.pulse
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.PathEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -44,13 +37,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -67,6 +57,7 @@ import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.ui.DraftSource
 import dev.abhishekan.pulse.core.ui.LocalPulseNavigationHidingScreens
+import dev.abhishekan.pulse.core.ui.PulseActivityTransitions
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -98,19 +89,6 @@ import dev.abhishekan.pulse.feature.profile.ProfileRoute
 import dev.abhishekan.pulse.feature.profile.ProfileSetupPrompt
 import org.koin.androidx.compose.koinViewModel
 import dev.abhishekan.pulse.feature.profile.R as FeatureProfileR
-
-// Android 14's Activity open/close translation curve.
-private val activitySlide =
-    tween<IntOffset>(
-        durationMillis = 450,
-        easing =
-            PathEasing(
-                Path().apply {
-                    cubicTo(0.05f, 0f, 0.133333f, 0.06f, 0.166666f, 0.4f)
-                    cubicTo(0.208333f, 0.82f, 0.25f, 1f, 1f, 1f)
-                },
-            ),
-    )
 
 @Composable
 fun PulseApp(
@@ -240,20 +218,19 @@ private fun SignedInApp(
     val nav = rememberNavController()
     val shell = rememberSaveable(saver = ShellState.Saver) { ShellState() }
     val isTablet = LocalConfiguration.current.smallestScreenWidthDp >= 600
-    val direction = if (LocalLayoutDirection.current == LayoutDirection.Ltr) 1 else -1
+    val transitions = PulseActivityTransitions(LocalLayoutDirection.current)
     val backEnter: AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition = {
         if (isTabTransition(initialState, targetState)) {
             EnterTransition.None
         } else {
-            slideInHorizontally(activitySlide) { -direction * it / 10 }
+            transitions.backEnter
         }
     }
     val backExit: AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition = {
         if (isTabTransition(initialState, targetState)) {
             ExitTransition.None
         } else {
-            slideOutHorizontally(activitySlide) { direction * it / 10 } +
-                fadeOut(tween(durationMillis = 83, delayMillis = 35, easing = LinearEasing))
+            transitions.backExit
         }
     }
     val hidingScreens = remember { mutableStateMapOf<Any, Unit>() }
@@ -337,15 +314,14 @@ private fun SignedInApp(
                                 if (isTabTransition(initialState, targetState)) {
                                     EnterTransition.None
                                 } else {
-                                    slideInHorizontally(activitySlide) { direction * it / 10 } +
-                                        fadeIn(tween(durationMillis = 83, delayMillis = 50, easing = LinearEasing))
+                                    transitions.forwardEnter
                                 }
                             },
                             exitTransition = {
                                 if (isTabTransition(initialState, targetState)) {
                                     ExitTransition.None
                                 } else {
-                                    slideOutHorizontally(activitySlide) { -direction * it / 10 }
+                                    transitions.forwardExit
                                 }
                             },
                             popEnterTransition = backEnter,
@@ -353,13 +329,22 @@ private fun SignedInApp(
                             predictivePopEnterTransition = { backEnter() },
                             predictivePopExitTransition = { backExit() },
                         ) {
-                            composable(AppDestination.Home.route) {
+                            composable(AppDestination.Home.route) { home ->
                                 HomeRoute(
                                     username,
                                     { selectDestination(AppDestination.Horizon) },
                                     onFitness = { selectDestination(AppDestination.Fitness) },
                                     onNotifications = { nav.navigateSingleTop(AppDestination.Notifications.path) },
-                                    onProfile = if (isTablet) null else ({ selectDestination(AppDestination.Profile) }),
+                                    onProfile =
+                                        if (isTablet) {
+                                            null
+                                        } else {
+                                            {
+                                                if (nav.currentBackStackEntry == home) {
+                                                    nav.navigateSingleTop("${AppDestination.Profile.path}?fromHome=true")
+                                                }
+                                            }
+                                        },
                                     onMissingProfile = shell::offerOnboarding,
                                 )
                                 if (shell.onboarding == OnboardingPrompt.Showing) {
@@ -407,6 +392,10 @@ private fun SignedInApp(
                                 arguments =
                                     listOf(
                                         navArgument("editName") {
+                                            type = NavType.BoolType
+                                            defaultValue = false
+                                        },
+                                        navArgument("fromHome") {
                                             type = NavType.BoolType
                                             defaultValue = false
                                         },

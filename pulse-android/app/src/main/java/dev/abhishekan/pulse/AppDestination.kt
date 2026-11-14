@@ -17,7 +17,7 @@ internal enum class AppDestination(
     Horizon("horizon", R.string.pulse_app_horizon, UiR.drawable.pulse_horizon),
     Garage("garage", R.string.pulse_app_garage, UiR.drawable.pulse_garage),
     MealPlan("mealplan", R.string.pulse_app_meals, UiR.drawable.pulse_meals),
-    Profile("you?editName={editName}", R.string.pulse_app_you, UiR.drawable.pulse_person),
+    Profile("you?editName={editName}&fromHome={fromHome}", R.string.pulse_app_you, UiR.drawable.pulse_person),
     Workout("workout/{id}"),
     Vehicle("vehicle/{id}"),
     Notifications("notifications"),
@@ -50,12 +50,17 @@ internal fun isTabTransition(
 ): Boolean = from.isTabRoot() && to.isTabRoot()
 
 private fun NavBackStackEntry.isTabRoot(): Boolean =
-    isTabRoot(AppDestination.fromRoute(destination.route), arguments?.getBoolean("editName") == true)
+    isTabRoot(
+        AppDestination.fromRoute(destination.route),
+        editName = arguments?.getBoolean("editName") == true,
+        fromHome = arguments?.getBoolean("fromHome") == true,
+    )
 
 internal fun isTabRoot(
     destination: AppDestination?,
     editName: Boolean,
-): Boolean = destination in AppDestination.tabs && !(destination == AppDestination.Profile && editName)
+    fromHome: Boolean = false,
+): Boolean = destination in AppDestination.tabs && !(destination == AppDestination.Profile && (editName || fromHome))
 
 internal fun NavController.navigateToTab(destination: AppDestination) =
     navigate(destination.path) {

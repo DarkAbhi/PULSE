@@ -1562,7 +1562,7 @@ class GarageDeviceTest {
         pick("Fuel type", "Petrol", "Diesel")
         screenshot("fuel-editor")
         tap("Save")
-        awaitText("1234.5")
+        awaitText("Odometer 1234.5 km")
         assertEquals(
             "diesel",
             fuel.values

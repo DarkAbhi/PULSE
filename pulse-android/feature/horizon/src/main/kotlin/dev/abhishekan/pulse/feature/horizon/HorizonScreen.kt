@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,8 +29,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,6 +50,7 @@ import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
@@ -55,6 +60,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseFormAction
 import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
+import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
@@ -73,20 +79,57 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    PulseHideNavigation(state.draft != null || state.subscriptionId != null)
+    var searchOpen by rememberSaveable(state.historyOpen) { mutableStateOf(false) }
+    var focusSearch by remember { mutableStateOf(false) }
+    PulseHideNavigation(state.draft != null || state.subscriptionId != null || state.historyOpen)
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     val scrollStates = rememberSaveableStateHolder()
-    var ledgerCategory by rememberSaveable { mutableStateOf<Long?>(null) }
-    PulseScreenTransition(state, screenDepth = { if (it.draft == null) 0 else 1 }) { screen, active ->
+    PulseScreenTransition(
+        state,
+        screenDepth = {
+            when {
+                it.transactionDraft != null -> 2
+                it.draft != null && it.historyOpen -> 2
+                it.draft != null || it.historyOpen -> 1
+                else -> 0
+            }
+        },
+    ) { screen, active ->
         PulseScreenScaffold(
-            title = stringResource(screen.draft.topBarTitle()),
-            showTopBar = screen.draft != null,
-            backLabel = stringResource(R.string.pulse_horizon_back_to_horizon),
-            backEnabled = !screen.busy || screen.draft == null,
-            actions = { HorizonTopBarActions(screen, viewModel::deleteObligation) },
+            title =
+                when {
+                    screen.draft != null -> stringResource(screen.draft.topBarTitle())
+                    screen.historyOpen -> stringResource(R.string.pulse_horizon_all_transactions)
+                    else -> ""
+                },
+            showTopBar = screen.draft != null || screen.historyOpen,
+            backLabel =
+                stringResource(
+                    when {
+                        screen.transactionDraft != null -> R.string.pulse_horizon_back_to_transaction
+                        screen.draft != null && screen.historyOpen -> R.string.pulse_horizon_back_to_history
+                        screen.historyOpen -> R.string.pulse_horizon_back_to_transactions
+                        else -> R.string.pulse_horizon_back_to_horizon
+                    },
+                ),
+            backEnabled = !screen.busy,
+            actions = {
+                if (screen.draft == null && screen.historyOpen) {
+                    PulseButton(
+                        stringResource(R.string.pulse_horizon_search_transactions),
+                        {
+                            searchOpen = true
+                            focusSearch = true
+                        },
+                        enabled = !screen.busy,
+                        style = PulseButtonStyle.Icon,
+                    ) { Icon(painterResource(R.drawable.pulse_horizon_search), null) }
+                }
+                HorizonTopBarActions(screen, viewModel::deleteObligation, viewModel::addTransactionCategory)
+            },
         ) {
             key(timeZone, accountCurrency) {
-                HorizonScreen(screen, viewModel, scrollStates, active, ledgerCategory) { ledgerCategory = it }
+                HorizonScreen(screen, viewModel, scrollStates, active, searchOpen, focusSearch) { focusSearch = false }
             }
         }
     }
@@ -98,21 +141,29 @@ internal fun HorizonScreen(
     vm: HorizonViewModel,
     scrollStates: SaveableStateHolder,
     active: Boolean,
-    ledgerCategory: Long?,
-    onLedgerCategory: (Long?) -> Unit,
+    searchOpen: Boolean,
+    focusSearch: Boolean,
+    onSearchFocused: () -> Unit,
 ) {
     var discard by rememberSaveable { mutableStateOf(false) }
     var records by rememberSaveable { mutableStateOf(false) }
     var deletion by remember { mutableStateOf<Pair<HorizonChange, UiText>?>(null) }
-    val cancel = { if (state.draft?.dirty == true) discard = true else vm.discard() }
-    BackHandler(active && (state.draft != null || state.busy || state.subscriptionId != null)) {
+    var selectedTransaction by rememberSaveable { mutableStateOf<Long?>(null) }
+    val closeForm = {
+        records = false
+        vm.discard()
+    }
+    val cancel = { if (state.draft?.dirty == true) discard = true else closeForm() }
+    BackHandler(active && (state.draft != null || state.busy || state.subscriptionId != null || state.historyOpen)) {
         when {
             state.busy -> Unit
             state.draft != null -> cancel()
+            state.historyOpen -> vm.closeHistory()
             else -> vm.hidePayments()
         }
     }
     val currency = UserCurrency.code
+    val canMutate = !state.busy && !state.reviewRequired && state.overview.value != null && state.draft == null
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { width ->
         Column(
             Modifier
@@ -122,9 +173,8 @@ internal fun HorizonScreen(
                 .padding(top = LocalPulseContentPadding.current.calculateTopPadding())
                 .imePadding(),
         ) {
-            if (state.draft == null ||
-                records
-            ) {
+            val showHistory = state.historyOpen && (state.draft == null || records)
+            if (!showHistory && (state.draft == null || records)) {
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -192,6 +242,15 @@ internal fun HorizonScreen(
                     }
                 }
             }
+            val resumeDraft: @Composable () -> Unit = {
+                if (state.draft != null && !state.reviewRequired) {
+                    PulseButton(
+                        stringResource(R.string.pulse_horizon_resume_unsaved_edits),
+                        { records = false },
+                        style = PulseButtonStyle.Text,
+                    )
+                }
+            }
             val content: @Composable () -> Unit = {
                 val scroll = rememberScrollState()
                 Column(
@@ -203,25 +262,13 @@ internal fun HorizonScreen(
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                 ) {
                     review()
-                    if (state.draft != null &&
-                        !state.reviewRequired
-                    ) {
-                        PulseButton(
-                            stringResource(
-                                R.string.pulse_horizon_resume_unsaved_edits,
-                            ),
-                            {
-                                records =
-                                    false
-                            },
-                            style = PulseButtonStyle.Text,
-                        )
+                    resumeDraft()
+                    if (records && state.transactionDraft != null && state.reviewRequired) {
+                        SectionState(state.overview, vm::refreshOverview) { overview ->
+                            PulseText(stringResource(R.string.pulse_horizon_filter_categories), style = PulseTextStyle.Title)
+                            overview.categories.forEach { PulseText(it.name) }
+                        }
                     }
-                    val canMutate =
-                        !state.busy &&
-                            !state.reviewRequired &&
-                            state.overview.value != null &&
-                            state.draft == null
                     val edit: (HorizonDraft) -> Unit = {
                         records = false
                         vm.edit(it)
@@ -248,41 +295,46 @@ internal fun HorizonScreen(
                             }
                         }
                         HorizonTab.Transactions -> {
-                            LedgerFilters(
-                                state,
-                                vm,
-                                ledgerCategory,
-                                onLedgerCategory,
-                                canMutate = canMutate,
-                                addCategory = { create(HorizonForm.Category) },
-                                logTransaction = { create(HorizonForm.Transaction) },
+                            PulseText(
+                                stringResource(R.string.pulse_horizon_recent_transactions),
+                                style = PulseTextStyle.Heading2,
                             )
-                            SectionState(state.transactions, {
-                                vm.refreshTransactions()
-                            }) { page ->
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
+                                verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
+                            ) {
+                                PulseButton(
+                                    stringResource(R.string.pulse_horizon_log_transaction),
+                                    { create(HorizonForm.Transaction) },
+                                    enabled = canMutate,
+                                )
+                                PulseButton(
+                                    stringResource(R.string.pulse_horizon_view_all_transactions),
+                                    vm::openHistory,
+                                    enabled = !state.busy && state.draft == null,
+                                    variant = PulseButtonVariant.Secondary,
+                                )
+                            }
+                            SectionState(state.recent, vm::refreshRecent) { page ->
                                 if (currency.isBlank()) {
                                     PulseText(stringResource(R.string.pulse_horizon_currency_unavailable), style = PulseTextStyle.Label)
                                 }
-                                HorizonLedger(
-                                    page,
-                                    currency,
-                                    canMutate,
-                                    { edit(it.draft(currency)) },
-                                    { tx ->
-                                        remove(
-                                            HorizonRecord.Transaction,
-                                            tx.id,
-                                            uiText(
-                                                R.string.pulse_horizon_delete_1_s_this_permanently_removes_the_transaction_and,
-                                                tx.name,
-                                            ),
-                                        )
-                                    },
-                                    categoryId = ledgerCategory,
-                                )
-                                PageControls(page, state.transactions.loading || state.busy, {
-                                    vm.refreshTransactions(it)
-                                })
+                                val recent = page.items.take(5)
+                                if (recent.isEmpty()) {
+                                    PulseEmptyState(
+                                        stringResource(R.string.pulse_horizon_no_transactions),
+                                        stringResource(R.string.pulse_horizon_log_first_transaction),
+                                    )
+                                } else {
+                                    Column {
+                                        recent.forEachIndexed { index, tx ->
+                                            key(tx.id) {
+                                                LedgerRow(tx, wide = false) { selectedTransaction = tx.id }
+                                                if (index < recent.lastIndex) PulseHorizontalDivider()
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                         HorizonTab.Budgets -> {
@@ -450,11 +502,30 @@ internal fun HorizonScreen(
             }
             val sectionLoading =
                 when (state.tab) {
-                    HorizonTab.Transactions -> state.transactions.loading && state.transactions.value == null
+                    HorizonTab.Transactions -> false
                     HorizonTab.Purchases -> state.purchases.loading && state.purchases.value == null
                     else -> state.overview.loading && state.overview.value == null
                 }
-            if (sectionLoading &&
+            if (showHistory) {
+                val bottom = LocalPulseContentPadding.current.calculateBottomPadding()
+                val wide = width == PulseWindowSize.Expanded && LocalDensity.current.fontScale <= 1.15f
+                scrollStates.SaveableStateProvider(if (state.draft == null) "transaction-history" else "review-history") {
+                    TransactionHistory(
+                        state,
+                        vm,
+                        active && state.draft == null,
+                        searchOpen,
+                        active && focusSearch,
+                        onSearchFocused,
+                        PaddingValues(start = width.pagePadding, end = width.pagePadding, top = PulseTokens.small, bottom = bottom),
+                        wide,
+                        { selectedTransaction = it.id },
+                    ) {
+                        review()
+                        resumeDraft()
+                    }
+                }
+            } else if (sectionLoading &&
                 state.draft == null &&
                 !state.reviewRequired
             ) {
@@ -477,6 +548,22 @@ internal fun HorizonScreen(
                 uiText(R.string.pulse_horizon_link_this_debit_to_the_subscription_the_transaction_remains)
         }
     }
+    val displayedTransactions = if (state.historyOpen) state.history.value else state.recent.value
+    if (active && state.draft == null && state.tab == HorizonTab.Transactions) {
+        displayedTransactions?.items?.find { it.id == selectedTransaction }?.let { tx ->
+            TransactionDetails(
+                tx,
+                currency,
+                canMutate,
+                { selectedTransaction = null },
+                { vm.edit(it.draft(currency)) },
+                { transaction ->
+                    deletion = HorizonChange.Delete(HorizonRecord.Transaction, transaction.id) to
+                        uiText(R.string.pulse_horizon_delete_1_s_this_permanently_removes_the_transaction_and, transaction.name)
+                },
+            )
+        }
+    }
     if (active && discard) {
         PulseDialog(
             stringResource(R.string.pulse_horizon_discard_unsaved_changes),
@@ -484,8 +571,7 @@ internal fun HorizonScreen(
             stringResource(R.string.pulse_horizon_discard_edits),
             {
                 discard = false
-                records = false
-                vm.discard()
+                closeForm()
             },
             { discard = false },
         )

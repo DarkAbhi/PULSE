@@ -17,16 +17,23 @@ SELECT COUNT(*) FROM financial_horizon_transactions t
 WHERE t.user_id = $1
   AND ($2::text = '' OR t.type = $2)
   AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3)
+  AND ($4::bigint = 0 OR t.category_id = $4)
 `
 
 type CountFilteredTransactionsParams struct {
 	UserID  int64
 	Column2 string
 	Column3 string
+	Column4 int64
 }
 
 func (q *Queries) CountFilteredTransactions(ctx context.Context, arg CountFilteredTransactionsParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countFilteredTransactions, arg.UserID, arg.Column2, arg.Column3)
+	row := q.db.QueryRow(ctx, countFilteredTransactions,
+		arg.UserID,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+	)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -208,13 +215,15 @@ LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id AND s.us
 WHERE t.user_id = $1
   AND ($2::text = '' OR t.type = $2)
   AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3)
-ORDER BY t.transaction_date DESC, t.id DESC LIMIT $4 OFFSET $5
+  AND ($4::bigint = 0 OR t.category_id = $4)
+ORDER BY t.transaction_date DESC, t.id DESC LIMIT $5 OFFSET $6
 `
 
 type ListFilteredTransactionsParams struct {
 	UserID  int64
 	Column2 string
 	Column3 string
+	Column4 int64
 	Limit   int32
 	Offset  int32
 }
@@ -240,6 +249,7 @@ func (q *Queries) ListFilteredTransactions(ctx context.Context, arg ListFiltered
 		arg.UserID,
 		arg.Column2,
 		arg.Column3,
+		arg.Column4,
 		arg.Limit,
 		arg.Offset,
 	)
@@ -285,13 +295,15 @@ LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.us
 WHERE t.user_id = $1
   AND ($2::text = '' OR t.type = $2)
   AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3)
-ORDER BY t.transaction_date DESC, t.id DESC LIMIT $4 OFFSET $5
+  AND ($4::bigint = 0 OR t.category_id = $4)
+ORDER BY t.transaction_date DESC, t.id DESC LIMIT $5 OFFSET $6
 `
 
 type ListFilteredTransactionsLegacyParams struct {
 	UserID  int64
 	Column2 string
 	Column3 string
+	Column4 int64
 	Limit   int32
 	Offset  int32
 }
@@ -317,6 +329,7 @@ func (q *Queries) ListFilteredTransactionsLegacy(ctx context.Context, arg ListFi
 		arg.UserID,
 		arg.Column2,
 		arg.Column3,
+		arg.Column4,
 		arg.Limit,
 		arg.Offset,
 	)

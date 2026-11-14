@@ -16,6 +16,8 @@ interface HorizonRepository {
         page: Int,
         search: String,
         type: String?,
+        categoryId: Long? = null,
+        pageSize: Int = 20,
     ): Outcome<HorizonTransactionPage>
 
     suspend fun purchases(): Outcome<PlannedPurchases>

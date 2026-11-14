@@ -922,9 +922,11 @@ func operation41() {}
 // @Param page query integer false "Page number" default(1) minimum(1)
 // @Param page_size query integer false "Items per page, capped at 100" default(10) minimum(1) maximum(100)
 // @Param type query string false "Transaction type" Enums(debit,credit)
+// @Param category_id query integer false "Category ID" minimum(1)
 // @Param search query string false "Case-insensitive search text"
 // @Security SessionBearer
 // @Success 200 {object} horizon.PaginatedTransactionsDTO
+// @Failure 400 {object} Error
 // @Failure 401 {object} Error
 // @Failure 500 {object} Error
 // @Router /api/horizon/transactions [get]

@@ -22,13 +22,16 @@ class HorizonApi(
         page: Int,
         search: String,
         type: String?,
+        categoryId: Long?,
+        pageSize: Int,
     ): HorizonTransactionPageDto =
         client
             .get("horizon/transactions") {
                 parameter("page", page)
-                parameter("page_size", 20)
+                parameter("page_size", pageSize)
                 parameter("search", search)
                 parameter("type", type)
+                parameter("category_id", categoryId)
             }.body()
 
     suspend fun purchases(): PlannedPurchasesDto = client.get("next-month-purchases").body()

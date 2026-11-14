@@ -32,6 +32,7 @@ internal class HorizonTestRepository : HorizonRepository {
     var purchaseFailure: Failure? = null
     var writes = mutableListOf<HorizonChange>()
     val pages = mutableListOf<Triple<Int, String, String?>>()
+    val historyRequests = mutableListOf<Pair<Long?, Int>>()
     var readCount = 0
     var write: suspend () -> Outcome<Unit> = { Outcome.Success(Unit) }
 
@@ -45,10 +46,13 @@ internal class HorizonTestRepository : HorizonRepository {
         page: Int,
         search: String,
         type: String?,
+        categoryId: Long?,
+        pageSize: Int,
     ): Outcome<HorizonTransactionPage> {
-        pages += Triple(page, search, type)
+        historyRequests += categoryId to pageSize
+        if (pageSize == 20) pages += Triple(page, search, type)
         return listFailure?.let { Outcome.Error(it) }
-            ?: Outcome.Success(HorizonTransactionPage(emptyList(), page, 20, 80, 4))
+            ?: Outcome.Success(HorizonTransactionPage(emptyList(), page, pageSize, 80, 80 / pageSize))
     }
 
     override suspend fun purchases(): Outcome<PlannedPurchases> =

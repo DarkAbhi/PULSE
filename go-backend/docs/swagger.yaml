@@ -2332,6 +2332,11 @@ paths:
         in: query
         name: type
         type: string
+      - description: Category ID
+        in: query
+        minimum: 1
+        name: category_id
+        type: integer
       - description: Case-insensitive search text
         in: query
         name: search
@@ -2343,6 +2348,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/horizon.PaginatedTransactionsDTO'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
         "401":
           description: Unauthorized
           schema:

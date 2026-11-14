@@ -71,13 +71,13 @@ class HorizonViewModelTest {
             vm.refresh()
             assertTrue(vm.uiState.value.overview.loading)
             assertEquals(previous.overview.value, vm.uiState.value.overview.value)
-            assertEquals(previous.transactions.value, vm.uiState.value.transactions.value)
+            assertEquals(previous.recent.value, vm.uiState.value.recent.value)
             assertEquals(previous.purchases.value, vm.uiState.value.purchases.value)
             runCurrent()
             assertFalse(vm.uiState.value.overview.loading)
             assertEquals(Failure.Connection, vm.uiState.value.overview.error)
             assertEquals(previous.overview.value, vm.uiState.value.overview.value)
-            assertEquals(previous.transactions.value, vm.uiState.value.transactions.value)
+            assertEquals(previous.recent.value, vm.uiState.value.recent.value)
             assertEquals(previous.purchases.value, vm.uiState.value.purchases.value)
         }
 
@@ -105,12 +105,12 @@ class HorizonViewModelTest {
             val vm = vm()
             runCurrent()
             assertEquals(Failure.Server, vm.uiState.value.overview.error)
-            assertNotNull(vm.uiState.value.transactions.value)
+            assertNotNull(vm.uiState.value.recent.value)
             assertNotNull(vm.uiState.value.purchases.value)
             repo.overviewFailure = null
             vm.refreshOverview()
             runCurrent()
-            assertEquals(1, repo.pages.size)
+            assertEquals(listOf(null to 5), repo.historyRequests)
             assertNotNull(vm.uiState.value.overview.value)
         }
 
@@ -143,6 +143,8 @@ class HorizonViewModelTest {
                 )
             runCurrent()
             assertEquals(HorizonTab.Transactions, restored.uiState.value.tab)
+            restored.showPayments(1)
+            runCurrent()
             assertEquals(2, repo.pages.last().first)
         }
 
@@ -162,6 +164,72 @@ class HorizonViewModelTest {
                 3,
                 vm.uiState.value.transactions.value
                     ?.page,
+            )
+        }
+
+    @Test fun historyFiltersAndAppendingDoNotChangeTheRecentPreviewOrPaymentPicker() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            val recent = vm.uiState.value.recent.value
+            vm.openHistory()
+            runCurrent()
+            vm.filterHistory("tea", "debit", 7)
+            runCurrent()
+            assertEquals(7L to 20, repo.historyRequests.last())
+            assertEquals(Triple(1, "tea", "debit"), repo.pages.last())
+            repo.listFailure = Failure.Connection
+            vm.loadMoreHistory()
+            runCurrent()
+            assertEquals(
+                1,
+                vm.uiState.value.history.value
+                    ?.page,
+            )
+            assertEquals(Failure.Connection, vm.uiState.value.history.error)
+            repo.listFailure = null
+            vm.retryHistory()
+            runCurrent()
+            assertEquals(
+                2,
+                vm.uiState.value.history.value
+                    ?.page,
+            )
+            assertEquals(recent, vm.uiState.value.recent.value)
+            vm.closeHistory()
+            vm.showPayments(1)
+            runCurrent()
+            assertEquals(Triple(1, "", null), repo.pages.last())
+            assertEquals(null to 20, repo.historyRequests.last())
+        }
+
+    @Test fun nestedCategorySaveAndCancelRestoreTheTransactionDraft() =
+        runTest {
+            val saved = SavedStateHandle()
+            val vm = vm(saved)
+            runCurrent()
+            val transaction = HorizonDraft(HorizonForm.Transaction, name = "Tea", amount = "12.50", dirty = true)
+            vm.edit(transaction)
+            vm.addTransactionCategory()
+            vm.discard()
+            assertEquals(transaction, vm.uiState.value.draft)
+
+            vm.addTransactionCategory()
+            vm.update(checkNotNull(vm.uiState.value.draft).copy(name = "Drinks"))
+            val restored = vm(saved)
+            runCurrent()
+            restored.save()
+            runCurrent()
+            assertEquals(transaction, restored.uiState.value.draft)
+            assertNull(restored.uiState.value.transactionDraft)
+            assertEquals("Drinks", (repo.writes.single() as HorizonChange.Category).name)
+
+            restored.edit(transaction.copy(id = 42))
+            restored.addTransactionCategory()
+            assertEquals(
+                HorizonForm.Transaction,
+                restored.uiState.value.draft
+                    ?.kind,
             )
         }
 

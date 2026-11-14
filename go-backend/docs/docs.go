@@ -1667,6 +1667,13 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "Case-insensitive search text",
                         "name": "search",
@@ -1678,6 +1685,12 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/horizon.PaginatedTransactionsDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
                         }
                     },
                     "401": {

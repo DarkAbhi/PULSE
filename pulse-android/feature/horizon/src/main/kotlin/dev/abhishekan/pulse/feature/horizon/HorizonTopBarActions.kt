@@ -22,9 +22,31 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 internal fun HorizonTopBarActions(
     state: HorizonUiState,
     onDelete: (Long) -> Unit,
+    onAddCategory: () -> Unit,
 ) {
     if (state.draft?.kind == HorizonForm.Deduction) {
         state.draft.id?.let { ObligationTopBarActions(state, onDelete, it) }
+    }
+    if (state.draft?.kind == HorizonForm.Transaction && state.draft.id == null) {
+        var expanded by remember { mutableStateOf(false) }
+        val enabled = !state.busy && !state.reviewRequired && state.overview.value != null
+        Box {
+            PulseButton(
+                stringResource(R.string.pulse_horizon_transaction_more_actions),
+                { expanded = true },
+                enabled = enabled,
+                style = PulseButtonStyle.Icon,
+            ) { Icon(painterResource(R.drawable.pulse_horizon_more), null) }
+            PulseDropdownMenu(expanded && enabled, { expanded = false }) {
+                PulseDropdownMenuItem(
+                    text = { PulseText(stringResource(R.string.pulse_horizon_category_type_action)) },
+                    onClick = {
+                        expanded = false
+                        onAddCategory()
+                    },
+                )
+            }
+        }
     }
 }
 

@@ -16,6 +16,7 @@ import dev.abhishekan.pulse.core.ui.DraftSource
 import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
@@ -38,6 +39,11 @@ class HorizonViewModel(
                 tab = HorizonTab.valueOf(saved["tab"] ?: "Overview"),
                 search = saved["search"] ?: "",
                 type = saved["type"],
+                historyOpen = saved["historyOpen"] ?: false,
+                historySearch = saved["historySearch"] ?: "",
+                historyType = saved["historyType"],
+                historyCategoryId = saved["historyCategoryId"],
+                transactionDraft = saved.get<ArrayList<String>>("transactionDraft")?.let(HorizonDraft::restore),
                 subscriptionId = saved["subscription"],
                 draft = saved.get<ArrayList<String>>("draft")?.let(HorizonDraft::restore),
                 reviewRequired =
@@ -47,7 +53,11 @@ class HorizonViewModel(
     val uiState = state.asStateFlow()
 
     init {
-        unsavedChanges.track(DraftSource.Horizon, state.map { it.draft?.dirty == true }, viewModelScope)
+        unsavedChanges.track(
+            DraftSource.Horizon,
+            state.map { it.draft?.dirty == true || it.transactionDraft?.dirty == true },
+            viewModelScope,
+        )
     }
 
     fun deleteObligation(id: Long) = mutate(HorizonChange.Delete(HorizonRecord.Deduction, id), closeDraft = true)
@@ -77,13 +87,15 @@ class HorizonViewModel(
                         is Outcome.Success -> HorizonSection(value.value, loading = false)
                         is Outcome.Error -> current(state.value).copy(loading = false, error = value.failure)
                     }
+                ensureActive()
                 state.update { update(it, result) }
             }
     }
 
     fun refresh() {
         refreshOverview()
-        refreshTransactions()
+        refreshRecent()
+        if (state.value.historyOpen) refreshHistory()
         refreshPurchases()
         state.value.subscriptionId?.let(::showPayments)
     }
@@ -105,6 +117,85 @@ class HorizonViewModel(
         fetch("purchases", {
             horizon.purchases()
         }, { it.purchases }) { s, v -> s.copy(purchases = v) }
+
+    fun refreshRecent() = fetch("recent", { getTransactions(1, "", null, pageSize = 5) }, { it.recent }) { s, v -> s.copy(recent = v) }
+
+    fun openHistory() {
+        saved["historyOpen"] = true
+        state.update { it.copy(historyOpen = true) }
+        refreshHistory()
+    }
+
+    fun closeHistory() {
+        jobs["history"]?.cancel()
+        saved["historyOpen"] = false
+        state.update { it.copy(historyOpen = false, history = HorizonSection()) }
+    }
+
+    fun filterHistory(
+        search: String,
+        type: String?,
+        categoryId: Long?,
+    ) {
+        val current = state.value
+        if (!current.historyOpen || current.busy) return
+        if (search == current.historySearch && type == current.historyType && categoryId == current.historyCategoryId) return
+        saved["historySearch"] = search
+        saved["historyType"] = type
+        saved["historyCategoryId"] = categoryId
+        state.update {
+            it.copy(
+                historySearch = search,
+                historyType = type,
+                historyCategoryId = categoryId,
+                history = HorizonSection(),
+            )
+        }
+        refreshHistory()
+    }
+
+    fun refreshHistory() {
+        loadHistory(append = false)
+    }
+
+    fun loadMoreHistory() {
+        val history = state.value.history
+        val page = history.value ?: return
+        if (!history.loading && page.page < page.totalPages) loadHistory(append = true)
+    }
+
+    private var retryHistoryAppend = false
+
+    fun retryHistory() = loadHistory(retryHistoryAppend)
+
+    private fun loadHistory(append: Boolean) {
+        val current = state.value
+        if (!current.historyOpen) return
+        retryHistoryAppend = append
+        val previous = current.history.value
+        val first = if (append && previous != null) previous.page + 1 else 1
+        val last = if (append) first else previous?.page ?: 1
+        fetch(
+            "history",
+            {
+                val items = if (append) previous?.items.orEmpty().toMutableList() else mutableListOf()
+                for (number in first..last) {
+                    when (val result = getTransactions(number, current.historySearch, current.historyType, current.historyCategoryId)) {
+                        is Outcome.Error -> return@fetch result
+                        is Outcome.Success -> {
+                            val page = result.value
+                            if (page.page == number) items.addAll(page.items)
+                            if (number == last || number >= page.totalPages) {
+                                return@fetch Outcome.Success(page.copy(items = items.distinctBy { it.id }))
+                            }
+                        }
+                    }
+                }
+                error("history page range is empty")
+            },
+            { it.history },
+        ) { s, v -> s.copy(history = v) }
+    }
 
     fun refreshTransactions(page: Int = saved["page"] ?: 1) {
         if (saved.get<Int>("page") != page) {
@@ -152,12 +243,14 @@ class HorizonViewModel(
         state.update {
             it.copy(subscriptionId = id, payments = if (it.subscriptionId == id) it.payments else HorizonSection())
         }
+        refreshTransactions()
         fetch("payments", { getPayments(id) }, { it.payments }) { s, v -> s.copy(payments = v) }
     }
 
     fun hidePayments() {
         saved["subscription"] = null
         jobs["payments"]?.cancel()
+        jobs["transactions"]?.cancel()
         state.update { it.copy(subscriptionId = null, payments = HorizonSection(loading = false)) }
     }
 
@@ -180,7 +273,23 @@ class HorizonViewModel(
     }
 
     fun discard() {
-        if (!state.value.busy) editStored(null)
+        if (!state.value.busy) closeForm()
+    }
+
+    fun addTransactionCategory() {
+        val current = state.value
+        val draft = current.draft ?: return
+        if (draft.kind != HorizonForm.Transaction || draft.id != null || current.busy || current.reviewRequired) return
+        saved["transactionDraft"] = draft.saved()
+        state.update { it.copy(transactionDraft = draft) }
+        newForm(HorizonForm.Category)
+    }
+
+    private fun closeForm() {
+        val parent = state.value.transactionDraft
+        saved["transactionDraft"] = null
+        saved["draft"] = parent?.saved()
+        state.update { it.copy(draft = parent, transactionDraft = null, formError = null) }
     }
 
     fun newForm(kind: HorizonForm) {
@@ -259,7 +368,7 @@ class HorizonViewModel(
             when (val result = apply(change)) {
                 is Outcome.Success -> {
                     saved["pending"] = false
-                    if (closeDraft) editStored(null)
+                    if (closeDraft) closeForm()
                     state.update {
                         it.copy(
                             busy = false,

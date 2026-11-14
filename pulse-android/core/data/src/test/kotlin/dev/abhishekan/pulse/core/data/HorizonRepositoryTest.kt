@@ -189,12 +189,13 @@ class HorizonRepositoryTest {
     @Test fun paginatedSearchEncodesFiltersAndHonorsServerClampedPage() =
         runTest {
             Harness().use { h ->
-                val page = (h.repo.transactions(99, "tea & cake", "debit") as Outcome.Success).value
+                val page = (h.repo.transactions(99, "tea & cake", "debit", categoryId = 7, pageSize = 5) as Outcome.Success).value
                 assertEquals(3, page.page)
                 assertEquals(41, page.total)
                 assertEquals(3, page.totalPages)
                 assertEquals("99", h.query["page"])
-                assertEquals("20", h.query["page_size"])
+                assertEquals("5", h.query["page_size"])
+                assertEquals("7", h.query["category_id"])
                 assertEquals("tea & cake", h.query["search"])
                 assertEquals("debit", h.query["type"])
                 assertEquals(

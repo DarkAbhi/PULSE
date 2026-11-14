@@ -352,7 +352,7 @@
     <string name="pulse_horizon_budget_actions">Actions for %1$s</string>
     <string name="pulse_horizon_budget_remaining">%1$s remaining</string>
     <string name="pulse_horizon_budget_over_by">Over budget by %1$s</string>
-    <string name="pulse_horizon_category_type_action">Add category type</string>
+    <string name="pulse_horizon_category_type_action">Add a Category Type</string>
     <string name="pulse_horizon_budgets_heading">Budgets</string>
     <string name="pulse_horizon_obligations_heading">Obligations</string>
     <string name="pulse_horizon_screen_title">"Financial Horizon"</string>
@@ -360,4 +360,13 @@
     <string name="pulse_horizon_manage_subscription">Manage</string>
     <string name="pulse_horizon_manage_subscription_named">Manage subscription %1$s</string>
     <string name="pulse_horizon_subscription_yearly_amount">%1$s per year</string>
+    <string name="pulse_horizon_recent_transactions">Recent transactions</string>
+    <string name="pulse_horizon_all_transactions">All transactions</string>
+    <string name="pulse_horizon_view_all_transactions">View all</string>
+    <string name="pulse_horizon_log_first_transaction">Log your first transaction to see it here.</string>
+    <string name="pulse_horizon_loading_transactions">Loading transactions</string>
+    <string name="pulse_horizon_back_to_transactions">Back to transactions</string>
+    <string name="pulse_horizon_back_to_history">Back to all transactions</string>
+    <string name="pulse_horizon_back_to_transaction">Back to add transaction</string>
+    <string name="pulse_horizon_transaction_more_actions">More transaction actions</string>
 </resources>

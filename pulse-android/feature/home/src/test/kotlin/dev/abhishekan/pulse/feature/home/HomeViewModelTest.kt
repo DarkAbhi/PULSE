@@ -93,6 +93,8 @@ class HomeViewModelTest {
                 page: Int,
                 search: String,
                 type: String?,
+                categoryId: Long?,
+                pageSize: Int,
             ): Outcome<HorizonTransactionPage> = error("Unused")
 
             override suspend fun purchases(): Outcome<PlannedPurchases> = error("Unused")

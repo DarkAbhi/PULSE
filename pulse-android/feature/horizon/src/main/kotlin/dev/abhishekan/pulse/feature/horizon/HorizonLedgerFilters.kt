@@ -1,203 +1,73 @@
 package dev.abhishekan.pulse.feature.horizon
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import dev.abhishekan.pulse.core.domain.model.HorizonCategory
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
-import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
+import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
+import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
-import kotlinx.coroutines.delay
-import android.graphics.Color as GraphicsColor
+import dev.abhishekan.pulse.core.ui.message
 
 @Composable
 internal fun LedgerFilters(
     state: HorizonUiState,
     vm: HorizonViewModel,
-    categoryId: Long?,
-    onCategory: (Long?) -> Unit,
-    canMutate: Boolean,
-    addCategory: () -> Unit,
-    logTransaction: () -> Unit,
+    search: String,
 ) {
-    var search by rememberSaveable { mutableStateOf(state.search) }
+    val categoryId = state.historyCategoryId
     var sheet by rememberSaveable { mutableStateOf<String?>(null) }
     var categorySearch by rememberSaveable { mutableStateOf("") }
     val categories =
         state.overview.value
             ?.categories
             .orEmpty()
-            .ifEmpty {
-                state.transactions.value?.items.orEmpty().filter { it.categoryId != null }.distinctBy { it.categoryId }.map {
-                    HorizonCategory(requireNotNull(it.categoryId), it.categoryName, "", "", false)
-                }
-            }.sortedBy { it.name.lowercase() }
+            .sortedBy { it.name.lowercase() }
     val allCategories = stringResource(R.string.pulse_horizon_ledger_all_categories)
-    val categoryLabel = categories.find { it.id == categoryId }?.name ?: allCategories
-    val typeLabel = ledgerTypeLabel(state.type)
-    LaunchedEffect(search, state.type, state.busy) {
-        if (search != state.search && !state.busy) {
-            delay(350)
-            vm.filter(search, state.type)
-        }
-    }
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val wide = maxWidth >= 720.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
-        val actions: @Composable (Modifier) -> Unit = { actionModifier ->
-            PulseButton(
-                stringResource(R.string.pulse_horizon_category_type_action),
-                addCategory,
-                modifier = actionModifier,
-                enabled = canMutate,
-                variant = PulseButtonVariant.Secondary,
-            )
-            PulseButton(
-                stringResource(R.string.pulse_horizon_log_transaction),
-                logTransaction,
-                modifier = actionModifier,
-                enabled = canMutate,
-            )
-        }
-        if (wide) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                PulseTextField(search, {
-                    search = it
-                }, stringResource(R.string.pulse_horizon_search_transactions), Modifier.weight(1f), enabled = !state.busy)
-                actions(Modifier.offset(y = 4.dp))
-            }
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PulseTextField(search, {
-                    search = it
-                }, stringResource(R.string.pulse_horizon_search_transactions), Modifier.fillMaxWidth(), enabled = !state.busy)
-                FlowRow(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    actions(Modifier)
-                }
-            }
-        }
-    }
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val tablet = maxWidth >= 900.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (tablet) {
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    listOf(null, "debit", "credit").forEach { type ->
-                        LedgerFilterPill(
-                            ledgerTypeLabel(type),
-                            state.type == type,
-                            enabled = !state.busy,
-                            onClick = { vm.filter(search, type) },
-                        )
-                    }
-                }
-                Box(Modifier.padding(horizontal = 4.dp).size(1.dp, 24.dp).background(PulseTheme.colors.border))
-                Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    LedgerFilterPill(allCategories, categoryId == null, enabled = !state.busy, onClick = { onCategory(null) })
-                    categories.take(4).forEach { category ->
-                        LedgerFilterPill(
-                            category.name,
-                            categoryId == category.id,
-                            color = category.filterColor(),
-                            enabled = !state.busy,
-                            onClick = {
-                                onCategory(category.id)
-                            },
-                        )
-                    }
-                }
-                LedgerFilterPill(
-                    if (categoryId != null &&
-                        categories.take(4).none { it.id == categoryId }
-                    ) {
-                        categoryLabel
-                    } else {
-                        stringResource(R.string.pulse_horizon_filter_more)
-                    },
-                    categoryId != null && categories.take(4).none { it.id == categoryId },
-                    Modifier.testTag("ledger-category-more"),
-                    dropdown = true,
-                    enabled = !state.busy,
-                    onClick = {
-                        categorySearch = ""
-                        sheet = "category"
-                    },
-                )
-            } else {
-                LedgerFilterPill(
-                    typeLabel,
-                    true,
-                    Modifier
-                        .weight(
-                            1f,
-                        ).testTag("ledger-type-filter"),
-                    dropdown = true,
-                    enabled = !state.busy,
-                    onClick = {
-                        sheet =
-                            "type"
-                    },
-                )
-                LedgerFilterPill(
-                    categoryLabel,
-                    categoryId != null,
-                    Modifier
-                        .weight(
-                            1.3f,
-                        ).testTag("ledger-category-filter"),
-                    dropdown = true,
-                    enabled = !state.busy,
-                    onClick = {
-                        categorySearch =
-                            ""
-
-                        sheet = "category"
-                    },
-                )
-            }
+    val categoryLabel =
+        categories.find { it.id == categoryId }?.name
+            ?: if (categoryId == null) allCategories else stringResource(R.string.pulse_horizon_filter_categories)
+    FlowRow(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        LedgerFilterPill(
+            ledgerTypeLabel(state.historyType),
+            state.historyType != null,
+            Modifier.testTag("ledger-type-filter"),
+            !state.busy,
+        ) { sheet = "type" }
+        LedgerFilterPill(
+            categoryLabel,
+            categoryId != null,
+            Modifier.testTag("ledger-category-filter"),
+            !state.busy,
+        ) {
+            categorySearch = ""
+            sheet = "category"
         }
     }
     if (sheet != null) {
@@ -234,23 +104,29 @@ internal fun LedgerFilters(
                     ) {
                         item {
                             PulseCheckbox(categoryId == null, {
-                                onCategory(null)
+                                vm.filterHistory(search, state.historyType, null)
                                 sheet = null
                             }, allCategories, Modifier.fillMaxWidth())
+                        }
+                        state.overview.error?.let { error ->
+                            item { PulseErrorState(error.message, vm::refreshOverview) }
+                        }
+                        if (state.overview.loading && state.overview.value == null) {
+                            item { PulseLoadingState(stringResource(R.string.pulse_horizon_loading_your_horizon)) }
                         }
                         val matches = categories.filter { it.name.contains(categorySearch.trim(), ignoreCase = true) }
                         items(matches, key = { it.id }) { category ->
                             PulseCheckbox(
                                 categoryId == category.id,
                                 {
-                                    onCategory(category.id)
+                                    vm.filterHistory(search, state.historyType, category.id)
                                     sheet = null
                                 },
                                 category.name,
                                 Modifier.fillMaxWidth().testTag("ledger-category-option-${category.id}"),
                             )
                         }
-                        if (matches.isEmpty()) {
+                        if (matches.isEmpty() && state.overview.value != null) {
                             item {
                                 PulseText(
                                     stringResource(R.string.pulse_horizon_filter_no_categories),
@@ -262,8 +138,8 @@ internal fun LedgerFilters(
                     }
                 } else {
                     listOf(null, "debit", "credit").forEach { type ->
-                        LedgerSheetOption(ledgerTypeLabel(type), state.type == type) {
-                            vm.filter(search, type)
+                        LedgerSheetOption(ledgerTypeLabel(type), state.historyType == type) {
+                            vm.filterHistory(search, type, categoryId)
                             sheet = null
                         }
                     }
@@ -284,19 +160,11 @@ private fun ledgerTypeLabel(type: String?): String =
     )
 
 @Composable
-private fun HorizonCategory.filterColor(): Color =
-    runCatching {
-        Color(GraphicsColor.parseColor(color))
-    }.getOrDefault(PulseTheme.colors.action)
-
-@Composable
 private fun LedgerFilterPill(
     label: String,
     active: Boolean,
-    modifier: Modifier = Modifier,
-    dropdown: Boolean = false,
-    color: Color? = null,
-    enabled: Boolean = true,
+    modifier: Modifier,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     val foreground = if (active) PulseTheme.colors.onPrimary else PulseTheme.colors.textPrimary
@@ -307,30 +175,13 @@ private fun LedgerFilterPill(
         modifier = modifier,
         enabled = enabled,
         showSelectedIcon = false,
-        leadingIcon = color?.let { { Box(Modifier.size(8.dp).background(it, CircleShape)) } },
-        trailingIcon =
-            if (dropdown) {
-                {
-                    Canvas(Modifier.size(16.dp)) {
-                        drawLine(
-                            foreground,
-                            Offset(size.width * 0.25f, size.height * 0.4f),
-                            Offset(size.width * 0.5f, size.height * 0.65f),
-                            1.5.dp.toPx(),
-                            StrokeCap.Round,
-                        )
-                        drawLine(
-                            foreground,
-                            Offset(size.width * 0.5f, size.height * 0.65f),
-                            Offset(size.width * 0.75f, size.height * 0.4f),
-                            1.5.dp.toPx(),
-                            StrokeCap.Round,
-                        )
-                    }
-                }
-            } else {
-                null
-            },
+        trailingIcon = {
+            Canvas(Modifier.size(16.dp)) {
+                val tip = Offset(size.width * 0.5f, size.height * 0.65f)
+                drawLine(foreground, Offset(size.width * 0.25f, size.height * 0.4f), tip, 1.5.dp.toPx(), StrokeCap.Round)
+                drawLine(foreground, tip, Offset(size.width * 0.75f, size.height * 0.4f), 1.5.dp.toPx(), StrokeCap.Round)
+            }
+        },
     )
 }
 

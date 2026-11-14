@@ -37,6 +37,12 @@ data class HorizonSection<T>(
 data class HorizonUiState(
     val tab: HorizonTab = HorizonTab.Overview,
     val overview: HorizonSection<HorizonOverview> = HorizonSection(),
+    val recent: HorizonSection<HorizonTransactionPage> = HorizonSection(),
+    val historyOpen: Boolean = false,
+    val history: HorizonSection<HorizonTransactionPage> = HorizonSection(),
+    val historySearch: String = "",
+    val historyType: String? = null,
+    val historyCategoryId: Long? = null,
     val transactions: HorizonSection<HorizonTransactionPage> = HorizonSection(),
     val purchases: HorizonSection<PlannedPurchases> = HorizonSection(),
     val payments: HorizonSection<List<HorizonTransaction>> = HorizonSection(loading = false),
@@ -44,19 +50,16 @@ data class HorizonUiState(
     val search: String = "",
     val type: String? = null,
     val draft: HorizonDraft? = null,
+    val transactionDraft: HorizonDraft? = null,
     val busy: Boolean = false,
     val reviewRequired: Boolean = false,
     val message: UiText? = null,
     val formError: UiText? = null,
 ) {
     val reviewReady: Boolean get() =
-        listOf(overview, transactions, purchases).all {
-            !it.loading &&
-                it.error == null &&
-                it.value != null
-        } &&
-            (
-                subscriptionId == null ||
-                    (!payments.loading && payments.error == null && payments.value != null)
-            )
+        listOf(overview, recent, purchases).all { it.ready } &&
+            (!historyOpen || history.ready) &&
+            (subscriptionId == null || (payments.ready && transactions.ready))
 }
+
+private val HorizonSection<*>.ready: Boolean get() = !loading && error == null && value != null

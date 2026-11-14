@@ -23,7 +23,8 @@ ORDER BY t.transaction_date DESC, t.id DESC LIMIT $2;
 SELECT COUNT(*) FROM financial_horizon_transactions t
 WHERE t.user_id = $1
   AND ($2::text = '' OR t.type = $2)
-  AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3);
+  AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3)
+  AND ($4::bigint = 0 OR t.category_id = $4);
 
 -- name: ListFilteredTransactions :many
 SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
@@ -36,7 +37,8 @@ LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id AND s.us
 WHERE t.user_id = $1
   AND ($2::text = '' OR t.type = $2)
   AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3)
-ORDER BY t.transaction_date DESC, t.id DESC LIMIT $4 OFFSET $5;
+  AND ($4::bigint = 0 OR t.category_id = $4)
+ORDER BY t.transaction_date DESC, t.id DESC LIMIT $5 OFFSET $6;
 
 -- name: ListFilteredTransactionsLegacy :many
 SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
@@ -48,7 +50,8 @@ LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.us
 WHERE t.user_id = $1
   AND ($2::text = '' OR t.type = $2)
   AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3)
-ORDER BY t.transaction_date DESC, t.id DESC LIMIT $4 OFFSET $5;
+  AND ($4::bigint = 0 OR t.category_id = $4)
+ORDER BY t.transaction_date DESC, t.id DESC LIMIT $5 OFFSET $6;
 
 -- name: GetUserCategoryName :one
 SELECT name FROM financial_horizon_categories WHERE id = $1 AND ((user_id IS NULL AND is_default) OR user_id = $2);

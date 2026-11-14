@@ -189,13 +189,26 @@ func (h *TransactionsHandler) ListTransactions(w http.ResponseWriter, r *http.Re
 		txType = ""
 	}
 	search := strings.TrimSpace(r.URL.Query().Get("search"))
+	var categoryID int64
+	if raw := r.URL.Query().Get("category_id"); raw != "" {
+		categoryID, err = strconv.ParseInt(raw, 10, 64)
+		if err != nil || categoryID <= 0 {
+			webutil.BadRequest(w, "category_id must be a positive integer")
+			return
+		}
+	}
 
 	searchPattern := ""
 	if search != "" {
 		searchPattern = "%" + strings.ToLower(search) + "%"
 	}
 
-	count, err := query.New(h.DB).CountFilteredTransactions(r.Context(), query.CountFilteredTransactionsParams{UserID: user.ID, Column2: txType, Column3: searchPattern})
+	count, err := query.New(h.DB).CountFilteredTransactions(r.Context(), query.CountFilteredTransactionsParams{
+		UserID:  user.ID,
+		Column2: txType,
+		Column3: searchPattern,
+		Column4: categoryID,
+	})
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -211,7 +224,7 @@ func (h *TransactionsHandler) ListTransactions(w http.ResponseWriter, r *http.Re
 	}
 	offset := (page - 1) * pageSize
 
-	transactions, err := h.fetchTransactionsPage(r.Context(), user.ID, pageSize, offset, txType, search)
+	transactions, err := h.fetchTransactionsPage(r.Context(), user.ID, pageSize, offset, txType, searchPattern, categoryID)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -226,14 +239,25 @@ func (h *TransactionsHandler) ListTransactions(w http.ResponseWriter, r *http.Re
 	})
 }
 
-func (h *TransactionsHandler) fetchTransactionsPage(ctx context.Context, userID int64, limit, offset int, txType, search string) ([]TransactionDTO, error) {
-	searchPattern := ""
-	if search != "" {
-		searchPattern = "%" + strings.ToLower(search) + "%"
+func (h *TransactionsHandler) fetchTransactionsPage(
+	ctx context.Context,
+	userID int64,
+	limit, offset int,
+	txType, searchPattern string,
+	categoryID int64,
+) ([]TransactionDTO, error) {
+	q := query.New(h.DB)
+	params := query.ListFilteredTransactionsParams{
+		UserID:  userID,
+		Column2: txType,
+		Column3: searchPattern,
+		Column4: categoryID,
+		Limit:   int32(limit),
+		Offset:  int32(offset),
 	}
-	rows, err := query.New(h.DB).ListFilteredTransactions(ctx, query.ListFilteredTransactionsParams{UserID: userID, Column2: txType, Column3: searchPattern, Limit: int32(limit), Offset: int32(offset)})
+	rows, err := q.ListFilteredTransactions(ctx, params)
 	if err != nil {
-		legacy, legacyErr := query.New(h.DB).ListFilteredTransactionsLegacy(ctx, query.ListFilteredTransactionsLegacyParams{UserID: userID, Column2: txType, Column3: searchPattern, Limit: int32(limit), Offset: int32(offset)})
+		legacy, legacyErr := q.ListFilteredTransactionsLegacy(ctx, query.ListFilteredTransactionsLegacyParams(params))
 		if legacyErr != nil {
 			return nil, err
 		}

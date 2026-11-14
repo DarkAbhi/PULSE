@@ -35,6 +35,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
@@ -98,6 +99,7 @@ import java.io.File
 import java.io.IOException
 import java.math.BigDecimal
 import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
 
 /** Source-derived fixtures exercise the real HTTP/session/repository/navigation path. */
@@ -193,7 +195,9 @@ class HorizonDeviceTest {
                             put("total_spent", 0)
                         }
                         "transactions" -> {
-                            put("category_name", "Other")
+                            val categoryId = input["category_id"]?.jsonPrimitive?.longOrNull
+                            val categoryName = categoryId?.let { items("categories")[it]?.get("name") }
+                            put("category_name", categoryName ?: JsonPrimitive("Uncategorized"))
                             put("budget_name", "Everyday")
                         }
                     }
@@ -313,18 +317,26 @@ class HorizonDeviceTest {
                     "horizon/transactions" -> {
                         val type = request.url.parameters["type"].orEmpty()
                         val search = request.url.parameters["search"].orEmpty()
+                        val size = request.url.parameters["page_size"]?.toIntOrNull() ?: 20
+                        val category = request.url.parameters["category_id"]?.toLongOrNull()
                         val all =
-                            items("transactions").values.filter {
-                                (
-                                    type.isBlank() ||
-                                        it["type"]?.jsonPrimitive?.content == type
-                                ) &&
-                                    it
-                                        .getValue("name")
-                                        .jsonPrimitive.content
-                                        .contains(search, true)
-                            }
-                        val totalPages = (all.size + 19) / 20
+                            items("transactions")
+                                .values
+                                .filter {
+                                    (type.isBlank() || it["type"]?.jsonPrimitive?.content == type) &&
+                                        (category == null || it["category_id"]?.jsonPrimitive?.longOrNull == category) &&
+                                        listOf("name", "notes").any { field ->
+                                            it[field]
+                                                ?.jsonPrimitive
+                                                ?.content
+                                                .orEmpty()
+                                                .contains(search, ignoreCase = true)
+                                        }
+                                }.sortedWith(
+                                    compareByDescending<JsonObject> { Instant.parse(it.getValue("transaction_date").jsonPrimitive.content) }
+                                        .thenByDescending { it.getValue("id").jsonPrimitive.long },
+                                )
+                        val totalPages = (all.size + size - 1) / size
                         val page =
                             (request.url.parameters["page"]?.toIntOrNull() ?: 1).coerceIn(
                                 1,
@@ -332,9 +344,9 @@ class HorizonDeviceTest {
                             )
                         Reply(
                             buildJsonObject {
-                                put("transactions", JsonArray(all.drop((page - 1) * 20).take(20)))
+                                put("transactions", JsonArray(all.drop((page - 1) * size).take(size)))
                                 put("page", page)
-                                put("page_size", 20)
+                                put("page_size", size)
                                 put("total", all.size)
                                 put("total_pages", totalPages)
                             }.toString(),
@@ -529,7 +541,7 @@ class HorizonDeviceTest {
         val (tab, action) =
             when (label) {
                 "Log a transaction" -> "Transactions" to label
-                "Add a category tag" -> "Transactions" to "Add category type"
+                "Add a category tag" -> "Transactions" to "Log a transaction"
                 "Add a monthly budget" -> "Budgets" to "Add budget"
                 "Add fixed obligation" -> "Obligations" to "Add obligation"
                 "Add subscription" -> "Subscriptions" to label
@@ -544,7 +556,14 @@ class HorizonDeviceTest {
             tap(if (empty) "Plan your first purchase" else action)
         } else {
             tap(action)
+            if (label == "Add a category tag") openCategoryEditor()
         }
+    }
+
+    private fun openCategoryEditor() {
+        tap("More transaction actions")
+        tap("Add a Category Type")
+        awaitText("Add category")
     }
 
     private fun field(
@@ -553,11 +572,9 @@ class HorizonDeviceTest {
     ) {
         val field = (hasText(label) or hasContentDescription(label)) and hasSetTextAction()
         compose.waitUntil(15_000) { compose.onAllNodes(field).fetchSemanticsNodes().isNotEmpty() }
-        compose
-            .onNode(field)
-            .performScrollTo()
-            .performClick()
-            .performTextReplacement(value)
+        val node = compose.onNode(field)
+        compose.scrollToDisplayed(node)
+        node.performClick().performTextReplacement(value)
     }
 
     private fun confirm(text: String) {
@@ -744,12 +761,13 @@ class HorizonDeviceTest {
                         "Add planned purchase" to "Add planned purchase",
                         "Add subscription" to "Add subscription",
                         "Add a monthly budget" to "Add budget",
-                        "Add a category tag" to "Add category",
                     )
                 quickAction("Add a category tag")
                 awaitText("Add category")
                 compose.onNodeWithContentDescription("Financial Horizon quick actions").assertDoesNotExist()
                 tap("Cancel")
+                awaitText("Add transaction")
+                tap("Back to Financial Horizon")
                 actions.forEach { (label, title) ->
                     quickAction(label)
                     awaitText(title)
@@ -935,47 +953,50 @@ class HorizonDeviceTest {
             shell("wm density 320")
             launchHorizon()
             tap("Transactions")
-            awaitText("Ledger payment 1")
-            compose.onNode(hasTestTag("ledger-category-filter")).performScrollTo().performClick()
+            awaitText("Ledger payment 21")
+            compose.onNodeWithText("Ledger payment 16").assertDoesNotExist()
+            compose.onNodeWithText("Add a Category Type").assertDoesNotExist()
+            tap("View all")
+            awaitText("All transactions")
+            compose.onNode(hasTestTag("ledger-category-filter")).performClick()
             awaitText("Choose a category")
             screenshot("filter-categories-phone", tag = "ledger-category-sheet")
             compose.onNodeWithText("Search categories").performTextReplacement("Transport")
             compose.onNode(hasTestTag("ledger-category-option-14")).performClick()
             awaitText("No transactions")
-            compose.onNode(hasTestTag("ledger-category-filter")).performScrollTo().performClick()
+            compose.onNode(hasTestTag("ledger-category-filter")).performClick()
             awaitText("Choose a category")
             compose.onNodeWithText("Search categories").performTextReplacement("No such category")
             awaitText("No categories match. Try another name.")
             compose.onNodeWithText("Search categories").performTextReplacement("Other")
             compose.onNode(hasTestTag("ledger-category-option-3")).performClick()
-            awaitText("Ledger payment 1")
-            compose.onNode(hasTestTag("ledger-type-filter")).performScrollTo().performClick()
+            awaitText("Ledger payment 21")
+            compose.onNode(hasTestTag("ledger-type-filter")).performClick()
             awaitText("Transaction type")
             compose.onNode(hasText("Credit") and hasClickAction() and hasAnyAncestor(hasTestTag("ledger-category-sheet"))).performClick()
             awaitText("No transactions")
-            compose.onNode(hasTestTag("ledger-type-filter")).performScrollTo().performClick()
+            compose.onNode(hasTestTag("ledger-type-filter")).performClick()
             awaitText("Transaction type")
             compose.onNode(hasText("All types") and hasClickAction() and hasAnyAncestor(hasTestTag("ledger-category-sheet"))).performClick()
-            awaitText("Ledger payment 1")
+            awaitText("Ledger payment 21")
             compose.onNode(hasTestTag("ledger-category-filter") and hasText("Other")).assertIsDisplayed()
             screenshot("ledger-phone")
             compose.onNode(hasTestTag("ledger-sort")).assertDoesNotExist()
             shell("wm size 2400x1800")
             shell("wm density 320")
-            compose.onNode(hasTestTag("ledger-category-more")).performScrollTo().performClick()
+            compose.onNode(hasTestTag("ledger-category-filter")).performClick()
             awaitText("Choose a category")
             screenshot("filter-categories-tablet", tag = "ledger-category-sheet")
             compose
                 .onNode(
                     hasText("All categories") and hasClickAction() and hasAnyAncestor(hasTestTag("ledger-category-sheet")),
                 ).performClick()
-            awaitText("Ledger payment 1")
-            compose.onNodeWithText("Bills & Utilities", useUnmergedTree = true).assertIsDisplayed()
+            awaitText("Ledger payment 21")
             screenshot("ledger-tablet")
-            tap("Ledger payment 1")
+            tap("Ledger payment 21")
             awaitText("Edit")
-            compose.onNodeWithContentDescription("Edit Ledger payment 1").performScrollTo().assertIsDisplayed()
-            compose.onNodeWithContentDescription("Delete Ledger payment 1").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithContentDescription("Edit Ledger payment 21").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithContentDescription("Delete Ledger payment 21").performScrollTo().assertIsDisplayed()
             assertEquals(0, backend.mutations)
         } finally {
             shell("wm size ${size ?: "reset"}")
@@ -983,45 +1004,80 @@ class HorizonDeviceTest {
         }
     }
 
-    @Test fun transactionPaginationCategoryAssociationsAndCrud() {
+    @Test fun transactionHistoryScrollsFiltersAndKeepsDraftDuringCategoryCreation() {
+        backend.items("categories")[14] =
+            buildJsonObject {
+                put("id", 14)
+                put("name", "Transport")
+                put("icon", "tag")
+                put("color", "#6B65B8")
+                put("is_default", false)
+            }
+        val oldest = backend.items("transactions").getValue(1)
+        backend.items("transactions")[1] =
+            buildJsonObject {
+                oldest.forEach { (key, value) -> put(key, value) }
+                put("category_id", 14)
+                put("category_name", "Transport")
+            }
         launchHorizon()
         tap("Transactions")
-        tap("Next page")
-        awaitText("Page 2 of 2 · 21 transactions")
-        quickAction("Add a category tag")
-        field("Name", "Coffee")
-        tap("Save")
-        awaitText("Search transactions")
+        awaitText("Ledger payment 21")
+        compose.onNodeWithText("Ledger payment 16").assertDoesNotExist()
+        tap("View all")
+        awaitText("All transactions")
+        compose.onNode(hasTestTag("transaction-history-list")).performScrollToIndex(21)
+        awaitText("Ledger payment 1")
+        tap("All categories")
+        compose.onNode(hasTestTag("ledger-category-option-14")).performClick()
+        awaitText("Ledger payment 1")
+        compose.onNodeWithText("Ledger payment 21").assertDoesNotExist()
+        tap("Transport")
+        tap("All categories")
+        tap("Back to transactions")
+        awaitText("Recent transactions")
+        awaitText("Ledger payment 21")
         quickAction("Log a transaction")
         field("Name", "Coffee refund")
         field("Amount (${UserCurrency.symbol()})", "12.50")
+        openCategoryEditor()
+        tap("Cancel")
+        awaitText("Coffee refund")
+        openCategoryEditor()
+        field("Name", "Coffee")
+        tap("Save")
+        awaitText("Coffee refund")
         tap("Credit")
         pick("Category", "None", "Coffee")
         pick("Budget", "None", "Everyday")
         pick("Subscription", "None", "Music")
         field("Notes (optional)", "Receipt refunded")
-        screenshot("transaction-editor")
         tap("Save")
-        awaitText("Search transactions")
+        awaitText("Recent transactions")
+        tap("View all")
+        tap("Search transactions")
         field("Search transactions", "Coffee refund")
-        awaitText("Page 1 of 1 · 1 transaction")
-        awaitText("Coffee refund")
-        screenshot("transactions")
         val tx = backend.items("transactions").values.last()
         assertEquals("credit", tx["type"]?.jsonPrimitive?.content)
         assertEquals(1L, tx["budget_id"]?.jsonPrimitive?.long)
         assertEquals(4L, tx["subscription_id"]?.jsonPrimitive?.long)
-        compose.onNode(hasTestTag("horizon-record-${backend.items("transactions").keys.last()}")).performScrollTo().performClick()
+        val record = hasTestTag("horizon-record-${tx.getValue("id").jsonPrimitive.long}")
+        compose.waitUntil(15_000) {
+            compose.onAllNodes(record and hasClickAction() and hasText("Coffee refund")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(record).performClick()
         expandBottomSheet()
         tap("Edit Coffee refund")
+        compose.onNodeWithContentDescription("More transaction actions").assertDoesNotExist()
         field("Name", "Coffee expense")
         tap("Debit")
         pick("Subscription", "Music", "None")
         tap("Save")
         field("Search transactions", "Coffee expense")
-        awaitText("Page 1 of 1 · 1 transaction")
-        awaitText("Coffee expense")
-        compose.onNode(hasTestTag("horizon-record-${backend.items("transactions").keys.last()}")).performScrollTo().performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodes(record and hasClickAction() and hasText("Coffee expense")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(record).performClick()
         expandBottomSheet()
         tap("Delete Coffee expense")
         confirm("Delete")
@@ -1235,6 +1291,7 @@ class HorizonDeviceTest {
             .onNodeWithText(
                 "Link Ledger payment 3 · ${UserCurrency.format(BigDecimal("2.50"))}",
             ).assertDoesNotExist()
+        field("Search transactions", "Ledger payment 1")
         tap("Link Ledger payment 1 · ${UserCurrency.format(BigDecimal("2.50"))}")
         confirm("Link payment")
         awaitText("Ledger payment 1")
@@ -1711,7 +1768,7 @@ class HorizonDeviceTest {
         compose.onNodeWithContentDescription("Back to Financial Horizon").performClick()
         awaitText("Discard unsaved changes?")
         confirm("Discard edits")
-        awaitText("Search transactions")
+        awaitText("Recent transactions")
     }
 
     @Test fun uncertainSaveRefreshesAndBlocksDuplicatesUntilRecordsReviewed() {
@@ -1789,7 +1846,7 @@ class HorizonDeviceTest {
             screenshot("resized-editor")
             assertEquals(0, backend.mutations)
             tap("Save")
-            awaitText("Search transactions")
+            awaitText("Recent transactions")
             assertEquals(1, backend.mutations)
             assertEquals(
                 "Resized draft",
@@ -1811,7 +1868,7 @@ class HorizonDeviceTest {
         backend.summaryError = true
         launchHorizon()
         tap("Transactions")
-        awaitText("Ledger payment 1")
+        awaitText("Ledger payment 21")
         compose.onNodeWithText("Currency unavailable", substring = true).assertDoesNotExist()
         screenshot("partial-transactions")
         tap("Overview")

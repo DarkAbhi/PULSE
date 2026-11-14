@@ -53,8 +53,10 @@ class PulseHorizonRepository(
         page: Int,
         search: String,
         type: String?,
+        categoryId: Long?,
+        pageSize: Int,
     ) = request {
-        val dto = api.transactions(page, search, type)
+        val dto = api.transactions(page, search, type, categoryId, pageSize)
         require(dto.page > 0 && dto.pageSize in 1..100 && dto.total >= 0 && dto.totalPages >= 0)
         val items = dto.transactions.orEmpty().map { it.domain() }
         require(items.size <= dto.pageSize)

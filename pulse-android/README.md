@@ -335,7 +335,7 @@ The `:feature:horizon` module adds native secondary navigation for Overview, Tra
 | Linked payments | `GET/POST /horizon/subscriptions/{id}/transactions` |
 | Planned purchases | `GET/POST/DELETE /next-month-purchases`, `DELETE /next-month-purchases/{id}` |
 
-Transactions request one 20-item page at a time with the supported `search` and `type` filters, honoring server page clamping and totals. Only unlinked debits are offered when linking an existing payment, with confirmation before applying the association. Categories support the API’s name/icon/color metadata; no unsupported category update/delete operation is exposed.
+The Transactions tab requests the newest five records with `page=1&page_size=5`. View all opens transaction history, which loads 20 records at a time as you scroll and combines the server’s `search`, `type` and `category_id` filters. Deploy the Go category filter before releasing the Android update. Add Transaction offers category creation from its overflow menu and retains the transaction draft when you return. The subscription payment picker keeps its own search and pagination and offers only unlinked debits.
 
 Forms support all exposed budget, category, subscription and obligation associations, including explicit JSON nulls to clear a link. Obligations include category, due day and active state. Subscriptions include monthly/yearly cycles, billing day, optional renewal date, active/paused/cancelled status and notes. Transaction timestamps retain their seconds/precision when editing an unrelated field; native date/time controls change the local date/time and send the corresponding instant. Renewal dates remain calendar dates. Planned purchases use the server’s next-month boundary.
 

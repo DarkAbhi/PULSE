@@ -29,14 +29,27 @@ data class StatementBatch(
     val duplicates: Int,
 )
 
-data class StatementPreview(val batch: StatementBatch, val rows: StatementRows)
+data class StatementPreview(
+    val batch: StatementBatch,
+    val rows: StatementRows,
+)
 
-data class StatementCommit(val imported: Int, val duplicates: Int, val excluded: Int)
+data class StatementCommit(
+    val imported: Int,
+    val duplicates: Int,
+    val excluded: Int,
+)
 
 sealed interface StatementResponse<out T> {
-    data class Success<T>(val value: T) : StatementResponse<T>
+    data class Success<T>(
+        val value: T,
+    ) : StatementResponse<T>
 
-    data class Rejected(val code: String) : StatementResponse<Nothing>
+    data class Rejected(
+        val code: String,
+    ) : StatementResponse<Nothing>
 
-    data class Failed(val failure: Failure) : StatementResponse<Nothing>
+    data class Failed(
+        val failure: Failure,
+    ) : StatementResponse<Nothing>
 }

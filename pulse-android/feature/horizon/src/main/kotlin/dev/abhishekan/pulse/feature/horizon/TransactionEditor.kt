@@ -263,11 +263,12 @@ private fun TransactionAccountField(
     val unassigned = stringResource(R.string.pulse_horizon_transaction_no_account)
     val archived = stringResource(R.string.pulse_horizon_account_archived)
     val selected = accounts.firstOrNull { it.id == draft.accountId }
-    val label = when {
-        selected == null -> unassigned
-        selected.archived -> "${selected.displayName} · $archived"
-        else -> selected.displayName
-    }
+    val label =
+        when {
+            selected == null -> unassigned
+            selected.archived -> "${selected.displayName} · $archived"
+            else -> selected.displayName
+        }
     PulseSelectionField(
         label = stringResource(R.string.pulse_horizon_transaction_account_optional),
         selected = label,

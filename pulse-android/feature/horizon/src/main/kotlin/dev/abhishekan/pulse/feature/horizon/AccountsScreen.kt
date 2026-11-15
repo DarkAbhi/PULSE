@@ -24,7 +24,10 @@ import dev.abhishekan.pulse.core.ui.message
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-internal fun AccountsScreen(currency: String, vm: AccountsViewModel = koinViewModel()) {
+internal fun AccountsScreen(
+    currency: String,
+    vm: AccountsViewModel = koinViewModel(),
+) {
     val state by vm.uiState.collectAsStateWithLifecycle()
     val draft = state.draft
     BackHandler(draft != null) { if (!state.busy) vm.edit(null) }
@@ -43,12 +46,13 @@ internal fun AccountsScreen(currency: String, vm: AccountsViewModel = koinViewMo
             PulseCard(Modifier.fillMaxWidth()) {
                 PulseText(account.displayName, style = PulseTextStyle.Title)
                 PulseText(account.institutionName)
-                val details = listOfNotNull(
-                    stringResource(account.typeLabel()),
-                    account.lastFour.takeIf { it.isNotEmpty() }?.let { "•••• $it" },
-                    account.currency,
-                    if (account.archived) stringResource(R.string.pulse_horizon_account_archived) else null,
-                )
+                val details =
+                    listOfNotNull(
+                        stringResource(account.typeLabel()),
+                        account.lastFour.takeIf { it.isNotEmpty() }?.let { "•••• $it" },
+                        account.currency,
+                        if (account.archived) stringResource(R.string.pulse_horizon_account_archived) else null,
+                    )
                 PulseText(details.joinToString(" · "))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
                     PulseButton(
@@ -58,7 +62,9 @@ internal fun AccountsScreen(currency: String, vm: AccountsViewModel = koinViewMo
                         style = PulseButtonStyle.Text,
                     )
                     PulseButton(
-                        stringResource(if (account.archived) R.string.pulse_horizon_restore_account else R.string.pulse_horizon_archive_account),
+                        stringResource(
+                            if (account.archived) R.string.pulse_horizon_restore_account else R.string.pulse_horizon_archive_account,
+                        ),
                         { account.id?.let { vm.archive(it, !account.archived) } },
                         enabled = !state.busy,
                         style = PulseButtonStyle.Text,
@@ -116,15 +122,17 @@ private fun AccountEditor(
         }
         if (draft.accountType == "bank_account") {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                val subtypes = listOf(
-                    "" to R.string.pulse_horizon_account_unspecified,
-                    "savings" to R.string.pulse_horizon_account_savings,
-                    "current" to R.string.pulse_horizon_account_current,
-                    "other" to R.string.pulse_horizon_account_other,
-                )
+                val subtypes =
+                    listOf(
+                        "" to R.string.pulse_horizon_account_unspecified,
+                        "savings" to R.string.pulse_horizon_account_savings,
+                        "current" to R.string.pulse_horizon_account_current,
+                        "other" to R.string.pulse_horizon_account_other,
+                    )
                 for ((value, label) in subtypes) {
                     PulseButton(
-                        stringResource(label), { edit(draft.copy(bankAccountSubtype = value)) },
+                        stringResource(label),
+                        { edit(draft.copy(bankAccountSubtype = value)) },
                         enabled = !busy,
                         style = if (draft.bankAccountSubtype == value) PulseButtonStyle.Standard else PulseButtonStyle.Text,
                     )
@@ -134,7 +142,13 @@ private fun AccountEditor(
         PulseText(stringResource(R.string.pulse_horizon_account_currency, draft.currency))
         PulseTextField(
             value = draft.countryCode,
-            onValueChange = { if (it.length <= 2 && it.all { ch -> ch.uppercaseChar() in 'A'..'Z' }) edit(draft.copy(countryCode = it.uppercase())) },
+            onValueChange = {
+                if (it.length <= 2 &&
+                    it.all { ch -> ch.uppercaseChar() in 'A'..'Z' }
+                ) {
+                    edit(draft.copy(countryCode = it.uppercase()))
+                }
+            },
             label = stringResource(R.string.pulse_horizon_account_country),
             enabled = !busy,
             modifier = Modifier.fillMaxWidth(),
@@ -147,12 +161,21 @@ private fun AccountEditor(
             modifier = Modifier.fillMaxWidth(),
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-            PulseButton(stringResource(R.string.pulse_horizon_cancel_account), { edit(null) }, enabled = !busy, style = PulseButtonStyle.Text)
+            PulseButton(
+                stringResource(R.string.pulse_horizon_cancel_account),
+                { edit(null) },
+                enabled = !busy,
+                style = PulseButtonStyle.Text,
+            )
             PulseButton(
                 stringResource(R.string.pulse_horizon_save_account),
                 save,
-                enabled = !busy && draft.displayName.isNotBlank() && draft.institutionName.isNotBlank() &&
-                    draft.countryCode.length in listOf(0, 2) && draft.lastFour.length in listOf(0, 4),
+                enabled =
+                    !busy &&
+                        draft.displayName.isNotBlank() &&
+                        draft.institutionName.isNotBlank() &&
+                        draft.countryCode.length in listOf(0, 2) &&
+                        draft.lastFour.length in listOf(0, 4),
             )
         }
     }

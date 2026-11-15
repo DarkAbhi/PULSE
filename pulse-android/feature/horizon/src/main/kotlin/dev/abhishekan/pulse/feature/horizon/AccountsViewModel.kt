@@ -40,7 +40,10 @@ internal class AccountsViewModel(
         }
     }
 
-    fun archive(id: Long, archived: Boolean) = submit {
+    fun archive(
+        id: Long,
+        archived: Boolean,
+    ) = submit {
         when (val result = repository.archiveAccount(id, archived)) {
             is Outcome.Success -> load()
             is Outcome.Error -> state.update { it.copy(error = result.failure) }

@@ -39,7 +39,10 @@ data class StatementBatchDto(
 )
 
 @Serializable
-data class StatementCountsDto(val parsed: Int, val duplicates: Int)
+data class StatementCountsDto(
+    val parsed: Int,
+    val duplicates: Int,
+)
 
 @Serializable
 data class StatementCommitDto(
@@ -49,4 +52,6 @@ data class StatementCommitDto(
 )
 
 @Serializable
-data class StatementErrorDto(val code: String = "")
+data class StatementErrorDto(
+    val code: String = "",
+)

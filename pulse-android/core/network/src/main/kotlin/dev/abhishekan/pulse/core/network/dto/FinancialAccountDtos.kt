@@ -4,7 +4,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class FinancialAccountsDto(val accounts: List<FinancialAccountDto>)
+data class FinancialAccountsDto(
+    val accounts: List<FinancialAccountDto>,
+)
 
 @Serializable
 data class FinancialAccountDto(

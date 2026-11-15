@@ -79,12 +79,17 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
     PulseHideNavigation(importOpen || state.draft != null || state.subscriptionId != null || state.historyOpen)
     if (importOpen) {
         StatementImportScreen(
-            state.overview.value?.categories.orEmpty(),
+            state.overview.value
+                ?.categories
+                .orEmpty(),
             onClose = {
                 if (importViewModel.uiState.value.result != null) viewModel.refresh()
                 importOpen = false
             },
-            onManageAccounts = { importOpen = false; viewModel.tab(HorizonTab.Accounts) },
+            onManageAccounts = {
+                importOpen = false
+                viewModel.tab(HorizonTab.Accounts)
+            },
             vm = importViewModel,
         )
         return

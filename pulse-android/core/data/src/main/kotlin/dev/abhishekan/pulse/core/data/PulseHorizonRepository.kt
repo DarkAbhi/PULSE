@@ -41,7 +41,9 @@ import java.math.BigDecimal
 class PulseHorizonRepository(
     private val api: HorizonApi,
     private val auth: PulseAuthRepository,
-) : HorizonRepository, FinancialAccountsRepository, StatementImportRepository {
+) : HorizonRepository,
+    FinancialAccountsRepository,
+    StatementImportRepository {
     private val revision = MutableStateFlow(0L)
     override val changes = revision.asStateFlow()
 
@@ -63,32 +65,44 @@ class PulseHorizonRepository(
         }
     }
 
-    override suspend fun accounts(includeArchived: Boolean) = request {
-        api.accounts(includeArchived).accounts.map {
-            FinancialAccount(
-                it.id, it.displayName, it.institutionName, it.accountType, it.bankAccountSubtype,
-                it.currency, it.countryCode, it.lastFour, it.archivedAt != null,
+    override suspend fun accounts(includeArchived: Boolean) =
+        request {
+            api.accounts(includeArchived).accounts.map {
+                FinancialAccount(
+                    it.id,
+                    it.displayName,
+                    it.institutionName,
+                    it.accountType,
+                    it.bankAccountSubtype,
+                    it.currency,
+                    it.countryCode,
+                    it.lastFour,
+                    it.archivedAt != null,
+                )
+            }
+        }
+
+    override suspend fun saveAccount(account: FinancialAccount) =
+        request {
+            api.save(
+                "horizon/accounts",
+                account.id,
+                buildJsonObject {
+                    put("display_name", account.displayName)
+                    put("institution_name", account.institutionName)
+                    put("account_type", account.accountType)
+                    put("bank_account_subtype", account.bankAccountSubtype)
+                    put("currency", account.currency)
+                    put("country_code", account.countryCode)
+                    put("last_four", account.lastFour)
+                },
             )
         }
-    }
 
-    override suspend fun saveAccount(account: FinancialAccount) = request {
-        api.save(
-            "horizon/accounts",
-            account.id,
-            buildJsonObject {
-                put("display_name", account.displayName)
-                put("institution_name", account.institutionName)
-                put("account_type", account.accountType)
-                put("bank_account_subtype", account.bankAccountSubtype)
-                put("currency", account.currency)
-                put("country_code", account.countryCode)
-                put("last_four", account.lastFour)
-            },
-        )
-    }
-
-    override suspend fun archiveAccount(id: Long, archived: Boolean) = request { api.archiveAccount(id, archived) }
+    override suspend fun archiveAccount(
+        id: Long,
+        archived: Boolean,
+    ) = request { api.archiveAccount(id, archived) }
 
     private suspend fun <T> statementRequest(block: suspend () -> T): StatementResponse<T> {
         val version = auth.version
@@ -97,28 +111,40 @@ class PulseHorizonRepository(
         } catch (error: Exception) {
             val failure = remoteFailure(error)
             if (failure == Failure.Unauthorized) auth.expire(version)
-            val code = if (error is ResponseException) {
-                try {
-                    error.response.body<StatementErrorDto>().code
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
-                } catch (_: Exception) {
+            val code =
+                if (error is ResponseException) {
+                    try {
+                        error.response.body<StatementErrorDto>().code
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        ""
+                    }
+                } else {
                     ""
                 }
-            } else ""
             if (code.isBlank()) StatementResponse.Failed(failure) else StatementResponse.Rejected(code)
         }
     }
 
-    override suspend fun uploadStatement(accountId: Long, pdf: ByteArray, progress: (Float?) -> Unit) =
-        statementRequest {
-            val result = api.uploadStatement(accountId, pdf, progress)
-            StatementPreview(result.statementBatch(), StatementRows(result.rows.map { it.statementRow() }, result.page, result.pageSize, result.total))
-        }
+    override suspend fun uploadStatement(
+        accountId: Long,
+        pdf: ByteArray,
+        progress: (Float?) -> Unit,
+    ) = statementRequest {
+        val result = api.uploadStatement(accountId, pdf, progress)
+        StatementPreview(
+            result.statementBatch(),
+            StatementRows(result.rows.map { it.statementRow() }, result.page, result.pageSize, result.total),
+        )
+    }
 
     override suspend fun statementBatch(id: String) = statementRequest { api.statementBatch(id).statementBatch() }
 
-    override suspend fun statementRows(id: String, page: Int) = statementRequest {
+    override suspend fun statementRows(
+        id: String,
+        page: Int,
+    ) = statementRequest {
         val result = api.statementRows(id, page)
         StatementRows(result.rows.map { it.statementRow() }, result.page, result.pageSize, result.total)
     }
@@ -128,31 +154,38 @@ class PulseHorizonRepository(
         confirmed: Boolean,
         changes: List<Pair<StatementRow, StatementRow>>,
     ) = statementRequest {
-        val body = buildJsonObject {
-            put("revision", batch.revision)
-            put("account_confirmed", confirmed)
-            put("changes", JsonArray(changes.map { (original, edited) ->
-                buildJsonObject {
-                    put("id", edited.id)
-                    if (original.date != edited.date) put("date", edited.date)
-                    if (original.description != edited.description) put("description", edited.description)
-                    if (original.type != edited.type) put("type", edited.type)
-                    if (original.amount != edited.amount) put("amount", edited.amount)
-                    if (original.included != edited.included) put("included", edited.included)
-                    if (original.categoryId != edited.categoryId) {
-                        put("category_id", edited.categoryId?.let(::JsonPrimitive) ?: JsonNull)
-                    }
-                }
-            }))
-        }
+        val body =
+            buildJsonObject {
+                put("revision", batch.revision)
+                put("account_confirmed", confirmed)
+                put(
+                    "changes",
+                    JsonArray(
+                        changes.map { (original, edited) ->
+                            buildJsonObject {
+                                put("id", edited.id)
+                                if (original.date != edited.date) put("date", edited.date)
+                                if (original.description != edited.description) put("description", edited.description)
+                                if (original.type != edited.type) put("type", edited.type)
+                                if (original.amount != edited.amount) put("amount", edited.amount)
+                                if (original.included != edited.included) put("included", edited.included)
+                                if (original.categoryId != edited.categoryId) {
+                                    put("category_id", edited.categoryId?.let(::JsonPrimitive) ?: JsonNull)
+                                }
+                            }
+                        },
+                    ),
+                )
+            }
         api.editStatement(batch.id, body).statementBatch()
     }
 
-    override suspend fun commitStatement(batch: StatementBatch) = statementRequest {
-        val result = api.commitStatement(batch.id, buildJsonObject { put("revision", batch.revision) })
-        revision.update { it + 1 }
-        StatementCommit(result.imported, result.duplicatesSkipped, result.excluded)
-    }
+    override suspend fun commitStatement(batch: StatementBatch) =
+        statementRequest {
+            val result = api.commitStatement(batch.id, buildJsonObject { put("revision", batch.revision) })
+            revision.update { it + 1 }
+            StatementCommit(result.imported, result.duplicatesSkipped, result.excluded)
+        }
 
     override suspend fun cancelStatement(id: String) = statementRequest { api.cancelStatement(id) }
 

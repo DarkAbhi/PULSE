@@ -8,5 +8,8 @@ interface FinancialAccountsRepository {
 
     suspend fun saveAccount(account: FinancialAccount): Outcome<Unit>
 
-    suspend fun archiveAccount(id: Long, archived: Boolean): Outcome<Unit>
+    suspend fun archiveAccount(
+        id: Long,
+        archived: Boolean,
+    ): Outcome<Unit>
 }

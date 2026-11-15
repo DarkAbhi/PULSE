@@ -16,7 +16,10 @@ interface StatementImportRepository {
 
     suspend fun statementBatch(id: String): StatementResponse<StatementBatch>
 
-    suspend fun statementRows(id: String, page: Int): StatementResponse<StatementRows>
+    suspend fun statementRows(
+        id: String,
+        page: Int,
+    ): StatementResponse<StatementRows>
 
     suspend fun editStatement(
         batch: StatementBatch,

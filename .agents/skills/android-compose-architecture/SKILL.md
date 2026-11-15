@@ -1,7 +1,7 @@
 ---
 name: android-compose-architecture
 description: |
-  Compose screen architecture for a feature module - the Screen / ScreenContent split, State / Action / Event contract, ViewModel shape, one-time events, overlay vs full-screen loading, navigation routes, and the paged-list ViewModel variant. Use this skill whenever creating a Compose screen or ViewModel, defining screen state, or structuring a feature's presentation layer. Trigger on phrases like "create a screen", "add a ViewModel", "screen state", "MVI", "action", "event", "ScreenContent", "paged list screen", or "NavHost inside a feature".
+  Compose screen architecture for a feature module - the Screen / ScreenContent split, State / Action / Event contract (each in its own file), ViewModel shape, one-time events, overlay vs full-screen loading, navigation routes, and the paged-list ViewModel variant. Use this skill whenever creating a Compose screen or ViewModel, defining screen state, or structuring a feature's presentation layer. Trigger on phrases like "create a screen", "add a ViewModel", "screen state", "MVI", "action", "event", "ScreenContent", "paged list screen", or "NavHost inside a feature".
 ---
 
 # Skill: Compose Screen Architecture
@@ -32,6 +32,8 @@ Every screen consists of:
 - `[FeatureName]Action` — user intents
 - `[FeatureName]Event` — one-time effects
 
+The ViewModel and the three contract types (`State`, `Action`, `Event`) each live in **their own file**.
+
 ---
 
 ## File structure
@@ -42,7 +44,10 @@ Every screen consists of:
 screens/
 └── [FeatureName]Screen.kt   ← Screen + ScreenContent + Loading + OverlayLoading
 viewmodels/
-└── [FeatureName]ViewModel.kt
+├── [FeatureName]ViewModel.kt
+├── [FeatureName]State.kt
+├── [FeatureName]Action.kt
+└── [FeatureName]Event.kt
 ```
 
 ### Feature with sub-screens
@@ -54,8 +59,13 @@ screens/
 ├── [FeatureName]Screen.kt
 ├── [SubFeature]Screen.kt
 viewmodels/
-└── [FeatureName]ViewModel.kt
+├── [FeatureName]ViewModel.kt
+├── [FeatureName]State.kt
+├── [FeatureName]Action.kt
+└── [FeatureName]Event.kt
 ```
+
+All four files in `viewmodels/` declare the **same package** (`com.example.feature.[featurename].presentation`), so the ViewModel can reference `State`, `Action` and `Event` without imports. The Screen file lives in `...presentation.screens` and must import all four.
 
 ---
 
@@ -65,6 +75,7 @@ viewmodels/
 package com.example.feature.[featurename].presentation.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -77,6 +88,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.feature.[featurename].presentation.[FeatureName]Action
+import com.example.feature.[featurename].presentation.[FeatureName]Event
+import com.example.feature.[featurename].presentation.[FeatureName]State
+import com.example.feature.[featurename].presentation.[FeatureName]ViewModel
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -152,6 +167,8 @@ private fun OverlayLoading() {
 
 ## ViewModel file: `[FeatureName]ViewModel.kt`
 
+Contains **only** the ViewModel class. `State`, `Action` and `Event` are declared in their own files (below), in the same package.
+
 ```kotlin
 package com.example.feature.[featurename].presentation
 
@@ -183,8 +200,18 @@ class [FeatureName]ViewModel : ViewModel() {
         viewModelScope.launch { _event.send(event) }
     }
 }
+```
 
-// ─── State ───────────────────────────────────────────────────────────────────
+---
+
+## Contract files
+
+Each lives next to the ViewModel, in the same package.
+
+### State file: `[FeatureName]State.kt`
+
+```kotlin
+package com.example.feature.[featurename].presentation
 
 data class [FeatureName]State(
     val screenState: ScreenState = ScreenState.Loading,
@@ -196,18 +223,30 @@ data class [FeatureName]State(
         data object Success : ScreenState
     }
 }
+```
 
-// ─── Action ──────────────────────────────────────────────────────────────────
+`ScreenState` is nested inside `State` and stays in this file.
+
+### Action file: `[FeatureName]Action.kt`
+
+```kotlin
+package com.example.feature.[featurename].presentation
 
 sealed interface [FeatureName]Action {
     data object OnBackClick : [FeatureName]Action
+    // add other user intents here
 }
+```
 
-// ─── Event ───────────────────────────────────────────────────────────────────
+### Event file: `[FeatureName]Event.kt`
+
+```kotlin
+package com.example.feature.[featurename].presentation
 
 sealed interface [FeatureName]Event {
     data object NavigateBack : [FeatureName]Event
     data class ShowToast(val message: String) : [FeatureName]Event
+    // add other one-time effects here
 }
 ```
 
@@ -244,9 +283,24 @@ NavHost(
 ## Paged-list ViewModel variant
 
 When the screen is a paged list, expose the paging stream **alongside** the usual `state`/`event` —
-it is not part of `state`:
+it is not part of `state`.
+
+`[Feature]State`, `[Feature]Action` and `[Feature]Event` follow the contract-file rules above. The query
+inputs live in a separate **`[Feature]Params.kt`** file, in the same package as the ViewModel — not
+inside the State file and not inside the ViewModel file.
 
 ```kotlin
+// [Feature]Params.kt
+package com.example.feature.[feature].presentation
+
+data class [Feature]Params(
+    val query: String = "",
+    // category / filters / sort ...
+)
+```
+
+```kotlin
+// [Feature]ViewModel.kt
 @OptIn(ExperimentalCoroutinesApi::class)
 class [Feature]ViewModel(private val repository: [Feature]Repository) : ViewModel() {
 
@@ -291,14 +345,21 @@ class [Feature]ViewModel(private val repository: [Feature]Repository) : ViewMode
 - **ScreenState** — a sealed interface. If your product rule is "errors are toasts", keep
   `Loading`/`Success` only and emit `ShowToast` + `NavigateBack`; otherwise add `Error`. Be
   consistent across features either way.
-- **ViewModel file** — keep `State`, `Action` and `Event` in the same file as the ViewModel so the
-  whole contract for a screen is one file.
+- **Contract files** — `State`, `Action` and `Event` each live in their own file next to the ViewModel,
+  in the **same package**, named `[FeatureName]State.kt`, `[FeatureName]Action.kt` and
+  `[FeatureName]Event.kt`. The ViewModel file contains only the ViewModel class. Each sealed
+  hierarchy stays complete within its single file (Kotlin requires sealed subclasses in the same
+  package and module).
 - **Navigation routes** — only create `NavigationRoutes.kt` if the feature has more than one screen.
 
 ---
 
 ## What NOT to do
 
+- Do NOT declare `State`, `Action` or `Event` inside the ViewModel file.
+- Do NOT put two contract types in one file (no combined `Contract.kt`) and do NOT scatter the
+  members of one sealed hierarchy across files.
+- Do NOT place contract files in a different package from the ViewModel.
 - Do NOT use `isLoading` / `isError` / `isSuccess` booleans — use a sealed `ScreenState`. Booleans
   allow impossible combinations (`isLoading && isError`); a sealed type does not.
 - Do NOT put business logic inside `ScreenContent`.

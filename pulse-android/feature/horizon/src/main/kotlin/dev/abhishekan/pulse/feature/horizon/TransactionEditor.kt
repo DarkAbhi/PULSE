@@ -66,7 +66,7 @@ internal fun TransactionEditor(
         val wide = maxWidth >= 600.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             error?.let { PulseText(it, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = PulseTheme.colors.error) }
-            TransactionSection(
+            HorizonFormSection(
                 R.string.pulse_horizon_transaction_details,
                 R.string.pulse_horizon_transaction_details_hint,
                 R.drawable.pulse_obligation_card,
@@ -99,7 +99,7 @@ internal fun TransactionEditor(
                     color = PulseTheme.colors.textSecondary,
                 )
             }
-            TransactionSection(
+            HorizonFormSection(
                 R.string.pulse_horizon_transaction_when,
                 R.string.pulse_horizon_transaction_when_hint,
                 R.drawable.pulse_obligation_calendar,
@@ -121,7 +121,7 @@ internal fun TransactionEditor(
                     }
                 })
             }
-            TransactionSection(
+            HorizonFormSection(
                 R.string.pulse_horizon_transaction_organize,
                 R.string.pulse_horizon_transaction_organize_hint,
                 R.drawable.pulse_obligation_tag,
@@ -157,7 +157,7 @@ internal fun TransactionEditor(
                 ) { onChange(draft.copy(subscriptionId = it)) }
                 if (draft.accountEditable) TransactionAccountField(draft, !busy, onChange)
             }
-            TransactionSection(
+            HorizonFormSection(
                 R.string.pulse_horizon_notes_optional,
                 R.string.pulse_horizon_transaction_notes_hint,
                 R.drawable.pulse_obligation_document,
@@ -201,7 +201,7 @@ internal fun TransactionEditor(
 }
 
 @Composable
-private fun TransactionPickerField(
+internal fun TransactionPickerField(
     label: Int,
     value: String,
     enabled: Boolean,
@@ -223,9 +223,9 @@ private fun TransactionPickerField(
 }
 
 @Composable
-private fun TransactionSection(
+internal fun HorizonFormSection(
     title: Int,
-    hint: Int,
+    hint: Int?,
     icon: Int,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -240,7 +240,7 @@ private fun TransactionSection(
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     PulseText(stringResource(title), Modifier.semantics { heading() }, style = PulseTextStyle.Title3)
-                    PulseText(stringResource(hint), style = PulseTextStyle.Body2, color = colors.textSecondary)
+                    hint?.let { PulseText(stringResource(it), style = PulseTextStyle.Body2, color = colors.textSecondary) }
                 }
             }
             content()

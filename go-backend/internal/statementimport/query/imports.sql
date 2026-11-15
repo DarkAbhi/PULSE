@@ -5,10 +5,14 @@ INSERT INTO statement_import_batches (
 ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *;
 
 -- name: FindSourceBatch :one
-SELECT * FROM statement_import_batches
-WHERE user_id = $1 AND account_id = $2 AND source_sha256 = $3 AND
-    (status = 'committed' OR (status = 'ready' AND expires_at > CURRENT_TIMESTAMP))
-ORDER BY (status = 'committed') DESC, created_at DESC LIMIT 1;
+SELECT b.* FROM statement_import_batches b
+WHERE b.user_id = $1 AND b.account_id = $2 AND b.source_sha256 = $3 AND (
+    (b.status = 'ready' AND b.expires_at > CURRENT_TIMESTAMP)
+    OR (b.status = 'committed' AND (b.imported_count = 0 OR EXISTS (
+        SELECT 1 FROM financial_horizon_transactions t WHERE t.import_batch_id = b.id
+    )))
+)
+ORDER BY (b.status = 'committed') DESC, b.created_at DESC LIMIT 1;
 
 -- name: GetBatch :one
 SELECT * FROM statement_import_batches WHERE id = $1 AND user_id = $2;
@@ -63,11 +67,17 @@ WITH expired AS (
 DELETE FROM statement_import_structures WHERE batch_id IN (SELECT id FROM expired);
 
 -- name: ListFingerprints :many
-SELECT fingerprint, occurrence FROM statement_import_dedupe
-WHERE user_id = $1 AND account_id = $2 AND fingerprint = ANY(sqlc.arg(hashes)::text[]);
+SELECT d.fingerprint, d.occurrence FROM statement_import_dedupe d
+JOIN statement_import_batches b ON b.id = d.batch_id
+WHERE d.user_id = $1 AND d.account_id = $2 AND d.fingerprint = ANY(sqlc.arg(hashes)::text[])
+    AND (b.source_sha256 <> sqlc.arg(source_sha256) OR EXISTS (
+        SELECT 1 FROM financial_horizon_transactions t WHERE t.import_batch_id = d.batch_id
+    ));
 
 -- name: RecordFingerprint :exec
-INSERT INTO statement_import_dedupe (user_id,account_id,fingerprint,occurrence,batch_id,ordinal) VALUES ($1,$2,$3,$4,$5,$6);
+INSERT INTO statement_import_dedupe (user_id,account_id,fingerprint,occurrence,batch_id,ordinal) VALUES ($1,$2,$3,$4,$5,$6)
+ON CONFLICT (user_id, account_id, fingerprint, occurrence) DO UPDATE
+SET batch_id = EXCLUDED.batch_id, ordinal = EXCLUDED.ordinal;
 
 -- name: ImportTransaction :exec
 INSERT INTO financial_horizon_transactions (

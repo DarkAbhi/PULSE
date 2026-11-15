@@ -13,6 +13,7 @@ import (
 	"sync"
 	"testing"
 
+	horizonquery "github.com/DarkAbhi/life-backend/internal/horizon/query"
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -149,4 +150,71 @@ func TestPostgresImportOwnershipAndConcurrentOverlap(t *testing.T) {
 	if res.Code != 409 {
 		t.Fatalf("exact replay status %d", res.Code)
 	}
+
+	t.Run("reimport after deleting all transactions", func(t *testing.T) {
+		original := 0
+		if results[1].Imported > 0 {
+			original = 1
+		}
+		var first, last int64
+		if err := db.QueryRow(`SELECT min(id), max(id) FROM financial_horizon_transactions
+			WHERE user_id = $1 AND import_batch_id = $2`, owner, previews[original].ID).Scan(&first, &last); err != nil {
+			t.Fatal(err)
+		}
+		deleteTransaction := func(id int64) {
+			t.Helper()
+			deleted, err := horizonquery.New(pool).DeleteTransaction(t.Context(), horizonquery.DeleteTransactionParams{
+				ID: id, UserID: owner,
+			})
+			if err != nil || deleted != 1 {
+				t.Fatalf("delete returned %d rows, error %v", deleted, err)
+			}
+		}
+		deleteTransaction(first)
+		res := httptest.NewRecorder()
+		router.ServeHTTP(res, postPDF(original))
+		if res.Code != 409 {
+			t.Fatalf("replay after partial deletion returned %d, want 409", res.Code)
+		}
+
+		deleteTransaction(last)
+		res = httptest.NewRecorder()
+		router.ServeHTTP(res, postPDF(2))
+		if res.Code != 201 {
+			t.Fatalf("overlapping PDF after full deletion returned %d, want 201", res.Code)
+		}
+		var overlap batchSummary
+		if err := json.Unmarshal(res.Body.Bytes(), &overlap); err != nil || overlap.Counts["duplicates"] != 2 {
+			t.Fatalf("expected overlapping PDF to skip both rows, got %+v, error %v", overlap, err)
+		}
+
+		res = httptest.NewRecorder()
+		router.ServeHTTP(res, postPDF(original))
+		if res.Code != 201 {
+			t.Fatalf("replay after full deletion returned %d, want 201", res.Code)
+		}
+		var restored batchSummary
+		if err := json.Unmarshal(res.Body.Bytes(), &restored); err != nil {
+			t.Fatal(err)
+		}
+		if restored.ID == previews[original].ID || restored.Counts["duplicates"] != 0 {
+			t.Fatalf("expected a fresh preview without duplicates, got %+v", restored)
+		}
+
+		res = httptest.NewRecorder()
+		commit := httptest.NewRequest("POST", path+"/"+restored.ID+"/commit", bytes.NewBufferString(`{"revision":1}`))
+		router.ServeHTTP(res, commit)
+		if res.Code != 200 {
+			t.Fatalf("reimport commit returned %d, want 200", res.Code)
+		}
+		var result commitResult
+		if err := json.Unmarshal(res.Body.Bytes(), &result); err != nil || result.Imported != 2 {
+			t.Fatalf("expected both deleted transactions to be imported again, got %+v, error %v", result, err)
+		}
+		res = httptest.NewRecorder()
+		router.ServeHTTP(res, postPDF(original))
+		if res.Code != 409 {
+			t.Fatalf("replay after reimport returned %d, want 409", res.Code)
+		}
+	})
 }

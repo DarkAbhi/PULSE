@@ -187,10 +187,14 @@ func (q *Queries) ExpireBatches(ctx context.Context) error {
 }
 
 const findSourceBatch = `-- name: FindSourceBatch :one
-SELECT id, user_id, account_id, source_sha256, status, profile_id, currency, ocr_used, reason_code, revision, account_confirmed, parsed_count, imported_count, duplicate_count, excluded_count, opening_minor, closing_minor, created_at, expires_at, committed_at FROM statement_import_batches
-WHERE user_id = $1 AND account_id = $2 AND source_sha256 = $3 AND
-    (status = 'committed' OR (status = 'ready' AND expires_at > CURRENT_TIMESTAMP))
-ORDER BY (status = 'committed') DESC, created_at DESC LIMIT 1
+SELECT b.id, b.user_id, b.account_id, b.source_sha256, b.status, b.profile_id, b.currency, b.ocr_used, b.reason_code, b.revision, b.account_confirmed, b.parsed_count, b.imported_count, b.duplicate_count, b.excluded_count, b.opening_minor, b.closing_minor, b.created_at, b.expires_at, b.committed_at FROM statement_import_batches b
+WHERE b.user_id = $1 AND b.account_id = $2 AND b.source_sha256 = $3 AND (
+    (b.status = 'ready' AND b.expires_at > CURRENT_TIMESTAMP)
+    OR (b.status = 'committed' AND (b.imported_count = 0 OR EXISTS (
+        SELECT 1 FROM financial_horizon_transactions t WHERE t.import_batch_id = b.id
+    )))
+)
+ORDER BY (b.status = 'committed') DESC, b.created_at DESC LIMIT 1
 `
 
 type FindSourceBatchParams struct {
@@ -330,14 +334,19 @@ func (q *Queries) LearnCategory(ctx context.Context, arg LearnCategoryParams) er
 }
 
 const listFingerprints = `-- name: ListFingerprints :many
-SELECT fingerprint, occurrence FROM statement_import_dedupe
-WHERE user_id = $1 AND account_id = $2 AND fingerprint = ANY($3::text[])
+SELECT d.fingerprint, d.occurrence FROM statement_import_dedupe d
+JOIN statement_import_batches b ON b.id = d.batch_id
+WHERE d.user_id = $1 AND d.account_id = $2 AND d.fingerprint = ANY($3::text[])
+    AND (b.source_sha256 <> $4 OR EXISTS (
+        SELECT 1 FROM financial_horizon_transactions t WHERE t.import_batch_id = d.batch_id
+    ))
 `
 
 type ListFingerprintsParams struct {
-	UserID    int64
-	AccountID int64
-	Hashes    []string
+	UserID       int64
+	AccountID    int64
+	Hashes       []string
+	SourceSha256 string
 }
 
 type ListFingerprintsRow struct {
@@ -346,7 +355,12 @@ type ListFingerprintsRow struct {
 }
 
 func (q *Queries) ListFingerprints(ctx context.Context, arg ListFingerprintsParams) ([]ListFingerprintsRow, error) {
-	rows, err := q.db.Query(ctx, listFingerprints, arg.UserID, arg.AccountID, arg.Hashes)
+	rows, err := q.db.Query(ctx, listFingerprints,
+		arg.UserID,
+		arg.AccountID,
+		arg.Hashes,
+		arg.SourceSha256,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -537,6 +551,8 @@ func (q *Queries) PossibleManualMatches(ctx context.Context, arg PossibleManualM
 
 const recordFingerprint = `-- name: RecordFingerprint :exec
 INSERT INTO statement_import_dedupe (user_id,account_id,fingerprint,occurrence,batch_id,ordinal) VALUES ($1,$2,$3,$4,$5,$6)
+ON CONFLICT (user_id, account_id, fingerprint, occurrence) DO UPDATE
+SET batch_id = EXCLUDED.batch_id, ordinal = EXCLUDED.ordinal
 `
 
 type RecordFingerprintParams struct {

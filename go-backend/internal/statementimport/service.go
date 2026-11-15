@@ -108,7 +108,7 @@ func (s *Service) upload(ctx context.Context, user, accountID int64, file []byte
 
 	var duplicate []bool
 	if fail == nil {
-		duplicate, fail = duplicates(ctx, q, user, accountID, ledger.Rows)
+		duplicate, fail = duplicates(ctx, q, user, accountID, source.SourceSha256, ledger.Rows)
 		if fail == internal {
 			return empty, fail
 		}
@@ -177,14 +177,16 @@ func findSource(ctx context.Context, q *query.Queries, source query.FindSourceBa
 	}
 }
 
-func duplicates(ctx context.Context, q *query.Queries, user, account int64, rows []LedgerRow) ([]bool, *failure) {
+func duplicates(ctx context.Context, q *query.Queries, user, account int64, sourceSHA256 string, rows []LedgerRow) ([]bool, *failure) {
 	hashes := make([]string, len(rows))
 	counts := make(map[string]int, len(rows))
 	for i, row := range rows {
 		hashes[i] = sourceFingerprint(row)
 		counts[hashes[i]]++
 	}
-	existing, err := q.ListFingerprints(ctx, query.ListFingerprintsParams{UserID: user, AccountID: account, Hashes: hashes})
+	existing, err := q.ListFingerprints(ctx, query.ListFingerprintsParams{
+		UserID: user, AccountID: account, Hashes: hashes, SourceSha256: sourceSHA256,
+	})
 	if err != nil {
 		return nil, dbFailure(ctx, err)
 	}

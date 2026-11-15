@@ -200,7 +200,7 @@ func (s *Service) commit(ctx context.Context, tx pgx.Tx, b query.StatementImport
 	if fail != nil {
 		return b, fail
 	}
-	skips, fail := duplicates(ctx, q, b.UserID, b.AccountID, source)
+	skips, fail := duplicates(ctx, q, b.UserID, b.AccountID, b.SourceSha256, source)
 	if fail != nil {
 		return b, fail
 	}
@@ -234,6 +234,8 @@ func (s *Service) commit(ctx context.Context, tx pgx.Tx, b query.StatementImport
 		if err := storeTransaction(ctx, tx, b, row, normalized[i].Amount, date, hash); err != nil {
 			return b, dbFailure(ctx, err)
 		}
+		// Under the account lock, a matching fingerprint can only be reused for
+		// the same PDF after all transactions in its original batch were deleted.
 		if err := q.RecordFingerprint(ctx, query.RecordFingerprintParams{
 			UserID: b.UserID, AccountID: b.AccountID, Fingerprint: hash, Occurrence: occurrence[hash], BatchID: b.ID, Ordinal: row.ID,
 		}); err != nil {

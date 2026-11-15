@@ -76,16 +76,22 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var importOpen by rememberSaveable { mutableStateOf(false) }
     val importViewModel: StatementImportViewModel = koinViewModel()
+    val importState by importViewModel.uiState.collectAsStateWithLifecycle()
+    var importMessage by remember { mutableStateOf<UiText?>(null) }
+    LaunchedEffect(importOpen, importState.result) {
+        if (importOpen && importState.result != null) {
+            importOpen = false
+            viewModel.refresh()
+            importMessage = uiText(R.string.pulse_horizon_statement_complete)
+        }
+    }
     PulseHideNavigation(importOpen || state.draft != null || state.subscriptionId != null || state.historyOpen)
     if (importOpen) {
         StatementImportScreen(
             state.overview.value
                 ?.categories
                 .orEmpty(),
-            onClose = {
-                if (importViewModel.uiState.value.result != null) viewModel.refresh()
-                importOpen = false
-            },
+            onClose = { importOpen = false },
             onManageAccounts = {
                 importOpen = false
                 viewModel.tab(HorizonTab.Accounts)
@@ -94,6 +100,7 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
         )
         return
     }
+    PulseSnackbarEffect(importMessage) { importMessage = null }
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     val scrollStates = rememberSaveableStateHolder()
     PulseScreenTransition(

@@ -99,35 +99,11 @@ internal fun StatementImportScreen(
         backEnabled = !state.busy,
         onBack = close,
     ) {
-        val result = state.result
         val batch = state.batch
         val page = state.page
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             when {
-                result != null ->
-                    PulseFormLayout(
-                        modifier = Modifier.widthIn(max = PulseTokens.readingWidth).padding(horizontal = PulseTokens.medium),
-                        scrollContentModifier = Modifier.padding(vertical = PulseTokens.medium),
-                        footer = {
-                            PulseFormActions(primary = PulseFormAction(stringResource(R.string.pulse_horizon_statement_done), onClose))
-                        },
-                    ) {
-                        HorizonFormSection(
-                            R.string.pulse_horizon_statement_complete,
-                            null,
-                            R.drawable.pulse_purchase_check,
-                        ) {
-                            PulseText(
-                                stringResource(
-                                    R.string.pulse_horizon_statement_result,
-                                    result.imported,
-                                    result.duplicates,
-                                    result.excluded,
-                                ),
-                                Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                            )
-                        }
-                    }
+                state.result != null -> Unit
                 batch != null && page != null ->
                     key(batch.id, page.page) {
                         StatementReview(state, batch, page, categories, close, vm)

@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.feature.auth
 
+import androidx.annotation.MainThread
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,9 +21,10 @@ internal class LoginViewModel(
     private val state = MutableStateFlow(LoginUiState(username = savedState[USERNAME_KEY] ?: ""))
     val uiState = state.asStateFlow()
 
+    @MainThread
     fun onAction(action: LoginAction) {
         val input = state.value
-        if (input.isSubmitting) return
+        if (!input.canEdit) return
         when (action) {
             is LoginAction.UsernameChanged -> {
                 savedState[USERNAME_KEY] = action.value
@@ -58,7 +60,7 @@ internal class LoginViewModel(
                 }
             when (result) {
                 is Outcome.Success ->
-                    state.update { it.copy(password = "", submission = LoginSubmission.Idle) }
+                    state.update { it.copy(password = "", submission = LoginSubmission.Succeeded) }
                 is Outcome.Error ->
                     state.update { it.copy(submission = LoginSubmission.Failed(result.failure.message)) }
             }

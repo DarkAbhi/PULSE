@@ -70,7 +70,7 @@ class LoginViewModelTest {
         handle: SavedStateHandle = SavedStateHandle(),
     ) = LoginViewModel(Login(auth), handle).also { models.put("login", it) }
 
-    @Test fun duplicateSubmissionsAreBlockedAndOnlyUsernameIsTrimmed() =
+    @Test fun duplicateSubmissionsAreBlockedThroughSuccessAndOnlyUsernameIsTrimmed() =
         runTest {
             val auth = Auth()
             val vm = model(auth)
@@ -88,8 +88,16 @@ class LoginViewModelTest {
             assertEquals(LoginSubmission.Submitting, vm.uiState.value.submission)
             auth.response.complete(Outcome.Success(Unit))
             runCurrent()
+            assertEquals(LoginSubmission.Succeeded, vm.uiState.value.submission)
             assertEquals("", vm.uiState.value.password)
-            assertEquals(LoginSubmission.Idle, vm.uiState.value.submission)
+            vm.onAction(LoginAction.UsernameChanged("bob"))
+            vm.onAction(LoginAction.PasswordChanged("another password"))
+            vm.onAction(LoginAction.Submit)
+            runCurrent()
+            assertEquals(1, auth.calls)
+            assertEquals("  alice  ", vm.uiState.value.username)
+            assertEquals("", vm.uiState.value.password)
+            assertFalse(vm.uiState.value.canEdit)
         }
 
     @Test fun invalidInputAndCredentialsHaveUsefulFeedback() =
@@ -130,7 +138,7 @@ class LoginViewModelTest {
             runCurrent()
             assertEquals(2, auth.calls)
             assertEquals("", vm.uiState.value.password)
-            assertEquals(LoginSubmission.Idle, vm.uiState.value.submission)
+            assertEquals(LoginSubmission.Succeeded, vm.uiState.value.submission)
         }
 
     @Test fun savedStateKeepsUsernameButNeverPassword() =

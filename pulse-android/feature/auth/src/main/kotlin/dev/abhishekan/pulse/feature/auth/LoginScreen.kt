@@ -17,7 +17,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -34,11 +33,6 @@ internal fun LoginScreen(
     modifier: Modifier = Modifier,
     notice: String? = null,
 ) {
-    val keyboard = LocalSoftwareKeyboardController.current
-    val submit = {
-        keyboard?.hide()
-        onAction(LoginAction.Submit)
-    }
     Scaffold(
         modifier = modifier,
         containerColor = PulseTheme.colors.background,
@@ -70,7 +64,7 @@ internal fun LoginScreen(
                             verticalArrangement = Arrangement.spacedBy(PulseTokens.large),
                         ) {
                             LoginIntroduction(expanded = false)
-                            LoginForm(state = state, onAction = onAction, onSubmit = submit, notice = notice)
+                            LoginForm(state = state, onAction = onAction, notice = notice)
                         }
                     } else {
                         Row(
@@ -83,7 +77,6 @@ internal fun LoginScreen(
                                 LoginForm(
                                     state = state,
                                     onAction = onAction,
-                                    onSubmit = submit,
                                     modifier = Modifier.widthIn(max = PulseTokens.readingWidth),
                                     notice = notice,
                                 )
@@ -92,15 +85,19 @@ internal fun LoginScreen(
                     }
                 }
                 val continueAction =
-                    PulseFormAction(stringResource(R.string.pulse_auth_continue), submit, loading = state.isSubmitting)
-                if (compact) {
-                    PulseFormActions(continueAction)
-                } else {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PulseTokens.large)) {
-                        Spacer(Modifier.weight(1f))
-                        Box(Modifier.weight(1f)) {
-                            PulseFormActions(continueAction, modifier = Modifier.widthIn(max = PulseTokens.readingWidth))
-                        }
+                    PulseFormAction(
+                        label = stringResource(R.string.pulse_auth_continue),
+                        onClick = { onAction(LoginAction.Submit) },
+                        enabled = state.canEdit,
+                        loading = state.isSubmitting,
+                    )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(PulseTokens.large)) {
+                    if (!compact) Spacer(Modifier.weight(1f))
+                    Box(Modifier.weight(1f)) {
+                        PulseFormActions(
+                            continueAction,
+                            modifier = if (compact) Modifier else Modifier.widthIn(max = PulseTokens.readingWidth),
+                        )
                     }
                 }
             }

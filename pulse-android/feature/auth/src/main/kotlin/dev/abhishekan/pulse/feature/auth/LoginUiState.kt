@@ -10,12 +10,16 @@ internal data class LoginUiState(
     val submission: LoginSubmission = LoginSubmission.Idle,
 ) {
     val isSubmitting: Boolean get() = submission == LoginSubmission.Submitting
+    val canEdit: Boolean get() = !isSubmitting && submission != LoginSubmission.Succeeded
 }
 
 internal sealed interface LoginSubmission {
     data object Idle : LoginSubmission
 
     data object Submitting : LoginSubmission
+
+    // Keep the form locked until the app observes the authenticated session and replaces it.
+    data object Succeeded : LoginSubmission
 
     data class Failed(
         val message: UiText,

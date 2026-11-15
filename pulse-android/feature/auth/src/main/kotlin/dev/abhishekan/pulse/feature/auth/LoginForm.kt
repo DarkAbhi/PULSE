@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulsePasswordField
 import dev.abhishekan.pulse.core.ui.components.PulseText
@@ -37,7 +38,6 @@ import kotlinx.coroutines.CompletableDeferred
 internal fun LoginForm(
     state: LoginUiState,
     onAction: (LoginAction) -> Unit,
-    onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
     notice: String? = null,
 ) {
@@ -60,8 +60,12 @@ internal fun LoginForm(
             value = state.username,
             onValueChange = { onAction(LoginAction.UsernameChanged(it)) },
             label = stringResource(R.string.pulse_auth_username),
-            modifier = Modifier.fillMaxWidth().semantics { contentType = ContentType.Username },
-            enabled = !state.isSubmitting,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .bringErrorIntoView(state.usernameError)
+                    .semantics { contentType = ContentType.Username },
+            enabled = state.canEdit,
             error = state.usernameError,
             keyboardOptions =
                 KeyboardOptions(
@@ -79,36 +83,43 @@ internal fun LoginForm(
                 Modifier
                     .fillMaxWidth()
                     .focusRequester(passwordFocus)
+                    .bringErrorIntoView(if (state.usernameError == null) state.passwordError else null)
                     .semantics { contentType = ContentType.Password },
-            enabled = !state.isSubmitting,
+            enabled = state.canEdit,
             error = state.passwordError,
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done,
                 ),
-            keyboardActions = KeyboardActions(onDone = { onSubmit() }),
+            keyboardActions = KeyboardActions(onDone = { onAction(LoginAction.Submit) }),
         )
         val submission = state.submission
         if (submission is LoginSubmission.Failed) {
-            val errorRequester = remember { BringIntoViewRequester() }
-            val errorPlaced = remember { CompletableDeferred<Unit>() }
             PulseText(
                 submission.message,
                 Modifier
-                    .bringIntoViewRequester(errorRequester)
-                    .onGloballyPositioned { errorPlaced.complete(Unit) }
+                    .bringErrorIntoView(submission.message)
                     .semantics { liveRegion = LiveRegionMode.Polite },
                 color = PulseTheme.colors.error,
             )
-            LaunchedEffect(submission) {
-                errorPlaced.await()
-                errorRequester.bringIntoView()
-            }
         }
         PulseText(
             stringResource(R.string.pulse_auth_your_account_your_own_quiet_corner),
             color = PulseTheme.colors.textSecondary,
         )
     }
+}
+
+@Composable
+private fun Modifier.bringErrorIntoView(error: UiText?): Modifier {
+    if (error == null) return this
+
+    val requester = remember { BringIntoViewRequester() }
+    val placed = remember(error) { CompletableDeferred<Unit>() }
+    LaunchedEffect(requester, placed) {
+        placed.await()
+        requester.bringIntoView()
+    }
+    return bringIntoViewRequester(requester).onGloballyPositioned { placed.complete(Unit) }
 }

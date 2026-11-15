@@ -165,6 +165,8 @@ internal fun HorizonScreen(
     val currency = UserCurrency.code
     val canMutate = !state.busy && !state.reviewRequired && state.overview.value != null && state.draft == null
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { width ->
+        val showTransactionAdd = state.tab == HorizonTab.Transactions && !state.historyOpen && state.draft == null
+        val transactionAddSpacing = if (showTransactionAdd) 56.dp + width.pagePadding else 0.dp
         Column(
             Modifier
                 .widthIn(
@@ -240,7 +242,7 @@ internal fun HorizonScreen(
                     Modifier
                         .fillMaxWidth()
                         .verticalScroll(scroll)
-                        .padding(bottom = LocalPulseContentPadding.current.calculateBottomPadding())
+                        .padding(bottom = LocalPulseContentPadding.current.calculateBottomPadding() + transactionAddSpacing)
                         .padding(if (state.tab == HorizonTab.Transactions) width.horizonGutter else width.pagePadding),
                     verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                 ) {
@@ -280,34 +282,6 @@ internal fun HorizonScreen(
                         }
                         HorizonTab.Transactions -> {
                             RecentTransactionsHeading(width)
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                                verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
-                            ) {
-                                PulseButton(
-                                    stringResource(R.string.pulse_horizon_log_transaction),
-                                    { create(HorizonForm.Transaction) },
-                                    enabled = canMutate,
-                                )
-                                PulseButton(
-                                    stringResource(R.string.pulse_horizon_import_statement),
-                                    openImport,
-                                    enabled = !state.busy && state.draft == null,
-                                    variant = PulseButtonVariant.Secondary,
-                                    modifier = Modifier.testTag("horizon-statement-import"),
-                                )
-                                if (state.recent.value
-                                        ?.items
-                                        ?.isNotEmpty() == true
-                                ) {
-                                    PulseButton(
-                                        stringResource(R.string.pulse_horizon_view_all_transactions),
-                                        vm::openHistory,
-                                        enabled = !state.busy && state.draft == null,
-                                        variant = PulseButtonVariant.Secondary,
-                                    )
-                                }
-                            }
                             SectionState(state.recent, vm::refreshRecent) { page ->
                                 if (currency.isBlank()) {
                                     PulseText(stringResource(R.string.pulse_horizon_currency_unavailable), style = PulseTextStyle.Label)
@@ -327,6 +301,13 @@ internal fun HorizonScreen(
                                             }
                                         }
                                     }
+                                    PulseButton(
+                                        stringResource(R.string.pulse_horizon_view_all_transactions),
+                                        vm::openHistory,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        enabled = !state.busy && state.draft == null,
+                                        variant = PulseButtonVariant.Secondary,
+                                    )
                                 }
                             }
                         }
@@ -540,13 +521,28 @@ internal fun HorizonScreen(
                 scrollStates.SaveableStateProvider("empty-transactions") {
                     EmptyRecentTransactions(
                         width,
-                        canMutate,
-                        { vm.newForm(HorizonForm.Transaction) },
-                        Modifier.weight(1f),
+                        Modifier.weight(1f).padding(bottom = transactionAddSpacing),
                     )
                 }
             } else {
                 scrollStates.SaveableStateProvider((if (state.draft == null) "root-" else "review-") + state.tab.name) { content() }
+            }
+        }
+        if (active && showTransactionAdd && !state.busy) {
+            Box(Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize().imePadding()) {
+                RecentTransactionAdd(
+                    canLog = canMutate,
+                    onLog = {
+                        records = false
+                        vm.newForm(HorizonForm.Transaction)
+                    },
+                    onImport = openImport,
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(bottom = LocalPulseContentPadding.current.calculateBottomPadding())
+                            .padding(end = width.horizonGutter, bottom = width.pagePadding),
+                )
             }
         }
     }

@@ -4,13 +4,9 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
-import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
@@ -43,7 +39,6 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
@@ -561,6 +556,7 @@ class HorizonDeviceTest {
             val empty = compose.onAllNodes(hasText("Plan your first purchase") and hasClickAction()).fetchSemanticsNodes().isNotEmpty()
             tap(if (empty) "Plan your first purchase" else action)
         } else {
+            if (tab == "Transactions") tap("Add")
             tap(action)
             if (label == "Add a category tag") openCategoryEditor()
         }
@@ -940,20 +936,26 @@ class HorizonDeviceTest {
         compose.onNode(hasTestTag("fixed-obligation-editor")).assertDoesNotExist()
     }
 
-    @Test fun emptyRecentTransactionsOfferLoggingAndHideHistory() {
+    @Test fun emptyRecentTransactionsOfferBothAddActionsAndHideHistory() {
         backend.items("transactions").clear()
         launchHorizon()
         tap("Transactions")
         awaitText("Nothing logged yet")
-        compose.onNodeWithText("View all").assertDoesNotExist()
+        compose.onNodeWithText("View all transactions").assertDoesNotExist()
         compose.onNode(hasText("Transactions") and isSelectable()).assertIsSelected()
         compose.onNode(hasText("Horizon") and isSelectable()).assertIsSelected()
-        compose
-            .onNodeWithText("Log a transaction")
-            .performScrollTo()
-            .assertHeightIsAtLeast(56.dp)
-            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+        compose.onNodeWithText("Add").assertIsDisplayed().assertHasClickAction()
         screenshot("recent-transactions-empty")
+        tap("Add")
+        awaitText("Add transactions")
+        compose.onNodeWithText("Log a transaction").assertIsDisplayed().assertHasClickAction()
+        tap("Import statement")
+        awaitText("Import statement")
+        compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("Import statement"))).assertIsDisplayed()
+        tap("Back to Financial Horizon")
+        awaitText("Nothing logged yet")
+        compose.onNodeWithText("Add transactions").assertDoesNotExist()
+        tap("Add")
         tap("Log a transaction")
         awaitText("Add transaction")
     }
@@ -980,7 +982,7 @@ class HorizonDeviceTest {
             awaitText("Ledger payment 21")
             compose.onNodeWithText("Ledger payment 16").assertDoesNotExist()
             compose.onNodeWithText("Add a Category Type").assertDoesNotExist()
-            tap("View all")
+            tap("View all transactions")
             awaitText("All transactions")
             compose.onNode(hasTestTag("ledger-category-filter")).performClick()
             awaitText("Choose a category")
@@ -1063,8 +1065,9 @@ class HorizonDeviceTest {
         tap("Transactions")
         awaitText("Ledger payment 21")
         compose.onNodeWithText("Ledger payment 16").assertDoesNotExist()
-        tap("View all")
+        tap("View all transactions")
         awaitText("All transactions")
+        compose.onNodeWithText("Add").assertDoesNotExist()
         compose.onNode(hasTestTag("transaction-history-list")).performScrollToIndex(21)
         awaitText("Ledger payment 1")
         tap("All categories")
@@ -1093,7 +1096,7 @@ class HorizonDeviceTest {
         field("Notes (optional)", "Receipt refunded")
         tap("Save")
         awaitText("Recent transactions")
-        tap("View all")
+        tap("View all transactions")
         tap("Search transactions")
         field("Search transactions", "Coffee refund")
         val tx = backend.items("transactions").values.last()

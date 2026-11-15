@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,7 +14,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -23,6 +27,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -31,10 +37,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
+import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
+import dev.abhishekan.pulse.core.ui.components.PulseExtendedFloatingActionButton
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseText
+import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
 internal val PulseWindowSize.horizonGutter
     get() =
@@ -88,10 +99,62 @@ internal fun RecentTransactionsHeading(width: PulseWindowSize) {
 }
 
 @Composable
+internal fun RecentTransactionAdd(
+    canLog: Boolean,
+    onLog: () -> Unit,
+    onImport: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var showActions by rememberSaveable { mutableStateOf(false) }
+    PulseExtendedFloatingActionButton(
+        text = { PulseText(stringResource(R.string.pulse_horizon_add), style = PulseTextStyle.Label) },
+        icon = { Icon(painterResource(R.drawable.pulse_purchase_add), contentDescription = null) },
+        onClick = { showActions = true },
+        modifier = modifier,
+    )
+    if (showActions) {
+        PulseBottomSheet(
+            title = stringResource(R.string.pulse_horizon_add_transactions),
+            onDismissRequest = { showActions = false },
+            wrapContent = true,
+        ) {
+            Column(
+                Modifier.padding(horizontal = PulseTokens.medium).padding(bottom = PulseTokens.medium),
+                verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
+            ) {
+                PulseText(
+                    stringResource(R.string.pulse_horizon_choose_transaction_method),
+                    style = PulseTextStyle.Body3,
+                    color = PulseTheme.colors.textSecondary,
+                )
+                PulseButton(
+                    text = stringResource(R.string.pulse_horizon_log_transaction),
+                    onClick = {
+                        showActions = false
+                        onLog()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = canLog,
+                    supportingText = stringResource(R.string.pulse_horizon_log_transaction_description),
+                )
+                PulseButton(
+                    text = stringResource(R.string.pulse_horizon_import_statement),
+                    onClick = {
+                        showActions = false
+                        onImport()
+                    },
+                    modifier = Modifier.fillMaxWidth().testTag("horizon-statement-import"),
+                    variant = PulseButtonVariant.Secondary,
+                    supportingText = stringResource(R.string.pulse_horizon_import_statement_description),
+                )
+            }
+        }
+    }
+}
+
+@Composable
 internal fun EmptyRecentTransactions(
     width: PulseWindowSize,
-    enabled: Boolean,
-    onLog: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val wide = width != PulseWindowSize.Compact
@@ -121,12 +184,12 @@ internal fun EmptyRecentTransactions(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         TransactionGhostRows(Modifier.weight(1f).padding(bottom = 80.dp), wide = true)
-                        FirstTransactionPrompt(enabled, onLog, Modifier.weight(1f), wide = true)
+                        FirstTransactionPrompt(Modifier.weight(1f), wide = true)
                     }
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
                         TransactionGhostRows(Modifier.fillMaxWidth(), wide = false)
-                        FirstTransactionPrompt(enabled, onLog, Modifier.fillMaxWidth(), wide = false)
+                        FirstTransactionPrompt(Modifier.fillMaxWidth(), wide = false)
                     }
                 }
             }
@@ -136,8 +199,6 @@ internal fun EmptyRecentTransactions(
 
 @Composable
 private fun FirstTransactionPrompt(
-    enabled: Boolean,
-    onLog: () -> Unit,
     modifier: Modifier,
     wide: Boolean,
 ) {
@@ -157,16 +218,9 @@ private fun FirstTransactionPrompt(
         )
         PulseText(
             stringResource(R.string.pulse_horizon_log_first_transaction),
-            Modifier.padding(top = if (wide) 20.dp else 14.dp, bottom = 26.dp),
+            Modifier.padding(top = if (wide) 20.dp else 14.dp),
             style = typography.body1.copy(fontSize = if (wide) 18.sp else 16.5.sp, lineHeight = if (wide) 28.sp else 25.sp),
             color = colors.textSecondary,
-        )
-        PulseButton(
-            text = stringResource(R.string.pulse_horizon_log_transaction),
-            onClick = onLog,
-            modifier = Modifier.heightIn(min = 56.dp).then(if (wide) Modifier else Modifier.fillMaxWidth()),
-            enabled = enabled,
-            contentPadding = PaddingValues(horizontal = if (wide) 36.dp else 20.dp, vertical = 12.dp),
         )
     }
 }

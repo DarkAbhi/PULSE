@@ -372,7 +372,12 @@
     <string name="pulse_horizon_subscription_yearly_amount">%1$s per year</string>
     <string name="pulse_horizon_recent_transactions">Recent transactions</string>
     <string name="pulse_horizon_all_transactions">All transactions</string>
-    <string name="pulse_horizon_view_all_transactions">View all</string>
+    <string name="pulse_horizon_add">Add</string>
+    <string name="pulse_horizon_add_transactions">Add transactions</string>
+    <string name="pulse_horizon_choose_transaction_method">Choose how you want to add them.</string>
+    <string name="pulse_horizon_log_transaction_description">Enter one by hand</string>
+    <string name="pulse_horizon_import_statement_description">Bring in many at once</string>
+    <string name="pulse_horizon_view_all_transactions">View all transactions</string>
     <string name="pulse_horizon_nothing_logged_yet">Nothing logged yet</string>
     <string name="pulse_horizon_log_first_transaction">Add your first transaction and watch your room to move update. Spending and income both count.</string>
     <string name="pulse_horizon_loading_transactions">Loading transactions</string>

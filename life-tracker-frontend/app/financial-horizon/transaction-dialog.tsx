@@ -10,6 +10,8 @@ import Button from "@/app/components/design-system/button";
 import { useState, useEffect, useId } from "react";
 import { X, Receipt, Wallet, ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { TransactionItem, CategoryItem, BudgetItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
+import { listAccounts } from "./accounts";
+import type { Account } from "./account-types";
 import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 
 export interface TransactionDialogProps {
@@ -25,6 +27,7 @@ export interface TransactionDialogProps {
     budgetId?: number | null;
     subscriptionId?: number | null;
     notes?: string | null;
+    accountId?: number | null;
   }) => Promise<void> | void;
   editingTransaction?: TransactionItem | null;
   paymentSubscription?: SubscriptionItem | null;
@@ -60,12 +63,25 @@ export default function TransactionDialog({
   const [txSubscriptionId, setTxSubscriptionId] = useState<number | null>(null);
   const [txNotes, setTxNotes] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accountId, setAccountId] = useState<number | null>(null);
+  const accountEditable = editingTransaction?.source !== "statement";
+
+  useEffect(() => {
+    if (!isOpen || !accountEditable) return;
+    let current = true;
+    void listAccounts(true).then(response => {
+      if (current && response.ok) setAccounts(response.data.accounts);
+    });
+    return () => { current = false; };
+  }, [isOpen, accountEditable]);
 
   // Synchronize state when modal opens or editingTransaction changes
   useEffect(() => {
     if (!isOpen) return;
 
     setErrorMsg("");
+    setAccountId(editingTransaction?.account_id ?? null);
     setEntryTimeZone(timeZone);
     if (editingTransaction) {
       setTxName(editingTransaction.name);
@@ -138,6 +154,7 @@ export default function TransactionDialog({
         budgetId: txBudgetId,
         subscriptionId: txSubscriptionId,
         notes: txNotes.trim() || null,
+        accountId: accountEditable && accountId !== (editingTransaction?.account_id ?? null) ? accountId : undefined,
       });
     } catch (error) {
       setErrorMsg(error instanceof RangeError ? error.message : "Failed to save transaction.");
@@ -297,6 +314,26 @@ export default function TransactionDialog({
             />
           </div>
 
+
+          {accountEditable && accounts.some(account => !account.archived_at || account.id === accountId) && (
+            <label className="block text-sm font-medium">
+              Financial account (optional)
+              <Select
+                value={accountId ?? ""}
+                onChange={event => setAccountId(event.target.value ? Number(event.target.value) : null)}
+                disabled={isPending}
+                className="mt-1"
+              >
+                <option value="">No account</option>
+                {accounts.filter(account => !account.archived_at || account.id === editingTransaction?.account_id)
+                  .map(account => (
+                    <option key={account.id} value={account.id} disabled={Boolean(account.archived_at) && account.id !== accountId}>
+                      {account.display_name}{account.archived_at ? " · Archived" : ""}
+                    </option>
+                  ))}
+              </Select>
+            </label>
+          )}
           <DialogActions className="border-t border-divider pt-4">
             <DialogAction
               type="button"

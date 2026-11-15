@@ -675,7 +675,7 @@ func (h *SubscriptionsHandler) LinkSubscriptionTransaction(w http.ResponseWriter
 		return
 	}
 
-	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time)
+	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source)
 	enrichTransactionNames(r.Context(), q, user.ID, &item)
 	webutil.WriteJSON(w, http.StatusOK, item)
 }

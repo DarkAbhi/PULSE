@@ -1,19 +1,35 @@
 package dev.abhishekan.pulse.core.data
 import dev.abhishekan.pulse.core.domain.model.Failure
+import dev.abhishekan.pulse.core.domain.model.FinancialAccount
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.HorizonRecord
 import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.PlannedPurchase
 import dev.abhishekan.pulse.core.domain.model.PlannedPurchases
+import dev.abhishekan.pulse.core.domain.model.StatementBatch
+import dev.abhishekan.pulse.core.domain.model.StatementCommit
+import dev.abhishekan.pulse.core.domain.model.StatementPreview
+import dev.abhishekan.pulse.core.domain.model.StatementResponse
+import dev.abhishekan.pulse.core.domain.model.StatementRow
+import dev.abhishekan.pulse.core.domain.model.StatementRows
+import dev.abhishekan.pulse.core.domain.repository.FinancialAccountsRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
+import dev.abhishekan.pulse.core.domain.repository.StatementImportRepository
 import dev.abhishekan.pulse.core.network.HorizonApi
+import dev.abhishekan.pulse.core.network.dto.StatementBatchDto
+import dev.abhishekan.pulse.core.network.dto.StatementErrorDto
+import dev.abhishekan.pulse.core.network.dto.StatementRowDto
+import io.ktor.client.call.body
+import io.ktor.client.plugins.ResponseException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
@@ -25,7 +41,7 @@ import java.math.BigDecimal
 class PulseHorizonRepository(
     private val api: HorizonApi,
     private val auth: PulseAuthRepository,
-) : HorizonRepository {
+) : HorizonRepository, FinancialAccountsRepository, StatementImportRepository {
     private val revision = MutableStateFlow(0L)
     override val changes = revision.asStateFlow()
 
@@ -46,6 +62,105 @@ class PulseHorizonRepository(
             Outcome.Error(failure)
         }
     }
+
+    override suspend fun accounts(includeArchived: Boolean) = request {
+        api.accounts(includeArchived).accounts.map {
+            FinancialAccount(
+                it.id, it.displayName, it.institutionName, it.accountType, it.bankAccountSubtype,
+                it.currency, it.countryCode, it.lastFour, it.archivedAt != null,
+            )
+        }
+    }
+
+    override suspend fun saveAccount(account: FinancialAccount) = request {
+        api.save(
+            "horizon/accounts",
+            account.id,
+            buildJsonObject {
+                put("display_name", account.displayName)
+                put("institution_name", account.institutionName)
+                put("account_type", account.accountType)
+                put("bank_account_subtype", account.bankAccountSubtype)
+                put("currency", account.currency)
+                put("country_code", account.countryCode)
+                put("last_four", account.lastFour)
+            },
+        )
+    }
+
+    override suspend fun archiveAccount(id: Long, archived: Boolean) = request { api.archiveAccount(id, archived) }
+
+    private suspend fun <T> statementRequest(block: suspend () -> T): StatementResponse<T> {
+        val version = auth.version
+        return try {
+            StatementResponse.Success(block())
+        } catch (error: Exception) {
+            val failure = remoteFailure(error)
+            if (failure == Failure.Unauthorized) auth.expire(version)
+            val code = if (error is ResponseException) {
+                try {
+                    error.response.body<StatementErrorDto>().code
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    ""
+                }
+            } else ""
+            if (code.isBlank()) StatementResponse.Failed(failure) else StatementResponse.Rejected(code)
+        }
+    }
+
+    override suspend fun uploadStatement(accountId: Long, pdf: ByteArray, progress: (Float?) -> Unit) =
+        statementRequest {
+            val result = api.uploadStatement(accountId, pdf, progress)
+            StatementPreview(result.statementBatch(), StatementRows(result.rows.map { it.statementRow() }, result.page, result.pageSize, result.total))
+        }
+
+    override suspend fun statementBatch(id: String) = statementRequest { api.statementBatch(id).statementBatch() }
+
+    override suspend fun statementRows(id: String, page: Int) = statementRequest {
+        val result = api.statementRows(id, page)
+        StatementRows(result.rows.map { it.statementRow() }, result.page, result.pageSize, result.total)
+    }
+
+    override suspend fun editStatement(
+        batch: StatementBatch,
+        confirmed: Boolean,
+        changes: List<Pair<StatementRow, StatementRow>>,
+    ) = statementRequest {
+        val body = buildJsonObject {
+            put("revision", batch.revision)
+            put("account_confirmed", confirmed)
+            put("changes", JsonArray(changes.map { (original, edited) ->
+                buildJsonObject {
+                    put("id", edited.id)
+                    if (original.date != edited.date) put("date", edited.date)
+                    if (original.description != edited.description) put("description", edited.description)
+                    if (original.type != edited.type) put("type", edited.type)
+                    if (original.amount != edited.amount) put("amount", edited.amount)
+                    if (original.included != edited.included) put("included", edited.included)
+                    if (original.categoryId != edited.categoryId) {
+                        put("category_id", edited.categoryId?.let(::JsonPrimitive) ?: JsonNull)
+                    }
+                }
+            }))
+        }
+        api.editStatement(batch.id, body).statementBatch()
+    }
+
+    override suspend fun commitStatement(batch: StatementBatch) = statementRequest {
+        val result = api.commitStatement(batch.id, buildJsonObject { put("revision", batch.revision) })
+        revision.update { it + 1 }
+        StatementCommit(result.imported, result.duplicatesSkipped, result.excluded)
+    }
+
+    override suspend fun cancelStatement(id: String) = statementRequest { api.cancelStatement(id) }
+
+    private fun StatementBatchDto.statementBatch() =
+        StatementBatch(id, currency, revision, ocrUsed, accountConfirmationRequired, counts.parsed, counts.duplicates)
+
+    private fun StatementRowDto.statementRow() =
+        StatementRow(id, date, description, amount, type, categoryId, included, duplicateStatus == "skipped", warnings)
 
     override suspend fun overview() = request { api.overview().domain() }
 
@@ -145,6 +260,7 @@ class PulseHorizonRepository(
                             ref("category_id", change.categoryId)
                             ref("budget_id", change.budgetId)
                             ref("subscription_id", change.subscriptionId)
+                            if (change.setAccount) ref("account_id", change.accountId)
                             text("notes", change.notes)
                         },
                     )

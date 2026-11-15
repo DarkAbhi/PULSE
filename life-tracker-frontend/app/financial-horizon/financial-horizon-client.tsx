@@ -24,6 +24,7 @@ import PlannedPurchaseDialog from "./components/PlannedPurchaseDialog";
 import StatementUploadDialog from "./components/StatementUploadDialog";
 
 import QuickActionDropdown from "./components/QuickActionDropdown";
+import AccountsTab from "./components/AccountsTab";
 import TabNavigation, { HorizonTab } from "./components/TabNavigation";
 import HeaderMetrics from "./components/HeaderMetrics";
 import OverviewTab from "./components/OverviewTab";
@@ -46,7 +47,6 @@ import {
   deleteBudgetAction,
   addHorizonCategoryAction,
   addTransactionAction,
-  bulkAddTransactionsAction,
   updateTransactionAction,
   deleteTransactionAction,
   addSubscriptionAction,
@@ -186,31 +186,6 @@ export default function FinancialHorizonClient({
   const [linkingPaymentSubscription, setLinkingPaymentSubscription] = useState<SubscriptionItem | null>(null);
   const [txToDelete, setTxToDelete] = useState<TransactionItem | null>(null);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
-
-  const handleImportTransactions = async (
-    items: {
-      name: string;
-      amount: number;
-      type?: "debit" | "credit";
-      transactionDate: string;
-      categoryId?: number | null;
-      notes?: string | null;
-    }[]
-  ) => {
-    if (items.length === 0) return;
-
-    const res = await bulkAddTransactionsAction(items);
-
-    if (res.ok && res.transactions && Array.isArray(res.transactions)) {
-      const newItems = res.transactions as TransactionItem[];
-      recalculateSummary({
-        transactionsUpdater: (prev) => [...newItems, ...prev],
-      });
-      setTotalTransactionsCount((prev) => prev + newItems.length);
-    } else {
-      setErrorMsg(res.error || "Failed to bulk add transactions.");
-    }
-  };
 
   // Error & Transition Hook
   const [errorMsg, setErrorMsg] = useState("");
@@ -610,6 +585,7 @@ export default function FinancialHorizonClient({
     budgetId?: number | null;
     subscriptionId?: number | null;
     notes?: string | null;
+    accountId?: number | null;
   }) => {
     setErrorMsg("");
     startTransition(async () => {
@@ -623,7 +599,8 @@ export default function FinancialHorizonClient({
           data.categoryId,
           data.budgetId,
           data.subscriptionId,
-          data.notes
+          data.notes,
+          data.accountId,
         );
         if (res.ok && res.transaction) {
           recalculateSummary({
@@ -644,7 +621,8 @@ export default function FinancialHorizonClient({
           data.categoryId,
           data.budgetId,
           data.subscriptionId,
-          data.notes
+          data.notes,
+          data.accountId,
         );
         if (res.ok && res.transaction) {
           recalculateSummary({
@@ -890,6 +868,7 @@ export default function FinancialHorizonClient({
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         {/* Tab Content Views */}
+        {activeTab === "accounts" && <AccountsTab currency={summary.currency} />}
         {activeTab === "overview" && (
           <OverviewTab
             summary={summary}
@@ -1220,12 +1199,20 @@ export default function FinancialHorizonClient({
       />
 
       {/* Statement Upload & Extraction Dialog */}
-      <StatementUploadDialog
-        isOpen={isStatementUploadOpen}
-        onClose={() => setIsStatementUploadOpen(false)}
-        categories={categories}
-        onImportTransactions={handleImportTransactions}
-      />
+      {isStatementUploadOpen && (
+        <StatementUploadDialog
+          onClose={() => setIsStatementUploadOpen(false)}
+          onManageAccounts={() => { setIsStatementUploadOpen(false); setActiveTab("accounts"); }}
+          categories={categories}
+          onImported={result => {
+            setTotalTransactionsCount(previous => previous + result.imported);
+            loadTransactionsPage(1);
+            void fetch("/api/horizon", { cache: "no-store" }).then(async response => {
+              if (response.ok) setSummary(await response.json() as HorizonSummary);
+            }).catch(() => setErrorMsg("Refresh Financial Horizon to see your updated totals."));
+          }}
+        />
+      )}
     </main>
   );
 }

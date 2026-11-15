@@ -41,6 +41,8 @@ internal fun HorizonTransactionDto.domain(): HorizonTransaction {
         subscriptionId,
         subscriptionName,
         notes,
+        accountId,
+        source,
     )
 }
 

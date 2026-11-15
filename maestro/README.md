@@ -58,3 +58,18 @@ Bash syntax and preservation of a failing Maestro exit status were validated.
 The GitHub report contained only `Unknown error`; local diagnostics reproduced
 an emulator transport disconnect. The updated GitHub-hosted workflow still needs
 execution to confirm that the isolated startup resolves its failure.
+
+## Android statement import
+
+Use an emulator signed in to an isolated development API with INR selected.
+Create a bank account named `Statement test savings` with institution `Kotak`
+and leave its last four digits blank so the flow exercises account confirmation.
+Open the document picker to Downloads before running the flow.
+
+```sh
+adb push tests/statement-import/fixtures/kotak_savings_synthetic.pdf /sdcard/Download/
+maestro test maestro/android/statement-import.yaml
+```
+
+Use a fresh test account or database for each run so the synthetic PDF is eligible
+for import. The flow uses the Android system document picker.

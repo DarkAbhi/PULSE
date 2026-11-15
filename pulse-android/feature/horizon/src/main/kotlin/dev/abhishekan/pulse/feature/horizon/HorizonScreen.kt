@@ -74,7 +74,21 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     LaunchedEffect(timeZone) { viewModel.refresh() }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    PulseHideNavigation(state.draft != null || state.subscriptionId != null || state.historyOpen)
+    var importOpen by rememberSaveable { mutableStateOf(false) }
+    val importViewModel: StatementImportViewModel = koinViewModel()
+    PulseHideNavigation(importOpen || state.draft != null || state.subscriptionId != null || state.historyOpen)
+    if (importOpen) {
+        StatementImportScreen(
+            state.overview.value?.categories.orEmpty(),
+            onClose = {
+                if (importViewModel.uiState.value.result != null) viewModel.refresh()
+                importOpen = false
+            },
+            onManageAccounts = { importOpen = false; viewModel.tab(HorizonTab.Accounts) },
+            vm = importViewModel,
+        )
+        return
+    }
     PulseSnackbarEffect(state.message.takeUnless { state.reviewRequired }, viewModel::consumeMessage)
     val scrollStates = rememberSaveableStateHolder()
     PulseScreenTransition(
@@ -109,7 +123,10 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
             },
         ) {
             key(timeZone, accountCurrency) {
-                HorizonScreen(screen, viewModel, scrollStates, active)
+                HorizonScreen(screen, viewModel, scrollStates, active) {
+                    importViewModel.reset()
+                    importOpen = true
+                }
             }
         }
     }
@@ -121,6 +138,7 @@ internal fun HorizonScreen(
     vm: HorizonViewModel,
     scrollStates: SaveableStateHolder,
     active: Boolean,
+    openImport: () -> Unit,
 ) {
     var discard by rememberSaveable { mutableStateOf(false) }
     var records by rememberSaveable { mutableStateOf(false) }
@@ -246,6 +264,7 @@ internal fun HorizonScreen(
                             HorizonChange.Delete(kind, id) to body
                     }
                     when (state.tab) {
+                        HorizonTab.Accounts -> AccountsScreen(currency)
                         HorizonTab.Overview -> {
                             SectionState(state.overview, vm::refreshOverview) { data ->
                                 HorizonMetrics(data, canMutate) {
@@ -264,6 +283,13 @@ internal fun HorizonScreen(
                                     stringResource(R.string.pulse_horizon_log_transaction),
                                     { create(HorizonForm.Transaction) },
                                     enabled = canMutate,
+                                )
+                                PulseButton(
+                                    stringResource(R.string.pulse_horizon_import_statement),
+                                    openImport,
+                                    enabled = !state.busy && state.draft == null,
+                                    variant = PulseButtonVariant.Secondary,
+                                    modifier = Modifier.testTag("horizon-statement-import"),
                                 )
                                 if (state.recent.value
                                         ?.items
@@ -464,7 +490,7 @@ internal fun HorizonScreen(
             }
             val sectionLoading =
                 when (state.tab) {
-                    HorizonTab.Transactions -> false
+                    HorizonTab.Transactions, HorizonTab.Accounts -> false
                     HorizonTab.Purchases -> state.purchases.loading && state.purchases.value == null
                     else -> state.overview.loading && state.overview.value == null
                 }

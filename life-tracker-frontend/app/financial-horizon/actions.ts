@@ -333,7 +333,8 @@ export async function addTransactionAction(
   categoryId?: number | null,
   budgetId?: number | null,
   subscriptionId?: number | null,
-  notes?: string | null
+  notes?: string | null,
+  accountId?: number | null,
 ) {
   try {
     const response = await apiFetch(`${apiBaseURL}/api/horizon/transactions`, {
@@ -350,6 +351,7 @@ export async function addTransactionAction(
         budget_id: budgetId ?? null,
         subscription_id: subscriptionId ?? null,
         notes: notes ?? null,
+        account_id: accountId,
       }),
     });
 
@@ -366,51 +368,6 @@ export async function addTransactionAction(
   }
 }
 
-export async function bulkAddTransactionsAction(
-  items: {
-    name: string;
-    amount: number;
-    type?: "debit" | "credit";
-    transactionDate?: string | null;
-    categoryId?: number | null;
-    budgetId?: number | null;
-    subscriptionId?: number | null;
-    notes?: string | null;
-  }[]
-) {
-  try {
-    const payload = items.map((item) => ({
-      name: item.name,
-      amount: item.amount,
-      type: item.type ?? "debit",
-      transaction_date: item.transactionDate ?? null,
-      category_id: item.categoryId ?? null,
-      budget_id: item.budgetId ?? null,
-      subscription_id: item.subscriptionId ?? null,
-      notes: item.notes ?? null,
-    }));
-
-    const response = await apiFetch(`${apiBaseURL}/api/horizon/transactions/bulk`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const body = await response.json().catch(() => ([]));
-    if (!response.ok) {
-      return { ok: false, error: (body as any).error ?? "Failed to bulk add transactions." };
-    }
-
-    revalidatePath("/dashboard");
-    revalidatePath("/financial-horizon");
-    return { ok: true, transactions: body };
-  } catch {
-    return { ok: false, error: "Unable to reach the server. Please try again." };
-  }
-}
-
 export async function updateTransactionAction(
   id: number,
   name: string,
@@ -420,7 +377,8 @@ export async function updateTransactionAction(
   categoryId?: number | null,
   budgetId?: number | null,
   subscriptionId?: number | null,
-  notes?: string | null
+  notes?: string | null,
+  accountId?: number | null,
 ) {
   try {
     const response = await apiFetch(`${apiBaseURL}/api/horizon/transactions/${id}`, {
@@ -437,6 +395,7 @@ export async function updateTransactionAction(
         budget_id: budgetId ?? null,
         subscription_id: subscriptionId ?? null,
         notes: notes ?? null,
+        account_id: accountId,
       }),
     });
 

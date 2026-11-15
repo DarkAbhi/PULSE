@@ -36,6 +36,8 @@ sealed interface HorizonChange {
         val budgetId: Long?,
         val subscriptionId: Long?,
         val notes: String?,
+        val accountId: Long? = null,
+        val setAccount: Boolean = false,
     ) : HorizonChange
 
     data class Subscription(

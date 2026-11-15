@@ -22,7 +22,9 @@ import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.repository.GarageRepository
+import dev.abhishekan.pulse.core.domain.repository.FinancialAccountsRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
+import dev.abhishekan.pulse.core.domain.repository.StatementImportRepository
 import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
 import dev.abhishekan.pulse.core.domain.repository.MealPreferencesRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
@@ -46,6 +48,8 @@ val dataModule =
             GarageRepository::class
         single<VehicleCatalogRepository> { get<PulseGarageRepository>() }
         singleOf(::PulseHorizonRepository) bind HorizonRepository::class
+        single<FinancialAccountsRepository> { get<PulseHorizonRepository>() }
+        single<StatementImportRepository> { get<PulseHorizonRepository>() }
         singleOf(::PulseFitnessRepository) bind FitnessRepository::class
         single<DataStore<Preferences>> { get<Context>().preferences }
         singleOf(::PulsePreferences) bind PreferencesRepository::class

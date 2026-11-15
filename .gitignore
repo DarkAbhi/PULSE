@@ -251,3 +251,7 @@ Cargo.lock
 # Local combined test reports and runner logs
 /test-results/
 /logs/
+
+# Private statement corpus; only sanitized fixtures may be committed.
+/test-statement/
+/test statement/

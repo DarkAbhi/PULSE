@@ -21,6 +21,9 @@ internal fun HorizonTransaction.draft(currency: String): HorizonDraft {
         subscriptionId = subscriptionId,
         notes = notes.orEmpty(),
         originalInstant = date.toString(),
+        accountId = accountId,
+        originalAccountId = accountId,
+        accountEditable = source != "statement",
     )
 }
 

@@ -61,6 +61,8 @@ export type SubscriptionItem = {
 
 export type TransactionItem = {
   id: number;
+  account_id?: number | null;
+  source?: "manual" | "statement";
   name: string;
   amount: number;
   type?: "debit" | "credit";

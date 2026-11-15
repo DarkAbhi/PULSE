@@ -56,6 +56,9 @@ data class HorizonDraft(
     val dirty: Boolean = false,
     val zone: String = UserTimeZone.zone.id,
     val originalInstant: String = "",
+    val accountId: Long? = null,
+    val originalAccountId: Long? = null,
+    val accountEditable: Boolean = true,
 ) {
     fun change(): HorizonChange {
         val value by lazy { amount.toBigDecimal() }
@@ -97,6 +100,8 @@ data class HorizonDraft(
                     notes.trim().ifBlank {
                         null
                     },
+                    accountId = accountId,
+                    setAccount = accountEditable && accountId != originalAccountId,
                 )
             HorizonForm.Subscription ->
                 HorizonChange.Subscription(
@@ -152,6 +157,9 @@ data class HorizonDraft(
             dirty.toString(),
             zone,
             originalInstant,
+            accountId?.toString().orEmpty(),
+            originalAccountId?.toString().orEmpty(),
+            accountEditable.toString(),
         )
 
     companion object {
@@ -183,6 +191,9 @@ data class HorizonDraft(
                 v[21].toBoolean(),
                 v.getOrNull(22) ?: UserTimeZone.zone.id,
                 v.getOrNull(23).orEmpty(),
+                v.getOrNull(24)?.toLongOrNull(),
+                v.getOrNull(25)?.toLongOrNull(),
+                v.getOrNull(26)?.toBoolean() ?: true,
             )
     }
 }

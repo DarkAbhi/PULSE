@@ -27,16 +27,20 @@ services:
       PGPASSWORD: ${DB_PASSWORD}
       PGDATABASE: ${DB_NAME}
       PGSSLMODE: ${DB_SSLMODE:-require}
+      STATEMENT_TEST_PASSWORD: ${STATEMENT_TEST_PASSWORD:-}
     volumes:
-      - ./go-backend/data/dev-seed.sql:/seed.sql:ro
+      - ${PULSE_DEV_SEED_FILE:-./go-backend/data/dev-seed.sql}:/seed.sql:ro
     command: ["psql", "-X", "-v", "seed_environment=development", "-f", "/seed.sql"]
     restart: "no"
 
   backend-dev:
+    profiles: ["dev"]
     depends_on:
+      statement-extractor:
+        condition: service_healthy
       seed-dev:
         condition: service_completed_successfully
-    image: golang:1.25.1-bookworm
+    image: golang:1.26.10-bookworm
     user: "0:0"
     entrypoint: []
     working_dir: /app
@@ -54,6 +58,7 @@ services:
     environment:
       APP_ENV: development
       PORT: 8080
+      STATEMENT_EXTRACTOR_URL: ${STATEMENT_EXTRACTOR_URL:-http://statement-extractor:8090}
       DB_HOSTNAME: ${DB_HOSTNAME}
       DB_PORT: ${DB_PORT:-5432}
       DB_USERNAME: ${DB_USERNAME}
@@ -70,9 +75,15 @@ services:
       S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-}
       OTEL_EXPORTER_OTLP_ENDPOINT: jaeger:4317
       OTEL_EXPORTER_OTLP_INSECURE: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
     ports:
-      - "127.0.0.1:18081:8080"
+      - "${PULSE_DEV_GO_BIND:-127.0.0.1:18081}:8080"
     networks:
+      statement-extraction: {}
       default:
         aliases:
           - backend-api
@@ -94,7 +105,7 @@ services:
         aliases:
           - rust-backend-api
     ports:
-      - "127.0.0.1:18084:${RUST_PORT:-8083}"
+      - "${PULSE_DEV_RUST_BIND:-127.0.0.1:18084}:${RUST_PORT:-8083}"
     restart: unless-stopped
 
   cloudflared-dev:
@@ -106,6 +117,7 @@ services:
     restart: unless-stopped
 
   web-dev:
+    profiles: ["dev"]
     image: node:24-bookworm-slim
     working_dir: /app
     command: sh -lc "(npm ci || npm i) && npm run dev:docker"
@@ -122,7 +134,7 @@ services:
       # This is consumed by Webpack/Watchpack (not Turbopack).
       WATCHPACK_POLLING: "1000"
     ports:
-      - "3102:3000"
+      - "${PULSE_DEV_WEB_BIND:-3102}:3000"
     depends_on:
       - backend-dev
 
@@ -132,15 +144,39 @@ services:
 
   prometheus:
     ports: !override
-      - "127.0.0.1:19090:9090"
+      - "${PULSE_DEV_PROMETHEUS_BIND:-127.0.0.1:19090}:9090"
 
   grafana:
     ports: !override
-      - "127.0.0.1:3103:3000"
+      - "${PULSE_DEV_GRAFANA_BIND:-127.0.0.1:3103}:3000"
 
   jaeger:
     ports: !override
-      - "127.0.0.1:16687:16686"
+      - "${PULSE_DEV_JAEGER_BIND:-127.0.0.1:16687}:16686"
+
+  statement-test-db:
+    profiles: ["statement-test"]
+    image: postgres:17.6
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  statement-corpus:
+    profiles: ["statement-test"]
+    image: python:3.12-slim-bookworm
+    command: ["python", "/runner.py"]
+    environment:
+      STATEMENT_TEST_PASSWORD: ${STATEMENT_TEST_PASSWORD:-}
+      STATEMENT_API_BASE: http://backend-dev:8080
+    volumes:
+      - ./scripts/statement-corpus-runner.py:/runner.py:ro
+      - ${CORPUS_DIR:-./tests/statement-import/fixtures}:/corpus:ro
 
 volumes:
   go_build_cache:

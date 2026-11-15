@@ -20,3 +20,8 @@ scrape_configs:
           - "rust-backend-api:9091"
         labels:
           service: "Rust backend"
+  - job_name: "statement-extractor"
+    static_configs:
+      - targets: ["statement-extractor:8090"]
+        labels:
+          service: "Statement extractor"

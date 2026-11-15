@@ -21,22 +21,24 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/observability"
 	"github.com/DarkAbhi/life-backend/internal/profile"
 	"github.com/DarkAbhi/life-backend/internal/purchase"
+	"github.com/DarkAbhi/life-backend/internal/statementimport"
 	"github.com/DarkAbhi/life-backend/internal/vehicle"
 )
 
 // API holds the dependencies used to build the HTTP handler.
 type API struct {
-	DB             *pgxpool.Pool
-	AllowedOrigins []string
-	Purchase       *purchase.Handler
-	MealPlan       *mealplan.Handler
-	Notification   *notification.Handler
-	Gym            *gym.Handler
-	Vehicle        *vehicle.Handler
-	Horizon        *horizon.Handler
-	Auth           *auth.Handler
-	Profile        *profile.Handler
-	ObsConfig      observability.Config
+	DB              *pgxpool.Pool
+	AllowedOrigins  []string
+	Purchase        *purchase.Handler
+	MealPlan        *mealplan.Handler
+	Notification    *notification.Handler
+	Gym             *gym.Handler
+	Vehicle         *vehicle.Handler
+	Horizon         *horizon.Handler
+	StatementImport *statementimport.Handler
+	Auth            *auth.Handler
+	Profile         *profile.Handler
+	ObsConfig       observability.Config
 }
 
 // Router builds the API handler, including operational and feature routes.
@@ -57,7 +59,17 @@ func (a *API) Router() http.Handler {
 	r.Use(observability.HTTPMiddleware(serviceName))
 	r.Use(middleware.Recoverer)
 	r.Use(cors(a.AllowedOrigins))
-	r.Use(middleware.Timeout(15 * time.Second))
+	r.Use(func(next http.Handler) http.Handler {
+		regular := middleware.Timeout(15 * time.Second)(next)
+		importUpload := middleware.Timeout(180 * time.Second)(next)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method == http.MethodPost && strings.TrimSuffix(r.URL.Path, "/") == "/api/horizon/statement-imports" {
+				importUpload.ServeHTTP(w, r)
+				return
+			}
+			regular.ServeHTTP(w, r)
+		})
+	})
 
 	healthHandler := health.New(a.DB)
 
@@ -89,6 +101,10 @@ func (a *API) Router() http.Handler {
 
 		if a.Horizon != nil {
 			a.Horizon.RegisterRoutes(api)
+		}
+
+		if a.StatementImport != nil {
+			a.StatementImport.RegisterRoutes(api)
 		}
 
 		// Daily logs

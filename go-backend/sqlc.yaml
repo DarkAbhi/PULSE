@@ -164,3 +164,12 @@ sql:
             go_type:
               import: database/sql
               type: NullInt64
+  - engine: postgresql
+    schema: migrations
+    queries: internal/statementimport/query
+    gen:
+      go:
+        package: query
+        out: internal/statementimport/query
+        sql_package: pgx/v5
+        omit_unused_structs: true

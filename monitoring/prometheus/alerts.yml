@@ -2,7 +2,7 @@ groups:
   - name: pulse-alerts
     rules:
       - alert: ServiceDown
-        expr: up{job=~"go-backend|rust-backend"} == 0
+        expr: up{job=~"go-backend|rust-backend|statement-extractor"} == 0
         for: 3m
         labels:
           severity: critical

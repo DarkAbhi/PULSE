@@ -26,6 +26,7 @@ enum class HorizonTab(
         R.string.pulse_horizon_subscriptions,
     ),
     Purchases(R.string.pulse_horizon_planned_purchases),
+    Accounts(R.string.pulse_horizon_accounts),
 }
 
 data class HorizonSection<T>(

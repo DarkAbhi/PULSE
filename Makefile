@@ -152,3 +152,7 @@ mcp-test:
 
 seed-test:
 	python3 -m unittest discover -v -s scripts -p 'test_*.py'
+
+.PHONY: statement-import-test
+statement-import-test:
+	@./scripts/run-statement-corpus.sh "$(or $(CORPUS_DIR),./test-statement)"

@@ -5,6 +5,7 @@ const states = new Map();
 const failures = new Map();
 const writes = new Map();
 const customTimes = new Map();
+const accountsByUser = new Map();
 let nextTimeId = 5;
 const pending = () => ({ status: "pending", questionnaire_version: 1, preferences: null });
 const times = [
@@ -24,6 +25,28 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/__test/state") return send(200, { state: states.get(token) ?? pending(), writes: writes.get(token) ?? 0 });
   if (url.pathname === "/api/auth/session") return send(200, { username: token });
   if (url.pathname === "/api/profile") return send(200, { name: "Browser test", timezone: "Asia/Kolkata", currency: "INR" });
+  if (url.pathname === "/api/horizon") return send(200, {
+    base_amount: 0, currency: "INR", total_deductions: 0, total_transactions: 0,
+    remaining_amount: 0, committed_ratio: 0, total_budgets_allocated: 0, total_subscription_burn: 0,
+    budgets: [], deductions: [], categories: [], transactions: [], subscriptions: [], projections: [],
+  });
+  if (url.pathname === "/api/horizon/transactions") return send(200, {
+    transactions: [], page: 1, page_size: 10, total: 0, total_pages: 0,
+  });
+  if (url.pathname === "/api/next-month-purchases") return send(200, { items: [], total: 0 });
+  if (url.pathname === "/api/horizon/accounts") {
+    const accounts = accountsByUser.get(token) ?? [{
+      id: 1, display_name: "Test savings", institution_name: "Kotak", account_type: "bank_account",
+      bank_account_subtype: "savings", currency: "INR", country_code: "", last_four: "", archived_at: null,
+    }];
+    if (req.method === "GET") return send(200, { accounts });
+    if (req.method === "POST") {
+      const account = { ...body, id: accounts.length + 1, archived_at: null };
+      accounts.push(account);
+      accountsByUser.set(token, accounts);
+      return send(201, account);
+    }
+  }
   if (url.pathname === "/api/meal-times") {
     const existing = customTimes.get(token) ?? [];
     if (req.method === "GET") return send(200, [...times, ...existing]);

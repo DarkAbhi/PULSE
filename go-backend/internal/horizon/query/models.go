@@ -3,3 +3,22 @@
 //   sqlc v1.31.1
 
 package query
+
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+type FinancialAccount struct {
+	ID                 int64
+	UserID             int64
+	DisplayName        string
+	InstitutionName    string
+	AccountType        string
+	BankAccountSubtype string
+	Currency           string
+	CountryCode        string
+	LastFour           string
+	ArchivedAt         pgtype.Timestamptz
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
+}

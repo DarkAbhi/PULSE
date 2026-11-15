@@ -239,3 +239,38 @@ See [testing and CI](docs/guides/testing.md), [seed data](docs/guides/developmen
 - [Documentation index](docs/README.md): configuration, monitoring, testing, pre-commit, seeds and releases.
 - [Development history](docs/development-history/README.md): categorized feature plans, design rationale, reviews and verification evidence across backend, web and Android.
 - [Development timeline](docs/development-history/timeline.md): dated index of the existing build records.
+
+## Statement import
+
+Open **Financial Horizon → Accounts** to create a bank account or credit card,
+then choose **Import statement** in Transactions. Choose the account and a PDF,
+review the reconciled rows, and confirm. Pulse imports to the existing transaction
+history. The selected account and statement must match the currency in Profile.
+
+Pulse recognizes the INR statement layouts in the current test corpus:
+
+- Savings accounts: Federal Bank, IDFC FIRST Bank, Kotak, and SBI.
+- Credit cards: Amazon Pay ICICI, Axis MY ZONE, HDFC Millennia, HDFC Swiggy, and IDFC FIRST Bank.
+
+Import requires a recognized layout and totals that reconcile. Uploads are
+limited to unencrypted PDFs up to 10 MiB and 100 pages. Scanned statements may
+use OCR and still need to pass the same checks. Pulse deletes the uploaded PDF
+after processing. An unconfirmed preview expires after 24 hours.
+
+From the repository root, run the development acceptance test with Docker:
+
+```sh
+make statement-import-test CORPUS_DIR=./test-statement
+```
+
+The command uses the existing development Compose files and enables the
+`statement-test` profile in a temporary project. It runs with a disposable
+PostgreSQL database and user, assigns temporary loopback ports, and skips the
+tunnel. The runner mounts PDFs read-only, checks reconciliation and same-file
+replay, and prints an anonymous report. Keep real statements in the ignored
+corpus directory. The extractor is private to Compose.
+
+Synthetic fixtures are generated independently of the real corpus. Regenerate
+the text fixture with `python3 scripts/generate-statement-fixture.py`. To also
+regenerate the encrypted, rasterized, and malformed fixtures, use
+`--variants` with pypdf, Pillow, and Poppler installed.

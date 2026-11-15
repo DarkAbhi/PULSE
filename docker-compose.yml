@@ -1,4 +1,25 @@
 services:
+  statement-extractor:
+    profiles: ["dev", "prod"]
+    build:
+      context: ./statement-extractor
+    networks: [statement-extraction]
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 64
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/healthz', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
   migrate:
     profiles: ["prod"]
     build:
@@ -20,11 +41,14 @@ services:
       context: .
       dockerfile: go-backend/Dockerfile
     depends_on:
+      statement-extractor:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     environment:
       APP_ENV: ${APP_ENV}
       PORT: 8080
+      STATEMENT_EXTRACTOR_URL: ${STATEMENT_EXTRACTOR_URL:-http://statement-extractor:8090}
       DB_NAME: ${DB_NAME}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
@@ -42,6 +66,7 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: jaeger:4317
       OTEL_EXPORTER_OTLP_INSECURE: "true"
     networks:
+      statement-extraction: {}
       default:
         aliases:
           - backend-api
@@ -120,6 +145,7 @@ services:
     restart: unless-stopped
 
   prometheus:
+    networks: [default, statement-extraction]
     profiles: ["prod", "dev"]
     image: prom/prometheus:latest
     restart: unless-stopped
@@ -197,3 +223,7 @@ services:
 volumes:
   loki_data:
   alloy_data:
+
+networks:
+  statement-extraction:
+    internal: true

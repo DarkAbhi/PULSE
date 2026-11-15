@@ -78,6 +78,8 @@ import kotlinx.serialization.json.JsonPrimitive
     @SerialName("subscription_id") val subscriptionId: Long? = null,
     @SerialName("subscription_name") val subscriptionName: String? = null,
     val notes: String? = null,
+    @SerialName("account_id") val accountId: Long? = null,
+    val source: String = "manual",
 )
 
 @Serializable data class HorizonTransactionPageDto(

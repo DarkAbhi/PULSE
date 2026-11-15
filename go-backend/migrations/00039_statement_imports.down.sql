@@ -1,0 +1,10 @@
+ALTER TABLE financial_horizon_transactions
+    DROP COLUMN dedupe_hash,
+    DROP COLUMN import_row_ordinal,
+    DROP COLUMN import_batch_id,
+    DROP COLUMN source;
+DROP TABLE statement_category_rules;
+DROP TABLE statement_import_dedupe;
+DROP TABLE statement_import_structures;
+DROP TABLE statement_import_rows;
+DROP TABLE statement_import_batches;

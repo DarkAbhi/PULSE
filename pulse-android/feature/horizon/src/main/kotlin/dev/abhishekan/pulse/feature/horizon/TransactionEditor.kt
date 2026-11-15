@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,6 +33,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
@@ -41,10 +43,12 @@ import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
+import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
+import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -151,6 +155,7 @@ internal fun TransactionEditor(
                     },
                     !busy,
                 ) { onChange(draft.copy(subscriptionId = it)) }
+                if (draft.accountEditable) TransactionAccountField(draft, !busy, onChange)
             }
             TransactionSection(
                 R.string.pulse_horizon_notes_optional,
@@ -241,4 +246,33 @@ private fun TransactionSection(
             content()
         }
     }
+}
+
+@Composable
+private fun TransactionAccountField(
+    draft: HorizonDraft,
+    enabled: Boolean,
+    onChange: (HorizonDraft) -> Unit,
+    vm: AccountsViewModel = koinViewModel(),
+) {
+    val state by vm.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.refresh() }
+    val accounts = state.accounts.orEmpty()
+    val active = accounts.filterNot { it.archived }
+    if (active.isEmpty() && draft.accountId == null) return
+    val unassigned = stringResource(R.string.pulse_horizon_transaction_no_account)
+    val archived = stringResource(R.string.pulse_horizon_account_archived)
+    val selected = accounts.firstOrNull { it.id == draft.accountId }
+    val label = when {
+        selected == null -> unassigned
+        selected.archived -> "${selected.displayName} · $archived"
+        else -> selected.displayName
+    }
+    PulseSelectionField(
+        label = stringResource(R.string.pulse_horizon_transaction_account_optional),
+        selected = label,
+        options = listOf(unassigned) + active.map { it.displayName },
+        onSelect = { onChange(draft.copy(accountId = active.getOrNull(it - 1)?.id)) },
+        enabled = enabled && state.accounts != null,
+    )
 }

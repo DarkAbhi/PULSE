@@ -1,7 +1,7 @@
 -- name: ListRecentTransactions :many
 SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
-       t.subscription_id, s.name AS subscription_name, t.notes, t.created_at
+       t.subscription_id, s.name AS subscription_name, t.notes, t.created_at, t.account_id, t.source
 FROM financial_horizon_transactions t
 LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
 LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
@@ -12,7 +12,7 @@ ORDER BY t.transaction_date DESC, t.id DESC LIMIT $2;
 -- name: ListRecentTransactionsLegacy :many
 SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
-       NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at
+       NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at, t.account_id, t.source
 FROM financial_horizon_transactions t
 LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
 LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
@@ -29,7 +29,7 @@ WHERE t.user_id = $1
 -- name: ListFilteredTransactions :many
 SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
-       t.subscription_id, s.name AS subscription_name, t.notes, t.created_at
+       t.subscription_id, s.name AS subscription_name, t.notes, t.created_at, t.account_id, t.source
 FROM financial_horizon_transactions t
 LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
 LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
@@ -43,7 +43,7 @@ ORDER BY t.transaction_date DESC, t.id DESC LIMIT $5 OFFSET $6;
 -- name: ListFilteredTransactionsLegacy :many
 SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
-       NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at
+       NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at, t.account_id, t.source
 FROM financial_horizon_transactions t
 LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
 LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
@@ -57,9 +57,9 @@ ORDER BY t.transaction_date DESC, t.id DESC LIMIT $5 OFFSET $6;
 SELECT name FROM financial_horizon_categories WHERE id = $1 AND ((user_id IS NULL AND is_default) OR user_id = $2);
 
 -- name: CreateTransaction :one
-INSERT INTO financial_horizon_transactions (user_id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at;
+INSERT INTO financial_horizon_transactions (user_id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, account_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source;
 
 -- name: GetSubscriptionName :one
 SELECT name FROM financial_horizon_subscriptions WHERE id = $1 AND user_id = $2;
@@ -67,9 +67,10 @@ SELECT name FROM financial_horizon_subscriptions WHERE id = $1 AND user_id = $2;
 -- name: UpdateTransaction :one
 UPDATE financial_horizon_transactions
 SET name = $1, amount = $2, type = $3, transaction_date = $4, category_id = $5, category_name = $6,
-    budget_id = $7, subscription_id = $8, notes = $9, updated_at = CURRENT_TIMESTAMP
+    budget_id = $7, subscription_id = $8, notes = $9,
+    account_id = CASE WHEN source = 'manual' AND sqlc.arg(set_account)::boolean THEN sqlc.narg(account_id)::bigint ELSE account_id END, updated_at = CURRENT_TIMESTAMP
 WHERE id = $10 AND user_id = $11
-RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at;
+RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source;
 
 -- name: DeleteTransaction :execrows
 DELETE FROM financial_horizon_transactions WHERE id = $1 AND user_id = $2;
@@ -85,4 +86,4 @@ WHERE financial_horizon_transactions.id = sqlc.arg(id)
     SELECT 1 FROM financial_horizon_subscriptions s
     WHERE s.id = sqlc.arg(subscription_id) AND s.user_id = sqlc.arg(user_id)
   )
-RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at;
+RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source;

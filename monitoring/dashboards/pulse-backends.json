@@ -272,6 +272,34 @@
         "overrides": []
       },
       "id": 24
+    },
+    {
+      "title": "Statement imports by outcome",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 27},
+      "targets": [
+        {
+          "expr": "sum by (operation, outcome) (increase(pulse_statement_import_attempts_total[5m]))",
+          "legendFormat": "{{operation}} {{outcome}}"
+        }
+      ],
+      "id": 25
+    },
+    {
+      "title": "Statement extractor latency and failures",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 35},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(pulse_statement_extractor_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "P95 duration (seconds)"
+        },
+        {
+          "expr": "increase(pulse_statement_extractor_failures_total[5m])",
+          "legendFormat": "Failed requests (5 minutes)"
+        }
+      ],
+      "id": 26
     }
   ],
   "refresh": "10s",

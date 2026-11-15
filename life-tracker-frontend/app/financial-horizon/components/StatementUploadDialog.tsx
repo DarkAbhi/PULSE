@@ -1,495 +1,252 @@
 "use client";
 
-import Select from "@/app/components/design-system/select";
-import { formatMoney } from "@/app/lib/currency.mjs";
-import { useCurrency } from "@/app/components/currency-provider";
-import { useTimeZone } from "@/app/components/time-zone-provider";
-import { statementTransactionInstant } from "@/app/lib/time-zone.mjs";
-
+import { useEffect, useState, type FormEvent } from "react";
 import Button from "@/app/components/design-system/button";
-
-import { useState, useRef } from "react";
+import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Select from "@/app/components/design-system/select";
+import type { CategoryItem } from "@/app/dashboard/financial-horizon-card";
+import type { Account } from "../account-types";
+import { listAccounts } from "../accounts";
 import {
-  X,
-  Upload,
-  FileText,
-  Sparkles,
-  AlertCircle,
-  Copy,
-  Check,
-  Code2,
-  List,
-  Plus,
-  Loader2,
-} from "lucide-react";
-import { extractStatement, type StatementExtractionResponse } from "@/app/financial-horizon/extract-statement";
-import { CategoryItem } from "@/app/dashboard/financial-horizon-card";
-import Dialog from "@/app/components/design-system/dialog";
+  cancelImport, commitImport, editImport, getImport, getImportRows, ImportError, uploadStatement,
+  type ImportBatch, type ImportEdit, type ImportResult, type RowPage,
+} from "../statement-import";
 
-interface StatementUploadDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface Props {
   categories: CategoryItem[];
-  onImportTransactions: (
-    transactions: {
-      name: string;
-      amount: number;
-      type?: "debit" | "credit";
-      transactionDate: string;
-      categoryId?: number | null;
-      notes?: string | null;
-    }[]
-  ) => Promise<void>;
+  onClose: () => void;
+  onManageAccounts: () => void;
+  onImported: (result: ImportResult) => void;
 }
 
-export default function StatementUploadDialog({
-  isOpen,
-  onClose,
-  categories,
-  onImportTransactions,
-}: StatementUploadDialogProps) {
-  const { timeZone } = useTimeZone();
-  const { currency } = useCurrency();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [extractionResult, setExtractionResult] = useState<StatementExtractionResponse | null>(null);
-  const [activeView, setActiveView] = useState<"json" | "preview">("json");
-  const [copied, setCopied] = useState(false);
-  const [selectedTxIndexes, setSelectedTxIndexes] = useState<number[]>([]);
-  const [selectedCategoryMap, setSelectedCategoryMap] = useState<Record<number, number | null>>({});
-  const [isImporting, setIsImporting] = useState(false);
+const inputClass = "block min-w-0 w-full rounded-lg border border-divider bg-card px-2 py-1.5 text-base sm:text-sm";
+const previewColumns = "lg:grid-cols-[3.75rem_minmax(0,1fr)_8.5rem_8rem_6rem_9rem]";
+const fieldLabel = "mb-1 block text-xs font-medium text-muted-foreground lg:sr-only";
+const descriptionClass = `${inputClass} min-h-10 whitespace-pre-wrap [overflow-wrap:anywhere] leading-5`;
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+export default function StatementUploadDialog({ categories, onClose, onManageAccounts, onImported }: Props) {
+  const [accounts, setAccounts] = useState<Account[] | null>(null);
+  const [accountId, setAccountId] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState("");
+  const [batch, setBatch] = useState<ImportBatch | null>(null);
+  const [page, setPage] = useState<RowPage | null>(null);
+  const [changes, setChanges] = useState<Record<number, ImportEdit>>({});
+  const [confirmed, setConfirmed] = useState(false);
+  const [result, setResult] = useState<ImportResult | null>(null);
 
-  if (!isOpen) return null;
+  function loadAccounts() {
+    setError("");
+    void listAccounts().then(response => {
+      if (response.ok) setAccounts(response.data.accounts);
+      else setError(response.error);
+    });
+  }
 
-  const handleFileSelect = (file: File) => {
-    if (!file.name.toLowerCase().endsWith(".pdf") && file.type !== "application/pdf") {
-      setError("Please select a PDF statement file.");
+  useEffect(loadAccounts, []);
+
+  function attempt(op: () => Promise<void>) {
+    setBusy(true);
+    setError("");
+    setErrorCode("");
+    void op().catch(err => {
+      setError(err instanceof Error ? err.message : "The import request failed. Try again.");
+      setErrorCode(err instanceof ImportError ? err.code : "");
+    }).finally(() => setBusy(false));
+  }
+
+  function upload(event: FormEvent) {
+    event.preventDefault();
+    if (!file || !accountId || busy) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Choose a PDF up to 10 MiB.");
       return;
     }
-    setSelectedFile(file);
-    setError(null);
-    setExtractionResult(null);
-  };
+    setProgress(null);
+    attempt(async () => {
+      const parsed = await uploadStatement(file, Number(accountId), setProgress);
+      setBatch(parsed);
+      setPage(parsed);
+      setFile(null);
+      setConfirmed(!parsed.account_confirmation_required);
+    });
+  }
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
+  function change(edit: ImportEdit) {
+    setChanges(current => ({ ...current, [edit.id]: { ...current[edit.id], ...edit } }));
+  }
 
-  const handleDragLeave = () => {
-    setIsDragOver(false);
-  };
+  async function save(current: ImportBatch) {
+    if (!Object.keys(changes).length && !(confirmed && current.account_confirmation_required)) return current;
+    const updated = await editImport(current.id, current.revision, confirmed, Object.values(changes));
+    setBatch(updated);
+    setPage(currentPage => currentPage && ({
+      ...currentPage, rows: currentPage.rows.map(row => ({ ...row, ...changes[row.id] })),
+    }));
+    setChanges({});
+    return updated;
+  }
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFileSelect(e.dataTransfer.files[0]);
-    }
-  };
+  function turnPage(target: number) {
+    if (!batch) return;
+    attempt(async () => {
+      const current = await save(batch);
+      setPage(await getImportRows(current.id, target));
+    });
+  }
 
-  const handleExtract = async () => {
-    if (!selectedFile) return;
+  function reload() {
+    if (!batch) return;
+    attempt(async () => {
+      const current = await getImport(batch.id);
+      const rows = await getImportRows(batch.id, page?.page ?? 1);
+      setBatch(current);
+      setPage(rows);
+      setChanges({});
+      setConfirmed(!current.account_confirmation_required);
+    });
+  }
 
-    setIsLoading(true);
-    setError(null);
+  function confirm() {
+    if (!batch || !confirmed) return;
+    attempt(async () => {
+      const updated = await save(batch);
+      const saved = await commitImport(updated.id, updated.revision);
+      setResult(saved);
+      onImported(saved);
+    });
+  }
 
-    try {
-      const res = await extractStatement(selectedFile);
+  function close() {
+    if (busy) return;
+    if (!batch || result || errorCode === "BATCH_EXPIRED") onClose();
+    else attempt(async () => { await cancelImport(batch.id); onClose(); });
+  }
 
-      setExtractionResult(res);
-      // Pre-select all extracted transactions for preview import
-      if (res.data.transactions) {
-        setSelectedTxIndexes(res.data.transactions.map((_, idx) => idx));
-
-        // Find fallback 'Other' category ID if present in user categories
-        const defaultOtherCategory = categories.find(
-          (c) => c.name.toLowerCase() === "other"
-        );
-        const defaultOtherId = defaultOtherCategory ? defaultOtherCategory.id : null;
-
-        // Auto-match categories by suggestedCategory or default to 'Other'
-        const initialCategoryMap: Record<number, number | null> = {};
-        res.data.transactions.forEach((tx, idx) => {
-          if (tx.suggestedCategory) {
-            const match = categories.find(
-              (c) => c.name.toLowerCase() === tx.suggestedCategory?.toLowerCase()
-            );
-            initialCategoryMap[idx] = match ? match.id : defaultOtherId;
-          } else {
-            initialCategoryMap[idx] = defaultOtherId;
-          }
-        });
-        setSelectedCategoryMap(initialCategoryMap);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to extract statement data. Please try another PDF.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCopyJson = () => {
-    if (!extractionResult?.rawJson) return;
-    navigator.clipboard.writeText(extractionResult.rawJson);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const toggleSelectTx = (index: number) => {
-    setSelectedTxIndexes((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (!extractionResult?.data.transactions) return;
-    if (selectedTxIndexes.length === extractionResult.data.transactions.length) {
-      setSelectedTxIndexes([]);
-    } else {
-      setSelectedTxIndexes(extractionResult.data.transactions.map((_, idx) => idx));
-    }
-  };
-
-  const handleImport = async () => {
-    if (!extractionResult?.data.transactions || selectedTxIndexes.length === 0) return;
-
-    setIsImporting(true);
-    try {
-      const itemsToImport = selectedTxIndexes.map((idx) => {
-        const tx = extractionResult.data.transactions[idx];
-        const formattedTxDate = statementTransactionInstant(tx.date, timeZone);
-
-        return {
-          name: tx.description || "Statement Transaction",
-          amount: Math.abs(tx.amount),
-          type: (tx.type && tx.type.toLowerCase() === "credit" ? "credit" : "debit") as "debit" | "credit",
-          transactionDate: formattedTxDate,
-          categoryId: selectedCategoryMap[idx] ?? null,
-          notes: `Imported from statement${
-            extractionResult.data.accountNumber ? ` (${extractionResult.data.accountNumber})` : ""
-          }`,
-        };
-      });
-
-      await onImportTransactions(itemsToImport);
-      onClose();
-    } catch (err: any) {
-      setError(err?.message || "Failed to import transactions.");
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
+  const account = accounts?.find(item => String(item.id) === accountId);
   return (
-    <Dialog panelClassName="relative rounded-3xl p-0 overflow-hidden" size="xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-divider px-6 py-4 bg-secondary/30">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-action font-bold">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-foreground">Import Statement PDF</h3>
-              <p className="text-xs text-muted-foreground">
-                Extract transactions from credit card, debit card, or bank statements
-              </p>
-            </div>
+    <Dialog
+      size={batch && !result ? "xl" : "sm"}
+      panelClassName={batch && !result ? "max-w-6xl! p-4! sm:p-6!" : undefined}
+      labelledBy="statement-import-title"
+    >
+      <h2 id="statement-import-title" className="mb-4 text-xl font-semibold">Import statement</h2>
+      {error && <p role="alert" className="my-3">{error}</p>}
+      {result ? (
+        <>
+          <p role="status">{result.imported} imported · {result.duplicates_skipped} duplicates skipped · {result.excluded} excluded</p>
+          <DialogActions><Button onClick={onClose}>Done</Button></DialogActions>
+        </>
+      ) : batch && page ? (
+        <div className="space-y-4">
+          <p role="status">Balances reconciled · {batch.counts.parsed} rows · {batch.counts.duplicates} duplicates</p>
+          {batch.ocr_used && <p>Text was read from a scan. Check each row against your statement.</p>}
+          {batch.counts.new === 0 && <p>No new transactions are selected for import.</p>}
+          {batch.account_confirmation_required && (
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={confirmed} disabled={busy} onChange={event => setConfirmed(event.target.checked)} />
+              This statement belongs to {account?.display_name ?? "the selected account"}.
+            </label>
+          )}
+          <div className={`hidden gap-3 text-sm font-semibold lg:grid ${previewColumns}`} aria-hidden="true">
+            <span>Include</span>
+            <span>Description</span>
+            <span>Date</span>
+            <span>Amount (${batch.currency})</span>
+            <span>Type</span>
+            <span>Category</span>
           </div>
-          <Button variant="icon"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-
-        {/* Content Body */}
-        <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto scrollbar-thin">
-          {/* File Upload Zone */}
-          {!extractionResult && (
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`flex flex-col items-center justify-center rounded-2xl p-8 text-center cursor-pointer transition ${
-                isDragOver
-                  ? "bg-accent"
-                  : selectedFile
-                  ? "bg-success-soft"
-                  : "bg-secondary hover:bg-surface-strong"
-              }`}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,application/pdf"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
-              />
-              {selectedFile ? (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-success/10 text-success">
-                    <FileText className="h-6 w-6" />
-                  </div>
-                  <h4 className="font-bold text-foreground text-sm">{selectedFile.name}</h4>
-                  <p className="text-xs text-muted-foreground">
-                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB PDF Document
-                  </p>
-                  <span className="mt-2 text-xs font-semibold text-action hover:underline">
-                    Click to change file
-                  </span>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-action">
-                    <Upload className="h-6 w-6" />
-                  </div>
-                  <h4 className="font-bold text-foreground text-sm">
-                    Drag and drop your statement PDF here
-                  </h4>
-                  <p className="text-xs text-muted-foreground">
-                    Supports monthly Credit Card, Debit Card, or Bank Account statements
-                  </p>
-                  <Button variant="secondary" size="sm"
-                    type="button"
-                    className="mt-2"
-                  >
-                    Browse Computer
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div role="alert" className="flex items-center gap-2.5 rounded-2xl bg-destructive/10 p-4 text-xs text-destructive">
-              <AlertCircle className="h-4 w-4 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Extracting Loading Indicator */}
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center py-10 space-y-3">
-              <Loader2 className="h-8 w-8 animate-spin text-action" />
-              <p className="text-sm font-semibold text-foreground">
-                Analyzing statement...
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Extracting transactions and account summary into structured JSON
-              </p>
-            </div>
-          )}
-
-          {/* Extraction Results View */}
-          {extractionResult && (
-            <div className="space-y-4">
-              {/* Header Tabs: Pure JSON vs Transaction List */}
-              <div className="flex items-center justify-between border-b border-divider pb-3">
-                <div className="flex items-center gap-2">
-                  <Button variant={activeView === "json" ? "primary" : "secondary"} size="sm"
-                    onClick={() => setActiveView("json")}
-                  >
-                    <Code2 className="h-3.5 w-3.5" /> Pure JSON Output
-                  </Button>
-                  <Button variant={activeView === "preview" ? "primary" : "secondary"} size="sm"
-                    onClick={() => setActiveView("preview")}
-                  >
-                    <List className="h-3.5 w-3.5" /> Transactions (
-                    {extractionResult.data.transactions?.length || 0})
-                  </Button>
-                </div>
-
-                {activeView === "json" ? (
-                  <Button variant="secondary" size="sm"
-                    onClick={handleCopyJson}
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="h-3.5 w-3.5 text-success" /> Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-3.5 w-3.5" /> Copy JSON
-                      </>
+          <ul aria-label={`Statement rows, page ${page.page}`} className="text-sm">
+            {page.rows.map(original => {
+              const row = { ...original, ...changes[original.id] };
+              const duplicate = row.duplicate_status === "skipped";
+              const disabled = busy || duplicate;
+              return (
+                <li key={row.id} className={`grid min-w-0 items-start gap-3 border-t border-divider py-3 min-[23.4375rem]:grid-cols-2 md:grid-cols-4 ${previewColumns}`}>
+                  <div className="min-[23.4375rem]:col-span-full lg:col-span-1 lg:pt-2">
+                    {duplicate ? <span className="text-xs font-medium text-muted-foreground">Duplicate</span> : (
+                      <label className="inline-flex items-center gap-2">
+                        <input aria-label={`Include row ${row.id}`} type="checkbox" disabled={disabled} checked={row.included} onChange={e => change({ id: row.id, included: e.target.checked })} />
+                        <span className="lg:sr-only">Include in import</span>
+                      </label>
                     )}
-                  </Button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Button variant="tertiary" size="sm"
-                      onClick={toggleSelectAll}
-                    >
-                      {selectedTxIndexes.length === extractionResult.data.transactions.length
-                        ? "Deselect All"
-                        : "Select All"}
-                    </Button>
                   </div>
-                )}
-              </div>
-
-              {/* Statement Overview Badge */}
-              <div className="flex items-center gap-3 flex-wrap text-xs rounded-xl bg-secondary/20 p-3">
-                {extractionResult.data.statementType && (
-                  <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-semibold text-action capitalize">
-                    {extractionResult.data.statementType.replace("_", " ")}
-                  </span>
-                )}
-                {extractionResult.data.accountNumber && (
-                  <span className="text-muted-foreground">
-                    Account: <strong className="text-foreground">{extractionResult.data.accountNumber}</strong>
-                  </span>
-                )}
-                {extractionResult.data.totalDebits !== undefined && (
-                  <span className="text-muted-foreground">
-                    Total Debits:{" "}
-                    <strong className="text-destructive">
-                      {formatMoney(extractionResult.data.totalDebits, currency)}
-                    </strong>
-                  </span>
-                )}
-                {extractionResult.data.totalCredits !== undefined && (
-                  <span className="text-muted-foreground">
-                    Total Credits:{" "}
-                    <strong className="text-success">
-                      {formatMoney(extractionResult.data.totalCredits, currency)}
-                    </strong>
-                  </span>
-                )}
-              </div>
-
-              {/* Pure JSON Code View */}
-              {activeView === "json" && (
-                <div className="relative rounded-2xl bg-card p-4 font-mono text-xs text-muted-foreground overflow-x-auto max-h-96 leading-relaxed">
-                  <pre>{JSON.stringify(JSON.parse(extractionResult.rawJson), null, 2)}</pre>
-                </div>
-              )}
-
-              {/* Transaction List Preview & Category Mapping View */}
-              {activeView === "preview" && (
-                <div className="space-y-2 max-h-96 overflow-y-auto scrollbar-thin pr-1">
-                  {extractionResult.data.transactions.map((tx, idx) => {
-                    const isSelected = selectedTxIndexes.includes(idx);
-                    return (
-                      <div
-                        key={idx}
-                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl p-3 text-xs transition ${
-                          isSelected
-                            ? "bg-accent"
-                            : "bg-card opacity-60"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3 min-w-0">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleSelectTx(idx)}
-                            className="mt-0.5 rounded text-action h-4 w-4 shrink-0"
-                          />
-                          <div className="min-w-0">
-                            <div className="font-semibold text-foreground truncate text-sm">
-                              {tx.description}
-                            </div>
-                            <div className="text-muted-foreground text-[11px] flex items-center gap-2 mt-0.5">
-                              <span>{tx.date}</span>
-                              <span className="capitalize font-medium text-secondary-foreground">
-                                • {tx.type}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 shrink-0 justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-divider/40">
-                          {/* Category Selector */}
-                          <Select
-                            value={selectedCategoryMap[idx] ?? ""}
-                            onChange={(e) =>
-                              setSelectedCategoryMap((prev) => ({
-                                ...prev,
-                                [idx]: e.target.value ? Number(e.target.value) : null,
-                              }))
-                            }
-                            className="rounded-lg bg-secondary px-2 py-1 text-xs text-foreground"
-                          >
-                            <option value="">Uncategorized</option>
-                            {categories.map((cat) => (
-                              <option key={cat.id} value={cat.id}>
-                                {cat.name}
-                              </option>
-                            ))}
-                          </Select>
-
-                          <span
-                            className={`font-bold text-sm ${
-                              tx.type === "credit" ? "text-success" : "text-foreground"
-                            }`}
-                          >
-                            {formatMoney(tx.amount, currency)}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                  <label className="min-w-0 min-[23.4375rem]:col-span-full lg:col-span-1">
+                    <span className={fieldLabel}>Description</span>
+                    <span className="relative block">
+                      {/* Matching text keeps the editor tall enough as the value and width change. */}
+                      <span aria-hidden="true" className={`${descriptionClass} invisible`}>{row.description + "\u200B"}</span>
+                      <textarea className={`${descriptionClass} absolute inset-0 h-full resize-none`} aria-label={`Description for row ${row.id}`} maxLength={255} disabled={disabled} value={row.description} onChange={e => change({ id: row.id, description: e.target.value })} />
+                    </span>
+                    {row.warnings?.includes("POSSIBLE_MANUAL_MATCH") && (
+                      <span className="mt-1 block text-muted-foreground">Possible match in transaction history</span>
+                    )}
+                  </label>
+                  <label className="min-w-0">
+                    <span className={fieldLabel}>Date</span>
+                    <input className={inputClass} aria-label={`Date for row ${row.id}`} type="date" disabled={disabled} value={row.date} onChange={e => change({ id: row.id, date: e.target.value })} />
+                  </label>
+                  <label className="min-w-0">
+                    <span className={fieldLabel}>Amount (${batch.currency})</span>
+                    <input className={`${inputClass} tabular-nums`} aria-label={`Amount for row ${row.id}`} inputMode="decimal" disabled={disabled} value={row.amount} onChange={e => change({ id: row.id, amount: e.target.value })} />
+                  </label>
+                  <label className="min-w-0">
+                    <span className={fieldLabel}>Type</span>
+                    <Select className={inputClass} aria-label={`Type for row ${row.id}`} value={row.type} disabled={disabled} onChange={e => change({ id: row.id, type: e.target.value as "debit" | "credit" })}><option value="debit">Debit</option><option value="credit">Credit</option></Select>
+                  </label>
+                  <label className="min-w-0">
+                    <span className={fieldLabel}>Category</span>
+                    <Select className={inputClass} aria-label={`Category for row ${row.id}`} value={row.category_id ?? ""} disabled={disabled} onChange={e => change({ id: row.id, category_id: e.target.value ? Number(e.target.value) : null })}>
+                      <option value="">Other</option>
+                      {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+                    </Select>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+          {page.total > page.page_size && (
+            <nav className="flex items-center gap-2" aria-label="Preview pages">
+              <Button variant="secondary" disabled={busy || page.page <= 1} onClick={() => turnPage(page.page - 1)}>Previous</Button>
+              <span>Page {page.page} of {Math.ceil(page.total / page.page_size)}</span>
+              <Button variant="secondary" disabled={busy || page.page * page.page_size >= page.total} onClick={() => turnPage(page.page + 1)}>Next</Button>
+            </nav>
           )}
+          {errorCode === "STALE_REVISION" && <Button onClick={reload}>Reload preview</Button>}
+          <DialogActions>
+            <Button variant="secondary" disabled={busy} onClick={close}>Cancel import</Button>
+            <Button disabled={busy || !confirmed || ["BATCH_EXPIRED", "STALE_REVISION"].includes(errorCode)} onClick={confirm}>{busy ? "Working…" : "Confirm import"}</Button>
+          </DialogActions>
         </div>
-
-        {/* Footer Actions */}
-        <div className="flex items-center justify-between border-t border-divider px-6 py-4 bg-secondary/20">
-          {extractionResult ? (
-            <Button variant="tertiary" size="sm"
-              onClick={() => setExtractionResult(null)}
-            >
-              Upload Another Statement
-            </Button>
+      ) : (
+        <form className="space-y-4" onSubmit={upload}>
+          {accounts === null ? (
+            error ? <Button type="button" variant="secondary" onClick={loadAccounts}>Retry</Button> : <p role="status">Loading accounts…</p>
+          ) : accounts.length === 0 ? (
+            <Button type="button" variant="secondary" onClick={onManageAccounts}>Add a financial account</Button>
           ) : (
-            <Button variant="secondary" size="sm"
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
+            <>
+              <label className="block">Financial account
+                <Select required disabled={busy} value={accountId} onChange={e => setAccountId(e.target.value)}>
+                  <option value="">Choose an account</option>
+                  {accounts.map(item => <option key={item.id} value={item.id}>{item.display_name} · {item.institution_name}</option>)}
+                </Select>
+              </label>
+              <label className="block">Statement PDF
+                <input className="mt-1 block w-full" type="file" accept="application/pdf,.pdf" required disabled={busy} onChange={e => setFile(e.target.files?.[0] ?? null)} />
+              </label>
+            </>
           )}
-
-          {!extractionResult ? (
-            <Button variant="primary" size="sm"
-              onClick={handleExtract}
-              disabled={!selectedFile || isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Extracting...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" /> Extract Transactions
-                </>
-              )}
-            </Button>
-          ) : (
-            <Button variant="primary" size="sm"
-              onClick={handleImport}
-              disabled={selectedTxIndexes.length === 0 || isImporting}
-            >
-              {isImporting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Importing...
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4" /> Import {selectedTxIndexes.length} Transactions
-                </>
-              )}
-            </Button>
-          )}
-        </div>
+          {busy && <p role="status">{progress === 1 ? "Extracting and checking balances…" : progress === null ? "Uploading…" : `Uploading… ${Math.round(progress * 100)}%`}</p>}
+          <DialogActions>
+            <Button type="button" variant="secondary" disabled={busy} onClick={close}>Close</Button>
+            <DialogAction disabled={busy || !accountId || !file}>Preview statement</DialogAction>
+          </DialogActions>
+        </form>
+      )}
     </Dialog>
   );
 }

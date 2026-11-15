@@ -4,6 +4,11 @@ import "github.com/go-chi/chi/v5"
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/horizon", h.Summary)
+	r.Get("/horizon/accounts", h.accountRoute(h.listFinancialAccounts))
+	r.Post("/horizon/accounts", h.accountRoute(h.saveFinancialAccount))
+	r.Put("/horizon/accounts/{id}", h.accountRoute(h.saveFinancialAccount))
+	r.Post("/horizon/accounts/{id}/archive", h.accountRoute(h.setFinancialAccountArchived(true)))
+	r.Post("/horizon/accounts/{id}/restore", h.accountRoute(h.setFinancialAccountArchived(false)))
 	r.Put("/horizon/config", h.UpdateConfig)
 	r.Post("/horizon/budgets", h.CreateBudget)
 	r.Put("/horizon/budgets/{id}", h.UpdateBudget)

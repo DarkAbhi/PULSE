@@ -37,3 +37,15 @@ tests:
       - expr: 'ALERTS{alertname="ContainerMetricsMissing",alertstate="firing"}'
         eval_time: 5m
         exp_samples: []
+
+  - name: An unavailable statement extractor raises the service-down alert
+    interval: 1m
+    input_series:
+      - series: 'up{job="statement-extractor",instance="statement-extractor:8090",service="Statement extractor"}'
+        values: '0x5'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="ServiceDown",alertstate="firing",job="statement-extractor"}'
+        eval_time: 5m
+        exp_samples:
+          - labels: 'ALERTS{alertname="ServiceDown",alertstate="firing",instance="statement-extractor:8090",job="statement-extractor",service="Statement extractor",severity="critical"}'
+            value: 1

@@ -16,4 +16,6 @@ data class HorizonTransaction(
     val subscriptionId: Long?,
     val subscriptionName: String?,
     val notes: String?,
+    val accountId: Long? = null,
+    val source: String = "manual",
 )

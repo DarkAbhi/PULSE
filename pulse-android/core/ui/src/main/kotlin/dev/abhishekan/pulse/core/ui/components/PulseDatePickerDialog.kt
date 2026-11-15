@@ -22,6 +22,19 @@ import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+internal fun pulseDatePickerColors() =
+    with(PulseTheme.colors) {
+        DatePickerDefaults.colors(
+            containerColor = surface,
+            selectedDayContainerColor = primary,
+            selectedDayContentColor = onPrimary,
+            todayContentColor = action,
+            todayDateBorderColor = action,
+        )
+    }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun PulseDatePickerDialog(
     selected: LocalDate,
     onSelected: (LocalDate) -> Unit,
@@ -64,14 +77,7 @@ fun PulseDatePickerDialog(
             state,
             Modifier.verticalScroll(rememberScrollState()),
             showModeToggle = !inputMode,
-            colors =
-                DatePickerDefaults.colors(
-                    containerColor = PulseTheme.colors.surface,
-                    selectedDayContainerColor = PulseTheme.colors.primary,
-                    selectedDayContentColor = PulseTheme.colors.onPrimary,
-                    todayContentColor = PulseTheme.colors.action,
-                    todayDateBorderColor = PulseTheme.colors.action,
-                ),
+            colors = pulseDatePickerColors(),
         )
     }
     if (inputMode) {

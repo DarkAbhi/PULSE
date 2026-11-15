@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextAlign
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.R
@@ -51,8 +52,10 @@ fun PulseButton(
     leadingIcon: (@Composable () -> Unit)? = null,
     style: PulseButtonStyle = PulseButtonStyle.Standard,
     trailingIcon: (@Composable () -> Unit)? = null,
-    contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
+    contentPadding: PaddingValues =
+        if (style == PulseButtonStyle.Text) ButtonDefaults.TextButtonContentPadding else ButtonDefaults.ContentPadding,
     supportingText: String? = null,
+    textAlign: TextAlign? = null,
     icon: (@Composable () -> Unit)? = null,
 ) {
     val colors = PulseTheme.colors
@@ -96,10 +99,11 @@ fun PulseButton(
                 text,
                 modifier = if (trailingIcon != null) Modifier.weight(1f, fill = false) else Modifier,
                 style = PulseTextStyle.Label,
+                textAlign = textAlign,
             )
         } else {
             Column(Modifier.weight(1f)) {
-                PulseText(text, style = PulseTextStyle.Label)
+                PulseText(text, style = PulseTextStyle.Label, textAlign = textAlign)
                 PulseText(supportingText, style = PulseTextStyle.Caption)
             }
         }
@@ -119,6 +123,7 @@ fun PulseButton(
                     contentColor = if (variant == PulseButtonVariant.Destructive) colors.error else colors.action,
                     disabledContentColor = colors.textSecondary,
                 ),
+            contentPadding = contentPadding,
         ) { content() }
         return
     }

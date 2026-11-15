@@ -22,8 +22,8 @@ class MealPreferencesTest {
                 )
             }
         }
-        assertEquals(listOf("breakfast", "lunch", "dinner"), valid.meals.map { it.kind })
-        assertEquals(listOf("09:00", "12:30", "19:30"), valid.meals.map { it.time.toString() })
+        assertEquals(listOf("breakfast", "lunch", "evening_snacks", "dinner"), valid.meals.map { it.kind })
+        assertEquals(listOf("09:00", "12:30", "17:30", "19:30"), valid.meals.map { it.time.toString() })
     }
 
     @Test fun missingUnknownAndDuplicateValuesAreRejected() {

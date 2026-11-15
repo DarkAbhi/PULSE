@@ -19,10 +19,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -148,28 +146,20 @@ internal fun MealCalendar(
                     ) {
                         Icon(painterResource(R.drawable.meal_next), null, Modifier.rotate(180f))
                     }
-                    TextButton(
-                        onClick = { pickingDate = true },
-                        modifier = Modifier.weight(1f).heightIn(min = PulseTokens.target),
-                        enabled = enabled,
-                        shape = PulseTheme.shapes.small,
-                        colors =
-                            ButtonDefaults.textButtonColors(
-                                contentColor = colors.action,
-                                disabledContentColor = colors.textSecondary,
-                            ),
-                        contentPadding = PaddingValues(vertical = 4.dp),
-                    ) {
-                        PulseText(
+                    PulseButton(
+                        text =
                             stringResource(
                                 R.string.pulse_mealplan_week_range,
                                 week.format(DateTimeFormatter.ofPattern("d MMM")),
                                 week.plusDays(6).format(format),
                             ),
-                            style = PulseTextStyle.Label,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
+                        onClick = { pickingDate = true },
+                        modifier = Modifier.weight(1f).heightIn(min = PulseTokens.target),
+                        enabled = enabled,
+                        style = PulseButtonStyle.Text,
+                        contentPadding = PaddingValues(vertical = PulseTokens.tiny),
+                        textAlign = TextAlign.Center,
+                    )
                     PulseButton(
                         stringResource(R.string.pulse_mealplan_next_week),
                         next,

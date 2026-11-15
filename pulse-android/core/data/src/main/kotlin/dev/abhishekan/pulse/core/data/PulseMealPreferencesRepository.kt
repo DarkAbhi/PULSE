@@ -22,18 +22,8 @@ class PulseMealPreferencesRepository(
     private val api: MealPlanApi,
     private val auth: PulseAuthRepository,
 ) : MealPreferencesRepository {
-    private suspend fun request(block: suspend () -> MealOnboardingDto): Outcome<MealOnboarding> {
-        val version = auth.version
-        return try {
-            val result = block().domain()
-            // A response from a previous account must never enter the next account's UI.
-            if (version != auth.version) Outcome.Error(Failure.Unauthorized) else Outcome.Success(result)
-        } catch (error: Exception) {
-            val failure = remoteFailure(error)
-            if (failure == Failure.Unauthorized) auth.expire(version)
-            Outcome.Error(failure)
-        }
-    }
+    private suspend fun request(block: suspend () -> MealOnboardingDto): Outcome<MealOnboarding> =
+        auth.authenticatedRequest { block().domain() }
 
     override suspend fun onboarding() = request { api.onboarding() }
 

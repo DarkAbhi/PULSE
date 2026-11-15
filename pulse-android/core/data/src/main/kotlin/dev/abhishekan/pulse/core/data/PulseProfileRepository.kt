@@ -13,6 +13,7 @@ import dev.abhishekan.pulse.core.network.PulseApi
 import dev.abhishekan.pulse.core.network.dto.APIKeyDto
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.statement.bodyAsText
+import kotlinx.coroutines.CancellationException
 import java.time.Instant
 import java.time.ZoneId
 
@@ -23,50 +24,45 @@ class PulseProfileRepository(
 ) : ProfileRepository {
     private suspend fun <T> request(
         mutation: Boolean = false,
+        refresh: Boolean = false,
         password: Boolean = false,
-        block: suspend () -> T,
-    ): Outcome<T> {
-        val version = auth.version
-        return try {
-            val value = block()
-            if (mutation) dashboard.accountChanged()
-            Outcome.Success(value)
-        } catch (e: Exception) {
-            var failure = remoteFailure(e)
+        block: suspend (Long) -> T,
+    ): Outcome<T> =
+        auth.authenticatedRequest(
+            onResult = { if (mutation || (refresh && it is Outcome.Success)) dashboard.accountChanged() },
+            mapFailure = { if (password) passwordFailure(it) else remoteFailure(it) },
+            block = block,
+        )
+
+    private suspend fun passwordFailure(error: Exception): Failure {
+        if (error is ResponseException && error.response.status.value == 400) {
             // Only this known error is interpreted; arbitrary server text is never shown.
-            if (password &&
-                e is ResponseException &&
-                e.response.status.value == 400 &&
+            val wrongPassword =
                 try {
-                    e.response.bodyAsText().contains("current password is incorrect")
-                } catch (
-                    read: Exception,
-                ) {
-                    remoteFailure(read)
+                    error.response.bodyAsText().contains("current password is incorrect")
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
                     false
                 }
-            ) {
-                failure =
-                    Failure.InvalidCredentials
-            }
-            if (failure == Failure.Unauthorized) auth.expire(version)
-            if (mutation) dashboard.accountChanged()
-            Outcome.Error(failure)
+            if (wrongPassword) return Failure.InvalidCredentials
         }
+        return remoteFailure(error)
     }
 
     override suspend fun profile() =
-        request {
-            val version = auth.version
+        request(refresh = true) { version ->
             val previousZone = UserTimeZone.zone
             val previousCurrency = UserCurrency.code
             val dto = api.profile()
             ZoneId.of(dto.timezone)
             require(UserCurrency.valid(dto.currency))
-            if (version == auth.version && previousCurrency == UserCurrency.code) UserCurrency.select(dto.currency)
-            if (version == auth.version && previousZone == UserTimeZone.zone) UserTimeZone.select(dto.timezone)
+            auth.withCurrentVersion(version) {
+                if (previousCurrency == UserCurrency.code) UserCurrency.select(dto.currency)
+                if (previousZone == UserTimeZone.zone) UserTimeZone.select(dto.timezone)
+            }
             Profile(dto.name?.takeIf { dto.hasProfile && it.isNotBlank() }, dto.hasProfile, dto.timezone, dto.currency)
-        }.also { if (it is Outcome.Success) dashboard.accountChanged() }
+        }
 
     override suspend fun saveName(name: String) =
         request(true) {
@@ -80,20 +76,18 @@ class PulseProfileRepository(
         }
 
     override suspend fun saveCurrency(currency: String) =
-        request(true) {
-            val version = auth.version
+        request(mutation = true) { version ->
             api.saveCurrency(currency).currency.also {
                 require(it == currency && UserCurrency.valid(it))
-                if (version == auth.version) UserCurrency.select(it)
+                auth.withCurrentVersion(version) { UserCurrency.select(it) }
             }
         }
 
     override suspend fun saveTimeZone(timezone: String) =
-        request(true) {
-            val version = auth.version
+        request(mutation = true) { version ->
             api.saveTimeZone(timezone).timezone.also {
                 require(it == timezone)
-                if (version == auth.version) UserTimeZone.select(it)
+                auth.withCurrentVersion(version) { UserTimeZone.select(it) }
             }
         }
 

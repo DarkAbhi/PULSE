@@ -1,7 +1,6 @@
 package dev.abhishekan.pulse.core.data
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.domain.model.ExerciseInput
-import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.model.FitnessMetric
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
@@ -40,20 +39,12 @@ class PulseFitnessRepository(
     private suspend fun <T> request(
         mutation: Boolean = false,
         block: suspend () -> T,
-    ): Outcome<T> {
-        val version = auth.version
-        return try {
-            val result = withContext(Dispatchers.Default) { block() }
-            if (mutation) revision.update { it + 1 }
-            Outcome.Success(result)
-        } catch (error: Exception) {
-            val failure = remoteFailure(error)
-            if (failure == Failure.Unauthorized) auth.expire(version)
-            // A lost response can follow a committed write. Observers must revalidate even on failure.
-            if (mutation) revision.update { it + 1 }
-            Outcome.Error(failure)
+    ): Outcome<T> =
+        auth.authenticatedRequest(
+            onResult = { if (mutation) revision.update { it + 1 } },
+        ) {
+            withContext(Dispatchers.Default) { block() }
         }
-    }
 
     override suspend fun overview(): Outcome<FitnessOverview> =
         request {

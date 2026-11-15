@@ -50,20 +50,12 @@ class PulseHorizonRepository(
     private suspend fun <T> request(
         mutation: Boolean = false,
         block: suspend () -> T,
-    ): Outcome<T> {
-        val version = auth.version
-        return try {
-            val value = withContext(Dispatchers.Default) { block() }
-            if (mutation) revision.update { it + 1 }
-            Outcome.Success(value)
-        } catch (error: Exception) {
-            val failure = remoteFailure(error)
-            if (failure == Failure.Unauthorized) auth.expire(version)
-            // A committed write may lose its response; observers must refresh before another attempt.
-            if (mutation) revision.update { it + 1 }
-            Outcome.Error(failure)
+    ): Outcome<T> =
+        auth.authenticatedRequest(
+            onResult = { if (mutation) revision.update { it + 1 } },
+        ) {
+            withContext(Dispatchers.Default) { block() }
         }
-    }
 
     override suspend fun accounts(includeArchived: Boolean) =
         request {
@@ -106,25 +98,30 @@ class PulseHorizonRepository(
 
     private suspend fun <T> statementRequest(block: suspend () -> T): StatementResponse<T> {
         val version = auth.version
-        return try {
-            StatementResponse.Success(block())
-        } catch (error: Exception) {
-            val failure = remoteFailure(error)
-            if (failure == Failure.Unauthorized) auth.expire(version)
-            val code =
-                if (error is ResponseException) {
-                    try {
-                        error.response.body<StatementErrorDto>().code
-                    } catch (cancelled: CancellationException) {
-                        throw cancelled
-                    } catch (_: Exception) {
+        val result =
+            try {
+                StatementResponse.Success(block())
+            } catch (error: Exception) {
+                val failure = remoteFailure(error)
+                if (failure == Failure.Unauthorized) {
+                    auth.expire(version)
+                    return StatementResponse.Failed(failure)
+                }
+                val code =
+                    if (error is ResponseException) {
+                        try {
+                            error.response.body<StatementErrorDto>().code
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (_: Exception) {
+                            ""
+                        }
+                    } else {
                         ""
                     }
-                } else {
-                    ""
-                }
-            if (code.isBlank()) StatementResponse.Failed(failure) else StatementResponse.Rejected(code)
-        }
+                if (code.isBlank()) StatementResponse.Failed(failure) else StatementResponse.Rejected(code)
+            }
+        return if (version == auth.version) result else StatementResponse.Failed(Failure.Unauthorized)
     }
 
     override suspend fun uploadStatement(

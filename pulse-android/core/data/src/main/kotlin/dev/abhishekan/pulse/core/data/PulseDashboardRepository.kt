@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse.core.data
 
-import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Horizon
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.Profile
@@ -25,30 +24,19 @@ class PulseDashboardRepository(
         revision.update { it + 1 }
     }
 
-    private suspend fun <T> fetch(block: suspend () -> T): Outcome<T> {
-        val version = auth.version
-        return try {
-            Outcome.Success(block())
-        } catch (error: Exception) {
-            val failure = remoteFailure(error)
-            if (failure == Failure.Unauthorized) auth.expire(version)
-            Outcome.Error(failure)
-        }
-    }
-
     override suspend fun profile(): Outcome<Profile> =
-        fetch {
+        auth.authenticatedRequest {
             val dto = api.profile()
             Profile(if (dto.hasProfile) dto.name?.trim()?.takeIf { it.isNotEmpty() } else null, dto.hasProfile, dto.timezone, dto.currency)
         }
 
     override suspend fun workout(): Outcome<WorkoutToday> =
-        fetch {
+        auth.authenticatedRequest {
             WorkoutToday(api.workout().visited)
         }
 
     override suspend fun horizon(): Outcome<Horizon> =
-        fetch {
+        auth.authenticatedRequest {
             val dto = api.horizon()
             require(dto.currency.isNotBlank())
             Horizon(

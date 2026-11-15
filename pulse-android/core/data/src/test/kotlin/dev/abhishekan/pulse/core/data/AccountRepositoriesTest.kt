@@ -21,6 +21,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
@@ -44,6 +46,7 @@ class AccountRepositoriesTest {
         var path = ""
         var query = ""
         var method = ""
+        var beforeResponse: suspend (String) -> Unit = {}
         val store =
             object : SessionMaterialStore {
                 var value: ByteArray? = null
@@ -88,7 +91,10 @@ class AccountRepositoriesTest {
                         respond("""{"username":"fixture"}""", HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
                     } else {
                         error?.let { throw it }
-                        respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
+                        val responseBody = body
+                        val responseStatus = status
+                        beforeResponse(request.url.encodedPath)
+                        respond(responseBody, responseStatus, headersOf(HttpHeaders.ContentType, "application/json"))
                     }
                 },
                 cookies,
@@ -118,6 +124,39 @@ class AccountRepositoriesTest {
                 h.notifications.list()
                 h.profile.profile()
                 assertEquals(2L, h.dashboard.changes.first())
+            }
+        }
+
+    @Test fun oldCurrencySaveCannotUpdateTheNextSessionOrInvalidateItsDashboard() =
+        runTest {
+            Harness().use { h ->
+                try {
+                    h.auth.restore()
+                    assertEquals(Outcome.Success(Unit), h.auth.login("fixture", "password"))
+                    val requestStarted = CompletableDeferred<Unit>()
+                    val releaseResponse = CompletableDeferred<Unit>()
+                    h.body = """{"currency":"INR"}"""
+                    h.beforeResponse = { path ->
+                        if (path == "/api/profile/currency") {
+                            requestStarted.complete(Unit)
+                            releaseResponse.await()
+                        }
+                    }
+                    val save = async { h.profile.saveCurrency("INR") }
+                    requestStarted.await()
+
+                    assertEquals(Outcome.Success(Unit), h.auth.forget())
+                    h.body = """{"has_profile":true,"currency":"EUR"}"""
+                    assertEquals(Outcome.Success(Unit), h.auth.login("fixture", "password"))
+                    releaseResponse.complete(Unit)
+
+                    assertEquals(Outcome.Error(Failure.Unauthorized), save.await())
+                    assertEquals("EUR", UserCurrency.code)
+                    assertEquals(0L, h.dashboard.changes.first())
+                    assertTrue(h.auth.session.value is SessionState.Authenticated)
+                } finally {
+                    UserCurrency.reset()
+                }
             }
         }
 

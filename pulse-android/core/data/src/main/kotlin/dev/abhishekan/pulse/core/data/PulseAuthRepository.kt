@@ -131,6 +131,16 @@ class PulseAuthRepository(
             }
         }
 
+    internal suspend fun withCurrentVersion(
+        expectedVersion: Long,
+        action: () -> Unit,
+    ): Boolean =
+        mutex.withLock {
+            if (version != expectedVersion) return@withLock false
+            action()
+            true
+        }
+
     internal suspend fun expire(expectedVersion: Long) =
         mutex.withLock {
             if (version == expectedVersion &&

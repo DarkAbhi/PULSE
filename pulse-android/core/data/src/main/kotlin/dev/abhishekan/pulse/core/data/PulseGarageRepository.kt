@@ -40,26 +40,13 @@ class PulseGarageRepository(
     private suspend fun <T> request(
         mutation: Boolean = false,
         block: suspend () -> T,
-    ): Outcome<T> {
-        val version = auth.version
-        return try {
-            val result = withContext(Dispatchers.Default) { block() }
-            if (mutation) revision.update { it + 1 }
-            Outcome.Success(result)
-        } catch (error: Exception) {
-            val failure =
-                if (error is ReceiptFileException) {
-                    Failure.InvalidInput
-                } else {
-                    remoteFailure(
-                        error,
-                    )
-                }
-            if (failure == Failure.Unauthorized) auth.expire(version)
-            if (mutation) revision.update { it + 1 }
-            Outcome.Error(failure)
+    ): Outcome<T> =
+        auth.authenticatedRequest(
+            onResult = { if (mutation) revision.update { it + 1 } },
+            mapFailure = { if (it is ReceiptFileException) Failure.InvalidInput else remoteFailure(it) },
+        ) {
+            withContext(Dispatchers.Default) { block() }
         }
-    }
 
     override suspend fun vehicles() =
         request {

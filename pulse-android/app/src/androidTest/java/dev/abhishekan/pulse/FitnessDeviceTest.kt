@@ -502,8 +502,7 @@ class FitnessDeviceTest {
         compose
             .onNode(
                 hasText("Search for an exercise") and
-                    androidx.compose.ui.test
-                        .hasSetTextAction(),
+                    hasSetTextAction(),
             ).performTextInput(name)
         val custom = hasText("Use $name as a custom exercise") and hasClickAction() and isEnabled()
         compose.waitUntil(15_000) { compose.onAllNodes(custom).fetchSemanticsNodes().isNotEmpty() }
@@ -632,8 +631,7 @@ class FitnessDeviceTest {
         compose
             .onNode(
                 hasText("Search for an exercise") and
-                    androidx.compose.ui.test
-                        .hasSetTextAction(),
+                        hasSetTextAction(),
             ).performTextReplacement("Squat")
         tap("Fixture barbell squat")
         tap("Save")

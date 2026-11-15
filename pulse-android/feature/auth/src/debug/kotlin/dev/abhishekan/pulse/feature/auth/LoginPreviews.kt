@@ -11,14 +11,17 @@ import dev.abhishekan.pulse.core.ui.UiText
 @Preview(name = "Large text", widthDp = 360, heightDp = 800, fontScale = 2f)
 @Composable
 private fun LoginLightPreview() {
-    PulseTheme(false) { LoginScreen(LoginUiState(), {}, {}, {}) }
+    PulseTheme(false) { LoginScreen(state = LoginUiState(), onAction = {}) }
 }
 
 @Preview(name = "Dark error", widthDp = 360, heightDp = 800)
+@Preview(name = "Short screen error", widthDp = 360, heightDp = 440)
 @Composable
 private fun LoginDarkPreview() {
     PulseTheme(true) {
-        LoginScreen(LoginUiState(error = UiText.Literal("Check your connection and try again.")), {
-        }, {}, {})
+        LoginScreen(
+            state = LoginUiState(submission = LoginSubmission.Failed(UiText.Literal("Check your connection and try again."))),
+            onAction = {},
+        )
     }
 }

@@ -747,10 +747,10 @@ class MealPlanDeviceTest {
         awaitText("No meals planned for this day")
         val week = day.plusWeeks(1).with(DayOfWeek.MONDAY)
         val range = "${week.format(
-            java.time.format.DateTimeFormatter
+            DateTimeFormatter
                 .ofPattern("d MMM"),
         )} – ${week.plusDays(6).format(
-            java.time.format.DateTimeFormatter
+            DateTimeFormatter
                 .ofPattern("d MMM yyyy"),
         )}"
         screenshot("away-week-navigation")

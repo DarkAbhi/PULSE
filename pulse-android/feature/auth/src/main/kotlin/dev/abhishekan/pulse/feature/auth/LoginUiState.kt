@@ -2,11 +2,34 @@ package dev.abhishekan.pulse.feature.auth
 
 import dev.abhishekan.pulse.core.ui.UiText
 
-data class LoginUiState(
+internal data class LoginUiState(
     val username: String = "",
     val password: String = "",
-    val loading: Boolean = false,
     val usernameError: UiText? = null,
     val passwordError: UiText? = null,
-    val error: UiText? = null,
-)
+    val submission: LoginSubmission = LoginSubmission.Idle,
+) {
+    val isSubmitting: Boolean get() = submission == LoginSubmission.Submitting
+}
+
+internal sealed interface LoginSubmission {
+    data object Idle : LoginSubmission
+
+    data object Submitting : LoginSubmission
+
+    data class Failed(
+        val message: UiText,
+    ) : LoginSubmission
+}
+
+internal sealed interface LoginAction {
+    data class UsernameChanged(
+        val value: String,
+    ) : LoginAction
+
+    data class PasswordChanged(
+        val value: String,
+    ) : LoginAction
+
+    data object Submit : LoginAction
+}

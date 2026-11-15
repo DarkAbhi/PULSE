@@ -190,7 +190,7 @@ internal fun copySecret(
         val clipboard = context.getSystemService(ClipboardManager::class.java)
         val clip = ClipData.newPlainText(context.getString(R.string.pulse_profile_clipboard_label), token)
         clip.description.extras = PersistableBundle().apply { putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true) }
-        clipboard.setPrimaryClip(clip)
+        clipboard.primaryClip = clip
         clipboard.primaryClip
             ?.getItemAt(0)
             ?.text

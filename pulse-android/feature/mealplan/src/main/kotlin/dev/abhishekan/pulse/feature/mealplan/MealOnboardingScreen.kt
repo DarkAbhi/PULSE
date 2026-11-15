@@ -443,7 +443,7 @@ private fun MealSetupQuestion(
                         },
                 ),
             )
-            ; timeKind = null
+            timeKind = null
         }, { timeKind = null })
     }
 }

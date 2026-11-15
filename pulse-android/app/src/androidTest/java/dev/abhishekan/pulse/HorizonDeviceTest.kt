@@ -1329,14 +1329,15 @@ class HorizonDeviceTest {
         tap("View payments for Streaming")
         awaitText("Link an existing payment")
         compose
-            .onNodeWithText(
+            .onNodeWithContentDescription(
                 "Link Ledger payment 2 · ${UserCurrency.format(BigDecimal("2.50"))}",
             ).assertDoesNotExist()
         compose
-            .onNodeWithText(
+            .onNodeWithContentDescription(
                 "Link Ledger payment 3 · ${UserCurrency.format(BigDecimal("2.50"))}",
             ).assertDoesNotExist()
         field("Search transactions", "Ledger payment 1")
+        tap("Apply search")
         tap("Link Ledger payment 1 · ${UserCurrency.format(BigDecimal("2.50"))}")
         confirm("Link payment")
         awaitText("Ledger payment 1")

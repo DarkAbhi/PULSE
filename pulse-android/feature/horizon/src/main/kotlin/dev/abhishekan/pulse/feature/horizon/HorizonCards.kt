@@ -104,10 +104,12 @@ import java.time.format.DateTimeFormatter
 }
 
 @Composable internal fun TransactionFilters(
-    state: HorizonUiState,
-    vm: HorizonViewModel,
+    committedSearch: String,
+    type: String?,
+    busy: Boolean,
+    onFilter: (String, String?) -> Unit,
 ) {
-    var search by rememberSaveable(state.search) { mutableStateOf(state.search) }
+    var search by rememberSaveable(committedSearch) { mutableStateOf(committedSearch) }
     PulseCard(Modifier.fillMaxWidth()) {
         PulseTextField(
             search,
@@ -118,12 +120,12 @@ import java.time.format.DateTimeFormatter
                 R.string.pulse_horizon_search_transactions,
             ),
             Modifier.fillMaxWidth(),
-            enabled = !state.busy,
+            enabled = !busy,
         )
         val types = listOf(null, "debit", "credit")
         PulseSelectionField(
             stringResource(R.string.pulse_horizon_filter),
-            state.type?.let { horizonOption(it) }
+            type?.let { horizonOption(it) }
                 ?: stringResource(R.string.pulse_horizon_all_types),
             listOf(
                 stringResource(R.string.pulse_horizon_all_types),
@@ -131,14 +133,14 @@ import java.time.format.DateTimeFormatter
                 stringResource(R.string.pulse_horizon_credit),
             ),
             {
-                vm.filter(search, types[it])
+                onFilter(search, types[it])
             },
             Modifier.fillMaxWidth(),
-            !state.busy,
+            !busy,
         )
         PulseButton(stringResource(R.string.pulse_horizon_apply_search), {
-            vm.filter(search, state.type)
-        }, enabled = !state.busy, style = PulseButtonStyle.Text)
+            onFilter(search, type)
+        }, enabled = !busy, style = PulseButtonStyle.Text)
     }
 }
 

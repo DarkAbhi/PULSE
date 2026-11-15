@@ -126,12 +126,14 @@ internal fun SubscriptionList(
                     }
                 }
             }
-            HorizonSectionAction(
-                R.string.pulse_horizon_subscription_your_subscriptions,
-                R.string.pulse_horizon_add_subscription,
-                canMutate,
-                add,
-            )
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
+            ) {
+                PulseText(stringResource(R.string.pulse_horizon_subscription_your_subscriptions), style = PulseTextStyle.Heading2)
+                PulseButton(stringResource(R.string.pulse_horizon_add_subscription), add, enabled = canMutate)
+            }
             if (data.subscriptions.isEmpty()) {
                 PulseEmptyState(
                     stringResource(R.string.pulse_horizon_no_subscriptions),

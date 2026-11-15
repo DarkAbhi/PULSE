@@ -208,6 +208,8 @@ class HorizonViewModelTest {
             val saved = SavedStateHandle()
             val vm = vm(saved)
             runCurrent()
+            vm.tab(HorizonTab.Transactions)
+            vm.openHistory()
             val transaction = HorizonDraft(HorizonForm.Transaction, name = "Tea", amount = "12.50", dirty = true)
             vm.edit(transaction)
             vm.addTransactionCategory()
@@ -218,9 +220,13 @@ class HorizonViewModelTest {
             vm.update(checkNotNull(vm.uiState.value.draft).copy(name = "Drinks"))
             val restored = vm(saved)
             runCurrent()
+            val categoryDestination = restored.uiState.value.destination as HorizonDestination.Editor
+            assertEquals(HorizonForm.Category, categoryDestination.draft.kind)
+            assertEquals(EditorParent.Transaction, categoryDestination.parent)
             restored.save()
             runCurrent()
             assertEquals(transaction, restored.uiState.value.draft)
+            assertEquals(HorizonDestination.Editor(transaction, EditorParent.History), restored.uiState.value.destination)
             assertNull(restored.uiState.value.transactionDraft)
             assertEquals("Drinks", (repo.writes.single() as HorizonChange.Category).name)
 
@@ -231,6 +237,20 @@ class HorizonViewModelTest {
                 restored.uiState.value.draft
                     ?.kind,
             )
+        }
+
+    @Test fun statementImportDestinationSurvivesRecreationAndReturnsToTransactions() =
+        runTest {
+            val saved = SavedStateHandle()
+            val original = vm(saved)
+            original.tab(HorizonTab.Transactions)
+            original.setImportOpen(true)
+
+            val restored = vm(saved)
+            assertEquals(HorizonDestination.StatementImport, restored.uiState.value.destination)
+
+            restored.setImportOpen(false)
+            assertEquals(HorizonDestination.Tabs(HorizonTab.Transactions), restored.uiState.value.destination)
         }
 
     @Test fun deletionRefreshClosesPaymentsForAnAbsentSubscription() =

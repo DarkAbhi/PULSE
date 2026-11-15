@@ -40,6 +40,7 @@ class HorizonViewModel(
                 search = saved["search"] ?: "",
                 type = saved["type"],
                 historyOpen = saved["historyOpen"] ?: false,
+                importOpen = saved["importOpen"] ?: false,
                 historySearch = saved["historySearch"] ?: "",
                 historyType = saved["historyType"],
                 historyCategoryId = saved["historyCategoryId"],
@@ -231,6 +232,11 @@ class HorizonViewModel(
             )
         }
         refreshTransactions(1)
+    }
+
+    internal fun setImportOpen(open: Boolean) {
+        saved["importOpen"] = open
+        state.update { it.copy(importOpen = open) }
     }
 
     fun tab(tab: HorizonTab) {

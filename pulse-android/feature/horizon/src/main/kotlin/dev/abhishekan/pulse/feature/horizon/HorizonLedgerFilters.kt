@@ -33,9 +33,10 @@ import dev.abhishekan.pulse.core.ui.message
 
 @Composable
 internal fun LedgerFilters(
-    state: HorizonUiState,
-    vm: HorizonViewModel,
+    state: TransactionHistoryUiState,
     search: String,
+    onFilter: (String, String?, Long?) -> Unit,
+    onRetryCategories: () -> Unit,
 ) {
     val categoryId = state.historyCategoryId
     var sheet by rememberSaveable { mutableStateOf<String?>(null) }
@@ -104,12 +105,12 @@ internal fun LedgerFilters(
                     ) {
                         item {
                             PulseCheckbox(categoryId == null, {
-                                vm.filterHistory(search, state.historyType, null)
+                                onFilter(search, state.historyType, null)
                                 sheet = null
                             }, allCategories, Modifier.fillMaxWidth())
                         }
                         state.overview.error?.let { error ->
-                            item { PulseErrorState(error.message, vm::refreshOverview) }
+                            item { PulseErrorState(error.message, onRetryCategories) }
                         }
                         if (state.overview.loading && state.overview.value == null) {
                             item { PulseLoadingState(stringResource(R.string.pulse_horizon_loading_your_horizon)) }
@@ -119,7 +120,7 @@ internal fun LedgerFilters(
                             PulseCheckbox(
                                 categoryId == category.id,
                                 {
-                                    vm.filterHistory(search, state.historyType, category.id)
+                                    onFilter(search, state.historyType, category.id)
                                     sheet = null
                                 },
                                 category.name,
@@ -139,7 +140,7 @@ internal fun LedgerFilters(
                 } else {
                     listOf(null, "debit", "credit").forEach { type ->
                         LedgerSheetOption(ledgerTypeLabel(type), state.historyType == type) {
-                            vm.filterHistory(search, type, categoryId)
+                            onFilter(search, type, categoryId)
                             sheet = null
                         }
                     }

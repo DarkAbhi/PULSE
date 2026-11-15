@@ -24,7 +24,7 @@ import dev.abhishekan.pulse.core.ui.message
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-internal fun AccountsScreen(
+internal fun AccountsTabScreen(
     currency: String,
     vm: AccountsViewModel = koinViewModel(),
 ) {

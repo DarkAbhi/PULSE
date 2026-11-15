@@ -150,15 +150,13 @@ private fun StatesPreview() {
                     ).padding(PulseTokens.medium),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
             ) {
-                SectionState(HorizonSection<HorizonOverview>(), {}) {}
-                SectionState(
-                    HorizonSection<HorizonOverview>(
-                        loading = false,
-                        error = Failure.Connection,
-                    ),
-                    {
-                    },
-                ) {}
+                HorizonOverviewTabScreen(HorizonSection(), canMutate = false, onRetry = {}, onAdd = {})
+                HorizonOverviewTabScreen(
+                    HorizonSection(loading = false, error = Failure.Connection),
+                    canMutate = false,
+                    onRetry = {},
+                    onAdd = {},
+                )
                 PulseEmptyState("No transactions", "Record your first transaction.")
                 PulseButton("Saving transaction", {}, loading = true)
                 PulseButton("Save transaction", {}, enabled = false)

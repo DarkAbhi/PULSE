@@ -36,7 +36,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
+import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -55,23 +57,39 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
+internal data class TransactionHistoryUiState(
+    val history: HorizonSection<HorizonTransactionPage>,
+    val overview: HorizonSection<HorizonOverview>,
+    val historySearch: String,
+    val historyType: String?,
+    val historyCategoryId: Long?,
+    val busy: Boolean,
+    val reviewingDraft: Boolean,
+    val reviewRequired: Boolean,
+)
+
 @Composable
-internal fun TransactionHistory(
-    state: HorizonUiState,
-    vm: HorizonViewModel,
+internal fun TransactionHistoryScreen(
+    state: TransactionHistoryUiState,
     active: Boolean,
     padding: PaddingValues,
     tablet: Boolean,
     wide: Boolean,
     canLog: Boolean,
     select: (HorizonTransaction) -> Unit,
+    onBack: () -> Unit,
+    onFilter: (String, String?, Long?) -> Unit,
+    onRetryCategories: () -> Unit,
+    onRetry: () -> Unit,
+    onLoadMore: () -> Unit,
+    onLog: () -> Unit,
     review: @Composable () -> Unit,
 ) {
     var search by rememberSaveable { mutableStateOf(state.historySearch) }
     LaunchedEffect(active, search, state.historySearch, state.historyType, state.historyCategoryId, state.busy) {
         if (active && search != state.historySearch && !state.busy) {
             delay(350)
-            vm.filterHistory(search, state.historyType, state.historyCategoryId)
+            onFilter(search, state.historyType, state.historyCategoryId)
         }
     }
 
@@ -82,7 +100,7 @@ internal fun TransactionHistory(
     val focusManager = LocalFocusManager.current
     val clearSearch: () -> Unit = {
         search = ""
-        vm.filterHistory("", state.historyType, state.historyCategoryId)
+        onFilter("", state.historyType, state.historyCategoryId)
         focusManager.clearFocus()
         keyboard?.hide()
     }
@@ -111,7 +129,7 @@ internal fun TransactionHistory(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions =
                 KeyboardActions(onSearch = {
-                    vm.filterHistory(search, state.historyType, state.historyCategoryId)
+                    onFilter(search, state.historyType, state.historyCategoryId)
                     focusManager.clearFocus()
                     keyboard?.hide()
                 }),
@@ -126,13 +144,13 @@ internal fun TransactionHistory(
     }
 
     Column(Modifier.fillMaxSize()) {
-        if (state.draft == null) {
+        if (!state.reviewingDraft) {
             PulseTopAppBar(
                 stringResource(R.string.pulse_horizon_all_transactions),
                 navigationIcon = {
                     PulseButton(
                         stringResource(R.string.pulse_horizon_back_to_transactions),
-                        vm::closeHistory,
+                        onBack,
                         enabled = !state.busy,
                         style = PulseButtonStyle.Icon,
                     ) { Icon(painterResource(CoreUiR.drawable.pulse_back), null) }
@@ -159,10 +177,10 @@ internal fun TransactionHistory(
             Modifier.padding(start = padding.calculateStartPadding(direction), end = padding.calculateEndPadding(direction)),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
         ) {
-            if ((!tablet || state.draft != null) && (searchOpen || search.isNotEmpty())) {
+            if ((!tablet || state.reviewingDraft) && (searchOpen || search.isNotEmpty())) {
                 searchField(Modifier.fillMaxWidth())
             }
-            LedgerFilters(state, vm, search)
+            LedgerFilters(state, search, onFilter, onRetryCategories)
         }
 
         val history = state.history
@@ -177,7 +195,7 @@ internal fun TransactionHistory(
                     state = rememberLazyListState(),
                     contentPadding = padding,
                 ) {
-                    if (state.reviewRequired || state.draft != null) item("review") { review() }
+                    if (state.reviewRequired || state.reviewingDraft) item("review") { review() }
                     if (history.loading && page == null) {
                         item("loading") {
                             PulseCenteredLoadingState(stringResource(R.string.pulse_horizon_loading_transactions), Modifier.fillMaxWidth())
@@ -195,13 +213,13 @@ internal fun TransactionHistory(
                                 tablet = tablet,
                                 canLog = canLog,
                                 clearSearch = clearSearch,
-                                clearFilters = { vm.filterHistory(search, null, null) },
+                                clearFilters = { onFilter(search, null, null) },
                                 log = {
                                     keyboard?.hide()
-                                    vm.newForm(HorizonForm.Transaction)
+                                    onLog()
                                 },
                                 modifier =
-                                    if (state.draft == null && !state.reviewRequired) Modifier.heightIn(min = emptyHeight) else Modifier,
+                                    if (!state.reviewingDraft && !state.reviewRequired) Modifier.heightIn(min = emptyHeight) else Modifier,
                             )
                         }
                     }
@@ -220,12 +238,12 @@ internal fun TransactionHistory(
                     }
                     if (history.error != null) {
                         item("error") {
-                            PulseErrorState(history.error.message, vm::retryHistory)
+                            PulseErrorState(history.error.message, onRetry)
                         }
                     } else if (page != null && (history.loading || page.page < page.totalPages)) {
                         item("more") {
                             LaunchedEffect(active, page.page, history.loading) {
-                                if (active && !history.loading) vm.loadMoreHistory()
+                                if (active && !history.loading) onLoadMore()
                             }
                             PulseLoadingState(stringResource(R.string.pulse_horizon_loading_transactions))
                         }

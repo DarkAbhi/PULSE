@@ -40,6 +40,7 @@ data class HorizonUiState(
     val overview: HorizonSection<HorizonOverview> = HorizonSection(),
     val recent: HorizonSection<HorizonTransactionPage> = HorizonSection(),
     val historyOpen: Boolean = false,
+    val importOpen: Boolean = false,
     val history: HorizonSection<HorizonTransactionPage> = HorizonSection(),
     val historySearch: String = "",
     val historyType: String? = null,

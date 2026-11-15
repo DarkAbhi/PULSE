@@ -34,7 +34,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
 @Composable
 internal fun EmptyTransactionHistory(
-    state: HorizonUiState,
+    state: TransactionHistoryUiState,
     tablet: Boolean,
     canLog: Boolean,
     clearSearch: () -> Unit,

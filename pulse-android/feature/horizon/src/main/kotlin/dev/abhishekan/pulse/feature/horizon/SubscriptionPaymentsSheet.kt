@@ -17,42 +17,51 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
+import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.currencyText
+import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pulseDescription
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
 
 @Composable
 internal fun SubscriptionPaymentsSheet(
-    state: HorizonUiState,
-    vm: HorizonViewModel,
+    subscriptionName: String?,
+    payments: HorizonSection<List<HorizonTransaction>>,
+    transactions: HorizonSection<HorizonTransactionPage>,
+    search: String,
+    type: String?,
+    busy: Boolean,
     enabled: Boolean,
+    onDismiss: () -> Unit,
+    onRetryPayments: () -> Unit,
+    onRetryTransactions: () -> Unit,
+    onFilter: (String, String?) -> Unit,
+    onPage: (Int) -> Unit,
     link: (Long) -> Unit,
 ) {
     val colors = PulseTheme.colors
-    val subscription =
-        state.overview.value
-            ?.subscriptions
-            ?.find { it.id == state.subscriptionId }
     PulseBottomSheet(
         title = stringResource(R.string.pulse_horizon_subscription_payment_history),
         fullScreen = true,
-        onDismissRequest = vm::hidePayments,
+        onDismissRequest = onDismiss,
     ) {
         Column(Modifier.fillMaxWidth().testTag("subscription-payments-sheet")) {
             PulseText(
-                subscription?.name ?: stringResource(R.string.pulse_horizon_subscription),
+                subscriptionName ?: stringResource(R.string.pulse_horizon_subscription),
                 Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
                 style = PulseTextStyle.Body2,
                 color = colors.textSecondary,
@@ -65,7 +74,14 @@ internal fun SubscriptionPaymentsSheet(
                     .padding(bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                SectionState(state.payments, { state.subscriptionId?.let(vm::showPayments) }) { payments ->
+                if (payments.loading && payments.value == null) {
+                    PulseCenteredLoadingState(
+                        stringResource(R.string.pulse_horizon_loading_your_horizon),
+                        Modifier.fillMaxWidth(),
+                    )
+                }
+                payments.error?.let { PulseErrorState(it.message, onRetryPayments) }
+                payments.value?.let { linkedPayments ->
                     PulseCard(Modifier.fillMaxWidth().testTag("subscription-payments-summary"), highlighted = true) {
                         PulseText(
                             stringResource(R.string.pulse_horizon_subscription_total_paid),
@@ -73,21 +89,25 @@ internal fun SubscriptionPaymentsSheet(
                             color = colors.onPrimarySoft,
                         )
                         PulseText(
-                            currencyText(payments.fold(BigDecimal.ZERO) { total, payment -> total + payment.amount }).asString(),
+                            currencyText(linkedPayments.fold(BigDecimal.ZERO) { total, payment -> total + payment.amount }).asString(),
                             style = PulseTheme.typography.heading2.copy(fontFeatureSettings = "tnum"),
                         )
                         PulseText(
-                            pluralStringResource(R.plurals.pulse_horizon_subscription_payment_count, payments.size, payments.size),
+                            pluralStringResource(
+                                R.plurals.pulse_horizon_subscription_payment_count,
+                                linkedPayments.size,
+                                linkedPayments.size,
+                            ),
                             style = PulseTextStyle.Body2,
                         )
                     }
-                    if (payments.isEmpty()) {
+                    if (linkedPayments.isEmpty()) {
                         PulseEmptyState(
                             stringResource(R.string.pulse_horizon_no_linked_payments),
                             stringResource(R.string.pulse_horizon_link_an_existing_unassigned_debit_below),
                         )
                     }
-                    ledgerMonths(payments).forEach { (month, transactions) ->
+                    ledgerMonths(linkedPayments).forEach { (month, transactions) ->
                         key(month) {
                             Surface(shape = PulseTheme.shapes.extraLarge, color = colors.surface) {
                                 Column(Modifier.fillMaxWidth().padding(16.dp)) {
@@ -114,8 +134,15 @@ internal fun SubscriptionPaymentsSheet(
                     style = PulseTextStyle.Body2,
                     color = colors.textSecondary,
                 )
-                TransactionFilters(state, vm)
-                SectionState(state.transactions, vm::refreshTransactions) { page ->
+                TransactionFilters(search, type, busy, onFilter)
+                if (transactions.loading && transactions.value == null) {
+                    PulseCenteredLoadingState(
+                        stringResource(R.string.pulse_horizon_loading_your_horizon),
+                        Modifier.fillMaxWidth(),
+                    )
+                }
+                transactions.error?.let { PulseErrorState(it.message, onRetryTransactions) }
+                transactions.value?.let { page ->
                     val eligible = page.items.filter { it.type == "debit" && it.subscriptionId == null }
                     eligible.forEach { payment ->
                         key(payment.id) {
@@ -142,9 +169,9 @@ internal fun SubscriptionPaymentsSheet(
                     if (eligible.isEmpty()) {
                         PulseText(stringResource(R.string.pulse_horizon_no_eligible_payments_on_this_page), color = colors.textSecondary)
                     }
-                    PageControls(page, state.busy, { vm.refreshTransactions(it) })
+                    PageControls(page, busy, onPage)
                 }
-                if (state.busy) PulseLoadingState(stringResource(R.string.pulse_horizon_saving_your_change))
+                if (busy) PulseLoadingState(stringResource(R.string.pulse_horizon_saving_your_change))
             }
         }
     }

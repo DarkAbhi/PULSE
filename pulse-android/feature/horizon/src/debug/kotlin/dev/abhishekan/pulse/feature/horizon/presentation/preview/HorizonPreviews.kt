@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import dev.abhishekan.pulse.core.domain.model.Failure
+import dev.abhishekan.pulse.core.domain.model.FinancialAccount
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.domain.model.HorizonProjection
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
@@ -24,6 +25,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsState
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsTabContent
+import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonTabScroll
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonForm
 import dev.abhishekan.pulse.feature.horizon.presentation.obligations.FixedObligationEditor
@@ -54,6 +58,28 @@ private val sample =
             HorizonProjection(12, "12 Months", "1200000.00".toBigDecimal()),
         ),
     )
+
+private val sampleAccount = FinancialAccount(id = 1L, displayName = "Everyday account", institutionName = "Sample Bank", currency = "USD")
+
+@Preview(name = "Accounts list", widthDp = 360)
+@Composable
+private fun AccountsListPreview() {
+    PulseTheme(false) {
+        HorizonTabScroll(PulseTokens.medium) {
+            AccountsTabContent(AccountsState(accounts = listOf(sampleAccount)), sampleAccount.currency, onAction = {})
+        }
+    }
+}
+
+@Preview(name = "Account editor", widthDp = 360)
+@Composable
+private fun AccountEditorPreview() {
+    PulseTheme(false) {
+        HorizonTabScroll(PulseTokens.medium) {
+            AccountsTabContent(AccountsState(draft = sampleAccount), sampleAccount.currency, onAction = {})
+        }
+    }
+}
 
 @Preview(name = "Finance phone light", widthDp = 360, heightDp = 800)
 @Preview(name = "Finance tablet light", widthDp = 1024, heightDp = 900)

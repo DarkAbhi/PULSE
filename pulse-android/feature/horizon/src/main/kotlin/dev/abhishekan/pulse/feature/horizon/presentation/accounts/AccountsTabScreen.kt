@@ -30,14 +30,23 @@ internal fun AccountsTabScreen(
     vm: AccountsViewModel = koinViewModel(),
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
+    BackHandler(state.draft != null) { vm.onAction(AccountsAction.Cancel) }
+    AccountsTabContent(state, currency, vm::onAction)
+}
+
+@Composable
+internal fun AccountsTabContent(
+    state: AccountsState,
+    currency: String,
+    onAction: (AccountsAction) -> Unit,
+) {
     val draft = state.draft
-    BackHandler(draft != null) { if (!state.busy) vm.edit(null) }
     if (draft != null) {
-        AccountEditor(draft, state.busy, vm::edit, vm::save)
+        AccountEditor(draft, state.busy, state.canSave, onAction)
     } else {
         PulseButton(
             stringResource(R.string.pulse_horizon_add_account),
-            { vm.edit(FinancialAccount(currency = currency)) },
+            { onAction(AccountsAction.Add(currency)) },
             enabled = !state.busy,
         )
         if (state.accounts?.isEmpty() == true) {
@@ -49,7 +58,7 @@ internal fun AccountsTabScreen(
                 PulseText(account.institutionName)
                 val details =
                     listOfNotNull(
-                        stringResource(account.typeLabel()),
+                        stringResource(accountTypeLabel(account.accountType)),
                         account.lastFour.takeIf { it.isNotEmpty() }?.let { "•••• $it" },
                         account.currency,
                         if (account.archived) stringResource(R.string.pulse_horizon_account_archived) else null,
@@ -58,7 +67,7 @@ internal fun AccountsTabScreen(
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
                     PulseButton(
                         stringResource(R.string.pulse_horizon_edit_account),
-                        { vm.edit(account) },
+                        { onAction(AccountsAction.Edit(account)) },
                         enabled = !state.busy,
                         style = PulseButtonStyle.Text,
                     )
@@ -66,7 +75,7 @@ internal fun AccountsTabScreen(
                         stringResource(
                             if (account.archived) R.string.pulse_horizon_restore_account else R.string.pulse_horizon_archive_account,
                         ),
-                        { account.id?.let { vm.archive(it, !account.archived) } },
+                        { account.id?.let { onAction(AccountsAction.SetArchived(it, !account.archived)) } },
                         enabled = !state.busy,
                         style = PulseButtonStyle.Text,
                     )
@@ -74,13 +83,14 @@ internal fun AccountsTabScreen(
             }
         }
     }
-    if (state.busy) {
-        PulseLoadingState(stringResource(R.string.pulse_horizon_loading_accounts))
-    }
-    state.error?.let {
-        PulseText(it.message.asString())
-        if (draft == null) {
-            PulseButton(stringResource(R.string.pulse_horizon_retry_accounts), { vm.refresh() })
+    when (val request = state.request) {
+        AccountsState.Request.Idle -> Unit
+        AccountsState.Request.Loading -> PulseLoadingState(stringResource(R.string.pulse_horizon_loading_accounts))
+        is AccountsState.Request.Failed -> {
+            PulseText(request.failure.message.asString())
+            if (draft == null) {
+                PulseButton(stringResource(R.string.pulse_horizon_retry_accounts), { onAction(AccountsAction.Refresh) })
+            }
         }
     }
 }
@@ -89,8 +99,8 @@ internal fun AccountsTabScreen(
 private fun AccountEditor(
     draft: FinancialAccount,
     busy: Boolean,
-    edit: (FinancialAccount?) -> Unit,
-    save: () -> Unit,
+    canSave: Boolean,
+    onAction: (AccountsAction) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
         PulseText(
@@ -99,14 +109,14 @@ private fun AccountEditor(
         )
         PulseTextField(
             value = draft.displayName,
-            onValueChange = { if (it.length <= 100) edit(draft.copy(displayName = it)) },
+            onValueChange = { onAction(AccountsAction.ChangeName(it)) },
             label = stringResource(R.string.pulse_horizon_account_name),
             enabled = !busy,
             modifier = Modifier.fillMaxWidth(),
         )
         PulseTextField(
             value = draft.institutionName,
-            onValueChange = { if (it.length <= 150) edit(draft.copy(institutionName = it)) },
+            onValueChange = { onAction(AccountsAction.ChangeInstitution(it)) },
             label = stringResource(R.string.pulse_horizon_account_institution),
             enabled = !busy,
             modifier = Modifier.fillMaxWidth(),
@@ -114,8 +124,8 @@ private fun AccountEditor(
         FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
             for (type in listOf("bank_account", "credit_card")) {
                 PulseButton(
-                    stringResource(draft.copy(accountType = type).typeLabel()),
-                    { edit(draft.copy(accountType = type, bankAccountSubtype = "")) },
+                    stringResource(accountTypeLabel(type)),
+                    { onAction(AccountsAction.SelectType(type)) },
                     enabled = !busy,
                     style = if (draft.accountType == type) PulseButtonStyle.Standard else PulseButtonStyle.Text,
                 )
@@ -133,7 +143,7 @@ private fun AccountEditor(
                 for ((value, label) in subtypes) {
                     PulseButton(
                         stringResource(label),
-                        { edit(draft.copy(bankAccountSubtype = value)) },
+                        { onAction(AccountsAction.SelectSubtype(value)) },
                         enabled = !busy,
                         style = if (draft.bankAccountSubtype == value) PulseButtonStyle.Standard else PulseButtonStyle.Text,
                     )
@@ -143,20 +153,14 @@ private fun AccountEditor(
         PulseText(stringResource(R.string.pulse_horizon_account_currency, draft.currency))
         PulseTextField(
             value = draft.countryCode,
-            onValueChange = {
-                if (it.length <= 2 &&
-                    it.all { ch -> ch.uppercaseChar() in 'A'..'Z' }
-                ) {
-                    edit(draft.copy(countryCode = it.uppercase()))
-                }
-            },
+            onValueChange = { onAction(AccountsAction.ChangeCountry(it)) },
             label = stringResource(R.string.pulse_horizon_account_country),
             enabled = !busy,
             modifier = Modifier.fillMaxWidth(),
         )
         PulseTextField(
             value = draft.lastFour,
-            onValueChange = { if (it.length <= 4 && it.all { ch -> ch in '0'..'9' }) edit(draft.copy(lastFour = it)) },
+            onValueChange = { onAction(AccountsAction.ChangeLastFour(it)) },
             label = stringResource(R.string.pulse_horizon_account_last_four),
             enabled = !busy,
             modifier = Modifier.fillMaxWidth(),
@@ -164,23 +168,18 @@ private fun AccountEditor(
         FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
             PulseButton(
                 stringResource(R.string.pulse_horizon_cancel_account),
-                { edit(null) },
+                { onAction(AccountsAction.Cancel) },
                 enabled = !busy,
                 style = PulseButtonStyle.Text,
             )
             PulseButton(
                 stringResource(R.string.pulse_horizon_save_account),
-                save,
-                enabled =
-                    !busy &&
-                        draft.displayName.isNotBlank() &&
-                        draft.institutionName.isNotBlank() &&
-                        draft.countryCode.length in listOf(0, 2) &&
-                        draft.lastFour.length in listOf(0, 4),
+                { onAction(AccountsAction.Save) },
+                enabled = canSave,
             )
         }
     }
 }
 
-private fun FinancialAccount.typeLabel(): Int =
+private fun accountTypeLabel(accountType: String): Int =
     if (accountType == "credit_card") R.string.pulse_horizon_credit_card else R.string.pulse_horizon_bank_account

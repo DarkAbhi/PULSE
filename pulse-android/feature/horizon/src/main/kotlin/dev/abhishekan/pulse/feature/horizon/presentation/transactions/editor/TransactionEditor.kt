@@ -33,6 +33,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import dev.abhishekan.pulse.feature.horizon.R
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsAction
 import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsViewModel
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonFormSection
@@ -201,7 +202,7 @@ private fun TransactionAccountField(
     vm: AccountsViewModel = koinViewModel(),
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { vm.refresh() }
+    LaunchedEffect(vm) { vm.onAction(AccountsAction.Refresh) }
     val accounts = state.accounts.orEmpty()
     val active = accounts.filterNot { it.archived }
     if (active.isEmpty() && draft.accountId == null) return

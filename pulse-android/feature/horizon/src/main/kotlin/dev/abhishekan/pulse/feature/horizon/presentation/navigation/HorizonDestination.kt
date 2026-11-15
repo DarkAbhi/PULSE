@@ -47,7 +47,7 @@ internal val HorizonUiState.destination: HorizonDestination
                     draft,
                     when {
                         transactionDraft != null -> EditorParent.Transaction
-                        historyOpen -> EditorParent.History
+                        transactionLists.historyOpen -> EditorParent.History
                         else -> EditorParent.Tab
                     },
                 )
@@ -55,4 +55,4 @@ internal val HorizonUiState.destination: HorizonDestination
         }
 
 internal val HorizonUiState.recordsDestination: HorizonDestination
-    get() = if (historyOpen) HorizonDestination.History else HorizonDestination.Tabs(tab)
+    get() = if (transactionLists.historyOpen) HorizonDestination.History else HorizonDestination.Tabs(tab)

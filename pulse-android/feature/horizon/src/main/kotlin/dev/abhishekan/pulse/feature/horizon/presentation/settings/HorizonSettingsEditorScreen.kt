@@ -2,35 +2,43 @@ package dev.abhishekan.pulse.feature.horizon.presentation.settings
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
+import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorAction
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorForm
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorScaffold
+import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorState
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.topBarTitle
 
 @Composable
 internal fun HorizonSettingsEditorScreen(
-    draft: HorizonDraft,
-    busy: Boolean,
-    error: UiText?,
+    state: HorizonEditorState,
     backLabel: String,
-    onChange: (HorizonDraft) -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit,
+    onAction: (HorizonEditorAction) -> Unit,
     notice: @Composable () -> Unit,
-    data: HorizonOverview?,
-    canSave: Boolean,
 ) {
+    val onSave = { onAction(HorizonEditorAction.Save) }
     HorizonEditorScaffold(
-        title = stringResource(draft.topBarTitle()),
+        title = stringResource(state.draft.topBarTitle()),
         backLabel = backLabel,
-        busy = busy,
+        busy = state.busy,
     ) { width ->
-        HorizonEditorForm(width, busy, canSave, PulseTokens.readingWidth, onSave, onCancel) {
+        HorizonEditorForm(
+            width,
+            state.busy,
+            state.canSave,
+            PulseTokens.readingWidth,
+            onSave,
+            onCancel = { onAction(HorizonEditorAction.Cancel) },
+        ) {
             notice()
-            HorizonEditor(draft, data, busy, error, onChange, onSave)
+            HorizonEditor(
+                state.draft,
+                state.data,
+                state.busy,
+                state.error,
+                { onAction(HorizonEditorAction.Change(it)) },
+                onSave,
+            )
         }
     }
 }

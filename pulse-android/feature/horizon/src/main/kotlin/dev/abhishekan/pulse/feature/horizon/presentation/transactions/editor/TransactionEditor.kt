@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,7 +19,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.abhishekan.pulse.core.domain.model.FinancialAccount
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
@@ -33,8 +32,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import dev.abhishekan.pulse.feature.horizon.R
-import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsAction
-import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsViewModel
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonFormSection
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionFieldPair
@@ -42,7 +39,6 @@ import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionInpu
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionRelation
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionSegments
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.TransactionPickerField
-import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -53,6 +49,7 @@ internal fun TransactionEditor(
     busy: Boolean,
     error: UiText?,
     onChange: (HorizonDraft) -> Unit,
+    accounts: List<FinancialAccount>? = null,
 ) {
     var picker by remember { mutableStateOf<String?>(null) }
     val focus = LocalFocusManager.current
@@ -149,7 +146,7 @@ internal fun TransactionEditor(
                     },
                     !busy,
                 ) { onChange(draft.copy(subscriptionId = it)) }
-                if (draft.accountEditable) TransactionAccountField(draft, !busy, onChange)
+                if (draft.accountEditable) TransactionAccountField(draft, accounts, !busy, onChange)
             }
             HorizonFormSection(
                 R.string.pulse_horizon_notes_optional,
@@ -197,18 +194,15 @@ internal fun TransactionEditor(
 @Composable
 private fun TransactionAccountField(
     draft: HorizonDraft,
+    accounts: List<FinancialAccount>?,
     enabled: Boolean,
     onChange: (HorizonDraft) -> Unit,
-    vm: AccountsViewModel = koinViewModel(),
 ) {
-    val state by vm.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(vm) { vm.onAction(AccountsAction.Refresh) }
-    val accounts = state.accounts.orEmpty()
-    val active = accounts.filterNot { it.archived }
+    val active = accounts.orEmpty().filterNot { it.archived }
     if (active.isEmpty() && draft.accountId == null) return
     val unassigned = stringResource(R.string.pulse_horizon_transaction_no_account)
     val archived = stringResource(R.string.pulse_horizon_account_archived)
-    val selected = accounts.firstOrNull { it.id == draft.accountId }
+    val selected = accounts?.firstOrNull { it.id == draft.accountId }
     val label =
         when {
             selected == null -> unassigned
@@ -220,6 +214,6 @@ private fun TransactionAccountField(
         selected = label,
         options = listOf(unassigned) + active.map { it.displayName },
         onSelect = { onChange(draft.copy(accountId = active.getOrNull(it - 1)?.id)) },
-        enabled = enabled && state.accounts != null,
+        enabled = enabled && accounts != null,
     )
 }

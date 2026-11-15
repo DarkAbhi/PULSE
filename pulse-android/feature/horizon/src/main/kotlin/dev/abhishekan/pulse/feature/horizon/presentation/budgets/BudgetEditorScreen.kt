@@ -5,38 +5,41 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
-import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
+import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorAction
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorForm
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorScaffold
+import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorState
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.topBarTitle
 
 @Composable
 internal fun BudgetEditorScreen(
-    draft: HorizonDraft,
-    busy: Boolean,
-    error: UiText?,
+    state: HorizonEditorState,
     backLabel: String,
-    onChange: (HorizonDraft) -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit,
+    onAction: (HorizonEditorAction) -> Unit,
     notice: @Composable () -> Unit,
-    canSave: Boolean,
 ) {
+    val onSave = { onAction(HorizonEditorAction.Save) }
     HorizonEditorScaffold(
-        title = stringResource(draft.topBarTitle()),
+        title = stringResource(state.draft.topBarTitle()),
         backLabel = backLabel,
-        busy = busy,
+        busy = state.busy,
     ) { width ->
-        HorizonEditorForm(width, busy, canSave, PulseTokens.contentWidth, onSave, onCancel) {
+        HorizonEditorForm(
+            width,
+            state.busy,
+            state.canSave,
+            PulseTokens.contentWidth,
+            onSave,
+            onCancel = { onAction(HorizonEditorAction.Cancel) },
+        ) {
             notice()
             BudgetEditor(
-                draft,
-                busy,
-                error,
+                state.draft,
+                state.busy,
+                state.error,
                 LocalConfiguration.current.smallestScreenWidthDp >= 600 && width != PulseWindowSize.Compact,
-                canSave,
-                onChange,
+                state.canSave,
+                { onAction(HorizonEditorAction.Change(it)) },
                 onSave,
             )
         }

@@ -4,52 +4,60 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
-import dev.abhishekan.pulse.core.domain.model.HorizonRecord
-import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.message
-import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.feature.horizon.R
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.draft
 import dev.abhishekan.pulse.feature.horizon.presentation.state.HorizonSection
 
+internal data class SubscriptionsTabState(
+    val section: HorizonSection<HorizonOverview>,
+    val canMutate: Boolean,
+    val currency: String,
+    val canViewPayments: Boolean,
+)
+
+internal sealed interface SubscriptionsTabAction {
+    data object Retry : SubscriptionsTabAction
+
+    data object Add : SubscriptionsTabAction
+
+    data class Edit(
+        val draft: HorizonDraft,
+    ) : SubscriptionsTabAction
+
+    data class RequestDelete(
+        val id: Long,
+        val name: String,
+    ) : SubscriptionsTabAction
+
+    data class ViewPayments(
+        val id: Long,
+    ) : SubscriptionsTabAction
+}
+
 @Composable
 internal fun SubscriptionsTabScreen(
-    section: HorizonSection<HorizonOverview>,
-    canMutate: Boolean,
-    onRetry: () -> Unit,
-    onAdd: () -> Unit,
-    currency: String,
-    canViewPayments: Boolean,
-    onEdit: (HorizonDraft) -> Unit,
-    onConfirm: (HorizonChange, UiText) -> Unit,
-    onViewPayments: (Long) -> Unit,
+    state: SubscriptionsTabState,
+    onAction: (SubscriptionsTabAction) -> Unit,
 ) {
+    val section = state.section
     if (section.loading && section.value == null) {
         PulseCenteredLoadingState(stringResource(R.string.pulse_horizon_loading_your_horizon), Modifier.fillMaxWidth())
     }
-    section.error?.let { PulseErrorState(it.message, onRetry) }
+    section.error?.let { PulseErrorState(it.message, { onAction(SubscriptionsTabAction.Retry) }) }
     section.value?.let { data ->
         SubscriptionList(
             data = data,
-            canMutate = canMutate,
-            canViewPayments = canViewPayments,
-            add = onAdd,
-            edit = { onEdit(it.draft(currency)) },
-            delete = { item ->
-                onConfirm(
-                    HorizonChange.Delete(HorizonRecord.Subscription, item.id),
-                    uiText(
-                        R.string.pulse_horizon_delete_subscription_confirmation,
-                        item.name,
-                    ),
-                )
-            },
-            payments = { onViewPayments(it.id) },
+            canMutate = state.canMutate,
+            canViewPayments = state.canViewPayments,
+            add = { onAction(SubscriptionsTabAction.Add) },
+            edit = { onAction(SubscriptionsTabAction.Edit(it.draft(state.currency))) },
+            delete = { onAction(SubscriptionsTabAction.RequestDelete(it.id, it.name)) },
+            payments = { onAction(SubscriptionsTabAction.ViewPayments(it.id)) },
         )
     }
 }

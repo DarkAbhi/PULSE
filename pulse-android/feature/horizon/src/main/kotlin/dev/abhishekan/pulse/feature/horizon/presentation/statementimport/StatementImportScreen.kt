@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -24,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,8 +39,10 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.abhishekan.pulse.core.domain.model.FinancialAccount
+import androidx.lifecycle.repeatOnLifecycle
 import dev.abhishekan.pulse.core.domain.model.HorizonCategory
 import dev.abhishekan.pulse.core.domain.model.StatementBatch
 import dev.abhishekan.pulse.core.domain.model.StatementRow
@@ -70,6 +74,9 @@ import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionInpu
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionSegments
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.TransactionPickerField
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 import java.io.ByteArrayOutputStream
@@ -85,43 +92,76 @@ internal fun StatementImportScreen(
     categories: List<HorizonCategory>,
     onClose: () -> Unit,
     onManageAccounts: () -> Unit,
+    onCompleted: () -> Unit,
     vm: StatementImportViewModel = koinViewModel(),
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
-    val resolver = LocalContext.current.contentResolver
+    val resolver = LocalContext.current.applicationContext.contentResolver
     val picker =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            if (uri != null) vm.upload { readStatement(resolver, uri) }
+            if (uri != null) vm.onAction(StatementImportAction.Upload { readStatement(resolver, uri) })
         }
-    LaunchedEffect(Unit) {
-        if (vm.uiState.value.accounts == null && vm.uiState.value.failure == null) vm.loadAccounts()
+    LaunchedEffect(vm) {
+        vm.onAction(StatementImportAction.Entered)
     }
-    val close = { vm.close(onClose) }
-    BackHandler { close() }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val close by rememberUpdatedState(onClose)
+    val manageAccounts by rememberUpdatedState(onManageAccounts)
+    val completed by rememberUpdatedState(onCompleted)
+    LaunchedEffect(vm, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            vm.uiState
+                .map { it.exit as? StatementImportExit.Pending }
+                .distinctUntilChanged()
+                .collectLatest { pending ->
+                    val event = pending?.event ?: return@collectLatest
+                    vm.onAction(StatementImportAction.ExitHandled(event))
+                    when (event) {
+                        StatementImportEvent.Closed -> close()
+                        StatementImportEvent.ManageAccounts -> manageAccounts()
+                        is StatementImportEvent.Completed -> completed()
+                    }
+                }
+        }
+    }
+    BackHandler { vm.onAction(StatementImportAction.Close) }
 
+    val listState = key(state.batch?.id, state.page?.page) { rememberLazyListState() }
+    LaunchedEffect(listState, state.errorCode, state.failure) {
+        if (state.batch != null && state.page != null && (state.errorCode != null || state.failure != null)) {
+            listState.scrollToItem(0)
+        }
+    }
+    StatementImportScreenContent(state, categories, listState, vm::onAction) {
+        picker.launch(arrayOf("application/pdf"))
+    }
+}
+
+@Composable
+private fun StatementImportScreenContent(
+    state: StatementImportState,
+    categories: List<HorizonCategory>,
+    listState: LazyListState,
+    onAction: (StatementImportAction) -> Unit,
+    onPickPdf: () -> Unit,
+) {
     PulseScreenScaffold(
         title = stringResource(R.string.pulse_horizon_import_statement),
         backLabel = stringResource(R.string.pulse_horizon_back_to_horizon),
         backEnabled = !state.busy,
-        onBack = close,
+        onBack = { onAction(StatementImportAction.Close) },
     ) {
         val batch = state.batch
         val page = state.page
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             when {
-                state.result != null -> Unit
+                state.exit != null -> Unit
                 batch != null && page != null ->
                     key(batch.id, page.page) {
-                        StatementReview(state, batch, page, categories, close, vm)
+                        StatementReview(state, batch, page, categories, listState, onAction)
                     }
                 else ->
-                    StatementSetup(
-                        state,
-                        onSelectAccount = vm::select,
-                        onPickPdf = { picker.launch(arrayOf("application/pdf")) },
-                        onManageAccounts = onManageAccounts,
-                        onRetry = vm::loadAccounts,
-                    )
+                    StatementSetup(state, onAction, onPickPdf)
             }
         }
     }
@@ -130,10 +170,8 @@ internal fun StatementImportScreen(
 @Composable
 private fun StatementSetup(
     state: StatementImportState,
-    onSelectAccount: (FinancialAccount) -> Unit,
+    onAction: (StatementImportAction) -> Unit,
     onPickPdf: () -> Unit,
-    onManageAccounts: () -> Unit,
-    onRetry: () -> Unit,
 ) {
     val accounts = state.accounts
     PulseFormLayout(
@@ -150,9 +188,16 @@ private fun StatementSetup(
                             modifier = Modifier.testTag("statement-pick"),
                         )
                     accounts?.isEmpty() == true ->
-                        PulseFormAction(stringResource(R.string.pulse_horizon_add_account), onManageAccounts)
+                        PulseFormAction(
+                            stringResource(R.string.pulse_horizon_add_account),
+                            { onAction(StatementImportAction.ManageAccounts) },
+                        )
                     state.failure != null ->
-                        PulseFormAction(stringResource(R.string.pulse_horizon_retry_accounts), onRetry, enabled = !state.busy)
+                        PulseFormAction(
+                            stringResource(R.string.pulse_horizon_retry_accounts),
+                            { onAction(StatementImportAction.RetryAccounts) },
+                            enabled = !state.busy,
+                        )
                     else -> null
                 }
             if (primary != null) PulseFormActions(primary)
@@ -178,7 +223,7 @@ private fun StatementSetup(
                         state.account?.let { "${it.displayName} · ${it.institutionName}" }
                             ?: stringResource(R.string.pulse_horizon_statement_choose_account),
                     options = accounts.map { "${it.displayName} · ${it.institutionName}" },
-                    onSelect = { onSelectAccount(accounts[it]) },
+                    onSelect = { onAction(StatementImportAction.SelectAccount(accounts[it])) },
                     enabled = !state.busy,
                     labelAbove = true,
                 )
@@ -206,14 +251,10 @@ private fun StatementReview(
     batch: StatementBatch,
     page: StatementRows,
     categories: List<HorizonCategory>,
-    close: () -> Unit,
-    vm: StatementImportViewModel,
+    listState: LazyListState,
+    onAction: (StatementImportAction) -> Unit,
 ) {
     val focus = LocalFocusManager.current
-    val listState = rememberLazyListState()
-    LaunchedEffect(state.errorCode, state.failure) {
-        if (state.errorCode != null || state.failure != null) listState.scrollToItem(0)
-    }
 
     Column(
         Modifier
@@ -230,7 +271,7 @@ private fun StatementReview(
         ) {
             item(key = "review") {
                 Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-                    StatementImportError(state, vm::reload)
+                    StatementImportError(state) { onAction(StatementImportAction.Reload) }
                     HorizonFormSection(
                         R.string.pulse_horizon_statement_review,
                         null,
@@ -248,7 +289,7 @@ private fun StatementReview(
                         if (batch.accountConfirmationRequired) {
                             PulseCheckbox(
                                 state.confirmed,
-                                vm::confirmAccount,
+                                { onAction(StatementImportAction.ConfirmAccount(it)) },
                                 stringResource(R.string.pulse_horizon_statement_account_confirm, state.account?.displayName.orEmpty()),
                                 modifier = Modifier.fillMaxWidth(),
                                 enabled = !state.busy,
@@ -258,13 +299,15 @@ private fun StatementReview(
                 }
             }
             items(page.rows, key = { it.id }) { source ->
-                ImportRowCard(state.edits[source.id] ?: source, batch.currency, categories, !state.busy, vm::edit)
+                ImportRowCard(state.edits[source.id] ?: source, batch.currency, categories, !state.busy) {
+                    onAction(StatementImportAction.EditRow(it))
+                }
             }
             if (page.total > page.pageSize) {
                 item(key = "pagination") {
                     StatementPagination(page, !state.busy) {
                         focus.clearFocus()
-                        vm.page(it)
+                        onAction(StatementImportAction.Page(it))
                     }
                 }
             }
@@ -283,12 +326,17 @@ private fun StatementReview(
                     stringResource(R.string.pulse_horizon_statement_commit),
                     {
                         focus.clearFocus()
-                        vm.commit()
+                        onAction(StatementImportAction.Commit)
                     },
                     enabled = !state.busy && state.confirmed && state.errorCode !in setOf("BATCH_EXPIRED", "STALE_REVISION"),
                     modifier = Modifier.testTag("statement-confirm"),
                 ),
-            secondary = PulseFormAction(stringResource(R.string.pulse_horizon_statement_cancel), close, enabled = !state.busy),
+            secondary =
+                PulseFormAction(
+                    stringResource(R.string.pulse_horizon_statement_cancel),
+                    { onAction(StatementImportAction.Close) },
+                    enabled = !state.busy,
+                ),
         )
     }
 }

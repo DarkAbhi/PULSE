@@ -33,6 +33,7 @@ import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonForm
 import dev.abhishekan.pulse.feature.horizon.presentation.obligations.FixedObligationEditor
 import dev.abhishekan.pulse.feature.horizon.presentation.overview.HorizonMetrics
 import dev.abhishekan.pulse.feature.horizon.presentation.overview.HorizonOverviewTabScreen
+import dev.abhishekan.pulse.feature.horizon.presentation.overview.HorizonOverviewTabState
 import dev.abhishekan.pulse.feature.horizon.presentation.overview.ProjectionCard
 import dev.abhishekan.pulse.feature.horizon.presentation.state.HorizonSection
 import dev.abhishekan.pulse.feature.horizon.presentation.transactions.editor.TransactionEditor
@@ -185,13 +186,10 @@ private fun StatesPreview() {
                     ).padding(PulseTokens.medium),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
             ) {
-                HorizonOverviewTabScreen(HorizonSection(), canMutate = false, onRetry = {}, onAdd = {})
+                HorizonOverviewTabScreen(HorizonOverviewTabState(HorizonSection(), canMutate = false)) {}
                 HorizonOverviewTabScreen(
-                    HorizonSection(loading = false, error = Failure.Connection),
-                    canMutate = false,
-                    onRetry = {},
-                    onAdd = {},
-                )
+                    HorizonOverviewTabState(HorizonSection(loading = false, error = Failure.Connection), canMutate = false),
+                ) {}
                 PulseEmptyState("No transactions", "Record your first transaction.")
                 PulseButton("Saving transaction", {}, loading = true)
                 PulseButton("Save transaction", {}, enabled = false)

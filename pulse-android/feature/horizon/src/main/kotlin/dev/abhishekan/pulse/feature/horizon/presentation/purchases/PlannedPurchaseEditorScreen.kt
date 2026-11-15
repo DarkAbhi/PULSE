@@ -6,35 +6,39 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
-import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.pagePadding
-import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
+import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorAction
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorScaffold
+import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorState
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.topBarTitle
 
 @Composable
 internal fun PlannedPurchaseEditorScreen(
-    draft: HorizonDraft,
-    busy: Boolean,
-    error: UiText?,
+    state: HorizonEditorState,
     backLabel: String,
-    onChange: (HorizonDraft) -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit,
+    onAction: (HorizonEditorAction) -> Unit,
     notice: @Composable () -> Unit,
-    data: HorizonOverview?,
-    reviewRequired: Boolean,
 ) {
     HorizonEditorScaffold(
-        title = stringResource(draft.topBarTitle()),
+        title = stringResource(state.draft.topBarTitle()),
         backLabel = backLabel,
-        busy = busy,
+        busy = state.busy,
     ) { width ->
         val bottom = LocalPulseContentPadding.current.calculateBottomPadding()
         Box(Modifier.fillMaxSize().padding(bottom = bottom)) {
-            PlannedPurchaseEditor(draft, data, busy, error, reviewRequired, onChange, onSave, onCancel, width.pagePadding, notice)
+            PlannedPurchaseEditor(
+                state.draft,
+                state.data,
+                state.busy,
+                state.error,
+                state.reviewRequired,
+                { onAction(HorizonEditorAction.Change(it)) },
+                { onAction(HorizonEditorAction.Save) },
+                { onAction(HorizonEditorAction.Cancel) },
+                width.pagePadding,
+                notice,
+            )
         }
     }
 }

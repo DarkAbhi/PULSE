@@ -12,6 +12,7 @@ import dev.abhishekan.pulse.core.domain.repository.FinancialAccountsRepository
 import dev.abhishekan.pulse.core.domain.repository.StatementImportRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -52,38 +53,72 @@ class StatementImportViewModelTest {
     @Test fun requiresDestinationConfirmationAndCommitsTheUpdatedRevision() =
         runTest {
             val vm = StatementImportViewModel(accounts, repo)
-            vm.reset()
+            vm.onAction(StatementImportAction.Reset)
             runCurrent()
-            vm.select(sampleAccount)
-            vm.upload { byteArrayOf(1) }
+            vm.onAction(StatementImportAction.SelectAccount(sampleAccount))
+            vm.onAction(StatementImportAction.Upload { byteArrayOf(1) })
             runCurrent()
             assertFalse(vm.uiState.value.confirmed)
-            vm.commit()
+            vm.onAction(StatementImportAction.Commit)
             runCurrent()
             assertNull(repo.committedRevision)
 
-            vm.confirmAccount(true)
-            vm.edit(repo.row.copy(included = false))
-            vm.commit()
+            vm.onAction(StatementImportAction.ConfirmAccount(true))
+            vm.onAction(StatementImportAction.EditRow(repo.row.copy(included = false)))
+            vm.onAction(StatementImportAction.Commit)
             runCurrent()
 
             assertEquals(2, repo.committedRevision)
             assertEquals(false, repo.editedRow?.included)
-            assertEquals(StatementCommit(0, 0, 1), vm.uiState.value.result)
+            val completed = StatementImportEvent.Completed(StatementCommit(0, 0, 1))
+            assertEquals(StatementImportExit.Pending(completed), vm.uiState.first().exit)
+            vm.onAction(StatementImportAction.ExitHandled(completed))
+            vm.onAction(StatementImportAction.Commit)
+            runCurrent()
+            assertEquals(StatementImportExit.Handled, vm.uiState.first().exit)
+            assertEquals(1, repo.commitCount)
         }
 
     @Test fun aReconciliationFailureNeverBecomesAReadyPreview() =
         runTest {
             repo.uploadFailure = "RECONCILIATION_FAILED"
             val vm = StatementImportViewModel(accounts, repo)
-            vm.select(sampleAccount)
-            vm.upload { byteArrayOf(1) }
+            vm.onAction(StatementImportAction.SelectAccount(sampleAccount))
+            vm.onAction(StatementImportAction.Upload { byteArrayOf(1) })
             runCurrent()
             assertEquals("RECONCILIATION_FAILED", vm.uiState.value.errorCode)
             assertNull(vm.uiState.value.batch)
-            vm.commit()
+            vm.onAction(StatementImportAction.Commit)
             runCurrent()
             assertNull(repo.committedRevision)
+        }
+
+    @Test fun closeWaitsForCancellationAndCanBeHandledAfterTheScreenReattaches() =
+        runTest {
+            val vm = StatementImportViewModel(accounts, repo)
+            vm.onAction(StatementImportAction.SelectAccount(sampleAccount))
+            vm.onAction(StatementImportAction.Upload { byteArrayOf(1) })
+            runCurrent()
+
+            repo.cancelFailure = "EXTRACTOR_BUSY"
+            vm.onAction(StatementImportAction.Close)
+            runCurrent()
+            assertNull(vm.uiState.value.exit)
+            assertEquals("EXTRACTOR_BUSY", vm.uiState.value.errorCode)
+
+            repo.cancelFailure = null
+            vm.onAction(StatementImportAction.Close)
+            vm.onAction(StatementImportAction.Close)
+            runCurrent()
+            assertEquals(StatementImportExit.Pending(StatementImportEvent.Closed), vm.uiState.first().exit)
+            vm.onAction(StatementImportAction.ExitHandled(StatementImportEvent.Closed))
+            assertEquals(StatementImportExit.Handled, vm.uiState.first().exit)
+            assertEquals(2, repo.cancelCount)
+
+            vm.onAction(StatementImportAction.Reset)
+            runCurrent()
+            assertNull(vm.uiState.value.exit)
+            assertEquals(listOf(sampleAccount), vm.uiState.value.accounts)
         }
 
     private class ImportRepository : StatementImportRepository {
@@ -91,8 +126,11 @@ class StatementImportViewModelTest {
         private val batch = StatementBatch("test", "INR", 1, false, true, 1, 0)
         private val rows = StatementRows(listOf(row), 1, 100, 1)
         var uploadFailure: String? = null
+        var cancelFailure: String? = null
         var editedRow: StatementRow? = null
         var committedRevision: Int? = null
+        var commitCount = 0
+        var cancelCount = 0
 
         override suspend fun uploadStatement(
             accountId: Long,
@@ -120,10 +158,15 @@ class StatementImportViewModelTest {
         }
 
         override suspend fun commitStatement(batch: StatementBatch): StatementResponse<StatementCommit> {
+            commitCount++
             committedRevision = batch.revision
             return StatementResponse.Success(StatementCommit(0, 0, 1))
         }
 
-        override suspend fun cancelStatement(id: String) = StatementResponse.Success(Unit)
+        override suspend fun cancelStatement(id: String): StatementResponse<Unit> {
+            cancelCount++
+            val failure = cancelFailure
+            return if (failure == null) StatementResponse.Success(Unit) else StatementResponse.Rejected(failure)
+        }
     }
 }

@@ -133,6 +133,7 @@
     <string name="pulse_horizon_no_search_results_filtered_help">Check the spelling, try a shorter word, or loosen a filter.</string>
     <string name="pulse_horizon_no_filter_matches">No matches for these filters</string>
     <string name="pulse_horizon_no_filter_matches_help">Loosen a filter, or log a transaction now.</string>
+    <string name="pulse_horizon_history_empty_badge_glyph" translatable="false">0</string>
     <string name="pulse_horizon_no_income_in_category">You have no income under %1$s yet. Loosen a filter, or log one now.</string>
     <string name="pulse_horizon_no_spending_in_category">You have no spending under %1$s yet. Loosen a filter, or log one now.</string>
     <string name="pulse_horizon_ledger_income">Income</string>

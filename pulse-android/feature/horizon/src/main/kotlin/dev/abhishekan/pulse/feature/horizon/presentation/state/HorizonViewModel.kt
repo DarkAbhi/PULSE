@@ -16,8 +16,17 @@ import dev.abhishekan.pulse.core.ui.DraftSource
 import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.feature.horizon.R
+import dev.abhishekan.pulse.feature.horizon.presentation.budgets.BudgetsTabAction
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
+import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorAction
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonForm
+import dev.abhishekan.pulse.feature.horizon.presentation.obligations.ObligationsTabAction
+import dev.abhishekan.pulse.feature.horizon.presentation.overview.HorizonOverviewTabAction
+import dev.abhishekan.pulse.feature.horizon.presentation.purchases.PlannedPurchasesTabAction
+import dev.abhishekan.pulse.feature.horizon.presentation.subscriptions.SubscriptionPaymentsAction
+import dev.abhishekan.pulse.feature.horizon.presentation.subscriptions.SubscriptionsTabAction
+import dev.abhishekan.pulse.feature.horizon.presentation.transactions.history.TransactionHistoryAction
+import dev.abhishekan.pulse.feature.horizon.presentation.transactions.recent.RecentTransactionsAction
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,19 +51,243 @@ class HorizonViewModel(
                 tab = HorizonTab.valueOf(saved["tab"] ?: "Overview"),
                 search = saved["search"] ?: "",
                 type = saved["type"],
-                historyOpen = saved["historyOpen"] ?: false,
+                transactionLists =
+                    TransactionListsState(
+                        historyOpen = saved["historyOpen"] ?: false,
+                        historyFilters = HistoryFilters(saved["historySearch"] ?: "", saved["historyType"], saved["historyCategoryId"]),
+                        selected = restoreTransactionSelection(),
+                    ),
                 importOpen = saved["importOpen"] ?: false,
-                historySearch = saved["historySearch"] ?: "",
-                historyType = saved["historyType"],
-                historyCategoryId = saved["historyCategoryId"],
                 transactionDraft = saved.get<ArrayList<String>>("transactionDraft")?.let(HorizonDraft::restore),
                 subscriptionId = saved["subscription"],
                 draft = saved.get<ArrayList<String>>("draft")?.let(HorizonDraft::restore),
                 reviewRequired =
                     saved["pending"] ?: false,
+                showingReviewRecords = saved["showingReviewRecords"] ?: false,
+                confirmation = if (saved.get<Boolean>("confirmDiscard") == true) HorizonConfirmation.Discard else null,
             ),
         )
-    val uiState = state.asStateFlow()
+    internal val uiState = state.asStateFlow()
+
+    internal fun onAction(action: HorizonAction) {
+        when (action) {
+            HorizonAction.Refresh -> refresh()
+            HorizonAction.RetryOverview -> refreshOverview()
+            HorizonAction.ConsumeMessage -> consumeMessage()
+            is HorizonAction.SelectTab -> tab(action.tab)
+            is HorizonAction.Recent -> onRecentAction(action.action)
+            is HorizonAction.History -> onHistoryAction(action.action)
+            is HorizonAction.Overview -> onOverviewAction(action.action)
+            is HorizonAction.Budgets -> onBudgetsAction(action.action)
+            is HorizonAction.Obligations -> onObligationsAction(action.action)
+            is HorizonAction.Subscriptions -> onSubscriptionsAction(action.action)
+            is HorizonAction.Purchases -> onPurchasesAction(action.action)
+            is HorizonAction.Payments -> onPaymentsAction(action.action)
+            HorizonAction.DismissTransaction -> selectTransaction(null)
+            HorizonAction.CloseImport -> setImportOpen(false)
+            HorizonAction.ManageAccounts -> {
+                setImportOpen(false)
+                tab(HorizonTab.Accounts)
+            }
+            HorizonAction.ImportCompleted -> completeImport()
+            HorizonAction.Back -> back()
+            HorizonAction.ToggleReviewRecords -> showReviewRecords(!state.value.showingReviewRecords)
+            HorizonAction.ResumeDraft -> showReviewRecords(false)
+            HorizonAction.AcknowledgeReview -> acknowledgeReview()
+            is HorizonAction.Edit -> edit(action.draft)
+            is HorizonAction.Editor -> onEditorAction(action.action)
+            is HorizonAction.AskConfirmation -> confirm(HorizonConfirmation.Apply(action.change, action.message))
+            HorizonAction.AcceptConfirmation -> acceptConfirmation()
+            HorizonAction.DismissConfirmation -> confirm(null)
+        }
+    }
+
+    private fun onOverviewAction(action: HorizonOverviewTabAction) {
+        when (action) {
+            HorizonOverviewTabAction.Retry -> refreshOverview()
+            HorizonOverviewTabAction.EditSettings -> newForm(HorizonForm.Config)
+        }
+    }
+
+    private fun onBudgetsAction(action: BudgetsTabAction) {
+        when (action) {
+            BudgetsTabAction.Retry -> refreshOverview()
+            BudgetsTabAction.Add -> newForm(HorizonForm.Budget)
+            is BudgetsTabAction.Edit ->
+                edit(
+                    HorizonDraft(
+                        HorizonForm.Budget,
+                        action.budget.id,
+                        action.budget.name,
+                        action.budget.allocated.toPlainString(),
+                        UserCurrency.code,
+                    ),
+                )
+            is BudgetsTabAction.Delete ->
+                requestDelete(HorizonRecord.Budget, action.budget.id, R.string.pulse_horizon_delete_budget_confirmation, action.budget.name)
+        }
+    }
+
+    private fun onObligationsAction(action: ObligationsTabAction) {
+        when (action) {
+            ObligationsTabAction.Retry -> refreshOverview()
+            ObligationsTabAction.Add -> newForm(HorizonForm.Deduction)
+            is ObligationsTabAction.Edit -> edit(action.draft)
+            is ObligationsTabAction.RequestDelete ->
+                requestDelete(
+                    HorizonRecord.Deduction,
+                    action.id,
+                    R.string.pulse_horizon_delete_1_s_this_removes_the_fixed_obligation_and,
+                    action.name,
+                )
+        }
+    }
+
+    private fun onSubscriptionsAction(action: SubscriptionsTabAction) {
+        when (action) {
+            SubscriptionsTabAction.Retry -> refreshOverview()
+            SubscriptionsTabAction.Add -> newForm(HorizonForm.Subscription)
+            is SubscriptionsTabAction.Edit -> edit(action.draft)
+            is SubscriptionsTabAction.RequestDelete ->
+                requestDelete(HorizonRecord.Subscription, action.id, R.string.pulse_horizon_delete_subscription_confirmation, action.name)
+            is SubscriptionsTabAction.ViewPayments -> showPayments(action.id)
+        }
+    }
+
+    private fun onPurchasesAction(action: PlannedPurchasesTabAction) {
+        when (action) {
+            PlannedPurchasesTabAction.Retry -> refreshPurchases()
+            PlannedPurchasesTabAction.Add -> newForm(HorizonForm.Purchase)
+            is PlannedPurchasesTabAction.Delete ->
+                requestDelete(
+                    HorizonRecord.Purchase,
+                    action.purchase.id,
+                    R.string.pulse_horizon_remove_1_s_from_next_month_s_planned_purchases,
+                    action.purchase.name,
+                )
+            PlannedPurchasesTabAction.Clear ->
+                confirm(
+                    HorizonConfirmation.Apply(
+                        HorizonChange.ClearPurchases,
+                        uiText(R.string.pulse_horizon_permanently_remove_every_purchase_in_next_month_s_list),
+                    ),
+                )
+        }
+    }
+
+    private fun onPaymentsAction(action: SubscriptionPaymentsAction) {
+        when (action) {
+            SubscriptionPaymentsAction.Dismiss -> hidePayments()
+            SubscriptionPaymentsAction.RetryPayments -> state.value.subscriptionId?.let(::showPayments)
+            SubscriptionPaymentsAction.RetryTransactions -> refreshTransactions()
+            is SubscriptionPaymentsAction.Filter -> filter(action.search, action.type)
+            is SubscriptionPaymentsAction.Page -> refreshTransactions(action.page)
+            is SubscriptionPaymentsAction.RequestLink -> {
+                val subscriptionId = state.value.subscriptionId ?: return
+                confirm(
+                    HorizonConfirmation.Apply(
+                        HorizonChange.LinkPayment(subscriptionId, action.id),
+                        uiText(R.string.pulse_horizon_link_this_debit_to_the_subscription_the_transaction_remains),
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun requestDelete(
+        record: HorizonRecord,
+        id: Long,
+        message: Int,
+        name: String,
+    ) {
+        confirm(HorizonConfirmation.Apply(HorizonChange.Delete(record, id), uiText(message, name)))
+    }
+
+    private fun onEditorAction(action: HorizonEditorAction) {
+        when (action) {
+            is HorizonEditorAction.Change -> update(action.draft)
+            HorizonEditorAction.Save -> save()
+            HorizonEditorAction.Cancel -> requestCancelEdit()
+            HorizonEditorAction.AddCategory -> addTransactionCategory()
+            is HorizonEditorAction.DeleteObligation -> deleteObligation(action.id)
+        }
+    }
+
+    private fun onRecentAction(action: RecentTransactionsAction) {
+        when (action) {
+            RecentTransactionsAction.Retry -> refreshRecent()
+            RecentTransactionsAction.OpenHistory -> openHistory()
+            is RecentTransactionsAction.Select -> selectTransaction(TransactionSelection(action.id, TransactionList.Recent))
+            RecentTransactionsAction.Log -> newForm(HorizonForm.Transaction)
+            RecentTransactionsAction.Import -> setImportOpen(true)
+        }
+    }
+
+    private fun onHistoryAction(action: TransactionHistoryAction) {
+        when (action) {
+            TransactionHistoryAction.Back -> closeHistory()
+            is TransactionHistoryAction.Filter -> filterHistory(action.search, action.type, action.categoryId)
+            TransactionHistoryAction.RetryCategories -> refreshOverview()
+            TransactionHistoryAction.Retry -> retryHistory()
+            TransactionHistoryAction.LoadMore -> loadMoreHistory()
+            is TransactionHistoryAction.Select -> selectTransaction(TransactionSelection(action.id, TransactionList.History))
+            TransactionHistoryAction.Log -> newForm(HorizonForm.Transaction)
+        }
+    }
+
+    private fun restoreTransactionSelection(): TransactionSelection? {
+        val id = saved.get<Long>("selectedTransaction") ?: return null
+        val source = TransactionList.entries.find { it.name == saved.get<String>("selectedTransactionSource") } ?: return null
+        return TransactionSelection(id, source)
+    }
+
+    private fun selectTransaction(selection: TransactionSelection?) {
+        saved["selectedTransaction"] = selection?.id
+        saved["selectedTransactionSource"] = selection?.source?.name
+        state.update { it.copy(transactionLists = it.transactionLists.copy(selected = selection)) }
+    }
+
+    private fun back() {
+        val current = state.value
+        when {
+            current.busy -> Unit
+            current.draft != null -> requestCancelEdit()
+            current.transactionLists.historyOpen -> closeHistory()
+            else -> hidePayments()
+        }
+    }
+
+    private fun showReviewRecords(show: Boolean) {
+        saved["showingReviewRecords"] = show
+        state.update { it.copy(showingReviewRecords = show) }
+    }
+
+    private fun requestCancelEdit() {
+        if (state.value.busy) return
+        if (state.value.draft?.dirty == true) confirm(HorizonConfirmation.Discard) else discard()
+    }
+
+    private fun confirm(confirmation: HorizonConfirmation?) {
+        saved["confirmDiscard"] = confirmation == HorizonConfirmation.Discard
+        state.update { it.copy(confirmation = confirmation) }
+    }
+
+    private fun acceptConfirmation() {
+        val pending = state.value.confirmation
+        confirm(null)
+        when (pending) {
+            HorizonConfirmation.Discard -> discard()
+            is HorizonConfirmation.Apply -> mutate(pending.change)
+            null -> Unit
+        }
+    }
+
+    private fun completeImport() {
+        if (!state.value.importOpen) return
+        setImportOpen(false)
+        refresh()
+        state.update { it.copy(message = uiText(R.string.pulse_horizon_statement_complete)) }
+    }
 
     init {
         unsavedChanges.track(
@@ -64,9 +297,9 @@ class HorizonViewModel(
         )
     }
 
-    fun deleteObligation(id: Long) = mutate(HorizonChange.Delete(HorizonRecord.Deduction, id), closeDraft = true)
+    private fun deleteObligation(id: Long) = mutate(HorizonChange.Delete(HorizonRecord.Deduction, id), closeDraft = true)
 
-    fun consumeMessage() {
+    private fun consumeMessage() {
         state.update { it.copy(message = null) }
     }
 
@@ -96,15 +329,15 @@ class HorizonViewModel(
             }
     }
 
-    fun refresh() {
+    private fun refresh() {
         refreshOverview()
         refreshRecent()
-        if (state.value.historyOpen) refreshHistory()
+        if (state.value.transactionLists.historyOpen) refreshHistory()
         refreshPurchases()
         state.value.subscriptionId?.let(::showPayments)
     }
 
-    fun refreshOverview() =
+    private fun refreshOverview() =
         fetch("overview", { horizon.overview() }, { it.overview }) { s, v ->
             if (v.value != null &&
                 s.subscriptionId != null &&
@@ -117,65 +350,65 @@ class HorizonViewModel(
             }
         }
 
-    fun refreshPurchases() =
+    private fun refreshPurchases() =
         fetch("purchases", {
             horizon.purchases()
         }, { it.purchases }) { s, v -> s.copy(purchases = v) }
 
-    fun refreshRecent() = fetch("recent", { getTransactions(1, "", null, pageSize = 5) }, { it.recent }) { s, v -> s.copy(recent = v) }
+    private fun refreshRecent() =
+        fetch("recent", { getTransactions(1, "", null, pageSize = 5) }, { it.transactionLists.recent }) { s, v ->
+            s.copy(transactionLists = s.transactionLists.copy(recent = v))
+        }
 
-    fun openHistory() {
+    private fun openHistory() {
+        selectTransaction(null)
         saved["historyOpen"] = true
-        state.update { it.copy(historyOpen = true) }
+        state.update { it.copy(transactionLists = it.transactionLists.copy(historyOpen = true)) }
         refreshHistory()
     }
 
-    fun closeHistory() {
+    private fun closeHistory() {
         jobs["history"]?.cancel()
+        selectTransaction(null)
         saved["historyOpen"] = false
-        state.update { it.copy(historyOpen = false, history = HorizonSection()) }
+        state.update { it.copy(transactionLists = it.transactionLists.copy(historyOpen = false, history = HorizonSection())) }
     }
 
-    fun filterHistory(
+    private fun filterHistory(
         search: String,
         type: String?,
         categoryId: Long?,
     ) {
         val current = state.value
-        if (!current.historyOpen || current.busy) return
-        if (search == current.historySearch && type == current.historyType && categoryId == current.historyCategoryId) return
+        if (!current.transactionLists.historyOpen || current.busy) return
+        val filters = HistoryFilters(search, type, categoryId)
+        if (filters == current.transactionLists.historyFilters) return
         saved["historySearch"] = search
         saved["historyType"] = type
         saved["historyCategoryId"] = categoryId
         state.update {
-            it.copy(
-                historySearch = search,
-                historyType = type,
-                historyCategoryId = categoryId,
-                history = HorizonSection(),
-            )
+            it.copy(transactionLists = it.transactionLists.copy(historyFilters = filters, history = HorizonSection()))
         }
         refreshHistory()
     }
 
-    fun refreshHistory() {
-        loadHistory(append = false)
+    private fun refreshHistory() {
+        loadHistory(HistoryRequest.Refresh)
     }
 
-    fun loadMoreHistory() {
-        val history = state.value.history
+    private fun loadMoreHistory() {
+        val history = state.value.transactionLists.history
         val page = history.value ?: return
-        if (!history.loading && page.page < page.totalPages) loadHistory(append = true)
+        if (!history.loading && page.page < page.totalPages) loadHistory(HistoryRequest.Append)
     }
 
-    private var retryHistoryAppend = false
+    private fun retryHistory() = loadHistory(state.value.transactionLists.historyRequest)
 
-    fun retryHistory() = loadHistory(retryHistoryAppend)
-
-    private fun loadHistory(append: Boolean) {
-        val current = state.value
+    private fun loadHistory(request: HistoryRequest) {
+        val current = state.value.transactionLists
         if (!current.historyOpen) return
-        retryHistoryAppend = append
+        val append = request == HistoryRequest.Append
+        val filters = current.historyFilters
         val previous = current.history.value
         val first = if (append && previous != null) previous.page + 1 else 1
         val last = if (append) first else previous?.page ?: 1
@@ -184,7 +417,7 @@ class HorizonViewModel(
             {
                 val items = if (append) previous?.items.orEmpty().toMutableList() else mutableListOf()
                 for (number in first..last) {
-                    when (val result = getTransactions(number, current.historySearch, current.historyType, current.historyCategoryId)) {
+                    when (val result = getTransactions(number, filters.search, filters.type, filters.categoryId)) {
                         is Outcome.Error -> return@fetch result
                         is Outcome.Success -> {
                             val page = result.value
@@ -197,11 +430,11 @@ class HorizonViewModel(
                 }
                 error("history page range is empty")
             },
-            { it.history },
-        ) { s, v -> s.copy(history = v) }
+            { it.transactionLists.history },
+        ) { s, v -> s.copy(transactionLists = s.transactionLists.copy(history = v, historyRequest = request)) }
     }
 
-    fun refreshTransactions(page: Int = saved["page"] ?: 1) {
+    private fun refreshTransactions(page: Int = saved["page"] ?: 1) {
         if (saved.get<Int>("page") != page) {
             state.update { it.copy(transactions = HorizonSection()) }
         }
@@ -214,7 +447,7 @@ class HorizonViewModel(
         }
     }
 
-    fun filter(
+    private fun filter(
         search: String,
         type: String?,
     ) {
@@ -237,17 +470,19 @@ class HorizonViewModel(
         refreshTransactions(1)
     }
 
-    internal fun setImportOpen(open: Boolean) {
+    private fun setImportOpen(open: Boolean) {
+        if (open) selectTransaction(null)
         saved["importOpen"] = open
         state.update { it.copy(importOpen = open) }
     }
 
-    fun tab(tab: HorizonTab) {
+    private fun tab(tab: HorizonTab) {
+        if (state.value.tab != tab) selectTransaction(null)
         saved["tab"] = tab.name
         state.update { it.copy(tab = tab) }
     }
 
-    fun showPayments(id: Long) {
+    private fun showPayments(id: Long) {
         saved["subscription"] = id
         state.update {
             it.copy(subscriptionId = id, payments = if (it.subscriptionId == id) it.payments else HorizonSection())
@@ -256,23 +491,24 @@ class HorizonViewModel(
         fetch("payments", { getPayments(id) }, { it.payments }) { s, v -> s.copy(payments = v) }
     }
 
-    fun hidePayments() {
+    private fun hidePayments() {
         saved["subscription"] = null
         jobs["payments"]?.cancel()
         jobs["transactions"]?.cancel()
         state.update { it.copy(subscriptionId = null, payments = HorizonSection(loading = false)) }
     }
 
-    fun edit(draft: HorizonDraft) {
+    private fun edit(draft: HorizonDraft) {
         if (!state.value.busy &&
             !state.value.reviewRequired
         ) {
+            selectTransaction(null)
             saved["draft"] = draft.saved()
             state.update { it.copy(draft = draft, formError = null, message = null) }
         }
     }
 
-    fun update(draft: HorizonDraft) {
+    private fun update(draft: HorizonDraft) {
         if (!state.value.busy) editStored(draft.copy(dirty = true))
     }
 
@@ -281,11 +517,11 @@ class HorizonViewModel(
         state.update { it.copy(draft = draft, formError = null) }
     }
 
-    fun discard() {
+    private fun discard() {
         if (!state.value.busy) closeForm()
     }
 
-    fun addTransactionCategory() {
+    private fun addTransactionCategory() {
         val current = state.value
         val draft = current.draft ?: return
         if (draft.kind != HorizonForm.Transaction || draft.id != null || current.busy || current.reviewRequired) return
@@ -295,13 +531,14 @@ class HorizonViewModel(
     }
 
     private fun closeForm() {
+        showReviewRecords(false)
         val parent = state.value.transactionDraft
         saved["transactionDraft"] = null
         saved["draft"] = parent?.saved()
         state.update { it.copy(draft = parent, transactionDraft = null, formError = null) }
     }
 
-    fun newForm(kind: HorizonForm) {
+    private fun newForm(kind: HorizonForm) {
         val data = state.value.overview.value
         val now = ZonedDateTime.now(UserTimeZone.zone)
         edit(
@@ -339,7 +576,7 @@ class HorizonViewModel(
         )
     }
 
-    fun save() {
+    private fun save() {
         if (state.value.busy || state.value.reviewRequired) return
         val draft = state.value.draft ?: return
         val change =
@@ -366,7 +603,7 @@ class HorizonViewModel(
         mutate(change, closeDraft = true)
     }
 
-    fun mutate(
+    private fun mutate(
         change: HorizonChange,
         closeDraft: Boolean = false,
     ) {
@@ -393,10 +630,6 @@ class HorizonViewModel(
                         it.copy(
                             busy = false,
                             reviewRequired = true,
-                            message =
-                                uiText(
-                                    R.string.pulse_horizon_the_change_could_not_be_confirmed_refresh_and_review,
-                                ),
                         )
                     }
             }
@@ -404,7 +637,7 @@ class HorizonViewModel(
         }
     }
 
-    fun acknowledgeReview() {
+    private fun acknowledgeReview() {
         if (state.value.reviewRequired && state.value.reviewReady) {
             saved["pending"] = false
             state.update {

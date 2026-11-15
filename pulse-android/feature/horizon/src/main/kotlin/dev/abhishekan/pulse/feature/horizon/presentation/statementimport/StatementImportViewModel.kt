@@ -23,7 +23,7 @@ internal data class StatementImportState(
     val batch: StatementBatch? = null,
     val page: StatementRows? = null,
     val edits: Map<Int, StatementRow> = emptyMap(),
-    val result: StatementCommit? = null,
+    val exit: StatementImportExit? = null,
     val confirmed: Boolean = false,
     val busy: Boolean = false,
     val uploading: Boolean = false,
@@ -39,12 +39,39 @@ internal class StatementImportViewModel(
     private val state = MutableStateFlow(StatementImportState())
     val uiState = state.asStateFlow()
 
-    fun reset() {
-        state.value = StatementImportState()
+    fun onAction(action: StatementImportAction) {
+        if (state.value.busy && action !is StatementImportAction.ExitHandled) return
+        if (state.value.exit != null && action != StatementImportAction.Reset && action !is StatementImportAction.ExitHandled) return
+
+        when (action) {
+            StatementImportAction.Reset -> reset()
+            StatementImportAction.Entered -> {
+                val current = state.value
+                if (current.accounts == null && current.failure == null) loadAccounts()
+            }
+            StatementImportAction.RetryAccounts -> loadAccounts()
+            is StatementImportAction.SelectAccount -> state.update { it.copy(account = action.account) }
+            is StatementImportAction.ConfirmAccount -> state.update { it.copy(confirmed = action.confirmed) }
+            is StatementImportAction.EditRow -> state.update { it.copy(edits = it.edits + (action.row.id to action.row)) }
+            is StatementImportAction.Upload -> upload(action.readPdf)
+            is StatementImportAction.Page -> page(action.target)
+            StatementImportAction.Reload -> reload()
+            StatementImportAction.Commit -> commit()
+            StatementImportAction.Close -> close()
+            StatementImportAction.ManageAccounts -> requestExit(StatementImportEvent.ManageAccounts)
+            is StatementImportAction.ExitHandled ->
+                state.update {
+                    if (it.exit == StatementImportExit.Pending(action.event)) it.copy(exit = StatementImportExit.Handled) else it
+                }
+        }
+    }
+
+    private fun reset() {
+        state.update { StatementImportState() }
         loadAccounts()
     }
 
-    fun loadAccounts() =
+    private fun loadAccounts() =
         work {
             when (val result = accounts.accounts()) {
                 is Outcome.Success -> state.update { it.copy(accounts = result.value) }
@@ -52,13 +79,7 @@ internal class StatementImportViewModel(
             }
         }
 
-    fun select(account: FinancialAccount) = state.update { it.copy(account = account) }
-
-    fun confirmAccount(confirmed: Boolean) = state.update { it.copy(confirmed = confirmed) }
-
-    fun edit(row: StatementRow) = state.update { it.copy(edits = it.edits + (row.id to row)) }
-
-    fun upload(readFile: suspend () -> ByteArray?) =
+    private fun upload(readFile: suspend () -> ByteArray?) =
         work {
             val accountId = state.value.account?.id ?: return@work
             val pdf = readFile()
@@ -81,13 +102,13 @@ internal class StatementImportViewModel(
             }
         }
 
-    fun page(target: Int) =
+    private fun page(target: Int) =
         work {
             val current = saveEdits() ?: return@work
             loadPage(current.id, target)
         }
 
-    fun reload() =
+    private fun reload() =
         work {
             val current = state.value.batch ?: return@work
             val response = imports.statementBatch(current.id)
@@ -99,30 +120,34 @@ internal class StatementImportViewModel(
             }
         }
 
-    fun commit() =
+    private fun commit() =
         work {
             if (!state.value.confirmed) return@work
             val current = saveEdits() ?: return@work
             val response = imports.commitStatement(current)
             if (response is StatementResponse.Success) {
-                state.update { it.copy(result = response.value) }
+                requestExit(StatementImportEvent.Completed(response.value))
             } else {
                 record(response)
             }
         }
 
-    fun close(dismiss: () -> Unit) {
+    private fun close() {
         val current = state.value
         work {
-            if (current.batch == null || current.result != null || current.errorCode == "BATCH_EXPIRED") {
-                dismiss()
+            if (current.batch == null || current.errorCode == "BATCH_EXPIRED") {
+                requestExit(StatementImportEvent.Closed)
             } else {
                 when (val response = imports.cancelStatement(current.batch.id)) {
-                    is StatementResponse.Success -> dismiss()
+                    is StatementResponse.Success -> requestExit(StatementImportEvent.Closed)
                     else -> record(response)
                 }
             }
         }
+    }
+
+    private fun requestExit(event: StatementImportEvent) {
+        state.update { it.copy(exit = StatementImportExit.Pending(event)) }
     }
 
     private suspend fun loadPage(
@@ -167,7 +192,6 @@ internal class StatementImportViewModel(
     }
 
     private fun work(action: suspend () -> Unit) {
-        if (state.value.busy) return
         state.update { it.copy(busy = true, errorCode = null, failure = null) }
         viewModelScope.launch {
             try {
@@ -177,4 +201,62 @@ internal class StatementImportViewModel(
             }
         }
     }
+}
+
+internal sealed interface StatementImportAction {
+    data object Reset : StatementImportAction
+
+    data object Entered : StatementImportAction
+
+    data object RetryAccounts : StatementImportAction
+
+    data class SelectAccount(
+        val account: FinancialAccount,
+    ) : StatementImportAction
+
+    data class ConfirmAccount(
+        val confirmed: Boolean,
+    ) : StatementImportAction
+
+    data class EditRow(
+        val row: StatementRow,
+    ) : StatementImportAction
+
+    data class Upload(
+        val readPdf: suspend () -> ByteArray?,
+    ) : StatementImportAction
+
+    data class Page(
+        val target: Int,
+    ) : StatementImportAction
+
+    data object Reload : StatementImportAction
+
+    data object Commit : StatementImportAction
+
+    data object Close : StatementImportAction
+
+    data object ManageAccounts : StatementImportAction
+
+    data class ExitHandled(
+        val event: StatementImportEvent,
+    ) : StatementImportAction
+}
+
+internal sealed interface StatementImportEvent {
+    data object Closed : StatementImportEvent
+
+    data object ManageAccounts : StatementImportEvent
+
+    data class Completed(
+        val result: StatementCommit,
+    ) : StatementImportEvent
+}
+
+internal sealed interface StatementImportExit {
+    data class Pending(
+        val event: StatementImportEvent,
+    ) : StatementImportExit
+
+    data object Handled : StatementImportExit
 }

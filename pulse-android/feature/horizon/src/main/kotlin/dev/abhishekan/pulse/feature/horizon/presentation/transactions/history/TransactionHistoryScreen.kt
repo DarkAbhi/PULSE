@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -37,7 +38,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
-import dev.abhishekan.pulse.core.domain.model.HorizonTransaction
 import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -72,6 +72,28 @@ internal data class TransactionHistoryUiState(
     val reviewRequired: Boolean,
 )
 
+internal sealed interface TransactionHistoryAction {
+    data object Back : TransactionHistoryAction
+
+    data class Filter(
+        val search: String,
+        val type: String?,
+        val categoryId: Long?,
+    ) : TransactionHistoryAction
+
+    data object RetryCategories : TransactionHistoryAction
+
+    data object Retry : TransactionHistoryAction
+
+    data object LoadMore : TransactionHistoryAction
+
+    data class Select(
+        val id: Long,
+    ) : TransactionHistoryAction
+
+    data object Log : TransactionHistoryAction
+}
+
 @Composable
 internal fun TransactionHistoryScreen(
     state: TransactionHistoryUiState,
@@ -80,20 +102,15 @@ internal fun TransactionHistoryScreen(
     tablet: Boolean,
     wide: Boolean,
     canLog: Boolean,
-    select: (HorizonTransaction) -> Unit,
-    onBack: () -> Unit,
-    onFilter: (String, String?, Long?) -> Unit,
-    onRetryCategories: () -> Unit,
-    onRetry: () -> Unit,
-    onLoadMore: () -> Unit,
-    onLog: () -> Unit,
+    onAction: (TransactionHistoryAction) -> Unit,
     review: @Composable () -> Unit,
 ) {
     var search by rememberSaveable { mutableStateOf(state.historySearch) }
+    val dispatch by rememberUpdatedState(onAction)
     LaunchedEffect(active, search, state.historySearch, state.historyType, state.historyCategoryId, state.busy) {
         if (active && search != state.historySearch && !state.busy) {
             delay(350)
-            onFilter(search, state.historyType, state.historyCategoryId)
+            dispatch(TransactionHistoryAction.Filter(search, state.historyType, state.historyCategoryId))
         }
     }
 
@@ -104,7 +121,7 @@ internal fun TransactionHistoryScreen(
     val focusManager = LocalFocusManager.current
     val clearSearch: () -> Unit = {
         search = ""
-        onFilter("", state.historyType, state.historyCategoryId)
+        onAction(TransactionHistoryAction.Filter("", state.historyType, state.historyCategoryId))
         focusManager.clearFocus()
         keyboard?.hide()
     }
@@ -133,7 +150,7 @@ internal fun TransactionHistoryScreen(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions =
                 KeyboardActions(onSearch = {
-                    onFilter(search, state.historyType, state.historyCategoryId)
+                    onAction(TransactionHistoryAction.Filter(search, state.historyType, state.historyCategoryId))
                     focusManager.clearFocus()
                     keyboard?.hide()
                 }),
@@ -147,6 +164,45 @@ internal fun TransactionHistoryScreen(
         }
     }
 
+    TransactionHistoryScreenContent(
+        state = state,
+        active = active,
+        padding = padding,
+        tablet = tablet,
+        wide = wide,
+        canLog = canLog,
+        search = search,
+        searchOpen = searchOpen,
+        searchField = searchField,
+        clearSearch = clearSearch,
+        onOpenSearch = {
+            searchOpen = true
+            focusSearch = true
+        },
+        onAction = {
+            if (it == TransactionHistoryAction.Log) keyboard?.hide()
+            onAction(it)
+        },
+        review = review,
+    )
+}
+
+@Composable
+private fun TransactionHistoryScreenContent(
+    state: TransactionHistoryUiState,
+    active: Boolean,
+    padding: PaddingValues,
+    tablet: Boolean,
+    wide: Boolean,
+    canLog: Boolean,
+    search: String,
+    searchOpen: Boolean,
+    searchField: @Composable (Modifier) -> Unit,
+    clearSearch: () -> Unit,
+    onOpenSearch: () -> Unit,
+    onAction: (TransactionHistoryAction) -> Unit,
+    review: @Composable () -> Unit,
+) {
     Column(Modifier.fillMaxSize()) {
         if (!state.reviewingDraft) {
             PulseTopAppBar(
@@ -154,7 +210,7 @@ internal fun TransactionHistoryScreen(
                 navigationIcon = {
                     PulseButton(
                         stringResource(R.string.pulse_horizon_back_to_transactions),
-                        onBack,
+                        { onAction(TransactionHistoryAction.Back) },
                         enabled = !state.busy,
                         style = PulseButtonStyle.Icon,
                     ) { Icon(painterResource(CoreUiR.drawable.pulse_back), null) }
@@ -165,10 +221,7 @@ internal fun TransactionHistoryScreen(
                     } else {
                         PulseButton(
                             stringResource(R.string.pulse_horizon_search_transactions),
-                            {
-                                searchOpen = true
-                                focusSearch = true
-                            },
+                            onOpenSearch,
                             enabled = !state.busy,
                             style = PulseButtonStyle.Icon,
                         ) { Icon(painterResource(R.drawable.pulse_horizon_search), null) }
@@ -184,13 +237,15 @@ internal fun TransactionHistoryScreen(
             if ((!tablet || state.reviewingDraft) && (searchOpen || search.isNotEmpty())) {
                 searchField(Modifier.fillMaxWidth())
             }
-            LedgerFilters(state, search, onFilter, onRetryCategories)
+            LedgerFilters(state, search, onAction)
         }
 
         val history = state.history
         val page = history.value
+        val showingCurrentSearch = search == state.historySearch
         val months = remember(page) { ledgerMonths(page?.items.orEmpty()) }
-        val monthFormat = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
+        val locale = Locale.getDefault()
+        val monthFormat = remember(locale) { DateTimeFormatter.ofPattern("MMMM yyyy", locale) }
         BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
             val emptyHeight = maxHeight * 0.9f
             key(state.historySearch, state.historyType, state.historyCategoryId) {
@@ -209,7 +264,7 @@ internal fun TransactionHistoryScreen(
                         page.items.isEmpty() &&
                         history.error == null &&
                         !history.loading &&
-                        search == state.historySearch
+                        showingCurrentSearch
                     ) {
                         item("empty") {
                             EmptyTransactionHistory(
@@ -217,11 +272,8 @@ internal fun TransactionHistoryScreen(
                                 tablet = tablet,
                                 canLog = canLog,
                                 clearSearch = clearSearch,
-                                clearFilters = { onFilter(search, null, null) },
-                                log = {
-                                    keyboard?.hide()
-                                    onLog()
-                                },
+                                clearFilters = { onAction(TransactionHistoryAction.Filter(search, null, null)) },
+                                log = { onAction(TransactionHistoryAction.Log) },
                                 modifier =
                                     if (!state.reviewingDraft && !state.reviewRequired) Modifier.heightIn(min = emptyHeight) else Modifier,
                             )
@@ -236,24 +288,39 @@ internal fun TransactionHistoryScreen(
                             )
                         }
                         items(transactions, key = { it.id }) { tx ->
-                            LedgerRow(tx, wide, open = if (search == state.historySearch) ({ select(tx) }) else null)
+                            LedgerRow(
+                                tx,
+                                wide,
+                                open = if (showingCurrentSearch) ({ onAction(TransactionHistoryAction.Select(tx.id)) }) else null,
+                            )
                             PulseHorizontalDivider()
                         }
                     }
                     if (history.error != null) {
                         item("error") {
-                            PulseErrorState(history.error.message, onRetry)
+                            PulseErrorState(history.error.message, { onAction(TransactionHistoryAction.Retry) })
                         }
                     } else if (page != null && (history.loading || page.page < page.totalPages)) {
                         item("more") {
-                            LaunchedEffect(active, page.page, history.loading) {
-                                if (active && !history.loading) onLoadMore()
-                            }
-                            PulseLoadingState(stringResource(R.string.pulse_horizon_loading_transactions))
+                            TransactionHistoryAppendFooter(active, page.page, history.loading, onAction)
                         }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun TransactionHistoryAppendFooter(
+    active: Boolean,
+    page: Int,
+    loading: Boolean,
+    onAction: (TransactionHistoryAction) -> Unit,
+) {
+    val dispatch by rememberUpdatedState(onAction)
+    LaunchedEffect(active, page, loading) {
+        if (active && !loading) dispatch(TransactionHistoryAction.LoadMore)
+    }
+    PulseLoadingState(stringResource(R.string.pulse_horizon_loading_transactions))
 }

@@ -138,7 +138,11 @@ private fun HistoryEmptyIllustration(filtered: Boolean) {
             Modifier.align(Alignment.TopEnd).size(spacing.large).background(colors.primary, PulseTheme.shapes.pill),
             contentAlignment = Alignment.Center,
         ) {
-            PulseText("0", style = PulseTextStyle.Label, color = colors.onPrimary)
+            PulseText(
+                stringResource(R.string.pulse_horizon_history_empty_badge_glyph),
+                style = PulseTextStyle.Label,
+                color = colors.onPrimary,
+            )
         }
     }
 }

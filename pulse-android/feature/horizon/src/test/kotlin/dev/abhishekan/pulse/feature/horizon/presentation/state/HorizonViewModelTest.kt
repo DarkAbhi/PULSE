@@ -14,11 +14,16 @@ import dev.abhishekan.pulse.core.domain.usecase.GetSubscriptionPayments
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.currencyText
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
+import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorAction
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonForm
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.draft
 import dev.abhishekan.pulse.feature.horizon.presentation.navigation.EditorParent
 import dev.abhishekan.pulse.feature.horizon.presentation.navigation.HorizonDestination
 import dev.abhishekan.pulse.feature.horizon.presentation.navigation.destination
+import dev.abhishekan.pulse.feature.horizon.presentation.subscriptions.SubscriptionPaymentsAction
+import dev.abhishekan.pulse.feature.horizon.presentation.subscriptions.SubscriptionsTabAction
+import dev.abhishekan.pulse.feature.horizon.presentation.transactions.history.TransactionHistoryAction
+import dev.abhishekan.pulse.feature.horizon.presentation.transactions.recent.RecentTransactionsAction
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -74,16 +79,16 @@ class HorizonViewModelTest {
             repo.overviewFailure = Failure.Connection
             repo.listFailure = Failure.Connection
             repo.purchaseFailure = Failure.Connection
-            vm.refresh()
+            vm.onAction(HorizonAction.Refresh)
             assertTrue(vm.uiState.value.overview.loading)
             assertEquals(previous.overview.value, vm.uiState.value.overview.value)
-            assertEquals(previous.recent.value, vm.uiState.value.recent.value)
+            assertEquals(previous.transactionLists.recent.value, vm.uiState.value.transactionLists.recent.value)
             assertEquals(previous.purchases.value, vm.uiState.value.purchases.value)
             runCurrent()
             assertFalse(vm.uiState.value.overview.loading)
             assertEquals(Failure.Connection, vm.uiState.value.overview.error)
             assertEquals(previous.overview.value, vm.uiState.value.overview.value)
-            assertEquals(previous.recent.value, vm.uiState.value.recent.value)
+            assertEquals(previous.transactionLists.recent.value, vm.uiState.value.transactionLists.recent.value)
             assertEquals(previous.purchases.value, vm.uiState.value.purchases.value)
         }
 
@@ -91,16 +96,16 @@ class HorizonViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.refreshTransactions(2)
+            vm.onAction(HorizonAction.Payments(SubscriptionPaymentsAction.Page(2)))
             assertNull(vm.uiState.value.transactions.value)
             runCurrent()
-            vm.filter("tea", "debit")
+            vm.onAction(HorizonAction.Payments(SubscriptionPaymentsAction.Filter("tea", "debit")))
             assertNull(vm.uiState.value.transactions.value)
             runCurrent()
-            vm.showPayments(1)
+            vm.onAction(HorizonAction.Subscriptions(SubscriptionsTabAction.ViewPayments(1)))
             runCurrent()
             assertNotNull(vm.uiState.value.payments.value)
-            vm.showPayments(2)
+            vm.onAction(HorizonAction.Subscriptions(SubscriptionsTabAction.ViewPayments(2)))
             assertNull(vm.uiState.value.payments.value)
             runCurrent()
         }
@@ -111,10 +116,10 @@ class HorizonViewModelTest {
             val vm = vm()
             runCurrent()
             assertEquals(Failure.Server, vm.uiState.value.overview.error)
-            assertNotNull(vm.uiState.value.recent.value)
+            assertNotNull(vm.uiState.value.transactionLists.recent.value)
             assertNotNull(vm.uiState.value.purchases.value)
             repo.overviewFailure = null
-            vm.refreshOverview()
+            vm.onAction(HorizonAction.RetryOverview)
             runCurrent()
             assertEquals(listOf(null to 5), repo.historyRequests)
             assertNotNull(vm.uiState.value.overview.value)
@@ -125,17 +130,17 @@ class HorizonViewModelTest {
             val saved = SavedStateHandle()
             val vm = vm(saved)
             runCurrent()
-            vm.refreshTransactions(3)
+            vm.onAction(HorizonAction.Payments(SubscriptionPaymentsAction.Page(3)))
             runCurrent()
             assertEquals(
                 3,
                 vm.uiState.value.transactions.value
                     ?.page,
             )
-            vm.filter(" tea ", "debit")
+            vm.onAction(HorizonAction.Payments(SubscriptionPaymentsAction.Filter(" tea ", "debit")))
             runCurrent()
             assertEquals(Triple(1, "tea", "debit"), repo.pages.last())
-            vm.tab(HorizonTab.Transactions)
+            vm.onAction(HorizonAction.SelectTab(HorizonTab.Transactions))
             val restored =
                 vm(
                     SavedStateHandle(
@@ -149,7 +154,7 @@ class HorizonViewModelTest {
                 )
             runCurrent()
             assertEquals(HorizonTab.Transactions, restored.uiState.value.tab)
-            restored.showPayments(1)
+            restored.onAction(HorizonAction.Subscriptions(SubscriptionsTabAction.ViewPayments(1)))
             runCurrent()
             assertEquals(2, repo.pages.last().first)
         }
@@ -159,11 +164,11 @@ class HorizonViewModelTest {
             val vm = vm()
             runCurrent()
             repo.listFailure = Failure.Connection
-            vm.refreshTransactions(3)
+            vm.onAction(HorizonAction.Payments(SubscriptionPaymentsAction.Page(3)))
             runCurrent()
             assertEquals(Failure.Connection, vm.uiState.value.transactions.error)
             repo.listFailure = null
-            vm.refreshTransactions()
+            vm.onAction(HorizonAction.Payments(SubscriptionPaymentsAction.RetryTransactions))
             runCurrent()
             assertEquals(3, repo.pages.last().first)
             assertEquals(
@@ -177,36 +182,63 @@ class HorizonViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            val recent = vm.uiState.value.recent.value
-            vm.openHistory()
+            val recent = vm.uiState.value.transactionLists.recent.value
+            vm.onAction(HorizonAction.Recent(RecentTransactionsAction.OpenHistory))
             runCurrent()
-            vm.filterHistory("tea", "debit", 7)
+            vm.onAction(HorizonAction.History(TransactionHistoryAction.Filter("tea", "debit", 7)))
             runCurrent()
             assertEquals(7L to 20, repo.historyRequests.last())
             assertEquals(Triple(1, "tea", "debit"), repo.pages.last())
             repo.listFailure = Failure.Connection
-            vm.loadMoreHistory()
+            vm.onAction(HorizonAction.History(TransactionHistoryAction.LoadMore))
             runCurrent()
             assertEquals(
                 1,
-                vm.uiState.value.history.value
+                vm.uiState.value.transactionLists.history.value
                     ?.page,
             )
-            assertEquals(Failure.Connection, vm.uiState.value.history.error)
+            assertEquals(Failure.Connection, vm.uiState.value.transactionLists.history.error)
             repo.listFailure = null
-            vm.retryHistory()
+            vm.onAction(HorizonAction.History(TransactionHistoryAction.Retry))
             runCurrent()
             assertEquals(
                 2,
-                vm.uiState.value.history.value
+                vm.uiState.value.transactionLists.history.value
                     ?.page,
             )
-            assertEquals(recent, vm.uiState.value.recent.value)
-            vm.closeHistory()
-            vm.showPayments(1)
+            assertEquals(recent, vm.uiState.value.transactionLists.recent.value)
+            vm.onAction(HorizonAction.History(TransactionHistoryAction.Back))
+            vm.onAction(HorizonAction.Subscriptions(SubscriptionsTabAction.ViewPayments(1)))
             runCurrent()
             assertEquals(Triple(1, "", null), repo.pages.last())
             assertEquals(null to 20, repo.historyRequests.last())
+        }
+
+    @Test fun transactionSelectionRestoresForItsListAndClearsWhenEditingOrLeaving() =
+        runTest {
+            val saved = SavedStateHandle()
+            val original = vm(saved)
+            original.onAction(HorizonAction.SelectTab(HorizonTab.Transactions))
+            original.onAction(HorizonAction.Recent(RecentTransactionsAction.Select(4)))
+            assertEquals(TransactionSelection(4, TransactionList.Recent), original.uiState.value.transactionLists.selected)
+
+            original.onAction(HorizonAction.Recent(RecentTransactionsAction.OpenHistory))
+            assertNull(original.uiState.value.transactionLists.selected)
+            original.onAction(HorizonAction.History(TransactionHistoryAction.Filter("tea", "debit", 7)))
+            original.onAction(HorizonAction.History(TransactionHistoryAction.Select(4)))
+
+            val restored = vm(saved)
+            assertEquals(TransactionSelection(4, TransactionList.History), restored.uiState.value.transactionLists.selected)
+            assertEquals(HistoryFilters("tea", "debit", 7), restored.uiState.value.transactionLists.historyFilters)
+            restored.onAction(HorizonAction.Edit(HorizonDraft(HorizonForm.Transaction)))
+            restored.onAction(HorizonAction.Editor(HorizonEditorAction.Cancel))
+            assertNull(restored.uiState.value.transactionLists.selected)
+            assertEquals(HorizonDestination.History, restored.uiState.value.destination)
+
+            restored.onAction(HorizonAction.History(TransactionHistoryAction.Select(4)))
+            restored.onAction(HorizonAction.Back)
+            assertNull(restored.uiState.value.transactionLists.selected)
+            assertEquals(HorizonDestination.Tabs(HorizonTab.Transactions), restored.uiState.value.destination)
         }
 
     @Test fun nestedCategorySaveAndCancelRestoreTheTransactionDraft() =
@@ -214,30 +246,30 @@ class HorizonViewModelTest {
             val saved = SavedStateHandle()
             val vm = vm(saved)
             runCurrent()
-            vm.tab(HorizonTab.Transactions)
-            vm.openHistory()
+            vm.onAction(HorizonAction.SelectTab(HorizonTab.Transactions))
+            vm.onAction(HorizonAction.Recent(RecentTransactionsAction.OpenHistory))
             val transaction = HorizonDraft(HorizonForm.Transaction, name = "Tea", amount = "12.50", dirty = true)
-            vm.edit(transaction)
-            vm.addTransactionCategory()
-            vm.discard()
+            vm.onAction(HorizonAction.Edit(transaction))
+            vm.onAction(HorizonAction.Editor(HorizonEditorAction.AddCategory))
+            vm.onAction(HorizonAction.Editor(HorizonEditorAction.Cancel))
             assertEquals(transaction, vm.uiState.value.draft)
 
-            vm.addTransactionCategory()
-            vm.update(checkNotNull(vm.uiState.value.draft).copy(name = "Drinks"))
+            vm.onAction(HorizonAction.Editor(HorizonEditorAction.AddCategory))
+            vm.onAction(HorizonAction.Editor(HorizonEditorAction.Change(checkNotNull(vm.uiState.value.draft).copy(name = "Drinks"))))
             val restored = vm(saved)
             runCurrent()
             val categoryDestination = restored.uiState.value.destination as HorizonDestination.Editor
             assertEquals(HorizonForm.Category, categoryDestination.draft.kind)
             assertEquals(EditorParent.Transaction, categoryDestination.parent)
-            restored.save()
+            restored.onAction(HorizonAction.Editor(HorizonEditorAction.Save))
             runCurrent()
             assertEquals(transaction, restored.uiState.value.draft)
             assertEquals(HorizonDestination.Editor(transaction, EditorParent.History), restored.uiState.value.destination)
             assertNull(restored.uiState.value.transactionDraft)
             assertEquals("Drinks", (repo.writes.single() as HorizonChange.Category).name)
 
-            restored.edit(transaction.copy(id = 42))
-            restored.addTransactionCategory()
+            restored.onAction(HorizonAction.Edit(transaction.copy(id = 42)))
+            restored.onAction(HorizonAction.Editor(HorizonEditorAction.AddCategory))
             assertEquals(
                 HorizonForm.Transaction,
                 restored.uiState.value.draft
@@ -249,23 +281,40 @@ class HorizonViewModelTest {
         runTest {
             val saved = SavedStateHandle()
             val original = vm(saved)
-            original.tab(HorizonTab.Transactions)
-            original.setImportOpen(true)
+            original.onAction(HorizonAction.SelectTab(HorizonTab.Transactions))
+            original.onAction(HorizonAction.Recent(RecentTransactionsAction.Import))
 
             val restored = vm(saved)
             assertEquals(HorizonDestination.StatementImport, restored.uiState.value.destination)
 
-            restored.setImportOpen(false)
+            restored.onAction(HorizonAction.CloseImport)
             assertEquals(HorizonDestination.Tabs(HorizonTab.Transactions), restored.uiState.value.destination)
+
+            restored.onAction(HorizonAction.Recent(RecentTransactionsAction.Import))
+            runCurrent()
+            val readsBeforeCompletion = repo.readCount
+            restored.onAction(HorizonAction.ImportCompleted)
+            restored.onAction(HorizonAction.ImportCompleted)
+            runCurrent()
+            assertEquals(HorizonDestination.Tabs(HorizonTab.Transactions), restored.uiState.value.destination)
+            assertEquals(readsBeforeCompletion + 1, repo.readCount)
+            assertNotNull(restored.uiState.value.message)
+            restored.onAction(HorizonAction.ConsumeMessage)
+            assertNull(restored.uiState.value.message)
         }
 
     @Test fun deletionRefreshClosesPaymentsForAnAbsentSubscription() =
         runTest {
             val vm = vm()
             runCurrent()
-            vm.showPayments(4)
+            vm.onAction(HorizonAction.Subscriptions(SubscriptionsTabAction.ViewPayments(4)))
             runCurrent()
-            vm.mutate(HorizonChange.Delete(HorizonRecord.Subscription, 4))
+            vm.onAction(HorizonAction.Subscriptions(SubscriptionsTabAction.RequestDelete(4, "Subscription")))
+            assertEquals(
+                HorizonChange.Delete(HorizonRecord.Subscription, 4),
+                (vm.uiState.value.confirmation as HorizonConfirmation.Apply).change,
+            )
+            vm.onAction(HorizonAction.AcceptConfirmation)
             runCurrent()
             assertNull(vm.uiState.value.subscriptionId)
             assertFalse(vm.uiState.value.payments.loading)
@@ -281,8 +330,8 @@ class HorizonViewModelTest {
                 HorizonDraft(HorizonForm.Deduction, name = "Bad day", amount = "1", dueDay = "32"),
                 HorizonDraft(HorizonForm.Transaction, name = "Date", amount = "1", date = "2026-02-30"),
             ).forEach {
-                vm.edit(it)
-                vm.save()
+                vm.onAction(HorizonAction.Edit(it))
+                vm.onAction(HorizonAction.Editor(HorizonEditorAction.Save))
                 runCurrent()
                 assertNotNull(vm.uiState.value.formError)
             }
@@ -295,9 +344,9 @@ class HorizonViewModelTest {
             repo.write = { gate.await() }
             val vm = vm()
             runCurrent()
-            vm.edit(HorizonDraft(HorizonForm.Budget, name = "Food", amount = "12.50"))
-            vm.save()
-            vm.save()
+            vm.onAction(HorizonAction.Edit(HorizonDraft(HorizonForm.Budget, name = "Food", amount = "12.50")))
+            vm.onAction(HorizonAction.Editor(HorizonEditorAction.Save))
+            vm.onAction(HorizonAction.Editor(HorizonEditorAction.Save))
             runCurrent()
             assertEquals(1, repo.writes.size)
             assertTrue(vm.uiState.value.busy)
@@ -321,27 +370,27 @@ class HorizonViewModelTest {
                     date = "2028-02-20",
                 )
             listOf("", "0", "32", "1.5").forEach { day ->
-                vm.edit(monthly.copy(dueDay = day))
-                vm.save()
+                vm.onAction(HorizonAction.Edit(monthly.copy(dueDay = day)))
+                vm.onAction(HorizonAction.Editor(HorizonEditorAction.Save))
                 runCurrent()
                 assertNotNull(vm.uiState.value.formError)
             }
-            vm.edit(monthly.copy(cycle = "yearly", date = ""))
-            vm.save()
+            vm.onAction(HorizonAction.Edit(monthly.copy(cycle = "yearly", date = "")))
+            vm.onAction(HorizonAction.Editor(HorizonEditorAction.Save))
             runCurrent()
             assertNotNull(vm.uiState.value.formError)
             assertTrue(repo.writes.isEmpty())
 
-            vm.edit(monthly)
-            vm.save()
+            vm.onAction(HorizonAction.Edit(monthly))
+            vm.onAction(HorizonAction.Editor(HorizonEditorAction.Save))
             runCurrent()
             val monthlyChange = repo.writes.last() as HorizonChange.Subscription
             assertEquals(29, monthlyChange.billingDay)
             assertNull(monthlyChange.renewalDate)
             assertNull(monthlyChange.deductionId)
 
-            vm.edit(monthly.copy(cycle = "yearly", dueDay = "invalid"))
-            vm.save()
+            vm.onAction(HorizonAction.Edit(monthly.copy(cycle = "yearly", dueDay = "invalid")))
+            vm.onAction(HorizonAction.Editor(HorizonEditorAction.Save))
             runCurrent()
             val yearlyChange = repo.writes.last() as HorizonChange.Subscription
             assertEquals(20, yearlyChange.billingDay)
@@ -357,13 +406,13 @@ class HorizonViewModelTest {
                 repo.listFailure = Failure.Connection
                 Outcome.Error(Failure.Timeout)
             }
-            vm.edit(HorizonDraft(HorizonForm.Budget, name = "Food", amount = "12.50", dirty = true))
-            vm.save()
+            vm.onAction(HorizonAction.Edit(HorizonDraft(HorizonForm.Budget, name = "Food", amount = "12.50", dirty = true)))
+            vm.onAction(HorizonAction.Editor(HorizonEditorAction.Save))
             runCurrent()
             assertTrue(vm.uiState.value.reviewRequired)
             assertFalse(vm.uiState.value.reviewReady)
-            vm.acknowledgeReview()
-            vm.save()
+            vm.onAction(HorizonAction.AcknowledgeReview)
+            vm.onAction(HorizonAction.Editor(HorizonEditorAction.Save))
             runCurrent()
             assertEquals(1, repo.writes.size)
             val restored =
@@ -383,9 +432,9 @@ class HorizonViewModelTest {
             )
             assertTrue(restored.uiState.value.reviewRequired)
             repo.listFailure = null
-            restored.refresh()
+            restored.onAction(HorizonAction.Refresh)
             runCurrent()
-            restored.acknowledgeReview()
+            restored.onAction(HorizonAction.AcknowledgeReview)
             assertFalse(restored.uiState.value.reviewRequired)
         }
 
@@ -419,12 +468,14 @@ class HorizonViewModelTest {
                     "color",
                     true,
                 )
-            vm.edit(draft)
+            vm.onAction(HorizonAction.Edit(draft))
             repo.overviewFailure = Failure.Connection
             val restored = vm(SavedStateHandle(mapOf("draft" to saved.get<ArrayList<String>>("draft"))))
             runCurrent()
             assertEquals(draft, restored.uiState.value.draft)
-            restored.discard()
+            restored.onAction(HorizonAction.Editor(HorizonEditorAction.Cancel))
+            assertEquals(HorizonConfirmation.Discard, restored.uiState.value.confirmation)
+            restored.onAction(HorizonAction.AcceptConfirmation)
             assertNull(restored.uiState.value.draft)
         }
 
@@ -470,7 +521,8 @@ class HorizonViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.mutate(HorizonChange.Delete(HorizonRecord.Budget, 3))
+            vm.onAction(HorizonAction.AskConfirmation(HorizonChange.Delete(HorizonRecord.Budget, 3), UiText.Literal("Confirm")))
+            vm.onAction(HorizonAction.AcceptConfirmation)
             runCurrent()
             assertEquals(HorizonChange.Delete(HorizonRecord.Budget, 3), repo.writes.single())
             val apply = ApplyHorizonChange(repo)

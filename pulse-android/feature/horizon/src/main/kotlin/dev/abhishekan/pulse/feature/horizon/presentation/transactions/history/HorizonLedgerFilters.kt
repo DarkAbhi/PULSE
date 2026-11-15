@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -36,17 +37,16 @@ import dev.abhishekan.pulse.feature.horizon.R
 internal fun LedgerFilters(
     state: TransactionHistoryUiState,
     search: String,
-    onFilter: (String, String?, Long?) -> Unit,
-    onRetryCategories: () -> Unit,
+    onAction: (TransactionHistoryAction) -> Unit,
 ) {
     val categoryId = state.historyCategoryId
     var sheet by rememberSaveable { mutableStateOf<String?>(null) }
     var categorySearch by rememberSaveable { mutableStateOf("") }
-    val categories =
+    val availableCategories =
         state.overview.value
             ?.categories
             .orEmpty()
-            .sortedBy { it.name.lowercase() }
+    val categories = remember(availableCategories) { availableCategories.sortedBy { it.name.lowercase() } }
     val allCategories = stringResource(R.string.pulse_horizon_ledger_all_categories)
     val categoryLabel =
         categories.find { it.id == categoryId }?.name
@@ -106,12 +106,12 @@ internal fun LedgerFilters(
                     ) {
                         item {
                             PulseCheckbox(categoryId == null, {
-                                onFilter(search, state.historyType, null)
+                                onAction(TransactionHistoryAction.Filter(search, state.historyType, null))
                                 sheet = null
                             }, allCategories, Modifier.fillMaxWidth())
                         }
                         state.overview.error?.let { error ->
-                            item { PulseErrorState(error.message, onRetryCategories) }
+                            item { PulseErrorState(error.message, { onAction(TransactionHistoryAction.RetryCategories) }) }
                         }
                         if (state.overview.loading && state.overview.value == null) {
                             item { PulseLoadingState(stringResource(R.string.pulse_horizon_loading_your_horizon)) }
@@ -121,7 +121,7 @@ internal fun LedgerFilters(
                             PulseCheckbox(
                                 categoryId == category.id,
                                 {
-                                    onFilter(search, state.historyType, category.id)
+                                    onAction(TransactionHistoryAction.Filter(search, state.historyType, category.id))
                                     sheet = null
                                 },
                                 category.name,
@@ -141,7 +141,7 @@ internal fun LedgerFilters(
                 } else {
                     listOf(null, "debit", "credit").forEach { type ->
                         LedgerSheetOption(ledgerTypeLabel(type), state.historyType == type) {
-                            onFilter(search, type, categoryId)
+                            onAction(TransactionHistoryAction.Filter(search, type, categoryId))
                             sheet = null
                         }
                     }

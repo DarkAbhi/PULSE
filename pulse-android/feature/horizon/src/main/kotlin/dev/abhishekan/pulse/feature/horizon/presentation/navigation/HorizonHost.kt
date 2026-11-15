@@ -9,13 +9,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.SaveableStateHolder
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -26,7 +21,6 @@ import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
-import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
@@ -40,17 +34,22 @@ import dev.abhishekan.pulse.feature.horizon.presentation.budgets.BudgetEditorScr
 import dev.abhishekan.pulse.feature.horizon.presentation.categories.CategoryEditorScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.components.horizonGutter
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
+import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorAction
+import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorState
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonForm
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.draft
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.topBarTitle
 import dev.abhishekan.pulse.feature.horizon.presentation.obligations.FixedObligationEditorScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.purchases.PlannedPurchaseEditorScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.settings.HorizonSettingsEditorScreen
+import dev.abhishekan.pulse.feature.horizon.presentation.state.HorizonAction
+import dev.abhishekan.pulse.feature.horizon.presentation.state.HorizonConfirmation
 import dev.abhishekan.pulse.feature.horizon.presentation.state.HorizonTab
 import dev.abhishekan.pulse.feature.horizon.presentation.state.HorizonUiState
-import dev.abhishekan.pulse.feature.horizon.presentation.state.HorizonViewModel
+import dev.abhishekan.pulse.feature.horizon.presentation.state.TransactionList
 import dev.abhishekan.pulse.feature.horizon.presentation.subscriptions.SubscriptionEditorScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.subscriptions.SubscriptionPaymentsSheet
+import dev.abhishekan.pulse.feature.horizon.presentation.subscriptions.SubscriptionPaymentsState
 import dev.abhishekan.pulse.feature.horizon.presentation.transactions.TransactionDetails
 import dev.abhishekan.pulse.feature.horizon.presentation.transactions.editor.TransactionEditorScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.transactions.history.TransactionHistoryScreen
@@ -59,29 +58,15 @@ import dev.abhishekan.pulse.feature.horizon.presentation.transactions.history.Tr
 @Composable
 internal fun HorizonHost(
     state: HorizonUiState,
-    vm: HorizonViewModel,
     scrollStates: SaveableStateHolder,
     active: Boolean,
-    openImport: () -> Unit,
+    onAction: (HorizonAction) -> Unit,
 ) {
     val destination = state.destination
     val editor = destination as? HorizonDestination.Editor
-    var discard by rememberSaveable { mutableStateOf(false) }
-    var records by rememberSaveable { mutableStateOf(false) }
-    var deletion by remember { mutableStateOf<Pair<HorizonChange, UiText>?>(null) }
-    var selectedTransaction by rememberSaveable { mutableStateOf<Long?>(null) }
-    val closeForm = {
-        records = false
-        vm.discard()
-    }
-    val cancel = { if (state.draft?.dirty == true) discard = true else closeForm() }
+    val records = state.showingReviewRecords
     BackHandler(active && (destination !is HorizonDestination.Tabs || state.busy || state.subscriptionId != null)) {
-        when {
-            state.busy -> Unit
-            editor != null -> cancel()
-            destination == HorizonDestination.History -> vm.closeHistory()
-            else -> vm.hidePayments()
-        }
+        onAction(HorizonAction.Back)
     }
     val currency = UserCurrency.code
     val canMutate = !state.busy && !state.reviewRequired && state.overview.value != null && state.draft == null
@@ -91,9 +76,9 @@ internal fun HorizonHost(
                 hasDraft = editor != null,
                 showingRecords = records,
                 reviewReady = state.reviewReady && !state.busy,
-                onRefresh = vm::refresh,
-                onToggleRecords = { records = !records },
-                onAcknowledge = vm::acknowledgeReview,
+                onRefresh = { onAction(HorizonAction.Refresh) },
+                onToggleRecords = { onAction(HorizonAction.ToggleReviewRecords) },
+                onAcknowledge = { onAction(HorizonAction.AcknowledgeReview) },
             )
         }
     }
@@ -101,7 +86,7 @@ internal fun HorizonHost(
     val draft = editor?.draft
     if (draft != null && !records) {
         key(draft.kind, draft.id) {
-            HorizonEditorDestination(draft, state, vm, backLabel, cancel, review)
+            HorizonEditorDestination(draft, state, onAction, backLabel, review)
         }
     } else {
         PulseScreenScaffold(
@@ -123,7 +108,7 @@ internal fun HorizonHost(
                         if (draft != null && !state.reviewRequired) {
                             PulseButton(
                                 stringResource(R.string.pulse_horizon_resume_unsaved_edits),
-                                { records = false },
+                                { onAction(HorizonAction.ResumeDraft) },
                                 style = PulseButtonStyle.Text,
                             )
                         }
@@ -136,11 +121,11 @@ internal fun HorizonHost(
                             TransactionHistoryScreen(
                                 state =
                                     TransactionHistoryUiState(
-                                        history = state.history,
+                                        history = state.transactionLists.history,
                                         overview = state.overview,
-                                        historySearch = state.historySearch,
-                                        historyType = state.historyType,
-                                        historyCategoryId = state.historyCategoryId,
+                                        historySearch = state.transactionLists.historyFilters.search,
+                                        historyType = state.transactionLists.historyFilters.type,
+                                        historyCategoryId = state.transactionLists.historyFilters.categoryId,
                                         busy = state.busy,
                                         reviewingDraft = draft != null,
                                         reviewRequired = state.reviewRequired,
@@ -156,38 +141,29 @@ internal fun HorizonHost(
                                 tablet = width != PulseWindowSize.Compact,
                                 wide = wide,
                                 canLog = canMutate,
-                                select = { selectedTransaction = it.id },
-                                onBack = vm::closeHistory,
-                                onFilter = vm::filterHistory,
-                                onRetryCategories = vm::refreshOverview,
-                                onRetry = vm::retryHistory,
-                                onLoadMore = vm::loadMoreHistory,
-                                onLog = { vm.newForm(HorizonForm.Transaction) },
+                                onAction = { onAction(HorizonAction.History(it)) },
                             ) {
                                 review()
                                 resumeDraft()
                             }
                         }
                     } else if (recordsDestination is HorizonDestination.Tabs) {
-                        HorizonTabs(recordsDestination.tab, !state.busy, width, vm::tab)
+                        HorizonTabs(recordsDestination.tab, !state.busy, width) { onAction(HorizonAction.SelectTab(it)) }
                         HorizonTabContent(
                             tab = recordsDestination.tab,
                             state = state,
-                            vm = vm,
+                            onAction = onAction,
                             width = width,
                             currency = currency,
                             canMutate = canMutate,
                             active = active,
                             reviewingDraft = draft != null,
                             scrollStates = scrollStates,
-                            onSelectTransaction = { selectedTransaction = it },
-                            onImport = openImport,
-                            confirm = { change, message -> deletion = change to message },
                         ) {
                             review()
                             resumeDraft()
                             if (records && state.transactionDraft != null && state.reviewRequired) {
-                                HorizonCategoryRecords(state.overview, vm::refreshOverview)
+                                HorizonCategoryRecords(state.overview) { onAction(HorizonAction.RetryOverview) }
                             }
                         }
                     }
@@ -197,56 +173,54 @@ internal fun HorizonHost(
     }
     if (active && state.tab == HorizonTab.Subscriptions && state.subscriptionId != null && state.draft == null) {
         SubscriptionPaymentsSheet(
-            subscriptionName =
-                state.overview.value
-                    ?.subscriptions
-                    ?.find { it.id == state.subscriptionId }
-                    ?.name,
-            payments = state.payments,
-            transactions = state.transactions,
-            search = state.search,
-            type = state.type,
-            busy = state.busy,
-            enabled = canMutate,
-            onDismiss = vm::hidePayments,
-            onRetryPayments = { vm.showPayments(state.subscriptionId) },
-            onRetryTransactions = { vm.refreshTransactions() },
-            onFilter = vm::filter,
-            onPage = { vm.refreshTransactions(it) },
-        ) { id ->
-            deletion = HorizonChange.LinkPayment(state.subscriptionId, id) to
-                uiText(R.string.pulse_horizon_link_this_debit_to_the_subscription_the_transaction_remains)
-        }
+            SubscriptionPaymentsState(
+                subscriptionName =
+                    state.overview.value
+                        ?.subscriptions
+                        ?.find { it.id == state.subscriptionId }
+                        ?.name,
+                payments = state.payments,
+                transactions = state.transactions,
+                search = state.search,
+                type = state.type,
+                busy = state.busy,
+                enabled = canMutate,
+            ),
+        ) { onAction(HorizonAction.Payments(it)) }
     }
-    val displayedTransactions = if (state.historyOpen) state.history.value else state.recent.value
+    val lists = state.transactionLists
+    val source = if (lists.historyOpen) TransactionList.History else TransactionList.Recent
+    val displayedTransactions = if (source == TransactionList.History) lists.history.value else lists.recent.value
+    val selectedId = lists.selected?.takeIf { it.source == source }?.id
     if (active && state.draft == null && state.tab == HorizonTab.Transactions) {
-        displayedTransactions?.items?.find { it.id == selectedTransaction }?.let { tx ->
+        displayedTransactions?.items?.find { it.id == selectedId }?.let { tx ->
             TransactionDetails(
                 tx,
                 currency,
                 canMutate,
-                { selectedTransaction = null },
-                { vm.edit(it.draft(currency)) },
+                { onAction(HorizonAction.DismissTransaction) },
+                { onAction(HorizonAction.Edit(it.draft(currency))) },
                 { transaction ->
-                    deletion = HorizonChange.Delete(HorizonRecord.Transaction, transaction.id) to
-                        uiText(R.string.pulse_horizon_delete_1_s_this_permanently_removes_the_transaction_and, transaction.name)
+                    onAction(
+                        HorizonAction.AskConfirmation(
+                            HorizonChange.Delete(HorizonRecord.Transaction, transaction.id),
+                            uiText(R.string.pulse_horizon_delete_1_s_this_permanently_removes_the_transaction_and, transaction.name),
+                        ),
+                    )
                 },
             )
         }
     }
-    if (active && discard) {
+    if (active && state.confirmation == HorizonConfirmation.Discard) {
         PulseDialog(
             stringResource(R.string.pulse_horizon_discard_unsaved_changes),
             stringResource(R.string.pulse_horizon_your_edits_have_not_been_saved_leaving_this_form),
             stringResource(R.string.pulse_horizon_discard_edits),
-            {
-                discard = false
-                closeForm()
-            },
-            { discard = false },
+            { onAction(HorizonAction.AcceptConfirmation) },
+            { onAction(HorizonAction.DismissConfirmation) },
         )
     }
-    deletion?.takeIf { active }?.let { (change, body) ->
+    (state.confirmation as? HorizonConfirmation.Apply)?.takeIf { active }?.let { (change, body) ->
         PulseDialog(
             if (change is HorizonChange.LinkPayment) {
                 stringResource(
@@ -263,11 +237,8 @@ internal fun HorizonHost(
             } else {
                 stringResource(R.string.pulse_horizon_delete)
             },
-            {
-                deletion = null
-                vm.mutate(change)
-            },
-            { deletion = null },
+            { onAction(HorizonAction.AcceptConfirmation) },
+            { onAction(HorizonAction.DismissConfirmation) },
         )
     }
 }
@@ -276,108 +247,23 @@ internal fun HorizonHost(
 private fun HorizonEditorDestination(
     draft: HorizonDraft,
     state: HorizonUiState,
-    vm: HorizonViewModel,
+    onAction: (HorizonAction) -> Unit,
     backLabel: String,
-    cancel: () -> Unit,
     review: @Composable () -> Unit,
 ) {
-    val data = state.overview.value
-    val canSave = !state.reviewRequired && !state.busy && data != null
+    val editor = HorizonEditorState(draft, state.overview.value, state.busy, state.formError, state.reviewRequired)
+    val editorAction: (HorizonEditorAction) -> Unit = { onAction(HorizonAction.Editor(it)) }
     val notice: @Composable () -> Unit = {
         review()
-        state.overview.error?.let { PulseErrorState(it.message, vm::refreshOverview) }
+        state.overview.error?.let { PulseErrorState(it.message, { onAction(HorizonAction.RetryOverview) }) }
     }
     when (draft.kind) {
-        HorizonForm.Budget ->
-            BudgetEditorScreen(
-                draft = draft,
-                busy = state.busy,
-                error = state.formError,
-                backLabel = backLabel,
-                onChange = vm::update,
-                onSave = vm::save,
-                onCancel = cancel,
-                notice = notice,
-                canSave = canSave,
-            )
-        HorizonForm.Transaction ->
-            TransactionEditorScreen(
-                draft = draft,
-                busy = state.busy,
-                error = state.formError,
-                backLabel = backLabel,
-                onChange = vm::update,
-                onSave = vm::save,
-                onCancel = cancel,
-                notice = notice,
-                data = data,
-                canSave = canSave,
-                onAddCategory = vm::addTransactionCategory,
-            )
-        HorizonForm.Subscription ->
-            SubscriptionEditorScreen(
-                draft = draft,
-                busy = state.busy,
-                error = state.formError,
-                backLabel = backLabel,
-                onChange = vm::update,
-                onSave = vm::save,
-                onCancel = cancel,
-                notice = notice,
-                data = data,
-                canSave = canSave,
-            )
-        HorizonForm.Deduction ->
-            FixedObligationEditorScreen(
-                draft = draft,
-                busy = state.busy,
-                error = state.formError,
-                backLabel = backLabel,
-                onChange = vm::update,
-                onSave = vm::save,
-                onCancel = cancel,
-                notice = notice,
-                data = data,
-                canSave = canSave,
-                onDelete = vm::deleteObligation,
-            )
-        HorizonForm.Category ->
-            CategoryEditorScreen(
-                draft = draft,
-                busy = state.busy,
-                error = state.formError,
-                backLabel = backLabel,
-                onChange = vm::update,
-                onSave = vm::save,
-                onCancel = cancel,
-                notice = notice,
-                canSave = canSave,
-            )
-        HorizonForm.Config ->
-            HorizonSettingsEditorScreen(
-                draft = draft,
-                busy = state.busy,
-                error = state.formError,
-                backLabel = backLabel,
-                onChange = vm::update,
-                onSave = vm::save,
-                onCancel = cancel,
-                notice = notice,
-                data = data,
-                canSave = canSave,
-            )
-        HorizonForm.Purchase ->
-            PlannedPurchaseEditorScreen(
-                draft = draft,
-                busy = state.busy,
-                error = state.formError,
-                backLabel = backLabel,
-                onChange = vm::update,
-                onSave = vm::save,
-                onCancel = cancel,
-                notice = notice,
-                data = data,
-                reviewRequired = state.reviewRequired,
-            )
+        HorizonForm.Budget -> BudgetEditorScreen(editor, backLabel, editorAction, notice)
+        HorizonForm.Transaction -> TransactionEditorScreen(editor, backLabel, editorAction, notice)
+        HorizonForm.Subscription -> SubscriptionEditorScreen(editor, backLabel, editorAction, notice)
+        HorizonForm.Deduction -> FixedObligationEditorScreen(editor, backLabel, editorAction, notice)
+        HorizonForm.Category -> CategoryEditorScreen(editor, backLabel, editorAction, notice)
+        HorizonForm.Config -> HorizonSettingsEditorScreen(editor, backLabel, editorAction, notice)
+        HorizonForm.Purchase -> PlannedPurchaseEditorScreen(editor, backLabel, editorAction, notice)
     }
 }

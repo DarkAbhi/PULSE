@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
@@ -43,31 +42,53 @@ import dev.abhishekan.pulse.feature.horizon.presentation.transactions.ledgerMont
 import java.math.BigDecimal
 import java.time.format.DateTimeFormatter
 
+internal data class SubscriptionPaymentsState(
+    val subscriptionName: String?,
+    val payments: HorizonSection<List<HorizonTransaction>>,
+    val transactions: HorizonSection<HorizonTransactionPage>,
+    val search: String,
+    val type: String?,
+    val busy: Boolean,
+    val enabled: Boolean,
+)
+
+internal sealed interface SubscriptionPaymentsAction {
+    data object Dismiss : SubscriptionPaymentsAction
+
+    data object RetryPayments : SubscriptionPaymentsAction
+
+    data object RetryTransactions : SubscriptionPaymentsAction
+
+    data class Filter(
+        val search: String,
+        val type: String?,
+    ) : SubscriptionPaymentsAction
+
+    data class Page(
+        val page: Int,
+    ) : SubscriptionPaymentsAction
+
+    data class RequestLink(
+        val id: Long,
+    ) : SubscriptionPaymentsAction
+}
+
 @Composable
 internal fun SubscriptionPaymentsSheet(
-    subscriptionName: String?,
-    payments: HorizonSection<List<HorizonTransaction>>,
-    transactions: HorizonSection<HorizonTransactionPage>,
-    search: String,
-    type: String?,
-    busy: Boolean,
-    enabled: Boolean,
-    onDismiss: () -> Unit,
-    onRetryPayments: () -> Unit,
-    onRetryTransactions: () -> Unit,
-    onFilter: (String, String?) -> Unit,
-    onPage: (Int) -> Unit,
-    link: (Long) -> Unit,
+    state: SubscriptionPaymentsState,
+    onAction: (SubscriptionPaymentsAction) -> Unit,
 ) {
+    val payments = state.payments
+    val transactions = state.transactions
     val colors = PulseTheme.colors
     PulseBottomSheet(
         title = stringResource(R.string.pulse_horizon_subscription_payment_history),
         fullScreen = true,
-        onDismissRequest = onDismiss,
+        onDismissRequest = { onAction(SubscriptionPaymentsAction.Dismiss) },
     ) {
         Column(Modifier.fillMaxWidth().testTag("subscription-payments-sheet")) {
             PulseText(
-                subscriptionName ?: stringResource(R.string.pulse_horizon_subscription),
+                state.subscriptionName ?: stringResource(R.string.pulse_horizon_subscription),
                 Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
                 style = PulseTextStyle.Body2,
                 color = colors.textSecondary,
@@ -86,7 +107,7 @@ internal fun SubscriptionPaymentsSheet(
                         Modifier.fillMaxWidth(),
                     )
                 }
-                payments.error?.let { PulseErrorState(it.message, onRetryPayments) }
+                payments.error?.let { PulseErrorState(it.message, { onAction(SubscriptionPaymentsAction.RetryPayments) }) }
                 payments.value?.let { linkedPayments ->
                     PulseCard(Modifier.fillMaxWidth().testTag("subscription-payments-summary"), highlighted = true) {
                         PulseText(
@@ -140,14 +161,16 @@ internal fun SubscriptionPaymentsSheet(
                     style = PulseTextStyle.Body2,
                     color = colors.textSecondary,
                 )
-                TransactionFilters(search, type, busy, onFilter)
+                TransactionFilters(state.search, state.type, state.busy) { search, type ->
+                    onAction(SubscriptionPaymentsAction.Filter(search, type))
+                }
                 if (transactions.loading && transactions.value == null) {
                     PulseCenteredLoadingState(
                         stringResource(R.string.pulse_horizon_loading_your_horizon),
                         Modifier.fillMaxWidth(),
                     )
                 }
-                transactions.error?.let { PulseErrorState(it.message, onRetryTransactions) }
+                transactions.error?.let { PulseErrorState(it.message, { onAction(SubscriptionPaymentsAction.RetryTransactions) }) }
                 transactions.value?.let { page ->
                     val eligible = page.items.filter { it.type == "debit" && it.subscriptionId == null }
                     eligible.forEach { payment ->
@@ -157,7 +180,7 @@ internal fun SubscriptionPaymentsSheet(
                                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                                     PulseButton(
                                         stringResource(R.string.pulse_horizon_link_payment_action),
-                                        { link(payment.id) },
+                                        { onAction(SubscriptionPaymentsAction.RequestLink(payment.id)) },
                                         Modifier.pulseDescription(
                                             stringResource(
                                                 R.string.pulse_horizon_link_1_s_2_s,
@@ -165,7 +188,7 @@ internal fun SubscriptionPaymentsSheet(
                                                 currencyText(payment.amount).asString(),
                                             ),
                                         ),
-                                        enabled = enabled,
+                                        enabled = state.enabled,
                                         variant = PulseButtonVariant.Soft,
                                     )
                                 }
@@ -175,9 +198,9 @@ internal fun SubscriptionPaymentsSheet(
                     if (eligible.isEmpty()) {
                         PulseText(stringResource(R.string.pulse_horizon_no_eligible_payments_on_this_page), color = colors.textSecondary)
                     }
-                    PageControls(page, busy, onPage)
+                    PageControls(page, state.busy) { onAction(SubscriptionPaymentsAction.Page(it)) }
                 }
-                if (busy) PulseLoadingState(stringResource(R.string.pulse_horizon_saving_your_change))
+                if (state.busy) PulseLoadingState(stringResource(R.string.pulse_horizon_saving_your_change))
             }
         }
     }

@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse
+package dev.abhishekan.pulse.debugtools
 
 import android.Manifest
 import android.content.Intent
@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import dev.abhishekan.pulse.R
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseText

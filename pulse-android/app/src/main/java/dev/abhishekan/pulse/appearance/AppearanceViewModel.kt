@@ -1,7 +1,8 @@
-package dev.abhishekan.pulse
+package dev.abhishekan.pulse.appearance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.abhishekan.pulse.R
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.domain.repository.PreferencesRepository
@@ -13,12 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-data class AppearanceUiState(
-    val theme: ThemePreference = ThemePreference.System,
-    val error: UiText? = null,
-)
-
-class AppearanceViewModel(
+internal class AppearanceViewModel(
     private val preferences: PreferencesRepository,
 ) : ViewModel() {
     private val error = MutableStateFlow<UiText?>(null)

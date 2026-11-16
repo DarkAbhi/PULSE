@@ -1,4 +1,5 @@
 package dev.abhishekan.pulse
+import dev.abhishekan.pulse.appearance.AppearanceViewModel
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.ThemePreference

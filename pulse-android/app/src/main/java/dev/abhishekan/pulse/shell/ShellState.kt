@@ -1,9 +1,10 @@
-package dev.abhishekan.pulse
+package dev.abhishekan.pulse.shell
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
+import dev.abhishekan.pulse.navigation.AppDestination
 
 internal enum class OnboardingPrompt { NotOffered, Showing, Dismissed }
 

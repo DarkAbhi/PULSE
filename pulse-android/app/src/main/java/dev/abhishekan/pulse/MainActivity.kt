@@ -11,10 +11,12 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.abhishekan.pulse.appearance.AppearanceViewModel
 import dev.abhishekan.pulse.core.domain.model.ThemePreference
 import dev.abhishekan.pulse.core.ui.PulseDarkColors
 import dev.abhishekan.pulse.core.ui.PulseLightColors
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.debugtools.LocalNetworkAccess
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {

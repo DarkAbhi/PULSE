@@ -1,5 +1,7 @@
 package dev.abhishekan.pulse
 
+import dev.abhishekan.pulse.navigation.AppDestination
+import dev.abhishekan.pulse.navigation.isTabRoot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

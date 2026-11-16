@@ -5,6 +5,8 @@ import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.SessionState
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.session.SessionAction
+import dev.abhishekan.pulse.session.SessionViewModel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -60,6 +62,9 @@ class SessionViewModelTest {
 
         override suspend fun logout(): Outcome<Unit> {
             if (logoutResult is Outcome.Success) session.value = SessionState.SignedOut()
+            if (logoutResult == Outcome.Error(Failure.Storage)) {
+                session.value = SessionState.SignedOut(storageProblem = true)
+            }
             return logoutResult
         }
 
@@ -82,8 +87,8 @@ class SessionViewModelTest {
         runTest {
             val auth = Auth()
             val vm = model(auth)
-            vm.retry()
-            vm.retry()
+            vm.onAction(SessionAction.Retry)
+            vm.onAction(SessionAction.Retry)
             runCurrent()
             assertEquals(1, auth.restores)
             assertEquals(SessionState.Checking, vm.session.value)
@@ -101,14 +106,29 @@ class SessionViewModelTest {
             auth.ready.complete(Unit)
             val vm = model(auth)
             runCurrent()
-            vm.logOut()
+            vm.onAction(SessionAction.LogOut)
             runCurrent()
             assertTrue(vm.session.value is SessionState.Authenticated)
             assertEquals(Failure.Connection.message, vm.operation.value.error)
             auth.logoutResult = Outcome.Success(Unit)
-            vm.logOut()
+            vm.onAction(SessionAction.LogOut)
             runCurrent()
             assertEquals(SessionState.SignedOut(), vm.session.value)
+            assertNull(vm.operation.value.error)
+        }
+
+    @Test fun storageFailureAfterSignOutUsesTheSignedOutNotice() =
+        runTest {
+            val auth = Auth()
+            auth.ready.complete(Unit)
+            auth.logoutResult = Outcome.Error(Failure.Storage)
+            val vm = model(auth)
+            runCurrent()
+
+            vm.onAction(SessionAction.LogOut)
+            runCurrent()
+
+            assertEquals(SessionState.SignedOut(storageProblem = true), vm.session.value)
             assertNull(vm.operation.value.error)
         }
 }

@@ -3,6 +3,7 @@ package dev.abhishekan.pulse
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import dev.abhishekan.pulse.core.network.NetworkConfig
+import dev.abhishekan.pulse.di.pulseModules
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import org.junit.Test

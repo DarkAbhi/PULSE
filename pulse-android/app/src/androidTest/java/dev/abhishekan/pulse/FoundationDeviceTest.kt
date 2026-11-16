@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse
 import android.content.Context
 import androidx.test.platform.app.InstrumentationRegistry
+import dev.abhishekan.pulse.appearance.AppearanceViewModel
 import dev.abhishekan.pulse.core.data.AndroidSessionKey
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.domain.model.ThemePreference

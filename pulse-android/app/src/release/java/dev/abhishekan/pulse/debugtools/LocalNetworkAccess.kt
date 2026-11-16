@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse
+package dev.abhishekan.pulse.debugtools
 
 import androidx.compose.runtime.Composable
 

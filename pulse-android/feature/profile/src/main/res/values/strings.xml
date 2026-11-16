@@ -31,7 +31,7 @@
     <string name="pulse_profile_wrong_password">"The current password is incorrect. Please try again."</string>
     <string name="pulse_profile_password_changed">"Password updated. Existing sessions remain signed in."</string>
     <string name="pulse_profile_password_uncertain">"The password may have changed. Pulse cannot read it back. Close this form and use the new password if your old password no longer works. No retry was sent."</string>
-    <string name="pulse_profile_uncertain">"We couldn’t confirm the change. Review refreshed account information and API keys before another change. If a key was created but its token was lost, revoke that unused key and create another."</string>
+    <string name="pulse_profile_uncertain">"We couldn’t confirm the change. Review the refreshed API keys before another change. If a key was created but its token was lost, revoke that unused key and create another."</string>
     <string name="pulse_profile_review">"Review server records"</string>
     <string name="pulse_profile_reviewed">"I reviewed the server records"</string>
     <string name="pulse_profile_refresh">"Refresh"</string>
@@ -56,8 +56,12 @@
     <string name="pulse_profile_brand">"Pulse"</string>
     <string name="pulse_profile_clipboard_label">Pulse API key</string>
     <string name="pulse_profile_name_uncertain">"We couldn’t confirm the display-name change. Review your refreshed profile before saving again."</string>
+    <string name="pulse_profile_currency_uncertain">"We couldn’t confirm the currency change. Review the saved currency before trying again."</string>
+    <string name="pulse_profile_timezone_uncertain">"We couldn’t confirm the time-zone change. Review the saved time zone before trying again."</string>
     <string name="pulse_profile_understood">"I understand"</string>
     <string name="pulse_profile_server_name">"Server display name: %1$s"</string>
+    <string name="pulse_profile_server_currency">"Saved currency: %1$s"</string>
+    <string name="pulse_profile_server_timezone">"Saved time zone: %1$s"</string>
     <string name="pulse_profile_server_key">"%1$s · Prefix: %2$s"</string>
     <string name="pulse_profile_not_set">"Not set"</string>
     <string name="pulse_profile_timezone">Time zone</string>

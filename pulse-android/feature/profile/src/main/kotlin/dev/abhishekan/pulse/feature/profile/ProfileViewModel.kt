@@ -1,11 +1,10 @@
 package dev.abhishekan.pulse.feature.profile
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.abhishekan.pulse.core.domain.model.CreatedAPIKey
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Outcome
-import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
 import dev.abhishekan.pulse.core.domain.usecase.AccountValidation
 import dev.abhishekan.pulse.core.domain.usecase.ChangePassword
@@ -15,13 +14,17 @@ import dev.abhishekan.pulse.core.domain.usecase.SaveProfileCurrency
 import dev.abhishekan.pulse.core.domain.usecase.SaveProfileName
 import dev.abhishekan.pulse.core.domain.usecase.SaveProfileTimeZone
 import dev.abhishekan.pulse.core.ui.DraftSource
+import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -36,447 +39,324 @@ class ProfileViewModel(
     private val saveTimeZone: SaveProfileTimeZone,
     unsavedChanges: UnsavedChanges = UnsavedChanges(),
 ) : ViewModel() {
-    private val state =
-        MutableStateFlow(
-            ProfileUiState(
-                name = saved["name"] ?: "",
-                keyName = saved["keyName"] ?: "",
-                editor = if (saved.get<Boolean>("editingName") == true) AccountEditor.Name else null,
-                uncertain = saved.get<String>("pending") != null || saved.get<Boolean>("tokenNeedsReview") == true,
-                passwordUncertain = saved.get<String>("pending") == "Password",
-                message =
-                    if (saved.get<String>("pending") !=
-                        null ||
-                        saved.get<Boolean>("tokenNeedsReview") == true
-                    ) {
-                        uiText(
-                            if (saved.get<String>("pending") ==
-                                "Password"
-                            ) {
-                                R.string.pulse_profile_password_uncertain
-                            } else if (saved.get<String>("pending") ==
-                                "Name"
-                            ) {
-                                R.string.pulse_profile_name_uncertain
-                            } else {
-                                R.string.pulse_profile_uncertain
-                            },
-                        )
-                    } else {
-                        null
-                    },
-            ),
-        )
-    val uiState = state.asStateFlow()
+    private val state = MutableStateFlow(restoreState())
+    internal val uiState = state.asStateFlow()
 
-    init {
-        unsavedChanges.track(
-            DraftSource.Profile,
-            state.map {
-                it.editor == AccountEditor.Password &&
-                    listOf(it.passwords.current, it.passwords.next, it.passwords.confirmation).any(String::isNotEmpty)
-            },
-            viewModelScope,
-        )
-    }
-
-    fun consumeMessage() {
-        state.update { it.copy(message = null) }
-    }
+    private val eventChannel = Channel<ProfileEvent>(Channel.BUFFERED)
+    internal val events = eventChannel.receiveAsFlow()
 
     private var secretGeneration = 0L
     private var profileJob: Job? = null
     private var keysJob: Job? = null
 
     init {
+        unsavedChanges.track(
+            DraftSource.Profile,
+            state.map { it.editor == AccountEditor.Password && it.passwords.isDirty },
+            viewModelScope,
+        )
+        refreshAll()
+    }
+
+    internal fun onAction(action: ProfileAction) {
+        when (action) {
+            ProfileAction.Refresh -> refreshAll()
+            ProfileAction.RefreshProfile -> refreshProfile()
+            ProfileAction.RefreshKeys -> refreshKeys()
+            ProfileAction.RefreshReview -> refreshReview()
+            ProfileAction.OpenInitialNameEditor -> openInitialNameEditor()
+            is ProfileAction.Edit -> edit(action.editor)
+            is ProfileAction.ChangeName -> changeName(action.value)
+            is ProfileAction.ChangeKeyName -> changeKeyName(action.value)
+            is ProfileAction.ChangePasswordField -> changePasswordField(action)
+            ProfileAction.SaveEditor -> saveEditor()
+            ProfileAction.CloseEditor -> closeEditor()
+            is ProfileAction.SaveCurrency -> saveCurrencyPreference(action.value)
+            is ProfileAction.SaveTimeZone -> saveTimeZonePreference(action.value)
+            is ProfileAction.RevokeKey -> revoke(action.id)
+            ProfileAction.AcknowledgeReview -> acknowledgeReview()
+            ProfileAction.ClearSecrets -> clearSecrets()
+            ProfileAction.CloseToken -> closeToken()
+            is ProfileAction.TokenCopied -> tokenCopied(action.success)
+        }
+    }
+
+    private fun restoreState(): ProfileUiState {
+        val pending = saved.get<String>("pending")
+        val review =
+            when {
+                pending != null -> ProfileMutation.entries.find { it.savedValue == pending } ?: ProfileMutation.Key
+                saved.get<Boolean>("tokenNeedsReview") == true -> ProfileMutation.Key
+                else -> null
+            }
+        return ProfileUiState(
+            editor = if (saved.get<Boolean>("editingName") == true) AccountEditor.Name else null,
+            name = saved["name"] ?: "",
+            keyName = saved["keyName"] ?: "",
+            review = review,
+        )
+    }
+
+    private fun refreshAll() {
         refreshProfile()
         refreshKeys()
     }
 
-    fun refreshProfile() {
-        if (profileJob?.isActive == true) return
-        state.update { it.copy(loading = true, profileError = null) }
+    private fun refreshProfile(restart: Boolean = false) {
+        if (!restart && profileJob?.isActive == true) return
+        profileJob?.cancel()
+        state.update { it.copy(profileLoad = ProfileLoad.Loading(it.profile)) }
         profileJob =
             viewModelScope.launch {
-                when (val result = profile.profile()) {
-                    is Outcome.Success -> state.update { it.copy(profile = result.value, loading = false) }
-                    is Outcome.Error -> state.update { it.copy(profileError = result.failure, loading = false) }
+                val result = profile.profile()
+                ensureActive()
+                state.update {
+                    when (result) {
+                        is Outcome.Success -> it.copy(profileLoad = ProfileLoad.Loaded(result.value))
+                        is Outcome.Error -> it.copy(profileLoad = ProfileLoad.Failed(result.failure, it.profile))
+                    }
                 }
-                reviewReady()
             }
     }
 
-    fun refreshKeys() {
-        if (keysJob?.isActive == true) return
-        state.update { it.copy(keysLoading = true, keysError = null) }
+    private fun refreshKeys(restart: Boolean = false) {
+        if (!restart && keysJob?.isActive == true) return
+        keysJob?.cancel()
+        state.update { it.copy(keysLoad = ProfileLoad.Loading(it.keysLoad.data)) }
         keysJob =
             viewModelScope.launch {
-                when (val result = profile.keys()) {
-                    is Outcome.Success -> state.update { it.copy(keys = result.value, keysLoading = false, keysLoaded = true) }
-                    is Outcome.Error -> state.update { it.copy(keysLoading = false, keysError = result.failure) }
+                val result = profile.keys()
+                ensureActive()
+                state.update {
+                    when (result) {
+                        is Outcome.Success -> it.copy(keysLoad = ProfileLoad.Loaded(result.value))
+                        is Outcome.Error -> it.copy(keysLoad = ProfileLoad.Failed(result.failure, it.keysLoad.data))
+                    }
                 }
-                reviewReady()
             }
     }
 
-    private fun refreshAfterMutation() {
-        profileJob?.cancel()
-        keysJob?.cancel()
-        refreshProfile()
-        refreshKeys()
+    private fun refreshReview(restart: Boolean = false) {
+        val review = state.value.review ?: return
+        if (review.reviewsProfile) refreshProfile(restart)
+        if (review.reviewsKeys) refreshKeys(restart)
     }
 
-    private fun reviewReady() {
-        state.update {
-            it.copy(
-                reviewed =
-                    when (saved.get<String>("pending")) {
-                        "Name", "TimeZone" -> !it.loading && it.profileError == null && it.profile != null
-                        "Password" -> true // Passwords cannot be read back from the server.
-                        else -> !it.keysLoading && it.keysError == null && it.keysLoaded
-                    },
-            )
-        }
-    }
-
-    fun acknowledge() {
-        if (!state.value.reviewed ||
-            state.value.busy
-        ) {
-            return
-        }
+    private fun acknowledgeReview() {
+        if (!state.value.reviewed || state.value.busy) return
         saved.remove<String>("pending")
         saved.remove<Boolean>("tokenNeedsReview")
-        state.update { it.copy(uncertain = false, passwordUncertain = false, message = null, error = null) }
+        state.update { it.copy(review = null, error = null, currencyError = null, timeZoneError = null) }
     }
 
-    fun openInitialNameEditor() {
+    private fun openInitialNameEditor() {
         if (saved.get<Boolean>("initialNameEditorConsumed") == true) return
         saved["initialNameEditorConsumed"] = true
         edit(AccountEditor.Name)
     }
 
-    fun edit(editor: AccountEditor) {
-        if (state.value.busy || state.value.uncertain || state.value.editor == editor) return
-        val name =
-            state.value.profile
-                ?.name
-                .orEmpty()
+    private fun edit(editor: AccountEditor) {
+        val current = state.value
+        if (!current.canMutate || current.editor != null) return
+        val name = if (editor == AccountEditor.Name) current.profile?.name.orEmpty() else current.name
         if (editor == AccountEditor.Name) {
             saved["editingName"] = true
             saved["name"] = name
         }
-        state.update {
-            it.copy(
-                editor = editor,
-                name =
-                    if (editor ==
-                        AccountEditor.Name
-                    ) {
-                        name
-                    } else {
-                        it.name
-                    },
-                passwords = PasswordFields(),
-                error = null,
-                message = null,
-            )
-        }
+        state.update { it.copy(editor = editor, name = name, error = null) }
     }
 
-    fun name(value: String) {
+    private fun changeName(value: String) {
+        if (state.value.editor != AccountEditor.Name || !state.value.canMutate) return
         saved["name"] = value
         state.update { it.copy(name = value, error = null) }
     }
 
-    fun keyName(value: String) {
+    private fun changeKeyName(value: String) {
+        if (state.value.editor != AccountEditor.Key || !state.value.canMutate) return
         saved["keyName"] = value
         state.update { it.copy(keyName = value, error = null) }
     }
 
-    fun passwords(value: PasswordFields) {
-        state.update { it.copy(passwords = value, error = null) }
+    private fun changePasswordField(action: ProfileAction.ChangePasswordField) {
+        if (state.value.editor != AccountEditor.Password || !state.value.canMutate) return
+        state.update { it.copy(passwords = it.passwords.change(action.field, action.value), error = null) }
     }
 
-    fun closeEditor() {
-        if (state.value.busy) return
+    private fun clearSavedDraft() {
         saved.remove<Boolean>("editingName")
         saved.remove<String>("name")
         saved.remove<String>("keyName")
-        state.update { it.copy(editor = null, passwords = PasswordFields(), keyName = "", error = null) }
     }
 
-    fun clearSecrets() {
+    private fun closeEditor() {
+        if (state.value.busy) return
+        clearSavedDraft()
+        state.update { it.copy(editor = null, name = "", keyName = "", passwords = PasswordFields(), error = null) }
+    }
+
+    private fun clearSecrets() {
         secretGeneration++
-        saved.remove<Boolean>("tokenNeedsReview")
+        val hadToken = state.value.token != null
         state.update {
             it.copy(
                 token = null,
+                tokenCopyMessage = null,
                 passwords = PasswordFields(),
-                editor =
-                    if (it.editor ==
-                        AccountEditor.Password ||
-                        it.editor == AccountEditor.Key
-                    ) {
-                        null
-                    } else {
-                        it.editor
-                    },
+                editor = it.editor.takeIf { editor -> editor == AccountEditor.Name },
+                review = if (hadToken) ProfileMutation.Key else it.review,
             )
         }
     }
 
-    fun clearToken() {
+    private fun closeToken() {
         saved.remove<Boolean>("tokenNeedsReview")
-        state.update { it.copy(token = null) }
+        state.update { it.copy(token = null, tokenCopyMessage = null) }
     }
 
-    fun copied(success: Boolean) {
-        state.update { it.copy(message = uiText(if (success) R.string.pulse_profile_copied else R.string.pulse_profile_copy_failed)) }
-    }
-
-    fun save() {
-        val s = state.value
-        if (s.busy || s.uncertain || s.editor == null) return
-        val valid =
-            when (s.editor) {
-                AccountEditor.Name -> AccountValidation.validName(s.name)
-                AccountEditor.Key -> AccountValidation.validName(s.keyName)
-                AccountEditor.Password -> AccountValidation.validPassword(s.passwords.current, s.passwords.next, s.passwords.confirmation)
-            }
-        if (!valid) {
-            state.update {
-                it.copy(
-                    error =
-                        uiText(
-                            if (s.editor ==
-                                AccountEditor.Password
-                            ) {
-                                R.string.pulse_profile_password_validation
-                            } else {
-                                R.string.pulse_profile_name_validation
-                            },
-                        ),
-                )
-            }
-            return
+    private fun tokenCopied(success: Boolean) {
+        if (state.value.token == null) return
+        state.update {
+            it.copy(tokenCopyMessage = uiText(if (success) R.string.pulse_profile_copied else R.string.pulse_profile_copy_failed))
         }
-        state.update { it.copy(busy = true, error = null) }
-        saved["pending"] = s.editor.name
+    }
+
+    private fun saveEditor() {
+        val current = state.value
+        if (!current.canMutate) return
+        when (current.editor) {
+            AccountEditor.Name -> {
+                if (!AccountValidation.validName(current.name)) {
+                    showEditorError(R.string.pulse_profile_name_validation)
+                    return
+                }
+                mutate(ProfileMutation.Name, R.string.pulse_profile_saved, { saveName(current.name) }) { updated ->
+                    copy(profileLoad = ProfileLoad.Loaded(updated))
+                }
+            }
+            AccountEditor.Password -> {
+                val draft = current.passwords
+                if (!AccountValidation.validPassword(draft.current, draft.next, draft.confirmation)) {
+                    showEditorError(R.string.pulse_profile_password_validation)
+                    return
+                }
+                mutate(ProfileMutation.Password, R.string.pulse_profile_password_changed, {
+                    password(draft.current, draft.next, draft.confirmation)
+                }) { this }
+            }
+            AccountEditor.Key -> {
+                if (!AccountValidation.validName(current.keyName)) {
+                    showEditorError(R.string.pulse_profile_name_validation)
+                    return
+                }
+                mutate(ProfileMutation.Key, request = { createKey(current.keyName) }) { created ->
+                    copy(token = created.takeIf { review == null })
+                }
+            }
+            null -> Unit
+        }
+    }
+
+    private fun showEditorError(message: Int) {
+        state.update { it.copy(error = uiText(message)) }
+    }
+
+    private fun saveTimeZonePreference(value: String) {
+        if (!state.value.canEditPreferences) return
+        mutate(ProfileMutation.TimeZone, R.string.pulse_profile_saved, { saveTimeZone(value) }) { updated ->
+            copy(profileLoad = ProfileLoad.Loaded(checkNotNull(profile).copy(timezone = updated)))
+        }
+    }
+
+    private fun saveCurrencyPreference(value: String) {
+        if (!state.value.canEditPreferences) return
+        mutate(ProfileMutation.Currency, R.string.pulse_profile_saved, { saveCurrency(value) }) { updated ->
+            copy(profileLoad = ProfileLoad.Loaded(checkNotNull(profile).copy(currency = updated)))
+        }
+    }
+
+    private fun revoke(id: Long) {
+        if (!state.value.canMutate) return
+        mutate(ProfileMutation.Revoke, R.string.pulse_profile_revoked, { revokeKey(id) }) {
+            val remaining = keys.filterNot { key -> key.id == id }
+            copy(keysLoad = ProfileLoad.Loaded(remaining))
+        }
+    }
+
+    private fun <T> mutate(
+        mutation: ProfileMutation,
+        successMessage: Int? = null,
+        request: suspend () -> Outcome<T>,
+        applySuccess: ProfileUiState.(T) -> ProfileUiState,
+    ) {
+        saved["pending"] = mutation.savedValue
+        state.update { it.withError(mutation, null).copy(busy = true) }
         val generation = secretGeneration
         viewModelScope.launch {
-            val result: Outcome<*> =
-                when (s.editor) {
-                    AccountEditor.Name -> saveName(s.name)
-                    AccountEditor.Password -> password(s.passwords.current, s.passwords.next, s.passwords.confirmation)
-                    AccountEditor.Key -> createKey(s.keyName)
-                }
+            val result = request()
+            ensureActive()
             when (result) {
                 is Outcome.Success -> {
-                    if (s.editor == AccountEditor.Key) saved["tokenNeedsReview"] = true
-                    val lostToken = s.editor == AccountEditor.Key && generation != secretGeneration
+                    val lostToken = mutation == ProfileMutation.Key && generation != secretGeneration
+                    if (mutation == ProfileMutation.Key) saved["tokenNeedsReview"] = true
                     saved.remove<String>("pending")
-                    saved.remove<Boolean>("editingName")
-                    saved.remove<String>("name")
-                    saved.remove<String>("keyName")
+                    if (mutation.editor != null) clearSavedDraft()
                     state.update {
-                        it.copy(
-                            busy = false,
-                            uncertain = lostToken,
-                            reviewed = false,
-                            editor = null,
-                            passwords = PasswordFields(),
-                            keyName = "",
-                            token =
-                                if (generation ==
-                                    secretGeneration
-                                ) {
-                                    result.value as? CreatedAPIKey
-                                } else {
-                                    null
-                                },
-                            profile = (result.value as? Profile) ?: it.profile,
-                            message =
-                                if (s.editor ==
-                                    AccountEditor.Key
-                                ) {
-                                    if (generation ==
-                                        secretGeneration
-                                    ) {
-                                        null
-                                    } else {
-                                        uiText(R.string.pulse_profile_uncertain)
-                                    }
-                                } else {
-                                    uiText(
-                                        if (s.editor ==
-                                            AccountEditor.Password
-                                        ) {
-                                            R.string.pulse_profile_password_changed
-                                        } else {
-                                            R.string.pulse_profile_saved
-                                        },
-                                    )
-                                },
-                        )
+                        val next = it.copy(busy = false, review = mutation.takeIf { lostToken })
+                        val updated = next.applySuccess(result.value)
+                        if (mutation.editor == null) {
+                            updated
+                        } else {
+                            updated.copy(editor = null, name = "", keyName = "", passwords = PasswordFields())
+                        }
                     }
-                    refreshAfterMutation()
+                    refreshProfile(restart = true)
+                    refreshKeys(restart = true)
+                    successMessage?.let { eventChannel.send(ProfileEvent(uiText(it))) }
                 }
-                is Outcome.Error -> {
-                    val uncertain = result.failure in setOf(Failure.Connection, Failure.Timeout, Failure.Server, Failure.Malformed)
-                    if (!uncertain) saved.remove<String>("pending")
-                    state.update {
-                        it.copy(
-                            busy = false,
-                            uncertain = uncertain,
-                            passwordUncertain = uncertain && s.editor == AccountEditor.Password,
-                            reviewed = uncertain && s.editor == AccountEditor.Password,
-                            editor = if (uncertain && s.editor == AccountEditor.Password) null else it.editor,
-                            passwords = if (uncertain && s.editor == AccountEditor.Password) PasswordFields() else it.passwords,
-                            error =
-                                if (result.failure == Failure.InvalidCredentials &&
-                                    s.editor == AccountEditor.Password
-                                ) {
-                                    uiText(R.string.pulse_profile_wrong_password)
-                                } else {
-                                    result.failure.message
-                                },
-                            message =
-                                if (uncertain) {
-                                    uiText(
-                                        if (s.editor ==
-                                            AccountEditor.Password
-                                        ) {
-                                            R.string.pulse_profile_password_uncertain
-                                        } else if (s.editor == AccountEditor.Name) {
-                                            R.string.pulse_profile_name_uncertain
-                                        } else {
-                                            R.string.pulse_profile_uncertain
-                                        },
-                                    )
-                                } else {
-                                    null
-                                },
-                        )
-                    }
-                    if (uncertain) {
-                        refreshAfterMutation()
-                    }
-                }
+                is Outcome.Error -> handleMutationError(mutation, result.failure)
             }
         }
     }
 
-    fun timeZone(value: String) {
-        if (state.value.busy || state.value.uncertain || state.value.loading) return
-        state.update { it.copy(busy = true, error = null) }
-        saved["pending"] = "TimeZone"
-        viewModelScope.launch {
-            when (val result = saveTimeZone(value)) {
-                is Outcome.Success -> {
-                    saved.remove<String>("pending")
-                    state.update {
-                        it.copy(
-                            busy = false,
-                            profile = it.profile?.copy(timezone = result.value),
-                            message = uiText(R.string.pulse_profile_saved),
-                        )
-                    }
-                    refreshAfterMutation()
-                }
-                is Outcome.Error -> {
-                    val uncertain = result.failure in setOf(Failure.Connection, Failure.Timeout, Failure.Server, Failure.Malformed)
-                    if (!uncertain) saved.remove<String>("pending")
-                    state.update {
-                        it.copy(
-                            busy = false,
-                            uncertain = uncertain,
-                            reviewed = false,
-                            error = result.failure.message,
-                            message = if (uncertain) uiText(R.string.pulse_profile_uncertain) else null,
-                        )
-                    }
-                    if (uncertain) refreshAfterMutation()
-                }
+    private suspend fun handleMutationError(
+        mutation: ProfileMutation,
+        failure: Failure,
+    ) {
+        val needsReview =
+            when (failure) {
+                Failure.Connection, Failure.Timeout, Failure.Server, Failure.Malformed -> true
+                else -> false
+            }
+        if (!needsReview) saved.remove<String>("pending")
+        val error =
+            if (mutation == ProfileMutation.Password && failure == Failure.InvalidCredentials) {
+                uiText(R.string.pulse_profile_wrong_password)
+            } else {
+                failure.message
+            }
+        state.update {
+            val next = it.withError(mutation, error).copy(busy = false, review = mutation.takeIf { needsReview })
+            if (needsReview && mutation == ProfileMutation.Password) {
+                next.copy(editor = null, passwords = PasswordFields())
+            } else {
+                next
             }
         }
+        if (needsReview) refreshReview(restart = true)
+        if (!needsReview && mutation == ProfileMutation.Revoke) eventChannel.send(ProfileEvent(error))
     }
 
-    fun currency(value: String) {
-        if (state.value.busy || state.value.uncertain || state.value.loading) return
-        state.update { it.copy(busy = true, error = null) }
-        saved["pending"] = "Currency"
-        viewModelScope.launch {
-            when (val result = saveCurrency(value)) {
-                is Outcome.Success -> {
-                    saved.remove<String>("pending")
-                    state.update {
-                        it.copy(
-                            busy = false,
-                            profile = it.profile?.copy(currency = result.value),
-                            message = uiText(R.string.pulse_profile_saved),
-                        )
-                    }
-                    refreshAfterMutation()
-                }
-                is Outcome.Error -> {
-                    val uncertain = result.failure in setOf(Failure.Connection, Failure.Timeout, Failure.Server, Failure.Malformed)
-                    if (!uncertain) saved.remove<String>("pending")
-                    state.update {
-                        it.copy(
-                            busy = false,
-                            uncertain = uncertain,
-                            reviewed = false,
-                            error = result.failure.message,
-                            message = if (uncertain) uiText(R.string.pulse_profile_uncertain) else null,
-                        )
-                    }
-                    if (uncertain) refreshAfterMutation()
-                }
-            }
+    private fun ProfileUiState.withError(
+        mutation: ProfileMutation,
+        error: UiText?,
+    ): ProfileUiState =
+        when (mutation) {
+            ProfileMutation.Currency -> copy(currencyError = error)
+            ProfileMutation.TimeZone -> copy(timeZoneError = error)
+            ProfileMutation.Revoke -> this
+            else -> copy(error = error)
         }
-    }
-
-    fun revoke(id: Long) {
-        if (state.value.busy || state.value.uncertain) return
-        state.update { it.copy(busy = true) }
-        saved["pending"] = "revoke"
-        viewModelScope.launch {
-            when (val result = revokeKey(id)) {
-                is Outcome.Success -> {
-                    saved.remove<String>("pending")
-                    state.update {
-                        it.copy(
-                            busy = false,
-                            keys =
-                                it.keys.filterNot { key ->
-                                    key.id ==
-                                        id
-                                },
-                            message = uiText(R.string.pulse_profile_revoked),
-                        )
-                    }
-                    refreshAfterMutation()
-                }
-                is Outcome.Error -> {
-                    val uncertain =
-                        result.failure in setOf(Failure.Connection, Failure.Timeout, Failure.Server, Failure.Malformed)
-                    if (!uncertain) saved.remove<String>("pending")
-                    state.update {
-                        it.copy(
-                            busy = false,
-                            uncertain = uncertain,
-                            reviewed = false,
-                            message = if (uncertain) uiText(R.string.pulse_profile_uncertain) else result.failure.message,
-                        )
-                    }
-                    if (uncertain) {
-                        refreshAfterMutation()
-                    }
-                }
-            }
-        }
-    }
 
     override fun onCleared() {
         clearSecrets()

@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.planner
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -52,11 +53,12 @@ import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pulseWindowSize
+import dev.abhishekan.pulse.feature.mealplan.R
+import dev.abhishekan.pulse.feature.mealplan.shared.mealDate
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
-import java.util.Locale
 
 private val firstMealWeek = LocalDate.of(1, 1, 1)
 private val mealWeekCount = ChronoUnit.WEEKS.between(firstMealWeek, LocalDate.of(9999, 12, 31).minusDays(6)).toInt() + 1
@@ -75,7 +77,10 @@ internal fun MealCalendar(
 ) {
     val colors = PulseTheme.colors
     var pickingDate by rememberSaveable { mutableStateOf(false) }
-    val format = DateTimeFormatter.ofPattern("d MMM yyyy")
+    val locale = LocalLocale.current.platformLocale
+    val weekStartFormat = remember(locale) { DateTimeFormatter.ofPattern("d MMM", locale) }
+    val weekEndFormat = remember(locale) { DateTimeFormatter.ofPattern("d MMM yyyy", locale) }
+    val accessibleDateFormat = remember(locale) { mealDate.withLocale(locale) }
     val weekPage = ChronoUnit.WEEKS.between(firstMealWeek, week).toInt()
     // The selected date already survives recreation. Start on its week even if a swipe was interrupted.
     val pager = remember { PagerState(currentPage = weekPage) { mealWeekCount } }
@@ -150,8 +155,8 @@ internal fun MealCalendar(
                         text =
                             stringResource(
                                 R.string.pulse_mealplan_week_range,
-                                week.format(DateTimeFormatter.ofPattern("d MMM")),
-                                week.plusDays(6).format(format),
+                                week.format(weekStartFormat),
+                                week.plusDays(6).format(weekEndFormat),
                             ),
                         onClick = { pickingDate = true },
                         modifier = Modifier.weight(1f).heightIn(min = PulseTokens.target),
@@ -198,9 +203,9 @@ internal fun MealCalendar(
                         val active = day == selected
                         val description =
                             if (day == today) {
-                                stringResource(R.string.pulse_mealplan_today_date_description, day.format(mealDate))
+                                stringResource(R.string.pulse_mealplan_today_date_description, day.format(accessibleDateFormat))
                             } else {
-                                day.format(mealDate)
+                                day.format(accessibleDateFormat)
                             }
                         Surface(
                             onClick = { select(day) },
@@ -221,7 +226,7 @@ internal fun MealCalendar(
                                 verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 PulseText(
-                                    day.dayOfWeek.getDisplayName(weekdayStyle, Locale.getDefault()),
+                                    day.dayOfWeek.getDisplayName(weekdayStyle, locale),
                                     style = if (compact) PulseTextStyle.Caption else PulseTextStyle.Body2,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,

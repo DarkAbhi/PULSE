@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.editor
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable

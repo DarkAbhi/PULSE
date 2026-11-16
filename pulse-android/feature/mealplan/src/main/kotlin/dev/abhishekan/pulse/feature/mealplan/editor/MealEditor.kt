@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.editor
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,6 +18,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -39,6 +40,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.feature.mealplan.R
+import dev.abhishekan.pulse.feature.mealplan.shared.mealDate
 import java.time.LocalDate
 import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
@@ -83,7 +86,8 @@ internal fun MealEditor(
         }
         Spacer(Modifier.height(8.dp))
         PulseText(stringResource(R.string.pulse_mealplan_meal_date), style = PulseTextStyle.Label)
-        val formattedDate = runCatching { LocalDate.parse(draft.date).format(mealDate) }.getOrDefault(draft.date)
+        val locale = LocalLocale.current.platformLocale
+        val formattedDate = runCatching { LocalDate.parse(draft.date).format(mealDate.withLocale(locale)) }.getOrDefault(draft.date)
         val dateLabel = stringResource(R.string.pulse_mealplan_meal_date_1_s, formattedDate)
         PulseButton(
             text = formattedDate,

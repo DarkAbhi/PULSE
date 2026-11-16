@@ -1,21 +1,27 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.planner
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.MealChange
+import dev.abhishekan.pulse.core.domain.model.MealPreferences
 import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
 import dev.abhishekan.pulse.core.domain.usecase.ApplyMealChange
 import dev.abhishekan.pulse.core.domain.usecase.GetMealWeek
 import dev.abhishekan.pulse.core.domain.usecase.MealCalendar
 import dev.abhishekan.pulse.core.domain.usecase.SetMealConsumed
 import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.mealplan.R
+import dev.abhishekan.pulse.feature.mealplan.editor.MealDraft
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -56,10 +62,12 @@ class MealPlanViewModelTest {
 
     private inner class Repo : MealPlanRepository {
         override val changes = MutableStateFlow(0L)
+        var mealReadGate: CompletableDeferred<Unit>? = null
         var mealFailure: Failure? = null
         var timeFailure: Failure? = null
         var meals = listOf(meal)
         var reads = 0
+        var timeReads = 0
         var writes = 0
         var ranges = mutableListOf<Pair<LocalDate, LocalDate>>()
         var result: suspend () -> Outcome<Unit> = { Outcome.Success(Unit) }
@@ -71,15 +79,19 @@ class MealPlanViewModelTest {
         ): Outcome<List<PlannedMeal>> {
             reads++
             ranges += start to end
+            mealReadGate?.await()
             return mealFailure?.let { Outcome.Error(it) }
                 ?: Outcome.Success(meals.filter { it.date in start..end })
         }
 
-        override suspend fun times(): Outcome<List<MealTime>> = timeFailure?.let { Outcome.Error(it) } ?: Outcome.Success(listOf(default))
+        override suspend fun times(): Outcome<List<MealTime>> {
+            timeReads++
+            return timeFailure?.let { Outcome.Error(it) } ?: Outcome.Success(listOf(default))
+        }
 
         override suspend fun apply(change: MealChange): Outcome<Unit> {
             writes++
-            return result()
+            return result().also { changes.value++ }
         }
 
         override suspend fun consumed(
@@ -119,17 +131,44 @@ class MealPlanViewModelTest {
             models.put("meals", it)
         }
 
+    @Test fun firstEntryUsesInitialReadsAndReentryRefreshes() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+
+            vm.onAction(MealPlanAction.Enter(UserTimeZone.zone))
+            runCurrent()
+            assertEquals(1, repo.reads)
+            assertEquals(1, repo.timeReads)
+
+            vm.onAction(MealPlanAction.Enter(UserTimeZone.zone))
+            runCurrent()
+            assertEquals(2, repo.reads)
+            assertEquals(2, repo.timeReads)
+        }
+
+    @Test fun revisionAfterInitialRequestStartsRefreshesEvenBeforeCollectorStarts() =
+        runTest {
+            val vm = vm()
+            repo.changes.value++
+            runCurrent()
+
+            assertEquals(2, repo.reads)
+            assertEquals(2, repo.timeReads)
+            assertTrue(vm.uiState.value.meals is MealSection.Ready)
+        }
+
     @Test fun resumeDoesNotFetchAndRefreshPreservesMealsOnFailure() =
         runTest {
             val vm = vm()
             runCurrent()
             val previous = vm.uiState.value
             val reads = repo.reads
-            vm.resume()
+            vm.onAction(MealPlanAction.Resume)
             runCurrent()
             assertEquals(reads, repo.reads)
             repo.mealFailure = Failure.Connection
-            vm.refresh()
+            vm.onAction(MealPlanAction.Refresh)
             assertTrue(vm.uiState.value.meals.loading)
             assertEquals(previous.meals.value, vm.uiState.value.meals.value)
             assertEquals(previous.times.value, vm.uiState.value.times.value)
@@ -160,10 +199,10 @@ class MealPlanViewModelTest {
                 LocalDate.parse("2026-12-28") to LocalDate.parse("2027-01-03"),
                 repo.ranges.single(),
             )
-            vm.shift(1)
+            vm.onAction(MealPlanAction.ShiftWeek(1))
             runCurrent()
             assertEquals(emptyList<PlannedMeal>(), vm.uiState.value.meals.value)
-            vm.today()
+            vm.onAction(MealPlanAction.Today)
             runCurrent()
             assertEquals(calendar.today(), vm.uiState.value.selected)
         }
@@ -176,29 +215,31 @@ class MealPlanViewModelTest {
             assertEquals(listOf(meal), vm.uiState.value.meals.value)
             assertEquals(Failure.Connection, vm.uiState.value.times.error)
             repo.timeFailure = null
-            vm.refreshTimes()
+            vm.onAction(MealPlanAction.RefreshTimes)
             runCurrent()
             assertEquals(1, repo.reads)
             repo.mealFailure = Failure.Server
-            vm.refreshMeals()
+            vm.onAction(MealPlanAction.RefreshMeals)
             runCurrent()
             assertNotNull(vm.uiState.value.times.value)
             assertEquals(listOf(meal), vm.uiState.value.meals.value)
         }
 
-    @Test fun duplicateSubmissionIsBlockedAndSuccessfulSaveKeepsFeedback() =
+    @Test fun duplicateSubmissionIsBlockedAndOwnRevisionTriggersOneRefresh() =
         runTest {
             val gate = CompletableDeferred<Outcome<Unit>>()
             repo.result = { gate.await() }
             val vm = vm()
             runCurrent()
-            vm.add()
-            vm.update(
-                vm.uiState.value.draft!!
-                    .copy(name = "Rice", timeId = default.id),
+            vm.onAction(MealPlanAction.AddMeal)
+            vm.onAction(
+                MealPlanAction.UpdateDraft(
+                    vm.uiState.value.draft!!
+                        .copy(name = "Rice", timeId = default.id),
+                ),
             )
-            vm.save()
-            vm.save()
+            vm.onAction(MealPlanAction.Save())
+            vm.onAction(MealPlanAction.Save())
             runCurrent()
             assertEquals(1, repo.writes)
             gate.complete(Outcome.Success(Unit))
@@ -206,30 +247,36 @@ class MealPlanViewModelTest {
             assertNull(vm.uiState.value.draft)
             assertEquals(
                 uiText(R.string.pulse_mealplan_saved_your_meal_plan_is_up_to_date),
-                vm.uiState.value.message,
+                (vm.event.first() as MealPlanEvent.ShowMessage).message,
             )
+            assertEquals(2, repo.reads)
+            assertEquals(2, repo.timeReads)
         }
 
     @Test fun mealTimeIsRequiredBeforeSaving() =
         runTest {
             val vm = vm()
             runCurrent()
-            vm.add()
-            vm.update(
-                vm.uiState.value.draft!!
-                    .copy(name = "Rice"),
+            vm.onAction(MealPlanAction.AddMeal)
+            vm.onAction(
+                MealPlanAction.UpdateDraft(
+                    vm.uiState.value.draft!!
+                        .copy(name = "Rice"),
+                ),
             )
-            vm.save()
+            vm.onAction(MealPlanAction.Save())
             runCurrent()
             assertEquals(0, repo.writes)
             assertEquals(uiText(R.string.pulse_mealplan_select_meal_time), vm.uiState.value.error)
             assertNotNull(vm.uiState.value.draft)
 
-            vm.update(
-                vm.uiState.value.draft!!
-                    .copy(timeId = default.id),
+            vm.onAction(
+                MealPlanAction.UpdateDraft(
+                    vm.uiState.value.draft!!
+                        .copy(timeId = default.id),
+                ),
             )
-            vm.save()
+            vm.onAction(MealPlanAction.Save())
             runCurrent()
             assertEquals(1, repo.writes)
             assertNull(vm.uiState.value.draft)
@@ -242,8 +289,8 @@ class MealPlanViewModelTest {
             repo.toggle = Outcome.Error(Failure.Timeout)
             repo.mealFailure =
                 Failure.Connection
-            vm.toggle(meal)
-            vm.toggle(meal)
+            vm.onAction(MealPlanAction.ToggleConsumed(meal))
+            vm.onAction(MealPlanAction.ToggleConsumed(meal))
             runCurrent()
             assertEquals(1, repo.writes)
             assertFalse(
@@ -252,12 +299,13 @@ class MealPlanViewModelTest {
                     .consumed,
             )
             assertTrue(vm.uiState.value.reviewRequired)
-            vm.reviewed()
+            assertEquals(MealWriteState.NeedsReview(Failure.Timeout), vm.uiState.value.write)
+            vm.onAction(MealPlanAction.Reviewed)
             assertTrue(vm.uiState.value.reviewRequired)
             repo.mealFailure = null
-            vm.refresh()
+            vm.onAction(MealPlanAction.Refresh)
             runCurrent()
-            vm.reviewed()
+            vm.onAction(MealPlanAction.Reviewed)
             assertFalse(vm.uiState.value.reviewRequired)
         }
 
@@ -265,7 +313,7 @@ class MealPlanViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.toggle(meal)
+            vm.onAction(MealPlanAction.ToggleConsumed(meal))
             assertFalse(
                 vm.uiState.value.meals.value!!
                     .single()
@@ -279,7 +327,7 @@ class MealPlanViewModelTest {
             )
             assertEquals(
                 uiText(R.string.pulse_mealplan_meal_enjoyed_a_little_care_for_your_day),
-                vm.uiState.value.message,
+                (vm.event.first() as MealPlanEvent.ShowMessage).message,
             )
         }
 
@@ -307,7 +355,7 @@ class MealPlanViewModelTest {
             assertEquals(draft, vm.uiState.value.draft)
             assertEquals(LocalDate.parse("2024-02-26"), vm.uiState.value.week)
             assertTrue(vm.uiState.value.reviewRequired)
-            vm.save()
+            vm.onAction(MealPlanAction.Save())
             runCurrent()
             assertEquals(0, repo.writes)
         }
@@ -316,14 +364,16 @@ class MealPlanViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.edit(MealDraft(name = "Rice", date = "2026-02-30", timeId = default.id))
-            vm.save()
+            vm.onAction(MealPlanAction.AddMeal)
+            vm.onAction(MealPlanAction.UpdateDraft(MealDraft(name = "Rice", date = "2026-02-30", timeId = default.id)))
+            vm.onAction(MealPlanAction.Save())
             runCurrent()
             assertEquals(0, repo.writes)
             assertNotNull(vm.uiState.value.error)
-            vm.discard()
-            vm.edit(MealDraft(timeForm = true, name = "Snack", start = "24:00"))
-            vm.save()
+            vm.onAction(MealPlanAction.Discard)
+            vm.onAction(MealPlanAction.AddMealTime)
+            vm.onAction(MealPlanAction.UpdateDraft(MealDraft(timeForm = true, name = "Snack", start = "24:00")))
+            vm.onAction(MealPlanAction.Save())
             runCurrent()
             assertEquals(0, repo.writes)
             val use = ApplyMealChange(repo)
@@ -349,15 +399,17 @@ class MealPlanViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.mutate(MealChange.DeleteTime(default))
+            vm.onAction(MealPlanAction.DeleteMealTime(default))
             runCurrent()
             assertEquals(0, repo.writes)
-            vm.edit(MealDraft.edit(meal))
-            vm.update(
-                vm.uiState.value.draft!!
-                    .copy(timeId = null),
+            vm.onAction(MealPlanAction.EditMeal(meal))
+            vm.onAction(
+                MealPlanAction.UpdateDraft(
+                    vm.uiState.value.draft!!
+                        .copy(timeId = null),
+                ),
             )
-            vm.save()
+            vm.onAction(MealPlanAction.Save())
             runCurrent()
             assertEquals(0, repo.writes)
             assertEquals(Outcome.Error(Failure.InvalidInput), SetMealConsumed(repo)(0, true))
@@ -368,16 +420,18 @@ class MealPlanViewModelTest {
             repo.result = { Outcome.Error(Failure.Server) }
             val vm = vm()
             runCurrent()
-            vm.add()
-            vm.update(
-                vm.uiState.value.draft!!
-                    .copy(name = "Rice", timeId = default.id),
+            vm.onAction(MealPlanAction.AddMeal)
+            vm.onAction(
+                MealPlanAction.UpdateDraft(
+                    vm.uiState.value.draft!!
+                        .copy(name = "Rice", timeId = default.id),
+                ),
             )
-            vm.save()
+            vm.onAction(MealPlanAction.Save())
             runCurrent()
             val before = vm.uiState.value.selected
-            vm.shift(1)
-            vm.save()
+            vm.onAction(MealPlanAction.ShiftWeek(1))
+            vm.onAction(MealPlanAction.Save())
             runCurrent()
             assertEquals(before, vm.uiState.value.selected)
             assertEquals(1, repo.writes)
@@ -390,8 +444,9 @@ class MealPlanViewModelTest {
             val saved = SavedStateHandle()
             val vm = vm(saved)
             runCurrent()
-            vm.edit(MealDraft(name = "Future soup", date = "2027-02-10", timeId = default.id))
-            vm.save()
+            vm.onAction(MealPlanAction.AddMeal)
+            vm.onAction(MealPlanAction.UpdateDraft(MealDraft(name = "Future soup", date = "2027-02-10", timeId = default.id)))
+            vm.onAction(MealPlanAction.Save())
             runCurrent()
             assertEquals(LocalDate.parse("2027-02-08"), vm.uiState.value.week)
             assertEquals("2027-02-10", saved.get<String>("selected"))
@@ -406,5 +461,55 @@ class MealPlanViewModelTest {
                 GetMealWeek(repo)(LocalDate.of(9999, 12, 31)),
             )
             assertEquals(0, repo.reads)
+        }
+
+    @Test fun excludedMealTimeIsRejectedForNewMealsAndAllowedForExistingAssignment() =
+        runTest {
+            val vm = vm()
+            val preferences = MealPreferences(meals = emptyList(), planningSlotsConfigured = true)
+            runCurrent()
+
+            vm.onAction(MealPlanAction.AddMeal)
+            val draft = requireNotNull(vm.uiState.value.draft)
+            vm.onAction(MealPlanAction.UpdateDraft(draft.copy(name = "Soup", timeId = default.id)))
+            vm.onAction(MealPlanAction.Save(preferences))
+            runCurrent()
+            assertEquals(0, repo.writes)
+            assertEquals(uiText(R.string.pulse_mealplan_select_meal_time), vm.uiState.value.error)
+
+            vm.onAction(MealPlanAction.Discard)
+            vm.onAction(MealPlanAction.EditMeal(meal))
+            vm.onAction(MealPlanAction.Save(preferences))
+            runCurrent()
+            assertEquals(1, repo.writes)
+        }
+
+    @Test fun savingToAnotherWeekCancelsTheReadForThePreviousWeek() =
+        runTest {
+            val oldRead = CompletableDeferred<Unit>()
+            val write = CompletableDeferred<Unit>()
+            repo.mealReadGate = oldRead
+            repo.result = {
+                write.await()
+                Outcome.Success(Unit)
+            }
+            val vm = vm()
+            runCurrent()
+
+            vm.onAction(MealPlanAction.AddMeal)
+            val draft = requireNotNull(vm.uiState.value.draft)
+            vm.onAction(MealPlanAction.UpdateDraft(draft.copy(name = "Soup", date = "2027-02-10", timeId = default.id)))
+            vm.onAction(MealPlanAction.Save())
+            runCurrent()
+            oldRead.complete(Unit)
+            runCurrent()
+
+            assertEquals(LocalDate.parse("2027-02-08"), vm.uiState.value.week)
+            assertNull(vm.uiState.value.meals.value)
+            assertTrue(vm.uiState.value.busy)
+
+            write.complete(Unit)
+            runCurrent()
+            assertEquals(emptyList<PlannedMeal>(), vm.uiState.value.meals.value)
         }
 }

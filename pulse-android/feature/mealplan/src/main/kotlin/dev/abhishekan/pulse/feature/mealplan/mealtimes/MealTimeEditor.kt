@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.mealtimes
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +35,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
+import dev.abhishekan.pulse.feature.mealplan.R
+import dev.abhishekan.pulse.feature.mealplan.editor.MealDraft
+import dev.abhishekan.pulse.feature.mealplan.shared.mealClock
 import java.time.LocalTime
 
 @Composable

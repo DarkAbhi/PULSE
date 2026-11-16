@@ -1,10 +1,12 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.MealOnboarding
 import dev.abhishekan.pulse.core.domain.model.MealOnboardingStatus
+import dev.abhishekan.pulse.core.domain.model.MealPreferenceChoices
+import dev.abhishekan.pulse.core.domain.model.MealPreferenceTime
 import dev.abhishekan.pulse.core.domain.model.MealPreferences
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.repository.MealPreferencesRepository
@@ -13,55 +15,113 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-data class MealOnboardingUiState(
-    val record: MealOnboarding? = null,
-    val loading: Boolean = true,
-    val error: Failure? = null,
-    val draft: MealPreferences = MealPreferences(),
-    val step: Int = 0,
-    val editing: Boolean = false,
-    val saving: Boolean = false,
-    val invalidStep: Int? = null,
-    val returnToReview: Boolean = false,
-    val resolvedElsewhere: Boolean = false,
-) {
-    val showJourney get() = record?.status == MealOnboardingStatus.Pending || editing
-}
+import java.time.LocalTime
 
 /** Drafts survive rotation in memory, but never mark setup done or persist across process death. */
-class MealOnboardingViewModel(
+internal class MealOnboardingViewModel(
     private val repository: MealPreferencesRepository,
 ) : ViewModel() {
     private val state = MutableStateFlow(MealOnboardingUiState())
     val uiState = state.asStateFlow()
     private var readJob: Job? = null
+    private var firstResume = true
+    private val defaultMealTimes = MealPreferences().meals.associate { it.kind to it.time }
+    private val disabledMealTimes = mutableMapOf<String, LocalTime>()
 
     init {
         refresh()
     }
 
-    fun refresh() {
+    fun onAction(action: MealOnboardingAction) {
+        when (action) {
+            MealOnboardingAction.Resume -> resume()
+            MealOnboardingAction.Refresh -> refresh()
+            is MealOnboardingAction.SelectGoal -> updateDraft { it.copy(goal = action.code) }
+            is MealOnboardingAction.SelectDiet -> updateDraft { it.copy(dietaryPattern = action.code) }
+            is MealOnboardingAction.ToggleBarrier -> updateDraft { it.copy(barriers = it.barriers.toggle(action.code)) }
+            is MealOnboardingAction.ToggleAvoidance -> updateDraft { it.copy(foodAvoidances = it.foodAvoidances.toggle(action.code)) }
+            is MealOnboardingAction.SetMealEnabled -> setMealEnabled(action.kind, action.enabled)
+            is MealOnboardingAction.SetMealTime -> setMealTime(action.kind, action.time)
+            MealOnboardingAction.Next -> next()
+            MealOnboardingAction.Back -> back()
+            is MealOnboardingAction.ReviewStep -> reviewStep(action.step)
+            MealOnboardingAction.EditPreferences -> editPreferences()
+            MealOnboardingAction.CancelEditing -> cancelEditing()
+            MealOnboardingAction.Save -> commit(skip = false)
+            MealOnboardingAction.Skip -> commit(skip = true)
+        }
+    }
+
+    private fun resume() {
+        // The initial read already covers the route's first resume.
+        if (!firstResume) refresh()
+        firstResume = false
+    }
+
+    private fun refresh() {
         if (state.value.saving) return
         readJob?.cancel()
-        state.update { it.copy(loading = true, error = null) }
+        state.update { it.copy(error = null) }
         readJob =
             viewModelScope.launch {
                 when (val result = repository.onboarding()) {
                     is Outcome.Success ->
                         state.update {
-                            it.copy(record = result.value, loading = false, error = null)
+                            it.copy(record = result.value, error = null)
                         }
-                    is Outcome.Error -> state.update { it.copy(loading = false, error = result.failure) }
+                    is Outcome.Error -> state.update { it.copy(error = result.failure) }
                 }
             }
     }
 
-    fun update(draft: MealPreferences) {
-        if (!state.value.saving) state.update { it.copy(draft = draft, invalidStep = null, error = null) }
+    private fun List<String>.toggle(code: String): List<String> = if (code in this) this - code else this + code
+
+    private fun updateDraft(update: (MealPreferences) -> MealPreferences) {
+        state.update {
+            if (!it.saving && it.showJourney) {
+                it.copy(draft = update(it.draft), invalidStep = null, error = null)
+            } else {
+                it
+            }
+        }
     }
 
-    fun next() {
+    private fun setMealEnabled(
+        kind: String,
+        enabled: Boolean,
+    ) {
+        val current = state.value
+        if (current.saving || !current.showJourney) return
+        val defaultTime = defaultMealTimes[kind] ?: return
+        val existing = current.draft.meals.firstOrNull { it.kind == kind }
+        val meals =
+            when {
+                enabled && existing == null ->
+                    current.draft.meals + MealPreferenceTime(kind, disabledMealTimes.remove(kind) ?: defaultTime)
+                !enabled && existing != null -> {
+                    disabledMealTimes[kind] = existing.time
+                    current.draft.meals - existing
+                }
+                else -> return
+            }
+        updateDraft {
+            it.copy(
+                meals = meals.sortedBy { MealPreferenceChoices.meals.indexOf(it.kind) },
+                planningSlotsConfigured = true,
+            )
+        }
+    }
+
+    private fun setMealTime(
+        kind: String,
+        time: LocalTime,
+    ) {
+        updateDraft { draft ->
+            draft.copy(meals = draft.meals.map { if (it.kind == kind) it.copy(time = time) else it })
+        }
+    }
+
+    private fun next() {
         val current = state.value
         if (current.saving) return
         val invalid = current.draft.invalidStep()
@@ -79,7 +139,7 @@ class MealOnboardingViewModel(
         }
     }
 
-    fun back() {
+    private fun back() {
         if (state.value.saving) return
         if (state.value.step == 0 && state.value.editing) {
             cancelEditing()
@@ -88,12 +148,13 @@ class MealOnboardingViewModel(
         }
     }
 
-    fun reviewStep(step: Int) {
+    private fun reviewStep(step: Int) {
         if (!state.value.saving && step in 0..5) state.update { it.copy(step = step, returnToReview = true, invalidStep = null) }
     }
 
-    fun editPreferences() {
+    private fun editPreferences() {
         if (state.value.record == null || state.value.showJourney) return
+        disabledMealTimes.clear()
         state.update {
             it.copy(
                 editing = true,
@@ -101,18 +162,17 @@ class MealOnboardingViewModel(
                 step = 0,
                 error = null,
                 invalidStep = null,
+                returnToReview = false,
                 resolvedElsewhere = false,
             )
         }
     }
 
-    fun cancelEditing() {
-        if (!state.value.saving) state.update { it.copy(editing = false, error = null, step = 0, returnToReview = false) }
+    private fun cancelEditing() {
+        if (state.value.saving) return
+        disabledMealTimes.clear()
+        state.update { it.copy(editing = false, error = null, step = 0, returnToReview = false) }
     }
-
-    fun save() = commit(false)
-
-    fun skip() = commit(true)
 
     private fun commit(skip: Boolean) {
         val before = state.value
@@ -139,7 +199,7 @@ class MealOnboardingViewModel(
                     ) {
                         accept(current.value, before, skip)
                     } else {
-                        state.update { it.copy(saving = false, loading = false, error = result.failure) }
+                        state.update { it.copy(saving = false, error = result.failure) }
                     }
                 }
             }
@@ -151,12 +211,12 @@ class MealOnboardingViewModel(
         before: MealOnboardingUiState,
         skip: Boolean,
     ) {
+        disabledMealTimes.clear()
         val expected = if (skip) MealOnboardingStatus.Skipped else MealOnboardingStatus.Completed
         state.update {
             it.copy(
                 record = record,
                 saving = false,
-                loading = false,
                 editing = false,
                 error = null,
                 resolvedElsewhere =

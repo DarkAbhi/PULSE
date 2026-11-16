@@ -3,8 +3,8 @@ import dev.abhishekan.pulse.core.domain.usecase.ApplyMealChange
 import dev.abhishekan.pulse.core.domain.usecase.GetMealWeek
 import dev.abhishekan.pulse.core.domain.usecase.MealCalendar
 import dev.abhishekan.pulse.core.domain.usecase.SetMealConsumed
-import dev.abhishekan.pulse.feature.mealplan.MealOnboardingViewModel
-import dev.abhishekan.pulse.feature.mealplan.MealPlanViewModel
+import dev.abhishekan.pulse.feature.mealplan.onboarding.MealOnboardingViewModel
+import dev.abhishekan.pulse.feature.mealplan.planner.MealPlanViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module

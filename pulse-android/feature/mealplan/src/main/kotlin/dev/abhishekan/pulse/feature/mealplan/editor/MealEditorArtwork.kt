@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.editor
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +24,7 @@ import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseText
+import dev.abhishekan.pulse.feature.mealplan.R
 import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable

@@ -1,10 +1,13 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.planner
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.MealChange
+import dev.abhishekan.pulse.core.domain.model.MealPreferences
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
 import dev.abhishekan.pulse.core.domain.usecase.ApplyMealChange
 import dev.abhishekan.pulse.core.domain.usecase.GetMealWeek
@@ -15,17 +18,21 @@ import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.mealplan.R
+import dev.abhishekan.pulse.feature.mealplan.editor.MealDraft
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.DateTimeException
 import java.time.LocalDate
+import java.time.ZoneId
 
-class MealPlanViewModel(
+internal class MealPlanViewModel(
     private val getWeek: GetMealWeek,
     private val mealPlan: MealPlanRepository,
     private val apply: ApplyMealChange,
@@ -43,77 +50,106 @@ class MealPlanViewModel(
                 initialDay,
                 calendar.monday(initialDay),
                 draft = saved.get<ArrayList<String>>("draft")?.let(MealDraft::restore),
-                reviewRequired =
-                    saved["pending"] ?: false,
+                write = if (saved.get<Boolean>("pending") == true) MealWriteState.NeedsReview() else MealWriteState.Idle,
             ),
         )
     val uiState = state.asStateFlow()
-
-    init {
-        unsavedChanges.track(DraftSource.MealPlan, state.map { it.draft?.dirty == true }, viewModelScope)
-    }
-
-    fun consumeMessage() {
-        state.update { it.copy(message = null) }
-    }
+    private val events = Channel<MealPlanEvent>(Channel.BUFFERED)
+    val event = events.receiveAsFlow()
 
     private var mealsJob: Job? = null
     private var timesJob: Job? = null
+    private var initialLoadZone: ZoneId? = UserTimeZone.zone
+    private var refreshedRevision = getWeek.changes.value
 
     init {
+        unsavedChanges.track(DraftSource.MealPlan, state.map { it.draft?.dirty == true }, viewModelScope)
         refresh()
         viewModelScope.launch {
-            getWeek.changes.drop(1).collect { if (!state.value.busy) refresh() }
+            getWeek.changes.collect { revision ->
+                if (revision != refreshedRevision && !state.value.busy) refresh()
+            }
         }
     }
 
-    fun resume() {
+    fun onAction(action: MealPlanAction) {
+        when (action) {
+            is MealPlanAction.Enter -> enter(action.timeZone)
+            MealPlanAction.Resume -> resume()
+            MealPlanAction.Refresh -> if (!state.value.busy) refresh()
+            MealPlanAction.RefreshMeals -> if (!state.value.busy) refreshMeals()
+            MealPlanAction.RefreshTimes -> if (!state.value.busy) refreshTimes()
+            MealPlanAction.Today -> today()
+            is MealPlanAction.SelectDate -> select(action.date)
+            is MealPlanAction.ShiftWeek -> shift(action.weeks)
+            MealPlanAction.AddMeal -> edit(MealDraft(date = state.value.selected.toString()))
+            is MealPlanAction.EditMeal -> edit(MealDraft.edit(action.meal))
+            MealPlanAction.AddMealTime -> edit(MealDraft(timeForm = true))
+            is MealPlanAction.UpdateDraft -> update(action.draft)
+            MealPlanAction.Discard -> discard()
+            is MealPlanAction.Save -> save(action.preferences)
+            is MealPlanAction.DeleteMeal -> mutate(MealChange.Delete(action.id))
+            is MealPlanAction.DeleteMealTime -> mutate(MealChange.DeleteTime(action.time))
+            is MealPlanAction.ToggleConsumed -> toggle(action.meal)
+            MealPlanAction.Reviewed -> reviewed()
+        }
+    }
+
+    private fun enter(timeZone: ZoneId) {
+        resume()
+        if (initialLoadZone != timeZone && !state.value.busy) refresh()
+        initialLoadZone = null
+    }
+
+    private fun resume() {
         state.update { it.copy(today = calendar.today()) }
     }
 
-    fun refresh() {
+    private fun refresh() {
+        // The read after a local write also covers that write's repository notification.
+        refreshedRevision = getWeek.changes.value
         refreshMeals()
         refreshTimes()
     }
 
-    fun refreshMeals() {
+    private fun refreshMeals() {
         mealsJob?.cancel()
         val week = state.value.week
-        state.update { it.copy(meals = it.meals.copy(loading = true)) }
+        state.update { it.copy(meals = MealSection.Loading(it.meals.value)) }
         mealsJob =
             viewModelScope.launch {
                 when (val result = getWeek(week)) {
                     is Outcome.Success ->
                         state.update {
-                            it.copy(meals = MealSection(result.value, false))
+                            it.copy(meals = MealSection.Ready(result.value))
                         }
                     is Outcome.Error ->
                         state.update {
-                            it.copy(meals = it.meals.copy(loading = false, error = result.failure))
+                            it.copy(meals = MealSection.Failed(it.meals.value, result.failure))
                         }
                 }
             }
     }
 
-    fun refreshTimes() {
+    private fun refreshTimes() {
         timesJob?.cancel()
-        state.update { it.copy(times = it.times.copy(loading = true)) }
+        state.update { it.copy(times = MealSection.Loading(it.times.value)) }
         timesJob =
             viewModelScope.launch {
                 when (val result = mealPlan.times()) {
                     is Outcome.Success ->
                         state.update {
-                            it.copy(times = MealSection(result.value, false))
+                            it.copy(times = MealSection.Ready(result.value))
                         }
                     is Outcome.Error ->
                         state.update {
-                            it.copy(times = it.times.copy(loading = false, error = result.failure))
+                            it.copy(times = MealSection.Failed(it.times.value, result.failure))
                         }
                 }
             }
     }
 
-    fun select(date: LocalDate) {
+    private fun select(date: LocalDate) {
         if (state.value.busy ||
             state.value.draft != null ||
             state.value.reviewRequired ||
@@ -129,23 +165,22 @@ class MealPlanViewModel(
             it.copy(
                 selected = date,
                 week = monday,
-                meals = if (changed) MealSection() else it.meals,
-                message = null,
+                meals = if (changed) MealSection.Loading() else it.meals,
             )
         }
         if (changed) refreshMeals()
     }
 
-    fun shift(weeks: Long) {
+    private fun shift(weeks: Long) {
         calendar.shift(state.value.selected, weeks)?.let(::select)
     }
 
-    fun today() {
+    private fun today() {
         resume()
         select(calendar.today())
     }
 
-    fun edit(draft: MealDraft) {
+    private fun edit(draft: MealDraft) {
         if (state.value.canWrite &&
             state.value.draft == null
         ) {
@@ -153,12 +188,8 @@ class MealPlanViewModel(
         }
     }
 
-    fun add(date: LocalDate = state.value.selected) {
-        edit(MealDraft(date = date.toString()))
-    }
-
-    fun update(draft: MealDraft) {
-        if (!state.value.busy) store(draft.copy(dirty = true))
+    private fun update(draft: MealDraft) {
+        if (!state.value.busy && state.value.draft != null) store(draft.copy(dirty = true))
     }
 
     private fun store(draft: MealDraft?) {
@@ -166,13 +197,14 @@ class MealPlanViewModel(
         state.update { it.copy(draft = draft, error = null) }
     }
 
-    fun discard() {
+    private fun discard() {
         if (!state.value.busy) store(null)
     }
 
-    fun save(selectableTimeIds: Set<Long>? = null) {
-        if (!state.value.canWrite) return
-        val draft = state.value.draft ?: return
+    private fun save(preferences: MealPreferences?) {
+        val current = state.value
+        if (!current.canWrite) return
+        val draft = current.draft ?: return
         val change =
             try {
                 draft.change()
@@ -183,8 +215,7 @@ class MealPlanViewModel(
         val unavailable =
             !draft.timeForm &&
                 draft.timeId != null &&
-                selectableTimeIds != null &&
-                draft.timeId !in selectableTimeIds
+                current.selectableTimes(preferences).none { it.id == draft.timeId }
         if (change == null || !apply.valid(change) || cannotClear || unavailable) {
             state.update {
                 it.copy(
@@ -211,23 +242,16 @@ class MealPlanViewModel(
 
     private fun begin() {
         saved["pending"] = true
-        state.update { it.copy(busy = true, error = null, message = null) }
+        state.update { it.copy(write = MealWriteState.Saving, error = null) }
     }
 
-    fun mutate(
+    private fun mutate(
         change: MealChange,
         closeDraft: Boolean = false,
     ) {
         if (!state.value.canWrite) return
         if (!apply.valid(change)) {
-            state.update {
-                it.copy(
-                    message =
-                        uiText(
-                            R.string.pulse_mealplan_this_meal_time_is_protected_or_the_input_is,
-                        ),
-                )
-            }
+            showMessage(uiText(R.string.pulse_mealplan_this_meal_time_is_protected_or_the_input_is))
             return
         }
         if (change is MealChange.Save) {
@@ -247,55 +271,31 @@ class MealPlanViewModel(
             // Keep the affected week available for review after a lost response or process recreation.
             saved["selected"] = change.date.toString()
             val week = calendar.monday(change.date)
+            if (week != state.value.week) mealsJob?.cancel()
             state.update {
                 it.copy(
                     selected = change.date,
                     week = week,
-                    meals =
-                        if (it.week ==
-                            week
-                        ) {
-                            it.meals
-                        } else {
-                            MealSection()
-                        },
+                    meals = if (it.week == week) it.meals else MealSection.Loading(),
                 )
             }
         }
         begin()
         viewModelScope.launch {
-            finish(apply(change), closeDraft, (change as? MealChange.Save)?.date)
+            finish(apply(change), closeDraft)
         }
     }
 
-    fun toggle(meal: PlannedMeal) {
-        if (!state.value.canWrite ||
-            state.value.meals.loading ||
-            state.value.meals.error != null
-        ) {
-            return
-        }
+    private fun toggle(meal: PlannedMeal) {
+        val current = state.value
+        val meals = current.meals as? MealSection.Ready ?: return
+        if (!current.canWrite) return
         begin()
         viewModelScope.launch {
             when (val result = setConsumed(meal.id, !meal.consumed)) {
                 is Outcome.Success -> {
-                    state.update {
-                        it.copy(
-                            meals =
-                                it.meals.copy(
-                                    value =
-                                        it.meals.value?.map { old ->
-                                            if (old.id ==
-                                                meal.id
-                                            ) {
-                                                result.value
-                                            } else {
-                                                old
-                                            }
-                                        },
-                                ),
-                        )
-                    }
+                    val updated = meals.value.map { if (it.id == meal.id) result.value else it }
+                    state.update { it.copy(meals = MealSection.Ready(updated)) }
                     finish(
                         Outcome.Success(Unit),
                         message =
@@ -316,45 +316,30 @@ class MealPlanViewModel(
     private fun finish(
         result: Outcome<Unit>,
         closeDraft: Boolean = false,
-        date: LocalDate? = null,
         message: UiText = uiText(R.string.pulse_mealplan_saved_your_meal_plan_is_up_to_date),
     ) {
         when (result) {
             is Outcome.Success -> {
                 saved["pending"] = false
-                if (closeDraft) store(null)
-                state.update { it.copy(busy = false) }
-                if (date != null) select(date)
-                state.update { it.copy(message = message) }
+                if (closeDraft) saved["draft"] = null
+                state.update { it.copy(write = MealWriteState.Idle, draft = if (closeDraft) null else it.draft) }
+                showMessage(message)
             }
             is Outcome.Error ->
-                state.update {
-                    it.copy(
-                        busy = false,
-                        reviewRequired = true,
-                        message =
-                            uiText(
-                                R.string.pulse_mealplan_uncertain_change,
-                                result.failure.message,
-                            ),
-                    )
-                }
+                state.update { it.copy(write = MealWriteState.NeedsReview(result.failure)) }
         }
         refresh()
     }
 
-    fun reviewed() {
-        if (state.value.reviewRequired && state.value.reviewReady) {
+    private fun reviewed() {
+        if (state.value.reviewReady) {
             saved["pending"] = false
-            state.update {
-                it.copy(
-                    reviewRequired = false,
-                    message =
-                        uiText(
-                            R.string.pulse_mealplan_records_reviewed_discard_the_draft_if_it_was_already,
-                        ),
-                )
-            }
+            state.update { it.copy(write = MealWriteState.Idle) }
+            showMessage(uiText(R.string.pulse_mealplan_records_reviewed_discard_the_draft_if_it_was_already))
         }
+    }
+
+    private fun showMessage(message: UiText) {
+        viewModelScope.launch { events.send(MealPlanEvent.ShowMessage(message)) }
     }
 }

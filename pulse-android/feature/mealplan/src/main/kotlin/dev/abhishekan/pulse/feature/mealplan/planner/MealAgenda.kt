@@ -1,4 +1,5 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.planner
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -40,11 +42,11 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.feature.mealplan.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-internal val mealDate: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE, d MMM yyyy")
-internal val mealClock: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+private val mealRangeTime = DateTimeFormatter.ofPattern("h:mm a")
 
 @Composable
 internal fun MealAgenda(
@@ -127,6 +129,7 @@ private fun MealIllustratedCard(
     modifier: Modifier = Modifier,
 ) {
     val colors = PulseTheme.colors
+    val timeFormat = mealRangeTime.withLocale(LocalLocale.current.platformLocale)
     val meal = meals.first()
     val hour = meal.start?.hour
     val artwork =
@@ -177,8 +180,8 @@ private fun MealIllustratedCard(
                                 } else {
                                     R.string.pulse_mealplan_time_range
                                 },
-                                start.format(DateTimeFormatter.ofPattern("h:mm a")),
-                                end.format(DateTimeFormatter.ofPattern("h:mm a")),
+                                start.format(timeFormat),
+                                end.format(timeFormat),
                             ),
                             style = PulseTextStyle.Body3,
                             color = colors.textSecondary,

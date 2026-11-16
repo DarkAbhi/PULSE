@@ -1,4 +1,5 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.planner
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,10 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
+import dev.abhishekan.pulse.feature.mealplan.editor.MealDraft
+import dev.abhishekan.pulse.feature.mealplan.editor.MealEditor
+import dev.abhishekan.pulse.feature.mealplan.editor.MealEditorFooter
+import dev.abhishekan.pulse.feature.mealplan.mealtimes.MealTimeEditor
 import java.time.LocalDate
 import java.time.LocalTime
 

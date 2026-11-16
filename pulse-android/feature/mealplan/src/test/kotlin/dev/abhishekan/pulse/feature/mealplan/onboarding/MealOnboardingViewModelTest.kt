@@ -1,9 +1,10 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.onboarding
 
 import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.MealOnboarding
 import dev.abhishekan.pulse.core.domain.model.MealOnboardingStatus
+import dev.abhishekan.pulse.core.domain.model.MealPreferenceChoices
 import dev.abhishekan.pulse.core.domain.model.MealPreferences
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.repository.MealPreferencesRepository
@@ -22,6 +23,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.LocalTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MealOnboardingViewModelTest {
@@ -35,9 +37,13 @@ class MealOnboardingViewModelTest {
         var writeFailure: Failure? = null
         var commitBeforeFailure = false
         var writes = 0
+        var reads = 0
         var hold: CompletableDeferred<Unit>? = null
 
-        override suspend fun onboarding(): Outcome<MealOnboarding> = failure?.let { Outcome.Error(it) } ?: Outcome.Success(record)
+        override suspend fun onboarding(): Outcome<MealOnboarding> {
+            reads++
+            return failure?.let { Outcome.Error(it) } ?: Outcome.Success(record)
+        }
 
         override suspend fun resolve(preferences: MealPreferences?): Outcome<MealOnboarding> {
             writes++
@@ -73,6 +79,38 @@ class MealOnboardingViewModelTest {
 
     private fun vm(key: String = "setup") = MealOnboardingViewModel(repo).also { models.put(key, it) }
 
+    private fun MealOnboardingViewModel.answerRequiredQuestions() {
+        onAction(MealOnboardingAction.SelectGoal(complete.goal))
+        onAction(MealOnboardingAction.SelectDiet(complete.dietaryPattern))
+    }
+
+    @Test fun firstResumeUsesInitialReadAndLaterResumeReadsServerStatus() =
+        runTest {
+            val model = vm()
+            runCurrent()
+            model.onAction(MealOnboardingAction.Resume)
+            runCurrent()
+            assertEquals(1, repo.reads)
+
+            repo.record = MealOnboarding(MealOnboardingStatus.Skipped)
+            model.onAction(MealOnboardingAction.Resume)
+            runCurrent()
+            assertEquals(2, repo.reads)
+            assertFalse(model.uiState.value.showJourney)
+        }
+
+    @Test fun consecutiveAnswersUseTheLatestDraft() =
+        runTest {
+            val model = vm()
+            runCurrent()
+            val barriers = MealPreferenceChoices.barriers.take(2)
+            val avoidance = MealPreferenceChoices.avoidances.first()
+            barriers.forEach { model.onAction(MealOnboardingAction.ToggleBarrier(it)) }
+            model.onAction(MealOnboardingAction.ToggleAvoidance(avoidance))
+            assertEquals(barriers, model.uiState.value.draft.barriers)
+            assertEquals(listOf(avoidance), model.uiState.value.draft.foodAvoidances)
+        }
+
     @Test fun webCompletionAndWebSkipBypassAndroidJourney() =
         runTest {
             for (status in listOf(MealOnboardingStatus.Completed, MealOnboardingStatus.Skipped)) {
@@ -89,8 +127,8 @@ class MealOnboardingViewModelTest {
         runTest {
             val first = vm()
             runCurrent()
-            first.update(complete)
-            first.next()
+            first.answerRequiredQuestions()
+            first.onAction(MealOnboardingAction.Next)
             runCurrent()
             assertEquals(0, repo.writes)
             assertTrue(first.uiState.value.showJourney)
@@ -104,18 +142,18 @@ class MealOnboardingViewModelTest {
         runTest {
             val model = vm()
             runCurrent()
-            model.next()
+            model.onAction(MealOnboardingAction.Next)
             assertEquals(0, model.uiState.value.invalidStep)
-            model.update(complete)
-            repeat(6) { model.next() }
+            model.answerRequiredQuestions()
+            repeat(6) { model.onAction(MealOnboardingAction.Next) }
             assertEquals(6, model.uiState.value.step)
-            model.reviewStep(4)
-            model.update(complete.copy(meals = emptyList()))
-            model.next()
+            model.onAction(MealOnboardingAction.ReviewStep(4))
+            complete.meals.forEach { model.onAction(MealOnboardingAction.SetMealEnabled(it.kind, false)) }
+            model.onAction(MealOnboardingAction.Next)
             assertEquals(4, model.uiState.value.invalidStep)
             assertEquals(0, repo.writes)
-            model.update(complete)
-            model.next()
+            complete.meals.forEach { model.onAction(MealOnboardingAction.SetMealEnabled(it.kind, true)) }
+            model.onAction(MealOnboardingAction.Next)
             assertEquals(6, model.uiState.value.step)
         }
 
@@ -123,11 +161,11 @@ class MealOnboardingViewModelTest {
         runTest {
             val model = vm()
             runCurrent()
-            model.update(complete)
+            model.answerRequiredQuestions()
             repo.hold = CompletableDeferred()
-            model.save()
-            model.save()
-            model.skip()
+            model.onAction(MealOnboardingAction.Save)
+            model.onAction(MealOnboardingAction.Save)
+            model.onAction(MealOnboardingAction.Skip)
             runCurrent()
             assertEquals(1, repo.writes)
             assertTrue(model.uiState.value.saving)
@@ -139,7 +177,7 @@ class MealOnboardingViewModelTest {
             repo.record = MealOnboarding(MealOnboardingStatus.Pending)
             val skipped = vm("skip")
             runCurrent()
-            skipped.skip()
+            skipped.onAction(MealOnboardingAction.Skip)
             runCurrent()
             assertEquals(MealOnboardingStatus.Skipped, repo.record.status)
             assertNull(repo.record.preferences)
@@ -155,7 +193,7 @@ class MealOnboardingViewModelTest {
             assertEquals(Failure.Connection, model.uiState.value.error)
             repo.failure = null
             repo.record = MealOnboarding(MealOnboardingStatus.Skipped)
-            model.refresh()
+            model.onAction(MealOnboardingAction.Refresh)
             runCurrent()
             assertFalse(model.uiState.value.showJourney)
             assertEquals(0, repo.writes)
@@ -165,16 +203,16 @@ class MealOnboardingViewModelTest {
         runTest {
             val model = vm()
             runCurrent()
-            model.update(complete)
+            model.answerRequiredQuestions()
             repo.writeFailure = Failure.Connection
-            model.save()
+            model.onAction(MealOnboardingAction.Save)
             runCurrent()
             assertTrue(model.uiState.value.showJourney)
             assertEquals(complete, model.uiState.value.draft)
             assertEquals(Failure.Connection, model.uiState.value.error)
             assertFalse(model.uiState.value.saving)
             repo.commitBeforeFailure = true
-            model.save()
+            model.onAction(MealOnboardingAction.Save)
             runCurrent()
             assertFalse(model.uiState.value.showJourney)
             assertEquals(MealOnboardingStatus.Completed, repo.record.status)
@@ -184,9 +222,9 @@ class MealOnboardingViewModelTest {
         runTest {
             val model = vm()
             runCurrent()
-            model.update(complete)
+            model.answerRequiredQuestions()
             repo.record = MealOnboarding(MealOnboardingStatus.Skipped)
-            model.save()
+            model.onAction(MealOnboardingAction.Save)
             runCurrent()
             assertFalse(model.uiState.value.showJourney)
             assertTrue(model.uiState.value.resolvedElsewhere)
@@ -194,7 +232,7 @@ class MealOnboardingViewModelTest {
             val pending = vm("resume")
             runCurrent()
             repo.record = MealOnboarding(MealOnboardingStatus.Completed, complete)
-            pending.refresh()
+            pending.onAction(MealOnboardingAction.Refresh)
             runCurrent()
             assertFalse(pending.uiState.value.showJourney)
             assertEquals(
@@ -209,14 +247,14 @@ class MealOnboardingViewModelTest {
             repo.record = MealOnboarding(MealOnboardingStatus.Skipped)
             val model = vm()
             runCurrent()
-            model.editPreferences()
-            model.update(complete)
-            model.cancelEditing()
+            model.onAction(MealOnboardingAction.EditPreferences)
+            model.answerRequiredQuestions()
+            model.onAction(MealOnboardingAction.CancelEditing)
             assertEquals(0, repo.writes)
             assertFalse(model.uiState.value.showJourney)
-            model.editPreferences()
-            model.update(complete)
-            model.save()
+            model.onAction(MealOnboardingAction.EditPreferences)
+            model.answerRequiredQuestions()
+            model.onAction(MealOnboardingAction.Save)
             runCurrent()
             assertEquals(MealOnboardingStatus.Skipped, repo.record.status)
             assertEquals(complete, repo.record.preferences)
@@ -228,17 +266,50 @@ class MealOnboardingViewModelTest {
             repo.record = MealOnboarding(MealOnboardingStatus.Completed, complete)
             val model = vm()
             runCurrent()
-            model.editPreferences()
+            model.onAction(MealOnboardingAction.EditPreferences)
             val updated = complete.copy(goal = "food_calm")
-            model.update(updated)
+            model.onAction(MealOnboardingAction.SelectGoal(updated.goal))
             repo.writeFailure = Failure.Timeout
-            model.save()
+            model.onAction(MealOnboardingAction.Save)
             runCurrent()
             assertTrue(model.uiState.value.editing)
             assertEquals(updated, model.uiState.value.draft)
             repo.commitBeforeFailure = true
-            model.save()
+            model.onAction(MealOnboardingAction.Save)
             runCurrent()
             assertFalse(model.uiState.value.editing)
+        }
+
+    @Test fun disabledMealTimeIsRestoredWithinAnEditAndClearedOnCancel() =
+        runTest {
+            val breakfast = complete.meals.first()
+            val committed = complete.copy(meals = complete.meals - breakfast, planningSlotsConfigured = true)
+            repo.record = MealOnboarding(MealOnboardingStatus.Completed, committed)
+            val model = vm()
+            runCurrent()
+            val kind = breakfast.kind
+            val editedTime = LocalTime.of(8, 15)
+
+            model.onAction(MealOnboardingAction.EditPreferences)
+            model.onAction(MealOnboardingAction.SetMealEnabled(kind, true))
+            model.onAction(MealOnboardingAction.SetMealTime(kind, editedTime))
+            model.onAction(MealOnboardingAction.SetMealEnabled(kind, false))
+            model.onAction(MealOnboardingAction.SetMealEnabled(kind, true))
+            assertEquals(
+                editedTime,
+                model.uiState.value.draft.meals
+                    .first()
+                    .time,
+            )
+
+            model.onAction(MealOnboardingAction.SetMealEnabled(kind, false))
+            model.onAction(MealOnboardingAction.CancelEditing)
+            model.onAction(MealOnboardingAction.EditPreferences)
+            model.onAction(MealOnboardingAction.SetMealEnabled(kind, true))
+            assertEquals(
+                breakfast,
+                model.uiState.value.draft.meals
+                    .first(),
+            )
         }
 }

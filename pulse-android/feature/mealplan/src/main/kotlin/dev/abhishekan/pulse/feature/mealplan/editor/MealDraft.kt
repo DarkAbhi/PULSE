@@ -1,10 +1,10 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.editor
 import dev.abhishekan.pulse.core.domain.model.MealChange
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import java.time.LocalDate
 import java.time.LocalTime
 
-data class MealDraft(
+internal data class MealDraft(
     val timeForm: Boolean = false,
     val id: Long? = null,
     val name: String = "",

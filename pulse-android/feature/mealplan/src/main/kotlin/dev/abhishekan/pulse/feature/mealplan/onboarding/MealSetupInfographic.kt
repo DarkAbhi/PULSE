@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse.feature.mealplan
+package dev.abhishekan.pulse.feature.mealplan.onboarding
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -32,6 +32,7 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.feature.mealplan.R
 import dev.abhishekan.pulse.core.ui.R as UiR
 
 private val chapterLabels = listOf(R.string.meal_setup_chapter_you, R.string.meal_setup_chapter_food, R.string.meal_setup_chapter_rhythm)

@@ -81,8 +81,8 @@ import dev.abhishekan.pulse.feature.fitness.overview.FitnessRoute
 import dev.abhishekan.pulse.feature.fitness.workout.WorkoutRoute
 import dev.abhishekan.pulse.feature.fitness.workout.WorkoutViewModel
 import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseEditorRoute
-import dev.abhishekan.pulse.feature.garage.GarageRoute
-import dev.abhishekan.pulse.feature.garage.VehicleDetailRoute
+import dev.abhishekan.pulse.feature.garage.collection.GarageRoute
+import dev.abhishekan.pulse.feature.garage.detail.VehicleDetailRoute
 import dev.abhishekan.pulse.feature.home.HomeRoute
 import dev.abhishekan.pulse.feature.horizon.HorizonRoute
 import dev.abhishekan.pulse.feature.mealplan.MealPlanRoute

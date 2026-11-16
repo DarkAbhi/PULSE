@@ -14,6 +14,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -23,11 +24,13 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
@@ -446,6 +449,11 @@ class FitnessDeviceTest {
             return
         }
         val button = hasText(text) and hasClickAction() and isEnabled()
+        if (text == "Edit" || text == "Delete workout") {
+            val addExercise = hasText("Add exercise") and hasClickAction() and isEnabled()
+            compose.waitUntil(15_000) { compose.onAllNodes(addExercise).fetchSemanticsNodes().isNotEmpty() }
+            compose.onNodeWithTag("workout-list").performScrollToNode(hasText(text))
+        }
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         val node = compose.onAllNodes(button)[0]
         compose.scrollToDisplayed(node)
@@ -636,7 +644,7 @@ class FitnessDeviceTest {
         tap("Fixture barbell squat")
         tap("Save")
         awaitText("Add exercise")
-        tap("Edit exercise")
+        tap("Edit")
         compose.onNodeWithContentDescription("Edit name").performScrollTo().performClick()
         compose
             .onNodeWithText(
@@ -652,10 +660,12 @@ class FitnessDeviceTest {
         tap("Remember my name for this exercise")
         tap("Save")
         awaitText("Add exercise")
-        awaitText("8 reps")
-        compose.onNodeWithText("8 reps").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("22.5 kg").performScrollTo().assertIsDisplayed()
-        tap("Remove")
+        val workoutList = compose.onNodeWithTag("workout-list")
+        workoutList.performScrollToNode(hasText("8 reps"))
+        compose.onNodeWithText("8 reps").assertIsDisplayed()
+        compose.onNodeWithText("22.5 kg").assertIsDisplayed()
+        workoutList.performScrollToNode(hasContentDescription("Remove"))
+        compose.onNodeWithContentDescription("Remove").performClick()
         awaitText("Delete this exercise?")
         assertEquals(1, backend.exercises[100]?.size)
         confirm("Delete exercise")
@@ -722,7 +732,8 @@ class FitnessDeviceTest {
         compose.onNodeWithContentDescription("Weight (kg), set 1").performImeAction()
         scenario!!.recreate()
         awaitText("Add exercise")
-        compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("workout-list").performScrollToNode(hasText("Custom mobility"))
+        compose.onNodeWithText("Custom mobility").assertIsDisplayed()
         screenshot("editor")
         compose.assertNestedNavigationForLayout()
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()

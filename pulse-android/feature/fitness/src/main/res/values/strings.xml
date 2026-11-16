@@ -156,7 +156,6 @@
         <item quantity="one">%1$d workout</item>
         <item quantity="other">%1$d workouts</item>
     </plurals>
-    <string name="pulse_fitness_workout_exercises">EXERCISES</string>
     <string name="pulse_fitness_workout_empty">No exercises added yet</string>
     <string name="pulse_fitness_workout_manage">MANAGE WORKOUT</string>
     <string name="pulse_fitness_workout_manage_description">Keep your workout data up to date or remove it if needed.</string>
@@ -168,13 +167,18 @@
     <string name="pulse_fitness_workout_energy">Energy</string>
     <string name="pulse_fitness_workout_kcal">%1$s kcal</string>
     <string name="pulse_fitness_workout_equipment">Equipment</string>
-    <string name="pulse_fitness_workout_muscles">Muscles</string>
-    <string name="pulse_fitness_workout_sets">SETS</string>
+    <string name="pulse_fitness_workout_exercise_expanded">Expanded</string>
+    <string name="pulse_fitness_workout_exercise_collapsed">Collapsed</string>
+    <string name="pulse_fitness_workout_expand_exercise">Expand exercise</string>
+    <string name="pulse_fitness_workout_collapse_exercise">Collapse exercise</string>
+    <string name="pulse_fitness_workout_edit">Edit</string>
     <string name="pulse_fitness_workout_remove">Remove</string>
-    <string name="pulse_fitness_workout_view_instructions">View instructions</string>
     <string name="pulse_fitness_workout_close">Close</string>
     <string name="pulse_fitness_workout_summary">WORKOUT SUMMARY</string>
     <plurals name="pulse_fitness_workout_reps"><item quantity="one">%1$d rep</item><item quantity="other">%1$d reps</item></plurals>
+    <plurals name="pulse_fitness_workout_set_count"><item quantity="one">%1$d set</item><item quantity="other">%1$d sets</item></plurals>
+    <string name="pulse_fitness_workout_reps_range">%1$d–%2$d reps</string>
+    <string name="pulse_fitness_workout_mixed_weights">Mixed weights</string>
     <plurals name="pulse_fitness_workout_exercises_label"><item quantity="one">exercise</item><item quantity="other">exercises</item></plurals>
     <plurals name="pulse_fitness_workout_sets_label"><item quantity="one">set</item><item quantity="other">sets</item></plurals>
     <string name="pulse_fitness_editor_back">Back</string>

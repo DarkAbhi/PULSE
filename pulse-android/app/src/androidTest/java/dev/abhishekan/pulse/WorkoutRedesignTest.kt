@@ -9,16 +9,21 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
@@ -68,9 +73,9 @@ class WorkoutRedesignTest {
         compose.onNodeWithText("Refresh workout").assertDoesNotExist()
         compose.onNodeWithText("169.9 kcal").assertIsDisplayed()
         compose.onNodeWithText("30 min").assertIsDisplayed()
-        compose.onNodeWithText("No exercises added yet").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Add exercise").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("YOUR WORKOUT").performScrollTo()
+        showWorkoutText("No exercises added yet")
+        compose.onNodeWithText("Add exercise").assertIsDisplayed()
+        showWorkoutText("YOUR WORKOUT")
         screenshot("workout-linked-empty")
     }
 
@@ -98,31 +103,80 @@ class WorkoutRedesignTest {
     @Test fun populatedWorkoutHasCountsAndSheetInstructions() {
         compose.setContent { Content(WorkoutDetail(manual, listOf(exercise))) }
         compose.onNodeWithText("Timing and energy data aren’t available for this visit.").assertIsDisplayed()
-        compose.onNodeWithText("WORKOUT SUMMARY").performScrollTo().assertIsDisplayed()
+        showWorkoutText("WORKOUT SUMMARY")
         compose.onNodeWithText("exercise", substring = false).assertExists()
         compose.onNodeWithText("sets", substring = false).assertExists()
         compose.onNodeWithTag("workout-summary-sets").assertTextEquals("3")
         compose.onNodeWithText("Great start!").assertDoesNotExist()
         compose.onNodeWithText(catalog.instructions.first()).assertDoesNotExist()
-        compose.onNodeWithText("View instructions").performScrollTo()
+        showWorkoutText("Instructions")
         screenshot("workout-populated")
-        compose.onNodeWithText("View instructions").performClick()
+        compose.onNodeWithText("Instructions").performClick()
         compose.onNodeWithText("1. ${catalog.instructions.first()}").assertIsDisplayed()
         screenshot("workout-instructions")
         compose.onNodeWithContentDescription("Close sheet").performSemanticsAction(SemanticsActions.OnClick) { it() }
         compose.onNodeWithText("1. ${catalog.instructions.first()}").assertDoesNotExist()
-        compose.onNodeWithText("View instructions").assertIsDisplayed()
+        compose.onNodeWithText("Instructions").assertIsDisplayed()
     }
 
     @Test fun customExerciseNeedsNoCatalogueAndRemoveStillConfirms() {
         compose.setContent {
             Content(WorkoutDetail(manual, listOf(exercise.copy(catalogId = null, catalog = null, name = "My exercise"))), dark = true)
         }
-        compose.onNodeWithText("My exercise").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("View instructions").assertDoesNotExist()
+        showWorkoutText("My exercise")
+        compose.onNodeWithText("Instructions").assertDoesNotExist()
         screenshot("workout-custom-dark")
-        compose.onNodeWithText("Remove", substring = false).performScrollTo().performClick()
+        compose.onNodeWithTag("workout-list").performScrollToNode(hasContentDescription("Remove"))
+        compose.onNodeWithContentDescription("Remove").performClick()
         compose.onNodeWithText("Delete this exercise?").assertIsDisplayed()
+    }
+
+    @Test fun openingAnotherExerciseClosesTheFirstAndKeepsAddVisible() {
+        val second =
+            WorkoutExercise(
+                2,
+                "Front Plate Raise",
+                null,
+                null,
+                listOf(WorkoutSet(1, 8, BigDecimal("7.5")), WorkoutSet(2, 12, BigDecimal.TEN)),
+            )
+        compose.setContent { Content(WorkoutDetail(manual, listOf(exercise, second))) }
+
+        compose.onNodeWithTag("workout-list").performScrollToNode(hasText("10 reps"))
+        compose.onAllNodesWithText("10 reps").assertCountEquals(3)[0].assertIsDisplayed()
+        compose.onNodeWithText("8 reps").assertDoesNotExist()
+        showWorkoutText("2 sets · 8–12 reps · 7.5–10 kg")
+
+        val header = compose.onNodeWithText("Front Plate Raise")
+        val collapsed = header.fetchSemanticsNode().config
+        assertTrue(collapsed.contains(SemanticsProperties.Heading))
+        assertEquals("Collapsed", collapsed[SemanticsProperties.StateDescription])
+        assertEquals("Expand exercise", collapsed[SemanticsActions.OnClick].label)
+        header.performClick()
+        val expanded = header.fetchSemanticsNode().config
+        assertEquals("Expanded", expanded[SemanticsProperties.StateDescription])
+        assertEquals("Collapse exercise", expanded[SemanticsActions.OnClick].label)
+        showWorkoutText("3 sets · 10 reps · 10 kg")
+        compose.onAllNodesWithText("10 reps").assertCountEquals(0)
+        showWorkoutText("8 reps")
+        compose.onNodeWithText("Add exercise").assertIsDisplayed()
+        header.performClick()
+        assertEquals("Collapsed", header.fetchSemanticsNode().config[SemanticsProperties.StateDescription])
+        compose.onNodeWithText("8 reps").assertDoesNotExist()
+    }
+
+    @Test fun exercisesFarBelowTheViewportAreRenderedOnDemand() {
+        val exercises = List(40) { index -> exercise.copy(id = index.toLong(), name = "Exercise ${index + 1}") }
+        compose.setContent { Content(WorkoutDetail(manual, exercises)) }
+
+        compose.onNodeWithText("Exercise 40").assertDoesNotExist()
+        showWorkoutText("Exercise 40")
+        compose.onNodeWithText("Add exercise").assertIsDisplayed()
+    }
+
+    private fun showWorkoutText(text: String) {
+        compose.onNodeWithTag("workout-list").performScrollToNode(hasText(text))
+        compose.onNodeWithText(text).assertIsDisplayed()
     }
 
     @Composable private fun Content(

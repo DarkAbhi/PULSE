@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse.feature.fitness.workout
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -14,13 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,90 +39,116 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
-import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
 import dev.abhishekan.pulse.core.domain.model.WorkoutInfo
 import dev.abhishekan.pulse.core.ui.PulseShapes
 import dev.abhishekan.pulse.core.ui.PulseSpacing
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.feature.fitness.R
-import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseInstructions
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-@Composable
-internal fun WorkoutDetailContent(
+internal fun LazyListScope.workoutDetailItems(
     detail: WorkoutDetail,
     timeZone: ZoneId,
     enabled: Boolean,
-    onAdd: () -> Unit,
+    wide: Boolean,
+    expandedExerciseId: Long?,
+    onToggle: (Long) -> Unit,
     onEdit: (Long) -> Unit,
     onRemove: (Long) -> Unit,
     onDelete: () -> Unit,
 ) {
-    WorkoutInformation(detail.info, timeZone)
+    item(key = "workout-information", contentType = "information") {
+        Box(Modifier.fillMaxWidth().padding(bottom = PulseSpacing.cardPadding)) {
+            WorkoutInformation(detail.info, timeZone)
+        }
+    }
     if (detail.exercises.isEmpty()) {
-        PulseCard(Modifier.fillMaxWidth()) {
-            WorkoutSectionTitle(stringResource(R.string.pulse_fitness_workout_exercises))
-            BoxWithConstraints {
-                val wide = maxWidth >= 640.dp
-                val copy: @Composable () -> Unit = {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        PulseText(stringResource(R.string.pulse_fitness_workout_empty), style = PulseTextStyle.Heading2)
-                        PulseText(
-                            stringResource(R.string.pulse_fitness_choose_a_catalogue_exercise_or_record_your_own_name),
-                            color = PulseTheme.colors.textSecondary,
-                        )
-                        WorkoutActionButton(
-                            stringResource(R.string.pulse_fitness_add_exercise),
-                            WorkoutSymbol.Add,
-                            onAdd,
-                            enabled,
-                            primary = true,
-                        )
-                    }
-                }
-                if (wide) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.weight(1f).padding(vertical = 24.dp)) { copy() }
-                        WorkoutIllustration(R.drawable.workout_empty, Modifier.width(260.dp).height(220.dp))
-                    }
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        WorkoutIllustration(R.drawable.workout_empty, Modifier.fillMaxWidth().height(160.dp))
-                        copy()
-                    }
-                }
-            }
+        item(key = "workout-empty", contentType = "empty") {
+            EmptyWorkoutExercises(Modifier.fillMaxWidth().padding(bottom = PulseSpacing.cardPadding))
         }
     } else {
-        WorkoutActionButton(
-            stringResource(R.string.pulse_fitness_add_exercise),
-            WorkoutSymbol.Add,
-            onAdd,
-            enabled,
-            Modifier.fillMaxWidth(),
-            primary = true,
-        )
-        BoxWithConstraints {
-            if (maxWidth >= 840.dp) {
-                Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.Top) {
-                    ExerciseList(detail.exercises, enabled, onEdit, onRemove, Modifier.weight(1f))
-                    WorkoutSummary(detail, Modifier.width(264.dp))
+        if (!wide) {
+            item(key = "workout-summary", contentType = "summary") {
+                WorkoutSummary(detail, Modifier.fillMaxWidth().padding(bottom = PulseSpacing.comfortable))
+            }
+        }
+        itemsIndexed(
+            detail.exercises,
+            key = { _, exercise -> exercise.id },
+            contentType = { index, _ -> if (wide && index == 0) "exercise-with-summary" else "exercise" },
+        ) { index, exercise ->
+            val gap = if (index == detail.exercises.lastIndex) PulseSpacing.cardPadding else PulseSpacing.compact
+            val card: @Composable (Modifier) -> Unit = { modifier ->
+                WorkoutExerciseCard(
+                    exercise,
+                    number = index + 1,
+                    expanded = exercise.id == expandedExerciseId,
+                    enabled = enabled,
+                    onToggle = { onToggle(exercise.id) },
+                    onEdit = { onEdit(exercise.id) },
+                    onRemove = { onRemove(exercise.id) },
+                    modifier = modifier,
+                )
+            }
+            if (wide && index == 0) {
+                Row(
+                    Modifier.fillMaxWidth().padding(bottom = gap),
+                    horizontalArrangement = Arrangement.spacedBy(PulseSpacing.comfortable),
+                ) {
+                    card(Modifier.weight(1f))
+                    WorkoutSummary(detail, Modifier.width(WorkoutSummaryWidth))
                 }
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                    WorkoutSummary(detail, Modifier.fillMaxWidth())
-                    ExerciseList(detail.exercises, enabled, onEdit, onRemove, Modifier.fillMaxWidth())
-                }
+                val summarySpace = if (wide) WorkoutSummaryWidth + PulseSpacing.comfortable else PulseSpacing.none
+                card(Modifier.fillMaxWidth().padding(end = summarySpace, bottom = gap))
             }
         }
     }
+    item(key = "workout-management", contentType = "management") {
+        WorkoutManagement(enabled, onDelete)
+    }
+}
+
+private val WorkoutSummaryWidth = 264.dp
+
+@Composable
+private fun EmptyWorkoutExercises(modifier: Modifier = Modifier) {
+    BoxWithConstraints(modifier) {
+        val wide = maxWidth >= 640.dp
+        val copy: @Composable () -> Unit = {
+            Column(verticalArrangement = Arrangement.spacedBy(PulseSpacing.medium)) {
+                PulseText(stringResource(R.string.pulse_fitness_workout_empty), style = PulseTextStyle.Heading2)
+                PulseText(
+                    stringResource(R.string.pulse_fitness_choose_a_catalogue_exercise_or_record_your_own_name),
+                    color = PulseTheme.colors.textSecondary,
+                )
+            }
+        }
+        if (wide) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f).padding(vertical = PulseSpacing.cardPadding)) { copy() }
+                WorkoutIllustration(R.drawable.workout_empty, Modifier.width(260.dp).height(220.dp))
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(PulseSpacing.medium)) {
+                WorkoutIllustration(R.drawable.workout_empty, Modifier.fillMaxWidth().height(160.dp))
+                copy()
+            }
+        }
+    }
+}
+
+@Composable
+private fun WorkoutManagement(
+    enabled: Boolean,
+    onDelete: () -> Unit,
+) {
     PulseCard(Modifier.fillMaxWidth()) {
         BoxWithConstraints {
             val wide = maxWidth >= 880.dp
@@ -405,134 +430,6 @@ private fun Modifier.workoutMetricPanel(): Modifier =
         .padding(PulseSpacing.compact)
 
 @Composable
-private fun ExerciseList(
-    exercises: List<WorkoutExercise>,
-    enabled: Boolean,
-    onEdit: (Long) -> Unit,
-    onRemove: (Long) -> Unit,
-    modifier: Modifier,
-) {
-    PulseCard(modifier) {
-        WorkoutSectionTitle(stringResource(R.string.pulse_fitness_workout_exercises))
-        exercises.forEach { exercise ->
-            key(exercise.id) { WorkoutExerciseCard(exercise, enabled, { onEdit(exercise.id) }, { onRemove(exercise.id) }) }
-        }
-    }
-}
-
-@Composable
-private fun WorkoutExerciseCard(
-    exercise: WorkoutExercise,
-    enabled: Boolean,
-    onEdit: () -> Unit,
-    onRemove: () -> Unit,
-) {
-    Surface(shape = RoundedCornerShape(20.dp), color = PulseTheme.colors.surface, border = BorderStroke(1.dp, PulseTheme.colors.divider)) {
-        Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            BoxWithConstraints {
-                val wide = maxWidth >= 560.dp
-                val title: @Composable () -> Unit = { PulseText(exercise.name, Modifier.semantics { heading() }, PulseTextStyle.Heading2) }
-                if (wide) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Top) {
-                        Box(Modifier.weight(1f)) { title() }
-                        exercise.catalog?.takeIf { it.instructions.isNotEmpty() }?.let { ExerciseInstructions(it) }
-                    }
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        title()
-                        exercise.catalog?.takeIf { it.instructions.isNotEmpty() }?.let { ExerciseInstructions(it) }
-                    }
-                }
-                // The catalogue has no description or image URL; never invent exercise-specific guidance.
-            }
-            BoxWithConstraints {
-                val wide = maxWidth >= 560.dp
-                val metadata: @Composable () -> Unit = {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        exercise.catalog?.equipment?.let {
-                            MetadataTile(
-                                stringResource(R.string.pulse_fitness_workout_equipment),
-                                it,
-                                WorkoutSymbol.Weight,
-                            )
-                        }
-                        exercise.catalog
-                            ?.muscles
-                            ?.takeIf {
-                                it.isNotEmpty()
-                            }?.let {
-                                MetadataTile(
-                                    stringResource(R.string.pulse_fitness_workout_muscles),
-                                    it.joinToString(),
-                                    WorkoutSymbol.Muscle,
-                                )
-                            }
-                    }
-                }
-                if (wide && exercise.catalog?.equipment?.contains("barbell", ignoreCase = true) == true) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.weight(1f)) { metadata() }
-                        WorkoutIllustration(R.drawable.workout_barbell, Modifier.width(180.dp).height(120.dp))
-                    }
-                } else {
-                    metadata()
-                }
-            }
-            PulseHorizontalDivider(color = PulseTheme.colors.divider)
-            WorkoutSectionTitle(stringResource(R.string.pulse_fitness_workout_sets))
-            BoxWithConstraints {
-                val columns =
-                    when {
-                        maxWidth >= 600.dp -> 3
-                        maxWidth >= 360.dp -> 2
-                        else -> 1
-                    }
-                val tileWidth = (maxWidth - 12.dp * (columns - 1) - 1.dp) / columns
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    exercise.sets.forEach { set ->
-                        Row(
-                            Modifier.width(tileWidth).background(PulseTheme.colors.background, RoundedCornerShape(16.dp)).padding(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Box(
-                                Modifier.size(40.dp).background(PulseTheme.colors.primarySoft, CircleShape),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                PulseText(set.number.toString(), style = PulseTextStyle.Label, color = PulseTheme.colors.onPrimarySoft)
-                            }
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                PulseText(
-                                    pluralStringResource(R.plurals.pulse_fitness_workout_reps, set.reps, set.reps),
-                                    style = PulseTextStyle.Label,
-                                )
-                                PulseText(
-                                    set.weight?.let { stringResource(R.string.pulse_fitness_weight_kg, it.toPlainString()) }
-                                        ?: stringResource(R.string.pulse_fitness_bodyweight),
-                                    color = PulseTheme.colors.textSecondary,
-                                    style = PulseTextStyle.Body2,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            PulseHorizontalDivider(color = PulseTheme.colors.divider)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                WorkoutActionButton(stringResource(R.string.pulse_fitness_edit_exercise), WorkoutSymbol.Edit, onEdit, enabled)
-                WorkoutActionButton(
-                    stringResource(R.string.pulse_fitness_workout_remove),
-                    WorkoutSymbol.Delete,
-                    onRemove,
-                    enabled,
-                    destructive = true,
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun WorkoutSummary(
     detail: WorkoutDetail,
     modifier: Modifier,
@@ -601,59 +498,6 @@ private fun SummaryMetric(
                 style = PulseTextStyle.Heading2,
             )
             PulseText(label, color = PulseTheme.colors.textSecondary)
-        }
-    }
-}
-
-@Composable
-private fun MetadataTile(
-    label: String,
-    value: String,
-    symbol: WorkoutSymbol,
-) {
-    Row(
-        Modifier
-            .widthIn(max = 280.dp)
-            .background(
-                if (symbol ==
-                    WorkoutSymbol.Muscle
-                ) {
-                    PulseTheme.colors.errorSoft.copy(alpha = .4f)
-                } else {
-                    PulseTheme.colors.background
-                },
-                RoundedCornerShape(16.dp),
-            ).padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            Modifier.size(44.dp).background(
-                if (symbol ==
-                    WorkoutSymbol.Muscle
-                ) {
-                    PulseTheme.colors.errorSoft
-                } else {
-                    PulseTheme.colors.primarySoft
-                },
-                CircleShape,
-            ),
-            contentAlignment = Alignment.Center,
-        ) {
-            WorkoutGlyph(
-                symbol,
-                if (symbol ==
-                    WorkoutSymbol.Muscle
-                ) {
-                    PulseTheme.colors.error
-                } else {
-                    PulseTheme.colors.action
-                },
-            )
-        }
-        Column {
-            PulseText(label, style = PulseTextStyle.Body2, color = PulseTheme.colors.textSecondary)
-            PulseText(value, style = PulseTextStyle.Label)
         }
     }
 }

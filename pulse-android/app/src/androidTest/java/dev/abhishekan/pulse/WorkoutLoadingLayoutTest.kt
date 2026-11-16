@@ -8,6 +8,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -67,17 +69,22 @@ class WorkoutLoadingLayoutTest {
                 )
         }
         val heading = compose.onNodeWithText("Timing and energy data aren’t available for this visit.")
+        val addExercise = compose.onNodeWithText("Add exercise")
         heading.assertIsDisplayed()
+        addExercise.assertIsDisplayed().assertIsEnabled()
         val beforeRefresh = heading.getUnclippedBoundsInRoot()
         compose.runOnIdle { state = state.copy(loadState = FitnessLoadState.Loading()) }
         loader.assertDoesNotExist()
+        addExercise.assertIsDisplayed().assertIsNotEnabled()
         assertEquals(beforeRefresh, heading.getUnclippedBoundsInRoot())
         compose.runOnIdle { state = state.copy(loadState = FitnessLoadState.Ready) }
+        addExercise.assertIsDisplayed().assertIsEnabled()
         compose.onNodeWithText("Refresh workout").assertDoesNotExist()
         compose.onNodeWithTag("workout-refresh").performTouchInput { swipeDown() }
         compose.runOnIdle { assertEquals(1, refreshes) }
         loader.assertDoesNotExist()
         heading.assertIsDisplayed()
+        addExercise.assertIsDisplayed().assertIsNotEnabled()
         assertEquals(beforeRefresh, heading.getUnclippedBoundsInRoot())
         compose.onNodeWithTag("workout-refresh").performTouchInput { swipeDown() }
         compose.runOnIdle {

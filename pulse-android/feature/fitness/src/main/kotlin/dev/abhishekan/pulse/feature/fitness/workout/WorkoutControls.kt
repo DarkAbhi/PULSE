@@ -24,29 +24,21 @@ internal fun WorkoutActionButton(
     onClick: () -> Unit,
     enabled: Boolean,
     modifier: Modifier = Modifier,
-    primary: Boolean = false,
     destructive: Boolean = false,
-    soft: Boolean = false,
 ) {
     PulseButton(
         text = text,
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        variant =
-            when {
-                destructive -> PulseButtonVariant.DestructiveSoft
-                primary -> PulseButtonVariant.Primary
-                soft -> PulseButtonVariant.Soft
-                else -> PulseButtonVariant.Secondary
-            },
+        variant = if (destructive) PulseButtonVariant.DestructiveSoft else PulseButtonVariant.Secondary,
         leadingIcon = {
             WorkoutGlyph(symbol, LocalContentColor.current)
         },
     )
 }
 
-internal enum class WorkoutSymbol { Add, Play, Stop, Clock, Energy, Info, Weight, Muscle, List, Edit, Delete, Refresh, Document }
+internal enum class WorkoutSymbol { Add, Play, Stop, Clock, Energy, Info, Weight, Muscle, List, Edit, Delete, Refresh, Document, ChevronDown }
 
 @Composable
 internal fun WorkoutGlyph(
@@ -82,6 +74,10 @@ internal fun WorkoutGlyph(
             style = if (fill) Fill else Stroke(stroke),
         )
         when (symbol) {
+            WorkoutSymbol.ChevronDown -> {
+                line(5f, 9f, 12f, 16f)
+                line(12f, 16f, 19f, 9f)
+            }
             WorkoutSymbol.Add -> {
                 line(12f, 3f, 12f, 21f)
                 line(3f, 12f, 21f, 12f)

@@ -32,7 +32,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.feature.fitness.R
-import dev.abhishekan.pulse.feature.fitness.workout.WorkoutActionButton
 import dev.abhishekan.pulse.feature.fitness.workout.WorkoutGlyph
 import dev.abhishekan.pulse.feature.fitness.workout.WorkoutSymbol
 
@@ -56,15 +55,20 @@ internal fun ExerciseMetadata(exercise: CatalogExercise) {
 }
 
 @Composable
-internal fun ExerciseInstructions(exercise: CatalogExercise) {
+internal fun ExerciseInstructions(
+    exercise: CatalogExercise,
+    modifier: Modifier,
+) {
     if (!exercise.hasInstructionsDetails) return
     var open by rememberSaveable(exercise.id) { mutableStateOf(false) }
-    WorkoutActionButton(
-        stringResource(R.string.pulse_fitness_workout_view_instructions),
-        WorkoutSymbol.Document,
-        { open = true },
-        true,
-        soft = true,
+    PulseButton(
+        stringResource(R.string.pulse_fitness_editor_instructions),
+        onClick = { open = true },
+        modifier = modifier,
+        variant = PulseButtonVariant.Soft,
+        leadingIcon = { WorkoutGlyph(WorkoutSymbol.Document, LocalContentColor.current, Modifier.size(PulseTokens.medium)) },
+        contentPadding = PaddingValues(horizontal = PulseTokens.tiny, vertical = PulseTokens.small),
+        textAlign = TextAlign.Center,
     )
     if (open) ExerciseInstructionsSheet(exercise, { open = false })
 }

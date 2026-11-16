@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -249,7 +250,7 @@ private fun WorkoutSetRow(
         Modifier
             .fillMaxWidth()
             .heightIn(min = PulseSpacing.target)
-            .background(colors.surfaceMuted, PulseTheme.shapes.large)
+            .background(lerp(colors.surface, colors.primarySoft, 0.3f), PulseTheme.shapes.large)
             .padding(horizontal = PulseSpacing.compact, vertical = PulseSpacing.small),
         horizontalArrangement = Arrangement.spacedBy(PulseSpacing.compact),
         verticalAlignment = Alignment.CenterVertically,

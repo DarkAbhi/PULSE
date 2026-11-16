@@ -27,15 +27,25 @@ private fun WorkoutExerciseCardDarkPreview() {
     WorkoutExerciseCardPreview(dark = true)
 }
 
+@Preview(name = "Exercise cards / bodyweight", widthDp = 412, showBackground = true)
 @Composable
-private fun WorkoutExerciseCardPreview(dark: Boolean) {
+private fun WorkoutBodyweightCardPreview() {
+    WorkoutExerciseCardPreview(dark = false, first = pushUps, second = pullUps)
+}
+
+@Composable
+private fun WorkoutExerciseCardPreview(
+    dark: Boolean,
+    first: WorkoutExercise = shoulderPress,
+    second: WorkoutExercise = plateRaise,
+) {
     PulseTheme(dark) {
         Column(
             Modifier.background(PulseTheme.colors.background).padding(PulseSpacing.medium),
             verticalArrangement = Arrangement.spacedBy(PulseSpacing.compact),
         ) {
             WorkoutExerciseCard(
-                shoulderPress,
+                first,
                 number = 1,
                 expanded = true,
                 enabled = true,
@@ -44,7 +54,7 @@ private fun WorkoutExerciseCardPreview(dark: Boolean) {
                 onRemove = {},
             )
             WorkoutExerciseCard(
-                plateRaise,
+                second,
                 number = 2,
                 expanded = false,
                 enabled = true,
@@ -72,4 +82,22 @@ private val plateRaise =
         catalogId = "plate-raise",
         catalog = CatalogExercise("plate-raise", "Front plate raise", "other", listOf("shoulders"), emptyList()),
         sets = (1..3).map { WorkoutSet(it, 10, BigDecimal.TEN) },
+    )
+
+private val pushUps =
+    WorkoutExercise(
+        id = 3,
+        name = "Push-ups",
+        catalogId = "push-ups",
+        catalog = CatalogExercise("push-ups", "Push-ups", null, listOf("chest"), listOf("Keep your body straight.")),
+        sets = listOf(WorkoutSet(1, 15, null), WorkoutSet(2, 12, null), WorkoutSet(3, 10, null)),
+    )
+
+private val pullUps =
+    WorkoutExercise(
+        id = 4,
+        name = "Pull-ups",
+        catalogId = null,
+        catalog = null,
+        sets = (1..3).map { WorkoutSet(it, 8, null) },
     )

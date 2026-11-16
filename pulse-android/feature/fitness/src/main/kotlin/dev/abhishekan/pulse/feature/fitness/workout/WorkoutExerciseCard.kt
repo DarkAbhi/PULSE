@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +27,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -46,6 +51,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.feature.fitness.R
 import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseInstructions
+import java.text.NumberFormat
+import dev.abhishekan.pulse.core.ui.R as PulseUiR
 
 @Composable
 internal fun WorkoutExerciseCard(
@@ -60,6 +67,8 @@ internal fun WorkoutExerciseCard(
 ) {
     val colors = PulseTheme.colors
     val shapes = PulseTheme.shapes
+    val sets = exercise.sets
+    val bodyweight = remember(sets) { sets.isNotEmpty() && sets.all { it.weight == null } }
     val expandedLabel =
         stringResource(
             if (expanded) R.string.pulse_fitness_workout_exercise_expanded else R.string.pulse_fitness_workout_exercise_collapsed,
@@ -107,25 +116,41 @@ internal fun WorkoutExerciseCard(
                     maxLines = if (expanded) Int.MAX_VALUE else 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                val setCount = pluralStringResource(R.plurals.pulse_fitness_workout_set_count, exercise.sets.size, exercise.sets.size)
+                val setCount = pluralStringResource(R.plurals.pulse_fitness_workout_set_count, sets.size, sets.size)
                 PulseText(
-                    if (expanded) setCount else collapsedExerciseSummary(exercise.sets, setCount),
+                    if (expanded) setCount else collapsedExerciseSummary(sets, setCount, bodyweight),
                     style = PulseTextStyle.Body2,
                     color = colors.textSecondary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                exercise.catalog?.let { catalog ->
-                    val equipment = catalog.equipment?.takeIf { it.isNotBlank() }
-                    val muscles = remember(catalog.muscles) { catalog.muscles.filter { it.isNotBlank() }.joinToString() }
-                    if (equipment != null || muscles.isNotEmpty()) {
-                        FlowRow(
-                            Modifier.padding(top = PulseSpacing.small),
-                            horizontalArrangement = Arrangement.spacedBy(PulseSpacing.small),
-                            verticalArrangement = Arrangement.spacedBy(PulseSpacing.tiny),
-                        ) {
-                            equipment?.let { ExercisePill(it, WorkoutSymbol.Weight) }
-                            if (muscles.isNotEmpty()) ExercisePill(muscles, WorkoutSymbol.Muscle)
+                val equipment = exercise.catalog?.equipment?.takeIf { it.isNotBlank() }
+                val muscles = exercise.catalog?.muscles.orEmpty()
+                val muscleLabel = remember(muscles) { muscles.filter { it.isNotBlank() }.joinToString() }
+                if (bodyweight || equipment != null || muscleLabel.isNotEmpty()) {
+                    FlowRow(
+                        Modifier.padding(top = PulseSpacing.small),
+                        horizontalArrangement = Arrangement.spacedBy(PulseSpacing.small),
+                        verticalArrangement = Arrangement.spacedBy(PulseSpacing.tiny),
+                    ) {
+                        if (bodyweight) {
+                            ExercisePill(stringResource(R.string.pulse_fitness_workout_bodyweight_equipment)) { tint ->
+                                Icon(
+                                    painterResource(PulseUiR.drawable.pulse_person),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(PulseSpacing.compact),
+                                    tint = tint,
+                                )
+                            }
+                        } else if (equipment != null) {
+                            ExercisePill(equipment) { tint ->
+                                WorkoutGlyph(WorkoutSymbol.Weight, tint, Modifier.size(PulseSpacing.compact))
+                            }
+                        }
+                        if (muscleLabel.isNotEmpty()) {
+                            ExercisePill(muscleLabel, muscle = true) { tint ->
+                                WorkoutGlyph(WorkoutSymbol.Muscle, tint, Modifier.size(PulseSpacing.compact))
+                            }
                         }
                     }
                 }
@@ -141,9 +166,10 @@ internal fun WorkoutExerciseCard(
                 Modifier.padding(start = PulseSpacing.medium, end = PulseSpacing.medium, bottom = PulseSpacing.medium),
                 verticalArrangement = Arrangement.spacedBy(PulseSpacing.compact),
             ) {
-                if (exercise.sets.isNotEmpty()) {
+                if (sets.isNotEmpty()) {
+                    val repScale = if (bodyweight) remember(sets) { sets.maxOf { it.reps }.coerceAtLeast(1) } else null
                     Column(verticalArrangement = Arrangement.spacedBy(PulseSpacing.tiny)) {
-                        exercise.sets.forEach { WorkoutSetRow(it) }
+                        sets.forEach { WorkoutSetRow(it, repScale) }
                     }
                 }
                 WorkoutExerciseActions(exercise, enabled, onEdit, onRemove)
@@ -156,19 +182,27 @@ internal fun WorkoutExerciseCard(
 private fun collapsedExerciseSummary(
     sets: List<WorkoutSet>,
     setCount: String,
+    bodyweight: Boolean,
 ): String {
     if (sets.isEmpty()) return setCount
     val (minReps, maxReps) = remember(sets) { sets.minOf { it.reps } to sets.maxOf { it.reps } }
     val reps =
-        if (minReps == maxReps) {
-            pluralStringResource(R.plurals.pulse_fitness_workout_reps, minReps, minReps)
-        } else {
-            stringResource(R.string.pulse_fitness_workout_reps_range, minReps, maxReps)
+        when {
+            minReps == maxReps -> pluralStringResource(R.plurals.pulse_fitness_workout_reps, minReps, minReps)
+            bodyweight -> {
+                val locale = LocalConfiguration.current.locales[0]
+                val sequence = remember(sets, locale) {
+                    val format = NumberFormat.getIntegerInstance(locale).apply { isGroupingUsed = false }
+                    sets.joinToString(" / ") { format.format(it.reps) }
+                }
+                stringResource(R.string.pulse_fitness_workout_reps_sequence, sequence)
+            }
+            else -> stringResource(R.string.pulse_fitness_workout_reps_range, minReps, maxReps)
         }
+    if (bodyweight) return "$setCount · $reps"
     val weights = remember(sets) { sets.mapNotNull { it.weight } }
     val weight =
         when {
-            weights.isEmpty() -> stringResource(R.string.pulse_fitness_bodyweight)
             weights.size < sets.size -> stringResource(R.string.pulse_fitness_workout_mixed_weights)
             else -> {
                 val amount = remember(weights) {
@@ -186,10 +220,10 @@ private fun collapsedExerciseSummary(
 @Composable
 private fun ExercisePill(
     text: String,
-    symbol: WorkoutSymbol,
+    muscle: Boolean = false,
+    icon: @Composable (Color) -> Unit,
 ) {
     val colors = PulseTheme.colors
-    val muscle = symbol == WorkoutSymbol.Muscle
     val tint = if (muscle) colors.error else colors.onPrimarySoft
     Row(
         Modifier
@@ -198,14 +232,19 @@ private fun ExercisePill(
         horizontalArrangement = Arrangement.spacedBy(PulseSpacing.tiny),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        WorkoutGlyph(symbol, tint, Modifier.size(PulseSpacing.compact))
+        icon(tint)
         PulseText(text, style = PulseTextStyle.Label2, color = tint, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
 @Composable
-private fun WorkoutSetRow(set: WorkoutSet) {
+private fun WorkoutSetRow(
+    set: WorkoutSet,
+    repScale: Int?,
+) {
     val colors = PulseTheme.colors
+    val reps = pluralStringResource(R.plurals.pulse_fitness_workout_reps, set.reps, set.reps)
+    val boldValue = PulseTheme.typography.label1.copy(fontWeight = FontWeight.Bold)
     Row(
         Modifier
             .fillMaxWidth()
@@ -224,18 +263,32 @@ private fun WorkoutSetRow(set: WorkoutSet) {
         ) {
             PulseText(set.number.toString(), style = PulseTextStyle.Label, color = colors.onPrimary)
         }
-        PulseText(
-            pluralStringResource(R.plurals.pulse_fitness_workout_reps, set.reps, set.reps),
-            Modifier.weight(1f),
-            PulseTextStyle.Label,
-        )
-        PulseText(
-            set.weight?.let { stringResource(R.string.pulse_fitness_weight_kg, it.stripTrailingZeros().toPlainString()) }
-                ?: stringResource(R.string.pulse_fitness_bodyweight),
-            Modifier.weight(1f),
-            style = PulseTheme.typography.label1.copy(fontWeight = FontWeight.Bold),
-            textAlign = TextAlign.End,
-        )
+        if (repScale != null) {
+            val fraction = (set.reps.toFloat() / repScale).coerceIn(0f, 1f)
+            Box(
+                Modifier
+                    .weight(2f)
+                    .height(PulseSpacing.tiny)
+                    .background(colors.primarySoft, PulseTheme.shapes.pill),
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxWidth(fraction)
+                        .height(PulseSpacing.tiny)
+                        .background(colors.primary, PulseTheme.shapes.pill),
+                )
+            }
+            PulseText(reps, Modifier.weight(1f), style = boldValue, textAlign = TextAlign.End)
+        } else {
+            PulseText(reps, Modifier.weight(1f), PulseTextStyle.Label)
+            PulseText(
+                set.weight?.let { stringResource(R.string.pulse_fitness_weight_kg, it.stripTrailingZeros().toPlainString()) }
+                    ?: stringResource(R.string.pulse_fitness_bodyweight),
+                Modifier.weight(1f),
+                style = boldValue,
+                textAlign = TextAlign.End,
+            )
+        }
     }
 }
 

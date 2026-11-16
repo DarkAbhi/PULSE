@@ -174,6 +174,41 @@ class WorkoutRedesignTest {
         compose.onNodeWithText("Add exercise").assertIsDisplayed()
     }
 
+    @Test fun bodyweightCardsShowOrderedRepsAndNoWeightColumn() {
+        val pushUps =
+            exercise.copy(
+                name = "Push-ups",
+                catalog = catalog.copy(equipment = "other", muscles = listOf("chest")),
+                sets = listOf(WorkoutSet(1, 15, null), WorkoutSet(2, 12, null), WorkoutSet(3, 10, null)),
+            )
+        val pullUps = WorkoutExercise(2, "Pull-ups", null, null, (1..3).map { WorkoutSet(it, 8, null) })
+        compose.setContent { Content(WorkoutDetail(manual, listOf(pushUps, pullUps))) }
+
+        showWorkoutText("15 reps")
+        showWorkoutText("12 reps")
+        showWorkoutText("10 reps")
+        showWorkoutText("chest")
+        compose.onNodeWithText("Bodyweight").assertDoesNotExist()
+        compose.onNodeWithText("kg", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("other").assertDoesNotExist()
+        showWorkoutText("3 sets · 8 reps")
+        screenshot("workout-bodyweight")
+        compose.onNodeWithText("Pull-ups").performClick()
+        showWorkoutText("3 sets · 15 / 12 / 10 reps")
+        compose.onNode(hasText("Push-ups") and hasText("bodyweight")).assertExists()
+        showWorkoutText("Pull-ups")
+        compose.onNode(hasText("Pull-ups") and hasText("bodyweight")).assertIsDisplayed()
+    }
+
+    @Test fun mixedSetsKeepTheRecordedWeightIncludingZero() {
+        val mixed = exercise.copy(sets = listOf(WorkoutSet(1, 10, null), WorkoutSet(2, 10, BigDecimal.ZERO)))
+        compose.setContent { Content(WorkoutDetail(manual, listOf(mixed))) }
+
+        showWorkoutText("0 kg")
+        showWorkoutText("Bodyweight")
+        compose.onNodeWithText("bodyweight").assertDoesNotExist()
+    }
+
     private fun showWorkoutText(text: String) {
         compose.onNodeWithTag("workout-list").performScrollToNode(hasText(text))
         compose.onNodeWithText(text).assertIsDisplayed()

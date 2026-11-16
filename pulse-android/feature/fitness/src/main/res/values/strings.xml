@@ -178,6 +178,8 @@
     <plurals name="pulse_fitness_workout_reps"><item quantity="one">%1$d rep</item><item quantity="other">%1$d reps</item></plurals>
     <plurals name="pulse_fitness_workout_set_count"><item quantity="one">%1$d set</item><item quantity="other">%1$d sets</item></plurals>
     <string name="pulse_fitness_workout_reps_range">%1$d–%2$d reps</string>
+    <string name="pulse_fitness_workout_reps_sequence">%1$s reps</string>
+    <string name="pulse_fitness_workout_bodyweight_equipment">bodyweight</string>
     <string name="pulse_fitness_workout_mixed_weights">Mixed weights</string>
     <plurals name="pulse_fitness_workout_exercises_label"><item quantity="one">exercise</item><item quantity="other">exercises</item></plurals>
     <plurals name="pulse_fitness_workout_sets_label"><item quantity="one">set</item><item quantity="other">sets</item></plurals>

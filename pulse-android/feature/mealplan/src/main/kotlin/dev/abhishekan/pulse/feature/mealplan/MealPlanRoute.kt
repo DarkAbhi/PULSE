@@ -53,7 +53,7 @@ fun MealPlanRoute() {
         }
     PulseSnackbarEffect(messages)
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    PulseHideNavigation(setup.record == null || setup.showJourney || state.draft != null)
+    PulseHideNavigation(setup.showJourney || state.draft != null)
     val timeForm = state.draft?.timeForm == true
     val onboardingStateHolder = rememberSaveableStateHolder()
     val plannerScrollStates = rememberSaveableStateHolder()

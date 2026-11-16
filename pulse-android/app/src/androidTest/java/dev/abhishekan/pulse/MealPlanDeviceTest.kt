@@ -445,7 +445,7 @@ class MealPlanDeviceTest {
         shell("cp ${file.absolutePath} /sdcard/Download/${file.name}")
     }
 
-    private fun launchPlanner(firstMeal: String = "Soup") {
+    private fun openMeals() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
         awaitText("Welcome back")
         field("Username", "meal-fixture")
@@ -453,7 +453,38 @@ class MealPlanDeviceTest {
         compose.onNodeWithText("Password").performImeAction()
         awaitText("Home")
         tap("Meals")
+    }
+
+    private fun launchPlanner(firstMeal: String = "Soup") {
+        openMeals()
         awaitText(firstMeal)
+    }
+
+    @Test fun bottomNavigationStaysVisibleWhileCheckingMealSetup() {
+        val size = shell("wm size").lineSequence().firstOrNull { it.startsWith("Override size:") }?.substringAfter(": ")
+        val density = shell("wm density").lineSequence().firstOrNull { it.startsWith("Override density:") }?.substringAfter(": ")
+        setupRecord = obj("""{"status":"pending","questionnaire_version":1,"preferences":null}""")
+        val read = PausedRead("meal-plan-onboarding").also { pausedRead = it }
+        val mealsTab = compose.onNode(hasText("Meals") and isSelectable())
+        try {
+            shell("wm size 800x1800")
+            shell("wm density 320")
+            openMeals()
+            compose.waitUntil(5_000) { read.started.isCompleted }
+            awaitText("Checking your meal preferences…")
+            mealsTab.assertIsDisplayed().assertIsSelected()
+            read.release.complete(Unit)
+
+            awaitText("What’s your goal?")
+            mealsTab.assertDoesNotExist()
+            tap("Skip")
+            awaitText("Soup")
+            mealsTab.assertIsDisplayed().assertIsSelected()
+        } finally {
+            read.release.complete(Unit)
+            shell("wm size ${size ?: "reset"}")
+            shell("wm density ${density ?: "reset"}")
+        }
     }
 
     @Test fun mealSetupCompletedOnWebIsNotShownAndAnswersRemainEditableOnAndroid() {

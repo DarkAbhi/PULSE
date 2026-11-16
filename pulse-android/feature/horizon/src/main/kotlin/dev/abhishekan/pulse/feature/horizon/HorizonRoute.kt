@@ -33,26 +33,27 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
     val destination = state.destination
     PulseHideNavigation(destination !is HorizonDestination.Tabs || state.subscriptionId != null)
     val scrollStates = rememberSaveableStateHolder()
-    if (destination == HorizonDestination.StatementImport) {
-        StatementImportScreen(
-            state.overview.value
-                ?.categories
-                .orEmpty(),
-            onClose = { viewModel.onAction(HorizonAction.CloseImport) },
-            onManageAccounts = { viewModel.onAction(HorizonAction.ManageAccounts) },
-            onCompleted = { viewModel.onAction(HorizonAction.ImportCompleted) },
-            vm = importViewModel,
-        )
-        return
-    }
-    PulseSnackbarEffect(state.message) {
-        viewModel.onAction(HorizonAction.ConsumeMessage)
+    if (destination != HorizonDestination.StatementImport) {
+        PulseSnackbarEffect(state.message) {
+            viewModel.onAction(HorizonAction.ConsumeMessage)
+        }
     }
     PulseScreenTransition(state, screenDepth = { it.destination.depth }) { screen, active ->
-        key(timeZone, accountCurrency) {
-            HorizonHost(screen, scrollStates, active) { action ->
-                if (action == HorizonAction.Recent(RecentTransactionsAction.Import)) importViewModel.onAction(StatementImportAction.Reset)
-                viewModel.onAction(action)
+        if (screen.destination == HorizonDestination.StatementImport) {
+            StatementImportScreen(
+                screen.overview.value?.categories.orEmpty(),
+                onClose = { viewModel.onAction(HorizonAction.CloseImport) },
+                onManageAccounts = { viewModel.onAction(HorizonAction.ManageAccounts) },
+                onCompleted = { viewModel.onAction(HorizonAction.ImportCompleted) },
+                active = active,
+                vm = importViewModel,
+            )
+        } else {
+            key(timeZone, accountCurrency) {
+                HorizonHost(screen, scrollStates, active) { action ->
+                    if (action == HorizonAction.Recent(RecentTransactionsAction.Import)) importViewModel.onAction(StatementImportAction.Reset)
+                    viewModel.onAction(action)
+                }
             }
         }
     }

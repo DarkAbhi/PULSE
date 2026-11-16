@@ -93,6 +93,7 @@ internal fun StatementImportScreen(
     onClose: () -> Unit,
     onManageAccounts: () -> Unit,
     onCompleted: () -> Unit,
+    active: Boolean,
     vm: StatementImportViewModel = koinViewModel(),
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
@@ -124,7 +125,7 @@ internal fun StatementImportScreen(
                 }
         }
     }
-    BackHandler { vm.onAction(StatementImportAction.Close) }
+    BackHandler(active) { vm.onAction(StatementImportAction.Close) }
 
     val listState = key(state.batch?.id, state.page?.page) { rememberLazyListState() }
     LaunchedEffect(listState, state.errorCode, state.failure) {

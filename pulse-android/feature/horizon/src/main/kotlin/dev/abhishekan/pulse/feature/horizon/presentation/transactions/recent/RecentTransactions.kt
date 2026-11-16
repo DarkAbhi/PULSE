@@ -79,7 +79,7 @@ internal fun RecentTransactionAdd(
         PulseBottomSheet(
             title = stringResource(R.string.pulse_horizon_add_transactions),
             onDismissRequest = { showActions = false },
-            expandOnOverflow = true,
+            fitContent = true,
         ) {
             Column(
                 Modifier.padding(horizontal = PulseTokens.medium).padding(bottom = PulseTokens.medium),

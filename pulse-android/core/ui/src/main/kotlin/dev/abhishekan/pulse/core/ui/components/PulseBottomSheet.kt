@@ -27,7 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 
-/** Opens halfway unless [fullScreen] is needed; content owns its scrolling. */
+/** Opens halfway by default, or sizes to its content when [fitContent] is set. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PulseBottomSheet(
@@ -36,9 +36,10 @@ fun PulseBottomSheet(
     modifier: Modifier = Modifier,
     fullScreen: Boolean = false,
     expandOnOverflow: Boolean = false,
+    fitContent: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = fullScreen)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = fullScreen || fitContent)
     val windowHeight = LocalWindowInfo.current.containerSize.height
     var viewportHeight by remember { mutableIntStateOf(0) }
     var contentHeight by remember { mutableIntStateOf(0) }
@@ -57,8 +58,8 @@ fun PulseBottomSheet(
         containerColor = PulseTheme.colors.surface,
         contentColor = PulseTheme.colors.textPrimary,
     ) {
-        // A full-height surface keeps the half-height anchor available even for short content.
-        Column(Modifier.fillMaxWidth().fillMaxHeight()) {
+        // The full-height surface keeps the half-height anchor available by default.
+        Column(Modifier.fillMaxWidth().then(if (fitContent) Modifier else Modifier.fillMaxHeight())) {
             PulseText(
                 title,
                 Modifier
@@ -70,7 +71,9 @@ fun PulseBottomSheet(
                 PulseTextStyle.Title3,
                 textAlign = TextAlign.Center,
             )
-            if (expandOnOverflow) {
+            if (fitContent) {
+                Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()), content = content)
+            } else if (expandOnOverflow) {
                 Column(
                     Modifier
                         .weight(1f)

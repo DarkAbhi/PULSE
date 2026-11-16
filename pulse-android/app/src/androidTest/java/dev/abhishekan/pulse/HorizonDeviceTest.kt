@@ -541,7 +541,7 @@ class HorizonDeviceTest {
     private fun quickAction(label: String) {
         val (tab, action) =
             when (label) {
-                "Log a transaction", "Add a category tag" -> "Transactions" to "log a transaction"
+                "Log a transaction", "Add a category tag" -> "Transactions" to "Log transaction"
                 "Add a monthly budget" -> "Budgets" to "Add budget"
                 "Add fixed obligation" -> "Obligations" to "Add obligation"
                 "Add subscription" -> "Subscriptions" to label
@@ -947,15 +947,15 @@ class HorizonDeviceTest {
         screenshot("recent-transactions-empty")
         tap("Add")
         awaitText("Add transactions")
-        compose.onNodeWithText("log a transaction").assertIsDisplayed().assertHasClickAction()
-        tap("Imports statement")
+        compose.onNodeWithText("Log transaction").assertIsDisplayed().assertHasClickAction()
+        tap("Import statement")
         awaitText("Import statement")
         compose.onNode(hasTestTag("pulse-top-app-bar") and hasAnyDescendant(hasText("Import statement"))).assertIsDisplayed()
         tap("Back to Financial Horizon")
         awaitText("Nothing logged yet")
         compose.onNodeWithText("Add transactions").assertDoesNotExist()
         tap("Add")
-        tap("log a transaction")
+        tap("Log transaction")
         awaitText("Add transaction")
     }
 

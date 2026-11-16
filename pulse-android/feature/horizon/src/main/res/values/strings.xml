@@ -375,8 +375,8 @@
     <string name="pulse_horizon_all_transactions">All transactions</string>
     <string name="pulse_horizon_add">Add</string>
     <string name="pulse_horizon_add_transactions">Add transactions</string>
-    <string name="pulse_horizon_add_menu_log_transaction">log a transaction</string>
-    <string name="pulse_horizon_add_menu_import_statement">Imports statement</string>
+    <string name="pulse_horizon_add_menu_log_transaction">Log transaction</string>
+    <string name="pulse_horizon_add_menu_import_statement">Import statement</string>
     <string name="pulse_horizon_view_all_transactions">View all transactions</string>
     <string name="pulse_horizon_nothing_logged_yet">Nothing logged yet</string>
     <string name="pulse_horizon_log_first_transaction">Add your first transaction and watch your room to move update. Spending and income both count.</string>

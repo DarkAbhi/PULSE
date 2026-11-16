@@ -15,7 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
@@ -43,6 +43,7 @@ import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
 import org.koin.androidx.compose.koinViewModel
 import java.time.Instant
+import java.time.ZoneId
 
 @Composable
 fun HomeRoute(
@@ -54,56 +55,52 @@ fun HomeRoute(
     onProfile: (() -> Unit)? = null,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
-    val currency by UserCurrency.changes
-        .collectAsStateWithLifecycle()
+    val currency by UserCurrency.changes.collectAsStateWithLifecycle()
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
-    LaunchedEffect(timeZone) {
-        viewModel.retryProfile()
-        viewModel.retryWorkout()
-        viewModel.retryHorizon()
-    }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val now by viewModel.now.collectAsStateWithLifecycle()
-    val profile = (state.profile as? Section.Content)?.value
-    LaunchedEffect(profile) { if (profile?.hasProfile == false) onMissingProfile() }
-    // Refresh today after returning to the app.
+    val offerOnboarding by rememberUpdatedState(onMissingProfile)
+    LaunchedEffect(viewModel, timeZone) {
+        viewModel.onAction(HomeAction.TimeZoneChanged(timeZone))
+    }
+    LaunchedEffect(state.needsProfile) {
+        if (state.needsProfile) offerOnboarding()
+    }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        viewModel.retryWorkout()
-        viewModel.refreshNotificationCount()
+        viewModel.onAction(HomeAction.Resumed)
     }
-    key(timeZone, currency) {
-        HomeScreen(
-            username,
-            state,
-            viewModel::retryProfile,
-            viewModel::retryWorkout,
-            viewModel::retryHorizon,
-            onHorizon,
-            onFitness,
-            onNotifications,
-            onProfile,
-            now = now,
-        )
-    }
+    HomeScreen(
+        username = username,
+        state = state,
+        onAction = viewModel::onAction,
+        onHorizon = onHorizon,
+        onFitness = onFitness,
+        onNotifications = onNotifications,
+        now = now,
+        onProfile = onProfile,
+        timeZone = timeZone,
+        currency = currency,
+    )
 }
 
 @Composable
 fun HomeScreen(
     username: String,
     state: HomeUiState,
-    retryProfile: () -> Unit,
-    retryWorkout: () -> Unit,
-    retryHorizon: () -> Unit,
+    onAction: (HomeAction) -> Unit,
     onHorizon: () -> Unit,
     onFitness: () -> Unit,
     onNotifications: () -> Unit,
-    onProfile: (() -> Unit)? = null,
     now: Instant,
+    onProfile: (() -> Unit)? = null,
+    timeZone: ZoneId = UserTimeZone.zone,
+    currency: String = UserCurrency.code,
 ) {
     val colors = PulseTheme.colors
+    val scrollState = rememberScrollState()
     Box(Modifier.fillMaxSize().background(colors.background).testTag("dashboard-background")) {
         PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
-            if (state.profile == Section.Loading && state.horizon == Section.Loading && state.workout == Section.Loading) {
+            if (state.isInitialLoading) {
                 PulseCenteredLoadingState(
                     stringResource(R.string.pulse_home_loading_your_dashboard),
                     Modifier.fillMaxSize().padding(LocalPulseContentPadding.current),
@@ -117,20 +114,22 @@ fun HomeScreen(
                 Modifier
                     .widthIn(max = PulseTokens.contentWidth)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .padding(LocalPulseContentPadding.current)
                     .padding(margin),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
             ) {
                 DashboardGreeting(
-                    name = (state.profile as? Section.Content)?.value?.name ?: username,
+                    name = state.profileName ?: username,
                     compact = stackCards,
                     onNotifications = onNotifications,
                     onProfile = onProfile,
                     notificationCount = state.notificationCount,
                     now = now,
+                    timeZone = timeZone,
                 )
-                when (val profile = state.profile) {
+                val retryProfile = { onAction(HomeAction.Retry(HomeSection.Profile)) }
+                when (val profile = state.profile.displayed) {
                     is Section.Error -> {
                         PulseText(profile.failure.message.asString())
                         PulseButton(stringResource(R.string.pulse_home_retry_profile), retryProfile, style = PulseButtonStyle.Text)
@@ -139,10 +138,10 @@ fun HomeScreen(
                         PulseCenteredLoadingState(stringResource(R.string.pulse_home_loading_your_profile), Modifier.fillMaxWidth())
                     else -> Unit
                 }
-                state.refreshErrors["profile"]?.let { PulseErrorState(it.message, retryProfile) }
+                state.profile.refreshFailure?.let { PulseErrorState(it.message, retryProfile) }
                 DashboardCards(stackCards) {
-                    HorizonCard(state.horizon, retryHorizon, onHorizon, state.refreshErrors["horizon"])
-                    WorkoutCard(state.workout, retryWorkout, onFitness, state.refreshErrors["workout"])
+                    HorizonCard(state.horizon, { onAction(HomeAction.Retry(HomeSection.Horizon)) }, onHorizon, currency)
+                    WorkoutCard(state.workout, { onAction(HomeAction.Retry(HomeSection.Workout)) }, onFitness)
                 }
                 Spacer(Modifier.height(if (compact) 48.dp else 160.dp))
             }

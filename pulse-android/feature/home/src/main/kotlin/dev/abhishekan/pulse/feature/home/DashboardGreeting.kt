@@ -51,6 +51,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import java.time.Instant
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.PI
@@ -65,6 +66,7 @@ internal fun DashboardGreeting(
     onProfile: (() -> Unit)?,
     notificationCount: Int = 0,
     now: Instant,
+    timeZone: ZoneId,
 ) {
     val darkTheme = PulseTheme.isDark
     val greetingInk = if (darkTheme) Color.White else Color(0xFF191633)
@@ -84,8 +86,8 @@ internal fun DashboardGreeting(
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    PulseText(formatDashboardTime(now), style = PulseTextStyle.Heading2, color = greetingInk)
-                    PulseText(formatDashboardDate(now), color = greetingMuted)
+                    PulseText(formatDashboardTime(now, zone = timeZone), style = PulseTextStyle.Heading2, color = greetingInk)
+                    PulseText(formatDashboardDate(now, zone = timeZone), color = greetingMuted)
                 }
                 val notificationLabel =
                     if (notificationCount > 0) {
@@ -237,9 +239,11 @@ private fun GreetingAurora(
 internal fun formatDashboardDate(
     instant: Instant,
     locale: Locale = Locale.getDefault(),
-): String = DateTimeFormatter.ofPattern("EEEE, d MMM yyyy", locale).withZone(UserTimeZone.zone).format(instant)
+    zone: ZoneId = UserTimeZone.zone,
+): String = DateTimeFormatter.ofPattern("EEEE, d MMM yyyy", locale).withZone(zone).format(instant)
 
 internal fun formatDashboardTime(
     instant: Instant,
     locale: Locale = Locale.getDefault(),
-): String = DateTimeFormatter.ofPattern("h:mm a", locale).withZone(UserTimeZone.zone).format(instant)
+    zone: ZoneId = UserTimeZone.zone,
+): String = DateTimeFormatter.ofPattern("h:mm a", locale).withZone(zone).format(instant)

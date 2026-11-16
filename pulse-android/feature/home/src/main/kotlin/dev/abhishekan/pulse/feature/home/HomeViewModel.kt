@@ -3,12 +3,16 @@ package dev.abhishekan.pulse.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,36 +42,46 @@ class HomeViewModel(
 
     private val state = MutableStateFlow(HomeUiState())
     val uiState = state.asStateFlow()
-    private val jobs = mutableMapOf<String, Job>()
+    private val sectionJobs = mutableMapOf<HomeSection, Job>()
+    private var notificationJob: Job? = null
+    private var requestedTimeZone = UserTimeZone.zone
 
     init {
-        viewModelScope.launch {
-            dashboard.changes.drop(1).collect {
-                jobs["profile"]?.cancel()
-                retryProfile()
-            }
-        }
-        retryProfile()
-        retryWorkout()
-        retryHorizon()
+        observeChanges(dashboard.changes) { refresh(HomeSection.Profile, replaceInFlight = true) }
+        observeChanges(horizon.changes) { refresh(HomeSection.Horizon, replaceInFlight = true) }
+        observeChanges(fitness.changes) { refresh(HomeSection.Workout, replaceInFlight = true) }
+        HomeSection.entries.forEach { refresh(it) }
         refreshNotificationCount()
-        viewModelScope.launch {
-            horizon.changes.drop(1).collect {
-                jobs["horizon"]?.cancel()
-                retryHorizon()
-            }
+    }
+
+    private fun observeChanges(
+        revisions: Flow<*>,
+        onChange: () -> Unit,
+    ) {
+        // Capture the initial revision before any requests can invalidate it.
+        viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            revisions.drop(1).collect { onChange() }
         }
-        viewModelScope.launch {
-            fitness.changes.drop(1).collect {
-                jobs["workout"]?.cancel()
-                retryWorkout()
+    }
+
+    fun onAction(action: HomeAction) {
+        when (action) {
+            is HomeAction.Retry -> refresh(action.section)
+            is HomeAction.TimeZoneChanged -> {
+                if (requestedTimeZone == action.zone) return
+                requestedTimeZone = action.zone
+                HomeSection.entries.forEach { refresh(it, replaceInFlight = true) }
+            }
+            HomeAction.Resumed -> {
+                refresh(HomeSection.Workout)
+                refreshNotificationCount()
             }
         }
     }
 
-    fun refreshNotificationCount() {
-        if (jobs["notifications"]?.isActive == true) return
-        jobs["notifications"] =
+    private fun refreshNotificationCount() {
+        if (notificationJob?.isActive == true) return
+        notificationJob =
             viewModelScope.launch {
                 when (val result = notifications.list()) {
                     is Outcome.Success -> state.update { it.copy(notificationCount = result.value.size) }
@@ -76,64 +90,58 @@ class HomeViewModel(
             }
     }
 
+    private fun refresh(
+        section: HomeSection,
+        replaceInFlight: Boolean = false,
+    ) {
+        when (section) {
+            HomeSection.Profile ->
+                load(
+                    section,
+                    replaceInFlight,
+                    dashboard::profile,
+                    { it.name == null && it.hasProfile },
+                    HomeUiState::profile,
+                ) { state, value -> state.copy(profile = value) }
+            HomeSection.Workout ->
+                load(section, replaceInFlight, dashboard::workout, { !it.visited }, HomeUiState::workout) { state, value ->
+                    state.copy(workout = value)
+                }
+            HomeSection.Horizon ->
+                load(section, replaceInFlight, dashboard::horizon, { false }, HomeUiState::horizon) { state, value ->
+                    state.copy(horizon = value)
+                }
+        }
+    }
+
     private fun <T> load(
-        key: String,
+        section: HomeSection,
+        replaceInFlight: Boolean,
         fetch: suspend () -> Outcome<T>,
         empty: (T) -> Boolean,
         current: (HomeUiState) -> Section<T>,
         update: (HomeUiState, Section<T>) -> HomeUiState,
     ) {
-        if (jobs[key]?.isActive == true) return
-        val previous = current(state.value)
-        val retained = previous is Section.Content || previous == Section.Empty
-        state.update {
-            val next = if (retained) it else update(it, Section.Loading)
-            next.copy(refreshing = next.refreshing + key, refreshErrors = next.refreshErrors - key)
+        val running = sectionJobs[section]
+        if (running?.isActive == true) {
+            if (!replaceInFlight) return
+            running.cancel()
         }
-        jobs[key] =
-            viewModelScope.launch {
+        val retained = current(state.value).displayed as? Section.Available
+        state.update { update(it, if (retained == null) Section.Loading else Section.Refreshing(retained)) }
+        val job =
+            viewModelScope.launch(start = CoroutineStart.LAZY) {
                 val result = fetch()
-                val section =
+                ensureActive()
+                val next =
                     when (result) {
-                        is Outcome.Error -> Section.Error(result.failure)
-                        is Outcome.Success ->
-                            if (empty(
-                                    result.value,
-                                )
-                            ) {
-                                Section.Empty
-                            } else {
-                                Section.Content(result.value)
-                            }
+                        is Outcome.Error ->
+                            if (retained == null) Section.Error(result.failure) else Section.RefreshFailed(retained, result.failure)
+                        is Outcome.Success -> if (empty(result.value)) Section.Empty else Section.Content(result.value)
                     }
-                state.update {
-                    val refreshFailure = (result as? Outcome.Error)?.failure?.takeIf { retained }
-                    val next = if (refreshFailure != null) it else update(it, section)
-                    next.copy(
-                        refreshing = next.refreshing - key,
-                        refreshErrors =
-                            if (refreshFailure != null) {
-                                next.refreshErrors + (key to refreshFailure)
-                            } else {
-                                next.refreshErrors - key
-                            },
-                    )
-                }
+                state.update { update(it, next) }
             }
+        sectionJobs[section] = job
+        job.start()
     }
-
-    fun retryProfile() =
-        load("profile", {
-            dashboard.profile()
-        }, { it.name == null && it.hasProfile }, { it.profile }) { state, value -> state.copy(profile = value) }
-
-    fun retryWorkout() =
-        load("workout", {
-            dashboard.workout()
-        }, { !it.visited }, { it.workout }) { state, value -> state.copy(workout = value) }
-
-    fun retryHorizon() =
-        load("horizon", {
-            dashboard.horizon()
-        }, { false }, { it.horizon }) { state, value -> state.copy(horizon = value) }
 }

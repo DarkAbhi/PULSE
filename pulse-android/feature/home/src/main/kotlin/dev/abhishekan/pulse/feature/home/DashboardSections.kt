@@ -30,18 +30,16 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Horizon
+import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
-import dev.abhishekan.pulse.core.ui.currencyText
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.R as UiR
 
@@ -50,7 +48,7 @@ internal fun HorizonCard(
     section: Section<Horizon>,
     onRetry: () -> Unit,
     onOpen: () -> Unit,
-    refreshError: Failure? = null,
+    currency: String,
 ) {
     // The yellow illustration card keeps dark ink in either appearance.
     PulseTheme(false) {
@@ -63,8 +61,8 @@ internal fun HorizonCard(
             action = stringResource(R.string.pulse_home_keep_going),
             onOpen = onOpen,
         ) {
-            refreshError?.let { PulseErrorState(it.message, onRetry) }
-            when (section) {
+            section.refreshFailure?.let { PulseErrorState(it.message, onRetry) }
+            when (val displayed = section.displayed) {
                 Section.Loading ->
                     PulseCenteredLoadingState(stringResource(R.string.pulse_home_loading_your_horizon), Modifier.fillMaxWidth())
                 Section.Empty ->
@@ -72,11 +70,11 @@ internal fun HorizonCard(
                         stringResource(R.string.pulse_home_no_summary_yet),
                         stringResource(R.string.pulse_home_your_financial_summary_will_appear_here_when_available),
                     )
-                is Section.Error -> PulseErrorState(section.failure.message, onRetry)
+                is Section.Error -> PulseErrorState(displayed.failure.message, onRetry)
                 is Section.Content -> {
                     PulseText(stringResource(R.string.pulse_home_your_room_to_move), style = PulseTextStyle.Title)
                     PulseText(
-                        currencyText(section.value.remainingAmount).asString(),
+                        UserCurrency.format(displayed.value.remainingAmount, currency),
                         style = PulseTextStyle.Metric,
                     )
                 }
@@ -90,8 +88,8 @@ internal fun WorkoutCard(
     section: Section<WorkoutToday>,
     onRetry: () -> Unit,
     onOpen: () -> Unit,
-    refreshError: Failure? = null,
 ) {
+    val displayed = section.displayed
     IllustratedDashboardCard(
         label = stringResource(R.string.pulse_home_fitness_today),
         illustration = R.drawable.dashboard_fitness,
@@ -100,7 +98,7 @@ internal fun WorkoutCard(
         accent = PulseTheme.colors.successSoft,
         action =
             stringResource(
-                if (section is Section.Content) R.string.pulse_home_view_fitness else R.string.pulse_home_get_moving,
+                if (displayed is Section.Content) R.string.pulse_home_view_fitness else R.string.pulse_home_get_moving,
             ),
         onOpen = onOpen,
     ) {
@@ -109,8 +107,8 @@ internal fun WorkoutCard(
             style = PulseTextStyle.Label,
             color = PulseTheme.colors.textSecondary,
         )
-        refreshError?.let { PulseErrorState(it.message, onRetry) }
-        when (section) {
+        section.refreshFailure?.let { PulseErrorState(it.message, onRetry) }
+        when (displayed) {
             Section.Loading ->
                 PulseCenteredLoadingState(stringResource(R.string.pulse_home_loading_today_s_workout), Modifier.fillMaxWidth())
             Section.Empty ->
@@ -118,7 +116,7 @@ internal fun WorkoutCard(
                     stringResource(R.string.pulse_home_no_workout_recorded_today),
                     style = PulseTextStyle.Title,
                 )
-            is Section.Error -> PulseErrorState(section.failure.message, onRetry)
+            is Section.Error -> PulseErrorState(displayed.failure.message, onRetry)
             is Section.Content -> PulseText(stringResource(R.string.pulse_home_workout_recorded), style = PulseTextStyle.Title)
         }
     }

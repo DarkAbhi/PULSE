@@ -24,9 +24,18 @@ private val preview =
 @Preview(name = "Large text", widthDp = 360, heightDp = 800, fontScale = 2f)
 @Composable
 private fun HomeLightPreview() {
-    PulseTheme(
-        false,
-    ) { HomeScreen("preview", preview, {}, {}, {}, {}, {}, {}, onProfile = {}, now = Instant.parse("2026-10-16T12:00:00Z")) }
+    PulseTheme(false) {
+        HomeScreen(
+            username = "preview",
+            state = preview,
+            onAction = {},
+            onHorizon = {},
+            onFitness = {},
+            onNotifications = {},
+            now = Instant.parse("2026-10-16T12:00:00Z"),
+            onProfile = {},
+        )
+    }
 }
 
 @Preview(name = "Dark phone", widthDp = 360, heightDp = 800)
@@ -35,7 +44,14 @@ private fun HomeLightPreview() {
 @Composable
 private fun HomeDarkPreview() {
     PulseTheme(true) {
-        HomeScreen("preview", preview.copy(horizon = Section.Error(Failure.Connection)), {
-        }, {}, {}, {}, {}, {}, now = Instant.parse("2026-10-16T12:00:00Z"))
+        HomeScreen(
+            username = "preview",
+            state = preview.copy(horizon = Section.Error(Failure.Connection)),
+            onAction = {},
+            onHorizon = {},
+            onFitness = {},
+            onNotifications = {},
+            now = Instant.parse("2026-10-16T12:00:00Z"),
+        )
     }
 }

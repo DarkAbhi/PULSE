@@ -15,6 +15,7 @@ import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.PlannedPurchases
 import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
+import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
@@ -41,8 +42,12 @@ import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.Locale
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
@@ -156,30 +161,13 @@ class HomeViewModelTest {
             assertEquals(Section.Loading, vm.uiState.value.profile)
             assertEquals(Section.Empty, vm.uiState.value.workout)
             assertEquals(Section.Error(Failure.Server), vm.uiState.value.horizon)
-            vm.retryProfile()
+            vm.onAction(HomeAction.Retry(HomeSection.Profile))
             runCurrent()
             assertEquals(1, profileCalls)
             horizonFails = false
-            vm.retryHorizon()
+            vm.onAction(HomeAction.Retry(HomeSection.Horizon))
             runCurrent()
             assertTrue(vm.uiState.value.horizon is Section.Content)
-            // The badge uses the complete notification center, not the five-item dashboard preview.
-            notificationResult = Outcome.Success(List(12) { Notification(it.toLong() + 1, "Update", null, null) })
-            vm.refreshNotificationCount()
-            runCurrent()
-            assertEquals(12, vm.uiState.value.notificationCount)
-            notificationResult = Outcome.Error(Failure.Connection)
-            vm.refreshNotificationCount()
-            runCurrent()
-            assertEquals(12, vm.uiState.value.notificationCount)
-            notificationResult = Outcome.Success(listOf(Notification(1, "Update", null, null)))
-            vm.refreshNotificationCount()
-            runCurrent()
-            assertEquals(1, vm.uiState.value.notificationCount)
-            notificationResult = Outcome.Success(emptyList())
-            vm.refreshNotificationCount()
-            runCurrent()
-            assertEquals(0, vm.uiState.value.notificationCount)
             profile.complete(Outcome.Success(Profile(null)))
             runCurrent()
             assertEquals(Section.Empty, vm.uiState.value.profile)
@@ -191,15 +179,97 @@ class HomeViewModelTest {
             horizonFails = true
             horizon.changes.value++
             runCurrent()
-            assertTrue(vm.uiState.value.horizon is Section.Content)
-            assertEquals(Failure.Server, vm.uiState.value.refreshErrors["horizon"])
+            assertTrue(vm.uiState.value.horizon.displayed is Section.Content)
+            assertEquals(Failure.Server, vm.uiState.value.horizon.refreshFailure)
             assertEquals(2, workoutCalls)
-            vm.retryWorkout()
-            assertEquals(Section.Content(WorkoutToday(true)), vm.uiState.value.workout)
-            assertTrue("workout" in vm.uiState.value.refreshing)
+            vm.onAction(HomeAction.Retry(HomeSection.Workout))
+            assertEquals(Section.Refreshing(Section.Content(WorkoutToday(true))), vm.uiState.value.workout)
             runCurrent()
-            assertTrue("workout" !in vm.uiState.value.refreshing)
+            assertEquals(Section.Content(WorkoutToday(true)), vm.uiState.value.workout)
             assertEquals(3, workoutCalls)
+        }
+
+    @Test fun resumingRefreshesWorkoutAndKeepsTheLastNotificationCountOnFailure() =
+        runTest {
+            var workoutCalls = 0
+            val repository =
+                object : DashboardRepository {
+                    override suspend fun profile() = Outcome.Success(Profile(null))
+
+                    override suspend fun workout(): Outcome<WorkoutToday> {
+                        workoutCalls++
+                        return Outcome.Success(WorkoutToday(false))
+                    }
+
+                    override suspend fun horizon() = Outcome.Error(Failure.Connection)
+                }
+            val vm = HomeViewModel(repository, fitness, horizon, notifications)
+            models.put("home", vm)
+            runCurrent()
+            notificationResult = Outcome.Success(List(12) { Notification(it.toLong() + 1, "Update", null, null) })
+            vm.onAction(HomeAction.Resumed)
+            runCurrent()
+            assertEquals(12, vm.uiState.value.notificationCount)
+            notificationResult = Outcome.Error(Failure.Connection)
+            vm.onAction(HomeAction.Resumed)
+            runCurrent()
+            assertEquals(12, vm.uiState.value.notificationCount)
+            notificationResult = Outcome.Success(listOf(Notification(1, "Update", null, null)))
+            vm.onAction(HomeAction.Resumed)
+            runCurrent()
+            assertEquals(1, vm.uiState.value.notificationCount)
+            notificationResult = Outcome.Success(emptyList())
+            vm.onAction(HomeAction.Resumed)
+            runCurrent()
+            assertEquals(0, vm.uiState.value.notificationCount)
+            assertEquals(5, workoutCalls)
+        }
+
+    @Test fun timeZoneChangeReplacesAnInFlightRequestAndIgnoresItsLateResult() =
+        runTest {
+            lateinit var oldWorkout: Continuation<Outcome<WorkoutToday>>
+            var workoutCalls = 0
+            var profileCalls = 0
+            var horizonCalls = 0
+            val repository =
+                object : DashboardRepository {
+                    override suspend fun profile(): Outcome<Profile> {
+                        profileCalls++
+                        return Outcome.Success(Profile(null))
+                    }
+
+                    override suspend fun workout(): Outcome<WorkoutToday> {
+                        workoutCalls++
+                        return if (workoutCalls == 1) {
+                            suspendCoroutine { oldWorkout = it }
+                        } else {
+                            Outcome.Success(WorkoutToday(true))
+                        }
+                    }
+
+                    override suspend fun horizon(): Outcome<Horizon> {
+                        horizonCalls++
+                        return Outcome.Error(Failure.Connection)
+                    }
+                }
+            val vm = HomeViewModel(repository, fitness, horizon, notifications)
+            models.put("home", vm)
+            runCurrent()
+            assertEquals(Section.Loading, vm.uiState.value.workout)
+
+            vm.onAction(HomeAction.TimeZoneChanged(UserTimeZone.zone))
+            runCurrent()
+            assertEquals(1, workoutCalls)
+
+            vm.onAction(HomeAction.TimeZoneChanged(ZoneId.of("America/Los_Angeles")))
+            runCurrent()
+            oldWorkout.resume(Outcome.Success(WorkoutToday(false)))
+            runCurrent()
+
+            assertEquals(2, profileCalls)
+            assertEquals(2, horizonCalls)
+            assertEquals(2, workoutCalls)
+            assertEquals(Section.Content(WorkoutToday(true)), vm.uiState.value.workout)
         }
 
     @Test fun dashboardClockUsesUtcByDefault() {

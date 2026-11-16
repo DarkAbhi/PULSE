@@ -25,7 +25,9 @@ import dev.abhishekan.pulse.core.domain.model.Horizon
 import dev.abhishekan.pulse.core.domain.model.Profile
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.feature.home.HomeAction
 import dev.abhishekan.pulse.feature.home.HomeScreen
+import dev.abhishekan.pulse.feature.home.HomeSection
 import dev.abhishekan.pulse.feature.home.HomeUiState
 import dev.abhishekan.pulse.feature.home.Section
 import org.junit.Assert.assertEquals
@@ -39,14 +41,13 @@ import java.time.Instant
 class HomeDashboardDeviceTest {
     @get:Rule val compose = createComposeRule()
 
+    private val balance =
+        Section.Content(Horizon("₹", BigDecimal("150000"), BigDecimal("100000.125"), BigDecimal("50000")))
     private val state =
         HomeUiState(
             profile = Section.Content(Profile("Abhishek")),
             workout = Section.Empty,
-            horizon =
-                Section.Content(
-                    Horizon("₹", BigDecimal("150000"), BigDecimal("100000.125"), BigDecimal("50000")),
-                ),
+            horizon = balance,
         )
 
     private fun show(
@@ -62,9 +63,7 @@ class HomeDashboardDeviceTest {
                     HomeScreen(
                         "fixture",
                         if (failure) state.copy(horizon = Section.Error(Failure.Connection)) else state,
-                        {},
-                        {},
-                        onRetry,
+                        { if (it == HomeAction.Retry(HomeSection.Horizon)) onRetry() },
                         {},
                         {},
                         {},
@@ -96,16 +95,22 @@ class HomeDashboardDeviceTest {
         val current = mutableStateOf(state)
         compose.setContent {
             PulseTheme(false) {
-                HomeScreen("fixture", current.value, {}, {}, {}, {}, {}, {}, now = Instant.parse("2026-10-16T12:00:00Z"))
+                HomeScreen("fixture", current.value, {}, {}, {}, {}, now = Instant.parse("2026-10-16T12:00:00Z"))
             }
         }
-        compose.runOnIdle { current.value = state.copy(refreshing = setOf("workout", "horizon")) }
+        compose.runOnIdle {
+            current.value =
+                state.copy(
+                    workout = Section.Refreshing(Section.Empty),
+                    horizon = Section.Refreshing(balance),
+                )
+        }
         compose.onNodeWithText("No workout recorded today.").assertExists()
         compose.onNodeWithText("Loading today’s workout").assertDoesNotExist()
         compose.onNodeWithText("Loading your horizon").assertDoesNotExist()
         assertMatchingCardHeights()
         compose.runOnIdle {
-            current.value = state.copy(refreshErrors = mapOf("workout" to Failure.Connection))
+            current.value = state.copy(workout = Section.RefreshFailed(Section.Empty, Failure.Connection))
         }
         compose.onNodeWithText("No workout recorded today.").assertExists()
     }
@@ -115,7 +120,7 @@ class HomeDashboardDeviceTest {
         var opened = 0
         compose.setContent {
             PulseTheme(false) {
-                HomeScreen("fixture", current.value, {}, {}, {}, {}, {}, { opened++ }, now = Instant.parse("2026-10-16T12:00:00Z"))
+                HomeScreen("fixture", current.value, {}, {}, {}, { opened++ }, now = Instant.parse("2026-10-16T12:00:00Z"))
             }
         }
         compose.onNodeWithTag("dashboard-notification-badge", useUnmergedTree = true).assertDoesNotExist()
@@ -138,7 +143,7 @@ class HomeDashboardDeviceTest {
         compose.setContent {
             PulseTheme(false) {
                 Box(Modifier.requiredWidth(width.value).fillMaxHeight()) {
-                    HomeScreen("fixture", state, {}, {}, {}, {}, {}, {}, now = Instant.parse("2026-10-16T12:00:00Z"))
+                    HomeScreen("fixture", state, {}, {}, {}, {}, now = Instant.parse("2026-10-16T12:00:00Z"))
                 }
             }
         }
@@ -165,18 +170,15 @@ class HomeDashboardDeviceTest {
                 HomeScreen(
                     "fixture",
                     state,
-                    {
-                    },
-                    {},
                     {},
                     { horizon++ },
                     { fitness++ },
                     { notifications++ },
-                    { profile++ },
                     now =
                         Instant.parse(
                             "2026-10-16T12:00:00Z",
                         ),
+                    onProfile = { profile++ },
                 )
             }
         }

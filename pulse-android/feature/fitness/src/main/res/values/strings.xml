@@ -88,15 +88,15 @@
     <string name="pulse_fitness_exercise_name">"Exercise name"</string>
     <string name="pulse_fitness_catalogue_match_selected_you_can_use_your_own_name">"Catalogue match selected. You can use your own name for it."</string>
     <string name="pulse_fitness_change_catalogue_match">"Change catalogue match"</string>
-    <string name="pulse_fitness_remember_this_name_for_future_workouts">"Remember this name for future workouts"</string>
+    <string name="pulse_fitness_remember_this_name_for_future_workouts">Remember my name for this exercise</string>
     <string name="pulse_fitness_search_by_name_above_or_keep_your_own_exercise">"Search by name above, or keep your own exercise name."</string>
     <string name="pulse_fitness_finding_exercises">"Finding exercises"</string>
     <string name="pulse_fitness_retry_catalogue_search">"Retry catalogue search"</string>
     <string name="pulse_fitness_no_matches_yet_you_can_save_your_own_exercise">"No matches yet. You can save your own exercise name."</string>
     <string name="pulse_fitness_exercise_equipment">"%1$s · %2$s"</string>
     <string name="pulse_fitness_equipment_unspecified">"Equipment unspecified"</string>
-    <string name="pulse_fitness_your_sets">"Your sets"</string>
-    <string name="pulse_fitness_repetitions_1_1_000_per_set_leave_weight_blank">"Repetitions: 1–1,000 per set. Leave weight blank for bodyweight. Up to 20 sets."</string>
+    <string name="pulse_fitness_your_sets">Sets</string>
+    <string name="pulse_fitness_repetitions_1_1_000_per_set_leave_weight_blank">1–1,000 reps per set. Leave weight blank for bodyweight.</string>
     <string name="pulse_fitness_set_1_s">"Set %1$s"</string>
     <string name="pulse_fitness_reps_set_1_s">"Reps, set %1$s"</string>
     <string name="pulse_fitness_remove_set_1_s">"Remove set %1$s"</string>
@@ -179,7 +179,7 @@
     <plurals name="pulse_fitness_workout_sets_label"><item quantity="one">set</item><item quantity="other">sets</item></plurals>
     <string name="pulse_fitness_editor_back">Back</string>
     <string name="pulse_fitness_editor_add_title">Add exercise</string>
-    <string name="pulse_fitness_editor_selected">Selected exercise</string>
+    <string name="pulse_fitness_editor_selected">Exercise</string>
     <string name="pulse_fitness_editor_change">Change</string>
     <string name="pulse_fitness_editor_custom">Custom exercise</string>
     <string name="pulse_fitness_editor_matched_to">Catalogue match: %1$s</string>
@@ -191,9 +191,14 @@
     <string name="pulse_fitness_editor_custom_action">Use %1$s as a custom exercise</string>
     <string name="pulse_fitness_editor_empty_title">Find an exercise to get started</string>
     <string name="pulse_fitness_editor_empty_body">Choose an exercise to start logging your sets.</string>
-    <string name="pulse_fitness_editor_set_count">%1$d / 20 sets</string>
+    <string name="pulse_fitness_editor_set_count">%1$d of %2$d</string>
     <string name="pulse_fitness_editor_add_set">Add another set</string>
-    <string name="pulse_fitness_editor_remember_body">Reuse your name for this catalogue exercise.</string>
+    <string name="pulse_fitness_editor_reps">Reps</string>
+    <string name="pulse_fitness_editor_weight">Weight</string>
+    <string name="pulse_fitness_editor_weight_kg">Weight (kg)</string>
+    <string name="pulse_fitness_editor_kg">kg</string>
+    <string name="pulse_fitness_editor_remember_body">Reuse it in future workouts</string>
+    <string name="pulse_fitness_editor_how_to">How to do it</string>
     <string name="pulse_fitness_editor_instructions">Instructions</string>
     <string name="pulse_fitness_editor_target_muscles">Target muscles</string>
     <string name="pulse_fitness_editor_edit_name">Edit name</string>

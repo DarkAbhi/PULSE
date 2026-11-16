@@ -510,14 +510,14 @@ class FitnessDeviceTest {
             .onNode(custom)
             .assertIsDisplayed()
             .performSemanticsAction(SemanticsActions.OnClick) { it() }
-        awaitText("Reps, set 1")
+        compose.waitUntil(15_000) { compose.onAllNodesWithContentDescription("Reps, set 1").fetchSemanticsNodes().isNotEmpty() }
     }
 
     private fun enterOwnExercise(name: String = "Custom mobility") {
         tap("Add exercise")
         chooseCustomName(name)
-        compose.onNodeWithText("Reps, set 1").performScrollTo().performTextInput("12")
-        compose.onNodeWithText("Weight (kg), set 1").performScrollTo().performTextInput("20.5")
+        compose.onNodeWithContentDescription("Reps, set 1").performScrollTo().performTextInput("12")
+        compose.onNodeWithContentDescription("Weight (kg), set 1").performScrollTo().performTextInput("20.5")
     }
 
     private fun screenshot(
@@ -631,25 +631,25 @@ class FitnessDeviceTest {
         compose
             .onNode(
                 hasText("Search for an exercise") and
-                        hasSetTextAction(),
+                    hasSetTextAction(),
             ).performTextReplacement("Squat")
         tap("Fixture barbell squat")
         tap("Save")
         awaitText("Add exercise")
         tap("Edit exercise")
-        tap("Edit name")
+        compose.onNodeWithContentDescription("Edit name").performScrollTo().performClick()
         compose
             .onNodeWithText(
                 "Exercise name",
             ).performScrollTo()
             .performTextReplacement("Personal squat")
-        compose.onNodeWithText("Reps, set 1").performScrollTo().performTextReplacement("8")
+        compose.onNodeWithContentDescription("Reps, set 1").performScrollTo().performTextReplacement("8")
         compose
-            .onNodeWithText(
+            .onNodeWithContentDescription(
                 "Weight (kg), set 1",
             ).performScrollTo()
             .performTextReplacement("22.5")
-        tap("Remember this name for future workouts")
+        tap("Remember my name for this exercise")
         tap("Save")
         awaitText("Add exercise")
         awaitText("8 reps")
@@ -716,10 +716,10 @@ class FitnessDeviceTest {
         tap("Add exercise")
         compose.onNodeWithText("Save").assertIsNotEnabled()
         chooseCustomName("Custom mobility")
-        compose.onNodeWithText("Reps, set 1").performScrollTo().performTextInput("12")
-        compose.onNodeWithText("Reps, set 1").performImeAction()
-        compose.onNodeWithText("Weight (kg), set 1").assertIsFocused().performTextInput("0")
-        compose.onNodeWithText("Weight (kg), set 1").performImeAction()
+        compose.onNodeWithContentDescription("Reps, set 1").performScrollTo().performTextInput("12")
+        compose.onNodeWithContentDescription("Reps, set 1").performImeAction()
+        compose.onNodeWithContentDescription("Weight (kg), set 1").assertIsFocused().performTextInput("0")
+        compose.onNodeWithContentDescription("Weight (kg), set 1").performImeAction()
         scenario!!.recreate()
         awaitText("Add exercise")
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
@@ -845,11 +845,11 @@ class FitnessDeviceTest {
         launchFitness()
         recordAndOpen()
         enterOwnExercise("Custom mobility")
-        compose.onNodeWithText("Weight (kg), set 1").performImeAction()
+        compose.onNodeWithContentDescription("Weight (kg), set 1").performImeAction()
         tap("Add another set")
-        compose.onNodeWithText("Reps, set 2").performScrollTo().performTextInput("8")
-        compose.onNodeWithText("Weight (kg), set 2").performScrollTo().performTextInput("12.123456789")
-        compose.onNodeWithText("Weight (kg), set 2").performImeAction()
+        compose.onNodeWithContentDescription("Reps, set 2").performScrollTo().performTextInput("8")
+        compose.onNodeWithContentDescription("Weight (kg), set 2").performScrollTo().performTextInput("12.123456789")
+        compose.onNodeWithContentDescription("Weight (kg), set 2").performImeAction()
         scenario!!.recreate()
         awaitText("Add exercise")
         compose.onNodeWithText("12.123456789").performScrollTo().assertIsDisplayed()

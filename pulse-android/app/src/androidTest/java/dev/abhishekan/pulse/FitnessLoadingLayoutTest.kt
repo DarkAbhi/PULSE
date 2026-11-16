@@ -17,8 +17,10 @@ import androidx.compose.ui.test.swipeDown
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.feature.fitness.FitnessScreen
-import dev.abhishekan.pulse.feature.fitness.FitnessUiState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessAction
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessScreen
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessUiState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -37,15 +39,12 @@ class FitnessLoadingLayoutTest {
                 Box(Modifier.fillMaxSize().testTag("fitness-viewport")) {
                     FitnessScreen(
                         state,
-                        onDate = {},
-                        onMonth = {},
-                        onToday = {},
-                        onRefresh = {
-                            refreshes++
-                            state = state.copy(loading = true)
+                        onAction = {
+                            if (it == FitnessAction.Refresh) {
+                                refreshes++
+                                state = state.copy(loadState = FitnessLoadState.Loading())
+                            }
                         },
-                        onRecord = {},
-                        onReviewed = {},
                         onWorkout = {},
                     )
                 }
@@ -53,7 +52,7 @@ class FitnessLoadingLayoutTest {
         }
         assertLoadingCentered()
         compose.runOnIdle {
-            state = state.copy(loading = false, overview = FitnessOverview(day, emptyList(), emptyList()))
+            state = state.copy(loadState = FitnessLoadState.Ready, overview = FitnessOverview(day, emptyList(), emptyList()))
         }
         val calendar = compose.onNodeWithText("SELECTED DAY")
         val beforeRefresh = calendar.getUnclippedBoundsInRoot()
@@ -62,7 +61,7 @@ class FitnessLoadingLayoutTest {
         compose.onNodeWithText("Refreshing your activity").assertDoesNotExist()
         assertEquals(beforeRefresh, calendar.getUnclippedBoundsInRoot())
         compose.runOnIdle {
-            state = state.copy(loading = false, error = Failure.Connection)
+            state = state.copy(loadState = FitnessLoadState.Failed(Failure.Connection))
         }
         compose.onNodeWithText("Refreshing your activity").assertDoesNotExist()
         compose.onNodeWithText("SELECTED DAY").assertExists()

@@ -1,4 +1,5 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.overview
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.Failure
@@ -6,6 +7,7 @@ import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.WorkoutSummary
 import dev.abhishekan.pulse.core.domain.usecase.RecordWorkout
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessTestRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -59,13 +61,13 @@ class FitnessViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.recordSelected()
+            vm.onAction(FitnessAction.RecordWorkout)
             runCurrent()
             val message = vm.uiState.value.message
             assertTrue(message != null)
-            vm.consumeMessage()
+            vm.onAction(FitnessAction.DismissMessage)
             assertNull(vm.uiState.value.message)
-            vm.recordSelected()
+            vm.onAction(FitnessAction.RecordWorkout)
             runCurrent()
             assertEquals(message, vm.uiState.value.message)
             assertEquals(2, repo.records)
@@ -75,18 +77,18 @@ class FitnessViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.resume()
+            vm.onAction(FitnessAction.Resume)
             runCurrent()
             assertEquals(listOf("overview"), repo.trace)
             val previous = vm.uiState.value.overview
             val gate = CompletableDeferred<Outcome<FitnessOverview>>()
             repo.overviewRead = { gate.await() }
-            vm.resume()
+            vm.onAction(FitnessAction.Resume)
             runCurrent()
             assertTrue(vm.uiState.value.loading)
             assertEquals(previous, vm.uiState.value.overview)
             assertTrue(vm.uiState.value.canRecord)
-            vm.refresh()
+            vm.onAction(FitnessAction.Refresh)
             runCurrent()
             assertEquals(listOf("overview", "overview"), repo.trace)
             gate.complete(Outcome.Error(Failure.Connection))
@@ -97,7 +99,7 @@ class FitnessViewModelTest {
             assertFalse(vm.uiState.value.canRecord)
             val retry = CompletableDeferred<Outcome<FitnessOverview>>()
             repo.overviewRead = { retry.await() }
-            vm.refresh()
+            vm.onAction(FitnessAction.Refresh)
             runCurrent()
             assertFalse(vm.uiState.value.canRecord)
             retry.complete(Outcome.Success(repo.overviewValue))
@@ -113,10 +115,10 @@ class FitnessViewModelTest {
             val write = CompletableDeferred<Outcome<Unit>>()
             repo.overviewRead = { refresh.await() }
             repo.write = { write.await() }
-            vm.refresh()
+            vm.onAction(FitnessAction.Refresh)
             runCurrent()
 
-            vm.recordSelected()
+            vm.onAction(FitnessAction.RecordWorkout)
             runCurrent()
             assertEquals(1, repo.records)
             assertTrue(vm.uiState.value.busy)
@@ -138,7 +140,7 @@ class FitnessViewModelTest {
             val gate = CompletableDeferred<Outcome<FitnessOverview>>()
             repo.overviewRead = { gate.await() }
             val vm = vm()
-            vm.resume()
+            vm.onAction(FitnessAction.Resume)
             runCurrent()
             gate.complete(Outcome.Success(repo.overviewValue))
             runCurrent()
@@ -152,8 +154,8 @@ class FitnessViewModelTest {
             runCurrent()
             val selected = LocalDate.of(2025, 12, 31)
             val browsed = YearMonth.of(2026, 1)
-            vm.select(selected)
-            vm.shiftMonth(1)
+            vm.onAction(FitnessAction.SelectDate(selected))
+            vm.onAction(FitnessAction.ShiftMonth(1))
             assertEquals(selected, vm.uiState.value.selected)
             assertEquals(browsed, vm.uiState.value.month)
             vm =
@@ -168,7 +170,7 @@ class FitnessViewModelTest {
             runCurrent()
             assertEquals(selected, vm.uiState.value.selected)
             assertEquals(browsed, vm.uiState.value.month)
-            vm.recordSelected()
+            vm.onAction(FitnessAction.RecordWorkout)
             runCurrent()
             assertEquals(selected, repo.selectedDate)
         }
@@ -179,8 +181,8 @@ class FitnessViewModelTest {
             repo.write = { gate.await() }
             val vm = vm()
             runCurrent()
-            vm.recordSelected()
-            vm.recordSelected()
+            vm.onAction(FitnessAction.RecordWorkout)
+            vm.onAction(FitnessAction.RecordWorkout)
             runCurrent()
             assertEquals(1, repo.records)
             assertNull(repo.selectedDate)
@@ -201,24 +203,24 @@ class FitnessViewModelTest {
                 repo.readFailure = Failure.Connection
                 Outcome.Error(Failure.Timeout)
             }
-            vm.recordSelected()
+            vm.onAction(FitnessAction.RecordWorkout)
             runCurrent()
             assertEquals(listOf("overview", "record", "overview"), repo.trace)
             assertTrue(vm.uiState.value.needsReview)
             assertFalse(vm.uiState.value.reviewReady)
             assertEquals(true, saved.get<Boolean>("pending"))
-            vm.acknowledgeReview()
-            vm.recordSelected()
+            vm.onAction(FitnessAction.AcknowledgeReview)
+            vm.onAction(FitnessAction.RecordWorkout)
             runCurrent()
             assertEquals(1, repo.records)
             repo.readFailure = null
-            vm.refresh()
+            vm.onAction(FitnessAction.Refresh)
             runCurrent()
             assertTrue(vm.uiState.value.reviewReady)
-            vm.recordSelected()
+            vm.onAction(FitnessAction.RecordWorkout)
             runCurrent()
             assertEquals(1, repo.records)
-            vm.acknowledgeReview()
+            vm.onAction(FitnessAction.AcknowledgeReview)
             assertFalse(vm.uiState.value.needsReview)
         }
 
@@ -245,7 +247,7 @@ class FitnessViewModelTest {
             runCurrent()
             assertTrue(vm.uiState.value.needsReview)
             assertTrue(vm.uiState.value.reviewReady)
-            vm.recordSelected()
+            vm.onAction(FitnessAction.RecordWorkout)
             runCurrent()
             assertEquals(0, repo.records)
         }
@@ -255,8 +257,8 @@ class FitnessViewModelTest {
             val vm = vm()
             runCurrent()
             val before = vm.uiState.value
-            vm.selectToday()
-            vm.selectToday()
+            vm.onAction(FitnessAction.SelectToday)
+            vm.onAction(FitnessAction.SelectToday)
             assertEquals(before, vm.uiState.value)
             runCurrent()
             assertEquals(before, vm.uiState.value)
@@ -270,7 +272,7 @@ class FitnessViewModelTest {
             assertEquals(repo.today, vm.uiState.value.selected)
             val nextDay = repo.today.plusDays(1)
             repo.overviewValue = repo.overviewValue.copy(today = nextDay)
-            vm.selectToday()
+            vm.onAction(FitnessAction.SelectToday)
             runCurrent()
             assertEquals(nextDay, vm.uiState.value.selected)
             assertEquals(listOf("overview", "overview"), repo.trace)
@@ -280,13 +282,13 @@ class FitnessViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.select(repo.today.minusDays(1))
+            vm.onAction(FitnessAction.SelectDate(repo.today.minusDays(1)))
             val nextDay = repo.today.plusDays(1)
             repo.overviewValue = repo.overviewValue.copy(today = nextDay)
-            vm.selectToday()
+            vm.onAction(FitnessAction.SelectToday)
             runCurrent()
             assertEquals(nextDay, vm.uiState.value.selected)
-            vm.recordSelected()
+            vm.onAction(FitnessAction.RecordWorkout)
             runCurrent()
             assertEquals(nextDay, repo.selectedDate)
         }
@@ -295,11 +297,11 @@ class FitnessViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.select(repo.today.minusDays(1))
-            vm.shiftMonth(-1)
+            vm.onAction(FitnessAction.SelectDate(repo.today.minusDays(1)))
+            vm.onAction(FitnessAction.ShiftMonth(-1))
             val gate = CompletableDeferred<Outcome<FitnessOverview>>()
             repo.overviewRead = { gate.await() }
-            vm.selectToday()
+            vm.onAction(FitnessAction.SelectToday)
             assertEquals(repo.today, vm.uiState.value.selected)
             assertEquals(YearMonth.from(repo.today), vm.uiState.value.month)
             gate.complete(Outcome.Error(Failure.Connection))
@@ -311,12 +313,12 @@ class FitnessViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.select(repo.today.minusDays(1))
+            vm.onAction(FitnessAction.SelectDate(repo.today.minusDays(1)))
             val gate = CompletableDeferred<Outcome<FitnessOverview>>()
             repo.overviewRead = { gate.await() }
-            vm.selectToday()
+            vm.onAction(FitnessAction.SelectToday)
             runCurrent()
-            vm.select(repo.today.minusDays(3))
+            vm.onAction(FitnessAction.SelectDate(repo.today.minusDays(3)))
             gate.complete(Outcome.Success(repo.overviewValue))
             runCurrent()
             assertEquals(repo.today.minusDays(3), vm.uiState.value.selected)

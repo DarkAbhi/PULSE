@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -10,6 +11,13 @@ class AppDestinationTest {
         assertFalse(isTabRoot(AppDestination.Profile, editName = true))
         assertFalse(isTabRoot(AppDestination.Profile, editName = false, fromHome = true))
         assertFalse(isTabRoot(AppDestination.Vehicle, editName = false))
+        assertFalse(isTabRoot(AppDestination.WorkoutExercise, editName = false))
         assertFalse(isTabRoot(AppDestination.Notifications, editName = false))
+    }
+
+    @Test fun exerciseEditorBelongsToTheWorkoutAndFitnessTab() {
+        val destination = AppDestination.WorkoutExercise
+        assertEquals(AppDestination.Fitness, destination.tab)
+        assertEquals(AppDestination.Workout.withId(100L) + "/exercise", destination.withId(100L))
     }
 }

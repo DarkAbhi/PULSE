@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.overview
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -35,6 +35,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.feature.fitness.R
 
 @Composable
 internal fun FitnessStats(

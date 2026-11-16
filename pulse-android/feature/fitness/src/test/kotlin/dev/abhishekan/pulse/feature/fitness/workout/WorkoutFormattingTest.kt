@@ -1,7 +1,8 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.workout
 
 import dev.abhishekan.pulse.core.ui.uiPlural
 import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.fitness.R
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.math.BigInteger

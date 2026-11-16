@@ -1,4 +1,5 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.shared
+
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.domain.model.ExerciseInput
 import dev.abhishekan.pulse.core.domain.model.Failure

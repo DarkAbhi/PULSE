@@ -1,13 +1,18 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.overview
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.usecase.RecordWorkout
 import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.fitness.R
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessReviewState
+import dev.abhishekan.pulse.feature.fitness.shared.fitnessFailureMessage
+import dev.abhishekan.pulse.feature.fitness.shared.requiresFitnessReview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,13 +36,26 @@ class FitnessViewModel(
             FitnessUiState(
                 selected,
                 saved.get<String>("browsedMonth")?.let(YearMonth::parse) ?: YearMonth.from(selected),
-                needsReview =
-                    saved["pending"] ?: false,
+                reviewState =
+                    if (saved.get<Boolean>("pending") == true) FitnessReviewState.AwaitingRefresh else FitnessReviewState.None,
             ),
         )
     val uiState = state.asStateFlow()
 
-    fun consumeMessage() {
+    fun onAction(action: FitnessAction) {
+        when (action) {
+            is FitnessAction.SelectDate -> select(action.date)
+            is FitnessAction.ShiftMonth -> shiftMonth(action.offset)
+            FitnessAction.SelectToday -> selectToday()
+            FitnessAction.Refresh -> refresh()
+            FitnessAction.RecordWorkout -> recordSelected()
+            FitnessAction.AcknowledgeReview -> acknowledgeReview()
+            FitnessAction.Resume -> resume()
+            FitnessAction.DismissMessage -> consumeMessage()
+        }
+    }
+
+    private fun consumeMessage() {
         state.update { it.copy(message = null) }
     }
 
@@ -53,7 +71,7 @@ class FitnessViewModel(
         }
     }
 
-    fun select(date: LocalDate) {
+    private fun select(date: LocalDate) {
         if (state.value.busy) return
         firstLoad = false
         selectionVersion++
@@ -69,7 +87,7 @@ class FitnessViewModel(
         }
     }
 
-    fun shiftMonth(offset: Long) {
+    private fun shiftMonth(offset: Long) {
         val current = state.value
         if (current.busy) return
         val next = current.month.plusMonths(offset)
@@ -79,7 +97,7 @@ class FitnessViewModel(
         state.update { it.copy(month = next) }
     }
 
-    fun selectToday() {
+    private fun selectToday() {
         val current = state.value
         if (current.busy) return
         val today = FitnessDates.today(clock)
@@ -96,22 +114,31 @@ class FitnessViewModel(
             }
     }
 
-    fun resume() {
+    private fun resume() {
         if (hasResumed) refresh() else hasResumed = true
     }
 
-    fun refresh(force: Boolean = false) {
+    private fun refresh(force: Boolean = false) {
         if (state.value.busy || (!force && loadJob?.isActive == true)) return
         loadJob?.cancel()
         loadJob = viewModelScope.launch { load() }
     }
 
     private suspend fun load(): Boolean {
-        state.update { it.copy(loading = true, reviewReady = false) }
+        state.update {
+            it.copy(
+                loadState = FitnessLoadState.Loading(it.error),
+                reviewState = it.reviewState.afterRefresh(succeeded = false),
+            )
+        }
         return when (val result = fitness.overview()) {
             is Outcome.Success -> {
                 state.update {
-                    it.copy(overview = result.value, loading = false, error = null, reviewReady = it.needsReview)
+                    it.copy(
+                        overview = result.value,
+                        loadState = FitnessLoadState.Ready,
+                        reviewState = it.reviewState.afterRefresh(succeeded = true),
+                    )
                 }
                 if (firstLoad) {
                     firstLoad = false
@@ -120,19 +147,19 @@ class FitnessViewModel(
                 true
             }
             is Outcome.Error -> {
-                state.update { it.copy(loading = false, error = result.failure) }
+                state.update { it.copy(loadState = FitnessLoadState.Failed(result.failure)) }
                 false
             }
         }
     }
 
-    fun acknowledgeReview() {
+    private fun acknowledgeReview() {
         if (!state.value.reviewReady || state.value.busy) return
         saved["pending"] = false
-        state.update { it.copy(needsReview = false, reviewReady = false, message = null) }
+        state.update { it.copy(reviewState = FitnessReviewState.None, message = null) }
     }
 
-    fun recordSelected() {
+    private fun recordSelected() {
         val input = state.value
         val overview = input.overview ?: return
         if (!input.canRecord) return
@@ -140,7 +167,7 @@ class FitnessViewModel(
         val todayAction =
             input.selected == overview.today && input.selected == FitnessDates.today(clock)
         saved["pending"] = true
-        state.update { it.copy(busy = true, loading = false, message = null, createdId = null) }
+        state.update { it.copy(busy = true, loadState = FitnessLoadState.Ready, message = null, createdId = null) }
         viewModelScope.launch {
             when (val result = record(if (todayAction) null else input.selected)) {
                 is Outcome.Success -> {
@@ -161,13 +188,11 @@ class FitnessViewModel(
                     }
                 }
                 is Outcome.Error -> {
-                    val uncertain =
-                        result.failure !in
-                            setOf(Failure.InvalidInput, Failure.Unauthorized, Failure.NotFound)
+                    val uncertain = result.failure.requiresFitnessReview
                     saved["pending"] = uncertain
                     state.update {
                         it.copy(
-                            needsReview = uncertain,
+                            reviewState = if (uncertain) FitnessReviewState.AwaitingRefresh else FitnessReviewState.None,
                             message =
                                 if (uncertain) {
                                     uiText(

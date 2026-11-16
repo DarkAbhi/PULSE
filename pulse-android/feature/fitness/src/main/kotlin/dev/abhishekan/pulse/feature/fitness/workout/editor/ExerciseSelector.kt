@@ -1,49 +1,27 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.workout.editor
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selectableGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -54,38 +32,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
-import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
-
-/** Shared bounded modal: centered on wide windows, nearly full screen on compact ones. */
-@Composable
-internal fun ExerciseModal(
-    title: String,
-    onDismiss: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Dialog(onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-        BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding().imePadding(), contentAlignment = Alignment.Center) {
-            val compact = maxWidth < PulseTokens.readingWidth
-            Column(
-                Modifier
-                    .padding(if (compact) PulseTokens.small else PulseTokens.cardPadding)
-                    .widthIn(max = PulseTokens.readingWidth)
-                    .fillMaxWidth()
-                    .then(if (compact) Modifier.fillMaxHeight() else Modifier.heightIn(max = maxHeight * .9f))
-                    .background(PulseTheme.colors.surface, PulseTheme.shapes.extraLarge)
-                    .border(PulseTokens.focusWidth / 2, PulseTheme.colors.border, PulseTheme.shapes.extraLarge)
-                    .padding(PulseTokens.medium),
-                verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
-            ) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    PulseText(title, Modifier.weight(1f).semantics { heading() }, PulseTextStyle.Title3)
-                    PulseButton(stringResource(R.string.pulse_fitness_workout_close), onDismiss, style = PulseButtonStyle.Text)
-                }
-                content()
-            }
-        }
-    }
-}
+import dev.abhishekan.pulse.feature.fitness.R
 
 @Composable
 internal fun ExerciseSelector(
@@ -201,84 +148,5 @@ internal fun ExerciseSelector(
                 )
             }
         }
-    }
-}
-
-@Composable
-internal fun ExerciseMetadata(exercise: CatalogExercise) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-        verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
-    ) {
-        (listOfNotNull(exercise.equipment?.takeIf { it.isNotBlank() }) + exercise.muscles).forEach { text ->
-            PulseText(
-                text,
-                Modifier
-                    .background(PulseTheme.colors.surface, PulseTheme.shapes.pill)
-                    .border(PulseTokens.focusWidth / 2, PulseTheme.colors.border, PulseTheme.shapes.pill)
-                    .padding(horizontal = PulseTokens.small, vertical = PulseTokens.tiny),
-                PulseTextStyle.Caption,
-            )
-        }
-    }
-}
-
-@Composable
-internal fun EditorInstructions(exercise: CatalogExercise) {
-    var open by rememberSaveable(exercise.id) { mutableStateOf(false) }
-    if (exercise.instructions.isEmpty() && exercise.muscles.isEmpty() && exercise.equipment.isNullOrBlank()) return
-    WorkoutAction(
-        stringResource(R.string.pulse_fitness_workout_view_instructions),
-        WorkoutSymbol.Document,
-        { open = true },
-        true,
-        soft = true,
-    )
-    if (open) ExerciseInstructionsSheet(exercise, { open = false })
-}
-
-@Composable
-internal fun ExerciseInstructionsSheet(
-    exercise: CatalogExercise,
-    onDismiss: () -> Unit,
-) {
-    PulseBottomSheet(exercise.name, onDismiss, expandOnOverflow = true) {
-        Column(
-            Modifier.fillMaxWidth().padding(horizontal = PulseTokens.medium, vertical = PulseTokens.medium),
-            verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
-        ) {
-            if (exercise.instructions.isNotEmpty()) {
-                PulseText(
-                    stringResource(R.string.pulse_fitness_editor_instructions),
-                    Modifier.semantics { heading() },
-                    PulseTextStyle.Label,
-                )
-                exercise.instructions.forEachIndexed { index, instruction ->
-                    PulseText(stringResource(R.string.pulse_fitness_numbered_instruction, index + 1, instruction))
-                }
-            }
-            if (exercise.muscles.isNotEmpty()) {
-                PulseText(
-                    stringResource(R.string.pulse_fitness_editor_target_muscles),
-                    Modifier.semantics { heading() },
-                    PulseTextStyle.Label,
-                )
-                PulseText(exercise.muscles.joinToString())
-            }
-            exercise.equipment?.takeIf { it.isNotBlank() }?.let {
-                PulseText(stringResource(R.string.pulse_fitness_workout_equipment), Modifier.semantics { heading() }, PulseTextStyle.Label)
-                PulseText(it)
-            }
-        }
-    }
-}
-
-@Composable
-internal fun EditorSearchGlyph() {
-    val color = PulseTheme.colors.action
-    Canvas(Modifier.size(PulseTheme.spacing.cardPadding)) {
-        val u = size.width / 24
-        drawCircle(color, 7 * u, Offset(10 * u, 10 * u), style = Stroke(2 * u))
-        drawLine(color, Offset(15 * u, 15 * u), Offset(21 * u, 21 * u), 2 * u)
     }
 }

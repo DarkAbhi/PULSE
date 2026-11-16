@@ -827,7 +827,7 @@ class FitnessDeviceTest {
         compose.onNodeWithText("Workout").assertDoesNotExist()
         compose.onNodeWithContentDescription("Back").assertDoesNotExist()
         screenshot("single-editor-header")
-        compose.onNodeWithContentDescription("Back to workout").performClick()
+        compose.pressSystemBack(scenario!!)
         awaitText("No exercises added yet")
         compose.onNodeWithText("Workout").assertIsDisplayed()
         enterOwnExercise()

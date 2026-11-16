@@ -29,11 +29,13 @@ import androidx.compose.ui.unit.Density
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.feature.fitness.ExerciseDraft
-import dev.abhishekan.pulse.feature.fitness.ExerciseEditorState
-import dev.abhishekan.pulse.feature.fitness.SetDraft
-import dev.abhishekan.pulse.feature.fitness.WorkoutScreen
-import dev.abhishekan.pulse.feature.fitness.WorkoutUiState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
+import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseDraft
+import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseEditorScreen
+import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseEditorState
+import dev.abhishekan.pulse.feature.fitness.workout.editor.SetDraft
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutAction
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutUiState
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -55,63 +57,39 @@ class ExerciseEditorRedesignTest {
                 val density = LocalDensity.current
                 CompositionLocalProvider(LocalDensity provides Density(density.density, if (largeType) 1.6f else density.fontScale)) {
                     Box(Modifier.fillMaxSize().safeDrawingPadding().background(PulseTheme.colors.background)) {
-                        WorkoutScreen(
-                            WorkoutUiState(editor = editor.value, loading = false),
-                            onRefresh = {},
-                            onEdit = {},
-                            onDelete = {},
-                            onDeleteExercise = {},
-                            onReviewed = {},
-                            onName = { editor.value = editor.value.copy(draft = editor.value.draft.copy(name = it)) },
-                            onSet = { index, reps, weight ->
-                                editor.value =
-                                    editor.value.copy(
-                                        draft =
-                                            editor.value.draft.copy(
-                                                sets =
-                                                    editor.value.draft.sets.mapIndexed { i, set ->
-                                                        if (i == index) SetDraft(reps ?: set.reps, weight ?: set.weight) else set
-                                                    },
+                        ExerciseEditorScreen(
+                            editor = editor.value,
+                            state = WorkoutUiState(loadState = FitnessLoadState.Ready),
+                            onAction = { action ->
+                                val current = editor.value
+                                val draft = current.draft
+                                when (action) {
+                                    is WorkoutAction.ChangeName -> editor.value = current.copy(draft = draft.copy(name = action.name))
+                                    is WorkoutAction.ChangeSet ->
+                                        editor.value = current.copy(
+                                            draft = draft.copy(
+                                                sets = draft.sets.mapIndexed { index, set ->
+                                                    if (index == action.index) SetDraft(action.reps ?: set.reps, action.weight ?: set.weight) else set
+                                                },
                                             ),
-                                    )
+                                        )
+                                    WorkoutAction.AddSet -> editor.value = current.copy(draft = draft.copy(sets = draft.sets + SetDraft()))
+                                    is WorkoutAction.RemoveSet ->
+                                        editor.value = current.copy(draft = draft.copy(sets = draft.sets.filterIndexed { index, _ -> index != action.index }))
+                                    is WorkoutAction.ChooseMatch ->
+                                        editor.value = current.copy(
+                                            draft = draft.copy(name = action.candidate.name, catalogId = action.candidate.id),
+                                            selectedCatalog = action.candidate,
+                                        )
+                                    WorkoutAction.ClearMatch ->
+                                        editor.value = current.copy(draft = draft.copy(catalogId = null, rememberAlias = false))
+                                    is WorkoutAction.SearchCatalogue ->
+                                        editor.value = current.copy(candidates = if (action.query.isBlank()) emptyList() else listOf(catalogue))
+                                    is WorkoutAction.RememberAlias -> editor.value = current.copy(draft = draft.copy(rememberAlias = action.value))
+                                    WorkoutAction.SaveExercise -> saved = true
+                                    else -> Unit
+                                }
                             },
-                            onAddSet = {
-                                editor.value =
-                                    editor.value.copy(draft = editor.value.draft.copy(sets = editor.value.draft.sets + SetDraft()))
-                            },
-                            onRemoveSet = { index ->
-                                editor.value =
-                                    editor.value.copy(
-                                        draft =
-                                            editor.value.draft.copy(
-                                                sets =
-                                                    editor.value.draft.sets.filterIndexed { i, _ ->
-                                                        i !=
-                                                            index
-                                                    },
-                                            ),
-                                    )
-                            },
-                            onChoose = {
-                                editor.value =
-                                    editor.value.copy(
-                                        draft = editor.value.draft.copy(name = it.name, catalogId = it.id),
-                                        selectedCatalog = it,
-                                    )
-                            },
-                            onClearMatch = {
-                                editor.value =
-                                    editor.value.copy(
-                                        draft = editor.value.draft.copy(catalogId = null, rememberAlias = false),
-                                    )
-                            },
-                            onSearch = {},
-                            onSearchQuery = {
-                                editor.value =
-                                    editor.value.copy(candidates = if (it.isBlank()) emptyList() else listOf(catalogue))
-                            },
-                            onAlias = { editor.value = editor.value.copy(draft = editor.value.draft.copy(rememberAlias = it)) },
-                            onSave = { saved = true },
                             onCancel = { cancelled = true },
                         )
                     }

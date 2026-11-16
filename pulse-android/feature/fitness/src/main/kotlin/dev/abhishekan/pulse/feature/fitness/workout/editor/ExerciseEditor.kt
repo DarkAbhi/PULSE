@@ -1,5 +1,8 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.workout.editor
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -37,7 +40,6 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -48,20 +50,17 @@ import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.feature.fitness.R
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutAction
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutActionButton
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutGlyph
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutSymbol
 
 @Composable
 internal fun ExerciseEditor(
     editor: ExerciseEditorState,
     busy: Boolean,
-    onName: (String) -> Unit,
-    onSet: (Int, String?, String?) -> Unit,
-    onAddSet: () -> Unit,
-    onRemoveSet: (Int) -> Unit,
-    onChoose: (CatalogExercise) -> Unit,
-    onClearMatch: () -> Unit,
-    onSearch: () -> Unit,
-    onAlias: (Boolean) -> Unit,
-    onSearchQuery: (String) -> Unit,
+    onAction: (WorkoutAction) -> Unit,
 ) {
     val draft = editor.draft
     val focus = LocalFocusManager.current
@@ -79,7 +78,7 @@ internal fun ExerciseEditor(
     val openSelector = {
         focus.clearFocus()
         query = draft.name
-        onSearchQuery(query)
+        onAction(WorkoutAction.SearchCatalogue(query))
         selector = true
     }
 
@@ -98,15 +97,15 @@ internal fun ExerciseEditor(
                         PulseText(stringResource(R.string.pulse_fitness_editor_custom), style = PulseTextStyle.Body2)
                     }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                        WorkoutAction(
+                        WorkoutActionButton(
                             stringResource(R.string.pulse_fitness_editor_change),
                             WorkoutSymbol.Refresh,
                             openSelector,
                             !busy,
                             soft = true,
                         )
-                        selected?.let { EditorInstructions(it) }
-                        WorkoutAction(
+                        selected?.let { ExerciseInstructions(it) }
+                        WorkoutActionButton(
                             stringResource(R.string.pulse_fitness_editor_edit_name),
                             WorkoutSymbol.Edit,
                             { editName = !editName },
@@ -118,7 +117,7 @@ internal fun ExerciseEditor(
                     if (editName) {
                         PulseTextField(
                             draft.name,
-                            onName,
+                            { onAction(WorkoutAction.ChangeName(it)) },
                             stringResource(R.string.pulse_fitness_exercise_name),
                             Modifier.fillMaxWidth(),
                             enabled = !busy,
@@ -136,7 +135,7 @@ internal fun ExerciseEditor(
                     if (editName && draft.catalogId != null) {
                         PulseButton(
                             stringResource(R.string.pulse_fitness_editor_use_custom),
-                            onClearMatch,
+                            { onAction(WorkoutAction.ClearMatch) },
                             enabled = !busy,
                             style = PulseButtonStyle.Text,
                         )
@@ -187,7 +186,7 @@ internal fun ExerciseEditor(
                             val reps: @Composable (Modifier) -> Unit = { modifier ->
                                 PulseTextField(
                                     set.reps,
-                                    { onSet(index, it, null) },
+                                    { onAction(WorkoutAction.ChangeSet(index, it, null)) },
                                     stringResource(R.string.pulse_fitness_reps_set_1_s, index + 1),
                                     modifier,
                                     enabled = !busy,
@@ -198,7 +197,7 @@ internal fun ExerciseEditor(
                             val weight: @Composable (Modifier) -> Unit = { modifier ->
                                 PulseTextField(
                                     set.weight,
-                                    { onSet(index, null, it) },
+                                    { onAction(WorkoutAction.ChangeSet(index, null, it)) },
                                     stringResource(R.string.pulse_fitness_weight_kg_set_1_s, index + 1),
                                     modifier,
                                     enabled = !busy,
@@ -239,7 +238,7 @@ internal fun ExerciseEditor(
                                     PulseButton(stringResource(R.string.pulse_fitness_remove_set_1_s, index + 1), {
                                         focus.clearFocus()
                                         rowIds = rowIds.filterIndexed { i, _ -> i != index }
-                                        onRemoveSet(index)
+                                        onAction(WorkoutAction.RemoveSet(index))
                                     }, enabled = !busy, style = PulseButtonStyle.Icon) {
                                         WorkoutGlyph(
                                             WorkoutSymbol.Delete,
@@ -252,9 +251,9 @@ internal fun ExerciseEditor(
                     }
                 }
             }
-            WorkoutAction(stringResource(R.string.pulse_fitness_editor_add_set), WorkoutSymbol.Add, {
+            WorkoutActionButton(stringResource(R.string.pulse_fitness_editor_add_set), WorkoutSymbol.Add, {
                 rowIds = rowIds + nextRowId++
-                onAddSet()
+                onAction(WorkoutAction.AddSet)
             }, !busy && draft.sets.size < 20, Modifier.fillMaxWidth().background(PulseTheme.colors.primarySoft, PulseTheme.shapes.medium))
             PulseText(
                 stringResource(R.string.pulse_fitness_repetitions_1_1_000_per_set_leave_weight_blank),
@@ -269,7 +268,7 @@ internal fun ExerciseEditor(
                     Column(Modifier.weight(1f)) {
                         PulseCheckbox(
                             draft.rememberAlias,
-                            onAlias,
+                            { onAction(WorkoutAction.RememberAlias(it)) },
                             stringResource(R.string.pulse_fitness_remember_this_name_for_future_workouts),
                             enabled = !busy,
                         )
@@ -291,28 +290,38 @@ internal fun ExerciseEditor(
             busy,
             {
                 query = it
-                onSearchQuery(it)
+                onAction(WorkoutAction.SearchCatalogue(it))
             },
             onChoose = {
                 identityChosen = true
                 editName = false
-                onChoose(it)
+                onAction(WorkoutAction.ChooseMatch(it))
                 keyboard?.hide()
                 selector = false
             },
             onCustom = {
                 identityChosen = true
                 editName = false
-                onClearMatch()
-                onName(query)
+                onAction(WorkoutAction.ClearMatch)
+                onAction(WorkoutAction.ChangeName(query))
                 keyboard?.hide()
                 selector = false
             },
-            onRetry = { onSearchQuery(query) },
+            onRetry = { onAction(WorkoutAction.SearchCatalogue(query)) },
             onDismiss = {
                 selector = false
                 keyboard?.hide()
             },
         )
+    }
+}
+
+@Composable
+private fun EditorSearchGlyph() {
+    val color = PulseTheme.colors.action
+    Canvas(Modifier.size(PulseTheme.spacing.cardPadding)) {
+        val u = size.width / 24
+        drawCircle(color, 7 * u, Offset(10 * u, 10 * u), style = Stroke(2 * u))
+        drawLine(color, Offset(15 * u, 15 * u), Offset(21 * u, 21 * u), 2 * u)
     }
 }

@@ -1,8 +1,9 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.workout
 
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.uiPlural
 import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.fitness.R
 import java.math.BigDecimal
 import java.math.BigInteger
 

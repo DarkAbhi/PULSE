@@ -1,4 +1,5 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.overview
+
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import dev.abhishekan.pulse.core.domain.model.Failure
@@ -6,6 +7,7 @@ import dev.abhishekan.pulse.core.domain.model.FitnessMetric
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.domain.model.WorkoutSummary
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -28,7 +30,7 @@ private val sample =
             ),
             listOf(WorkoutSummary(1, day, "7:30 AM")),
         ),
-        loading = false,
+        loadState = FitnessLoadState.Ready,
     )
 
 @Preview(name = "Fitness / phone light", widthDp = 360, heightDp = 800)
@@ -37,53 +39,19 @@ private val sample =
 @Preview(name = "Fitness / large text", widthDp = 360, heightDp = 800, fontScale = 2f)
 @Composable
 private fun FitnessLightPreview() {
-    PulseTheme(false) { FitnessScreen(sample, {}, {}, {}, {}, {}, {}, {}) }
+    PulseTheme(false) { FitnessScreen(sample, {}, {}) }
 }
 
 @Preview(name = "Fitness / tablet dark", widthDp = 1024, heightDp = 900)
 @Composable
 private fun FitnessDarkPreview() {
-    PulseTheme(true) { FitnessScreen(sample, {}, {}, {}, {}, {}, {}, {}) }
+    PulseTheme(true) { FitnessScreen(sample, {}, {}) }
 }
 
 @Preview(name = "Fitness / error", widthDp = 360, heightDp = 800)
 @Composable
 private fun FitnessErrorPreview() {
     PulseTheme(false) {
-        FitnessScreen(sample.copy(overview = null, error = Failure.Connection), {
-        }, {}, {}, {}, {}, {}, {})
-    }
-}
-
-@Preview(name = "Exercise / large text", widthDp = 360, heightDp = 800, fontScale = 2f)
-@Preview(name = "Exercise / dark tablet", widthDp = 1024, heightDp = 900)
-@Composable
-private fun ExercisePreview() {
-    PulseTheme(true) {
-        WorkoutScreen(
-            WorkoutUiState(
-                loading = false,
-                editor =
-                    ExerciseEditorState(
-                        ExerciseDraft(name = "Preview squat", sets = listOf(SetDraft("12", "20"))),
-                        dirty = true,
-                    ),
-            ),
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            { _, _, _ -> },
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-            {},
-        )
+        FitnessScreen(sample.copy(overview = null, loadState = FitnessLoadState.Failed(Failure.Connection)), {}, {})
     }
 }

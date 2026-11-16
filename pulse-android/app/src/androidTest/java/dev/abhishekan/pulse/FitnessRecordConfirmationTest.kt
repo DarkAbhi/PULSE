@@ -8,8 +8,10 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.feature.fitness.FitnessScreen
-import dev.abhishekan.pulse.feature.fitness.FitnessUiState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessAction
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessScreen
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessUiState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -27,12 +29,12 @@ class FitnessRecordConfirmationTest {
                 selected = day,
                 month = YearMonth.from(day),
                 overview = FitnessOverview(day, emptyList(), emptyList()),
-                loading = false,
+                loadState = FitnessLoadState.Ready,
             )
         var records = 0
         compose.setContent {
             PulseTheme(false) {
-                FitnessScreen(state, {}, {}, {}, {}, { records++ }, {}, {})
+                FitnessScreen(state, { if (it == FitnessAction.RecordWorkout) records++ }, {})
             }
         }
 

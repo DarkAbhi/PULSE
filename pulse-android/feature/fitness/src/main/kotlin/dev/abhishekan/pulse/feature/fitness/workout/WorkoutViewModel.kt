@@ -1,4 +1,5 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.workout
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,6 +15,16 @@ import dev.abhishekan.pulse.core.domain.usecase.SearchExercises
 import dev.abhishekan.pulse.core.ui.DraftSource
 import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.fitness.R
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessReviewState
+import dev.abhishekan.pulse.feature.fitness.shared.fitnessFailureMessage
+import dev.abhishekan.pulse.feature.fitness.shared.requiresFitnessReview
+import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseDraft
+import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseDraftSavedState
+import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseEditorState
+import dev.abhishekan.pulse.feature.fitness.workout.editor.SetDraft
+import dev.abhishekan.pulse.feature.fitness.workout.editor.message
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,11 +43,13 @@ class WorkoutViewModel(
     unsavedChanges: UnsavedChanges = UnsavedChanges(),
 ) : ViewModel() {
     private val id = checkNotNull(saved.get<Long>("id"))
+    private val draftSavedState = ExerciseDraftSavedState(saved)
     private val state =
         MutableStateFlow(
             WorkoutUiState(
-                needsReview =
-                    saved.get<String>("pending") != null,
+                editor = draftSavedState.restore(),
+                reviewState =
+                    if (saved.get<String>("pending") != null) FitnessReviewState.AwaitingRefresh else FitnessReviewState.None,
             ),
         )
     val uiState = state.asStateFlow()
@@ -45,44 +58,82 @@ class WorkoutViewModel(
         unsavedChanges.track(DraftSource.Fitness, state.map { it.editor?.dirty == true }, viewModelScope)
     }
 
-    fun consumeMessage() {
+    fun onAction(action: WorkoutAction) {
+        when (action) {
+            WorkoutAction.Refresh -> refresh()
+            is WorkoutAction.EditExercise -> edit(action.exerciseId)
+            WorkoutAction.DeleteWorkout -> removeWorkout()
+            is WorkoutAction.DeleteExercise -> removeExercise(action.exerciseId)
+            WorkoutAction.AcknowledgeReview -> acknowledgeReview()
+            is WorkoutAction.ChangeName -> nameChanged(action.name)
+            is WorkoutAction.ChangeSet -> setChanged(action.index, action.reps, action.weight)
+            WorkoutAction.AddSet -> addSet()
+            is WorkoutAction.RemoveSet -> removeSet(action.index)
+            is WorkoutAction.ChooseMatch -> choose(action.candidate)
+            WorkoutAction.ClearMatch -> clearMatch()
+            is WorkoutAction.SearchCatalogue -> searchCatalogue(action.query)
+            is WorkoutAction.RememberAlias -> rememberAlias(action.value)
+            WorkoutAction.SaveExercise -> save()
+            WorkoutAction.CloseEditor -> closeEditor()
+            WorkoutAction.Resume -> resume()
+            WorkoutAction.DismissMessage -> consumeMessage()
+        }
+    }
+
+    private fun consumeMessage() {
         state.update { it.copy(message = null) }
     }
 
     private var loadJob: Job? = null
     private var hasResumed = false
     private var searchJob: Job? = null
-    private var original = ExerciseDraft()
+    private var original: ExerciseDraft? =
+        if (state.value.editor?.draft?.exerciseId == null) ExerciseDraft() else null
 
     init {
-        if (saved.get<Boolean>("editing") == true) restoreEditor()
         refresh()
     }
 
-    fun resume() {
+    private fun resume() {
         // Initialization owns the first load; later resumes revalidate the existing detail.
         if (hasResumed) refresh() else hasResumed = true
     }
 
-    fun refresh() {
+    private fun refresh() {
         if (state.value.busy || loadJob?.isActive == true) return
         loadJob = viewModelScope.launch { load() }
     }
 
     private suspend fun load() {
-        state.update { it.copy(loading = true, error = null, reviewReady = false) }
+        state.update {
+            it.copy(
+                loadState = FitnessLoadState.Loading(),
+                reviewState = it.reviewState.afterRefresh(succeeded = false),
+            )
+        }
         when (val result = getWorkout(id)) {
             is Outcome.Success -> {
+                val editor = state.value.editor
+                val exercise = editor?.draft?.exerciseId?.let { id -> result.value.exercises.firstOrNull { it.id == id } }
+                if (original == null) original = exercise?.draft()
+                val catalog = exercise?.catalog?.takeIf { it.id == editor.draft.catalogId }
                 state.update {
-                    it.copy(detail = result.value, loading = false, reviewReady = it.needsReview)
+                    it.copy(
+                        detail = result.value,
+                        loadState = FitnessLoadState.Ready,
+                        reviewState = it.reviewState.afterRefresh(succeeded = true),
+                        editor = if (editor != null && editor.selectedCatalog == null && catalog != null) {
+                            editor.copy(selectedCatalog = catalog)
+                        } else {
+                            editor
+                        },
+                    )
                 }
-                if (saved.get<Boolean>("editing") == true) restoreEditor()
             }
             is Outcome.Error ->
                 state.update {
                     it.copy(
-                        loading = false,
-                        error = result.failure,
+                        loadState = FitnessLoadState.Failed(result.failure),
                         deleted =
                             result.failure == Failure.NotFound &&
                                 saved.get<String>("pending") == "deleteWorkout",
@@ -102,99 +153,28 @@ class WorkoutViewModel(
             catalogId,
         )
 
-    fun edit(exerciseId: Long? = null) {
-        if (state.value.busy || state.value.loading || state.value.needsReview) return
-        original =
-            state.value.detail
-                ?.exercises
-                ?.firstOrNull { it.id == exerciseId }
-                ?.draft()
-                ?: ExerciseDraft()
-        saved["editing"] = true
-        state.update {
-            it.copy(
-                editor =
-                    ExerciseEditorState(
-                        original,
-                        selectedCatalog =
-                            state.value.detail
-                                ?.exercises
-                                ?.firstOrNull {
-                                    it.id ==
-                                        exerciseId
-                                }?.catalog,
-                    ),
-                message = null,
-            )
-        }
-        persistDraft(original)
-    }
-
-    private fun restoreEditor() {
-        val exerciseId = saved.get<Long>("exerciseId")
-        original =
-            state.value.detail
-                ?.exercises
-                ?.firstOrNull { it.id == exerciseId }
-                ?.draft()
-                ?: ExerciseDraft()
-        val reps =
-            saved.get<ArrayList<String>>("reps")?.takeIf { it.isNotEmpty() } ?: arrayListOf("")
-        val weights = saved.get<ArrayList<String>>("weights") ?: arrayListOf("")
-        val draft =
-            ExerciseDraft(
-                exerciseId,
-                saved["name"] ?: "",
-                reps.mapIndexed { i, value ->
-                    SetDraft(value, weights.getOrElse(i) { "" })
-                },
-                saved["catalogId"],
-                saved["alias"] ?: false,
-            )
-        state.update { current ->
-            current.copy(
-                editor =
-                    ExerciseEditorState(
-                        draft,
-                        saved["dirty"] ?: (draft != original),
-                        error = current.editor?.error,
-                        candidates = current.editor?.candidates.orEmpty(),
-                        searching =
-                            current.editor?.searching ?: false,
-                        searchError = current.editor?.searchError,
-                        selectedCatalog =
-                            current.editor?.selectedCatalog
-                                ?: current.detail
-                                    ?.exercises
-                                    ?.firstOrNull { it.id == exerciseId }
-                                    ?.catalog,
-                    ),
-            )
-        }
-    }
-
-    private fun persistDraft(draft: ExerciseDraft) {
-        saved["dirty"] = draft != original
-        saved["exerciseId"] = draft.exerciseId
-        saved["name"] = draft.name
-        saved["reps"] = ArrayList(draft.sets.map { it.reps })
-        saved["weights"] =
-            ArrayList(draft.sets.map { it.weight })
-        saved["catalogId"] = draft.catalogId
-        saved["alias"] = draft.rememberAlias
+    private fun edit(exerciseId: Long?) {
+        val current = state.value
+        if (!current.canChangeWorkout) return
+        val exercise = exerciseId?.let { id -> current.detail?.exercises?.firstOrNull { it.id == id } ?: return }
+        val draft = exercise?.draft() ?: ExerciseDraft()
+        original = draft
+        draftSavedState.save(draft, dirty = false)
+        state.update { it.copy(editor = ExerciseEditorState(draft, selectedCatalog = exercise?.catalog), message = null) }
     }
 
     private fun updateDraft(transform: (ExerciseDraft) -> ExerciseDraft) {
         val editor = state.value.editor ?: return
         if (state.value.busy) return
         val draft = transform(editor.draft)
-        persistDraft(draft)
+        val dirty = draft != original
+        draftSavedState.save(draft, dirty)
         state.update {
-            it.copy(editor = editor.copy(draft = draft, dirty = draft != original, error = null))
+            it.copy(editor = editor.copy(draft = draft, dirty = dirty, error = null))
         }
     }
 
-    fun nameChanged(name: String) {
+    private fun nameChanged(name: String) {
         updateDraft { it.copy(name = name) }
         if (state.value.editor
                 ?.draft
@@ -204,10 +184,10 @@ class WorkoutViewModel(
         }
     }
 
-    fun setChanged(
+    private fun setChanged(
         index: Int,
-        reps: String? = null,
-        weight: String? = null,
+        reps: String?,
+        weight: String?,
     ) = updateDraft { draft ->
         draft.copy(
             sets =
@@ -223,7 +203,7 @@ class WorkoutViewModel(
         )
     }
 
-    fun addSet() =
+    private fun addSet() =
         updateDraft {
             if (it.sets.size <
                 20
@@ -234,7 +214,7 @@ class WorkoutViewModel(
             }
         }
 
-    fun removeSet(index: Int) =
+    private fun removeSet(index: Int) =
         updateDraft {
             if (it.sets.size >
                 1
@@ -245,9 +225,10 @@ class WorkoutViewModel(
             }
         }
 
-    fun rememberAlias(value: Boolean) = updateDraft { it.copy(rememberAlias = value) }
+    private fun rememberAlias(value: Boolean) = updateDraft { it.copy(rememberAlias = value) }
 
-    fun choose(candidate: CatalogExercise) {
+    private fun choose(candidate: CatalogExercise) {
+        if (state.value.busy || state.value.editor == null) return
         searchJob?.cancel()
         updateDraft {
             it.copy(name = candidate.name, catalogId = candidate.id, rememberAlias = false)
@@ -255,12 +236,14 @@ class WorkoutViewModel(
         state.update { it.copy(editor = it.editor?.copy(searching = false, selectedCatalog = candidate)) }
     }
 
-    fun clearMatch() {
+    private fun clearMatch() {
+        if (state.value.busy || state.value.editor == null) return
         updateDraft { it.copy(catalogId = null, rememberAlias = false) }
+        state.update { it.copy(editor = it.editor?.copy(selectedCatalog = null)) }
         findMatches()
     }
 
-    fun findMatches() {
+    private fun findMatches() {
         searchCatalogue(
             state.value.editor
                 ?.draft
@@ -269,7 +252,7 @@ class WorkoutViewModel(
     }
 
     // Browsing a replacement must not mutate the current name, match, alias, or sets.
-    fun searchCatalogue(query: String) {
+    private fun searchCatalogue(query: String) {
         if (state.value.editor == null || state.value.busy) return
         searchJob?.cancel()
         if (query.isBlank()) {
@@ -285,7 +268,7 @@ class WorkoutViewModel(
             }
             return
         }
-        state.update { it.copy(editor = it.editor?.copy(searching = true, searchError = null)) }
+        state.update { it.copy(editor = it.editor?.copy(candidates = emptyList(), searching = true, searchError = null)) }
         searchJob =
             viewModelScope.launch {
                 delay(300)
@@ -309,29 +292,18 @@ class WorkoutViewModel(
             }
     }
 
-    fun closeEditor() {
-        if (state.value.busy) return
+    private fun closeEditor() {
+        if (state.value.busy || state.value.editor == null) return
         clearEditor()
     }
 
     private fun clearEditor() {
         searchJob?.cancel()
-        listOf(
-            "editing",
-            "dirty",
-            "exerciseId",
-            "name",
-            "reps",
-            "weights",
-            "catalogId",
-            "alias",
-        ).forEach {
-            saved.remove<Any?>(it)
-        }
+        draftSavedState.clear()
         state.update { it.copy(editor = null) }
     }
 
-    fun save() {
+    private fun save() {
         val editor = state.value.editor ?: return
         if (state.value.busy || state.value.needsReview || state.value.loading) return
         val draft = editor.draft
@@ -347,15 +319,19 @@ class WorkoutViewModel(
         }
     }
 
-    fun removeWorkout() =
+    private fun removeWorkout() {
+        if (!state.value.canChangeWorkout) return
         mutate("deleteWorkout", {
             deleteWorkout(id)
         }) { state.update { it.copy(deleted = true) } }
+    }
 
-    fun removeExercise(exerciseId: Long) =
+    private fun removeExercise(exerciseId: Long) {
+        if (!state.value.canChangeWorkout) return
         mutate("deleteExercise", {
             deleteExercise(id, exerciseId)
         }) { state.update { it.copy(message = uiText(R.string.pulse_fitness_exercise_removed)) } }
+    }
 
     private fun mutate(
         kind: String,
@@ -378,13 +354,11 @@ class WorkoutViewModel(
                         saved.remove<String>("pending")
                         state.update { it.copy(deleted = true) }
                     } else {
-                        val uncertain =
-                            result.failure !in
-                                setOf(Failure.InvalidInput, Failure.Unauthorized, Failure.NotFound)
+                        val uncertain = result.failure.requiresFitnessReview
                         if (!uncertain) saved.remove<String>("pending")
                         state.update {
                             it.copy(
-                                needsReview = uncertain,
+                                reviewState = if (uncertain) FitnessReviewState.AwaitingRefresh else FitnessReviewState.None,
                                 message =
                                     if (uncertain) {
                                         uiText(R.string.pulse_fitness_uncertain_workout_change)
@@ -401,9 +375,9 @@ class WorkoutViewModel(
         }
     }
 
-    fun acknowledgeReview() {
+    private fun acknowledgeReview() {
         if (!state.value.reviewReady || state.value.busy) return
         saved.remove<String>("pending")
-        state.update { it.copy(needsReview = false, reviewReady = false, message = null) }
+        state.update { it.copy(reviewState = FitnessReviewState.None, message = null) }
     }
 }

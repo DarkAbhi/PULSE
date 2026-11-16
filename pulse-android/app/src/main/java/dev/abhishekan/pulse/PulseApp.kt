@@ -77,8 +77,10 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.feature.auth.LoginRoute
-import dev.abhishekan.pulse.feature.fitness.FitnessRoute
-import dev.abhishekan.pulse.feature.fitness.WorkoutRoute
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessRoute
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutRoute
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutViewModel
+import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseEditorRoute
 import dev.abhishekan.pulse.feature.garage.GarageRoute
 import dev.abhishekan.pulse.feature.garage.VehicleDetailRoute
 import dev.abhishekan.pulse.feature.home.HomeRoute
@@ -381,10 +383,37 @@ private fun SignedInApp(
                                     onWorkout = { id -> nav.navigateSingleTop(AppDestination.Workout.withId(id)) },
                                 )
                             }
-                            composable(AppDestination.Workout.route, arguments = listOf(navArgument("id") { type = NavType.LongType })) {
+                            composable(
+                                AppDestination.Workout.route,
+                                arguments = listOf(navArgument("id") { type = NavType.LongType }),
+                            ) { workout ->
+                                val id = checkNotNull(workout.arguments).getLong("id")
                                 WorkoutRoute(
-                                    onDeleted = { nav.popBackStack() },
+                                    onExercise = {
+                                        if (nav.currentBackStackEntry == workout) {
+                                            nav.navigateSingleTop(AppDestination.WorkoutExercise.withId(id))
+                                        }
+                                    },
+                                    onDeleted = {
+                                        if (nav.currentBackStackEntry == workout) nav.popBackStack()
+                                    },
                                     backLabel = backToNotifications ?: stringResource(R.string.pulse_app_back_to_fitness),
+                                )
+                            }
+                            composable(
+                                AppDestination.WorkoutExercise.route,
+                                arguments = listOf(navArgument("id") { type = NavType.LongType }),
+                            ) { exercise ->
+                                val id = checkNotNull(exercise.arguments).getLong("id")
+                                val workout = remember(nav, exercise) {
+                                    nav.getBackStackEntry(AppDestination.Workout.withId(id))
+                                }
+                                val viewModel: WorkoutViewModel = koinViewModel(viewModelStoreOwner = workout)
+                                ExerciseEditorRoute(
+                                    viewModel = viewModel,
+                                    onClose = {
+                                        if (nav.currentBackStackEntry == exercise) nav.popBackStack()
+                                    },
                                 )
                             }
                             composable(

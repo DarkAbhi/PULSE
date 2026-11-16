@@ -19,6 +19,7 @@ internal enum class AppDestination(
     MealPlan("mealplan", R.string.pulse_app_meals, UiR.drawable.pulse_meals),
     Profile("you?editName={editName}&fromHome={fromHome}", R.string.pulse_app_you, UiR.drawable.pulse_person),
     Workout("workout/{id}"),
+    WorkoutExercise("workout/{id}/exercise"),
     Vehicle("vehicle/{id}"),
     Notifications("notifications"),
     Gallery("gallery"),
@@ -27,7 +28,7 @@ internal enum class AppDestination(
     val path get() = route.substringBefore('?')
     val tab get() =
         when (this) {
-            Workout -> Fitness
+            Workout, WorkoutExercise -> Fitness
             Vehicle -> Garage
             Notifications -> Home
             else -> this

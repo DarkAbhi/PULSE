@@ -18,8 +18,10 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
 import dev.abhishekan.pulse.core.domain.model.WorkoutInfo
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.feature.fitness.WorkoutScreen
-import dev.abhishekan.pulse.feature.fitness.WorkoutUiState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutAction
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutScreen
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutUiState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -36,24 +38,13 @@ class WorkoutLoadingLayoutTest {
                 Box(Modifier.fillMaxSize().testTag("workout-viewport")) {
                     WorkoutScreen(
                         state = state,
-                        onRefresh = {
-                            refreshes++
-                            state = state.copy(loading = true)
+                        onAction = {
+                            if (it == WorkoutAction.Refresh) {
+                                refreshes++
+                                state = state.copy(loadState = FitnessLoadState.Loading())
+                            }
                         },
-                        onEdit = {},
-                        onDelete = {},
-                        onDeleteExercise = {},
-                        onReviewed = {},
-                        onName = {},
-                        onSet = { _, _, _ -> },
-                        onAddSet = {},
-                        onRemoveSet = {},
-                        onChoose = {},
-                        onClearMatch = {},
-                        onSearch = {},
-                        onAlias = {},
-                        onSave = {},
-                        onCancel = {},
+                        onExercise = {},
                     )
                 }
             }
@@ -67,7 +58,7 @@ class WorkoutLoadingLayoutTest {
         compose.runOnIdle {
             state =
                 state.copy(
-                    loading = false,
+                    loadState = FitnessLoadState.Ready,
                     detail =
                         WorkoutDetail(
                             WorkoutInfo(1, Instant.parse("2026-10-20T02:00:00Z"), null, null, null, null, false),
@@ -78,10 +69,10 @@ class WorkoutLoadingLayoutTest {
         val heading = compose.onNodeWithText("Timing and energy data aren’t available for this visit.")
         heading.assertIsDisplayed()
         val beforeRefresh = heading.getUnclippedBoundsInRoot()
-        compose.runOnIdle { state = state.copy(loading = true) }
+        compose.runOnIdle { state = state.copy(loadState = FitnessLoadState.Loading()) }
         loader.assertDoesNotExist()
         assertEquals(beforeRefresh, heading.getUnclippedBoundsInRoot())
-        compose.runOnIdle { state = state.copy(loading = false) }
+        compose.runOnIdle { state = state.copy(loadState = FitnessLoadState.Ready) }
         compose.onNodeWithText("Refresh workout").assertDoesNotExist()
         compose.onNodeWithTag("workout-refresh").performTouchInput { swipeDown() }
         compose.runOnIdle { assertEquals(1, refreshes) }
@@ -91,12 +82,12 @@ class WorkoutLoadingLayoutTest {
         compose.onNodeWithTag("workout-refresh").performTouchInput { swipeDown() }
         compose.runOnIdle {
             assertEquals(1, refreshes)
-            state = state.copy(loading = false, busy = true)
+            state = state.copy(loadState = FitnessLoadState.Ready, busy = true)
         }
         compose.onNodeWithTag("workout-refresh").performTouchInput { swipeDown() }
         compose.runOnIdle {
             assertEquals(1, refreshes)
-            state = state.copy(loading = false, busy = false, error = Failure.Connection)
+            state = state.copy(loadState = FitnessLoadState.Failed(Failure.Connection), busy = false)
         }
         loader.assertDoesNotExist()
         heading.assertExists()

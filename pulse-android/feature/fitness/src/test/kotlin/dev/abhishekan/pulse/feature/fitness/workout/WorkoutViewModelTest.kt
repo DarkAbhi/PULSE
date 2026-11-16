@@ -1,4 +1,5 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.workout
+
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
@@ -11,6 +12,7 @@ import dev.abhishekan.pulse.core.domain.usecase.DeleteWorkout
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutDetail
 import dev.abhishekan.pulse.core.domain.usecase.SaveExercise
 import dev.abhishekan.pulse.core.domain.usecase.SearchExercises
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessTestRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -58,26 +60,26 @@ class WorkoutViewModelTest {
         }
 
     private fun fill(vm: WorkoutViewModel) {
-        vm.edit()
-        vm.nameChanged("Squat")
-        vm.setChanged(0, "10", "12.1234567890123456789")
+        vm.onAction(WorkoutAction.EditExercise())
+        vm.onAction(WorkoutAction.ChangeName("Squat"))
+        vm.onAction(WorkoutAction.ChangeSet(0, "10", "12.1234567890123456789"))
     }
 
     @Test fun firstResumeDoesNotRepeatCompletedInitialLoadAndLaterResumeRetainsDetail() =
         runTest {
             val vm = vm()
             runCurrent()
-            vm.resume()
+            vm.onAction(WorkoutAction.Resume)
             runCurrent()
             assertEquals(listOf("workout"), repo.trace)
             val detail = vm.uiState.value.detail
             val gate = CompletableDeferred<Outcome<WorkoutDetail>>()
             repo.detailRead = { gate.await() }
-            vm.resume()
+            vm.onAction(WorkoutAction.Resume)
             runCurrent()
             assertTrue(vm.uiState.value.loading)
             assertEquals(detail, vm.uiState.value.detail)
-            vm.refresh()
+            vm.onAction(WorkoutAction.Refresh)
             runCurrent()
             assertEquals(listOf("workout", "workout"), repo.trace)
             gate.complete(Outcome.Error(Failure.Connection))
@@ -92,7 +94,7 @@ class WorkoutViewModelTest {
             val gate = CompletableDeferred<Outcome<WorkoutDetail>>()
             repo.detailRead = { gate.await() }
             val vm = vm()
-            vm.resume()
+            vm.onAction(WorkoutAction.Resume)
             runCurrent()
             gate.complete(Outcome.Success(repo.detailValue))
             runCurrent()
@@ -109,7 +111,7 @@ class WorkoutViewModelTest {
                     ?.draft
             val gate = CompletableDeferred<Outcome<WorkoutDetail>>()
             repo.detailRead = { gate.await() }
-            vm.refresh()
+            vm.onAction(WorkoutAction.Refresh)
             runCurrent()
             assertEquals(
                 draft,
@@ -125,24 +127,59 @@ class WorkoutViewModelTest {
             )
         }
 
+    @Test fun editorKeepsItsOriginalBaselineWhenServerExerciseChanges() =
+        runTest {
+            val exercise = WorkoutExercise(7, "Squat", null, null, emptyList())
+            repo.detailValue = repo.detailValue.copy(exercises = listOf(exercise))
+            val vm = vm()
+            runCurrent()
+            vm.onAction(WorkoutAction.EditExercise(7))
+            vm.onAction(WorkoutAction.ChangeName("Front squat"))
+
+            repo.detailValue = repo.detailValue.copy(exercises = listOf(exercise.copy(name = "Front squat")))
+            vm.onAction(WorkoutAction.Refresh)
+            runCurrent()
+            vm.onAction(WorkoutAction.ChangeName("Squat"))
+
+            assertFalse(checkNotNull(vm.uiState.value.editor).dirty)
+        }
+
+    @Test fun staleWorkoutActionsAfterFailedRefreshCannotOpenEditorOrDelete() =
+        runTest {
+            val vm = vm()
+            runCurrent()
+            repo.readFailure = Failure.Connection
+            vm.onAction(WorkoutAction.Refresh)
+            runCurrent()
+
+            vm.onAction(WorkoutAction.EditExercise())
+            vm.onAction(WorkoutAction.DeleteWorkout)
+            vm.onAction(WorkoutAction.DeleteExercise(7))
+            runCurrent()
+
+            assertNotNull(vm.uiState.value.detail)
+            assertNull(vm.uiState.value.editor)
+            assertEquals(0, repo.deletes)
+        }
+
     @Test fun invalidInputNeverSavesAndSetLimitIsEnforced() =
         runTest {
             val vm = vm()
             runCurrent()
-            vm.edit()
-            vm.save()
+            vm.onAction(WorkoutAction.EditExercise())
+            vm.onAction(WorkoutAction.SaveExercise)
             runCurrent()
             assertEquals(0, repo.saves)
             assertNotNull(
                 vm.uiState.value.editor
                     ?.error,
             )
-            vm.nameChanged("Squat")
-            vm.setChanged(0, "1001", "-1")
-            vm.save()
+            vm.onAction(WorkoutAction.ChangeName("Squat"))
+            vm.onAction(WorkoutAction.ChangeSet(0, "1001", "-1"))
+            vm.onAction(WorkoutAction.SaveExercise)
             runCurrent()
             assertEquals(0, repo.saves)
-            repeat(25) { vm.addSet() }
+            repeat(25) { vm.onAction(WorkoutAction.AddSet) }
             assertEquals(
                 20,
                 vm.uiState.value.editor
@@ -159,8 +196,8 @@ class WorkoutViewModelTest {
             val vm = vm()
             runCurrent()
             fill(vm)
-            vm.save()
-            vm.save()
+            vm.onAction(WorkoutAction.SaveExercise)
+            vm.onAction(WorkoutAction.SaveExercise)
             runCurrent()
             assertEquals(1, repo.saves)
             assertEquals(
@@ -183,7 +220,7 @@ class WorkoutViewModelTest {
             val vm = vm()
             runCurrent()
             fill(vm)
-            vm.save()
+            vm.onAction(WorkoutAction.SaveExercise)
             runCurrent()
             assertEquals(
                 "Squat",
@@ -193,11 +230,11 @@ class WorkoutViewModelTest {
             )
             assertTrue(vm.uiState.value.needsReview)
             assertTrue(vm.uiState.value.reviewReady)
-            vm.save()
+            vm.onAction(WorkoutAction.SaveExercise)
             runCurrent()
             assertEquals(1, repo.saves)
             assertEquals(listOf("workout", "save", "workout"), repo.trace)
-            vm.acknowledgeReview()
+            vm.onAction(WorkoutAction.AcknowledgeReview)
             assertFalse(vm.uiState.value.needsReview)
         }
 
@@ -207,11 +244,11 @@ class WorkoutViewModelTest {
             val first = vm(saved)
             runCurrent()
             fill(first)
-            first.addSet()
-            first.setChanged(1, "8", "")
+            first.onAction(WorkoutAction.AddSet)
+            first.onAction(WorkoutAction.ChangeSet(1, "8", ""))
             val gate = CompletableDeferred<Outcome<Unit>>()
             repo.write = { gate.await() }
-            first.save()
+            first.onAction(WorkoutAction.SaveExercise)
             runCurrent()
             val restored = SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
             val second = vm(restored)
@@ -231,7 +268,7 @@ class WorkoutViewModelTest {
             )
             assertTrue(second.uiState.value.needsReview)
             assertTrue(second.uiState.value.reviewReady)
-            second.save()
+            second.onAction(WorkoutAction.SaveExercise)
             runCurrent()
             assertEquals(1, repo.saves)
         }
@@ -240,17 +277,36 @@ class WorkoutViewModelTest {
         runTest {
             val vm = vm()
             runCurrent()
-            vm.removeExercise(7)
+            vm.onAction(WorkoutAction.DeleteExercise(7))
             runCurrent()
             assertEquals(listOf("workout", "deleteExercise", "workout"), repo.trace)
             repo.write = {
                 repo.readFailure = Failure.NotFound
                 Outcome.Error(Failure.Timeout)
             }
-            vm.removeWorkout()
+            vm.onAction(WorkoutAction.DeleteWorkout)
             runCurrent()
             assertTrue(vm.uiState.value.deleted)
             assertEquals(2, repo.deletes)
+        }
+
+    @Test fun changingCatalogueQueryClearsPreviousChoicesBeforeSearching() =
+        runTest {
+            repo.searchAction = { query ->
+                Outcome.Success(listOf(CatalogExercise(query, query, null, emptyList(), emptyList())))
+            }
+            val vm = vm()
+            runCurrent()
+            vm.onAction(WorkoutAction.EditExercise())
+            vm.onAction(WorkoutAction.SearchCatalogue("first"))
+            advanceTimeBy(301)
+            assertEquals("first", vm.uiState.value.editor?.candidates?.single()?.id)
+
+            vm.onAction(WorkoutAction.SearchCatalogue("second"))
+            assertEquals(emptyList<CatalogExercise>(), vm.uiState.value.editor?.candidates)
+            assertTrue(vm.uiState.value.editor?.searching == true)
+            advanceTimeBy(301)
+            assertEquals("second", vm.uiState.value.editor?.candidates?.single()?.id)
         }
 
     @Test fun supersededCatalogueSearchCannotReplaceNewerResults() =
@@ -270,11 +326,11 @@ class WorkoutViewModelTest {
                 }
             val vm = vm()
             runCurrent()
-            vm.edit()
-            vm.nameChanged("old")
+            vm.onAction(WorkoutAction.EditExercise())
+            vm.onAction(WorkoutAction.ChangeName("old"))
             advanceTimeBy(301)
             runCurrent()
-            vm.nameChanged("new")
+            vm.onAction(WorkoutAction.ChangeName("new"))
             advanceTimeBy(301)
             runCurrent()
             old.complete(
@@ -300,7 +356,7 @@ class WorkoutViewModelTest {
                 )
             val vm = vm()
             runCurrent()
-            vm.edit(7)
+            vm.onAction(WorkoutAction.EditExercise(7))
             assertEquals(
                 1,
                 vm.uiState.value.editor
@@ -308,7 +364,7 @@ class WorkoutViewModelTest {
                     ?.sets
                     ?.size,
             )
-            vm.save()
+            vm.onAction(WorkoutAction.SaveExercise)
             runCurrent()
             assertEquals(0, repo.saves)
             assertNotNull(
@@ -347,17 +403,17 @@ class WorkoutViewModelTest {
             repo.searchAction = { Outcome.Success(listOf(candidate.copy(id = "other", name = "Other exercise"))) }
             val vm = vm()
             runCurrent()
-            vm.edit()
-            vm.choose(candidate)
-            vm.nameChanged("My curls")
-            vm.rememberAlias(true)
-            vm.setChanged(0, "12", "12.1234567890123456789")
-            vm.addSet()
-            vm.setChanged(1, "", "invalid.")
+            vm.onAction(WorkoutAction.EditExercise())
+            vm.onAction(WorkoutAction.ChooseMatch(candidate))
+            vm.onAction(WorkoutAction.ChangeName("My curls"))
+            vm.onAction(WorkoutAction.RememberAlias(true))
+            vm.onAction(WorkoutAction.ChangeSet(0, "12", "12.1234567890123456789"))
+            vm.onAction(WorkoutAction.AddSet)
+            vm.onAction(WorkoutAction.ChangeSet(1, "", "invalid."))
             val before =
                 vm.uiState.value.editor!!
                     .draft
-            vm.searchCatalogue("Other exercise")
+            vm.onAction(WorkoutAction.SearchCatalogue("Other exercise"))
             advanceTimeBy(301)
             runCurrent()
             assertEquals(
@@ -370,7 +426,7 @@ class WorkoutViewModelTest {
                 vm.uiState.value.editor!!
                     .selectedCatalog,
             )
-            vm.choose(candidate.copy(id = "other", name = "Other exercise"))
+            vm.onAction(WorkoutAction.ChooseMatch(candidate.copy(id = "other", name = "Other exercise")))
             assertEquals(
                 before.sets,
                 vm.uiState.value.editor!!
@@ -393,9 +449,9 @@ class WorkoutViewModelTest {
             repo.searchAction = { Outcome.Error(Failure.Connection) }
             val vm = vm()
             runCurrent()
-            vm.edit()
-            vm.choose(candidate)
-            vm.searchCatalogue("unavailable")
+            vm.onAction(WorkoutAction.EditExercise())
+            vm.onAction(WorkoutAction.ChooseMatch(candidate))
+            vm.onAction(WorkoutAction.SearchCatalogue("unavailable"))
             advanceTimeBy(301)
             runCurrent()
             assertNotNull(
@@ -407,7 +463,7 @@ class WorkoutViewModelTest {
                 vm.uiState.value.editor!!
                     .selectedCatalog,
             )
-            vm.refresh()
+            vm.onAction(WorkoutAction.Refresh)
             runCurrent()
             assertEquals(
                 candidate,

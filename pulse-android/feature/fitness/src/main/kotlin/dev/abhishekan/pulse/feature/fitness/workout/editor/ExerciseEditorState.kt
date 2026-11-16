@@ -1,10 +1,9 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.workout.editor
+
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.domain.model.ExerciseInput
 import dev.abhishekan.pulse.core.domain.model.ExerciseIssue
 import dev.abhishekan.pulse.core.domain.model.ExerciseSetInput
-import dev.abhishekan.pulse.core.domain.model.Failure
-import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
 import dev.abhishekan.pulse.core.ui.UiText
 
 data class SetDraft(
@@ -42,16 +41,4 @@ data class ExerciseEditorState(
     val searching: Boolean = false,
     val searchError: UiText? = null,
     val selectedCatalog: CatalogExercise? = null,
-)
-
-data class WorkoutUiState(
-    val detail: WorkoutDetail? = null,
-    val loading: Boolean = true,
-    val error: Failure? = null,
-    val busy: Boolean = false,
-    val message: UiText? = null,
-    val editor: ExerciseEditorState? = null,
-    val needsReview: Boolean = false,
-    val reviewReady: Boolean = false,
-    val deleted: Boolean = false,
 )

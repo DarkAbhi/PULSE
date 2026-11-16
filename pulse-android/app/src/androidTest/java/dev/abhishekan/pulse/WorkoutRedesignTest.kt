@@ -24,8 +24,9 @@ import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
 import dev.abhishekan.pulse.core.domain.model.WorkoutInfo
 import dev.abhishekan.pulse.core.domain.model.WorkoutSet
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.feature.fitness.WorkoutScreen
-import dev.abhishekan.pulse.feature.fitness.WorkoutUiState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutScreen
+import dev.abhishekan.pulse.feature.fitness.workout.WorkoutUiState
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -102,22 +103,9 @@ class WorkoutRedesignTest {
         PulseTheme(dark) {
             Box(Modifier.fillMaxSize().background(PulseTheme.colors.background)) {
                 WorkoutScreen(
-                    WorkoutUiState(detail = detail, loading = false),
-                    onRefresh = {},
-                    onEdit = {},
-                    onDelete = {},
-                    onDeleteExercise = {},
-                    onReviewed = {},
-                    onName = {},
-                    onSet = { _, _, _ -> },
-                    onAddSet = {},
-                    onRemoveSet = {},
-                    onChoose = {},
-                    onClearMatch = {},
-                    onSearch = {},
-                    onAlias = {},
-                    onSave = {},
-                    onCancel = {},
+                    WorkoutUiState(detail = detail, loadState = FitnessLoadState.Ready),
+                    onAction = {},
+                    onExercise = {},
                 )
             }
         }

@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse.feature.fitness
+package dev.abhishekan.pulse.feature.fitness.overview
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas

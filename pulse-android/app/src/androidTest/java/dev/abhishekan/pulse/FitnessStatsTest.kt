@@ -23,8 +23,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.domain.model.FitnessMetric
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.feature.fitness.FitnessScreen
-import dev.abhishekan.pulse.feature.fitness.FitnessUiState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessAction
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessScreen
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -57,12 +59,7 @@ class FitnessStatsTest {
                 PulseTheme(dark) {
                     Box(Modifier.fillMaxSize().background(PulseTheme.colors.background)) {
                         FitnessScreen(
-                            FitnessUiState(today, YearMonth.from(today), FitnessOverview(today, metrics, emptyList()), loading = false),
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
+                            FitnessUiState(today, YearMonth.from(today), FitnessOverview(today, metrics, emptyList()), loadState = FitnessLoadState.Ready),
                             {},
                             {},
                         )
@@ -129,16 +126,16 @@ class FitnessStatsTest {
 
     @Test fun refreshingKeepsStatsAndNewResponseReplacesThem() {
         var state by mutableStateOf(
-            FitnessUiState(today, YearMonth.from(today), FitnessOverview(today, metrics, emptyList()), loading = false),
+            FitnessUiState(today, YearMonth.from(today), FitnessOverview(today, metrics, emptyList()), loadState = FitnessLoadState.Ready),
         )
         var refreshes = 0
         compose.setContent {
-            PulseTheme(false) { FitnessScreen(state, {}, {}, {}, { refreshes++ }, {}, {}, {}) }
+            PulseTheme(false) { FitnessScreen(state, { if (it == FitnessAction.Refresh) refreshes++ }, {}) }
         }
-        compose.runOnIdle { state = state.copy(loading = true) }
+        compose.runOnIdle { state = state.copy(loadState = FitnessLoadState.Loading()) }
         compose.onNodeWithText("1,615 kg", useUnmergedTree = true).assertExists()
         compose.runOnIdle {
-            state = state.copy(loading = false, overview = FitnessOverview(today, emptyList(), emptyList()))
+            state = state.copy(loadState = FitnessLoadState.Ready, overview = FitnessOverview(today, emptyList(), emptyList()))
         }
         compose.onNodeWithText("1,615 kg", useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithText("Stats are unavailable right now.").performScrollTo().assertIsDisplayed()

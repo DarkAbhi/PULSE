@@ -32,8 +32,10 @@ import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.domain.model.WorkoutSummary
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.feature.fitness.FitnessScreen
-import dev.abhishekan.pulse.feature.fitness.FitnessUiState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessAction
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessScreen
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessUiState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -89,14 +91,9 @@ class FitnessCalendarLayoutTest {
                                         WorkoutSummary(3, LocalDate.of(2026, 9, 30), "Morning"),
                                     ),
                                 ),
-                                loading = false,
+                                loadState = FitnessLoadState.Ready,
                             ),
-                            { selected = it },
-                            {},
-                            {},
-                            {},
-                            {},
-                            {},
+                            { if (it is FitnessAction.SelectDate) selected = it.date },
                             {},
                         )
                     }

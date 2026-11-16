@@ -163,6 +163,20 @@ private fun StatementImportScreenContent(
                 else ->
                     StatementSetup(state, onAction, onPickPdf)
             }
+            if (state.busy && state.exit == null) {
+                val progress = state.progress
+                val label =
+                    when {
+                        batch != null && page != null -> stringResource(R.string.pulse_horizon_statement_loading)
+                        state.accounts == null -> stringResource(R.string.pulse_horizon_statement_loading_accounts)
+                        !state.uploading || progress == null -> stringResource(R.string.pulse_horizon_statement_uploading)
+                        progress < 1 -> stringResource(R.string.pulse_horizon_statement_percent, (progress * 100).toInt())
+                        else -> stringResource(R.string.pulse_horizon_statement_extracting)
+                    }
+                PulseCard(Modifier.align(Alignment.Center).padding(horizontal = PulseTokens.medium)) {
+                    PulseLoadingState(label, horizontalAlignment = Alignment.CenterHorizontally)
+                }
+            }
         }
     }
 }
@@ -227,19 +241,6 @@ private fun StatementSetup(
                     enabled = !state.busy,
                     labelAbove = true,
                 )
-            }
-        }
-        if (state.busy) {
-            PulseCard(Modifier.fillMaxWidth()) {
-                val progress = state.progress
-                val label =
-                    when {
-                        accounts == null -> stringResource(R.string.pulse_horizon_statement_loading_accounts)
-                        !state.uploading || progress == null -> stringResource(R.string.pulse_horizon_statement_uploading)
-                        progress < 1 -> stringResource(R.string.pulse_horizon_statement_percent, (progress * 100).toInt())
-                        else -> stringResource(R.string.pulse_horizon_statement_extracting)
-                    }
-                PulseLoadingState(label)
             }
         }
     }
@@ -311,14 +312,6 @@ private fun StatementReview(
                     }
                 }
             }
-        }
-        if (state.busy) {
-            PulseText(
-                stringResource(R.string.pulse_horizon_statement_loading),
-                Modifier.padding(top = PulseTokens.small).semantics { liveRegion = LiveRegionMode.Polite },
-                style = PulseTextStyle.Body2,
-                color = PulseTheme.colors.textSecondary,
-            )
         }
         PulseFormActions(
             primary =

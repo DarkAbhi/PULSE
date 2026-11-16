@@ -16,43 +16,48 @@ import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenu
 import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenuItem
 import dev.abhishekan.pulse.core.ui.components.PulseText
 
+private enum class NotificationsMenu {
+    Closed,
+    Options,
+    ConfirmClear,
+}
+
 @Composable
 internal fun NotificationsTopBarActions(
-    state: NotificationsUiState,
+    canClear: Boolean,
     onClear: () -> Unit,
 ) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    var confirmation by rememberSaveable { mutableStateOf(false) }
-    val canClear = state.items.isNotEmpty() && !state.busy && !state.loading && !state.uncertain
+    var menu by rememberSaveable { mutableStateOf(NotificationsMenu.Closed) }
 
     Box {
-        PulseButton(stringResource(R.string.pulse_notifications_options), { expanded = true }, style = PulseButtonStyle.Icon) {
+        PulseButton(
+            stringResource(R.string.pulse_notifications_options),
+            { menu = NotificationsMenu.Options },
+            style = PulseButtonStyle.Icon,
+        ) {
             Icon(painterResource(R.drawable.pulse_notifications_more), contentDescription = null)
         }
         PulseDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
+            expanded = menu == NotificationsMenu.Options,
+            onDismissRequest = { menu = NotificationsMenu.Closed },
         ) {
             PulseDropdownMenuItem(
                 text = { PulseText(stringResource(R.string.pulse_notifications_clear)) },
                 enabled = canClear,
-                onClick = {
-                    expanded = false
-                    confirmation = true
-                },
+                onClick = { menu = NotificationsMenu.ConfirmClear },
             )
         }
     }
-    if (confirmation) {
+    if (menu == NotificationsMenu.ConfirmClear) {
         PulseDialog(
             stringResource(R.string.pulse_notifications_clear_title),
             stringResource(R.string.pulse_notifications_clear_body),
             stringResource(R.string.pulse_notifications_clear),
             {
-                confirmation = false
+                menu = NotificationsMenu.Closed
                 if (canClear) onClear()
             },
-            { confirmation = false },
+            { menu = NotificationsMenu.Closed },
         )
     }
 }

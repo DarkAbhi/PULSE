@@ -73,6 +73,8 @@ class ArchitectureTest {
                 "LocalMinimumInteractiveComponentSize",
                 "LocalContentColor",
                 "SwipeToDismissBox",
+                "SwipeToDismissBoxDefaults",
+                "SwipeToDismissBoxState",
                 "SwipeToDismissBoxValue",
                 "rememberSwipeToDismissBoxState",
                 "pulltorefresh.PullToRefreshBox",

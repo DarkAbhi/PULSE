@@ -46,9 +46,10 @@ internal fun NavGraphBuilder.fitnessDestinations(
         arguments = listOf(navArgument("id") { type = NavType.LongType }),
     ) { exercise ->
         val id = checkNotNull(exercise.arguments).getLong("id")
-        val workout = remember(nav, exercise) {
-            nav.getBackStackEntry(AppDestination.Workout.withId(id))
-        }
+        val workout =
+            remember(nav, exercise) {
+                nav.getBackStackEntry(AppDestination.Workout.withId(id))
+            }
         val viewModel: WorkoutViewModel = koinViewModel(viewModelStoreOwner = workout)
         ExerciseEditorRoute(
             viewModel = viewModel,

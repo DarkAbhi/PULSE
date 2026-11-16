@@ -42,14 +42,9 @@ class PulseBottomSheetTest {
         compose.onNodeWithText("Sheet title").assertDoesNotExist()
     }
 
-    @Test fun overflowContentExpandsButShortContentStaysHalfOpen() {
-        showSheet(expandOnOverflow = true, lines = 1)
-        assertTrue("Short content stays halfway", titleY() > windowHeight * 0.4f)
-    }
-
-    @Test fun longContentExpandsInitially() {
-        showSheet(expandOnOverflow = true, lines = 100)
-        assertTrue("Long content opens expanded", titleY() < windowHeight * 0.25f)
+    @Test fun fitContentSizesToShortContent() {
+        showSheet(fitContent = true)
+        assertTrue("Short content fits near the bottom", titleY() > windowHeight * 0.5f)
     }
 
     private fun verifyGestures(dark: Boolean) {
@@ -88,7 +83,7 @@ class PulseBottomSheetTest {
     private fun showSheet(
         fullScreen: Boolean = false,
         dark: Boolean = false,
-        expandOnOverflow: Boolean = false,
+        fitContent: Boolean = false,
         lines: Int = 1,
     ) {
         compose.setContent {
@@ -97,7 +92,7 @@ class PulseBottomSheetTest {
             PulseTheme(dark) {
                 Box(Modifier.fillMaxSize()) {
                     if (open) {
-                        PulseBottomSheet("Sheet title", { open = false }, fullScreen = fullScreen, expandOnOverflow = expandOnOverflow) {
+                        PulseBottomSheet("Sheet title", { open = false }, fullScreen = fullScreen, fitContent = fitContent) {
                             repeat(lines) { PulseText("Sheet content $it") }
                         }
                     }

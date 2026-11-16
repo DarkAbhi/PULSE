@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,9 +66,9 @@ private fun ExerciseInstructionsSheet(
     exercise: CatalogExercise,
     onDismiss: () -> Unit,
 ) {
-    PulseBottomSheet(exercise.name, onDismiss, fullScreen = true, expandOnOverflow = true) {
+    PulseBottomSheet(exercise.name, onDismiss, fullScreen = true) {
         Column(
-            Modifier.fillMaxWidth().padding(horizontal = PulseTokens.medium, vertical = PulseTokens.medium),
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = PulseTokens.medium, vertical = PulseTokens.medium),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
         ) {
             if (exercise.instructions.isNotEmpty()) {

@@ -79,36 +79,29 @@ internal fun RecentTransactionAdd(
         PulseBottomSheet(
             title = stringResource(R.string.pulse_horizon_add_transactions),
             onDismissRequest = { showActions = false },
-            wrapContent = true,
+            expandOnOverflow = true,
         ) {
             Column(
                 Modifier.padding(horizontal = PulseTokens.medium).padding(bottom = PulseTokens.medium),
                 verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
             ) {
-                PulseText(
-                    stringResource(R.string.pulse_horizon_choose_transaction_method),
-                    style = PulseTextStyle.Body3,
-                    color = PulseTheme.colors.textSecondary,
-                )
                 PulseButton(
-                    text = stringResource(R.string.pulse_horizon_log_transaction),
+                    text = stringResource(R.string.pulse_horizon_add_menu_log_transaction),
                     onClick = {
                         showActions = false
                         onLog()
                     },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = canLog,
-                    supportingText = stringResource(R.string.pulse_horizon_log_transaction_description),
                 )
                 PulseButton(
-                    text = stringResource(R.string.pulse_horizon_import_statement),
+                    text = stringResource(R.string.pulse_horizon_add_menu_import_statement),
                     onClick = {
                         showActions = false
                         onImport()
                     },
                     modifier = Modifier.fillMaxWidth().testTag("horizon-statement-import"),
                     variant = PulseButtonVariant.Secondary,
-                    supportingText = stringResource(R.string.pulse_horizon_import_statement_description),
                 )
             }
         }

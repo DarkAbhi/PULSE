@@ -2,7 +2,6 @@ package dev.abhishekan.pulse.core.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -54,7 +53,6 @@ fun PulseButton(
     trailingIcon: (@Composable () -> Unit)? = null,
     contentPadding: PaddingValues =
         if (style == PulseButtonStyle.Text) ButtonDefaults.TextButtonContentPadding else ButtonDefaults.ContentPadding,
-    supportingText: String? = null,
     textAlign: TextAlign? = null,
     icon: (@Composable () -> Unit)? = null,
 ) {
@@ -94,19 +92,12 @@ fun PulseButton(
             leadingIcon()
             Spacer(Modifier.width(PulseTokens.small))
         }
-        if (supportingText == null) {
-            PulseText(
-                text,
-                modifier = if (trailingIcon != null) Modifier.weight(1f, fill = false) else Modifier,
-                style = PulseTextStyle.Label,
-                textAlign = textAlign,
-            )
-        } else {
-            Column(Modifier.weight(1f)) {
-                PulseText(text, style = PulseTextStyle.Label, textAlign = textAlign)
-                PulseText(supportingText, style = PulseTextStyle.Caption)
-            }
-        }
+        PulseText(
+            text,
+            modifier = if (trailingIcon != null) Modifier.weight(1f, fill = false) else Modifier,
+            style = PulseTextStyle.Label,
+            textAlign = textAlign,
+        )
         if (trailingIcon != null && !loading) {
             Spacer(Modifier.width(PulseTokens.small))
             trailingIcon()

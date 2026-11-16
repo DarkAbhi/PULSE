@@ -27,7 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 
-/** Opens halfway by default. Use [wrapContent] for short menus that should open at their natural height. */
+/** Opens halfway unless [fullScreen] is needed; content owns its scrolling. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PulseBottomSheet(
@@ -36,10 +36,9 @@ fun PulseBottomSheet(
     modifier: Modifier = Modifier,
     fullScreen: Boolean = false,
     expandOnOverflow: Boolean = false,
-    wrapContent: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = fullScreen || wrapContent)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = fullScreen)
     val windowHeight = LocalWindowInfo.current.containerSize.height
     var viewportHeight by remember { mutableIntStateOf(0) }
     var contentHeight by remember { mutableIntStateOf(0) }
@@ -59,7 +58,7 @@ fun PulseBottomSheet(
         contentColor = PulseTheme.colors.textPrimary,
     ) {
         // A full-height surface keeps the half-height anchor available even for short content.
-        Column(if (wrapContent) Modifier.fillMaxWidth() else Modifier.fillMaxWidth().fillMaxHeight()) {
+        Column(Modifier.fillMaxWidth().fillMaxHeight()) {
             PulseText(
                 title,
                 Modifier
@@ -69,14 +68,9 @@ fun PulseBottomSheet(
                         vertical = PulseTheme.spacing.compact,
                     ).semantics { heading() },
                 PulseTextStyle.Title3,
-                textAlign = if (wrapContent) TextAlign.Start else TextAlign.Center,
+                textAlign = TextAlign.Center,
             )
-            if (wrapContent) {
-                Column(
-                    Modifier.weight(1f, fill = false).fillMaxWidth().verticalScroll(rememberScrollState()),
-                    content = content,
-                )
-            } else if (expandOnOverflow) {
+            if (expandOnOverflow) {
                 Column(
                     Modifier
                         .weight(1f)

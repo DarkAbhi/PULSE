@@ -5,11 +5,14 @@ import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -17,6 +20,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
@@ -27,11 +31,15 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
 import dev.abhishekan.pulse.feature.fitness.workout.WorkoutScreen
 import dev.abhishekan.pulse.feature.fitness.workout.WorkoutUiState
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.ZoneOffset
 
 class WorkoutRedesignTest {
     @get:Rule val compose = createComposeRule()
@@ -59,11 +67,32 @@ class WorkoutRedesignTest {
         compose.onNodeWithText("Times shown in India time (IST).").assertDoesNotExist()
         compose.onNodeWithText("Refresh workout").assertDoesNotExist()
         compose.onNodeWithText("169.9 kcal").assertIsDisplayed()
-        compose.onNodeWithText("30 minutes").assertIsDisplayed()
+        compose.onNodeWithText("30 min").assertIsDisplayed()
         compose.onNodeWithText("No exercises added yet").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Add exercise").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("YOUR WORKOUT").performScrollTo()
         screenshot("workout-linked-empty")
+    }
+
+    @Test fun overnightWorkoutKeepsTimesOnOneLineAtPhoneWidth() {
+        val start = Instant.parse("2026-09-28T23:50:00Z")
+        val info = WorkoutInfo(1, start, start, start.plusSeconds(1800), BigDecimal("1800"), BigDecimal("169.9"), true)
+        compose.setContent {
+            Box(Modifier.width(320.dp)) { Content(WorkoutDetail(info, emptyList())) }
+        }
+
+        for (text in listOf("Started", "23:50", "30 min", "Finished", "00:20", "169.9 kcal")) {
+            val layouts = mutableListOf<TextLayoutResult>()
+            compose.onNodeWithText(text).assertIsDisplayed().performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+            assertEquals(text, 1, layouts.single().lineCount)
+            assertFalse(text, layouts.single().isLineEllipsized(0))
+        }
+        val started = compose.onNodeWithText("23:50").getUnclippedBoundsInRoot()
+        val duration = compose.onNodeWithText("30 min").getUnclippedBoundsInRoot()
+        val finished = compose.onNodeWithText("00:20").getUnclippedBoundsInRoot()
+        assertEquals(started.top, finished.top)
+        assertTrue(started.right < duration.left && duration.right < finished.left)
+        compose.onNodeWithText("29 Sep").assertIsDisplayed()
     }
 
     @Test fun populatedWorkoutHasCountsAndSheetInstructions() {
@@ -106,6 +135,7 @@ class WorkoutRedesignTest {
                     WorkoutUiState(detail = detail, loadState = FitnessLoadState.Ready),
                     onAction = {},
                     onExercise = {},
+                    timeZone = ZoneOffset.UTC,
                 )
             }
         }

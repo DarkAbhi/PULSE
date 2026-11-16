@@ -162,7 +162,9 @@
     <string name="pulse_fitness_workout_manage_description">Keep your workout data up to date or remove it if needed.</string>
     <string name="pulse_fitness_workout_started">Started</string>
     <string name="pulse_fitness_workout_finished">Finished</string>
-    <string name="pulse_fitness_workout_duration">Duration</string>
+    <string name="pulse_fitness_workout_duration_under_minute">&lt;1 min</string>
+    <string name="pulse_fitness_workout_duration_short_minutes">%1$s min</string>
+    <string name="pulse_fitness_workout_duration_short_hours">%1$s h %2$s min</string>
     <string name="pulse_fitness_workout_energy">Energy</string>
     <string name="pulse_fitness_workout_kcal">%1$s kcal</string>
     <string name="pulse_fitness_workout_equipment">Equipment</string>

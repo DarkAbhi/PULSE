@@ -8,14 +8,26 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 /** Matches the web's whole-minute duration presentation without floating-point conversion. */
-internal fun formatWorkoutDuration(seconds: BigDecimal): UiText {
+internal fun formatWorkoutDuration(
+    seconds: BigDecimal,
+    compact: Boolean = false,
+): UiText {
     if (seconds.signum() > 0 &&
         seconds < BigDecimal(60)
     ) {
-        return uiText(R.string.pulse_fitness_less_than_a_minute)
+        return uiText(
+            if (compact) R.string.pulse_fitness_workout_duration_under_minute else R.string.pulse_fitness_less_than_a_minute,
+        )
     }
     val minutes = seconds.divideToIntegralValue(BigDecimal(60)).toBigInteger()
     val (hours, remainder) = minutes.divideAndRemainder(BigInteger.valueOf(60))
+    if (compact) {
+        return if (hours.signum() == 0) {
+            uiText(R.string.pulse_fitness_workout_duration_short_minutes, remainder)
+        } else {
+            uiText(R.string.pulse_fitness_workout_duration_short_hours, hours, remainder)
+        }
+    }
     val minuteLabel =
         uiPlural(R.plurals.pulse_fitness_duration_minutes, remainder.toInt(), remainder)
     val quantity =

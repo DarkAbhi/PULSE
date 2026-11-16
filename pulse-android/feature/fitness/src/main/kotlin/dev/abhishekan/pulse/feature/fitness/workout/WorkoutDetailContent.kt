@@ -1,7 +1,5 @@
 package dev.abhishekan.pulse.feature.fitness.workout
 
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,23 +18,32 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
 import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
 import dev.abhishekan.pulse.core.domain.model.WorkoutInfo
+import dev.abhishekan.pulse.core.ui.PulseShapes
+import dev.abhishekan.pulse.core.ui.PulseSpacing
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseCard
@@ -45,6 +52,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.feature.fitness.R
 import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseInstructions
+import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -156,10 +164,12 @@ internal fun WorkoutDetailContent(
 }
 
 @Composable
-private fun WorkoutInformation(info: WorkoutInfo, timeZone: ZoneId) {
+private fun WorkoutInformation(
+    info: WorkoutInfo,
+    timeZone: ZoneId,
+) {
     val locale = LocalConfiguration.current.locales[0]
-    val dateFormatter = remember(locale, timeZone) { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale).withZone(timeZone) }
-    val timeFormatter = remember(locale, timeZone) { DateTimeFormatter.ofPattern("d MMM · HH:mm", locale).withZone(timeZone) }
+    val dateFormatter = remember(locale, timeZone) { DateTimeFormatter.ofPattern("EEE, d MMM yyyy", locale).withZone(timeZone) }
     val hasMetrics = info.start != null || info.end != null || info.durationSeconds != null || info.calories != null
     if (!hasMetrics && !info.imported) {
         Surface(shape = RoundedCornerShape(16.dp), color = lerp(PulseTheme.colors.surface, PulseTheme.colors.primarySoft, .75f)) {
@@ -188,71 +198,23 @@ private fun WorkoutInformation(info: WorkoutInfo, timeZone: ZoneId) {
                     ),
                 ),
                 RoundedCornerShape(24.dp),
-            ).padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            ).padding(PulseSpacing.comfortable),
+        verticalArrangement = Arrangement.spacedBy(PulseSpacing.compact),
     ) {
-        WorkoutSectionTitle(stringResource(R.string.pulse_fitness_your_workout))
-        PulseText(
-            dateFormatter.format(info.createdAt),
-            Modifier.semantics {
-                heading()
-            },
-            PulseTextStyle.Heading2,
-        )
+        Column {
+            WorkoutSectionTitle(stringResource(R.string.pulse_fitness_your_workout))
+            PulseText(dateFormatter.format(info.createdAt), Modifier.semantics { heading() }, PulseTextStyle.Heading3)
+        }
         if (!info.imported) {
             PulseText(stringResource(R.string.pulse_fitness_recorded_gym_visit))
         }
-        if (hasMetrics) {
-            BoxWithConstraints(Modifier.padding(vertical = 8.dp)) {
-                val columns = if (maxWidth >= 720.dp) 4 else 2
-                val tileWidth = (maxWidth - 12.dp * (columns - 1) - 1.dp) / columns
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    info.start?.let {
-                        MetricTile(
-                            stringResource(R.string.pulse_fitness_workout_started),
-                            timeFormatter.format(it),
-                            WorkoutSymbol.Play,
-                            PulseTheme.colors.successSoft,
-                            PulseTheme.colors.success,
-                            Modifier.width(tileWidth),
-                        )
-                    }
-                    info.end?.let {
-                        MetricTile(
-                            stringResource(R.string.pulse_fitness_workout_finished),
-                            timeFormatter.format(it),
-                            WorkoutSymbol.Stop,
-                            PulseTheme.colors.errorSoft,
-                            PulseTheme.colors.error,
-                            Modifier.width(tileWidth),
-                        )
-                    }
-                    info.durationSeconds?.let {
-                        MetricTile(
-                            stringResource(R.string.pulse_fitness_workout_duration),
-                            formatWorkoutDuration(it).asString(),
-                            WorkoutSymbol.Clock,
-                            PulseTheme.colors.lavender.copy(alpha = .18f),
-                            PulseTheme.colors.textPrimary,
-                            Modifier.width(tileWidth),
-                        )
-                    }
-                    info.calories?.let {
-                        MetricTile(
-                            stringResource(R.string.pulse_fitness_workout_energy),
-                            stringResource(R.string.pulse_fitness_workout_kcal, it.toPlainString()),
-                            WorkoutSymbol.Energy,
-                            PulseTheme.colors.warningSoft,
-                            PulseTheme.colors.warning,
-                            Modifier.width(tileWidth),
-                        )
-                    }
-                }
-            }
+        if (info.start != null || info.end != null || info.durationSeconds != null) {
+            WorkoutTiming(info, timeZone)
         }
+        info.calories?.let { WorkoutEnergy(it.toPlainString()) }
         if (!hasMetrics || info.imported) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                WorkoutGlyph(WorkoutSymbol.Info, PulseTheme.colors.textSecondary)
+            Row(horizontalArrangement = Arrangement.spacedBy(PulseSpacing.small), verticalAlignment = Alignment.CenterVertically) {
+                WorkoutGlyph(WorkoutSymbol.Info, PulseTheme.colors.textSecondary, Modifier.size(16.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (!hasMetrics) {
                         PulseText(
@@ -273,6 +235,174 @@ private fun WorkoutInformation(info: WorkoutInfo, timeZone: ZoneId) {
         }
     }
 }
+
+@Composable
+private fun WorkoutTiming(
+    info: WorkoutInfo,
+    timeZone: ZoneId,
+) {
+    val locale = LocalConfiguration.current.locales[0]
+    val timeFormatter = remember(locale, timeZone) { DateTimeFormatter.ofPattern("HH:mm", locale).withZone(timeZone) }
+    val dayFormatter = remember(locale, timeZone) { DateTimeFormatter.ofPattern("d MMM", locale).withZone(timeZone) }
+    val workoutDay = info.createdAt.atZone(timeZone).toLocalDate()
+    val start = info.start
+    val end = info.end
+    val duration = info.durationSeconds?.let { formatWorkoutDuration(it, compact = true).asString() }
+
+    BoxWithConstraints(Modifier.workoutMetricPanel()) {
+        val hasTimes = start != null || end != null
+        val inlineDuration = maxWidth >= 220.dp * LocalDensity.current.fontScale
+        Column(verticalArrangement = Arrangement.spacedBy(PulseSpacing.small), horizontalAlignment = Alignment.CenterHorizontally) {
+            if (hasTimes) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(PulseSpacing.tiny),
+                ) {
+                    Box(Modifier.weight(1f)) {
+                        if (start != null) {
+                            WorkoutTime(
+                                instant = start,
+                                timeFormatter = timeFormatter,
+                                date = start.takeUnless { it.atZone(timeZone).toLocalDate() == workoutDay }?.let(dayFormatter::format),
+                                finished = false,
+                            )
+                        }
+                    }
+                    if (duration != null && inlineDuration) {
+                        Row(
+                            Modifier.weight(1f).align(Alignment.CenterVertically),
+                            horizontalArrangement = Arrangement.spacedBy(PulseSpacing.tiny, Alignment.CenterHorizontally),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            val showConnectors = duration.length <= 6
+                            if (showConnectors) Box(Modifier.size(PulseSpacing.tiny, 1.dp).background(PulseTheme.colors.divider))
+                            WorkoutDurationBadge(duration, Modifier.weight(1f, fill = false))
+                            if (showConnectors) Box(Modifier.size(PulseSpacing.tiny, 1.dp).background(PulseTheme.colors.divider))
+                        }
+                    }
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                        if (end != null) {
+                            WorkoutTime(
+                                instant = end,
+                                timeFormatter = timeFormatter,
+                                date = end.takeUnless { it.atZone(timeZone).toLocalDate() == workoutDay }?.let(dayFormatter::format),
+                                finished = true,
+                            )
+                        }
+                    }
+                }
+            }
+            if (duration != null && (!hasTimes || !inlineDuration)) {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    WorkoutDurationBadge(duration)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WorkoutTime(
+    instant: Instant,
+    timeFormatter: DateTimeFormatter,
+    date: String?,
+    finished: Boolean,
+) {
+    val colors = PulseTheme.colors
+    Column(horizontalAlignment = if (finished) Alignment.End else Alignment.Start) {
+        Row(horizontalArrangement = Arrangement.spacedBy(PulseSpacing.tiny), verticalAlignment = Alignment.CenterVertically) {
+            if (!finished) {
+                WorkoutMetricIcon(WorkoutSymbol.Play, colors.successSoft, colors.success, compact = true)
+            }
+            PulseText(
+                stringResource(if (finished) R.string.pulse_fitness_workout_finished else R.string.pulse_fitness_workout_started),
+                Modifier.weight(1f, fill = false),
+                style = PulseTextStyle.Caption,
+                color = colors.textSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (finished) {
+                WorkoutMetricIcon(WorkoutSymbol.Stop, colors.errorSoft, colors.error, compact = true)
+            }
+        }
+        PulseText(timeFormatter.format(instant), style = PulseTextStyle.Title, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        date?.let {
+            PulseText(it, style = PulseTextStyle.Caption, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+@Composable
+private fun WorkoutDurationBadge(
+    duration: String,
+    modifier: Modifier = Modifier,
+) {
+    PulseText(
+        duration,
+        modifier
+            .background(PulseTheme.colors.primary, CircleShape)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+        style = PulseTextStyle.Label2,
+        color = PulseTheme.colors.onPrimary,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
+
+@Composable
+private fun WorkoutEnergy(amount: String) {
+    val colors = PulseTheme.colors
+    val formatted = stringResource(R.string.pulse_fitness_workout_kcal, amount)
+    val amountStyle =
+        PulseTheme.typography.title1
+            .toSpanStyle()
+            .copy(color = colors.textPrimary)
+    Row(
+        Modifier.workoutMetricPanel(),
+        horizontalArrangement = Arrangement.spacedBy(PulseSpacing.small),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        WorkoutMetricIcon(WorkoutSymbol.Energy, colors.warningSoft, colors.warning)
+        PulseText(stringResource(R.string.pulse_fitness_workout_energy), style = PulseTextStyle.Caption, color = colors.textSecondary)
+        Text(
+            buildAnnotatedString {
+                append(formatted)
+                val amountStart = formatted.indexOf(amount)
+                if (amountStart >= 0) addStyle(amountStyle, amountStart, amountStart + amount.length)
+            },
+            Modifier.weight(1f),
+            color = colors.textSecondary,
+            style = PulseTheme.typography.caption,
+            textAlign = TextAlign.End,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun WorkoutMetricIcon(
+    symbol: WorkoutSymbol,
+    background: Color,
+    tint: Color,
+    compact: Boolean = false,
+) {
+    Box(
+        Modifier
+            .size(if (compact) PulseSpacing.comfortable else PulseSpacing.large)
+            .background(background, if (compact) PulseShapes.small else PulseShapes.medium),
+        contentAlignment = Alignment.Center,
+    ) {
+        WorkoutGlyph(symbol, tint, Modifier.size(if (compact) PulseSpacing.compact else PulseSpacing.medium))
+    }
+}
+
+@Composable
+private fun Modifier.workoutMetricPanel(): Modifier =
+    fillMaxWidth()
+        .background(PulseTheme.colors.surface.copy(alpha = .8f), PulseShapes.extraLarge)
+        .padding(PulseSpacing.compact)
 
 @Composable
 private fun ExerciseList(
@@ -523,30 +653,6 @@ private fun MetadataTile(
         }
         Column {
             PulseText(label, style = PulseTextStyle.Body2, color = PulseTheme.colors.textSecondary)
-            PulseText(value, style = PulseTextStyle.Label)
-        }
-    }
-}
-
-@Composable
-private fun MetricTile(
-    label: String,
-    value: String,
-    symbol: WorkoutSymbol,
-    background: Color,
-    tint: Color,
-    modifier: Modifier,
-) {
-    Row(
-        modifier.background(PulseTheme.colors.surface.copy(alpha = .8f), RoundedCornerShape(16.dp)).padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(44.dp).background(background, RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
-            WorkoutGlyph(symbol, tint)
-        }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            PulseText(label, style = PulseTextStyle.Body2)
             PulseText(value, style = PulseTextStyle.Label)
         }
     }

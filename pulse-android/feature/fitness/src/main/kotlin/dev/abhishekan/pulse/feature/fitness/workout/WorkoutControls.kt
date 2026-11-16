@@ -52,8 +52,9 @@ internal enum class WorkoutSymbol { Add, Play, Stop, Clock, Energy, Info, Weight
 internal fun WorkoutGlyph(
     symbol: WorkoutSymbol,
     color: Color,
+    modifier: Modifier = Modifier.size(24.dp),
 ) {
-    Canvas(Modifier.size(24.dp)) {
+    Canvas(modifier) {
         val u = size.width / 24f
         val stroke = 1.8f * u
 

@@ -64,7 +64,7 @@ private fun ExerciseInstructionsSheet(
     exercise: CatalogExercise,
     onDismiss: () -> Unit,
 ) {
-    PulseBottomSheet(exercise.name, onDismiss, expandOnOverflow = true) {
+    PulseBottomSheet(exercise.name, onDismiss, fullScreen = true, expandOnOverflow = true) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = PulseTokens.medium, vertical = PulseTokens.medium),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),

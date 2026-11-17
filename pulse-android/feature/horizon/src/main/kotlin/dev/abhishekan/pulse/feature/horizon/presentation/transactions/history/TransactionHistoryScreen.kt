@@ -257,7 +257,10 @@ private fun TransactionHistoryScreenContent(
                     if (state.reviewRequired || state.reviewingDraft) item("review") { review() }
                     if (history.loading && page == null) {
                         item("loading") {
-                            PulseCenteredLoadingState(stringResource(R.string.pulse_horizon_loading_transactions), Modifier.fillMaxWidth())
+                            PulseCenteredLoadingState(
+                                stringResource(R.string.pulse_horizon_loading_transactions),
+                                Modifier.fillMaxWidth().fillParentMaxHeight(),
+                            )
                         }
                     }
                     if (page != null &&

@@ -45,6 +45,7 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseFloatingActionButton
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
@@ -188,7 +189,7 @@ internal fun AccountListScreen(
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             Box(Modifier.widthIn(max = PulseTokens.readingWidth + gutter * 2).fillMaxSize()) {
                 HorizonTabScroll(gutter, bottomSpacing = 56.dp + gutter) {
-                    AccountsListStatus(state, onAction)
+                    if (!state.busy) AccountsListStatus(state, onAction)
                     when {
                         accounts == null -> Unit
                         accounts.isEmpty() ->
@@ -214,6 +215,9 @@ internal fun AccountListScreen(
                                 }
                             }
                     }
+                }
+                if (state.busy) {
+                    PulseCenteredLoadingState(stringResource(R.string.pulse_horizon_loading_accounts))
                 }
                 if (!state.busy && accounts?.isEmpty() != true) {
                     PulseFloatingActionButton(

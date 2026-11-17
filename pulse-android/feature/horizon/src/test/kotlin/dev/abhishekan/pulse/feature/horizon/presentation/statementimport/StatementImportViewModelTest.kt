@@ -29,7 +29,7 @@ import org.junit.Test
 class StatementImportViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val repo = ImportRepository()
-    private val sampleAccount = FinancialAccount(id = 7, currency = "INR")
+    private val sampleAccount = FinancialAccount(id = 7)
     private val accounts =
         object : FinancialAccountsRepository {
             override suspend fun accounts(includeArchived: Boolean) = Outcome.Success(listOf(sampleAccount))

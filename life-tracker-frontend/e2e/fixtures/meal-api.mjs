@@ -56,7 +56,7 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/api/horizon/accounts") {
     const accounts = accountsByUser.get(token) ?? [{
       id: 1, display_name: "Test savings", institution_name: "Kotak", account_type: "bank_account",
-      bank_account_subtype: "savings", currency: "INR", country_code: "", last_four: "", archived_at: null,
+      bank_account_subtype: "savings", last_four: "", archived_at: null, account_number: "", holder_name: "Test Person", holder_email: "test@example.com", card_type: "", card_network: "", credit_limit: null, statement_day: null,
     }];
     if (req.method === "GET") return send(200, { accounts });
     if (req.method === "POST") {
@@ -65,6 +65,15 @@ http.createServer(async (req, res) => {
       accountsByUser.set(token, accounts);
       return send(201, account);
     }
+  }
+  const accountPath = url.pathname.match(/^\/api\/horizon\/accounts\/(\d+)(?:\/(archive|restore))?$/);
+  if (accountPath) {
+    const accounts = accountsByUser.get(token) ?? [];
+    const account = accounts.find(item => item.id === Number(accountPath[1]));
+    if (!account) return send(404, { error: "Account not found" });
+    if (req.method === "PUT") Object.assign(account, body);
+    else account.archived_at = accountPath[2] === "archive" ? new Date().toISOString() : null;
+    return send(200, account);
   }
   if (url.pathname === "/api/meal-times") {
     const existing = customTimes.get(token) ?? [];
@@ -96,4 +105,4 @@ http.createServer(async (req, res) => {
     return send(200, state);
   }
   send(404, { error: "Unknown fixture endpoint" });
-}).listen(18081, "127.0.0.1");
+}).listen(Number(process.env.PULSE_E2E_API_PORT ?? 18081), "127.0.0.1");

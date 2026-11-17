@@ -4,61 +4,94 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"math"
 	"net/http"
+	"net/mail"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/DarkAbhi/life-backend/internal/currency"
 	"github.com/DarkAbhi/life-backend/internal/horizon/query"
-	profilequery "github.com/DarkAbhi/life-backend/internal/profile/query"
 	"github.com/DarkAbhi/life-backend/internal/webutil"
 )
 
-// FinancialAccountInput deliberately accepts only a masked identifier, never
-// account credentials or a complete card/account number.
 type FinancialAccountInput struct {
-	DisplayName        string `json:"display_name"`
-	InstitutionName    string `json:"institution_name"`
-	AccountType        string `json:"account_type"`
-	BankAccountSubtype string `json:"bank_account_subtype"`
-	Currency           string `json:"currency"`
-	CountryCode        string `json:"country_code"`
-	LastFour           string `json:"last_four"`
+	DisplayName        string   `json:"display_name"`
+	InstitutionName    string   `json:"institution_name"`
+	AccountType        string   `json:"account_type"`
+	BankAccountSubtype string   `json:"bank_account_subtype"`
+	LastFour           string   `json:"last_four"`
+	AccountNumber      string   `json:"account_number"`
+	HolderName         string   `json:"holder_name"`
+	HolderEmail        string   `json:"holder_email"`
+	CardType           string   `json:"card_type"`
+	CardNetwork        string   `json:"card_network"`
+	CreditLimit        *float64 `json:"credit_limit"`
+	StatementDay       *int32   `json:"statement_day"`
 }
 
-func normalizeFinancialAccount(in FinancialAccountInput, profileCurrency string) (FinancialAccountInput, error) {
+func normalizeFinancialAccount(in FinancialAccountInput) (FinancialAccountInput, error) {
 	in.DisplayName = strings.TrimSpace(in.DisplayName)
 	in.InstitutionName = strings.TrimSpace(in.InstitutionName)
 	in.AccountType = strings.TrimSpace(in.AccountType)
 	in.BankAccountSubtype = strings.TrimSpace(in.BankAccountSubtype)
-	in.Currency = strings.ToUpper(strings.TrimSpace(in.Currency))
-	in.CountryCode = strings.ToUpper(strings.TrimSpace(in.CountryCode))
 	in.LastFour = strings.TrimSpace(in.LastFour)
-	if !accountLabelValid(in.DisplayName, 100) || !accountLabelValid(in.InstitutionName, 150) {
-		return in, errors.New("account and institution names are required and must fit the allowed length")
-	}
-	if in.AccountType != "bank_account" && in.AccountType != "credit_card" {
-		return in, errors.New("choose a bank account or credit card")
-	}
-	switch in.BankAccountSubtype {
-	case "", "savings", "current", "other":
-	default:
-		return in, errors.New("invalid bank account subtype")
-	}
-	if in.AccountType == "credit_card" && in.BankAccountSubtype != "" {
-		return in, errors.New("credit cards cannot have a bank account subtype")
-	}
-	if !currency.Valid(in.Currency) || in.Currency != profileCurrency {
-		return in, errors.New("account currency must match your configured currency")
-	}
-	if in.CountryCode != "" && (len(in.CountryCode) != 2 || !asciiBetween(in.CountryCode, 'A', 'Z')) {
-		return in, errors.New("country code must contain two letters")
+	in.AccountNumber = strings.TrimSpace(in.AccountNumber)
+	in.HolderName = strings.TrimSpace(in.HolderName)
+	in.HolderEmail = strings.TrimSpace(in.HolderEmail)
+	in.CardType = strings.TrimSpace(in.CardType)
+	in.CardNetwork = strings.ToLower(strings.TrimSpace(in.CardNetwork))
+	if !accountLabelValid(in.DisplayName, 100) || !accountLabelValid(in.InstitutionName, 150) || !accountLabelValid(in.HolderName, 150) {
+		return in, errors.New("account, institution and holder names are required and must fit the allowed length")
 	}
 	if in.LastFour != "" && (len(in.LastFour) != 4 || !asciiBetween(in.LastFour, '0', '9')) {
 		return in, errors.New("enter only the last four digits")
+	}
+	switch in.AccountType {
+	case "bank_account":
+		if in.BankAccountSubtype != "savings" && in.BankAccountSubtype != "current" {
+			return in, errors.New("choose a savings or current account")
+		}
+		email, err := mail.ParseAddress(in.HolderEmail)
+		if err != nil || email.Address != in.HolderEmail || !accountLabelValid(in.HolderEmail, 254) {
+			return in, errors.New("enter a valid account holder email")
+		}
+		if in.AccountNumber != "" {
+			if len(in.AccountNumber) < 4 || len(in.AccountNumber) > 34 || strings.IndexFunc(in.AccountNumber, func(r rune) bool { return !(r >= '0' && r <= '9' || r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z') }) != -1 {
+				return in, errors.New("account number must contain 4 to 34 letters or digits")
+			}
+			suffix := in.AccountNumber[len(in.AccountNumber)-4:]
+			if asciiBetween(suffix, '0', '9') {
+				in.LastFour = suffix
+			} else {
+				in.LastFour = ""
+			}
+		}
+		if in.CardType != "" || in.CardNetwork != "" || in.CreditLimit != nil || in.StatementDay != nil {
+			return in, errors.New("bank accounts cannot have credit card details")
+		}
+	case "credit_card":
+		if in.BankAccountSubtype != "" || in.AccountNumber != "" || in.HolderEmail != "" {
+			return in, errors.New("credit cards cannot have bank account details")
+		}
+		if !accountLabelValid(in.CardType, 150) || in.LastFour == "" {
+			return in, errors.New("card type and last four digits are required")
+		}
+		switch in.CardNetwork {
+		case "visa", "mastercard", "american_express", "diners_club", "rupay":
+		default:
+			return in, errors.New("choose a supported card network")
+		}
+		if in.CreditLimit == nil || math.IsNaN(*in.CreditLimit) || math.IsInf(*in.CreditLimit, 0) || *in.CreditLimit < 0 || *in.CreditLimit >= 1e15 {
+			return in, errors.New("enter a valid non-negative credit limit below 1000000000000000")
+		}
+		if in.StatementDay == nil || *in.StatementDay < 1 || *in.StatementDay > 31 {
+			return in, errors.New("statement day must be between 1 and 31")
+		}
+	default:
+		return in, errors.New("choose a bank account or credit card")
 	}
 	return in, nil
 }
@@ -85,13 +118,14 @@ type FinancialAccountDTO struct {
 	ArchivedAt *time.Time `json:"archived_at"`
 }
 
-func financialAccountDTO(a query.FinancialAccount) FinancialAccountDTO {
+func financialAccountDTO(a query.FinancialAccountDetail) FinancialAccountDTO {
 	dto := FinancialAccountDTO{
 		ID: a.ID,
 		FinancialAccountInput: FinancialAccountInput{
 			DisplayName: a.DisplayName, InstitutionName: a.InstitutionName,
 			AccountType: a.AccountType, BankAccountSubtype: a.BankAccountSubtype,
-			Currency: a.Currency, CountryCode: a.CountryCode, LastFour: a.LastFour,
+			LastFour: a.LastFour, AccountNumber: a.AccountNumber, HolderName: a.HolderName, HolderEmail: a.HolderEmail,
+			CardType: a.CardType, CardNetwork: a.CardNetwork, CreditLimit: a.CreditLimit, StatementDay: nullStatementDay(a.StatementDay),
 		},
 	}
 	if a.ArchivedAt.Valid {
@@ -142,26 +176,9 @@ func (h *Handler) saveFinancialAccount(w http.ResponseWriter, r *http.Request, u
 		return
 	}
 	ctx := r.Context()
-	profileCurrency, err := profilequery.New(h.DB).GetCurrency(ctx, userID)
-	if err != nil {
-		accountError(w, err)
-		return
-	}
-	if in.Currency == "" {
-		in.Currency = profileCurrency
-	}
-	in, err = normalizeFinancialAccount(in, profileCurrency)
+	in, err := normalizeFinancialAccount(in)
 	if err != nil {
 		webutil.BadRequest(w, err.Error())
-		return
-	}
-	if id == 0 {
-		row, err := query.New(h.DB).CreateFinancialAccount(ctx, query.CreateFinancialAccountParams{
-			UserID: userID, DisplayName: in.DisplayName, InstitutionName: in.InstitutionName,
-			AccountType: in.AccountType, BankAccountSubtype: in.BankAccountSubtype,
-			Currency: in.Currency, CountryCode: in.CountryCode, LastFour: in.LastFour,
-		})
-		writeFinancialAccount(w, http.StatusCreated, row, err)
 		return
 	}
 
@@ -172,35 +189,61 @@ func (h *Handler) saveFinancialAccount(w http.ResponseWriter, r *http.Request, u
 	}
 	defer tx.Rollback(ctx)
 	q := query.New(tx)
-	current, err := q.LockFinancialAccount(ctx, query.LockFinancialAccountParams{ID: id, UserID: userID})
+	status := http.StatusOK
+	if id == 0 {
+		id, err = q.CreateFinancialAccount(ctx, query.CreateFinancialAccountParams{UserID: userID, DisplayName: in.DisplayName, AccountType: in.AccountType})
+		status = http.StatusCreated
+	} else {
+		current, lockErr := q.LockFinancialAccount(ctx, query.LockFinancialAccountParams{ID: id, UserID: userID})
+		if lockErr != nil {
+			accountError(w, lockErr)
+			return
+		}
+		if current.AccountType != in.AccountType || current.InstitutionName != in.InstitutionName || current.LastFour != in.LastFour ||
+			current.BankAccountSubtype != in.BankAccountSubtype || (current.AccountNumber != "" && current.AccountNumber != in.AccountNumber) {
+			used, checkErr := q.FinancialAccountHasTransactions(ctx, query.FinancialAccountHasTransactionsParams{AccountID: sql.NullInt64{Int64: id, Valid: true}, UserID: userID})
+			if checkErr != nil {
+				accountError(w, checkErr)
+				return
+			}
+			if used {
+				webutil.WriteJSON(w, http.StatusConflict, map[string]string{"error": "account identity is locked once transactions are linked"})
+				return
+			}
+		}
+		_, err = q.UpdateFinancialAccount(ctx, query.UpdateFinancialAccountParams{ID: id, UserID: userID, DisplayName: in.DisplayName, AccountType: in.AccountType})
+	}
 	if err != nil {
 		accountError(w, err)
 		return
 	}
-	if current.AccountType != in.AccountType || current.Currency != in.Currency ||
-		current.InstitutionName != in.InstitutionName || current.LastFour != in.LastFour ||
-		current.BankAccountSubtype != in.BankAccountSubtype || current.CountryCode != in.CountryCode {
-		used, err := q.FinancialAccountHasTransactions(ctx, query.FinancialAccountHasTransactionsParams{
-			AccountID: sql.NullInt64{Int64: id, Valid: true}, UserID: userID,
-		})
-		if err != nil {
-			accountError(w, err)
-			return
+	if in.AccountType == "bank_account" {
+		err = q.DeleteCreditCardDetails(ctx, id)
+		if err == nil {
+			err = q.SaveBankAccountDetails(ctx, query.SaveBankAccountDetailsParams{AccountID: id, InstitutionName: in.InstitutionName, AccountNumber: in.AccountNumber, HolderName: in.HolderName, HolderEmail: in.HolderEmail, BankAccountSubtype: in.BankAccountSubtype, LastFour: in.LastFour})
 		}
-		if used {
-			webutil.WriteJSON(w, http.StatusConflict, map[string]string{"error": "account identity is locked once transactions are linked"})
-			return
+	} else {
+		err = q.DeleteBankAccountDetails(ctx, id)
+		if err == nil {
+			err = q.SaveCreditCardDetails(ctx, query.SaveCreditCardDetailsParams{AccountID: id, InstitutionName: in.InstitutionName, CardType: in.CardType, CardNetwork: in.CardNetwork, LastFour: in.LastFour, HolderName: in.HolderName, CreditLimit: *in.CreditLimit, StatementDay: *in.StatementDay})
 		}
 	}
-	row, err := q.UpdateFinancialAccount(ctx, query.UpdateFinancialAccountParams{
-		ID: id, UserID: userID, DisplayName: in.DisplayName, InstitutionName: in.InstitutionName,
-		AccountType: in.AccountType, BankAccountSubtype: in.BankAccountSubtype,
-		Currency: in.Currency, CountryCode: in.CountryCode, LastFour: in.LastFour,
-	})
+	if err != nil {
+		accountError(w, err)
+		return
+	}
+	row, err := q.GetFinancialAccount(ctx, query.GetFinancialAccountParams{ID: id, UserID: userID})
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
-	writeFinancialAccount(w, http.StatusOK, row, err)
+	writeFinancialAccount(w, status, row, err)
+}
+
+func nullStatementDay(day sql.NullInt32) *int32 {
+	if !day.Valid {
+		return nil
+	}
+	return &day.Int32
 }
 
 func (h *Handler) setFinancialAccountArchived(archived bool) func(http.ResponseWriter, *http.Request, int64) {
@@ -209,9 +252,14 @@ func (h *Handler) setFinancialAccountArchived(archived bool) func(http.ResponseW
 		if !ok {
 			return
 		}
-		row, err := query.New(h.DB).SetFinancialAccountArchived(r.Context(), query.SetFinancialAccountArchivedParams{
+		_, err := query.New(h.DB).SetFinancialAccountArchived(r.Context(), query.SetFinancialAccountArchivedParams{
 			ID: id, UserID: userID, Archived: archived,
 		})
+		if err != nil {
+			accountError(w, err)
+			return
+		}
+		row, err := query.New(h.DB).GetFinancialAccount(r.Context(), query.GetFinancialAccountParams{ID: id, UserID: userID})
 		writeFinancialAccount(w, http.StatusOK, row, err)
 	}
 }
@@ -232,7 +280,7 @@ func (h *Handler) accountRoute(handle func(http.ResponseWriter, *http.Request, i
 	}
 }
 
-func writeFinancialAccount(w http.ResponseWriter, status int, row query.FinancialAccount, err error) {
+func writeFinancialAccount(w http.ResponseWriter, status int, row query.FinancialAccountDetail, err error) {
 	if err != nil {
 		accountError(w, err)
 		return

@@ -419,15 +419,12 @@
     <string name="pulse_horizon_account_reference">Account reference</string>
     <string name="pulse_horizon_card_name">Card name</string>
     <string name="pulse_horizon_account_type">Account type</string>
-    <string name="pulse_horizon_account_subtype">Bank account subtype</string>
-    <string name="pulse_horizon_account_country_hint">Two-letter code, e.g. IN</string>
+    <string name="pulse_horizon_account_subtype">Bank account type</string>
     <string name="pulse_horizon_account_unspecified">Unspecified</string>
     <string name="pulse_horizon_account_savings">Savings</string>
     <string name="pulse_horizon_account_current">Current</string>
     <string name="pulse_horizon_account_other">Other</string>
-    <string name="pulse_horizon_account_currency">Currency · %1$s</string>
-    <string name="pulse_horizon_account_country">Country code (optional)</string>
-    <string name="pulse_horizon_account_last_four">Last four digits (optional)</string>
+    <string name="pulse_horizon_account_last_four">Last four digits</string>
     <string name="pulse_horizon_import_statement">Import statement</string>
     <string name="pulse_horizon_statement_reload">Reload preview</string>
     <string name="pulse_horizon_statement_loading">Working…</string>
@@ -484,4 +481,17 @@
     <string name="pulse_horizon_transaction_no_account">No account</string>
     <string name="pulse_horizon_transaction_account_optional">Financial account (optional)</string>
     <string name="pulse_horizon_statement_manual_match">Possible match in transaction history</string>
+    <string name="pulse_horizon_holder_name">Account holder name</string>
+    <string name="pulse_horizon_cardholder_name">Cardholder name</string>
+    <string name="pulse_horizon_holder_email">Account holder email</string>
+    <string name="pulse_horizon_account_number">Account number (optional)</string>
+    <string name="pulse_horizon_card_type">Card type</string>
+    <string name="pulse_horizon_card_network">Card network</string>
+    <string name="pulse_horizon_credit_limit">Credit limit (%1$s)</string>
+    <string name="pulse_horizon_statement_day">Expected statement day of month (1–31)</string>
+    <string name="pulse_horizon_card_visa">Visa</string>
+    <string name="pulse_horizon_card_mastercard">Mastercard</string>
+    <string name="pulse_horizon_card_amex">American Express</string>
+    <string name="pulse_horizon_card_diners">Diners Club</string>
+    <string name="pulse_horizon_card_rupay">RuPay</string>
 </resources>

@@ -48,8 +48,11 @@ func TestPostgresImportOwnershipAndConcurrentOverlap(t *testing.T) {
 	foreign := newUser("statement-foreign")
 	var account int64
 	if err := db.QueryRow(`INSERT INTO financial_accounts
-		(user_id,display_name,institution_name,account_type,currency,last_four)
-		VALUES ($1,'Test account','Kotak','bank_account','INR','4321') RETURNING id`, owner).Scan(&account); err != nil {
+		(user_id,display_name,account_type)
+		VALUES ($1,'Test account','bank_account') RETURNING id`, owner).Scan(&account); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO bank_accounts (account_id,institution_name,last_four,holder_name,holder_email,bank_account_subtype) VALUES ($1,'Kotak','4321','A Person','person@example.com','savings')`, account); err != nil {
 		t.Fatal(err)
 	}
 	document, err := json.Marshal(syntheticDocument("20.00", "5.00"))
@@ -120,6 +123,19 @@ func TestPostgresImportOwnershipAndConcurrentOverlap(t *testing.T) {
 	router.ServeHTTP(res, edited)
 	if res.Code != 422 {
 		t.Fatalf("amount edit bypassed reconciliation with status %d", res.Code)
+	}
+
+	// A profile change after upload must block committing the old-currency draft.
+	if _, err := db.Exec("UPDATE user_profiles SET currency='USD' WHERE user_id=$1", owner); err != nil {
+		t.Fatal(err)
+	}
+	currencyResult := httptest.NewRecorder()
+	router.ServeHTTP(currencyResult, httptest.NewRequest("POST", path+"/"+previews[0].ID+"/commit", bytes.NewBufferString(`{"revision":1}`)))
+	if currencyResult.Code != 422 || !strings.Contains(currencyResult.Body.String(), "CURRENCY_MISMATCH") {
+		t.Fatalf("currency change bypassed: %d %s", currencyResult.Code, currencyResult.Body.String())
+	}
+	if _, err := db.Exec("UPDATE user_profiles SET currency='INR' WHERE user_id=$1", owner); err != nil {
+		t.Fatal(err)
 	}
 
 	var wg sync.WaitGroup

@@ -67,6 +67,7 @@ class HorizonRepositoryTest {
         var failure: Exception? = null
         var malformed = false
         var categories = "null"
+        var accounts = "[]"
         var originalNarration: String? = null
         var query: Parameters = Parameters.Empty
         val writes = mutableListOf<Pair<String, String>>()
@@ -139,6 +140,7 @@ class HorizonRepositoryTest {
                                     ?: transaction
                             """{"transactions":[$item],"page":3,"page_size":20,"total":41,"total_pages":3}"""
                         }
+                        path == "/api/horizon/accounts" -> """{"accounts":$accounts}"""
                         path.endsWith("/transactions") -> "[$transaction]"
                         path == "/api/next-month-purchases" -> """{"items":null,"total":0}"""
                         else -> error("Unexpected fixture path $path")
@@ -178,6 +180,43 @@ class HorizonRepositoryTest {
             client.close()
         }
     }
+
+    @Test fun accountDetailsRoundTripWithoutAccountCurrencyOrCountry() =
+        runTest {
+            Harness().use { h ->
+                h.login()
+                h.accounts =
+                    """[{"id":1,"display_name":"Rewards","institution_name":"HDFC","account_type":"credit_card","bank_account_subtype":"","last_four":"0123","holder_name":"A Person","card_type":"Millennia","card_network":"rupay","credit_limit":200000.50,"statement_day":31},{"id":2,"display_name":"Savings","institution_name":"Kotak","account_type":"bank_account","bank_account_subtype":"savings","last_four":"4321","account_number":"00004321","holder_name":"A Person","holder_email":"person@example.com"}]"""
+                val accounts = (h.repo.accounts() as Outcome.Success).value
+                val card = accounts[0]
+                assertEquals("Millennia", card.cardType)
+                assertEquals("rupay", card.cardNetwork)
+                assertEquals("200000.50", card.creditLimit)
+                assertEquals("31", card.statementDay)
+                assertEquals("0123", card.lastFour)
+                assertEquals("00004321", accounts[1].accountNumber)
+                assertEquals("person@example.com", accounts[1].holderEmail)
+                assertEquals(Outcome.Success(Unit), h.repo.saveAccount(card))
+                val cardBody = Json.parseToJsonElement(h.writes.last().second).jsonObject
+                assertEquals(
+                    "200000.5".toBigDecimal(),
+                    cardBody
+                        .getValue("credit_limit")
+                        .jsonPrimitive.content
+                        .toBigDecimal(),
+                )
+                assertEquals("31", cardBody.getValue("statement_day").jsonPrimitive.content)
+                assertEquals("A Person", cardBody.getValue("holder_name").jsonPrimitive.content)
+                assertFalse(cardBody.containsKey("currency"))
+                assertFalse(cardBody.containsKey("country_code"))
+                assertEquals(Outcome.Success(Unit), h.repo.saveAccount(accounts[1]))
+                val bankBody = Json.parseToJsonElement(h.writes.last().second).jsonObject
+                assertEquals("00004321", bankBody.getValue("account_number").jsonPrimitive.content)
+                assertEquals("person@example.com", bankBody.getValue("holder_email").jsonPrimitive.content)
+                assertEquals(JsonNull, bankBody["credit_limit"])
+                assertEquals(JsonNull, bankBody["statement_day"])
+            }
+        }
 
     @Test fun readsCategoryHierarchyAndSendsParentWhenCreatingSubcategory() =
         runTest {

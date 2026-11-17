@@ -17,7 +17,6 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
-import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.feature.horizon.R
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorForm
@@ -29,7 +28,15 @@ internal val accountSubtypeLabels =
         "" to R.string.pulse_horizon_account_unspecified,
         "savings" to R.string.pulse_horizon_account_savings,
         "current" to R.string.pulse_horizon_account_current,
-        "other" to R.string.pulse_horizon_account_other,
+    )
+
+internal val cardNetworkLabels =
+    mapOf(
+        "visa" to R.string.pulse_horizon_card_visa,
+        "mastercard" to R.string.pulse_horizon_card_mastercard,
+        "american_express" to R.string.pulse_horizon_card_amex,
+        "diners_club" to R.string.pulse_horizon_card_diners,
+        "rupay" to R.string.pulse_horizon_card_rupay,
     )
 
 @Composable
@@ -38,6 +45,7 @@ internal fun AccountEditorScreen(
     state: AccountsState,
     draft: FinancialAccount,
     onAction: (AccountsAction) -> Unit,
+    currency: String = "",
 ) {
     val enabled = !state.busy
     val draftType = AccountType.entries.firstOrNull { it.value == draft.accountType } ?: type
@@ -105,8 +113,8 @@ internal fun AccountEditorScreen(
                             stringResource(
                                 accountSubtypeLabels[draft.bankAccountSubtype] ?: R.string.pulse_horizon_account_unspecified,
                             ),
-                        options = accountSubtypeLabels.values.map { stringResource(it) },
-                        onSelect = { onAction(AccountsAction.SelectSubtype(accountSubtypeLabels.keys.elementAt(it))) },
+                        options = listOf("savings", "current").map { stringResource(accountSubtypeLabels.getValue(it)) },
+                        onSelect = { onAction(AccountsAction.SelectSubtype(listOf("savings", "current")[it])) },
                         enabled = enabled,
                         labelAbove = true,
                     )
@@ -117,26 +125,89 @@ internal fun AccountEditorScreen(
                 hint = null,
                 icon = R.drawable.pulse_obligation_document,
             ) {
-                PulseText(stringResource(R.string.pulse_horizon_account_currency, draft.currency), style = PulseTextStyle.Label)
                 PulseTextField(
-                    value = draft.countryCode,
-                    onValueChange = { onAction(AccountsAction.ChangeCountry(it)) },
-                    label = stringResource(R.string.pulse_horizon_account_country),
+                    value = draft.holderName,
+                    onValueChange = { onAction(AccountsAction.ChangeHolderName(it)) },
+                    label =
+                        stringResource(
+                            if (draftType ==
+                                AccountType.Bank
+                            ) {
+                                R.string.pulse_horizon_holder_name
+                            } else {
+                                R.string.pulse_horizon_cardholder_name
+                            },
+                        ),
                     enabled = enabled,
                     modifier = Modifier.fillMaxWidth(),
                     labelAbove = true,
-                    placeholder = { PulseText(stringResource(R.string.pulse_horizon_account_country_hint)) },
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, imeAction = ImeAction.Next),
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
                 )
-                PulseTextField(
-                    value = draft.lastFour,
-                    onValueChange = { onAction(AccountsAction.ChangeLastFour(it)) },
-                    label = stringResource(R.string.pulse_horizon_account_last_four),
-                    enabled = enabled,
-                    modifier = Modifier.fillMaxWidth(),
-                    labelAbove = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-                )
+                if (draftType == AccountType.Bank) {
+                    PulseTextField(
+                        value = draft.holderEmail,
+                        onValueChange = { onAction(AccountsAction.ChangeHolderEmail(it)) },
+                        label = stringResource(R.string.pulse_horizon_holder_email),
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        labelAbove = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                    )
+                    PulseTextField(
+                        value = draft.accountNumber,
+                        onValueChange = { onAction(AccountsAction.ChangeAccountNumber(it)) },
+                        label = stringResource(R.string.pulse_horizon_account_number),
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        labelAbove = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, imeAction = ImeAction.Done),
+                    )
+                } else {
+                    PulseTextField(
+                        value = draft.cardType,
+                        onValueChange = { onAction(AccountsAction.ChangeCardType(it)) },
+                        label = stringResource(R.string.pulse_horizon_card_type),
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        labelAbove = true,
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
+                    )
+                    PulseSelectionField(
+                        label = stringResource(R.string.pulse_horizon_card_network),
+                        selected = stringResource(cardNetworkLabels[draft.cardNetwork] ?: R.string.pulse_horizon_account_unspecified),
+                        options = cardNetworkLabels.values.map { stringResource(it) },
+                        onSelect = { onAction(AccountsAction.SelectNetwork(cardNetworkLabels.keys.elementAt(it))) },
+                        enabled = enabled,
+                        labelAbove = true,
+                    )
+                    PulseTextField(
+                        value = draft.lastFour,
+                        onValueChange = { onAction(AccountsAction.ChangeLastFour(it)) },
+                        label = stringResource(R.string.pulse_horizon_account_last_four),
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        labelAbove = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                    )
+                    PulseTextField(
+                        value = draft.creditLimit,
+                        onValueChange = { onAction(AccountsAction.ChangeCreditLimit(it)) },
+                        label = stringResource(R.string.pulse_horizon_credit_limit, currency),
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        labelAbove = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
+                    )
+                    PulseTextField(
+                        value = draft.statementDay,
+                        onValueChange = { onAction(AccountsAction.ChangeStatementDay(it)) },
+                        label = stringResource(R.string.pulse_horizon_statement_day),
+                        enabled = enabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        labelAbove = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+                    )
+                }
             }
         }
     }

@@ -41,11 +41,15 @@ class AccountsViewModelTest {
             val vm = viewModel()
             runCurrent()
 
-            vm.onAction(AccountsAction.Add("USD", AccountType.CreditCard))
+            vm.onAction(AccountsAction.Add(AccountType.CreditCard))
             vm.onAction(AccountsAction.ChangeName("Everyday"))
             vm.onAction(AccountsAction.ChangeInstitution("Sample Bank"))
+            vm.onAction(AccountsAction.ChangeHolderName("A Person"))
+            vm.onAction(AccountsAction.ChangeCardType("Millennia"))
+            vm.onAction(AccountsAction.SelectNetwork("visa"))
+            vm.onAction(AccountsAction.ChangeCreditLimit("200000.50"))
+            vm.onAction(AccountsAction.ChangeStatementDay("31"))
             vm.onAction(AccountsAction.SelectSubtype("savings"))
-            vm.onAction(AccountsAction.ChangeCountry("us"))
             vm.onAction(AccountsAction.ChangeLastFour("12"))
             vm.onAction(AccountsAction.Save)
             runCurrent()
@@ -68,9 +72,12 @@ class AccountsViewModelTest {
                         displayName = "Everyday",
                         institutionName = "Sample Bank",
                         accountType = "credit_card",
-                        currency = "USD",
-                        countryCode = "US",
                         lastFour = "0123",
+                        holderName = "A Person",
+                        cardType = "Millennia",
+                        cardNetwork = "visa",
+                        creditLimit = "200000.50",
+                        statementDay = "31",
                     ),
                 ),
                 repository.saved,
@@ -134,8 +141,31 @@ class AccountsViewModelTest {
             assertEquals(bank, vm.uiState.value.draft)
 
             vm.onAction(AccountsAction.SelectType(AccountType.CreditCard))
-            assertEquals(bank.copy(accountType = "credit_card", bankAccountSubtype = ""), vm.uiState.value.draft)
+            assertEquals(bank.copy(accountType = "credit_card", bankAccountSubtype = "", holderEmail = ""), vm.uiState.value.draft)
         }
+
+    @Test fun bankNumberIsOptionalAndCardLimitsAndStatementDaysAreValidated() {
+        val bank = repository.account
+        assertTrue(AccountsState(draft = bank).canSave)
+        assertTrue(AccountsState(draft = bank.copy(accountNumber = "001234")).canSave)
+        assertFalse(AccountsState(draft = bank.copy(holderEmail = "invalid")).canSave)
+        val card =
+            bank.copy(
+                accountType = "credit_card",
+                bankAccountSubtype = "",
+                holderEmail = "",
+                cardType = "Millennia",
+                cardNetwork = "visa",
+                lastFour = "0123",
+                creditLimit = "100000.50",
+                statementDay = "31",
+            )
+        assertTrue(AccountsState(draft = card).canSave)
+        assertFalse(AccountsState(draft = card.copy(creditLimit = "-1")).canSave)
+        assertFalse(AccountsState(draft = card.copy(statementDay = "32")).canSave)
+        assertFalse(AccountsState(draft = card.copy(statementDay = "0")).canSave)
+        assertFalse(AccountsState(draft = card.copy(cardNetwork = "other")).canSave)
+    }
 
     @Test fun accountListsFilterByTypeAndIncludeArchivedRecords() {
         val bank = repository.account
@@ -151,7 +181,15 @@ class AccountsViewModelTest {
     private fun viewModel() = AccountsViewModel(repository).also { models.put("accounts", it) }
 
     private class FakeAccountsRepository : FinancialAccountsRepository {
-        val account = FinancialAccount(id = 1L, displayName = "Original", institutionName = "Sample Bank", currency = "USD")
+        val account =
+            FinancialAccount(
+                id = 1L,
+                displayName = "Original",
+                institutionName = "Sample Bank",
+                bankAccountSubtype = "savings",
+                holderName = "A Person",
+                holderEmail = "person@example.com",
+            )
         val includeArchived = mutableListOf<Boolean>()
         val saved = mutableListOf<FinancialAccount>()
         var saveResult: Outcome<Unit> = Outcome.Success(Unit)

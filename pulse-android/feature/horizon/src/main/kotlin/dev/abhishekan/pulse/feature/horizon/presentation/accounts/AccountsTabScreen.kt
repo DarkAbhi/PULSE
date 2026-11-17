@@ -102,9 +102,9 @@ internal fun AccountsRoute(
                 }
             draft == null ->
                 listScroll.SaveableStateProvider(type.name) {
-                    AccountListScreen(type, screenState, currency, vm::onAction)
+                    AccountListScreen(type, screenState, vm::onAction)
                 }
-            else -> AccountEditorScreen(type, screenState, draft, vm::onAction)
+            else -> AccountEditorScreen(type, screenState, draft, vm::onAction, currency)
         }
     }
 }
@@ -175,7 +175,6 @@ internal fun AccountsTabContent(
 internal fun AccountListScreen(
     type: AccountType,
     state: AccountsState,
-    currency: String,
     onAction: (AccountsAction) -> Unit,
 ) {
     val accounts = state.accountsOfType(type)
@@ -213,7 +212,7 @@ internal fun AccountListScreen(
                 }
                 if (!state.busy) {
                     PulseFloatingActionButton(
-                        onClick = { onAction(AccountsAction.Add(currency, type)) },
+                        onClick = { onAction(AccountsAction.Add(type)) },
                         modifier = Modifier.align(Alignment.BottomEnd).padding(end = gutter, bottom = bottom + gutter),
                     ) {
                         Icon(painterResource(R.drawable.pulse_purchase_add), contentDescription = stringResource(type.addTitle))

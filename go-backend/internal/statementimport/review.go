@@ -111,6 +111,13 @@ func (s *Service) edit(ctx context.Context, tx pgx.Tx, b query.StatementImportBa
 	if input.Revision != b.Revision {
 		return b, stale
 	}
+	currency, err := profilequery.New(tx).GetCurrency(ctx, b.UserID)
+	if err != nil {
+		return b, dbFailure(ctx, err)
+	}
+	if currency != b.Currency {
+		return b, currencyMismatch
+	}
 	q := query.New(tx)
 	records, err := q.ListRows(ctx, b.ID)
 	if err != nil {
@@ -187,6 +194,13 @@ func (s *Service) commit(ctx context.Context, tx pgx.Tx, b query.StatementImport
 	}
 	if _, fail := s.account(ctx, tx, b.UserID, b.AccountID, true); fail != nil {
 		return b, fail
+	}
+	currency, err := profilequery.New(tx).GetCurrency(ctx, b.UserID)
+	if err != nil {
+		return b, dbFailure(ctx, err)
+	}
+	if currency != b.Currency {
+		return b, currencyMismatch
 	}
 	q := query.New(tx)
 	records, err := q.ListRows(ctx, b.ID)

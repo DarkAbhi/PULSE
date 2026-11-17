@@ -33,9 +33,9 @@ func dbFailure(ctx context.Context, err error) *failure {
 	return internal
 }
 
-func (s *Service) account(ctx context.Context, db query.DBTX, user, id int64, lock bool) (horizonquery.FinancialAccount, *failure) {
+func (s *Service) account(ctx context.Context, db query.DBTX, user, id int64, lock bool) (horizonquery.FinancialAccountDetail, *failure) {
 	q := horizonquery.New(db)
-	var a horizonquery.FinancialAccount
+	var a horizonquery.FinancialAccountDetail
 	var err error
 	if lock {
 		a, err = q.LockFinancialAccount(ctx, horizonquery.LockFinancialAccountParams{ID: id, UserID: user})
@@ -47,13 +47,6 @@ func (s *Service) account(ctx context.Context, db query.DBTX, user, id int64, lo
 	}
 	if a.ArchivedAt.Valid {
 		return a, archived
-	}
-	currency, err := profilequery.New(db).GetCurrency(ctx, user)
-	if err != nil {
-		return a, dbFailure(ctx, err)
-	}
-	if currency != a.Currency {
-		return a, currencyMismatch
 	}
 	return a, nil
 }
@@ -92,9 +85,13 @@ func (s *Service) upload(ctx context.Context, user, accountID int64, file []byte
 	if b, fail, found := findSource(ctx, q, source); found {
 		return b, fail
 	}
+	currency, err := profilequery.New(tx).GetCurrency(ctx, user)
+	if err != nil {
+		return empty, dbFailure(ctx, err)
+	}
 	confirmed := false
 	if fail == nil {
-		if account.Currency != ledger.Profile.Currency {
+		if currency != ledger.Profile.Currency {
 			fail = currencyMismatch
 		} else if account.AccountType != ledger.Profile.AccountType ||
 			(account.BankAccountSubtype != "" && account.BankAccountSubtype != ledger.Profile.AccountSubtype) ||
@@ -114,7 +111,7 @@ func (s *Service) upload(ctx context.Context, user, accountID int64, file []byte
 	}
 	params := query.CreateBatchParams{
 		ID: pgtype.UUID{Bytes: uuid.New(), Valid: true}, UserID: user, AccountID: accountID, SourceSha256: source.SourceSha256,
-		Status: "ready", ProfileID: ledger.Profile.ID, Currency: account.Currency, OcrUsed: doc.OCRUsed,
+		Status: "ready", ProfileID: ledger.Profile.ID, Currency: currency, OcrUsed: doc.OCRUsed,
 		AccountConfirmed: confirmed, ParsedCount: int32(len(ledger.Rows)),
 		ExpiresAt: pgtype.Timestamptz{Time: time.Now().Add(24 * time.Hour), Valid: true},
 	}

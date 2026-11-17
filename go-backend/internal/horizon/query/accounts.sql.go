@@ -11,48 +11,39 @@ import (
 )
 
 const createFinancialAccount = `-- name: CreateFinancialAccount :one
-INSERT INTO financial_accounts (user_id, display_name, institution_name, account_type, bank_account_subtype, currency, country_code, last_four)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, user_id, display_name, institution_name, account_type, bank_account_subtype, currency, country_code, last_four, archived_at, created_at, updated_at
+INSERT INTO financial_accounts (user_id, display_name, account_type)
+VALUES ($1, $2, $3) RETURNING id
 `
 
 type CreateFinancialAccountParams struct {
-	UserID             int64
-	DisplayName        string
-	InstitutionName    string
-	AccountType        string
-	BankAccountSubtype string
-	Currency           string
-	CountryCode        string
-	LastFour           string
+	UserID      int64
+	DisplayName string
+	AccountType string
 }
 
-func (q *Queries) CreateFinancialAccount(ctx context.Context, arg CreateFinancialAccountParams) (FinancialAccount, error) {
-	row := q.db.QueryRow(ctx, createFinancialAccount,
-		arg.UserID,
-		arg.DisplayName,
-		arg.InstitutionName,
-		arg.AccountType,
-		arg.BankAccountSubtype,
-		arg.Currency,
-		arg.CountryCode,
-		arg.LastFour,
-	)
-	var i FinancialAccount
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.DisplayName,
-		&i.InstitutionName,
-		&i.AccountType,
-		&i.BankAccountSubtype,
-		&i.Currency,
-		&i.CountryCode,
-		&i.LastFour,
-		&i.ArchivedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+func (q *Queries) CreateFinancialAccount(ctx context.Context, arg CreateFinancialAccountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, createFinancialAccount, arg.UserID, arg.DisplayName, arg.AccountType)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
+const deleteBankAccountDetails = `-- name: DeleteBankAccountDetails :exec
+DELETE FROM bank_accounts WHERE account_id = $1
+`
+
+func (q *Queries) DeleteBankAccountDetails(ctx context.Context, accountID int64) error {
+	_, err := q.db.Exec(ctx, deleteBankAccountDetails, accountID)
+	return err
+}
+
+const deleteCreditCardDetails = `-- name: DeleteCreditCardDetails :exec
+DELETE FROM credit_cards WHERE account_id = $1
+`
+
+func (q *Queries) DeleteCreditCardDetails(ctx context.Context, accountID int64) error {
+	_, err := q.db.Exec(ctx, deleteCreditCardDetails, accountID)
+	return err
 }
 
 const financialAccountHasTransactions = `-- name: FinancialAccountHasTransactions :one
@@ -73,7 +64,7 @@ func (q *Queries) FinancialAccountHasTransactions(ctx context.Context, arg Finan
 }
 
 const getFinancialAccount = `-- name: GetFinancialAccount :one
-SELECT id, user_id, display_name, institution_name, account_type, bank_account_subtype, currency, country_code, last_four, archived_at, created_at, updated_at FROM financial_accounts WHERE id = $1 AND user_id = $2
+SELECT id, user_id, display_name, account_type, archived_at, created_at, updated_at, institution_name, bank_account_subtype, last_four, account_number, holder_name, holder_email, card_type, card_network, credit_limit, statement_day FROM financial_account_details WHERE id = $1 AND user_id = $2
 `
 
 type GetFinancialAccountParams struct {
@@ -81,28 +72,33 @@ type GetFinancialAccountParams struct {
 	UserID int64
 }
 
-func (q *Queries) GetFinancialAccount(ctx context.Context, arg GetFinancialAccountParams) (FinancialAccount, error) {
+func (q *Queries) GetFinancialAccount(ctx context.Context, arg GetFinancialAccountParams) (FinancialAccountDetail, error) {
 	row := q.db.QueryRow(ctx, getFinancialAccount, arg.ID, arg.UserID)
-	var i FinancialAccount
+	var i FinancialAccountDetail
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.DisplayName,
-		&i.InstitutionName,
 		&i.AccountType,
-		&i.BankAccountSubtype,
-		&i.Currency,
-		&i.CountryCode,
-		&i.LastFour,
 		&i.ArchivedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.InstitutionName,
+		&i.BankAccountSubtype,
+		&i.LastFour,
+		&i.AccountNumber,
+		&i.HolderName,
+		&i.HolderEmail,
+		&i.CardType,
+		&i.CardNetwork,
+		&i.CreditLimit,
+		&i.StatementDay,
 	)
 	return i, err
 }
 
 const listFinancialAccounts = `-- name: ListFinancialAccounts :many
-SELECT id, user_id, display_name, institution_name, account_type, bank_account_subtype, currency, country_code, last_four, archived_at, created_at, updated_at FROM financial_accounts
+SELECT id, user_id, display_name, account_type, archived_at, created_at, updated_at, institution_name, bank_account_subtype, last_four, account_number, holder_name, holder_email, card_type, card_network, credit_limit, statement_day FROM financial_account_details
 WHERE user_id = $1 AND ($2::boolean OR archived_at IS NULL)
 ORDER BY archived_at IS NOT NULL, lower(display_name), id
 `
@@ -112,28 +108,33 @@ type ListFinancialAccountsParams struct {
 	IncludeArchived bool
 }
 
-func (q *Queries) ListFinancialAccounts(ctx context.Context, arg ListFinancialAccountsParams) ([]FinancialAccount, error) {
+func (q *Queries) ListFinancialAccounts(ctx context.Context, arg ListFinancialAccountsParams) ([]FinancialAccountDetail, error) {
 	rows, err := q.db.Query(ctx, listFinancialAccounts, arg.UserID, arg.IncludeArchived)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []FinancialAccount
+	var items []FinancialAccountDetail
 	for rows.Next() {
-		var i FinancialAccount
+		var i FinancialAccountDetail
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
 			&i.DisplayName,
-			&i.InstitutionName,
 			&i.AccountType,
-			&i.BankAccountSubtype,
-			&i.Currency,
-			&i.CountryCode,
-			&i.LastFour,
 			&i.ArchivedAt,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.InstitutionName,
+			&i.BankAccountSubtype,
+			&i.LastFour,
+			&i.AccountNumber,
+			&i.HolderName,
+			&i.HolderEmail,
+			&i.CardType,
+			&i.CardNetwork,
+			&i.CreditLimit,
+			&i.StatementDay,
 		); err != nil {
 			return nil, err
 		}
@@ -146,7 +147,8 @@ func (q *Queries) ListFinancialAccounts(ctx context.Context, arg ListFinancialAc
 }
 
 const lockFinancialAccount = `-- name: LockFinancialAccount :one
-SELECT id, user_id, display_name, institution_name, account_type, bank_account_subtype, currency, country_code, last_four, archived_at, created_at, updated_at FROM financial_accounts WHERE id = $1 AND user_id = $2 FOR UPDATE
+SELECT d.id, d.user_id, d.display_name, d.account_type, d.archived_at, d.created_at, d.updated_at, d.institution_name, d.bank_account_subtype, d.last_four, d.account_number, d.holder_name, d.holder_email, d.card_type, d.card_network, d.credit_limit, d.statement_day FROM financial_account_details d JOIN financial_accounts a ON a.id = d.id
+WHERE a.id = $1 AND a.user_id = $2 FOR UPDATE OF a
 `
 
 type LockFinancialAccountParams struct {
@@ -154,29 +156,98 @@ type LockFinancialAccountParams struct {
 	UserID int64
 }
 
-func (q *Queries) LockFinancialAccount(ctx context.Context, arg LockFinancialAccountParams) (FinancialAccount, error) {
+func (q *Queries) LockFinancialAccount(ctx context.Context, arg LockFinancialAccountParams) (FinancialAccountDetail, error) {
 	row := q.db.QueryRow(ctx, lockFinancialAccount, arg.ID, arg.UserID)
-	var i FinancialAccount
+	var i FinancialAccountDetail
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.DisplayName,
-		&i.InstitutionName,
 		&i.AccountType,
-		&i.BankAccountSubtype,
-		&i.Currency,
-		&i.CountryCode,
-		&i.LastFour,
 		&i.ArchivedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.InstitutionName,
+		&i.BankAccountSubtype,
+		&i.LastFour,
+		&i.AccountNumber,
+		&i.HolderName,
+		&i.HolderEmail,
+		&i.CardType,
+		&i.CardNetwork,
+		&i.CreditLimit,
+		&i.StatementDay,
 	)
 	return i, err
 }
 
+const saveBankAccountDetails = `-- name: SaveBankAccountDetails :exec
+INSERT INTO bank_accounts (account_id, institution_name, account_number, holder_name, holder_email, bank_account_subtype, last_four)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (account_id) DO UPDATE SET institution_name = EXCLUDED.institution_name,
+account_number = EXCLUDED.account_number, holder_name = EXCLUDED.holder_name,
+holder_email = EXCLUDED.holder_email, bank_account_subtype = EXCLUDED.bank_account_subtype, last_four = EXCLUDED.last_four
+`
+
+type SaveBankAccountDetailsParams struct {
+	AccountID          int64
+	InstitutionName    string
+	AccountNumber      string
+	HolderName         string
+	HolderEmail        string
+	BankAccountSubtype string
+	LastFour           string
+}
+
+func (q *Queries) SaveBankAccountDetails(ctx context.Context, arg SaveBankAccountDetailsParams) error {
+	_, err := q.db.Exec(ctx, saveBankAccountDetails,
+		arg.AccountID,
+		arg.InstitutionName,
+		arg.AccountNumber,
+		arg.HolderName,
+		arg.HolderEmail,
+		arg.BankAccountSubtype,
+		arg.LastFour,
+	)
+	return err
+}
+
+const saveCreditCardDetails = `-- name: SaveCreditCardDetails :exec
+INSERT INTO credit_cards (account_id, institution_name, card_type, card_network, last_four, holder_name, credit_limit, statement_day)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT (account_id) DO UPDATE SET institution_name = EXCLUDED.institution_name,
+card_type = EXCLUDED.card_type, card_network = EXCLUDED.card_network, last_four = EXCLUDED.last_four,
+holder_name = EXCLUDED.holder_name, credit_limit = EXCLUDED.credit_limit, statement_day = EXCLUDED.statement_day
+`
+
+type SaveCreditCardDetailsParams struct {
+	AccountID       int64
+	InstitutionName string
+	CardType        string
+	CardNetwork     string
+	LastFour        string
+	HolderName      string
+	CreditLimit     float64
+	StatementDay    int32
+}
+
+func (q *Queries) SaveCreditCardDetails(ctx context.Context, arg SaveCreditCardDetailsParams) error {
+	_, err := q.db.Exec(ctx, saveCreditCardDetails,
+		arg.AccountID,
+		arg.InstitutionName,
+		arg.CardType,
+		arg.CardNetwork,
+		arg.LastFour,
+		arg.HolderName,
+		arg.CreditLimit,
+		arg.StatementDay,
+	)
+	return err
+}
+
 const setFinancialAccountArchived = `-- name: SetFinancialAccountArchived :one
 UPDATE financial_accounts SET archived_at = CASE WHEN $3::boolean THEN COALESCE(archived_at, CURRENT_TIMESTAMP) ELSE NULL END,
-updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND user_id = $2 RETURNING id, user_id, display_name, institution_name, account_type, bank_account_subtype, currency, country_code, last_four, archived_at, created_at, updated_at
+updated_at = CURRENT_TIMESTAMP WHERE id = $1 AND user_id = $2 RETURNING id
 `
 
 type SetFinancialAccountArchivedParams struct {
@@ -185,70 +256,33 @@ type SetFinancialAccountArchivedParams struct {
 	Archived bool
 }
 
-func (q *Queries) SetFinancialAccountArchived(ctx context.Context, arg SetFinancialAccountArchivedParams) (FinancialAccount, error) {
+func (q *Queries) SetFinancialAccountArchived(ctx context.Context, arg SetFinancialAccountArchivedParams) (int64, error) {
 	row := q.db.QueryRow(ctx, setFinancialAccountArchived, arg.ID, arg.UserID, arg.Archived)
-	var i FinancialAccount
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.DisplayName,
-		&i.InstitutionName,
-		&i.AccountType,
-		&i.BankAccountSubtype,
-		&i.Currency,
-		&i.CountryCode,
-		&i.LastFour,
-		&i.ArchivedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
 const updateFinancialAccount = `-- name: UpdateFinancialAccount :one
-UPDATE financial_accounts SET display_name = $3, institution_name = $4, account_type = $5,
-bank_account_subtype = $6, currency = $7, country_code = $8, last_four = $9, updated_at = CURRENT_TIMESTAMP
-WHERE id = $1 AND user_id = $2 RETURNING id, user_id, display_name, institution_name, account_type, bank_account_subtype, currency, country_code, last_four, archived_at, created_at, updated_at
+UPDATE financial_accounts SET display_name = $3, account_type = $4, updated_at = CURRENT_TIMESTAMP
+WHERE id = $1 AND user_id = $2 RETURNING id
 `
 
 type UpdateFinancialAccountParams struct {
-	ID                 int64
-	UserID             int64
-	DisplayName        string
-	InstitutionName    string
-	AccountType        string
-	BankAccountSubtype string
-	Currency           string
-	CountryCode        string
-	LastFour           string
+	ID          int64
+	UserID      int64
+	DisplayName string
+	AccountType string
 }
 
-func (q *Queries) UpdateFinancialAccount(ctx context.Context, arg UpdateFinancialAccountParams) (FinancialAccount, error) {
+func (q *Queries) UpdateFinancialAccount(ctx context.Context, arg UpdateFinancialAccountParams) (int64, error) {
 	row := q.db.QueryRow(ctx, updateFinancialAccount,
 		arg.ID,
 		arg.UserID,
 		arg.DisplayName,
-		arg.InstitutionName,
 		arg.AccountType,
-		arg.BankAccountSubtype,
-		arg.Currency,
-		arg.CountryCode,
-		arg.LastFour,
 	)
-	var i FinancialAccount
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.DisplayName,
-		&i.InstitutionName,
-		&i.AccountType,
-		&i.BankAccountSubtype,
-		&i.Currency,
-		&i.CountryCode,
-		&i.LastFour,
-		&i.ArchivedAt,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }

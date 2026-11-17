@@ -93,7 +93,13 @@ internal fun AccountInitialsBadge(
     name: String,
     compact: Boolean = false,
 ) {
-    val initials = name.asSequence().filter(Char::isLetterOrDigit).take(2).joinToString("").uppercase()
+    val initials =
+        name
+            .asSequence()
+            .filter(Char::isLetterOrDigit)
+            .take(2)
+            .joinToString("")
+            .uppercase()
     Box(
         Modifier
             .size(if (compact) PulseSpacing.cardPadding else PulseSpacing.extraLarge)
@@ -135,7 +141,8 @@ internal fun FinancialAccountRow(
         listOfNotNull(
             account.institutionName,
             account.lastFour.takeIf { it.isNotBlank() }?.let { stringResource(R.string.pulse_horizon_account_masked_digits, it) },
-            account.currency.takeIf { it.isNotBlank() },
+            account.cardType.takeIf { it.isNotBlank() },
+            cardNetworkLabels[account.cardNetwork]?.let { stringResource(it) },
         ).joinToString(" · ")
 
     BoxWithConstraints(Modifier.fillMaxWidth()) {

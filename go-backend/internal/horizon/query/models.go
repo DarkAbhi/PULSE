@@ -5,20 +5,27 @@
 package query
 
 import (
+	"database/sql"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type FinancialAccount struct {
+type FinancialAccountDetail struct {
 	ID                 int64
 	UserID             int64
 	DisplayName        string
-	InstitutionName    string
 	AccountType        string
-	BankAccountSubtype string
-	Currency           string
-	CountryCode        string
-	LastFour           string
 	ArchivedAt         pgtype.Timestamptz
 	CreatedAt          pgtype.Timestamptz
 	UpdatedAt          pgtype.Timestamptz
+	InstitutionName    string
+	BankAccountSubtype string
+	LastFour           string
+	AccountNumber      string
+	HolderName         string
+	HolderEmail        string
+	CardType           string
+	CardNetwork        string
+	CreditLimit        *float64
+	StatementDay       sql.NullInt32
 }

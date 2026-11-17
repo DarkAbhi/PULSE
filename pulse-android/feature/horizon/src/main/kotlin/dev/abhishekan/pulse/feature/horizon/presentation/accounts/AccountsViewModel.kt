@@ -25,7 +25,20 @@ internal class AccountsViewModel(
         if (_uiState.value.busy) return
         when (action) {
             AccountsAction.Refresh -> submit { load() }
-            is AccountsAction.Add -> setDraft(FinancialAccount(currency = action.currency, accountType = action.type.value))
+            is AccountsAction.Add ->
+                setDraft(
+                    FinancialAccount(
+                        accountType = action.type.value,
+                        bankAccountSubtype =
+                            if (action.type ==
+                                AccountType.Bank
+                            ) {
+                                "savings"
+                            } else {
+                                ""
+                            },
+                    ),
+                )
             is AccountsAction.Edit -> setDraft(action.account)
             AccountsAction.Cancel -> setDraft(null)
             is AccountsAction.ChangeName ->
@@ -34,15 +47,63 @@ internal class AccountsViewModel(
                 updateDraft { if (action.value.length <= 150) copy(institutionName = action.value) else this }
             is AccountsAction.SelectType ->
                 updateDraft {
-                    if (accountType == action.type.value) this else copy(accountType = action.type.value, bankAccountSubtype = "")
+                    if (accountType ==
+                        action.type.value
+                    ) {
+                        this
+                    } else {
+                        copy(
+                            accountType = action.type.value,
+                            bankAccountSubtype =
+                                if (action.type ==
+                                    AccountType.Bank
+                                ) {
+                                    "savings"
+                                } else {
+                                    ""
+                                },
+                            accountNumber = "",
+                            holderEmail = "",
+                            cardType = "",
+                            cardNetwork = "",
+                            creditLimit = "",
+                            statementDay = "",
+                            lastFour = "",
+                        )
+                    }
                 }
             is AccountsAction.SelectSubtype ->
                 updateDraft { if (accountType == AccountType.Bank.value) copy(bankAccountSubtype = action.value) else this }
-            is AccountsAction.ChangeCountry ->
+            is AccountsAction.ChangeHolderName -> updateDraft { if (action.value.length <= 150) copy(holderName = action.value) else this }
+            is AccountsAction.ChangeHolderEmail ->
                 updateDraft {
-                    val value = action.value
-                    if (value.length <= 2 && value.all { it.uppercaseChar() in 'A'..'Z' }) {
-                        copy(countryCode = value.uppercase())
+                    if (action.value.length <=
+                        254
+                    ) {
+                        copy(holderEmail = action.value)
+                    } else {
+                        this
+                    }
+                }
+            is AccountsAction.ChangeAccountNumber ->
+                updateDraft {
+                    if (action.value.length <= 34 &&
+                        action.value.all { it in '0'..'9' || it in 'A'..'Z' || it in 'a'..'z' }
+                    ) {
+                        copy(accountNumber = action.value)
+                    } else {
+                        this
+                    }
+                }
+            is AccountsAction.ChangeCardType -> updateDraft { if (action.value.length <= 150) copy(cardType = action.value) else this }
+            is AccountsAction.SelectNetwork -> updateDraft { copy(cardNetwork = action.value) }
+            is AccountsAction.ChangeCreditLimit -> updateDraft { if (action.value.length <= 32) copy(creditLimit = action.value) else this }
+            is AccountsAction.ChangeStatementDay ->
+                updateDraft {
+                    if (action.value.length <= 2 &&
+                        action.value.all { it in '0'..'9' }
+                    ) {
+                        copy(statementDay = action.value)
                     } else {
                         this
                     }
@@ -132,8 +193,20 @@ internal data class AccountsState(
                 draft != null &&
                 draft.displayName.isNotBlank() &&
                 draft.institutionName.isNotBlank() &&
-                (draft.countryCode.isEmpty() || draft.countryCode.length == 2) &&
-                (draft.lastFour.isEmpty() || draft.lastFour.length == 4)
+                draft.holderName.isNotBlank() &&
+                if (draft.accountType == AccountType.Bank.value) {
+                    draft.bankAccountSubtype in setOf("savings", "current") &&
+                        draft.holderEmail.matches(Regex("[^\\s@]+@[^\\s@]+")) &&
+                        (draft.accountNumber.isEmpty() || draft.accountNumber.length in 4..34)
+                } else {
+                    draft.cardType.isNotBlank() &&
+                        draft.cardNetwork in setOf("visa", "mastercard", "american_express", "diners_club", "rupay") &&
+                        draft.lastFour.length == 4 &&
+                        draft.creditLimit.toBigDecimalOrNull()?.let {
+                            it.signum() >= 0 && it < "1000000000000000".toBigDecimal()
+                        } == true &&
+                        draft.statementDay.toIntOrNull() in 1..31
+                }
 
     sealed interface Request {
         data object Idle : Request
@@ -150,7 +223,6 @@ internal sealed interface AccountsAction {
     data object Refresh : AccountsAction
 
     data class Add(
-        val currency: String,
         val type: AccountType,
     ) : AccountsAction
 
@@ -176,7 +248,31 @@ internal sealed interface AccountsAction {
         val value: String,
     ) : AccountsAction
 
-    data class ChangeCountry(
+    data class ChangeHolderName(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeHolderEmail(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeAccountNumber(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeCardType(
+        val value: String,
+    ) : AccountsAction
+
+    data class SelectNetwork(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeCreditLimit(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeStatementDay(
         val value: String,
     ) : AccountsAction
 

@@ -61,15 +61,20 @@ class PulseHorizonRepository(
         request {
             api.accounts(includeArchived).accounts.map {
                 FinancialAccount(
-                    it.id,
-                    it.displayName,
-                    it.institutionName,
-                    it.accountType,
-                    it.bankAccountSubtype,
-                    it.currency,
-                    it.countryCode,
-                    it.lastFour,
-                    it.archivedAt != null,
+                    id = it.id,
+                    displayName = it.displayName,
+                    institutionName = it.institutionName,
+                    accountType = it.accountType,
+                    bankAccountSubtype = it.bankAccountSubtype,
+                    lastFour = it.lastFour,
+                    archived = it.archivedAt != null,
+                    accountNumber = it.accountNumber,
+                    holderName = it.holderName,
+                    holderEmail = it.holderEmail,
+                    cardType = it.cardType,
+                    cardNetwork = it.cardNetwork,
+                    creditLimit = it.creditLimit?.content.orEmpty(),
+                    statementDay = it.statementDay?.toString().orEmpty(),
                 )
             }
         }
@@ -84,9 +89,14 @@ class PulseHorizonRepository(
                     put("institution_name", account.institutionName)
                     put("account_type", account.accountType)
                     put("bank_account_subtype", account.bankAccountSubtype)
-                    put("currency", account.currency)
-                    put("country_code", account.countryCode)
                     put("last_four", account.lastFour)
+                    put("account_number", account.accountNumber)
+                    put("holder_name", account.holderName)
+                    put("holder_email", account.holderEmail)
+                    put("card_type", account.cardType)
+                    put("card_network", account.cardNetwork)
+                    put("credit_limit", account.creditLimit.toBigDecimalOrNull()?.let { JsonPrimitive(it) } ?: JsonNull)
+                    put("statement_day", account.statementDay.toIntOrNull()?.let { JsonPrimitive(it) } ?: JsonNull)
                 },
             )
         }

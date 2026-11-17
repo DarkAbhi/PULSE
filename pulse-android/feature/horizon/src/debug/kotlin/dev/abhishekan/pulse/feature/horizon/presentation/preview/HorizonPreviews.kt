@@ -68,7 +68,6 @@ private val sampleAccount =
         id = 1L,
         displayName = "Everyday account",
         institutionName = "Sample Bank",
-        currency = "USD",
         bankAccountSubtype = "savings",
         lastFour = "4821",
     )
@@ -111,7 +110,7 @@ private fun AccountsOverviewPreview() {
 @Composable
 private fun BankAccountsPreview() {
     PulseTheme(false) {
-        AccountListScreen(AccountType.Bank, sampleAccounts, "USD", onAction = {})
+        AccountListScreen(AccountType.Bank, sampleAccounts, onAction = {})
     }
 }
 
@@ -119,7 +118,7 @@ private fun BankAccountsPreview() {
 @Composable
 private fun CreditCardsPreview() {
     PulseTheme(true) {
-        AccountListScreen(AccountType.CreditCard, sampleAccounts, "USD", onAction = {})
+        AccountListScreen(AccountType.CreditCard, sampleAccounts, onAction = {})
     }
 }
 

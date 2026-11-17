@@ -18,4 +18,5 @@ data class HorizonTransaction(
     val notes: String?,
     val accountId: Long? = null,
     val source: String = "manual",
+    val originalNarration: String = "",
 )

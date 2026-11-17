@@ -69,7 +69,7 @@ class StatementImportViewModelTest {
             runCurrent()
 
             assertEquals(2, repo.committedRevision)
-            assertEquals(false, repo.editedRow?.included)
+            assertEquals(false, repo.edit?.second?.included)
             val completed = StatementImportEvent.Completed(StatementCommit(0, 0, 1))
             assertEquals(StatementImportExit.Pending(completed), vm.uiState.first().exit)
             vm.onAction(StatementImportAction.ExitHandled(completed))
@@ -77,6 +77,28 @@ class StatementImportViewModelTest {
             runCurrent()
             assertEquals(StatementImportExit.Handled, vm.uiState.first().exit)
             assertEquals(1, repo.commitCount)
+        }
+
+    @Test fun suggestedDescriptionAndCategoryCanBeOverriddenBeforeCommit() =
+        runTest {
+            val vm = StatementImportViewModel(accounts, repo)
+            vm.onAction(StatementImportAction.SelectAccount(sampleAccount))
+            vm.onAction(StatementImportAction.Upload { byteArrayOf(1) })
+            runCurrent()
+
+            val suggestion = checkNotNull(vm.uiState.value.page).rows.single()
+            assertEquals("Zerodha payment", suggestion.description)
+            assertEquals(30L, suggestion.categoryId)
+
+            val edited = suggestion.copy(description = "Brokerage payment", categoryId = 31L)
+            vm.onAction(StatementImportAction.ConfirmAccount(true))
+            vm.onAction(StatementImportAction.EditRow(edited))
+            vm.onAction(StatementImportAction.Commit)
+            runCurrent()
+
+            assertEquals(suggestion to edited, repo.edit)
+            assertEquals(edited, checkNotNull(vm.uiState.value.page).rows.single())
+            assertEquals(2, repo.committedRevision)
         }
 
     @Test fun aReconciliationFailureNeverBecomesAReadyPreview() =
@@ -122,12 +144,12 @@ class StatementImportViewModelTest {
         }
 
     private class ImportRepository : StatementImportRepository {
-        val row = StatementRow(1, "2026-01-02", "Test transaction", "10.00", "debit", null, true, false)
+        val row = StatementRow(1, "2026-01-02", "Zerodha payment", "10.00", "debit", 30L, true, false)
         private val batch = StatementBatch("test", "INR", 1, false, true, 1, 0)
         private val rows = StatementRows(listOf(row), 1, 100, 1)
         var uploadFailure: String? = null
         var cancelFailure: String? = null
-        var editedRow: StatementRow? = null
+        var edit: Pair<StatementRow, StatementRow>? = null
         var committedRevision: Int? = null
         var commitCount = 0
         var cancelCount = 0
@@ -153,7 +175,7 @@ class StatementImportViewModelTest {
             confirmed: Boolean,
             changes: List<Pair<StatementRow, StatementRow>>,
         ): StatementResponse<StatementBatch> {
-            editedRow = changes.single().second
+            edit = changes.single()
             return StatementResponse.Success(batch.copy(revision = 2, accountConfirmationRequired = !confirmed))
         }
 

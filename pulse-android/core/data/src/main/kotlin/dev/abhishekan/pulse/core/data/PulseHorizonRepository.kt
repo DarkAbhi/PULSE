@@ -190,7 +190,7 @@ class PulseHorizonRepository(
         StatementBatch(id, currency, revision, ocrUsed, accountConfirmationRequired, counts.parsed, counts.duplicates)
 
     private fun StatementRowDto.statementRow() =
-        StatementRow(id, date, description, amount, type, categoryId, included, duplicateStatus == "skipped", warnings)
+        StatementRow(id, date, description, amount, type, categoryId, included, duplicateStatus == "skipped", warnings, originalNarration)
 
     override suspend fun overview() = request { api.overview().domain() }
 

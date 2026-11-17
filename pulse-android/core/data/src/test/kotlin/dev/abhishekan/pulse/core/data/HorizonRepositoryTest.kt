@@ -4,6 +4,8 @@ import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.HorizonRecord
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.SessionState
+import dev.abhishekan.pulse.core.domain.model.StatementBatch
+import dev.abhishekan.pulse.core.domain.model.StatementResponse
 import dev.abhishekan.pulse.core.network.HorizonApi
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
@@ -25,9 +27,11 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -63,6 +67,7 @@ class HorizonRepositoryTest {
         var failure: Exception? = null
         var malformed = false
         var categories = "null"
+        var originalNarration: String? = null
         var query: Parameters = Parameters.Empty
         val writes = mutableListOf<Pair<String, String>>()
         private val transaction = (
@@ -96,6 +101,14 @@ class HorizonRepositoryTest {
                     when {
                         path == "/api/auth/login" -> """{"username":"fixture-user"}"""
                         malformed -> """{"currency":null}"""
+                        path == "/api/horizon/statement-imports/test/rows" -> {
+                            if (mutation) {
+                                """{"id":"test","currency":"INR","revision":2,"ocr_used":false,"account_confirmation_required":false,"counts":{"parsed":1,"duplicates":0}}"""
+                            } else {
+                                val original = originalNarration?.let { ",\"original_narration\":${JsonPrimitive(it)}" }.orEmpty()
+                                """{"rows":[{"id":1,"date":"2026-11-01","description":"Zerodha payment","amount":"10.00","type":"debit","category_id":30,"included":true,"duplicate_status":"new"$original}],"page":1,"page_size":100,"total":1}"""
+                            }
+                        }
                         mutation -> "{}"
                         path == "/api/horizon" -> (
                             """{"currency":"USD",""" +
@@ -121,7 +134,10 @@ class HorizonRepositoryTest {
                         )
                         path == "/api/horizon/transactions" -> {
                             query = request.url.parameters
-                            """{"transactions":[$transaction],"page":3,"page_size":20,"total":41,"total_pages":3}"""
+                            val item =
+                                originalNarration?.let { transaction.dropLast(1) + ",\"original_narration\":${JsonPrimitive(it)}}" }
+                                    ?: transaction
+                            """{"transactions":[$item],"page":3,"page_size":20,"total":41,"total_pages":3}"""
                         }
                         path.endsWith("/transactions") -> "[$transaction]"
                         path == "/api/next-month-purchases" -> """{"items":null,"total":0}"""
@@ -179,6 +195,38 @@ class HorizonRepositoryTest {
                 val (path, body) = h.writes.single()
                 assertEquals("POST /api/horizon/categories", path)
                 assertEquals(JsonPrimitive(parent.id), Json.parseToJsonElement(body).jsonObject["parent_id"])
+            }
+        }
+
+    @Test fun originalStatementNarrationIsReadWithoutBeingSentAsAnEdit() =
+        runTest {
+            Harness().use { h ->
+                h.login()
+                h.originalNarration = "UPI/DR/104332491964/ZEROD HA/HDFC/zerodha/reference"
+                val preview = (h.repo.statementRows("test", 1) as StatementResponse.Success).value.rows.single()
+                assertEquals("Zerodha payment", preview.description)
+                assertEquals(h.originalNarration, preview.originalNarration)
+                val ledger = (h.repo.transactions(1, "", null) as Outcome.Success).value.items.single()
+                assertEquals(h.originalNarration, ledger.originalNarration)
+
+                val batch = StatementBatch("test", "INR", 1, false, false, 1, 0)
+                val edited = preview.copy(description = "Brokerage payment", categoryId = 31L)
+                assertTrue(h.repo.editStatement(batch, true, listOf(preview to edited)) is StatementResponse.Success)
+                val payload = h.writes.last().second
+                val body = Json.parseToJsonElement(payload).jsonObject
+                val change =
+                    body
+                        .getValue("changes")
+                        .jsonArray
+                        .single()
+                        .jsonObject
+                assertEquals(JsonPrimitive("Brokerage payment"), change["description"])
+                assertEquals(JsonPrimitive(31L), change["category_id"])
+                assertFalse(change.containsKey("original_narration"))
+
+                h.originalNarration = null
+                val legacy = (h.repo.statementRows("test", 1) as StatementResponse.Success).value.rows.single()
+                assertEquals("", legacy.originalNarration)
             }
         }
 

@@ -229,6 +229,13 @@ export default function TransactionDialog({
             />
           </div>
 
+          {editingTransaction?.original_narration && (
+            <details className="min-w-0 text-sm text-muted-foreground">
+              <summary className="w-fit cursor-pointer rounded py-2 focus-visible:outline-2 focus-visible:outline-ring">Original statement narration</summary>
+              <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{editingTransaction.original_narration}</p>
+            </details>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">Amount ({currencySymbol(currency)})</label>

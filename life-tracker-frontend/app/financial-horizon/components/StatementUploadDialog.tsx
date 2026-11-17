@@ -202,10 +202,16 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
                   <label className="min-w-0">
                     <span className={fieldLabel}>Category</span>
                     <Select className={inputClass} aria-label={`Category for row ${row.id}`} value={row.category_id ?? ""} disabled={disabled} onChange={e => change({ id: row.id, category_id: e.target.value ? Number(e.target.value) : null })}>
-                      <option value="">Other</option>
+                      <option value="">Uncategorized</option>
                       <CategoryOptions categories={categories} />
                     </Select>
                   </label>
+                  {original.original_narration && (
+                    <details className="min-w-0 col-span-full text-muted-foreground">
+                      <summary className="w-fit cursor-pointer rounded py-2 focus-visible:outline-2 focus-visible:outline-ring" aria-label={`Original statement narration for row ${row.id}`}>Original statement narration</summary>
+                      <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{original.original_narration}</p>
+                    </details>
+                  )}
                 </li>
               );
             })}

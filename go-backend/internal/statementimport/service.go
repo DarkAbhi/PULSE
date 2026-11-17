@@ -9,7 +9,6 @@ import (
 	"math/big"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	horizonquery "github.com/DarkAbhi/life-backend/internal/horizon/query"
 	profilequery "github.com/DarkAbhi/life-backend/internal/profile/query"
@@ -210,38 +209,57 @@ func savePreview(ctx context.Context, tx pgx.Tx, b query.StatementImportBatch, l
 	if err != nil {
 		return err
 	}
-	byName := make(map[string]int64, len(categories))
+	paths := defaultCategoryPaths(categories)
 	available := make(map[int64]bool, len(categories))
 	for _, item := range categories {
-		byName[strings.ToLower(item.Name)] = item.ID
 		available[item.ID] = true
 	}
 	manual, err := manualMatches(ctx, tx, b, ledger)
 	if err != nil {
 		return err
 	}
-	known := map[string]pgtype.Int8{}
+	suggestions := make([]narrationSuggestion, len(ledger))
+	legacyKeys := make([]string, len(ledger))
+	keys := make([]string, 0, len(ledger))
 	for i, row := range ledger {
-		category := inferredCategory(row.Description, byName)
-		if key := merchantKey(row.Description); key != "" {
-			learned, found := known[key]
-			if !found {
-				id, err := q.MerchantCategory(ctx, query.MerchantCategoryParams{UserID: b.UserID, MerchantKey: key})
-				if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-					return err
-				}
-				learned = pgtype.Int8{Int64: id, Valid: available[id]}
-				known[key] = learned
-			}
-			if learned.Valid {
-				category = &learned.Int64
+		suggestions[i] = suggestNarration(row)
+		if dup[i] || suggestions[i].key == "" {
+			continue
+		}
+		keys = append(keys, suggestions[i].key)
+		// The old key did not reliably distinguish credits from purchases.
+		if row.Type == "debit" {
+			legacyKeys[i] = legacyMerchantKey(row.Description)
+			if legacyKeys[i] != "" {
+				keys = append(keys, legacyKeys[i])
 			}
 		}
+	}
+	rules, err := q.ListMerchantCategories(ctx, query.ListMerchantCategoriesParams{
+		UserID: b.UserID, MerchantKeys: keys,
+	})
+	if err != nil {
+		return err
+	}
+	learned := make(map[string]int64, len(rules))
+	for _, rule := range rules {
+		if available[rule.CategoryID] {
+			learned[rule.MerchantKey] = rule.CategoryID
+		}
+	}
+	for i, row := range ledger {
+		suggestion := suggestions[i]
+		category := suggestedCategoryID(paths, suggestion.categorySuggestion)
+		if id := learned[suggestion.key]; !dup[i] && id != 0 {
+			category = &id
+		} else if id := learned[legacyKeys[i]]; id != 0 {
+			category = &id
+		}
 		id := int32(i + 1)
-		name := string([]rune(row.Description)[:min(255, utf8.RuneCountInString(row.Description))])
 		preview := rowPreview{
-			ID: id, Date: row.Date, Description: name, Amount: decimal(row.Amount), Type: row.Type, CategoryID: category,
-			Included: !dup[i], Duplicate: "new", Reconciled: "passed", Warnings: []string{},
+			ID: id, Date: row.Date, Description: suggestion.name, Amount: decimal(row.Amount), Type: row.Type, CategoryID: category,
+			OriginalNarration: row.Description,
+			Included:          !dup[i], Duplicate: "new", Reconciled: "passed", Warnings: []string{},
 		}
 		if manual[id] && !dup[i] {
 			preview.Warnings = append(preview.Warnings, "POSSIBLE_MANUAL_MATCH")
@@ -293,29 +311,6 @@ func manualMatches(ctx context.Context, tx pgx.Tx, batch query.StatementImportBa
 		out[ordinal] = true
 	}
 	return out, nil
-}
-
-func inferredCategory(desc string, names map[string]int64) *int64 {
-	keywords := []struct {
-		term string
-		name string
-	}{
-		{"swiggy", "food & dining"}, {"zomato", "food & dining"}, {"uber", "transportation"}, {"ola", "transportation"},
-	}
-	search := " " + strings.Join(strings.FieldsFunc(strings.ToLower(desc), func(r rune) bool {
-		return r < 'a' || r > 'z'
-	}), " ") + " "
-	for _, rule := range keywords {
-		if strings.Contains(search, " "+rule.term+" ") {
-			if id, ok := names[rule.name]; ok {
-				return &id
-			}
-		}
-	}
-	if id, ok := names["other"]; ok {
-		return &id
-	}
-	return nil
 }
 
 func storeTransaction(ctx context.Context, tx pgx.Tx, b query.StatementImportBatch, row rowPreview, amount int64, date time.Time, hash string) error {

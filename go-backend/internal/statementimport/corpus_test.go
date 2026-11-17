@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/DarkAbhi/life-backend/internal/statementimport/query"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -46,8 +48,34 @@ func TestPrivateStatementGeometry(t *testing.T) {
 				ClosingMinor: pgtype.Int8{Int64: l.Closing, Valid: true},
 			}
 			preview := make([]rowPreview, len(l.Rows))
-			for i, row := range l.Rows {
-				preview[i] = rowPreview{Date: row.Date, Amount: decimal(row.Amount), Type: row.Type}
+			categorized, renamed := 0, 0
+			fuelOutletFound := false
+			for rowIndex, row := range l.Rows {
+				suggestion := suggestNarration(row)
+				compactNarration := strings.ToUpper(strings.Join(strings.Fields(row.Description), ""))
+				if strings.Contains(compactNarration, "KRJFUELSTATIONMYSORE") {
+					fuelOutletFound = true
+					if suggestion.primary != "Transport" || suggestion.child != "fuel" {
+						t.Errorf("sample %d: fuel outlet must select Transport / fuel", i+1)
+					}
+				}
+				if suggestion.primary != "" {
+					categorized++
+				}
+				if suggestion.name != row.Description {
+					renamed++
+				}
+				if suggestion.name == "" || !utf8.ValidString(suggestion.name) ||
+					utf8.RuneCountInString(suggestion.name) > 255 {
+					t.Errorf("sample %d: invalid suggested name for row %d", i+1, rowIndex+1)
+				}
+				preview[rowIndex] = rowPreview{
+					Date: row.Date, Amount: decimal(row.Amount), Type: row.Type,
+					Description: suggestion.name, OriginalNarration: row.Description,
+				}
+			}
+			if l.Profile.ID == "hdfc_millennia_credit_v1" && !fuelOutletFound {
+				t.Errorf("sample %d: expected fuel outlet entry was not extracted", i+1)
 			}
 			if _, fail := verifyPreview(batch, l.Rows, preview); fail != nil {
 				t.Errorf("sample %d: confirmation validation failed with %s", i+1, fail.code)
@@ -56,7 +84,8 @@ func TestPrivateStatementGeometry(t *testing.T) {
 			if _, fail := verifyPreview(batch, l.Rows, preview); fail != reconciliationFailed {
 				t.Errorf("sample %d: altered amount was not rejected by reconciliation", i+1)
 			}
-			t.Logf("sample %d: %s, %d rows reconciled", i+1, l.Profile.ID, len(l.Rows))
+			t.Logf("sample %d: %s, %d rows reconciled, %d category suggestions, %d names cleaned",
+				i+1, l.Profile.ID, len(l.Rows), categorized, renamed)
 		}
 	}
 }

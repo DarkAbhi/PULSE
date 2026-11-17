@@ -2,6 +2,7 @@ export type ImportRow = {
   id: number;
   date: string;
   description: string;
+  original_narration?: string;
   amount: string;
   type: "debit" | "credit";
   category_id: number | null;

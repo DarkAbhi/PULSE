@@ -66,6 +66,7 @@ export type TransactionItem = {
   id: number;
   account_id?: number | null;
   source?: "manual" | "statement";
+  original_narration?: string;
   name: string;
   amount: number;
   type?: "debit" | "credit";

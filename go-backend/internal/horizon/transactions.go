@@ -31,21 +31,22 @@ type TransactionInput struct {
 }
 
 type TransactionDTO struct {
-	ID               int64     `json:"id"`
-	AccountID        *int64    `json:"account_id,omitempty"`
-	Source           string    `json:"source"`
-	Name             string    `json:"name"`
-	Amount           float64   `json:"amount"`
-	Type             string    `json:"type"`
-	TransactionDate  time.Time `json:"transaction_date"`
-	CategoryID       *int64    `json:"category_id"`
-	CategoryName     string    `json:"category_name"`
-	BudgetID         *int64    `json:"budget_id"`
-	BudgetName       *string   `json:"budget_name,omitempty"`
-	SubscriptionID   *int64    `json:"subscription_id,omitempty"`
-	SubscriptionName *string   `json:"subscription_name,omitempty"`
-	Notes            *string   `json:"notes,omitempty"`
-	CreatedAt        time.Time `json:"created_at"`
+	ID                int64     `json:"id"`
+	AccountID         *int64    `json:"account_id,omitempty"`
+	Source            string    `json:"source"`
+	OriginalNarration string    `json:"original_narration,omitempty"`
+	Name              string    `json:"name"`
+	Amount            float64   `json:"amount"`
+	Type              string    `json:"type"`
+	TransactionDate   time.Time `json:"transaction_date"`
+	CategoryID        *int64    `json:"category_id"`
+	CategoryName      string    `json:"category_name"`
+	BudgetID          *int64    `json:"budget_id"`
+	BudgetName        *string   `json:"budget_name,omitempty"`
+	SubscriptionID    *int64    `json:"subscription_id,omitempty"`
+	SubscriptionName  *string   `json:"subscription_name,omitempty"`
+	Notes             *string   `json:"notes,omitempty"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 
 type BulkTransactionsInput struct {
@@ -99,7 +100,7 @@ func (h *TransactionsHandler) FetchTransactions(userID int64, limit int) ([]Tran
 		transactions := make([]TransactionDTO, 0, len(legacy))
 		var total float64
 		for _, row := range legacy {
-			item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, sqlText(row.SubscriptionName), sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source)
+			item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, sqlText(row.SubscriptionName), sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source, row.OriginalNarration)
 			total += item.Amount
 			transactions = append(transactions, item)
 		}
@@ -109,15 +110,15 @@ func (h *TransactionsHandler) FetchTransactions(userID int64, limit int) ([]Tran
 	transactions := make([]TransactionDTO, 0)
 	var total float64
 	for _, row := range rows {
-		item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, row.SubscriptionName, sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source)
+		item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, row.SubscriptionName, sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source, row.OriginalNarration)
 		total += item.Amount
 		transactions = append(transactions, item)
 	}
 	return transactions, total, nil
 }
 
-func transactionDTO(id int64, name string, amount float64, txType string, date time.Time, categoryID sql.NullInt64, categoryName string, budgetID sql.NullInt64, budgetName sql.NullString, subscriptionID sql.NullInt64, subscriptionName, notes sql.NullString, created time.Time, accountID sql.NullInt64, source string) TransactionDTO {
-	item := TransactionDTO{ID: id, Name: name, Amount: amount, Type: txType, TransactionDate: date, CategoryName: categoryName, CreatedAt: created, Source: source}
+func transactionDTO(id int64, name string, amount float64, txType string, date time.Time, categoryID sql.NullInt64, categoryName string, budgetID sql.NullInt64, budgetName sql.NullString, subscriptionID sql.NullInt64, subscriptionName, notes sql.NullString, created time.Time, accountID sql.NullInt64, source, originalNarration string) TransactionDTO {
+	item := TransactionDTO{ID: id, Name: name, Amount: amount, Type: txType, TransactionDate: date, CategoryName: categoryName, CreatedAt: created, Source: source, OriginalNarration: originalNarration}
 	if accountID.Valid {
 		item.AccountID = &accountID.Int64
 	}
@@ -268,14 +269,14 @@ func (h *TransactionsHandler) fetchTransactionsPage(
 		}
 		items := make([]TransactionDTO, 0, len(legacy))
 		for _, row := range legacy {
-			items = append(items, transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, sqlText(row.SubscriptionName), sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source))
+			items = append(items, transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, sqlText(row.SubscriptionName), sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source, row.OriginalNarration))
 		}
 		return items, nil
 	}
 
 	items := make([]TransactionDTO, 0)
 	for _, row := range rows {
-		items = append(items, transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, row.SubscriptionName, sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source))
+		items = append(items, transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, row.BudgetName, row.SubscriptionID, row.SubscriptionName, sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source, row.OriginalNarration))
 	}
 	return items, nil
 }
@@ -368,7 +369,7 @@ func (h *TransactionsHandler) CreateTransaction(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source)
+	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source, row.OriginalNarration)
 	enrichTransactionNames(r.Context(), q, user.ID, &item)
 	if err := tx.Commit(r.Context()); err != nil {
 		webutil.ServerError(w, err)
@@ -483,7 +484,7 @@ func (h *TransactionsHandler) BulkCreateTransactions(w http.ResponseWriter, r *h
 			return
 		}
 
-		item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source)
+		item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source, row.OriginalNarration)
 		enrichTransactionNames(r.Context(), q, user.ID, &item)
 
 		createdItems = append(createdItems, item)
@@ -594,7 +595,7 @@ func (h *TransactionsHandler) UpdateTransaction(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source)
+	item := transactionDTO(row.ID, row.Name, row.Amount, row.Type, row.TransactionDate.Time, row.CategoryID, row.CategoryName, row.BudgetID, sql.NullString{}, row.SubscriptionID, sql.NullString{}, sqlText(row.Notes), row.CreatedAt.Time, row.AccountID, row.Source, row.OriginalNarration)
 	enrichTransactionNames(r.Context(), q, user.ID, &item)
 	if err := tx.Commit(r.Context()); err != nil {
 		webutil.ServerError(w, err)

@@ -12,17 +12,18 @@ import (
 )
 
 type rowPreview struct {
-	ID              int32    `json:"id"`
-	Date            string   `json:"date"`
-	Description     string   `json:"description"`
-	Amount          string   `json:"amount"`
-	Type            string   `json:"type"`
-	CategoryChanged bool     `json:"category_changed,omitempty"`
-	CategoryID      *int64   `json:"category_id"`
-	Included        bool     `json:"included"`
-	Duplicate       string   `json:"duplicate_status"`
-	Reconciled      string   `json:"reconciliation_status"`
-	Warnings        []string `json:"warnings"`
+	ID                int32    `json:"id"`
+	Date              string   `json:"date"`
+	Description       string   `json:"description"`
+	OriginalNarration string   `json:"original_narration"`
+	Amount            string   `json:"amount"`
+	Type              string   `json:"type"`
+	CategoryChanged   bool     `json:"category_changed,omitempty"`
+	CategoryID        *int64   `json:"category_id"`
+	Included          bool     `json:"included"`
+	Duplicate         string   `json:"duplicate_status"`
+	Reconciled        string   `json:"reconciliation_status"`
+	Warnings          []string `json:"warnings"`
 }
 
 type batchSummary struct {
@@ -108,7 +109,7 @@ func digest(raw []byte) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func merchantKey(description string) string {
+func legacyMerchantKey(description string) string {
 	// Reference numbers and payment IDs vary even where the merchant does not.
 	parts := strings.FieldsFunc(strings.ToLower(description), func(r rune) bool {
 		return (r < 'a' || r > 'z') && (r < '0' || r > '9')

@@ -379,6 +379,41 @@ func (q *Queries) ListFingerprints(ctx context.Context, arg ListFingerprintsPara
 	return items, nil
 }
 
+const listMerchantCategories = `-- name: ListMerchantCategories :many
+SELECT merchant_key, category_id FROM statement_category_rules
+WHERE user_id = $1 AND merchant_key = ANY($2::text[])
+`
+
+type ListMerchantCategoriesParams struct {
+	UserID       int64
+	MerchantKeys []string
+}
+
+type ListMerchantCategoriesRow struct {
+	MerchantKey string
+	CategoryID  int64
+}
+
+func (q *Queries) ListMerchantCategories(ctx context.Context, arg ListMerchantCategoriesParams) ([]ListMerchantCategoriesRow, error) {
+	rows, err := q.db.Query(ctx, listMerchantCategories, arg.UserID, arg.MerchantKeys)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListMerchantCategoriesRow
+	for rows.Next() {
+		var i ListMerchantCategoriesRow
+		if err := rows.Scan(&i.MerchantKey, &i.CategoryID); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPage = `-- name: ListPage :many
 SELECT batch_id, ordinal, source, preview FROM statement_import_rows WHERE batch_id = $1 ORDER BY ordinal LIMIT $2 OFFSET $3
 `
@@ -478,22 +513,6 @@ func (q *Queries) LockBatch(ctx context.Context, arg LockBatchParams) (Statement
 		&i.CommittedAt,
 	)
 	return i, err
-}
-
-const merchantCategory = `-- name: MerchantCategory :one
-SELECT category_id FROM statement_category_rules WHERE user_id = $1 AND merchant_key = $2
-`
-
-type MerchantCategoryParams struct {
-	UserID      int64
-	MerchantKey string
-}
-
-func (q *Queries) MerchantCategory(ctx context.Context, arg MerchantCategoryParams) (int64, error) {
-	row := q.db.QueryRow(ctx, merchantCategory, arg.UserID, arg.MerchantKey)
-	var category_id int64
-	err := row.Scan(&category_id)
-	return category_id, err
 }
 
 const possibleManualMatches = `-- name: PossibleManualMatches :many

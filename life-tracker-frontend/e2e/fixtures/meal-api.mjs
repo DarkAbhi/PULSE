@@ -10,10 +10,11 @@ const horizonCategories = [
   { id: 1, name: "Test category", allows_subcategories: true, parent_id: null },
   { id: 2, name: "Test detail", allows_subcategories: false, parent_id: 1 },
   { id: 3, name: "Test standalone", allows_subcategories: false, parent_id: null },
+  { id: 4, name: "others", allows_subcategories: false, parent_id: 1 },
 ].map(category => ({ ...category, icon: "tag", color: "#64748b", is_default: true }));
 const horizonTransactions = [
   { id: 1, name: "Test parent expense", category_id: 1, category_name: "Test category" },
-  { id: 2, name: "Test child expense", category_id: 2, category_name: "Test category / Test detail" },
+  { id: 2, name: "Test child expense", category_id: 2, category_name: "Test category / Test detail", source: "statement", original_narration: "UPI/DR/104332516949/ICCL ZER/HDFC/zerodha/" },
   { id: 3, name: "Test standalone expense", category_id: 3, category_name: "Test standalone" },
 ].map(tx => ({ ...tx, type: "debit", amount: 10, transaction_date: "2026-01-02T10:00:00Z" }));
 let nextTimeId = 5;

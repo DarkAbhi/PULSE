@@ -462,6 +462,7 @@
     <string name="pulse_horizon_statement_no_description">No description</string>
     <string name="pulse_horizon_statement_row_summary">%1$s · %2$s · %3$s %4$s</string>
     <string name="pulse_horizon_statement_description">Description</string>
+    <string name="pulse_horizon_statement_original_narration">Original statement narration</string>
     <string name="pulse_horizon_statement_amount">Amount (%1$s)</string>
     <string name="pulse_horizon_statement_direction">Transaction type</string>
     <string name="pulse_horizon_statement_category">Category</string>

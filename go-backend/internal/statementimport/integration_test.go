@@ -10,6 +10,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 
@@ -215,6 +216,100 @@ func TestPostgresImportOwnershipAndConcurrentOverlap(t *testing.T) {
 		router.ServeHTTP(res, postPDF(original))
 		if res.Code != 409 {
 			t.Fatalf("replay after reimport returned %d, want 409", res.Code)
+		}
+	})
+
+	t.Run("suggests a scoped fallback and learns the reviewed category", func(t *testing.T) {
+		var investment, others, stocks int64
+		err := db.QueryRow(`
+			SELECT p.id, other.id, stocks.id
+			FROM financial_horizon_categories p
+			JOIN financial_horizon_categories other ON other.parent_id = p.id AND other.name = 'others'
+			JOIN financial_horizon_categories stocks ON stocks.parent_id = p.id AND stocks.name = 'stocks'
+			WHERE p.name = 'Investment' AND p.is_default`).Scan(&investment, &others, &stocks)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		upload := func(variant int, narration string) (batchSummary, rowPreview) {
+			t.Helper()
+			doc := syntheticDocument("20.00", "5.00")
+			for i, word := range doc.Pages[0].Words {
+				if word.Text == "Synthetic market" {
+					doc.Pages[0].Words[i].Text = narration
+				}
+				if word.Text == "wrap line" {
+					doc.Pages[0].Words[i].Text = "continued"
+				}
+			}
+			var err error
+			document, err = json.Marshal(doc)
+			if err != nil {
+				t.Fatal(err)
+			}
+			res := httptest.NewRecorder()
+			router.ServeHTTP(res, postPDF(variant))
+			var result struct {
+				batchSummary
+				previewPage
+			}
+			if res.Code != http.StatusCreated {
+				t.Fatalf("upload status %d: %s", res.Code, res.Body)
+			}
+			if err := json.Unmarshal(res.Body.Bytes(), &result); err != nil || len(result.Rows) != 2 {
+				t.Fatalf("invalid preview: %v", err)
+			}
+			return result.batchSummary, result.Rows[0]
+		}
+
+		batch, row := upload(3, "UPI/DR/123456789012/ICCL ZER/HDFC/zerodha/4r7w00ab32")
+		if row.Description != "Zerodha payment" || row.CategoryID == nil || *row.CategoryID != others || !row.Included {
+			t.Fatalf("unexpected first suggestion: %+v", row)
+		}
+		narration := row.OriginalNarration
+		if !strings.Contains(narration, "123456789012") || narration == row.Description {
+			t.Fatal("preview must expose the separate original narration")
+		}
+		body := fmt.Sprintf(`{"revision":%d,"changes":[{"id":1,"description":"Trading account funding","category_id":%d}]}`,
+			batch.Revision, stocks)
+		res := httptest.NewRecorder()
+		router.ServeHTTP(res, httptest.NewRequest("PATCH", path+"/"+batch.ID+"/rows", bytes.NewBufferString(body)))
+		var editedBatch batchSummary
+		if res.Code != http.StatusOK {
+			t.Fatalf("edit status %d: %s", res.Code, res.Body)
+		}
+		if err := json.Unmarshal(res.Body.Bytes(), &editedBatch); err != nil {
+			t.Fatal(err)
+		}
+		res = httptest.NewRecorder()
+		body = fmt.Sprintf(`{"revision":%d}`, editedBatch.Revision)
+		router.ServeHTTP(res, httptest.NewRequest("POST", path+"/"+batch.ID+"/commit", bytes.NewBufferString(body)))
+		if res.Code != http.StatusOK {
+			t.Fatalf("commit status %d: %s", res.Code, res.Body)
+		}
+
+		var saved horizonquery.ListFilteredTransactionsRow
+		for _, id := range []int64{investment, stocks} {
+			rows, err := horizonquery.New(pool).ListFilteredTransactions(t.Context(), horizonquery.ListFilteredTransactionsParams{
+				UserID: owner, Column4: id, Limit: 10,
+			})
+			if err != nil || len(rows) != 1 || rows[0].Name != "Trading account funding" ||
+				rows[0].CategoryName != "Investment / stocks" || rows[0].OriginalNarration != narration {
+				t.Fatalf("category %d did not find reviewed transaction: %+v, %v", id, rows, err)
+			}
+			saved = rows[0]
+		}
+		updated, err := horizonquery.New(pool).UpdateTransaction(t.Context(), horizonquery.UpdateTransactionParams{
+			ID: saved.ID, UserID: owner, Name: "Revised funding name", Amount: saved.Amount, Type: saved.Type,
+			TransactionDate: saved.TransactionDate, CategoryID: saved.CategoryID, CategoryName: saved.CategoryName,
+		})
+		if err != nil || updated.Name != "Revised funding name" || updated.OriginalNarration != narration {
+			t.Fatal("editing a saved transaction must retain its original narration")
+		}
+
+		_, row = upload(4, "UPI/DR/987654321012/ZEROD HA/HDFC/zerodha/9b2w54qa15")
+		if row.Description != "Zerodha payment" || row.CategoryID == nil || *row.CategoryID != stocks || !row.Included {
+			t.Fatalf("unexpected learned suggestion: %+v", row)
 		}
 	})
 }

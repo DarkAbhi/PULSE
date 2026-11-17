@@ -32,11 +32,11 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import dev.abhishekan.pulse.feature.horizon.R
+import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonCategoryPicker
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonFormSection
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionFieldPair
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionInput
-import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonCategoryPicker
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionRelation
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionSegments
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.TransactionPickerField
@@ -63,6 +63,14 @@ internal fun TransactionEditor(
                 R.string.pulse_horizon_transaction_details_hint,
                 R.drawable.pulse_obligation_card,
             ) {
+                if (draft.originalNarration.isNotBlank()) {
+                    PulseText(
+                        stringResource(R.string.pulse_horizon_statement_original_narration),
+                        style = PulseTextStyle.Body2,
+                        color = PulseTheme.colors.textSecondary,
+                    )
+                    PulseText(draft.originalNarration, style = PulseTextStyle.Body2)
+                }
                 SubscriptionInput(draft.name, {
                     onChange(draft.copy(name = it))
                 }, stringResource(R.string.pulse_horizon_name), stringResource(R.string.pulse_horizon_transaction_name_hint), !busy)

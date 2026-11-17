@@ -27,6 +27,7 @@ func rowsForReview(records []query.StatementImportRow) ([]rowPreview, []LedgerRo
 		if err := json.Unmarshal(row.Source, &source[index]); err != nil {
 			return nil, nil, err
 		}
+		preview[index].OriginalNarration = source[index].Description
 	}
 	return preview, source, nil
 }
@@ -242,8 +243,8 @@ func (s *Service) commit(ctx context.Context, tx pgx.Tx, b query.StatementImport
 			return b, dbFailure(ctx, err)
 		}
 		counts.ImportedCount++
-		if row.CategoryID != nil && row.CategoryChanged {
-			if key := merchantKey(source[i].Description); key != "" {
+		if row.CategoryID != nil && row.CategoryChanged && row.Type == source[i].Type {
+			if key := suggestNarration(source[i]).key; key != "" {
 				if err := q.LearnCategory(ctx, query.LearnCategoryParams{UserID: b.UserID, MerchantKey: key, CategoryID: *row.CategoryID}); err != nil {
 					return b, dbFailure(ctx, err)
 				}

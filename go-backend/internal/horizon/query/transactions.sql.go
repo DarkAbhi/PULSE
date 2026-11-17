@@ -43,7 +43,8 @@ func (q *Queries) CountFilteredTransactions(ctx context.Context, arg CountFilter
 const createTransaction = `-- name: CreateTransaction :one
 INSERT INTO financial_horizon_transactions (user_id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, account_id)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source
+RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source,
+    COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = financial_horizon_transactions.import_batch_id AND r.ordinal = financial_horizon_transactions.import_row_ordinal), '')::text AS original_narration
 `
 
 type CreateTransactionParams struct {
@@ -61,19 +62,20 @@ type CreateTransactionParams struct {
 }
 
 type CreateTransactionRow struct {
-	ID              int64
-	Name            string
-	Amount          float64
-	Type            string
-	TransactionDate pgtype.Timestamptz
-	CategoryID      sql.NullInt64
-	CategoryName    string
-	BudgetID        sql.NullInt64
-	SubscriptionID  sql.NullInt64
-	Notes           pgtype.Text
-	CreatedAt       pgtype.Timestamptz
-	AccountID       sql.NullInt64
-	Source          string
+	ID                int64
+	Name              string
+	Amount            float64
+	Type              string
+	TransactionDate   pgtype.Timestamptz
+	CategoryID        sql.NullInt64
+	CategoryName      string
+	BudgetID          sql.NullInt64
+	SubscriptionID    sql.NullInt64
+	Notes             pgtype.Text
+	CreatedAt         pgtype.Timestamptz
+	AccountID         sql.NullInt64
+	Source            string
+	OriginalNarration string
 }
 
 func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionParams) (CreateTransactionRow, error) {
@@ -105,6 +107,7 @@ func (q *Queries) CreateTransaction(ctx context.Context, arg CreateTransactionPa
 		&i.CreatedAt,
 		&i.AccountID,
 		&i.Source,
+		&i.OriginalNarration,
 	)
 	return i, err
 }
@@ -172,7 +175,8 @@ WHERE financial_horizon_transactions.id = $2
     SELECT 1 FROM financial_horizon_subscriptions s
     WHERE s.id = $1 AND s.user_id = $3
   )
-RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source
+RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source,
+    COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = financial_horizon_transactions.import_batch_id AND r.ordinal = financial_horizon_transactions.import_row_ordinal), '')::text AS original_narration
 `
 
 type LinkSubscriptionTransactionParams struct {
@@ -182,19 +186,20 @@ type LinkSubscriptionTransactionParams struct {
 }
 
 type LinkSubscriptionTransactionRow struct {
-	ID              int64
-	Name            string
-	Amount          float64
-	Type            string
-	TransactionDate pgtype.Timestamptz
-	CategoryID      sql.NullInt64
-	CategoryName    string
-	BudgetID        sql.NullInt64
-	SubscriptionID  sql.NullInt64
-	Notes           pgtype.Text
-	CreatedAt       pgtype.Timestamptz
-	AccountID       sql.NullInt64
-	Source          string
+	ID                int64
+	Name              string
+	Amount            float64
+	Type              string
+	TransactionDate   pgtype.Timestamptz
+	CategoryID        sql.NullInt64
+	CategoryName      string
+	BudgetID          sql.NullInt64
+	SubscriptionID    sql.NullInt64
+	Notes             pgtype.Text
+	CreatedAt         pgtype.Timestamptz
+	AccountID         sql.NullInt64
+	Source            string
+	OriginalNarration string
 }
 
 func (q *Queries) LinkSubscriptionTransaction(ctx context.Context, arg LinkSubscriptionTransactionParams) (LinkSubscriptionTransactionRow, error) {
@@ -214,6 +219,7 @@ func (q *Queries) LinkSubscriptionTransaction(ctx context.Context, arg LinkSubsc
 		&i.CreatedAt,
 		&i.AccountID,
 		&i.Source,
+		&i.OriginalNarration,
 	)
 	return i, err
 }
@@ -221,7 +227,8 @@ func (q *Queries) LinkSubscriptionTransaction(ctx context.Context, arg LinkSubsc
 const listFilteredTransactions = `-- name: ListFilteredTransactions :many
 SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(p.name || ' / ' || c.name, c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
-       t.subscription_id, s.name AS subscription_name, t.notes, t.created_at, t.account_id, t.source
+       t.subscription_id, s.name AS subscription_name, t.notes, t.created_at, t.account_id, t.source,
+       COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = t.import_batch_id AND r.ordinal = t.import_row_ordinal), '')::text AS original_narration
 FROM financial_horizon_transactions t
 LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
 LEFT JOIN financial_horizon_categories p ON p.id = c.parent_id AND (p.user_id = t.user_id OR (p.user_id IS NULL AND p.is_default))
@@ -244,21 +251,22 @@ type ListFilteredTransactionsParams struct {
 }
 
 type ListFilteredTransactionsRow struct {
-	ID               int64
-	Name             string
-	Amount           float64
-	Type             string
-	TransactionDate  pgtype.Timestamptz
-	CategoryID       sql.NullInt64
-	CategoryName     string
-	BudgetID         sql.NullInt64
-	BudgetName       sql.NullString
-	SubscriptionID   sql.NullInt64
-	SubscriptionName sql.NullString
-	Notes            pgtype.Text
-	CreatedAt        pgtype.Timestamptz
-	AccountID        sql.NullInt64
-	Source           string
+	ID                int64
+	Name              string
+	Amount            float64
+	Type              string
+	TransactionDate   pgtype.Timestamptz
+	CategoryID        sql.NullInt64
+	CategoryName      string
+	BudgetID          sql.NullInt64
+	BudgetName        sql.NullString
+	SubscriptionID    sql.NullInt64
+	SubscriptionName  sql.NullString
+	Notes             pgtype.Text
+	CreatedAt         pgtype.Timestamptz
+	AccountID         sql.NullInt64
+	Source            string
+	OriginalNarration string
 }
 
 func (q *Queries) ListFilteredTransactions(ctx context.Context, arg ListFilteredTransactionsParams) ([]ListFilteredTransactionsRow, error) {
@@ -293,6 +301,7 @@ func (q *Queries) ListFilteredTransactions(ctx context.Context, arg ListFiltered
 			&i.CreatedAt,
 			&i.AccountID,
 			&i.Source,
+			&i.OriginalNarration,
 		); err != nil {
 			return nil, err
 		}
@@ -307,7 +316,8 @@ func (q *Queries) ListFilteredTransactions(ctx context.Context, arg ListFiltered
 const listFilteredTransactionsLegacy = `-- name: ListFilteredTransactionsLegacy :many
 SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(p.name || ' / ' || c.name, c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
-       NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at, t.account_id, t.source
+       NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at, t.account_id, t.source,
+       COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = t.import_batch_id AND r.ordinal = t.import_row_ordinal), '')::text AS original_narration
 FROM financial_horizon_transactions t
 LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
 LEFT JOIN financial_horizon_categories p ON p.id = c.parent_id AND (p.user_id = t.user_id OR (p.user_id IS NULL AND p.is_default))
@@ -329,21 +339,22 @@ type ListFilteredTransactionsLegacyParams struct {
 }
 
 type ListFilteredTransactionsLegacyRow struct {
-	ID               int64
-	Name             string
-	Amount           float64
-	Type             string
-	TransactionDate  pgtype.Timestamptz
-	CategoryID       sql.NullInt64
-	CategoryName     string
-	BudgetID         sql.NullInt64
-	BudgetName       sql.NullString
-	SubscriptionID   sql.NullInt64
-	SubscriptionName pgtype.Text
-	Notes            pgtype.Text
-	CreatedAt        pgtype.Timestamptz
-	AccountID        sql.NullInt64
-	Source           string
+	ID                int64
+	Name              string
+	Amount            float64
+	Type              string
+	TransactionDate   pgtype.Timestamptz
+	CategoryID        sql.NullInt64
+	CategoryName      string
+	BudgetID          sql.NullInt64
+	BudgetName        sql.NullString
+	SubscriptionID    sql.NullInt64
+	SubscriptionName  pgtype.Text
+	Notes             pgtype.Text
+	CreatedAt         pgtype.Timestamptz
+	AccountID         sql.NullInt64
+	Source            string
+	OriginalNarration string
 }
 
 func (q *Queries) ListFilteredTransactionsLegacy(ctx context.Context, arg ListFilteredTransactionsLegacyParams) ([]ListFilteredTransactionsLegacyRow, error) {
@@ -378,6 +389,7 @@ func (q *Queries) ListFilteredTransactionsLegacy(ctx context.Context, arg ListFi
 			&i.CreatedAt,
 			&i.AccountID,
 			&i.Source,
+			&i.OriginalNarration,
 		); err != nil {
 			return nil, err
 		}
@@ -392,7 +404,8 @@ func (q *Queries) ListFilteredTransactionsLegacy(ctx context.Context, arg ListFi
 const listRecentTransactions = `-- name: ListRecentTransactions :many
 SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(p.name || ' / ' || c.name, c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
-       t.subscription_id, s.name AS subscription_name, t.notes, t.created_at, t.account_id, t.source
+       t.subscription_id, s.name AS subscription_name, t.notes, t.created_at, t.account_id, t.source,
+       COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = t.import_batch_id AND r.ordinal = t.import_row_ordinal), '')::text AS original_narration
 FROM financial_horizon_transactions t
 LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
 LEFT JOIN financial_horizon_categories p ON p.id = c.parent_id AND (p.user_id = t.user_id OR (p.user_id IS NULL AND p.is_default))
@@ -408,21 +421,22 @@ type ListRecentTransactionsParams struct {
 }
 
 type ListRecentTransactionsRow struct {
-	ID               int64
-	Name             string
-	Amount           float64
-	Type             string
-	TransactionDate  pgtype.Timestamptz
-	CategoryID       sql.NullInt64
-	CategoryName     string
-	BudgetID         sql.NullInt64
-	BudgetName       sql.NullString
-	SubscriptionID   sql.NullInt64
-	SubscriptionName sql.NullString
-	Notes            pgtype.Text
-	CreatedAt        pgtype.Timestamptz
-	AccountID        sql.NullInt64
-	Source           string
+	ID                int64
+	Name              string
+	Amount            float64
+	Type              string
+	TransactionDate   pgtype.Timestamptz
+	CategoryID        sql.NullInt64
+	CategoryName      string
+	BudgetID          sql.NullInt64
+	BudgetName        sql.NullString
+	SubscriptionID    sql.NullInt64
+	SubscriptionName  sql.NullString
+	Notes             pgtype.Text
+	CreatedAt         pgtype.Timestamptz
+	AccountID         sql.NullInt64
+	Source            string
+	OriginalNarration string
 }
 
 func (q *Queries) ListRecentTransactions(ctx context.Context, arg ListRecentTransactionsParams) ([]ListRecentTransactionsRow, error) {
@@ -450,6 +464,7 @@ func (q *Queries) ListRecentTransactions(ctx context.Context, arg ListRecentTran
 			&i.CreatedAt,
 			&i.AccountID,
 			&i.Source,
+			&i.OriginalNarration,
 		); err != nil {
 			return nil, err
 		}
@@ -464,7 +479,8 @@ func (q *Queries) ListRecentTransactions(ctx context.Context, arg ListRecentTran
 const listRecentTransactionsLegacy = `-- name: ListRecentTransactionsLegacy :many
 SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
        COALESCE(p.name || ' / ' || c.name, c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
-       NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at, t.account_id, t.source
+       NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at, t.account_id, t.source,
+       COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = t.import_batch_id AND r.ordinal = t.import_row_ordinal), '')::text AS original_narration
 FROM financial_horizon_transactions t
 LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
 LEFT JOIN financial_horizon_categories p ON p.id = c.parent_id AND (p.user_id = t.user_id OR (p.user_id IS NULL AND p.is_default))
@@ -479,21 +495,22 @@ type ListRecentTransactionsLegacyParams struct {
 }
 
 type ListRecentTransactionsLegacyRow struct {
-	ID               int64
-	Name             string
-	Amount           float64
-	Type             string
-	TransactionDate  pgtype.Timestamptz
-	CategoryID       sql.NullInt64
-	CategoryName     string
-	BudgetID         sql.NullInt64
-	BudgetName       sql.NullString
-	SubscriptionID   sql.NullInt64
-	SubscriptionName pgtype.Text
-	Notes            pgtype.Text
-	CreatedAt        pgtype.Timestamptz
-	AccountID        sql.NullInt64
-	Source           string
+	ID                int64
+	Name              string
+	Amount            float64
+	Type              string
+	TransactionDate   pgtype.Timestamptz
+	CategoryID        sql.NullInt64
+	CategoryName      string
+	BudgetID          sql.NullInt64
+	BudgetName        sql.NullString
+	SubscriptionID    sql.NullInt64
+	SubscriptionName  pgtype.Text
+	Notes             pgtype.Text
+	CreatedAt         pgtype.Timestamptz
+	AccountID         sql.NullInt64
+	Source            string
+	OriginalNarration string
 }
 
 func (q *Queries) ListRecentTransactionsLegacy(ctx context.Context, arg ListRecentTransactionsLegacyParams) ([]ListRecentTransactionsLegacyRow, error) {
@@ -521,6 +538,7 @@ func (q *Queries) ListRecentTransactionsLegacy(ctx context.Context, arg ListRece
 			&i.CreatedAt,
 			&i.AccountID,
 			&i.Source,
+			&i.OriginalNarration,
 		); err != nil {
 			return nil, err
 		}
@@ -538,7 +556,8 @@ SET name = $1, amount = $2, type = $3, transaction_date = $4, category_id = $5, 
     budget_id = $7, subscription_id = $8, notes = $9,
     account_id = CASE WHEN source = 'manual' AND $12::boolean THEN $13::bigint ELSE account_id END, updated_at = CURRENT_TIMESTAMP
 WHERE id = $10 AND user_id = $11
-RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source
+RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source,
+    COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = financial_horizon_transactions.import_batch_id AND r.ordinal = financial_horizon_transactions.import_row_ordinal), '')::text AS original_narration
 `
 
 type UpdateTransactionParams struct {
@@ -558,19 +577,20 @@ type UpdateTransactionParams struct {
 }
 
 type UpdateTransactionRow struct {
-	ID              int64
-	Name            string
-	Amount          float64
-	Type            string
-	TransactionDate pgtype.Timestamptz
-	CategoryID      sql.NullInt64
-	CategoryName    string
-	BudgetID        sql.NullInt64
-	SubscriptionID  sql.NullInt64
-	Notes           pgtype.Text
-	CreatedAt       pgtype.Timestamptz
-	AccountID       sql.NullInt64
-	Source          string
+	ID                int64
+	Name              string
+	Amount            float64
+	Type              string
+	TransactionDate   pgtype.Timestamptz
+	CategoryID        sql.NullInt64
+	CategoryName      string
+	BudgetID          sql.NullInt64
+	SubscriptionID    sql.NullInt64
+	Notes             pgtype.Text
+	CreatedAt         pgtype.Timestamptz
+	AccountID         sql.NullInt64
+	Source            string
+	OriginalNarration string
 }
 
 func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (UpdateTransactionRow, error) {
@@ -604,6 +624,7 @@ func (q *Queries) UpdateTransaction(ctx context.Context, arg UpdateTransactionPa
 		&i.CreatedAt,
 		&i.AccountID,
 		&i.Source,
+		&i.OriginalNarration,
 	)
 	return i, err
 }

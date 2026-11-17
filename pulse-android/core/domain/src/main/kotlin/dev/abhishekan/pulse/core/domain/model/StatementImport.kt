@@ -10,6 +10,7 @@ data class StatementRow(
     val included: Boolean,
     val duplicate: Boolean,
     val warnings: List<String> = emptyList(),
+    val originalNarration: String = "",
 )
 
 data class StatementRows(

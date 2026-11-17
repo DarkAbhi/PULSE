@@ -85,8 +85,9 @@ INSERT INTO financial_horizon_transactions (
     source, import_batch_id, import_row_ordinal, dedupe_hash
 ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'statement',$9,$10,$11);
 
--- name: MerchantCategory :one
-SELECT category_id FROM statement_category_rules WHERE user_id = $1 AND merchant_key = $2;
+-- name: ListMerchantCategories :many
+SELECT merchant_key, category_id FROM statement_category_rules
+WHERE user_id = sqlc.arg(user_id) AND merchant_key = ANY(sqlc.arg(merchant_keys)::text[]);
 
 -- name: LearnCategory :exec
 INSERT INTO statement_category_rules (user_id, merchant_key, category_id) VALUES ($1,$2,$3)

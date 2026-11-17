@@ -14,6 +14,7 @@ data class StatementRowDto(
     val included: Boolean,
     @SerialName("duplicate_status") val duplicateStatus: String,
     val warnings: List<String> = emptyList(),
+    @SerialName("original_narration") val originalNarration: String = "",
 )
 
 @Serializable

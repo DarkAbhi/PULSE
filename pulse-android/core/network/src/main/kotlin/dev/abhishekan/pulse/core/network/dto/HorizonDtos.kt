@@ -83,6 +83,7 @@ import kotlinx.serialization.json.JsonPrimitive
     val notes: String? = null,
     @SerialName("account_id") val accountId: Long? = null,
     val source: String = "manual",
+    @SerialName("original_narration") val originalNarration: String = "",
 )
 
 @Serializable data class HorizonTransactionPageDto(

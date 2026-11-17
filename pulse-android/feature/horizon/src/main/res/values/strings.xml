@@ -410,8 +410,10 @@
     <string name="pulse_horizon_add_credit_card">Add Credit Card</string>
     <string name="pulse_horizon_edit_bank_account">Edit Bank Account</string>
     <string name="pulse_horizon_edit_credit_card">Edit Credit Card</string>
-    <string name="pulse_horizon_no_bank_accounts">Add a bank account to get started.</string>
-    <string name="pulse_horizon_no_credit_cards">Add a credit card to get started.</string>
+    <string name="pulse_horizon_no_bank_accounts">No bank accounts yet</string>
+    <string name="pulse_horizon_no_credit_cards">No credit cards yet</string>
+    <string name="pulse_horizon_no_bank_accounts_help">Add your first bank account and it will show up here.</string>
+    <string name="pulse_horizon_no_credit_cards_help">Add your first credit card and it will show up here.</string>
     <string name="pulse_horizon_account_count">%1$d</string>
     <string name="pulse_horizon_account_actions">Actions for %1$s</string>
     <string name="pulse_horizon_account_masked_digits">•••• %1$s</string>

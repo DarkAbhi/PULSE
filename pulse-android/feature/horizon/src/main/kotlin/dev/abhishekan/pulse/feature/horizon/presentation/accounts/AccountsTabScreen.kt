@@ -191,7 +191,12 @@ internal fun AccountListScreen(
                     AccountsListStatus(state, onAction)
                     when {
                         accounts == null -> Unit
-                        accounts.isEmpty() -> PulseText(stringResource(type.emptyLabel), color = PulseTheme.colors.textSecondary)
+                        accounts.isEmpty() ->
+                            EmptyAccounts(
+                                type = type,
+                                enabled = !state.busy,
+                                onAdd = { onAction(AccountsAction.Add(type)) },
+                            )
                         else ->
                             PulseCard(
                                 modifier = Modifier.fillMaxWidth(),
@@ -210,7 +215,7 @@ internal fun AccountListScreen(
                             }
                     }
                 }
-                if (!state.busy) {
+                if (!state.busy && accounts?.isEmpty() != true) {
                     PulseFloatingActionButton(
                         onClick = { onAction(AccountsAction.Add(type)) },
                         modifier = Modifier.align(Alignment.BottomEnd).padding(end = gutter, bottom = bottom + gutter),

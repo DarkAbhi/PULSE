@@ -122,6 +122,31 @@ private fun CreditCardsPreview() {
     }
 }
 
+@Preview(name = "Empty bank accounts", widthDp = 360, heightDp = 800)
+@Preview(name = "Empty bank accounts large text", widthDp = 320, heightDp = 800, fontScale = 2f)
+@Composable
+private fun EmptyBankAccountsPreview() {
+    PulseTheme(false) {
+        AccountListScreen(AccountType.Bank, AccountsState(accounts = emptyList()), onAction = {})
+    }
+}
+
+@Preview(name = "Empty credit cards", widthDp = 360, heightDp = 800)
+@Composable
+private fun EmptyCreditCardsPreview() {
+    PulseTheme(false) {
+        AccountListScreen(AccountType.CreditCard, AccountsState(accounts = emptyList()), onAction = {})
+    }
+}
+
+@Preview(name = "Empty credit cards dark", widthDp = 360, heightDp = 800)
+@Composable
+private fun EmptyCreditCardsDarkPreview() {
+    PulseTheme(true) {
+        AccountListScreen(AccountType.CreditCard, AccountsState(accounts = emptyList()), onAction = {})
+    }
+}
+
 @Preview(name = "Edit Bank Account", widthDp = 360, heightDp = 800)
 @Composable
 private fun BankAccountEditorPreview() {

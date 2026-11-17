@@ -47,6 +47,7 @@ internal enum class AccountType(
     val addTitle: Int,
     val editTitle: Int,
     val emptyLabel: Int,
+    val emptyMessage: Int,
     val icon: Int,
 ) {
     Bank(
@@ -57,6 +58,7 @@ internal enum class AccountType(
         R.string.pulse_horizon_add_bank_account,
         R.string.pulse_horizon_edit_bank_account,
         R.string.pulse_horizon_no_bank_accounts,
+        R.string.pulse_horizon_no_bank_accounts_help,
         R.drawable.pulse_obligation_bank,
     ),
     CreditCard(
@@ -67,6 +69,7 @@ internal enum class AccountType(
         R.string.pulse_horizon_add_credit_card,
         R.string.pulse_horizon_edit_credit_card,
         R.string.pulse_horizon_no_credit_cards,
+        R.string.pulse_horizon_no_credit_cards_help,
         R.drawable.pulse_obligation_card,
     ),
 }
@@ -74,7 +77,7 @@ internal enum class AccountType(
 internal val AccountType.softColor
     @Composable get() = if (this == AccountType.Bank) PulseTheme.colors.infoSoft else PulseTheme.colors.primarySoft
 
-private val AccountType.accentColor
+internal val AccountType.accentColor
     @Composable get() = if (this == AccountType.Bank) PulseTheme.colors.info else PulseTheme.colors.onPrimarySoft
 
 @Composable

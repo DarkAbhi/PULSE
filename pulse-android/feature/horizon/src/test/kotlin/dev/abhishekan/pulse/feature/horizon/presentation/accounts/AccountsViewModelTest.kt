@@ -41,11 +41,10 @@ class AccountsViewModelTest {
             val vm = viewModel()
             runCurrent()
 
-            vm.onAction(AccountsAction.Add("USD"))
+            vm.onAction(AccountsAction.Add("USD", AccountType.CreditCard))
             vm.onAction(AccountsAction.ChangeName("Everyday"))
             vm.onAction(AccountsAction.ChangeInstitution("Sample Bank"))
             vm.onAction(AccountsAction.SelectSubtype("savings"))
-            vm.onAction(AccountsAction.SelectType("credit_card"))
             vm.onAction(AccountsAction.ChangeCountry("us"))
             vm.onAction(AccountsAction.ChangeLastFour("12"))
             vm.onAction(AccountsAction.Save)
@@ -123,6 +122,31 @@ class AccountsViewModelTest {
             assertEquals(listOf(repository.account), vm.uiState.value.accounts)
             assertEquals(listOf(true, true, true), repository.includeArchived)
         }
+
+    @Test fun changingAnExistingAccountTypeClearsTheBankSubtype() =
+        runTest {
+            val vm = viewModel()
+            runCurrent()
+            val bank = repository.account.copy(bankAccountSubtype = "savings")
+            vm.onAction(AccountsAction.Edit(bank))
+
+            vm.onAction(AccountsAction.SelectType(AccountType.Bank))
+            assertEquals(bank, vm.uiState.value.draft)
+
+            vm.onAction(AccountsAction.SelectType(AccountType.CreditCard))
+            assertEquals(bank.copy(accountType = "credit_card", bankAccountSubtype = ""), vm.uiState.value.draft)
+        }
+
+    @Test fun accountListsFilterByTypeAndIncludeArchivedRecords() {
+        val bank = repository.account
+        val card = bank.copy(id = 2L, accountType = "credit_card", archived = true)
+        val state = AccountsState(accounts = listOf(bank, card))
+
+        assertEquals(listOf(bank), state.accountsOfType(AccountType.Bank))
+        assertEquals(listOf(card), state.accountsOfType(AccountType.CreditCard))
+        assertEquals(emptyList<FinancialAccount>(), state.copy(accounts = listOf(bank)).accountsOfType(AccountType.CreditCard))
+        assertNull(AccountsState().accountsOfType(AccountType.Bank))
+    }
 
     private fun viewModel() = AccountsViewModel(repository).also { models.put("accounts", it) }
 

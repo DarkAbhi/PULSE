@@ -1,185 +1,237 @@
 package dev.abhishekan.pulse.feature.horizon.presentation.accounts
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.abhishekan.pulse.core.domain.model.FinancialAccount
+import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
+import dev.abhishekan.pulse.core.ui.PulseHideNavigation
+import dev.abhishekan.pulse.core.ui.PulseScreenTransition
+import dev.abhishekan.pulse.core.ui.PulseSpacing
+import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.asString
-import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseErrorState
+import dev.abhishekan.pulse.core.ui.components.PulseFloatingActionButton
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.feature.horizon.R
+import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonTabScroll
+import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorScaffold
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-internal fun AccountsTabScreen(
+internal fun AccountsRoute(
     currency: String,
+    active: Boolean,
+    enabled: Boolean,
+    width: PulseWindowSize,
+    header: @Composable () -> Unit,
+    notice: @Composable () -> Unit,
     vm: AccountsViewModel = koinViewModel(),
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
-    BackHandler(state.draft != null) { vm.onAction(AccountsAction.Cancel) }
-    AccountsTabContent(state, currency, vm::onAction)
+    var selectedType by rememberSaveable { mutableStateOf<AccountType?>(null) }
+    val listScroll = rememberSaveableStateHolder()
+    PulseHideNavigation(active && selectedType != null)
+    BackHandler(active && selectedType != null) {
+        if (state.draft != null) {
+            vm.onAction(AccountsAction.Cancel)
+        } else {
+            selectedType = null
+        }
+    }
+
+    PulseScreenTransition(
+        state = selectedType to state,
+        screenDepth = { (type, screenState) ->
+            when {
+                type == null -> 0
+                screenState.draft == null -> 1
+                else -> 2
+            }
+        },
+    ) { (type, screenState), _ ->
+        val draft = screenState.draft
+        when {
+            type == null ->
+                Column(Modifier.fillMaxSize().background(PulseTheme.colors.background)) {
+                    header()
+                    HorizonTabScroll(width.pagePadding) {
+                        notice()
+                        AccountsTabContent(screenState, enabled) { selectedType = it }
+                        AccountsListStatus(screenState, vm::onAction)
+                    }
+                }
+            draft == null ->
+                listScroll.SaveableStateProvider(type.name) {
+                    AccountListScreen(type, screenState, currency, vm::onAction)
+                }
+            else -> AccountEditorScreen(type, screenState, draft, vm::onAction)
+        }
+    }
 }
 
 @Composable
 internal fun AccountsTabContent(
     state: AccountsState,
-    currency: String,
-    onAction: (AccountsAction) -> Unit,
+    enabled: Boolean,
+    onOpen: (AccountType) -> Unit,
 ) {
-    val draft = state.draft
-    if (draft != null) {
-        AccountEditor(draft, state.busy, state.canSave, onAction)
-    } else {
-        PulseButton(
-            stringResource(R.string.pulse_horizon_add_account),
-            { onAction(AccountsAction.Add(currency)) },
-            enabled = !state.busy,
-        )
-        if (state.accounts?.isEmpty() == true) {
-            PulseText(stringResource(R.string.pulse_horizon_accounts_empty))
-        }
-        state.accounts.orEmpty().forEach { account ->
-            PulseCard(Modifier.fillMaxWidth()) {
-                PulseText(account.displayName, style = PulseTextStyle.Title)
-                PulseText(account.institutionName)
-                val details =
-                    listOfNotNull(
-                        stringResource(accountTypeLabel(account.accountType)),
-                        account.lastFour.takeIf { it.isNotEmpty() }?.let { "•••• $it" },
-                        account.currency,
-                        if (account.archived) stringResource(R.string.pulse_horizon_account_archived) else null,
-                    )
-                PulseText(details.joinToString(" · "))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                    PulseButton(
-                        stringResource(R.string.pulse_horizon_edit_account),
-                        { onAction(AccountsAction.Edit(account)) },
-                        enabled = !state.busy,
-                        style = PulseButtonStyle.Text,
-                    )
-                    PulseButton(
-                        stringResource(
-                            if (account.archived) R.string.pulse_horizon_restore_account else R.string.pulse_horizon_archive_account,
-                        ),
-                        { account.id?.let { onAction(AccountsAction.SetArchived(it, !account.archived)) } },
-                        enabled = !state.busy,
-                        style = PulseButtonStyle.Text,
-                    )
+    val colors = PulseTheme.colors
+    Row(
+        Modifier.widthIn(max = PulseTokens.readingWidth).fillMaxWidth().height(IntrinsicSize.Min),
+        horizontalArrangement = Arrangement.spacedBy(PulseSpacing.compact),
+    ) {
+        AccountType.entries.forEach { type ->
+            val accounts = state.accountsOfType(type)
+            Surface(
+                onClick = { onOpen(type) },
+                modifier = Modifier.weight(1f).fillMaxHeight().semantics { role = Role.Button },
+                enabled = enabled,
+                shape = PulseTheme.shapes.extraLarge,
+                color = type.softColor,
+                contentColor = colors.textPrimary,
+                border = BorderStroke(1.dp, colors.border),
+            ) {
+                Column(
+                    Modifier.padding(PulseSpacing.compact),
+                    verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
+                ) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        AccountTypeBadge(type)
+                        Icon(
+                            painterResource(R.drawable.pulse_obligation_chevron),
+                            contentDescription = null,
+                            modifier = Modifier.rotate(if (LocalLayoutDirection.current == LayoutDirection.Ltr) -90f else 90f),
+                            tint = colors.textPrimary,
+                        )
+                    }
+                    Column {
+                        accounts?.let {
+                            PulseText(
+                                stringResource(R.string.pulse_horizon_account_count, it.size),
+                                style = PulseTextStyle.Heading1,
+                            )
+                        }
+                        PulseText(stringResource(type.listTitle), style = PulseTextStyle.Body2)
+                    }
+                    if (!accounts.isNullOrEmpty()) {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
+                            verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
+                        ) {
+                            accounts.take(3).forEach { AccountInitialsBadge(type, it.displayName, compact = true) }
+                        }
+                    }
                 }
-            }
-        }
-    }
-    when (val request = state.request) {
-        AccountsState.Request.Idle -> Unit
-        AccountsState.Request.Loading -> PulseLoadingState(stringResource(R.string.pulse_horizon_loading_accounts))
-        is AccountsState.Request.Failed -> {
-            PulseText(request.failure.message.asString())
-            if (draft == null) {
-                PulseButton(stringResource(R.string.pulse_horizon_retry_accounts), { onAction(AccountsAction.Refresh) })
             }
         }
     }
 }
 
 @Composable
-private fun AccountEditor(
-    draft: FinancialAccount,
-    busy: Boolean,
-    canSave: Boolean,
+internal fun AccountListScreen(
+    type: AccountType,
+    state: AccountsState,
+    currency: String,
     onAction: (AccountsAction) -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-        PulseText(
-            stringResource(if (draft.id == null) R.string.pulse_horizon_add_account else R.string.pulse_horizon_edit_account),
-            style = PulseTextStyle.Title,
-        )
-        PulseTextField(
-            value = draft.displayName,
-            onValueChange = { onAction(AccountsAction.ChangeName(it)) },
-            label = stringResource(R.string.pulse_horizon_account_name),
-            enabled = !busy,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        PulseTextField(
-            value = draft.institutionName,
-            onValueChange = { onAction(AccountsAction.ChangeInstitution(it)) },
-            label = stringResource(R.string.pulse_horizon_account_institution),
-            enabled = !busy,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-            for (type in listOf("bank_account", "credit_card")) {
-                PulseButton(
-                    stringResource(accountTypeLabel(type)),
-                    { onAction(AccountsAction.SelectType(type)) },
-                    enabled = !busy,
-                    style = if (draft.accountType == type) PulseButtonStyle.Standard else PulseButtonStyle.Text,
-                )
-            }
-        }
-        if (draft.accountType == "bank_account") {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-                val subtypes =
-                    listOf(
-                        "" to R.string.pulse_horizon_account_unspecified,
-                        "savings" to R.string.pulse_horizon_account_savings,
-                        "current" to R.string.pulse_horizon_account_current,
-                        "other" to R.string.pulse_horizon_account_other,
-                    )
-                for ((value, label) in subtypes) {
-                    PulseButton(
-                        stringResource(label),
-                        { onAction(AccountsAction.SelectSubtype(value)) },
-                        enabled = !busy,
-                        style = if (draft.bankAccountSubtype == value) PulseButtonStyle.Standard else PulseButtonStyle.Text,
-                    )
+    val accounts = state.accountsOfType(type)
+    HorizonEditorScaffold(
+        title = stringResource(type.listTitle),
+        backLabel = stringResource(R.string.pulse_horizon_back_to_accounts),
+        busy = false,
+    ) { width ->
+        val gutter = width.pagePadding
+        val bottom = LocalPulseContentPadding.current.calculateBottomPadding()
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+            Box(Modifier.widthIn(max = PulseTokens.readingWidth + gutter * 2).fillMaxSize()) {
+                HorizonTabScroll(gutter, bottomSpacing = 56.dp + gutter) {
+                    AccountsListStatus(state, onAction)
+                    when {
+                        accounts == null -> Unit
+                        accounts.isEmpty() -> PulseText(stringResource(type.emptyLabel), color = PulseTheme.colors.textSecondary)
+                        else ->
+                            PulseCard(
+                                modifier = Modifier.fillMaxWidth(),
+                                border = BorderStroke(1.dp, PulseTheme.colors.border),
+                                shape = PulseTheme.shapes.extraLarge,
+                                contentPadding = PulseSpacing.none,
+                            ) {
+                                Column(Modifier.padding(horizontal = PulseSpacing.compact)) {
+                                    accounts.forEachIndexed { index, account ->
+                                        if (index > 0) HorizontalDivider(color = PulseTheme.colors.divider)
+                                        key(account.id ?: index) {
+                                            FinancialAccountRow(type, account, !state.busy, onAction)
+                                        }
+                                    }
+                                }
+                            }
+                    }
+                }
+                if (!state.busy) {
+                    PulseFloatingActionButton(
+                        onClick = { onAction(AccountsAction.Add(currency, type)) },
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(end = gutter, bottom = bottom + gutter),
+                    ) {
+                        Icon(painterResource(R.drawable.pulse_purchase_add), contentDescription = stringResource(type.addTitle))
+                    }
                 }
             }
-        }
-        PulseText(stringResource(R.string.pulse_horizon_account_currency, draft.currency))
-        PulseTextField(
-            value = draft.countryCode,
-            onValueChange = { onAction(AccountsAction.ChangeCountry(it)) },
-            label = stringResource(R.string.pulse_horizon_account_country),
-            enabled = !busy,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        PulseTextField(
-            value = draft.lastFour,
-            onValueChange = { onAction(AccountsAction.ChangeLastFour(it)) },
-            label = stringResource(R.string.pulse_horizon_account_last_four),
-            enabled = !busy,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
-            PulseButton(
-                stringResource(R.string.pulse_horizon_cancel_account),
-                { onAction(AccountsAction.Cancel) },
-                enabled = !busy,
-                style = PulseButtonStyle.Text,
-            )
-            PulseButton(
-                stringResource(R.string.pulse_horizon_save_account),
-                { onAction(AccountsAction.Save) },
-                enabled = canSave,
-            )
         }
     }
 }
 
-private fun accountTypeLabel(accountType: String): Int =
-    if (accountType == "credit_card") R.string.pulse_horizon_credit_card else R.string.pulse_horizon_bank_account
+@Composable
+private fun AccountsListStatus(
+    state: AccountsState,
+    onAction: (AccountsAction) -> Unit,
+) {
+    when (val request = state.request) {
+        AccountsState.Request.Idle -> Unit
+        AccountsState.Request.Loading -> PulseLoadingState(stringResource(R.string.pulse_horizon_loading_accounts))
+        is AccountsState.Request.Failed -> PulseErrorState(request.failure.message, { onAction(AccountsAction.Refresh) })
+    }
+}

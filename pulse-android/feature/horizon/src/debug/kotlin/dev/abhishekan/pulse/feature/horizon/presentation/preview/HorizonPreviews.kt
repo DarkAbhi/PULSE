@@ -25,6 +25,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountEditorScreen
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountListScreen
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountType
 import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsState
 import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsTabContent
 import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonTabScroll
@@ -60,25 +63,79 @@ private val sample =
         ),
     )
 
-private val sampleAccount = FinancialAccount(id = 1L, displayName = "Everyday account", institutionName = "Sample Bank", currency = "USD")
+private val sampleAccount =
+    FinancialAccount(
+        id = 1L,
+        displayName = "Everyday account",
+        institutionName = "Sample Bank",
+        currency = "USD",
+        bankAccountSubtype = "savings",
+        lastFour = "4821",
+    )
 
-@Preview(name = "Accounts list", widthDp = 360)
+private val sampleCard =
+    sampleAccount.copy(
+        id = 2L,
+        displayName = "Travel rewards",
+        accountType = "credit_card",
+        bankAccountSubtype = "",
+        lastFour = "9062",
+        archived = true,
+    )
+
+private val sampleAccounts =
+    AccountsState(
+        accounts =
+            listOf(
+                sampleAccount,
+                sampleAccount.copy(id = 3L, displayName = "Kotak", institutionName = "Kotak Bank"),
+                sampleAccount.copy(id = 4L, displayName = "SBI", institutionName = "State Bank of India"),
+                sampleCard,
+                sampleCard.copy(id = 5L, displayName = "Cashback", archived = false),
+            ),
+    )
+
+@Preview(name = "Accounts categories", widthDp = 360)
+@Preview(name = "Accounts categories large text", widthDp = 320, fontScale = 2f)
 @Composable
-private fun AccountsListPreview() {
+private fun AccountsOverviewPreview() {
     PulseTheme(false) {
         HorizonTabScroll(PulseTokens.medium) {
-            AccountsTabContent(AccountsState(accounts = listOf(sampleAccount)), sampleAccount.currency, onAction = {})
+            AccountsTabContent(sampleAccounts, enabled = true, onOpen = {})
         }
     }
 }
 
-@Preview(name = "Account editor", widthDp = 360)
+@Preview(name = "Bank Accounts", widthDp = 360, heightDp = 800)
+@Preview(name = "Bank Accounts large text", widthDp = 320, heightDp = 800, fontScale = 2f)
 @Composable
-private fun AccountEditorPreview() {
+private fun BankAccountsPreview() {
     PulseTheme(false) {
-        HorizonTabScroll(PulseTokens.medium) {
-            AccountsTabContent(AccountsState(draft = sampleAccount), sampleAccount.currency, onAction = {})
-        }
+        AccountListScreen(AccountType.Bank, sampleAccounts, "USD", onAction = {})
+    }
+}
+
+@Preview(name = "Credit Cards", widthDp = 360, heightDp = 800)
+@Composable
+private fun CreditCardsPreview() {
+    PulseTheme(true) {
+        AccountListScreen(AccountType.CreditCard, sampleAccounts, "USD", onAction = {})
+    }
+}
+
+@Preview(name = "Edit Bank Account", widthDp = 360, heightDp = 800)
+@Composable
+private fun BankAccountEditorPreview() {
+    PulseTheme(false) {
+        AccountEditorScreen(AccountType.Bank, AccountsState(draft = sampleAccount), sampleAccount, onAction = {})
+    }
+}
+
+@Preview(name = "Edit Credit Card", widthDp = 360, heightDp = 800)
+@Composable
+private fun CreditCardEditorPreview() {
+    PulseTheme(true) {
+        AccountEditorScreen(AccountType.CreditCard, AccountsState(draft = sampleCard), sampleCard, onAction = {})
     }
 }
 

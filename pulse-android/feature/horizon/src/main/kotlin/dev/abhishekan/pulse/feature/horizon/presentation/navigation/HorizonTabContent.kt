@@ -11,7 +11,6 @@ import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.feature.horizon.R
-import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsTabScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.budgets.BudgetsTabScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.budgets.BudgetsTabState
 import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonTabScroll
@@ -47,6 +46,7 @@ internal fun HorizonTabContent(
     val saving: @Composable () -> Unit = {
         if (state.busy) PulseLoadingState(stringResource(R.string.pulse_horizon_saving_your_change))
     }
+    if (tab == HorizonTab.Accounts) return
     if (tab == HorizonTab.Transactions) {
         RecentTransactionsTabScreen(
             state =
@@ -71,7 +71,6 @@ internal fun HorizonTabContent(
 
     val loading =
         when (tab) {
-            HorizonTab.Accounts -> false
             HorizonTab.Purchases -> state.purchases.loading && state.purchases.value == null
             else -> state.overview.loading && state.overview.value == null
         }
@@ -88,7 +87,7 @@ internal fun HorizonTabContent(
         HorizonTabScroll(width.pagePadding) {
             recovery()
             when (tab) {
-                HorizonTab.Accounts -> AccountsTabScreen(currency)
+                HorizonTab.Accounts -> Unit
                 HorizonTab.Overview ->
                     HorizonOverviewTabScreen(HorizonOverviewTabState(state.overview, canMutate)) { onAction(HorizonAction.Overview(it)) }
                 HorizonTab.Transactions -> Unit

@@ -25,7 +25,7 @@ internal class AccountsViewModel(
         if (_uiState.value.busy) return
         when (action) {
             AccountsAction.Refresh -> submit { load() }
-            is AccountsAction.Add -> setDraft(FinancialAccount(currency = action.currency))
+            is AccountsAction.Add -> setDraft(FinancialAccount(currency = action.currency, accountType = action.type.value))
             is AccountsAction.Edit -> setDraft(action.account)
             AccountsAction.Cancel -> setDraft(null)
             is AccountsAction.ChangeName ->
@@ -33,9 +33,11 @@ internal class AccountsViewModel(
             is AccountsAction.ChangeInstitution ->
                 updateDraft { if (action.value.length <= 150) copy(institutionName = action.value) else this }
             is AccountsAction.SelectType ->
-                updateDraft { copy(accountType = action.value, bankAccountSubtype = "") }
+                updateDraft {
+                    if (accountType == action.type.value) this else copy(accountType = action.type.value, bankAccountSubtype = "")
+                }
             is AccountsAction.SelectSubtype ->
-                updateDraft { if (accountType == "bank_account") copy(bankAccountSubtype = action.value) else this }
+                updateDraft { if (accountType == AccountType.Bank.value) copy(bankAccountSubtype = action.value) else this }
             is AccountsAction.ChangeCountry ->
                 updateDraft {
                     val value = action.value
@@ -120,6 +122,8 @@ internal data class AccountsState(
     val draft: FinancialAccount? = null,
     val request: Request = Request.Idle,
 ) {
+    fun accountsOfType(type: AccountType): List<FinancialAccount>? = accounts?.filter { it.accountType == type.value }
+
     val busy get() = request == Request.Loading
 
     val canSave
@@ -147,6 +151,7 @@ internal sealed interface AccountsAction {
 
     data class Add(
         val currency: String,
+        val type: AccountType,
     ) : AccountsAction
 
     data class Edit(
@@ -164,7 +169,7 @@ internal sealed interface AccountsAction {
     ) : AccountsAction
 
     data class SelectType(
-        val value: String,
+        val type: AccountType,
     ) : AccountsAction
 
     data class SelectSubtype(

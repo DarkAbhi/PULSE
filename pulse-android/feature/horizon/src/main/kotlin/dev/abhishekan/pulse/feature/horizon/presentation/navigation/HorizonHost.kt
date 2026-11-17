@@ -30,6 +30,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.feature.horizon.R
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsRoute
 import dev.abhishekan.pulse.feature.horizon.presentation.budgets.BudgetEditorScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.categories.CategoryEditorScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.components.horizonGutter
@@ -147,6 +148,20 @@ internal fun HorizonHost(
                                 resumeDraft()
                             }
                         }
+                    } else if (recordsDestination is HorizonDestination.Tabs && recordsDestination.tab == HorizonTab.Accounts) {
+                        AccountsRoute(
+                            currency = currency,
+                            active = active,
+                            enabled = !state.busy,
+                            width = width,
+                            header = {
+                                HorizonTabs(HorizonTab.Accounts, !state.busy, width) { onAction(HorizonAction.SelectTab(it)) }
+                            },
+                            notice = {
+                                review()
+                                resumeDraft()
+                            },
+                        )
                     } else if (recordsDestination is HorizonDestination.Tabs) {
                         HorizonTabs(recordsDestination.tab, !state.busy, width) { onAction(HorizonAction.SelectTab(it)) }
                         HorizonTabContent(

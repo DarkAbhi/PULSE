@@ -1,5 +1,7 @@
 "use client";
 
+import CategoryOptions from "./CategoryOptions";
+
 import { useEffect, useState, type FormEvent } from "react";
 import Button from "@/app/components/design-system/button";
 import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
@@ -201,7 +203,7 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
                     <span className={fieldLabel}>Category</span>
                     <Select className={inputClass} aria-label={`Category for row ${row.id}`} value={row.category_id ?? ""} disabled={disabled} onChange={e => change({ id: row.id, category_id: e.target.value ? Number(e.target.value) : null })}>
                       <option value="">Other</option>
-                      {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
+                      <CategoryOptions categories={categories} />
                     </Select>
                   </label>
                 </li>

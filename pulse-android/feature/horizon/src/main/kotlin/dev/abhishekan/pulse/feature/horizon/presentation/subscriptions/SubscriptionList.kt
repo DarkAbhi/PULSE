@@ -151,7 +151,7 @@ internal fun SubscriptionList(
                                 data.categories
                                     .firstOrNull {
                                         it.id == item.categoryId
-                                    }?.name,
+                                    }?.displayName,
                                 today,
                                 canMutate,
                                 canViewPayments,

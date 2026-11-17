@@ -137,28 +137,31 @@ func TestTransactionsCRUDAndBulk(t *testing.T) {
 	}
 
 	{
-		var categoryID int64
-		err := db.QueryRow("SELECT id FROM financial_horizon_categories WHERE is_default AND name = 'Other'").Scan(&categoryID)
+		var categoryID, parentID int64
+		err := db.QueryRow("SELECT id, parent_id FROM financial_horizon_categories WHERE is_default AND name = 'takeaway'").Scan(&categoryID, &parentID)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if _, err := db.Exec("UPDATE financial_horizon_transactions SET category_id = $1 WHERE id = $2", categoryID, transactionID); err != nil {
 			t.Fatal(err)
 		}
-		rec := httptest.NewRecorder()
-		path := "/api/horizon/transactions?page_size=1&type=debit&category_id=" + strconv.FormatInt(categoryID, 10)
-		req := httptest.NewRequest(http.MethodGet, path, nil)
-		req.AddCookie(cookie)
-		h.ListTransactions(rec, req)
-		var page PaginatedTransactionsDTO
-		err = json.NewDecoder(rec.Body).Decode(&page)
-		if err != nil || rec.Code != http.StatusOK || page.Total != 1 || page.TotalPages != 1 ||
-			len(page.Transactions) != 1 || page.Transactions[0].ID != transactionID {
-			t.Fatalf("unexpected category-filtered transactions: status=%d page=%+v err=%v", rec.Code, page, err)
+		for _, filterID := range []int64{categoryID, parentID} {
+			rec := httptest.NewRecorder()
+			path := "/api/horizon/transactions?page_size=1&type=debit&category_id=" + strconv.FormatInt(filterID, 10)
+			req := httptest.NewRequest(http.MethodGet, path, nil)
+			req.AddCookie(cookie)
+			h.ListTransactions(rec, req)
+			var page PaginatedTransactionsDTO
+			err := json.NewDecoder(rec.Body).Decode(&page)
+			if err != nil || rec.Code != http.StatusOK || page.Total != 1 || page.TotalPages != 1 ||
+				len(page.Transactions) != 1 || page.Transactions[0].ID != transactionID ||
+				page.Transactions[0].CategoryName != "Food and Drinks / takeaway" {
+				t.Fatalf("unexpected category-filtered transactions: status=%d page=%+v err=%v", rec.Code, page, err)
+			}
 		}
 
-		rec = httptest.NewRecorder()
-		req = httptest.NewRequest(http.MethodGet, "/api/horizon/transactions?category_id=0", nil)
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/api/horizon/transactions?category_id=0", nil)
 		req.AddCookie(cookie)
 		h.ListTransactions(rec, req)
 		if rec.Code != http.StatusBadRequest {

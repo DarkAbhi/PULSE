@@ -1,5 +1,8 @@
 "use client";
 
+import Select from "@/app/components/design-system/select";
+import type { CategoryItem } from "@/app/dashboard/financial-horizon-card";
+
 import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useId } from "react";
@@ -9,18 +12,23 @@ import Dialog, { DialogAction, DialogActions } from "@/app/components/design-sys
 export interface CategoryDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { name: string; color: string }) => Promise<void> | void;
+  categories: CategoryItem[];
+  onSave: (data: { name: string; color: string; parentId: number | null }) => Promise<void> | void;
+  error?: string;
   isPending?: boolean;
 }
 
 export default function CategoryDialog({
   isOpen,
   onClose,
+  categories,
   onSave,
+  error,
   isPending = false,
 }: CategoryDialogProps) {
   const titleId = useId();
 
+  const [parentId, setParentId] = useState<number | null>(null);
   const [catName, setCatName] = useState("");
   const [catColor, setCatColor] = useState("#285c70");
   const [errorMsg, setErrorMsg] = useState("");
@@ -28,6 +36,7 @@ export default function CategoryDialog({
   useEffect(() => {
     if (!isOpen) return;
     setCatName("");
+    setParentId(null);
     setCatColor("#285c70");
     setErrorMsg("");
   }, [isOpen]);
@@ -62,7 +71,7 @@ export default function CategoryDialog({
     }
 
     try {
-      await onSave({ name: catName.trim(), color: catColor });
+      await onSave({ name: catName.trim(), color: catColor, parentId });
     } catch {
       setErrorMsg("Failed to save category.");
     }
@@ -94,9 +103,9 @@ export default function CategoryDialog({
         </div>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-          {errorMsg && (
-            <div className="rounded-xl bg-destructive/10 p-3 text-xs font-semibold text-destructive">
-              {errorMsg}
+          {(errorMsg || error) && (
+            <div role="alert" className="rounded-xl bg-destructive/10 p-3 text-xs font-semibold text-destructive">
+              {errorMsg || error}
             </div>
           )}
 
@@ -105,12 +114,26 @@ export default function CategoryDialog({
             <input
               type="text"
               required
-              placeholder="e.g. Pet Care, Education, Gaming"
+              maxLength={100}
               value={catName}
               onChange={(e) => setCatName(e.target.value)}
               className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
             />
           </div>
+
+          <label className="block space-y-1 text-xs font-semibold text-muted-foreground">
+            Parent Category
+            <Select
+              value={parentId ?? ""}
+              onChange={(e) => setParentId(e.target.value ? Number(e.target.value) : null)}
+              className="w-full rounded-xl bg-secondary px-3 py-2.5 text-sm text-foreground"
+            >
+              <option value="">None (Top-level category)</option>
+              {categories.filter(c => c.parent_id == null && c.allows_subcategories).map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </Select>
+          </label>
 
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground">Badge Color</label>

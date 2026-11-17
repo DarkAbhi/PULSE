@@ -36,6 +36,7 @@ import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonFormSection
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionFieldPair
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionInput
+import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonCategoryPicker
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionRelation
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionSegments
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.TransactionPickerField
@@ -118,13 +119,10 @@ internal fun TransactionEditor(
                 R.drawable.pulse_obligation_tag,
             ) {
                 SubscriptionFieldPair(wide, {
-                    SubscriptionRelation(
+                    HorizonCategoryPicker(
                         R.string.pulse_horizon_category,
                         draft.categoryId,
-                        data?.categories.orEmpty().map {
-                            it.id to
-                                it.name
-                        },
+                        data?.categories.orEmpty(),
                         !busy,
                     ) { onChange(draft.copy(categoryId = it)) }
                 }, {

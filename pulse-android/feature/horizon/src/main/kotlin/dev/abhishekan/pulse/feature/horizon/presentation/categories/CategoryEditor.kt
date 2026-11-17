@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import dev.abhishekan.pulse.core.domain.model.HorizonCategory
 import dev.abhishekan.pulse.core.ui.PulseLightColors
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
@@ -45,6 +46,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pulseWindowSize
 import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.feature.horizon.R
+import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonCategoryPicker
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import android.graphics.Color as GraphicsColor
 import dev.abhishekan.pulse.core.ui.R as CoreUiR
@@ -68,6 +70,7 @@ private val categoryIcons =
 @Composable
 internal fun CategoryEditor(
     draft: HorizonDraft,
+    categories: List<HorizonCategory>,
     busy: Boolean,
     error: UiText?,
     canSave: Boolean,
@@ -140,6 +143,13 @@ internal fun CategoryEditor(
                                 }
                             }),
                     )
+                    HorizonCategoryPicker(
+                        R.string.pulse_horizon_parent_category,
+                        draft.parentCategoryId,
+                        categories.filter { it.parentId == null && it.allowsSubcategories },
+                        !busy,
+                        emptyChoice = R.string.pulse_horizon_top_level_category,
+                    ) { onChange(draft.copy(parentCategoryId = it)) }
                     if (error != null && !nameError) {
                         PulseText(error, Modifier.semantics { liveRegion = LiveRegionMode.Polite }, color = colors.error)
                     }

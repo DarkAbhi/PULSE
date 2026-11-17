@@ -19,7 +19,8 @@ export async function getTransactionsPageAction(
   page: number,
   pageSize: number = 10,
   txType?: "debit" | "credit" | "all",
-  search?: string
+  search?: string,
+  categoryId?: number | null,
 ) {
   try {
     const params = new URLSearchParams({
@@ -28,6 +29,7 @@ export async function getTransactionsPageAction(
     });
     if (txType && txType !== "all") params.set("type", txType);
     if (search && search.trim()) params.set("search", search.trim());
+    if (categoryId != null) params.set("category_id", String(categoryId));
 
     const response = await apiFetch(
       `${apiBaseURL}/api/horizon/transactions?${params.toString()}`,
@@ -301,14 +303,14 @@ export async function getHorizonCategoriesAction() {
   }
 }
 
-export async function addHorizonCategoryAction(name: string, icon?: string, color?: string) {
+export async function addHorizonCategoryAction(name: string, icon?: string, color?: string, parentId?: number | null) {
   try {
     const response = await apiFetch(`${apiBaseURL}/api/horizon/categories`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, icon, color }),
+      body: JSON.stringify({ name, icon, color, parent_id: parentId }),
     });
 
     const body = await response.json().catch(() => ({}));

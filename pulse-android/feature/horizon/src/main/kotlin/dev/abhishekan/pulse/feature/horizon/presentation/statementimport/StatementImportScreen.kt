@@ -72,6 +72,7 @@ import dev.abhishekan.pulse.feature.horizon.presentation.components.horizonOptio
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonFormSection
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionInput
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.SubscriptionSegments
+import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonCategoryPicker
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.TransactionPickerField
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -500,15 +501,13 @@ private fun StatementRowFields(
             focus.clearFocus()
             datePicker = true
         }
-        val other = stringResource(R.string.pulse_horizon_account_other)
-        PulseSelectionField(
-            label = stringResource(R.string.pulse_horizon_statement_category),
-            selected = categories.firstOrNull { it.id == row.categoryId }?.name ?: other,
-            options = listOf(other) + categories.map(HorizonCategory::name),
-            onSelect = { change(row.copy(categoryId = categories.getOrNull(it - 1)?.id)) },
-            enabled = enabled,
-            labelAbove = true,
-        )
+        HorizonCategoryPicker(
+            R.string.pulse_horizon_statement_category,
+            row.categoryId,
+            categories,
+            enabled,
+            emptyChoice = R.string.pulse_horizon_uncategorized,
+        ) { change(row.copy(categoryId = it)) }
     }
     if (datePicker) {
         PulseDatePickerDialog(

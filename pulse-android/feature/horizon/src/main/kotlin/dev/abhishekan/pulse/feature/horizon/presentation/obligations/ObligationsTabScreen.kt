@@ -110,7 +110,7 @@ internal fun ObligationsTabScreen(
             SubscriptionObligationCard(
                 item = item,
                 budgetName = item.budgetId?.let { id -> data.budgets.find { it.id == id }?.name },
-                categoryName = item.categoryId?.let { id -> data.categories.find { it.id == id }?.name },
+                categoryName = item.categoryId?.let { id -> data.categories.find { it.id == id }?.displayName },
                 enabled = state.canMutate,
                 manage = { onAction(ObligationsTabAction.Edit(item.draft(state.currency))) },
             )

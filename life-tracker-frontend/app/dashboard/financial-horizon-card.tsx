@@ -35,6 +35,9 @@ export type CategoryItem = {
   color: string;
   is_default: boolean;
   user_id?: number | null;
+  parent_id?: number | null;
+  allows_subcategories?: boolean;
+  is_subscription_default?: boolean;
 };
 
 export type SubscriptionItem = {

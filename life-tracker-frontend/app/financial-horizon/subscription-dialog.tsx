@@ -1,5 +1,7 @@
 "use client";
 
+import CategoryOptions from "./components/CategoryOptions";
+
 import Select from "@/app/components/design-system/select";
 import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
@@ -53,6 +55,7 @@ export default function SubscriptionDialog({
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const defaultCategoryId = categories.find(c => c.is_subscription_default)?.id;
 
   useEffect(() => {
     if (editingSubscription) {
@@ -84,14 +87,13 @@ export default function SubscriptionDialog({
       setRenewalDate(dateKey(new Date(), timeZone));
       setStatus("active");
 
-      const defaultSubCategory = categories.find(c => c.name.toLowerCase().includes("subscription"));
-      setCategoryId(defaultSubCategory ? defaultSubCategory.id.toString() : "");
+      setCategoryId(defaultCategoryId?.toString() ?? "");
 
       setBudgetId("");
       setNotes("");
     }
     setError("");
-  }, [editingSubscription, isOpen, categories]);
+  }, [editingSubscription, isOpen, defaultCategoryId]);
 
   if (!isOpen) return null;
 
@@ -293,16 +295,13 @@ export default function SubscriptionDialog({
                 Category
               </label>
               <Select
+                aria-label="Category"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
               >
                 <option value="">None (Uncategorized)</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+                <CategoryOptions categories={categories} />
               </Select>
             </div>
             <div>

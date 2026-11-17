@@ -319,6 +319,7 @@ class PulseHorizonRepository(
                             put("name", change.name.trim())
                             put("icon", change.icon.trim())
                             put("color", change.color.trim())
+                            ref("parent_id", change.parentId)
                         },
                     )
                 is HorizonChange.Purchase ->

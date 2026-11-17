@@ -179,8 +179,8 @@ func (h *SubscriptionsHandler) FetchSubscriptions(userID int64) ([]SubscriptionD
 			id := row.CategoryID.Int64
 			s.CategoryID = &id
 		}
-		if row.CategoryName.Valid {
-			s.CategoryName = &row.CategoryName.String
+		if row.CategoryName != "" {
+			s.CategoryName = &row.CategoryName
 		}
 		if row.BudgetID.Valid {
 			id := row.BudgetID.Int64

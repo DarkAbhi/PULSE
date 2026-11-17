@@ -1,5 +1,7 @@
 "use client";
 
+import CategoryOptions from "./components/CategoryOptions";
+
 import Select from "@/app/components/design-system/select";
 import { currencySymbol } from "@/app/lib/currency.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
@@ -101,12 +103,12 @@ export default function TransactionDialog({
       const now = new Date();
       const localIso = toDateTimeInput(now, timeZone);
       setTxDate(localIso);
-      setTxCategoryId(paymentSubscription?.category_id ?? (categories.length > 0 ? categories[0].id : null));
+      setTxCategoryId(paymentSubscription?.category_id ?? null);
       setTxBudgetId(paymentSubscription?.budget_id ?? null);
       setTxSubscriptionId(paymentSubscription?.id ?? null);
       setTxNotes(paymentSubscription ? `Recurring payment for ${paymentSubscription.name}` : "");
     }
-  }, [isOpen, editingTransaction, paymentSubscription, categories]);
+  }, [isOpen, editingTransaction, paymentSubscription]);
 
   // Escape key listener to close modal
   useEffect(() => {
@@ -258,15 +260,13 @@ export default function TransactionDialog({
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">Category</label>
               <Select
+                aria-label="Category"
                 value={txCategoryId ?? ""}
                 onChange={(e) => setTxCategoryId(e.target.value ? parseInt(e.target.value, 10) : null)}
                 className="w-full rounded-xl bg-secondary px-3 py-2.5 text-sm text-foreground"
               >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+                <option value="">Uncategorized</option>
+                <CategoryOptions categories={categories} />
               </Select>
             </div>
 

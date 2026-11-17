@@ -45,6 +45,9 @@ import kotlinx.serialization.json.JsonPrimitive
     val icon: String = "tag",
     val color: String = "#64748b",
     @SerialName("is_default") val isDefault: Boolean = false,
+    @SerialName("parent_id") val parentId: Long? = null,
+    @SerialName("allows_subcategories") val allowsSubcategories: Boolean = false,
+    @SerialName("is_subscription_default") val isSubscriptionDefault: Boolean = false,
 )
 
 @Serializable data class HorizonSubscriptionDto(

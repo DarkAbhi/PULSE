@@ -53,6 +53,6 @@ internal fun HorizonCategoryRecords(
     section.error?.let { PulseErrorState(it.message, onRetry) }
     section.value?.let { overview ->
         PulseText(stringResource(R.string.pulse_horizon_filter_categories), style = PulseTextStyle.Title)
-        overview.categories.forEach { PulseText(it.name) }
+        overview.categories.forEach { PulseText(it.displayName) }
     }
 }

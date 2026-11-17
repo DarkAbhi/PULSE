@@ -9,7 +9,7 @@ import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import Button from "@/app/components/design-system/button";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import BackLink from "@/app/components/design-system/back-link";
 import { Compass, X } from "lucide-react";
 
@@ -132,7 +132,7 @@ export default function FinancialHorizonClient({
   // Transaction filter state — owned here so re-fetches happen server-side
   const [txTypeFilter, setTxTypeFilter] = useState<"all" | "debit" | "credit">("all");
   const [txSearchQuery, setTxSearchQuery] = useState<string>("");
-  const [txCategoryFilter, setTxCategoryFilter] = useState<string>("all");
+  const [txCategoryFilter, setTxCategoryFilter] = useState<number | null>(null);
 
   // Subscriptions State
   const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>(initialSummary.subscriptions ?? []);
@@ -148,6 +148,7 @@ export default function FinancialHorizonClient({
     if (initialSummary) {
       setSummary(initialSummary);
       setSubscriptions(initialSummary.subscriptions ?? []);
+      setCategories(initialSummary.categories ?? []);
     }
   }, [initialSummary]);
 
@@ -190,16 +191,20 @@ export default function FinancialHorizonClient({
   // Error & Transition Hook
   const [errorMsg, setErrorMsg] = useState("");
   const [isPending, startTransition] = useTransition();
+  const transactionRequest = useRef(0);
 
   const loadTransactionsPage = (
     page: number,
     pageSize = transactionPage.page_size,
     typeFilter: "all" | "debit" | "credit" = txTypeFilter,
-    search: string = txSearchQuery
+    search: string = txSearchQuery,
+    categoryId: number | null = txCategoryFilter,
   ) => {
+    const request = ++transactionRequest.current;
     setErrorMsg("");
     startTransition(async () => {
-      const res = await getTransactionsPageAction(page, pageSize, typeFilter, search);
+      const res = await getTransactionsPageAction(page, pageSize, typeFilter, search, categoryId);
+      if (request !== transactionRequest.current) return;
       if (res.ok) {
         setTransactions(res.data.transactions as TransactionItem[]);
         setTransactionPage(res.data);
@@ -209,11 +214,11 @@ export default function FinancialHorizonClient({
     });
   };
 
-  // Re-fetch from page 1 whenever type or search filter changes
+  // Re-fetch from page 1 whenever a filter changes.
   useEffect(() => {
-    loadTransactionsPage(1, transactionPage.page_size, txTypeFilter, txSearchQuery);
+    loadTransactionsPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [txTypeFilter, txSearchQuery]);
+  }, [txTypeFilter, txSearchQuery, txCategoryFilter]);
 
   // Calculated Metrics
   const purchasesTotal = purchases.reduce((sum, item) => sum + item.price, 0);
@@ -237,13 +242,9 @@ export default function FinancialHorizonClient({
     transactionsUpdater?: (prev: TransactionItem[]) => TransactionItem[];
     budgetsUpdater?: (prev: BudgetItem[]) => BudgetItem[];
   } = {}) => {
-    let nextTx = transactions;
-    if (transactionsUpdater) {
-      nextTx = transactionsUpdater(transactions);
-      setTransactions(nextTx);
-    }
-
     setSummary((prev) => {
+      const recentTransactions = prev.transactions ?? [];
+      const nextTx = transactionsUpdater ? transactionsUpdater(recentTransactions) : recentTransactions;
       const newDeductions = deductionsUpdater ? deductionsUpdater(prev.deductions) : prev.deductions;
       const newBudgetsList = budgetsUpdater ? budgetsUpdater(prev.budgets ?? []) : (prev.budgets ?? []);
 
@@ -295,6 +296,7 @@ export default function FinancialHorizonClient({
         total_budgets_allocated: totalBudgetsAllocated,
         remaining_amount: remainingAmount,
         committed_ratio: committedRatio,
+        transactions: nextTx,
         deductions: newDeductions,
         budgets: updatedBudgets,
       };
@@ -371,12 +373,14 @@ export default function FinancialHorizonClient({
     startTransition(async () => {
       const res = await deleteBudgetAction(id);
       if (res.ok) {
+        const unlinkBudget = (items: TransactionItem[]) =>
+          items.map(t => t.budget_id === id ? { ...t, budget_id: null, budget_name: null } : t);
+        setTransactions(unlinkBudget);
         recalculateSummary({
           budgetsUpdater: (prev) => prev.filter((b) => b.id !== id),
           deductionsUpdater: (prev) =>
             prev.map((d) => (d.budget_id === id ? { ...d, budget_id: null } : d)),
-          transactionsUpdater: (prev) =>
-            prev.map((t) => (t.budget_id === id ? { ...t, budget_id: null, budget_name: null } : t)),
+          transactionsUpdater: unlinkBudget,
         });
         setBudgetToDelete(null);
       } else {
@@ -609,6 +613,7 @@ export default function FinancialHorizonClient({
           });
           setIsTransactionDialogOpen(false);
           setEditingTransaction(null);
+          loadTransactionsPage(transactionPage.page);
         } else {
           setErrorMsg(res.error ?? "Failed to update transaction.");
         }
@@ -638,6 +643,7 @@ export default function FinancialHorizonClient({
           setTotalTransactionsCount((prev) => prev + 1);
           setIsTransactionDialogOpen(false);
           setPaymentSubscription(null);
+          loadTransactionsPage(1);
         } else {
           setErrorMsg(res.error ?? "Failed to add transaction.");
         }
@@ -652,36 +658,29 @@ export default function FinancialHorizonClient({
       const res = await deleteTransactionAction(txToDelete.id);
       if (res.ok) {
         setTxToDelete(null);
-        // Re-fetch the current page (with active filters) so the list
-        // refills to the page size instead of leaving a gap.
-        const pageRes = await getTransactionsPageAction(
-          transactionPage.page,
-          transactionPage.page_size,
-          txTypeFilter,
-          txSearchQuery
-        );
-        if (pageRes.ok) {
-          setTransactions(pageRes.data.transactions as TransactionItem[]);
-          setTransactionPage(pageRes.data);
-          setTotalTransactionsCount((prev) => Math.max(0, prev - 1));
-        } else {
-          recalculateSummary({
-            transactionsUpdater: (prev) => prev.filter((t) => t.id !== txToDelete.id),
-          });
-          setTotalTransactionsCount((prev) => Math.max(0, prev - 1));
-        }
+        setTransactions(prev => prev.filter(t => t.id !== txToDelete.id));
+        recalculateSummary({
+          transactionsUpdater: (prev) => prev.filter((t) => t.id !== txToDelete.id),
+        });
+        setTotalTransactionsCount((prev) => Math.max(0, prev - 1));
+        loadTransactionsPage(transactionPage.page);
       } else {
         setErrorMsg(res.error ?? "Failed to delete transaction.");
       }
     });
   };
 
-  const handleSaveCategory = async (data: { name: string; color: string }) => {
+  const openCategoryDialog = () => {
+    setErrorMsg("");
+    setIsCategoryDialogOpen(true);
+  };
+
+  const handleSaveCategory = async (data: { name: string; color: string; parentId: number | null }) => {
     setErrorMsg("");
     startTransition(async () => {
-      const res = await addHorizonCategoryAction(data.name, "tag", data.color);
+      const res = await addHorizonCategoryAction(data.name, "tag", data.color, data.parentId);
       if (res.ok && res.category) {
-        setCategories((prev) => [...prev, res.category]);
+        setCategories(prev => prev.some(c => c.id === res.category.id) ? prev : [...prev, res.category]);
         setIsCategoryDialogOpen(false);
       } else {
         setErrorMsg(res.error ?? "Failed to add category.");
@@ -826,7 +825,7 @@ export default function FinancialHorizonClient({
                 }}
                 onAddPlannedPurchase={() => setIsPlannedPurchaseDialogOpen(true)}
                 onAddBudget={handleOpenAddBudgetForm}
-                onAddCategory={() => setIsCategoryDialogOpen(true)}
+                onAddCategory={openCategoryDialog}
                 isPending={isPending}
               />
             </div>
@@ -889,7 +888,7 @@ export default function FinancialHorizonClient({
             onOpenAddTransaction={handleOpenAddTransaction}
             onOpenEditTransaction={handleOpenEditTransaction}
             onConfirmDeleteTransaction={setTxToDelete}
-            onOpenAddCategory={() => setIsCategoryDialogOpen(true)}
+            onOpenAddCategory={openCategoryDialog}
             onOpenStatementUpload={() => setIsStatementUploadOpen(true)}
             onPageChange={(page) => loadTransactionsPage(page)}
             onPageSizeChange={(pageSize) => loadTransactionsPage(1, pageSize)}
@@ -1171,7 +1170,12 @@ export default function FinancialHorizonClient({
       {/* Category Entry Dialog */}
       <CategoryDialog
         isOpen={isCategoryDialogOpen}
-        onClose={() => setIsCategoryDialogOpen(false)}
+        categories={categories}
+        error={errorMsg}
+        onClose={() => {
+          setErrorMsg("");
+          setIsCategoryDialogOpen(false);
+        }}
         onSave={handleSaveCategory}
         isPending={isPending}
       />

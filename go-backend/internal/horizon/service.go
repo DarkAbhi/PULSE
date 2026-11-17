@@ -43,10 +43,6 @@ func (s *Service) UpsertConfig(ctx context.Context, userID int64, baseAmount flo
 
 func (s *Service) Summary(ctx context.Context, userID int64) (*SummaryDTO, error) {
 
-	if err := SeedDefaultCategories(ctx, s.db); err != nil {
-		return nil, err
-	}
-
 	var baseAmount float64
 	currency, err := profilequery.New(s.db).GetCurrency(ctx, userID)
 	if err != nil {
@@ -89,7 +85,7 @@ func (s *Service) Summary(ctx context.Context, userID int64) (*SummaryDTO, error
 	}
 
 	// Fetch Categories
-	categoriesList, err := s.categories.FetchCategories(userID)
+	categoriesList, err := s.categories.FetchCategories(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("fetch categories: %w", err)
 	}

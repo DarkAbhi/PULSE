@@ -6,4 +6,8 @@ data class HorizonCategory(
     val icon: String,
     val color: String,
     val isDefault: Boolean,
+    val parentId: Long? = null,
+    val allowsSubcategories: Boolean = false,
+    val isSubscriptionDefault: Boolean = false,
+    val displayName: String = name,
 )

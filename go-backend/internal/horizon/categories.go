@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/DarkAbhi/life-backend/internal/auth"
@@ -17,18 +17,37 @@ import (
 )
 
 type CategoryInput struct {
-	Name  string  `json:"name"`
-	Icon  *string `json:"icon"`
-	Color *string `json:"color"`
+	Name     string  `json:"name"`
+	Icon     *string `json:"icon"`
+	Color    *string `json:"color"`
+	ParentID *int64  `json:"parent_id"`
 }
 
 type CategoryDTO struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Icon      string `json:"icon"`
-	Color     string `json:"color"`
-	IsDefault bool   `json:"is_default"`
-	UserID    *int64 `json:"user_id,omitempty"`
+	ID                    int64  `json:"id"`
+	Name                  string `json:"name"`
+	Icon                  string `json:"icon"`
+	Color                 string `json:"color"`
+	IsDefault             bool   `json:"is_default"`
+	UserID                *int64 `json:"user_id,omitempty"`
+	ParentID              *int64 `json:"parent_id"`
+	AllowsSubcategories   bool   `json:"allows_subcategories"`
+	IsSubscriptionDefault bool   `json:"is_subscription_default,omitempty"`
+}
+
+func categoryDTO(id int64, name, icon, color string, isDefault bool, userID, parentID sql.NullInt64, allowsSubcategories bool) CategoryDTO {
+	category := CategoryDTO{
+		ID: id, Name: name, Icon: icon, Color: color, IsDefault: isDefault,
+		AllowsSubcategories:   allowsSubcategories,
+		IsSubscriptionDefault: isDefault && !parentID.Valid && name == "Subscription",
+	}
+	if userID.Valid {
+		category.UserID = &userID.Int64
+	}
+	if parentID.Valid {
+		category.ParentID = &parentID.Int64
+	}
+	return category
 }
 
 type CategoriesHandler struct {
@@ -43,20 +62,15 @@ func (h *CategoriesHandler) sessionUser(r *http.Request) (auth.SessionUser, erro
 	return h.sessions(r)
 }
 
-func (h *CategoriesHandler) FetchCategories(userID int64) ([]CategoryDTO, error) {
-	rows, err := query.New(h.DB).ListCategories(context.Background(), sql.NullInt64{Int64: userID, Valid: true})
+func (h *CategoriesHandler) FetchCategories(ctx context.Context, userID int64) ([]CategoryDTO, error) {
+	rows, err := query.New(h.DB).ListCategories(ctx, sql.NullInt64{Int64: userID, Valid: true})
 	if err != nil {
 		return nil, err
 	}
 
-	categories := make([]CategoryDTO, 0)
+	categories := make([]CategoryDTO, 0, len(rows))
 	for _, row := range rows {
-		c := CategoryDTO{ID: row.ID, Name: row.Name, Icon: row.Icon, Color: row.Color, IsDefault: row.IsDefault}
-		if row.UserID.Valid {
-			u := row.UserID.Int64
-			c.UserID = &u
-		}
-		categories = append(categories, c)
+		categories = append(categories, categoryDTO(row.ID, row.Name, row.Icon, row.Color, row.IsDefault, row.UserID, row.ParentID, row.AllowsSubcategories))
 	}
 	return categories, nil
 }
@@ -72,11 +86,7 @@ func (h *CategoriesHandler) ListCategories(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := SeedDefaultCategories(r.Context(), h.DB); err != nil {
-		webutil.ServerError(w, err)
-		return
-	}
-	categories, err := h.FetchCategories(user.ID)
+	categories, err := h.FetchCategories(r.Context(), user.ID)
 	if err != nil {
 		webutil.ServerError(w, err)
 		return
@@ -118,52 +128,26 @@ func (h *CategoriesHandler) CreateCategory(w http.ResponseWriter, r *http.Reques
 		color = strings.TrimSpace(*in.Color)
 	}
 
-	row, err := query.New(h.DB).CreateCategory(r.Context(), query.CreateCategoryParams{UserID: sql.NullInt64{Int64: user.ID, Valid: true}, Name: in.Name, Icon: icon, Color: color})
-
+	var parentID sql.NullInt64
+	if in.ParentID != nil {
+		parentID = sql.NullInt64{Int64: *in.ParentID, Valid: true}
+	}
+	row, err := query.New(h.DB).CreateCategory(r.Context(), query.CreateCategoryParams{
+		UserID: sql.NullInt64{Int64: user.ID, Valid: true},
+		Name:   in.Name, Icon: icon, Color: color, ParentID: parentID,
+	})
 	if err != nil {
-		webutil.ServerError(w, err)
+		var pgErr *pgconn.PgError
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			webutil.BadRequest(w, "select a top-level category that allows subcategories")
+		case errors.As(err, &pgErr) && pgErr.Code == "23505":
+			webutil.BadRequest(w, "a category with that name already exists at this level")
+		default:
+			webutil.ServerError(w, err)
+		}
 		return
 	}
 
-	c := CategoryDTO{ID: row.ID, Name: row.Name, Icon: row.Icon, Color: row.Color, IsDefault: row.IsDefault}
-	if row.UserID.Valid {
-		u := row.UserID.Int64
-		c.UserID = &u
-	}
-
-	webutil.WriteJSON(w, http.StatusCreated, c)
-}
-
-func SeedDefaultCategories(ctx context.Context, db *pgxpool.Pool) error {
-	q := query.New(db)
-	defaultCategories := []struct {
-		name  string
-		icon  string
-		color string
-	}{
-		{"Food & Dining", "utensils", "#f97316"},
-		{"Bills & Utilities", "receipt", "#ef4444"},
-		{"Housing", "home", "#8b5cf6"},
-		{"Transportation", "car", "#3b82f6"},
-		{"Shopping", "shopping-bag", "#ec4899"},
-		{"Entertainment", "film", "#14b8a6"},
-		{"Health & Fitness", "heart-pulse", "#06b6d4"},
-		{"Investments & Savings", "trending-up", "#22c55e"},
-		{"Subscriptions", "credit-card", "#6366f1"},
-		{"Other", "tag", "#64748b"},
-	}
-	count, err := q.CountDefaultCategories(ctx)
-	if err != nil {
-		return fmt.Errorf("count default categories: %w", err)
-	}
-	if count >= int64(len(defaultCategories)) {
-		return nil
-	}
-
-	for _, c := range defaultCategories {
-		if err := q.SeedDefaultCategory(ctx, query.SeedDefaultCategoryParams{Name: c.name, Icon: c.icon, Color: c.color}); err != nil {
-			return fmt.Errorf("seed default category %q: %w", c.name, err)
-		}
-	}
-	return nil
+	webutil.WriteJSON(w, http.StatusCreated, categoryDTO(row.ID, row.Name, row.Icon, row.Color, row.IsDefault, row.UserID, row.ParentID, row.AllowsSubcategories))
 }

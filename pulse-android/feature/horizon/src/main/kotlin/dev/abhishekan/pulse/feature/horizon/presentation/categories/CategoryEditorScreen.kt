@@ -33,6 +33,7 @@ internal fun CategoryEditorScreen(
             notice()
             CategoryEditor(
                 state.draft,
+                state.data?.categories.orEmpty(),
                 state.busy,
                 state.error,
                 state.canSave,

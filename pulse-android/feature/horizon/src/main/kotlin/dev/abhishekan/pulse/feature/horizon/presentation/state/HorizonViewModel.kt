@@ -562,7 +562,7 @@ class HorizonViewModel(
                 dueDay = if (kind == HorizonForm.Subscription) now.dayOfMonth.toString() else "",
                 categoryId =
                     if (kind == HorizonForm.Subscription) {
-                        data?.categories?.find { it.name.contains("subscription", ignoreCase = true) }?.id
+                        data?.categories?.find { it.isSubscriptionDefault }?.id
                     } else {
                         null
                     },

@@ -10,37 +10,35 @@ import (
 	"database/sql"
 )
 
-const countDefaultCategories = `-- name: CountDefaultCategories :one
-SELECT COUNT(*) FROM financial_horizon_categories WHERE is_default = true
-`
-
-func (q *Queries) CountDefaultCategories(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countDefaultCategories)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const createCategory = `-- name: CreateCategory :one
-INSERT INTO financial_horizon_categories (user_id, name, icon, color, is_default)
-VALUES ($1, $2, $3, $4, false)
-RETURNING id, name, icon, color, is_default, user_id
+INSERT INTO financial_horizon_categories (user_id, name, icon, color, is_default, parent_id, allows_subcategories)
+SELECT $1::bigint, $2::varchar, $3::varchar, $4::varchar,
+       false, $5::bigint, $5::bigint IS NULL
+WHERE $5::bigint IS NULL OR EXISTS (
+    SELECT 1 FROM financial_horizon_categories p
+    WHERE p.id = $5 AND p.parent_id IS NULL AND p.allows_subcategories
+      AND (p.user_id = $1 OR (p.user_id IS NULL AND p.is_default))
+)
+RETURNING id, name, icon, color, is_default, user_id, parent_id, allows_subcategories
 `
 
 type CreateCategoryParams struct {
-	UserID sql.NullInt64
-	Name   string
-	Icon   string
-	Color  string
+	UserID   sql.NullInt64
+	Name     string
+	Icon     string
+	Color    string
+	ParentID sql.NullInt64
 }
 
 type CreateCategoryRow struct {
-	ID        int64
-	Name      string
-	Icon      string
-	Color     string
-	IsDefault bool
-	UserID    sql.NullInt64
+	ID                  int64
+	Name                string
+	Icon                string
+	Color               string
+	IsDefault           bool
+	UserID              sql.NullInt64
+	ParentID            sql.NullInt64
+	AllowsSubcategories bool
 }
 
 func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) (CreateCategoryRow, error) {
@@ -49,6 +47,7 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 		arg.Name,
 		arg.Icon,
 		arg.Color,
+		arg.ParentID,
 	)
 	var i CreateCategoryRow
 	err := row.Scan(
@@ -58,24 +57,28 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 		&i.Color,
 		&i.IsDefault,
 		&i.UserID,
+		&i.ParentID,
+		&i.AllowsSubcategories,
 	)
 	return i, err
 }
 
 const listCategories = `-- name: ListCategories :many
-SELECT id, name, icon, color, is_default, user_id
+SELECT id, name, icon, color, is_default, user_id, parent_id, allows_subcategories
 FROM financial_horizon_categories
 WHERE (user_id IS NULL AND is_default) OR user_id = $1
 ORDER BY is_default DESC, name ASC
 `
 
 type ListCategoriesRow struct {
-	ID        int64
-	Name      string
-	Icon      string
-	Color     string
-	IsDefault bool
-	UserID    sql.NullInt64
+	ID                  int64
+	Name                string
+	Icon                string
+	Color               string
+	IsDefault           bool
+	UserID              sql.NullInt64
+	ParentID            sql.NullInt64
+	AllowsSubcategories bool
 }
 
 func (q *Queries) ListCategories(ctx context.Context, userID sql.NullInt64) ([]ListCategoriesRow, error) {
@@ -94,6 +97,8 @@ func (q *Queries) ListCategories(ctx context.Context, userID sql.NullInt64) ([]L
 			&i.Color,
 			&i.IsDefault,
 			&i.UserID,
+			&i.ParentID,
+			&i.AllowsSubcategories,
 		); err != nil {
 			return nil, err
 		}
@@ -103,20 +108,4 @@ func (q *Queries) ListCategories(ctx context.Context, userID sql.NullInt64) ([]L
 		return nil, err
 	}
 	return items, nil
-}
-
-const seedDefaultCategory = `-- name: SeedDefaultCategory :exec
-INSERT INTO financial_horizon_categories (name, icon, color, is_default)
-VALUES ($1, $2, $3, true) ON CONFLICT DO NOTHING
-`
-
-type SeedDefaultCategoryParams struct {
-	Name  string
-	Icon  string
-	Color string
-}
-
-func (q *Queries) SeedDefaultCategory(ctx context.Context, arg SeedDefaultCategoryParams) error {
-	_, err := q.db.Exec(ctx, seedDefaultCategory, arg.Name, arg.Icon, arg.Color)
-	return err
 }

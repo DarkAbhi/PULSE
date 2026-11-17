@@ -314,7 +314,10 @@
     <string name="pulse_horizon_category_details">Category details</string>
     <string name="pulse_horizon_category_details_hint">Give your spending a label that is easy to recognize.</string>
     <string name="pulse_horizon_category_name">Category name *</string>
-    <string name="pulse_horizon_category_name_hint">e.g. Groceries, Dining Out, Pet Care</string>
+    <string name="pulse_horizon_category_name_hint">Enter a name</string>
+    <string name="pulse_horizon_parent_category">Parent category</string>
+    <string name="pulse_horizon_top_level_category">Top-level category</string>
+    <string name="pulse_horizon_uncategorized">Uncategorized</string>
     <string name="pulse_horizon_category_name_error">Enter a category name of up to 100 characters.</string>
     <string name="pulse_horizon_category_appearance">Appearance</string>
     <string name="pulse_horizon_category_appearance_hint">Choose an icon and color to help identify this category.</string>

@@ -62,6 +62,7 @@ class HorizonRepositoryTest {
         var status = HttpStatusCode.OK
         var failure: Exception? = null
         var malformed = false
+        var categories = "null"
         var query: Parameters = Parameters.Empty
         val writes = mutableListOf<Pair<String, String>>()
         private val transaction = (
@@ -112,7 +113,7 @@ class HorizonRepositoryTest {
 """"available_amount":13,""" +
 """"usage_percentage":48}],""" +
 """"deductions":null,""" +
-""""categories":null,""" +
+""""categories":$categories,""" +
 """"subscriptions":null,""" +
 """"projections":[{"months":3,""" +
 """"label":"3 Months",""" +
@@ -161,6 +162,25 @@ class HorizonRepositoryTest {
             client.close()
         }
     }
+
+    @Test fun readsCategoryHierarchyAndSendsParentWhenCreatingSubcategory() =
+        runTest {
+            Harness().use { h ->
+                h.categories =
+                    """[{"id":8,"name":"Child","parent_id":7},{"id":7,"name":"Parent","allows_subcategories":true}]"""
+                val data = (h.repo.overview() as Outcome.Success).value
+                val (parent, child) = data.categories
+                assertTrue(parent.allowsSubcategories)
+                assertEquals(parent.id, child.parentId)
+                assertEquals("Parent / Child", child.displayName)
+
+                h.login()
+                assertTrue(h.repo.apply(HorizonChange.Category("New label", "tag", "#64748b", parent.id)) is Outcome.Success)
+                val (path, body) = h.writes.single()
+                assertEquals("POST /api/horizon/categories", path)
+                assertEquals(JsonPrimitive(parent.id), Json.parseToJsonElement(body).jsonObject["parent_id"])
+            }
+        }
 
     @Test fun summaryUsesBackendValuesExactDecimalsAndNullCollections() =
         runTest {

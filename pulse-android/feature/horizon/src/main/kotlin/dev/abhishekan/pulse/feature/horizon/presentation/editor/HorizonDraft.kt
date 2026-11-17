@@ -60,6 +60,7 @@ data class HorizonDraft(
     val accountId: Long? = null,
     val originalAccountId: Long? = null,
     val accountEditable: Boolean = true,
+    val parentCategoryId: Long? = null,
 ) {
     fun change(): HorizonChange {
         val value by lazy { amount.toBigDecimal() }
@@ -120,7 +121,7 @@ data class HorizonDraft(
                         null
                     },
                 )
-            HorizonForm.Category -> HorizonChange.Category(name.trim(), icon.trim(), color.trim())
+            HorizonForm.Category -> HorizonChange.Category(name.trim(), icon.trim(), color.trim(), parentCategoryId)
             HorizonForm.Purchase ->
                 HorizonChange.Purchase(
                     name.trim(),
@@ -161,6 +162,7 @@ data class HorizonDraft(
             accountId?.toString().orEmpty(),
             originalAccountId?.toString().orEmpty(),
             accountEditable.toString(),
+            parentCategoryId?.toString().orEmpty(),
         )
 
     companion object {
@@ -195,6 +197,7 @@ data class HorizonDraft(
                 v.getOrNull(24)?.toLongOrNull(),
                 v.getOrNull(25)?.toLongOrNull(),
                 v.getOrNull(26)?.toBoolean() ?: true,
+                v.getOrNull(27)?.toLongOrNull(),
             )
     }
 }

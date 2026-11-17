@@ -1,5 +1,7 @@
 "use client";
 
+import CategoryOptions from "./CategoryOptions";
+
 import Select from "@/app/components/design-system/select";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
@@ -33,8 +35,8 @@ interface TransactionsTabProps {
   onTxTypeFilterChange: (v: "all" | "debit" | "credit") => void;
   searchQuery: string;
   onSearchQueryChange: (v: string) => void;
-  txCategoryFilter: string;
-  onTxCategoryFilterChange: (v: string) => void;
+  txCategoryFilter: number | null;
+  onTxCategoryFilterChange: (v: number | null) => void;
 }
 
 export default function TransactionsTab({
@@ -58,11 +60,7 @@ export default function TransactionsTab({
   onTxCategoryFilterChange,
 }: TransactionsTabProps) {
   const { timeZone } = useTimeZone();
-  // Category filter is still applied client-side (it's not sent to the API)
-  // because categories are metadata on already-fetched records.
-  const filteredTransactions = transactions.filter((t) => {
-    return txCategoryFilter === "all" || t.category_name === txCategoryFilter;
-  });
+  const hasFilters = txTypeFilter !== "all" || txCategoryFilter != null || searchQuery.trim() !== "";
 
   return (
     <section className="space-y-6">
@@ -124,39 +122,15 @@ export default function TransactionsTab({
             </Button>
           </div>
 
-          {/* Categories Pill List */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-none max-w-full sm:max-w-xl">
-            <Button variant={txCategoryFilter === "all" ? "primary" : "secondary"} size="sm"
-              aria-pressed={txCategoryFilter === "all"}
-              onClick={() => onTxCategoryFilterChange("all")}
-              className="shrink-0"
-            >
-              All Categories
-            </Button>
-            {categories.map((cat) => {
-              const count = transactions.filter((t) => t.category_id === cat.id || t.category_name === cat.name).length;
-              const isSelected = txCategoryFilter === cat.name;
-              return (
-                <Button variant={isSelected ? "soft" : "secondary"} size="sm"
-                  key={cat.id}
-                  aria-pressed={isSelected}
-                  onClick={() => onTxCategoryFilterChange(isSelected ? "all" : cat.name)}
-                  className="shrink-0"
-                >
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: cat.color || "#605d56" }}
-                  />
-                  <span>{cat.name}</span>
-                  {count > 0 && (
-                    <span className="ml-0.5 rounded-md bg-secondary px-1.5 py-0.2 text-[10px] font-bold">
-                      {count}
-                    </span>
-                  )}
-                </Button>
-              );
-            })}
-          </div>
+          <Select
+            aria-label="Filter by category"
+            value={txCategoryFilter ?? ""}
+            onChange={(e) => onTxCategoryFilterChange(e.target.value ? Number(e.target.value) : null)}
+            className="max-w-full rounded-xl bg-secondary px-3 py-1.5 text-xs sm:max-w-xs"
+          >
+            <option value="">All Categories</option>
+            <CategoryOptions categories={categories} />
+          </Select>
         </div>
 
         {/* Search Input */}
@@ -173,18 +147,18 @@ export default function TransactionsTab({
       </div>
 
       {/* Transactions List */}
-      {filteredTransactions.length === 0 ? (
+      {transactions.length === 0 ? (
         <PulseCard className="p-10 text-center">
           <Receipt className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
           <h3 className="mt-3 text-base font-semibold text-foreground">
-            {transactions.length === 0 ? "No transactions recorded yet" : "No matching transactions found"}
+            {hasFilters ? "No matching transactions found" : "No transactions recorded yet"}
           </h3>
           <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
-            {transactions.length === 0
-              ? "Log your financial transactions to track actual spending against pre-filled categories and monthly budgets."
-              : "Try adjusting your search or filters to find what you're looking for."}
+            {hasFilters
+              ? "Try adjusting your search or filters."
+              : "Log a transaction to start tracking your spending."}
           </p>
-          {transactions.length === 0 && (
+          {!hasFilters && (
             <Button variant="primary" size="md"
               onClick={onOpenAddTransaction}
               className="mt-4"
@@ -195,8 +169,8 @@ export default function TransactionsTab({
         </PulseCard>
       ) : (
         <div className="space-y-3">
-          {filteredTransactions.map((tx) => {
-            const matchingCat = categories.find((c) => c.id === tx.category_id || c.name === tx.category_name);
+          {transactions.map((tx) => {
+            const matchingCat = categories.find((c) => c.id === tx.category_id);
             const catColor = matchingCat?.color || "#605d56";
             const isCredit = tx.type === "credit";
 

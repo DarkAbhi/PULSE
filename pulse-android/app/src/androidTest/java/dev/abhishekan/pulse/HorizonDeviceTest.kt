@@ -39,6 +39,8 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
@@ -973,6 +975,15 @@ class HorizonDeviceTest {
                     put("is_default", false)
                 }
         }
+        listOf("Auto", "Bus", "Cab", "Flight", "Metro", "Parking", "Train", "Walk").forEachIndexed { index, name ->
+            val id = 100L + index
+            backend.items("categories")[id] =
+                buildJsonObject {
+                    put("id", id)
+                    put("name", name)
+                    put("parent_id", 14)
+                }
+        }
         try {
             shell("wm size 720x1600")
             shell("wm density 320")
@@ -985,8 +996,20 @@ class HorizonDeviceTest {
             awaitText("All transactions")
             compose.onNode(hasTestTag("ledger-category-filter")).performClick()
             awaitText("Choose a category")
+            val transportTop = compose.onNode(hasTestTag("ledger-category-option-14")).fetchSemanticsNode().boundsInRoot.top
+            val standaloneTop = compose.onNode(hasTestTag("ledger-category-option-3")).fetchSemanticsNode().boundsInRoot.top
+            assertTrue("Categories with children should appear above standalone categories", transportTop < standaloneTop)
             screenshot("filter-categories-phone", tag = "ledger-category-sheet")
             compose.onNodeWithText("Search categories").performTextReplacement("Transport")
+            val transportSubcategories = compose.onNode(hasTestTag("ledger-category-subcategories-14"))
+            transportSubcategories.performTouchInput { swipeLeft() }
+            transportSubcategories.performScrollToIndex(7)
+            compose.onNode(hasTestTag("ledger-category-option-107")).performClick()
+            awaitText("Transport / Walk")
+            awaitText("No matches for these filters")
+            compose.onNode(hasTestTag("ledger-category-filter")).performClick()
+            compose.onNodeWithText("Search categories").performTextReplacement("Walk")
+            compose.onNode(hasTestTag("ledger-category-option-107")).assertIsDisplayed().assertIsSelected()
             compose.onNode(hasTestTag("ledger-category-option-14")).performClick()
             awaitText("No matches for these filters")
             compose.onNode(hasTestTag("ledger-category-filter")).performClick()

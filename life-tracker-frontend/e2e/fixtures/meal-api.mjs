@@ -6,6 +6,16 @@ const failures = new Map();
 const writes = new Map();
 const customTimes = new Map();
 const accountsByUser = new Map();
+const horizonCategories = [
+  { id: 1, name: "Test category", allows_subcategories: true, parent_id: null },
+  { id: 2, name: "Test detail", allows_subcategories: false, parent_id: 1 },
+  { id: 3, name: "Test standalone", allows_subcategories: false, parent_id: null },
+].map(category => ({ ...category, icon: "tag", color: "#64748b", is_default: true }));
+const horizonTransactions = [
+  { id: 1, name: "Test parent expense", category_id: 1, category_name: "Test category" },
+  { id: 2, name: "Test child expense", category_id: 2, category_name: "Test category / Test detail" },
+  { id: 3, name: "Test standalone expense", category_id: 3, category_name: "Test standalone" },
+].map(tx => ({ ...tx, type: "debit", amount: 10, transaction_date: "2026-01-02T10:00:00Z" }));
 let nextTimeId = 5;
 const pending = () => ({ status: "pending", questionnaire_version: 1, preferences: null });
 const times = [
@@ -28,11 +38,19 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/api/horizon") return send(200, {
     base_amount: 0, currency: "INR", total_deductions: 0, total_transactions: 0,
     remaining_amount: 0, committed_ratio: 0, total_budgets_allocated: 0, total_subscription_burn: 0,
-    budgets: [], deductions: [], categories: [], transactions: [], subscriptions: [], projections: [],
+    budgets: [], deductions: [], categories: token === "categories-test" ? horizonCategories : [],
+    transactions: [], subscriptions: [], projections: [],
   });
-  if (url.pathname === "/api/horizon/transactions") return send(200, {
-    transactions: [], page: 1, page_size: 10, total: 0, total_pages: 0,
-  });
+  if (url.pathname === "/api/horizon/transactions") {
+    const categoryId = Number(url.searchParams.get("category_id"));
+    const transactions = token === "categories-test" ? horizonTransactions.filter(tx => {
+      const category = horizonCategories.find(item => item.id === tx.category_id);
+      return !categoryId || tx.category_id === categoryId || category.parent_id === categoryId;
+    }) : [];
+    return send(200, {
+      transactions, page: 1, page_size: 10, total: transactions.length, total_pages: transactions.length ? 1 : 0,
+    });
+  }
   if (url.pathname === "/api/next-month-purchases") return send(200, { items: [], total: 0 });
   if (url.pathname === "/api/horizon/accounts") {
     const accounts = accountsByUser.get(token) ?? [{

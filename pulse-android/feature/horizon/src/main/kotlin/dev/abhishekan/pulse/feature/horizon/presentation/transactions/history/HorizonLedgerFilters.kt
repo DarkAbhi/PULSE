@@ -8,11 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -23,15 +21,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
-import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
 import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
-import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.feature.horizon.R
+import dev.abhishekan.pulse.feature.horizon.presentation.components.categoryCards
 
 @Composable
 internal fun LedgerFilters(
@@ -42,14 +39,13 @@ internal fun LedgerFilters(
     val categoryId = state.historyCategoryId
     var sheet by rememberSaveable { mutableStateOf<String?>(null) }
     var categorySearch by rememberSaveable { mutableStateOf("") }
-    val availableCategories =
+    val categories =
         state.overview.value
             ?.categories
             .orEmpty()
-    val categories = remember(availableCategories) { availableCategories.sortedBy { it.name.lowercase() } }
     val allCategories = stringResource(R.string.pulse_horizon_ledger_all_categories)
     val categoryLabel =
-        categories.find { it.id == categoryId }?.name
+        categories.find { it.id == categoryId }?.displayName
             ?: if (categoryId == null) allCategories else stringResource(R.string.pulse_horizon_filter_categories)
     FlowRow(
         Modifier.fillMaxWidth(),
@@ -87,6 +83,7 @@ internal fun LedgerFilters(
             onDismissRequest = {
                 sheet = null
             },
+            fullScreen = sheet == "category",
         ) {
             Column(
                 Modifier
@@ -102,10 +99,10 @@ internal fun LedgerFilters(
                     }, stringResource(R.string.pulse_horizon_filter_search_categories), Modifier.fillMaxWidth())
                     LazyColumn(
                         Modifier.weight(1f, fill = false),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(PulseTheme.spacing.small),
                     ) {
                         item {
-                            PulseCheckbox(categoryId == null, {
+                            PulseRadioButton(categoryId == null, {
                                 onAction(TransactionHistoryAction.Filter(search, state.historyType, null))
                                 sheet = null
                             }, allCategories, Modifier.fillMaxWidth())
@@ -116,26 +113,15 @@ internal fun LedgerFilters(
                         if (state.overview.loading && state.overview.value == null) {
                             item { PulseLoadingState(stringResource(R.string.pulse_horizon_loading_your_horizon)) }
                         }
-                        val matches = categories.filter { it.name.contains(categorySearch.trim(), ignoreCase = true) }
-                        items(matches, key = { it.id }) { category ->
-                            PulseCheckbox(
-                                categoryId == category.id,
-                                {
-                                    onAction(TransactionHistoryAction.Filter(search, state.historyType, category.id))
-                                    sheet = null
-                                },
-                                category.name,
-                                Modifier.fillMaxWidth().testTag("ledger-category-option-${category.id}"),
-                            )
-                        }
-                        if (matches.isEmpty() && state.overview.value != null) {
-                            item {
-                                PulseText(
-                                    stringResource(R.string.pulse_horizon_filter_no_categories),
-                                    Modifier.padding(vertical = 16.dp),
-                                    color = PulseTheme.colors.textSecondary,
-                                )
-                            }
+                        categoryCards(
+                            categories,
+                            categorySearch,
+                            categoryId,
+                            testTagPrefix = "ledger-category",
+                            showEmpty = state.overview.value != null,
+                        ) { id ->
+                            onAction(TransactionHistoryAction.Filter(search, state.historyType, id))
+                            sheet = null
                         }
                     }
                 } else {

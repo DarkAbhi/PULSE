@@ -58,6 +58,7 @@ sealed interface HorizonChange {
         val name: String,
         val icon: String,
         val color: String,
+        val parentId: Long? = null,
     ) : HorizonChange
 
     data class Purchase(

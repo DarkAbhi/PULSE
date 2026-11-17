@@ -30,6 +30,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import dev.abhishekan.pulse.feature.horizon.R
+import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonCategoryPicker
 import dev.abhishekan.pulse.feature.horizon.presentation.components.horizonOption
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonForm
@@ -215,16 +216,12 @@ internal fun HorizonEditor(
             )
         }
         if (draft.kind in listOf(HorizonForm.Transaction, HorizonForm.Subscription)) {
-            Relation(
-                stringResource(R.string.pulse_horizon_category),
+            HorizonCategoryPicker(
+                R.string.pulse_horizon_category,
                 draft.categoryId,
-                data?.categories.orEmpty().map {
-                    it.id to
-                        it.name
-                },
-                { onChange(draft.copy(categoryId = it)) },
+                data?.categories.orEmpty(),
                 enabled,
-            )
+            ) { onChange(draft.copy(categoryId = it)) }
         }
         if (draft.kind in
             listOf(HorizonForm.Transaction, HorizonForm.Subscription, HorizonForm.Deduction)

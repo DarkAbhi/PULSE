@@ -63,7 +63,8 @@ class ApplyHorizonChange(
             is HorizonChange.Category ->
                 text(change.name, 100) &&
                     text(change.icon, 50) &&
-                    text(change.color, 30)
+                    text(change.color, 30) &&
+                    id(change.parentId)
             is HorizonChange.Purchase -> text(change.name, 160) && money(change.amount)
             is HorizonChange.Delete -> change.id > 0
             is HorizonChange.LinkPayment -> change.subscriptionId > 0 && change.transactionId > 0

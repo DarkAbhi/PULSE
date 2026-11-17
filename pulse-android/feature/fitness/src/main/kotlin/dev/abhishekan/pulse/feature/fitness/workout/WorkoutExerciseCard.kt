@@ -1,5 +1,11 @@
 package dev.abhishekan.pulse.feature.fitness.workout
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +50,7 @@ import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
 import dev.abhishekan.pulse.core.domain.model.WorkoutSet
 import dev.abhishekan.pulse.core.ui.PulseSpacing
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
@@ -96,7 +103,7 @@ internal fun WorkoutExerciseCard(
                 }.semantics {
                     heading()
                     stateDescription = expandedLabel
-                }
+                }.animateContentSize(tween(PulseTokens.MOTION_MILLIS, easing = FastOutSlowInEasing))
                 .padding(start = PulseSpacing.medium, top = PulseSpacing.medium, end = PulseSpacing.medium)
                 .padding(bottom = if (expanded) PulseSpacing.tiny else PulseSpacing.medium),
             horizontalArrangement = Arrangement.spacedBy(PulseSpacing.compact),
@@ -162,7 +169,11 @@ internal fun WorkoutExerciseCard(
                 Modifier.padding(top = PulseSpacing.small).size(PulseSpacing.comfortable).rotate(if (expanded) 180f else 0f),
             )
         }
-        if (expanded) {
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(tween(PulseTokens.MOTION_MILLIS, easing = FastOutSlowInEasing), expandFrom = Alignment.Top),
+            exit = shrinkVertically(tween(PulseTokens.MOTION_MILLIS, easing = FastOutSlowInEasing), shrinkTowards = Alignment.Top),
+        ) {
             Column(
                 Modifier.padding(start = PulseSpacing.medium, end = PulseSpacing.medium, bottom = PulseSpacing.medium),
                 verticalArrangement = Arrangement.spacedBy(PulseSpacing.compact),
@@ -173,7 +184,7 @@ internal fun WorkoutExerciseCard(
                         sets.forEach { WorkoutSetRow(it, repScale) }
                     }
                 }
-                WorkoutExerciseActions(exercise, enabled, onEdit, onRemove)
+                WorkoutExerciseActions(exercise, enabled && expanded, expanded, onEdit, onRemove)
             }
         }
     }
@@ -297,6 +308,7 @@ private fun WorkoutSetRow(
 private fun WorkoutExerciseActions(
     exercise: WorkoutExercise,
     enabled: Boolean,
+    expanded: Boolean,
     onEdit: () -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -307,7 +319,7 @@ private fun WorkoutExerciseActions(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         exercise.catalog?.takeIf { it.instructions.isNotEmpty() }?.let {
-            ExerciseInstructions(it, Modifier.weight(1f))
+            ExerciseInstructions(it, Modifier.weight(1f), enabled = expanded)
         }
         PulseButton(
             stringResource(R.string.pulse_fitness_workout_edit),

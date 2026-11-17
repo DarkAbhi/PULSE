@@ -174,6 +174,35 @@ class WorkoutRedesignTest {
         compose.onNodeWithText("Add exercise").assertIsDisplayed()
     }
 
+    @Test fun exerciseCardGrowsAndShrinksOverSeveralFrames() {
+        val first = exercise.copy(sets = exercise.sets.take(1))
+        val second = first.copy(id = 2, name = "Front Plate Raise")
+        compose.setContent { Content(WorkoutDetail(manual, listOf(first, second))) }
+        showWorkoutText(second.name)
+        val firstHeader = compose.onNodeWithText(first.name)
+        val secondHeader = compose.onNodeWithText(second.name)
+        fun headerGap() = secondHeader.getUnclippedBoundsInRoot().top - firstHeader.getUnclippedBoundsInRoot().top
+
+        compose.mainClock.autoAdvance = false
+        try {
+            val expanded = headerGap()
+            firstHeader.performClick()
+            compose.mainClock.advanceTimeBy(96)
+            val collapsing = headerGap()
+            compose.mainClock.advanceTimeBy(240)
+            val collapsed = headerGap()
+            assertTrue("The card should shrink gradually", collapsing > collapsed && collapsing < expanded)
+
+            firstHeader.performClick()
+            compose.mainClock.advanceTimeBy(96)
+            val expanding = headerGap()
+            compose.mainClock.advanceTimeBy(240)
+            assertTrue("The card should grow gradually", expanding > collapsed && expanding < headerGap())
+        } finally {
+            compose.mainClock.autoAdvance = true
+        }
+    }
+
     @Test fun bodyweightCardsShowOrderedRepsAndNoWeightColumn() {
         val pushUps =
             exercise.copy(

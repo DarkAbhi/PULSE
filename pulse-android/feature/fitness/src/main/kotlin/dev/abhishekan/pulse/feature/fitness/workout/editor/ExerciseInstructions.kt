@@ -58,6 +58,7 @@ internal fun ExerciseMetadata(exercise: CatalogExercise) {
 internal fun ExerciseInstructions(
     exercise: CatalogExercise,
     modifier: Modifier,
+    enabled: Boolean,
 ) {
     if (!exercise.hasInstructionsDetails) return
     var open by rememberSaveable(exercise.id) { mutableStateOf(false) }
@@ -65,6 +66,7 @@ internal fun ExerciseInstructions(
         stringResource(R.string.pulse_fitness_editor_instructions),
         onClick = { open = true },
         modifier = modifier,
+        enabled = enabled,
         variant = PulseButtonVariant.Soft,
         leadingIcon = { WorkoutGlyph(WorkoutSymbol.Document, LocalContentColor.current, Modifier.size(PulseTokens.medium)) },
         contentPadding = PaddingValues(horizontal = PulseTokens.tiny, vertical = PulseTokens.small),

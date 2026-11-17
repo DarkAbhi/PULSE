@@ -25,7 +25,6 @@ type TransactionInput struct {
 	Type            *string         `json:"type"`
 	TransactionDate *string         `json:"transaction_date"`
 	CategoryID      *int64          `json:"category_id"`
-	CategoryName    *string         `json:"category_name"`
 	BudgetID        *int64          `json:"budget_id"`
 	SubscriptionID  *int64          `json:"subscription_id"`
 	Notes           *string         `json:"notes"`
@@ -324,7 +323,7 @@ func (h *TransactionsHandler) CreateTransaction(w http.ResponseWriter, r *http.R
 		}
 	}
 
-	categoryName := "Other"
+	categoryName := "Uncategorized"
 	var categoryID sql.NullInt64
 	if in.CategoryID != nil && *in.CategoryID > 0 {
 		categoryID = sql.NullInt64{Int64: *in.CategoryID, Valid: true}
@@ -332,8 +331,6 @@ func (h *TransactionsHandler) CreateTransaction(w http.ResponseWriter, r *http.R
 		if err == nil {
 			categoryName = cName
 		}
-	} else if in.CategoryName != nil && strings.TrimSpace(*in.CategoryName) != "" {
-		categoryName = strings.TrimSpace(*in.CategoryName)
 	}
 
 	var budgetID sql.NullInt64
@@ -449,7 +446,7 @@ func (h *TransactionsHandler) BulkCreateTransactions(w http.ResponseWriter, r *h
 			}
 		}
 
-		categoryName := "Other"
+		categoryName := "Uncategorized"
 		var categoryID sql.NullInt64
 		if in.CategoryID != nil && *in.CategoryID > 0 {
 			categoryID = sql.NullInt64{Int64: *in.CategoryID, Valid: true}
@@ -457,8 +454,6 @@ func (h *TransactionsHandler) BulkCreateTransactions(w http.ResponseWriter, r *h
 			if err == nil {
 				categoryName = cName
 			}
-		} else if in.CategoryName != nil && strings.TrimSpace(*in.CategoryName) != "" {
-			categoryName = strings.TrimSpace(*in.CategoryName)
 		}
 
 		var budgetID sql.NullInt64
@@ -550,7 +545,7 @@ func (h *TransactionsHandler) UpdateTransaction(w http.ResponseWriter, r *http.R
 		}
 	}
 
-	categoryName := "Other"
+	categoryName := "Uncategorized"
 	var categoryID sql.NullInt64
 	if in.CategoryID != nil && *in.CategoryID > 0 {
 		categoryID = sql.NullInt64{Int64: *in.CategoryID, Valid: true}
@@ -558,8 +553,6 @@ func (h *TransactionsHandler) UpdateTransaction(w http.ResponseWriter, r *http.R
 		if err == nil {
 			categoryName = cName
 		}
-	} else if in.CategoryName != nil && strings.TrimSpace(*in.CategoryName) != "" {
-		categoryName = strings.TrimSpace(*in.CategoryName)
 	}
 
 	var budgetID sql.NullInt64

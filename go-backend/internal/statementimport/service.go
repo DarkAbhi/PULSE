@@ -319,7 +319,7 @@ func inferredCategory(desc string, names map[string]int64) *int64 {
 }
 
 func storeTransaction(ctx context.Context, tx pgx.Tx, b query.StatementImportBatch, row rowPreview, amount int64, date time.Time, hash string) error {
-	category := "Other"
+	category := "Uncategorized"
 	if row.CategoryID != nil {
 		var err error
 		category, err = horizonquery.New(tx).GetUserCategoryName(ctx, horizonquery.GetUserCategoryNameParams{

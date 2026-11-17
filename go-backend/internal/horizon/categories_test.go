@@ -81,7 +81,7 @@ func TestCategoriesListAndCreate(t *testing.T) {
 				takeaway = c.ID
 			}
 		}
-		if roots != 34 || children != 231 || food == 0 || transport == 0 || savings == 0 || takeaway == 0 {
+		if roots != 32 || children != 231 || food == 0 || transport == 0 || savings == 0 || takeaway == 0 {
 			t.Fatalf("unexpected category catalog: %d roots, %d children", roots, children)
 		}
 		for _, c := range categoriesList {

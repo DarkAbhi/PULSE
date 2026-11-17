@@ -75,7 +75,7 @@ import kotlinx.serialization.json.JsonPrimitive
     val type: String = "debit",
     @SerialName("transaction_date") val date: String,
     @SerialName("category_id") val categoryId: Long? = null,
-    @SerialName("category_name") val categoryName: String = "Other",
+    @SerialName("category_name") val categoryName: String = "Uncategorized",
     @SerialName("budget_id") val budgetId: Long? = null,
     @SerialName("budget_name") val budgetName: String? = null,
     @SerialName("subscription_id") val subscriptionId: Long? = null,

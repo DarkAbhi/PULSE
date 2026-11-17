@@ -1,40 +1,20 @@
 package dev.abhishekan.pulse.feature.horizon.presentation.accounts
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.abhishekan.pulse.core.domain.model.FinancialAccount
 import dev.abhishekan.pulse.core.ui.PulseSpacing
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
-import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenu
-import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenuItem
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.feature.horizon.R
@@ -123,113 +103,6 @@ internal fun AccountInitialsBadge(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-        }
-    }
-}
-
-@Composable
-internal fun FinancialAccountRow(
-    type: AccountType,
-    account: FinancialAccount,
-    enabled: Boolean,
-    onAction: (AccountsAction) -> Unit,
-) {
-    val colors = PulseTheme.colors
-    val subtype =
-        accountSubtypeLabels[account.bankAccountSubtype]?.takeIf {
-            type == AccountType.Bank && account.bankAccountSubtype.isNotEmpty()
-        }
-    val hasBadges = subtype != null || account.archived
-    val subtitle =
-        listOfNotNull(
-            account.institutionName,
-            account.lastFour.takeIf { it.isNotBlank() }?.let { stringResource(R.string.pulse_horizon_account_masked_digits, it) },
-            account.cardType.takeIf { it.isNotBlank() },
-            cardNetworkLabels[account.cardNetwork]?.let { stringResource(it) },
-        ).joinToString(" · ")
-
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val inlineBadges = maxWidth >= 268.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
-        val badges: @Composable () -> Unit = {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
-                verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny),
-            ) {
-                subtype?.let { AccountTag(stringResource(it), type.softColor, type.accentColor) }
-                if (account.archived) {
-                    AccountTag(stringResource(R.string.pulse_horizon_account_archived), colors.surfaceMuted, colors.textSecondary)
-                }
-            }
-        }
-        Row(
-            Modifier.fillMaxWidth().padding(vertical = PulseTokens.small),
-            horizontalArrangement = Arrangement.spacedBy(PulseTokens.small),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            AccountInitialsBadge(type, account.displayName)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
-                PulseText(account.displayName, style = PulseTextStyle.Label)
-                PulseText(subtitle, style = PulseTextStyle.Body3, color = colors.textSecondary)
-                if (!inlineBadges && hasBadges) badges()
-            }
-            if (inlineBadges && hasBadges) {
-                Box(Modifier.widthIn(max = 96.dp)) { badges() }
-            }
-            AccountMenu(account, enabled, onAction)
-        }
-    }
-}
-
-@Composable
-private fun AccountTag(
-    label: String,
-    background: Color,
-    foreground: Color,
-) {
-    Surface(shape = PulseTheme.shapes.pill, color = background) {
-        PulseText(
-            label,
-            modifier = Modifier.padding(horizontal = PulseTokens.small, vertical = PulseTokens.tiny),
-            style = PulseTextStyle.Caption,
-            color = foreground,
-        )
-    }
-}
-
-@Composable
-private fun AccountMenu(
-    account: FinancialAccount,
-    enabled: Boolean,
-    onAction: (AccountsAction) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        PulseButton(
-            stringResource(R.string.pulse_horizon_account_actions, account.displayName),
-            { expanded = true },
-            enabled = enabled,
-            style = PulseButtonStyle.Icon,
-        ) {
-            Icon(painterResource(R.drawable.pulse_horizon_more), null, tint = PulseTheme.colors.textSecondary)
-        }
-        PulseDropdownMenu(expanded && enabled, { expanded = false }) {
-            PulseDropdownMenuItem(
-                text = { PulseText(stringResource(R.string.pulse_horizon_edit_account)) },
-                onClick = {
-                    expanded = false
-                    onAction(AccountsAction.Edit(account))
-                },
-            )
-            account.id?.let { id ->
-                val label = if (account.archived) R.string.pulse_horizon_restore_account else R.string.pulse_horizon_archive_account
-                PulseDropdownMenuItem(
-                    text = { PulseText(stringResource(label)) },
-                    onClick = {
-                        expanded = false
-                        onAction(AccountsAction.SetArchived(id, !account.archived))
-                    },
-                )
-            }
         }
     }
 }

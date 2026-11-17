@@ -9,6 +9,7 @@ import dev.abhishekan.pulse.core.domain.model.HorizonTransactionPage
 import dev.abhishekan.pulse.core.domain.model.PlannedPurchases
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.feature.horizon.R
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountType
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 
 enum class HorizonTab(
@@ -44,6 +45,7 @@ internal data class HorizonUiState(
     val overview: HorizonSection<HorizonOverview> = HorizonSection(),
     val transactionLists: TransactionListsState = TransactionListsState(),
     val importOpen: Boolean = false,
+    val accountList: AccountType? = null,
     val transactions: HorizonSection<HorizonTransactionPage> = HorizonSection(),
     val purchases: HorizonSection<PlannedPurchases> = HorizonSection(),
     val payments: HorizonSection<List<HorizonTransaction>> = HorizonSection(loading = false),

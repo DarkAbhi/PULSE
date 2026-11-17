@@ -16,6 +16,7 @@ import dev.abhishekan.pulse.core.ui.DraftSource
 import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.feature.horizon.R
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountType
 import dev.abhishekan.pulse.feature.horizon.presentation.budgets.BudgetsTabAction
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonEditorAction
@@ -58,6 +59,7 @@ class HorizonViewModel(
                         selected = restoreTransactionSelection(),
                     ),
                 importOpen = saved["importOpen"] ?: false,
+                accountList = AccountType.entries.find { it.name == saved.get<String>("accountList") },
                 transactionDraft = saved.get<ArrayList<String>>("transactionDraft")?.let(HorizonDraft::restore),
                 subscriptionId = saved["subscription"],
                 draft = saved.get<ArrayList<String>>("draft")?.let(HorizonDraft::restore),
@@ -90,6 +92,8 @@ class HorizonViewModel(
                 tab(HorizonTab.Accounts)
             }
             HorizonAction.ImportCompleted -> completeImport()
+            HorizonAction.OpenBankAccounts -> openAccountList(AccountType.Bank)
+            HorizonAction.OpenCreditCards -> openAccountList(AccountType.CreditCard)
             HorizonAction.Back -> back()
             HorizonAction.ToggleReviewRecords -> showReviewRecords(!state.value.showingReviewRecords)
             HorizonAction.ResumeDraft -> showReviewRecords(false)
@@ -251,6 +255,10 @@ class HorizonViewModel(
         val current = state.value
         when {
             current.busy -> Unit
+            current.accountList != null -> {
+                saved["accountList"] = null
+                state.update { it.copy(accountList = null) }
+            }
             current.draft != null -> requestCancelEdit()
             current.transactionLists.historyOpen -> closeHistory()
             else -> hidePayments()
@@ -479,7 +487,15 @@ class HorizonViewModel(
     private fun tab(tab: HorizonTab) {
         if (state.value.tab != tab) selectTransaction(null)
         saved["tab"] = tab.name
-        state.update { it.copy(tab = tab) }
+        saved["accountList"] = null
+        state.update { it.copy(tab = tab, accountList = null) }
+    }
+
+    private fun openAccountList(type: AccountType) {
+        if (state.value.busy) return
+        tab(HorizonTab.Accounts)
+        saved["accountList"] = type.name
+        state.update { it.copy(accountList = type) }
     }
 
     private fun showPayments(id: Long) {

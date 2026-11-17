@@ -71,6 +71,56 @@ class HorizonViewModelTest {
             models.put("finance", it)
         }
 
+    @Test fun accountListsUseHorizonDestinationsAndBackReturnsToAccounts() =
+        runTest {
+            var saved = SavedStateHandle()
+            var model = vm(saved)
+            runCurrent()
+            listOf(
+                HorizonAction.OpenBankAccounts to HorizonDestination.BankAccounts,
+                HorizonAction.OpenCreditCards to HorizonDestination.CreditCards,
+            ).forEach { (action, destination) ->
+                model.onAction(HorizonAction.SelectTab(HorizonTab.Accounts))
+                model.onAction(action)
+                assertEquals(destination, model.uiState.value.destination)
+                assertEquals(1, destination.depth)
+                assertEquals(HorizonTab.Accounts, model.uiState.value.tab)
+                saved = SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
+                model = vm(saved)
+                runCurrent()
+                assertEquals(destination, model.uiState.value.destination)
+                model.onAction(HorizonAction.Back)
+                assertEquals(HorizonDestination.Tabs(HorizonTab.Accounts), model.uiState.value.destination)
+                assertNull(saved.get<String>("accountList"))
+            }
+        }
+
+    @Test fun changingHorizonTabsClearsTheAccountListDestination() =
+        runTest {
+            val saved = SavedStateHandle()
+            val model = vm(saved)
+            runCurrent()
+            model.onAction(HorizonAction.OpenCreditCards)
+            model.onAction(HorizonAction.SelectTab(HorizonTab.Budgets))
+            assertEquals(HorizonDestination.Tabs(HorizonTab.Budgets), model.uiState.value.destination)
+            assertNull(saved.get<String>("accountList"))
+        }
+
+    @Test fun leavingAnAccountListPreservesTheHorizonDraftUnderneath() =
+        runTest {
+            val model = vm()
+            runCurrent()
+            val draft = HorizonDraft(HorizonForm.Budget, name = "Food", amount = "12.50", dirty = true)
+            model.onAction(HorizonAction.Edit(draft))
+            model.onAction(HorizonAction.ToggleReviewRecords)
+            model.onAction(HorizonAction.OpenBankAccounts)
+            assertEquals(HorizonDestination.BankAccounts, model.uiState.value.destination)
+            model.onAction(HorizonAction.Back)
+            assertEquals(draft, model.uiState.value.draft)
+            assertNull(model.uiState.value.accountList)
+            assertNull(model.uiState.value.confirmation)
+        }
+
     @Test fun refreshRetainsSectionsAndFailedRefreshKeepsDataWithError() =
         runTest {
             val vm = vm()

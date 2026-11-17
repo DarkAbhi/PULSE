@@ -30,7 +30,10 @@ import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.feature.horizon.R
-import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsRoute
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountType
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsTabRoute
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.BankAccountsScreen
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.CreditCardsScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.budgets.BudgetEditorScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.categories.CategoryEditorScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.components.horizonGutter
@@ -85,7 +88,11 @@ internal fun HorizonHost(
     }
     val backLabel = stringResource(editor?.parent?.backLabel ?: R.string.pulse_horizon_back_to_horizon)
     val draft = editor?.draft
-    if (draft != null && !records) {
+    if (destination == HorizonDestination.BankAccounts) {
+        BankAccountsScreen(currency, active)
+    } else if (destination == HorizonDestination.CreditCards) {
+        CreditCardsScreen(currency, active)
+    } else if (draft != null && !records) {
         key(draft.kind, draft.id) {
             HorizonEditorDestination(draft, state, onAction, backLabel, review)
         }
@@ -149,9 +156,7 @@ internal fun HorizonHost(
                             }
                         }
                     } else if (recordsDestination is HorizonDestination.Tabs && recordsDestination.tab == HorizonTab.Accounts) {
-                        AccountsRoute(
-                            currency = currency,
-                            active = active,
+                        AccountsTabRoute(
                             enabled = !state.busy,
                             width = width,
                             header = {
@@ -160,6 +165,14 @@ internal fun HorizonHost(
                             notice = {
                                 review()
                                 resumeDraft()
+                            },
+                            onOpen = { type ->
+                                onAction(
+                                    when (type) {
+                                        AccountType.Bank -> HorizonAction.OpenBankAccounts
+                                        AccountType.CreditCard -> HorizonAction.OpenCreditCards
+                                    },
+                                )
                             },
                         )
                     } else if (recordsDestination is HorizonDestination.Tabs) {

@@ -26,10 +26,11 @@ import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountEditorScreen
-import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountListScreen
 import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountType
 import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsState
 import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountsTabContent
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.BankAccountsScreenContent
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.CreditCardsScreenContent
 import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonTabScroll
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonForm
@@ -110,7 +111,7 @@ private fun AccountsOverviewPreview() {
 @Composable
 private fun BankAccountsPreview() {
     PulseTheme(false) {
-        AccountListScreen(AccountType.Bank, sampleAccounts, onAction = {})
+        BankAccountsScreenContent(sampleAccounts, onAction = {})
     }
 }
 
@@ -118,7 +119,7 @@ private fun BankAccountsPreview() {
 @Composable
 private fun CreditCardsPreview() {
     PulseTheme(true) {
-        AccountListScreen(AccountType.CreditCard, sampleAccounts, onAction = {})
+        CreditCardsScreenContent(sampleAccounts, onAction = {})
     }
 }
 
@@ -127,7 +128,7 @@ private fun CreditCardsPreview() {
 @Composable
 private fun EmptyBankAccountsPreview() {
     PulseTheme(false) {
-        AccountListScreen(AccountType.Bank, AccountsState(accounts = emptyList()), onAction = {})
+        BankAccountsScreenContent(AccountsState(accounts = emptyList()), onAction = {})
     }
 }
 
@@ -135,7 +136,7 @@ private fun EmptyBankAccountsPreview() {
 @Composable
 private fun EmptyCreditCardsPreview() {
     PulseTheme(false) {
-        AccountListScreen(AccountType.CreditCard, AccountsState(accounts = emptyList()), onAction = {})
+        CreditCardsScreenContent(AccountsState(accounts = emptyList()), onAction = {})
     }
 }
 
@@ -143,7 +144,7 @@ private fun EmptyCreditCardsPreview() {
 @Composable
 private fun EmptyCreditCardsDarkPreview() {
     PulseTheme(true) {
-        AccountListScreen(AccountType.CreditCard, AccountsState(accounts = emptyList()), onAction = {})
+        CreditCardsScreenContent(AccountsState(accounts = emptyList()), onAction = {})
     }
 }
 

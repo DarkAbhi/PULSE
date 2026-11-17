@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse.feature.horizon.presentation.navigation
 
 import dev.abhishekan.pulse.feature.horizon.R
+import dev.abhishekan.pulse.feature.horizon.presentation.accounts.AccountType
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import dev.abhishekan.pulse.feature.horizon.presentation.state.HorizonTab
 import dev.abhishekan.pulse.feature.horizon.presentation.state.HorizonUiState
@@ -15,6 +16,14 @@ internal sealed interface HorizonDestination {
     }
 
     data object History : HorizonDestination {
+        override val depth = 1
+    }
+
+    data object BankAccounts : HorizonDestination {
+        override val depth = 1
+    }
+
+    data object CreditCards : HorizonDestination {
         override val depth = 1
     }
 
@@ -42,6 +51,8 @@ internal val HorizonUiState.destination: HorizonDestination
     get() =
         when {
             importOpen -> HorizonDestination.StatementImport
+            accountList == AccountType.Bank -> HorizonDestination.BankAccounts
+            accountList == AccountType.CreditCard -> HorizonDestination.CreditCards
             draft != null ->
                 HorizonDestination.Editor(
                     draft,

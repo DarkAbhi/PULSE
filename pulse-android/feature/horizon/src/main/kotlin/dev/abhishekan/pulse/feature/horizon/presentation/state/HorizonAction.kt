@@ -62,6 +62,10 @@ internal sealed interface HorizonAction {
 
     data object ManageAccounts : HorizonAction
 
+    data object OpenBankAccounts : HorizonAction
+
+    data object OpenCreditCards : HorizonAction
+
     data object ImportCompleted : HorizonAction
 
     data object Back : HorizonAction

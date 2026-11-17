@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
@@ -59,6 +60,42 @@ class FitnessCalendarLayoutTest {
     @Test fun calendarRendersInLightTheme() = verifyFullWeek(360.dp, dark = false)
 
     @Test fun largeTextKeepsDateRowsAndDateSelection() = verifyFullWeek(320.dp, fontScale = 2f)
+
+    @Test fun monthHeightAnimatesInBothDirections() {
+        val shortMonth = YearMonth.of(2026, 10)
+        val tallMonth = shortMonth.plusMonths(1)
+        val month = mutableStateOf(shortMonth)
+        val overview = FitnessOverview(shortMonth.atDay(1), emptyList(), emptyList())
+        compose.setContent {
+            PulseTheme(true) {
+                Box(Modifier.width(360.dp)) {
+                    FitnessScreen(
+                        FitnessUiState(month.value.atDay(1), month.value, overview, loadState = FitnessLoadState.Ready),
+                        {},
+                        {},
+                    )
+                }
+            }
+        }
+        val legend = compose.onNodeWithText("Workout recorded")
+        fun calendarBottom() = legend.getUnclippedBoundsInRoot().top
+
+        val shortHeight = calendarBottom()
+        compose.mainClock.autoAdvance = false
+        compose.runOnIdle { month.value = tallMonth }
+        compose.mainClock.advanceTimeBy(96)
+        val expanding = calendarBottom()
+        compose.mainClock.advanceTimeBy(240)
+        val tallHeight = calendarBottom()
+        assertTrue("Expected an intermediate height while expanding", expanding > shortHeight && expanding < tallHeight)
+
+        compose.runOnIdle { month.value = shortMonth }
+        compose.mainClock.advanceTimeBy(96)
+        val collapsing = calendarBottom()
+        compose.mainClock.advanceTimeBy(240)
+        assertTrue("Expected an intermediate height while collapsing", collapsing > shortHeight && collapsing < tallHeight)
+        assertEquals(shortHeight, calendarBottom())
+    }
 
     private fun verifyFullWeek(
         width: Dp,

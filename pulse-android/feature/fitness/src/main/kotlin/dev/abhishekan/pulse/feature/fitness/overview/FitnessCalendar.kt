@@ -1,5 +1,8 @@
 package dev.abhishekan.pulse.feature.fitness.overview
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -176,7 +179,10 @@ internal fun FitnessCalendar(
                 }
                 HorizontalPager(
                     state = pager,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .animateContentSize(tween(PulseTokens.MOTION_MILLIS, easing = FastOutSlowInEasing)),
                     userScrollEnabled = !state.busy,
                 ) { page ->
                     val month = YearMonth.of(page / 12, page % 12 + 1)

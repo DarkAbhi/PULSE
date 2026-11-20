@@ -1,0 +1,80 @@
+url: http://localhost:3000
+---
+# Reuse the login flow so the dashboard is always reached through authentication.
+- runFlow: login.yaml
+
+# Greeting and live clock: avoid matching a particular time, date, or profile name.
+- assertVisible: "A little perspective on your everyday."
+- assertVisible:
+    css: "section[aria-label='Welcome'] .pulse-clock-time"
+- assertVisible:
+    css: "section[aria-label='Welcome'] .pulse-clock-date"
+- assertVisible:
+    css: "a[aria-label='Profile'][href='/profile']"
+
+# Notifications remain available from the hero.
+- tapOn:
+    css: "section[aria-label='Welcome'] button[aria-label^='Notifications']"
+- assertVisible:
+    css: "[role='dialog'][aria-label='Notifications']"
+- tapOn:
+    css: "button[aria-label='Close notifications']"
+- assertVisible:
+    css: "section[aria-label='Welcome']:not(:has([role='dialog'][aria-label='Notifications']))"
+
+# The finance card replaces the previous Starting Pool / Uncommitted panel.
+- scrollUntilVisible:
+    element: "Your room to move"
+    direction: DOWN
+- assertVisible: "Your room to move"
+- scrollUntilVisible:
+    element: "Keep going|Set up horizon"
+    direction: DOWN
+- assertVisible:
+    # Maestro excludes img nodes from its web hierarchy; match their visible container.
+    css: ".pulse-card-footer:has(img[src='/dashboard/cat.webp'])"
+- assertVisible:
+    css: "a[href='/financial-horizon'] .pulse-card-cta"
+
+# The fitness card is navigation only, regardless of today's workout status.
+- scrollUntilVisible:
+    element: "View fitness|Get moving"
+    direction: DOWN
+- assertVisible:
+    css: ".pulse-card-footer:has(img[src='/dashboard/fitness.webp'])"
+- assertNotVisible: "Add workout"
+- assertNotVisible: "Mark workout completed"
+- assertNotVisible: "Log exercises"
+- assertVisible:
+    css: "section[aria-label='Your day at a glance']:not(:has(button, a[href^='/fitness/']))"
+- tapOn:
+    text: "View fitness|Get moving"
+- assertVisible: '\s*Dashboard\s*'
+- assertVisible: "Fitness"
+- tapOn: '\s*Dashboard\s*'
+- assertVisible: "Good to see you,"
+
+# Verify the entire finance card opens the financial space.
+- scrollUntilVisible:
+    element: "Keep going|Set up horizon"
+    direction: DOWN
+- tapOn:
+    text: "Keep going|Set up horizon"
+- assertVisible: "Financial Horizon"
+- tapOn: '\s*Back to Dashboard\s*'
+- assertVisible: "Good to see you,"
+
+# Both smaller spaces remain reachable below the two illustrated cards.
+- scrollUntilVisible:
+    element: "Meal Plan"
+    direction: DOWN
+- assertVisible:
+    css: "nav[aria-label='Your spaces'] a[href='/garage']"
+- tapOn: "Meal Plan"
+- assertVisible: '\s*Dashboard\s*'
+- runFlow:
+    when:
+      visible: "Skip setup"
+    commands:
+      - tapOn: "Skip setup"
+- assertVisible: "Meal Plan"

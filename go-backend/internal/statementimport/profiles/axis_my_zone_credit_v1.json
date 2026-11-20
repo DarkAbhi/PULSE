@@ -1,0 +1,53 @@
+{
+  "id": "axis_my_zone_credit_v1",
+  "layout": "card_summary",
+  "account_type": "credit_card",
+  "currency": "INR",
+  "decimal_separator": ".",
+  "group_separator": ",",
+  "description_column": 2,
+  "continuation_gap": 9,
+  "sign_convention": "direction_suffix",
+  "institution": [
+    "axis bank",
+    "axis"
+  ],
+  "detection": [
+    "my zone credit card statement",
+    "axis bank",
+    "previous balance",
+    "transaction details",
+    "merchant category"
+  ],
+  "currency_marker": "amount (rs.)",
+  "date_format": "02/01/2006",
+  "line_tolerance": 2.5,
+  "opening_label": "previous balance",
+  "summary_header": "payment due",
+  "summary_order": [
+    "opening",
+    "payment",
+    "credit",
+    "debit",
+    "cash",
+    "fees",
+    "closing"
+  ],
+  "summary_row_height": 16,
+  "summary_max_x": 455,
+  "header_anchors": [
+    "date",
+    "transaction",
+    "merchant",
+    "amount"
+  ],
+  "column_offsets": [
+    -18,
+    -100,
+    -36,
+    0
+  ],
+  "region_prefix": "date",
+  "footer_pattern": "^end of statement\\b",
+  "account_number_pattern": "(?i)^card no:\\s*[0-9X*]+([0-9]{4})\\b"
+}

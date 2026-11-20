@@ -1,0 +1,16 @@
+appId: dev.abhishekan.pulse
+name: Android required sign-in fields
+---
+- launchApp:
+    clearState: true
+- assertVisible: Welcome back
+- tapOn: Continue
+- assertVisible: 'Enter your username\.'
+- assertVisible: 'Enter your password\.'
+- tapOn: Username
+- inputText: smoke-user
+- hideKeyboard
+- tapOn: Continue
+- assertNotVisible: 'Enter your username\.'
+- assertVisible: 'Enter your password\.'
+- assertVisible: Welcome back

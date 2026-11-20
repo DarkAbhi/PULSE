@@ -1,0 +1,40 @@
+{
+  "id": "sbi_savings_v1",
+  "layout": "bank_running_balance",
+  "account_type": "bank_account",
+  "account_subtype": "savings",
+  "currency": "INR",
+  "decimal_separator": ".",
+  "group_separator": ",",
+  "institution": [
+    "state bank of india",
+    "sbi"
+  ],
+  "detection": [
+    "saving account inr",
+    "transaction reference ref.no./chq.no. credit debit balance",
+    "closing balance on"
+  ],
+  "currency_marker": "saving account inr",
+  "date_format": "02-01-06",
+  "header_anchors": [
+    "date",
+    "transaction",
+    "ref.no.",
+    "credit",
+    "debit",
+    "balance"
+  ],
+  "column_offsets": [
+    -10,
+    -74,
+    -5,
+    -10,
+    -10,
+    -12
+  ],
+  "line_tolerance": 2.5,
+  "opening_placeholders": true,
+  "continuation_gap": 8,
+  "account_number_pattern": "(?i)\\baccount number\\s*:\\s*[0-9X*]*([0-9]{4})\\b"
+}

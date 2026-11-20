@@ -1,0 +1,5 @@
+<resources>
+<string name="localization_greeting">Hello, %1$s</string>
+<string name="localization_nested">Notice: %1$s</string>
+<plurals name="localization_items"><item quantity="one">%1$d item</item><item quantity="other">%1$d items</item></plurals>
+</resources>

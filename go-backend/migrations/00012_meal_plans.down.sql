@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS meal_plans;
+DROP TABLE IF EXISTS meal_times;

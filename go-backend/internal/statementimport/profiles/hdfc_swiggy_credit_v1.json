@@ -1,0 +1,50 @@
+{
+  "id": "hdfc_swiggy_credit_v1",
+  "layout": "card_summary",
+  "institution": [
+    "hdfc bank",
+    "hdfc"
+  ],
+  "account_type": "credit_card",
+  "detection": [
+    "swiggy blck hdfc bank credit card statement",
+    "hdfc bank",
+    "previous statement dues",
+    "domestic transactions",
+    "transaction description"
+  ],
+  "currency_marker": "amount pi",
+  "currency": "INR",
+  "date_format": "02/01/2006",
+  "decimal_separator": ".",
+  "group_separator": ",",
+  "line_tolerance": 2.5,
+  "opening_label": "previous statement dues",
+  "summary_header": "total amount due",
+  "summary_order": [
+    "opening",
+    "credit",
+    "debit",
+    "fees",
+    "closing"
+  ],
+  "summary_currency_prefix": "C",
+  "summary_row_height": 25,
+  "rounded_card_due": true,
+  "header_anchors": [
+    "date",
+    "transaction",
+    "amount"
+  ],
+  "column_offsets": [
+    -3,
+    -4,
+    -21
+  ],
+  "region_prefix": "date & time",
+  "continuation_gap": 10,
+  "footer_pattern": "^(?:international transactions|rewards|page|\\*transaction time)\\b",
+  "sign_convention": "credit_prefix",
+  "account_number_pattern": "(?i)credit card (?:no\\.?|number)\\s*:?\\s*[0-9]{0,6}[x*]{2,}[0-9]*([0-9]{4})\\b",
+  "description_column": 2
+}

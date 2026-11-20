@@ -1,0 +1,2 @@
+ALTER TABLE financial_horizon_subscriptions
+ADD COLUMN start_date TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP;

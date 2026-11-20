@@ -1,0 +1,108 @@
+// Test-only contract server. Real persistence and transaction behavior are covered
+// separately by the Go suite against disposable PostgreSQL containers.
+import http from "node:http";
+const states = new Map();
+const failures = new Map();
+const writes = new Map();
+const customTimes = new Map();
+const accountsByUser = new Map();
+const horizonCategories = [
+  { id: 1, name: "Test category", allows_subcategories: true, parent_id: null },
+  { id: 2, name: "Test detail", allows_subcategories: false, parent_id: 1 },
+  { id: 3, name: "Test standalone", allows_subcategories: false, parent_id: null },
+  { id: 4, name: "others", allows_subcategories: false, parent_id: 1 },
+].map(category => ({ ...category, icon: "tag", color: "#64748b", is_default: true }));
+const horizonTransactions = [
+  { id: 1, name: "Test parent expense", category_id: 1, category_name: "Test category" },
+  { id: 2, name: "Test child expense", category_id: 2, category_name: "Test category / Test detail", source: "statement", original_narration: "UPI/DR/104332516949/ICCL ZER/HDFC/zerodha/" },
+  { id: 3, name: "Test standalone expense", category_id: 3, category_name: "Test standalone" },
+].map(tx => ({ ...tx, type: "debit", amount: 10, transaction_date: "2026-01-02T10:00:00Z" }));
+let nextTimeId = 5;
+const pending = () => ({ status: "pending", questionnaire_version: 1, preferences: null });
+const times = [
+  { id: 1, name: "Breakfast", start_time: "07:00", end_time: "10:00", is_default: true },
+  { id: 2, name: "Lunch", start_time: "12:00", end_time: "14:30", is_default: true },
+  { id: 3, name: "Evening Snacks", start_time: "16:30", end_time: "18:30", is_default: true },
+  { id: 4, name: "Dinner", start_time: "19:30", end_time: "22:00", is_default: true },
+];
+http.createServer(async (req, res) => {
+  const url = new URL(req.url, "http://127.0.0.1:18081");
+  const token = req.headers.authorization?.replace("Bearer ", "") ?? url.searchParams.get("user") ?? "anonymous";
+  const send = (status, body) => { res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" }); res.end(JSON.stringify(body)); };
+  const chunks = []; for await (const chunk of req) chunks.push(chunk);
+  let body; try { body = chunks.length ? JSON.parse(Buffer.concat(chunks)) : {}; } catch { send(400, { error: "Invalid JSON" }); return; }
+  if (url.pathname === "/health") return send(200, {});
+  if (url.pathname === "/__test/fail") { failures.set(token, body.mode); return send(200, {}); }
+  if (url.pathname === "/__test/state") return send(200, { state: states.get(token) ?? pending(), writes: writes.get(token) ?? 0 });
+  if (url.pathname === "/api/auth/session") return send(200, { username: token });
+  if (url.pathname === "/api/profile") return send(200, { name: "Browser test", timezone: "Asia/Kolkata", currency: "INR" });
+  if (url.pathname === "/api/horizon") return send(200, {
+    base_amount: 0, currency: "INR", total_deductions: 0, total_transactions: 0,
+    remaining_amount: 0, committed_ratio: 0, total_budgets_allocated: 0, total_subscription_burn: 0,
+    budgets: [], deductions: [], categories: token === "categories-test" ? horizonCategories : [],
+    transactions: [], subscriptions: [], projections: [],
+  });
+  if (url.pathname === "/api/horizon/transactions") {
+    const categoryId = Number(url.searchParams.get("category_id"));
+    const transactions = token === "categories-test" ? horizonTransactions.filter(tx => {
+      const category = horizonCategories.find(item => item.id === tx.category_id);
+      return !categoryId || tx.category_id === categoryId || category.parent_id === categoryId;
+    }) : [];
+    return send(200, {
+      transactions, page: 1, page_size: 10, total: transactions.length, total_pages: transactions.length ? 1 : 0,
+    });
+  }
+  if (url.pathname === "/api/next-month-purchases") return send(200, { items: [], total: 0 });
+  if (url.pathname === "/api/horizon/accounts") {
+    const accounts = accountsByUser.get(token) ?? [{
+      id: 1, display_name: "Test savings", institution_name: "Kotak", account_type: "bank_account",
+      bank_account_subtype: "savings", last_four: "", archived_at: null, account_number: "", holder_name: "Test Person", holder_email: "test@example.com", card_type: "", card_network: "", credit_limit: null, statement_day: null,
+    }];
+    if (req.method === "GET") return send(200, { accounts });
+    if (req.method === "POST") {
+      const account = { ...body, id: accounts.length + 1, archived_at: null };
+      accounts.push(account);
+      accountsByUser.set(token, accounts);
+      return send(201, account);
+    }
+  }
+  const accountPath = url.pathname.match(/^\/api\/horizon\/accounts\/(\d+)(?:\/(archive|restore))?$/);
+  if (accountPath) {
+    const accounts = accountsByUser.get(token) ?? [];
+    const account = accounts.find(item => item.id === Number(accountPath[1]));
+    if (!account) return send(404, { error: "Account not found" });
+    if (req.method === "PUT") Object.assign(account, body);
+    else account.archived_at = accountPath[2] === "archive" ? new Date().toISOString() : null;
+    return send(200, account);
+  }
+  if (url.pathname === "/api/meal-times") {
+    const existing = customTimes.get(token) ?? [];
+    if (req.method === "GET") return send(200, [...times, ...existing]);
+    if (req.method === "POST") {
+      const time = { id: nextTimeId++, is_default: false, ...body };
+      customTimes.set(token, [...existing, time]);
+      return send(201, time);
+    }
+  }
+  if (url.pathname.startsWith("/api/meal-times/") && req.method === "DELETE") {
+    const id = Number(url.pathname.split("/").at(-1));
+    customTimes.set(token, (customTimes.get(token) ?? []).filter(time => time.id !== id));
+    res.writeHead(204).end();
+    return;
+  }
+  if (url.pathname === "/api/meal-plans") return send(200, []);
+  if (url.pathname === "/api/meal-plan-onboarding" && req.method === "GET") {
+    if (failures.get(token) === "read") return send(503, { error: "Unable to load preferences" });
+    return send(200, states.get(token) ?? pending());
+  }
+  if (["/api/meal-plan-onboarding", "/api/meal-preferences"].includes(url.pathname) && req.method === "PUT") {
+    if (failures.get(token) === "write") return send(503, { error: "Test connection interrupted. Please try again." });
+    const current = states.get(token) ?? pending();
+    if (url.pathname.endsWith("onboarding") && current.status !== "pending") return send(current.status === body.status ? 200 : 409, current.status === body.status ? current : { error: "Already resolved", state: current });
+    const state = url.pathname.endsWith("onboarding") ? { ...pending(), status: body.status, decided_at: new Date().toISOString(), preferences: body.preferences ?? null } : { ...current, preferences: body };
+    states.set(token, state); writes.set(token, (writes.get(token) ?? 0) + 1);
+    if (failures.get(token) === "lost-response") { failures.delete(token); req.socket.destroy(); return; }
+    return send(200, state);
+  }
+  send(404, { error: "Unknown fixture endpoint" });
+}).listen(Number(process.env.PULSE_E2E_API_PORT ?? 18081), "127.0.0.1");

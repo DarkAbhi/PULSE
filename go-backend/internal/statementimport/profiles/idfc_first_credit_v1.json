@@ -1,0 +1,59 @@
+{
+  "id": "idfc_first_credit_v1",
+  "layout": "card_summary",
+  "account_type": "credit_card",
+  "currency": "INR",
+  "decimal_separator": ".",
+  "group_separator": ",",
+  "description_column": 2,
+  "continuation_gap": 9,
+  "sign_convention": "direction_suffix",
+  "institution": [
+    "idfc first bank",
+    "idfc first",
+    "idfc"
+  ],
+  "detection": [
+    "credit card statement",
+    "idfc first bank",
+    "opening balance",
+    "payments & refunds",
+    "transaction details"
+  ],
+  "currency_marker": "(in inr)",
+  "date_format": "02 Jan 06",
+  "line_tolerance": 4,
+  "summary_labels": [
+    "opening balance",
+    "purchases",
+    "emi",
+    "payments & refunds",
+    "total amount due"
+  ],
+  "summary_order": [
+    "opening",
+    "debit",
+    "fees",
+    "credit",
+    "closing"
+  ],
+  "summary_currency_prefix": "r",
+  "summary_max_x": 265,
+  "header_anchors": [
+    "transaction",
+    "transaction",
+    "emi",
+    "fx",
+    "amount"
+  ],
+  "column_offsets": [
+    -3,
+    -4,
+    -8,
+    -8,
+    -9
+  ],
+  "region_prefix": "transaction transaction details",
+  "footer_pattern": "^(?:total|important|benefits|interest)\\b",
+  "account_number_pattern": "(?i)^card number:\\s*[x*0-9 -]+([0-9]{4})\\b"
+}

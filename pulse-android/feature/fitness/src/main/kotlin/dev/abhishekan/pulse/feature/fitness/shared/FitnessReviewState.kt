@@ -5,7 +5,8 @@ import dev.abhishekan.pulse.core.domain.model.Failure
 enum class FitnessReviewState {
     None,
     AwaitingRefresh,
-    Ready;
+    Ready,
+    ;
 
     internal fun afterRefresh(succeeded: Boolean): FitnessReviewState =
         when {

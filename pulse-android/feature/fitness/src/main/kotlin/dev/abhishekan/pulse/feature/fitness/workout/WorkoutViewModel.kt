@@ -88,7 +88,14 @@ class WorkoutViewModel(
     private var hasResumed = false
     private var searchJob: Job? = null
     private var original: ExerciseDraft? =
-        if (state.value.editor?.draft?.exerciseId == null) ExerciseDraft() else null
+        if (state.value.editor
+                ?.draft
+                ?.exerciseId == null
+        ) {
+            ExerciseDraft()
+        } else {
+            null
+        }
 
     init {
         refresh()
@@ -122,11 +129,12 @@ class WorkoutViewModel(
                         detail = result.value,
                         loadState = FitnessLoadState.Ready,
                         reviewState = it.reviewState.afterRefresh(succeeded = true),
-                        editor = if (editor != null && editor.selectedCatalog == null && catalog != null) {
-                            editor.copy(selectedCatalog = catalog)
-                        } else {
-                            editor
-                        },
+                        editor =
+                            if (editor != null && editor.selectedCatalog == null && catalog != null) {
+                                editor.copy(selectedCatalog = catalog)
+                            } else {
+                                editor
+                            },
                     )
                 }
             }

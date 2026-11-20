@@ -2,7 +2,6 @@ package dev.abhishekan.pulse.feature.fitness.workout.editor
 
 import dev.abhishekan.pulse.core.domain.model.ExerciseIssue
 import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.feature.fitness.R
 

@@ -31,7 +31,9 @@ fun WorkoutRoute(
     )
     BackHandler(enabled = state.busy && state.editor == null) {}
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        if (viewModel.uiState.value.editor?.dirty == true) {
+        if (viewModel.uiState.value.editor
+                ?.dirty == true
+        ) {
             onExercise()
         } else {
             viewModel.onAction(WorkoutAction.CloseEditor)

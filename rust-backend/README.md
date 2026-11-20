@@ -24,7 +24,17 @@ public API. See [monitoring setup](../docs/guides/monitoring.md#backend-and-reso
 
 `POST /api/shortcut/fitness-rings` requires `Authorization: Bearer <API key>` using a key created in the Go app. It accepts the flat fitness rings payload used by the portfolio shortcut, including trimmed keys, numeric strings, and the exercise, stand, and step aliases. It upserts by the API key's user and `summary_date` and returns HTTP 201 with `{"saved":true}`.
 
-`POST /api/fitness-activity-rings` requires the same bearer API key. It accepts the portfolio's nested activity rings payload, including optional workouts. It rounds fractional `step_count` values to the nearest whole step. It upserts workout activity types by `raw_value`, workouts by the API key's user and `uuid`, and rings by the user and `summary_date`. On success it returns HTTP 201 with `{"rings": {...}, "workouts": [{"id": ..., "uuid": ...}], "saved": true}`.
+`POST /api/fitness-activity-rings` requires the same bearer API key. It accepts the portfolio's nested activity rings payload, including optional workouts and sleep. It rounds fractional `step_count` values to the nearest whole step. It upserts workout activity types by `raw_value`, workouts by the API key's user and `uuid`, and rings by the user and `summary_date`. On success it returns HTTP 201 with `{"rings": {...}, "workouts": [{"id": ..., "uuid": ...}], "saved": true}`.
+
+Sleep sessions are replaced as a group for the API key owner and `summary_date`.
+Older clients can omit `sleep` and preserve the stored row. Apply Go migration 43
+before accepting uploads containing sleep.
+
+`GET /api/health/latest` uses the same bearer API key as `GET /api/fitness-summary`.
+It returns the key owner's latest sleep date, total whole minutes, and a short
+display string. A key owner with no sleep data receives HTTP 404. Successful
+responses are privately cacheable for five minutes and vary by Authorization.
+The response adds `stale: true` when the latest session ended over 48 hours ago.
 
 Both import routes reject numbers outside the storage ranges with HTTP 400:
 whole-number counters and activity type values must fit a non-negative PostgreSQL

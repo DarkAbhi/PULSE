@@ -19,5 +19,11 @@ data class WorkoutUiState(
     val error get() = loadState.error
     val needsReview get() = reviewState != FitnessReviewState.None
     val reviewReady get() = reviewState == FitnessReviewState.Ready
-    val canChangeWorkout get() = detail != null && loadState == FitnessLoadState.Ready && !busy && !needsReview && editor == null && !deleted
+    val canChangeWorkout get() =
+        detail != null &&
+            loadState == FitnessLoadState.Ready &&
+            !busy &&
+            !needsReview &&
+            editor == null &&
+            !deleted
 }

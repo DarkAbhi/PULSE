@@ -23,10 +23,10 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.domain.model.FitnessMetric
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
 import dev.abhishekan.pulse.feature.fitness.overview.FitnessAction
 import dev.abhishekan.pulse.feature.fitness.overview.FitnessScreen
 import dev.abhishekan.pulse.feature.fitness.overview.FitnessUiState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -59,7 +59,12 @@ class FitnessStatsTest {
                 PulseTheme(dark) {
                     Box(Modifier.fillMaxSize().background(PulseTheme.colors.background)) {
                         FitnessScreen(
-                            FitnessUiState(today, YearMonth.from(today), FitnessOverview(today, metrics, emptyList()), loadState = FitnessLoadState.Ready),
+                            FitnessUiState(
+                                today,
+                                YearMonth.from(today),
+                                FitnessOverview(today, metrics, emptyList()),
+                                loadState = FitnessLoadState.Ready,
+                            ),
                             {},
                             {},
                         )

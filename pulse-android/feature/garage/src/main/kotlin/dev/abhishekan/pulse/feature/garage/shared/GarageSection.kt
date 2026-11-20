@@ -12,9 +12,13 @@ internal sealed interface GarageSection<out T> {
         override val value: Nothing? = null
     }
 
-    data class Loading<T>(override val value: T? = null) : GarageSection<T>
+    data class Loading<T>(
+        override val value: T? = null,
+    ) : GarageSection<T>
 
-    data class Ready<T>(override val value: T) : GarageSection<T>
+    data class Ready<T>(
+        override val value: T,
+    ) : GarageSection<T>
 
     data class Failed<T>(
         val failure: Failure,

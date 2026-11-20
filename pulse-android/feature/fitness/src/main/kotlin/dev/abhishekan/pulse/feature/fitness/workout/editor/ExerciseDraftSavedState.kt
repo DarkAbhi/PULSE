@@ -2,7 +2,9 @@ package dev.abhishekan.pulse.feature.fitness.workout.editor
 
 import androidx.lifecycle.SavedStateHandle
 
-internal class ExerciseDraftSavedState(private val saved: SavedStateHandle) {
+internal class ExerciseDraftSavedState(
+    private val saved: SavedStateHandle,
+) {
     fun restore(): ExerciseEditorState? {
         if (saved.get<Boolean>("editing") != true) return null
         val reps = saved.get<ArrayList<String>>("reps").orEmpty().ifEmpty { listOf("") }
@@ -18,7 +20,10 @@ internal class ExerciseDraftSavedState(private val saved: SavedStateHandle) {
         return ExerciseEditorState(draft, dirty = saved["dirty"] ?: (draft != ExerciseDraft()))
     }
 
-    fun save(draft: ExerciseDraft, dirty: Boolean) {
+    fun save(
+        draft: ExerciseDraft,
+        dirty: Boolean,
+    ) {
         saved["exerciseId"] = draft.exerciseId
         saved["name"] = draft.name
         saved["reps"] = ArrayList(draft.sets.map { it.reps })

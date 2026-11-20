@@ -996,8 +996,16 @@ class HorizonDeviceTest {
             awaitText("All transactions")
             compose.onNode(hasTestTag("ledger-category-filter")).performClick()
             awaitText("Choose a category")
-            val transportTop = compose.onNode(hasTestTag("ledger-category-option-14")).fetchSemanticsNode().boundsInRoot.top
-            val standaloneTop = compose.onNode(hasTestTag("ledger-category-option-3")).fetchSemanticsNode().boundsInRoot.top
+            val transportTop =
+                compose
+                    .onNode(hasTestTag("ledger-category-option-14"))
+                    .fetchSemanticsNode()
+                    .boundsInRoot.top
+            val standaloneTop =
+                compose
+                    .onNode(hasTestTag("ledger-category-option-3"))
+                    .fetchSemanticsNode()
+                    .boundsInRoot.top
             assertTrue("Categories with children should appear above standalone categories", transportTop < standaloneTop)
             screenshot("filter-categories-phone", tag = "ledger-category-sheet")
             compose.onNodeWithText("Search categories").performTextReplacement("Transport")

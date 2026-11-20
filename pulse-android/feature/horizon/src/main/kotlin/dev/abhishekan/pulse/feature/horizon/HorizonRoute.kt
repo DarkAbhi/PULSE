@@ -41,7 +41,9 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
     PulseScreenTransition(state, screenDepth = { it.destination.depth }) { screen, active ->
         if (screen.destination == HorizonDestination.StatementImport) {
             StatementImportScreen(
-                screen.overview.value?.categories.orEmpty(),
+                screen.overview.value
+                    ?.categories
+                    .orEmpty(),
                 onClose = { viewModel.onAction(HorizonAction.CloseImport) },
                 onManageAccounts = { viewModel.onAction(HorizonAction.ManageAccounts) },
                 onCompleted = { viewModel.onAction(HorizonAction.ImportCompleted) },
@@ -51,7 +53,11 @@ fun HorizonRoute(viewModel: HorizonViewModel = koinViewModel()) {
         } else {
             key(timeZone, accountCurrency) {
                 HorizonHost(screen, scrollStates, active) { action ->
-                    if (action == HorizonAction.Recent(RecentTransactionsAction.Import)) importViewModel.onAction(StatementImportAction.Reset)
+                    if (action ==
+                        HorizonAction.Recent(RecentTransactionsAction.Import)
+                    ) {
+                        importViewModel.onAction(StatementImportAction.Reset)
+                    }
                     viewModel.onAction(action)
                 }
             }

@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
@@ -25,6 +24,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
@@ -181,6 +181,7 @@ class WorkoutRedesignTest {
         showWorkoutText(second.name)
         val firstHeader = compose.onNodeWithText(first.name)
         val secondHeader = compose.onNodeWithText(second.name)
+
         fun headerGap() = secondHeader.getUnclippedBoundsInRoot().top - firstHeader.getUnclippedBoundsInRoot().top
 
         compose.mainClock.autoAdvance = false

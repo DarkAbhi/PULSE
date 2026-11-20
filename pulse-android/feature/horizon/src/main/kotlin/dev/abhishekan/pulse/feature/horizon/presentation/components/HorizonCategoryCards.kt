@@ -47,12 +47,13 @@ internal fun LazyListScope.categoryCards(
     val query = search.trim()
     val categoriesByParent = categories.groupBy(HorizonCategory::parentId)
     val (parents, standalone) = categoriesByParent[null].orEmpty().partition { it.id in categoriesByParent }
-    val groups = (parents + standalone).mapNotNull { parent ->
-        val children = categoriesByParent[parent.id].orEmpty()
-        val parentMatches = parent.name.contains(query, ignoreCase = true)
-        val matches = if (parentMatches) children else children.filter { it.displayName.contains(query, ignoreCase = true) }
-        (parent to matches).takeIf { parentMatches || matches.isNotEmpty() }
-    }
+    val groups =
+        (parents + standalone).mapNotNull { parent ->
+            val children = categoriesByParent[parent.id].orEmpty()
+            val parentMatches = parent.name.contains(query, ignoreCase = true)
+            val matches = if (parentMatches) children else children.filter { it.displayName.contains(query, ignoreCase = true) }
+            (parent to matches).takeIf { parentMatches || matches.isNotEmpty() }
+        }
     items(groups, key = { (parent, _) -> parent.id }, contentType = { "category-card" }) { (parent, children) ->
         CategoryCard(parent, children, selectedId, testTagPrefix, onSelect)
     }
@@ -111,7 +112,12 @@ private fun CategoryCard(
 }
 
 @Composable
-private fun SubcategoryTile(name: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun SubcategoryTile(
+    name: String,
+    selected: Boolean,
+    modifier: Modifier,
+    onClick: () -> Unit,
+) {
     val spacing = PulseTheme.spacing
     val colors = PulseTheme.colors
     val foreground = if (selected) colors.onPrimarySoft else colors.textPrimary

@@ -3,11 +3,15 @@ package dev.abhishekan.pulse.feature.fitness.shared
 import dev.abhishekan.pulse.core.domain.model.Failure
 
 sealed interface FitnessLoadState {
-    data class Loading(val previousFailure: Failure? = null) : FitnessLoadState
+    data class Loading(
+        val previousFailure: Failure? = null,
+    ) : FitnessLoadState
 
     data object Ready : FitnessLoadState
 
-    data class Failed(val failure: Failure) : FitnessLoadState
+    data class Failed(
+        val failure: Failure,
+    ) : FitnessLoadState
 
     val error: Failure?
         get() =

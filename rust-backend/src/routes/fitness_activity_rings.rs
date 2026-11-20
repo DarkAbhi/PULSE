@@ -1,6 +1,6 @@
 use axum::{Extension, Json, body::Bytes, extract::State, http::StatusCode};
 use chrono::{DateTime, NaiveDate, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use sqlx::Postgres;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -9,13 +9,17 @@ use uuid::Uuid;
 use super::fitness_input::{self, MAX_CALORIES, MAX_DISTANCE, MAX_DURATION};
 use crate::{
     auth::ApiKeyUser,
-    db::activity_rings::{self, Rings},
+    db::{
+        activity_rings::{self, Rings},
+        sleep::{self, Sleep},
+    },
     state::AppState,
 };
 
 struct Import {
     rings: Rings,
     workouts: Vec<Workout>,
+    sleep: Option<Sleep>,
 }
 
 struct Workout {
@@ -219,6 +223,14 @@ fn parse(payload: &Value) -> Result<Import, String> {
             workouts.push(workout);
         }
     }
+    let sleep = payload
+        .get("sleep")
+        .map(|value| {
+            let sleep = Sleep::deserialize(value).map_err(|error| format!("sleep {error}"))?;
+            sleep.validate(summary_date)?;
+            Ok::<_, String>(sleep)
+        })
+        .transpose()?;
     Ok(Import {
         rings: Rings {
             summary_date,
@@ -232,6 +244,7 @@ fn parse(payload: &Value) -> Result<Import, String> {
             time_zone,
         },
         workouts,
+        sleep,
     })
 }
 
@@ -385,6 +398,15 @@ pub async fn create(
             }
         }
     }
+    if let Some(sleep) = &import.sleep
+        && let Err(error) = sleep::upsert(&mut tx, user.0, sleep).await
+    {
+        tracing::error!(%error, "unable to save fitness sleep");
+        return reply(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            json!({"error": "Unable to save sleep."}),
+        );
+    }
     match save_rings(&mut tx, user.0, &import.rings).await {
         Ok(rings) => {
             if let Err(error) = tx.commit().await {
@@ -505,6 +527,99 @@ mod tests {
             payload["step_count"] = input;
             assert!(validate(&payload).is_err(), "accepted {payload}");
         }
+    }
+
+    fn sleep_example() -> Value {
+        json!({
+            "sleep_date": "2026-07-26",
+            "total_asleep_seconds": 27000, "main_sleep_seconds": 25200,
+            "sessions": [{
+                "session_id": "night", "start": "2026-07-25T20:00:00Z",
+                "end": "2026-07-26T03:00:00Z", "asleep_seconds": 25200, "is_main_sleep": true
+            }, {
+                "session_id": "nap", "start": "2026-07-26T07:30:00Z",
+                "end": "2026-07-26T08:00:00Z", "asleep_seconds": 1800, "is_main_sleep": false
+            }]
+        })
+    }
+
+    #[test]
+    fn rejects_invalid_or_empty_sleep() {
+        let mut payload = example();
+        assert!(parse(&payload).unwrap().sleep.is_none());
+        payload["sleep"] = sleep_example();
+        assert!(validate(&payload).is_ok());
+
+        for (path, replacement) in [
+            ("/sleep", json!(null)),
+            ("/sleep/sleep_date", json!("2026-07-25")),
+            ("/sleep/sessions", json!([])),
+            ("/sleep/total_asleep_seconds", json!(86_401)),
+            ("/sleep/sessions/0/asleep_seconds", json!(-1)),
+            ("/sleep/sessions/0/end", json!("2026-07-25T20:00:00Z")),
+        ] {
+            let mut invalid = payload.clone();
+            *invalid.pointer_mut(path).unwrap() = replacement;
+            assert!(validate(&invalid).is_err(), "accepted {invalid}");
+        }
+    }
+
+    #[tokio::test]
+    async fn sleep_upsert_is_idempotent_and_omission_preserves_saved_sessions() {
+        let database = crate::testhelper::TestDatabase::start().await;
+        let pool = &database.pool;
+        setup(pool).await;
+        sqlx::raw_sql("CREATE TABLE users (id BIGINT PRIMARY KEY); INSERT INTO users VALUES (1);")
+            .execute(pool)
+            .await
+            .unwrap();
+        sqlx::raw_sql(include_str!(
+            "../../../go-backend/migrations/00043_fitness_sleep.up.sql"
+        ))
+        .execute(pool)
+        .await
+        .unwrap();
+
+        let state = AppState { pool: pool.clone() };
+        let upload = async |payload: &Value| {
+            let (status, Json(body)) = create(
+                State(state.clone()),
+                Extension(ApiKeyUser(1)),
+                Bytes::from(payload.to_string()),
+            )
+            .await;
+            assert_eq!(status, StatusCode::CREATED, "{body}");
+        };
+        let saved = async || {
+            sqlx::query_as::<_, (i32, Value)>(
+                "SELECT total_asleep_seconds, sessions FROM fitness_sleep WHERE user_id = 1",
+            )
+            .fetch_all(pool)
+            .await
+            .unwrap()
+        };
+
+        let mut payload = example();
+        payload["sleep"] = sleep_example();
+        upload(&payload).await;
+        upload(&payload).await;
+        let rows = saved().await;
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].0, 27000);
+        assert_eq!(rows[0].1.as_array().unwrap().len(), 2);
+
+        payload["sleep"]["sessions"].as_array_mut().unwrap().pop();
+        payload["sleep"]["total_asleep_seconds"] = json!(25200);
+        upload(&payload).await;
+        let rows = saved().await;
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].0, 25200);
+        assert_eq!(rows[0].1.as_array().unwrap().len(), 1);
+        assert_eq!(rows[0].1[0]["session_id"], "night");
+
+        payload.as_object_mut().unwrap().remove("sleep");
+        upload(&payload).await;
+        assert_eq!(saved().await, rows);
     }
 
     async fn setup(pool: &sqlx::PgPool) {

@@ -39,8 +39,8 @@ import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseSpacing
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseErrorState
@@ -237,7 +237,9 @@ private sealed interface DeleteConfirmation {
 
     data object Workout : DeleteConfirmation
 
-    data class Exercise(val id: Long) : DeleteConfirmation
+    data class Exercise(
+        val id: Long,
+    ) : DeleteConfirmation
 }
 
 private val DeleteConfirmationSaver =

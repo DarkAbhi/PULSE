@@ -33,10 +33,10 @@ import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.domain.model.WorkoutSummary
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
 import dev.abhishekan.pulse.feature.fitness.overview.FitnessAction
 import dev.abhishekan.pulse.feature.fitness.overview.FitnessScreen
 import dev.abhishekan.pulse.feature.fitness.overview.FitnessUiState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -78,6 +78,7 @@ class FitnessCalendarLayoutTest {
             }
         }
         val legend = compose.onNodeWithText("Workout recorded")
+
         fun calendarBottom() = legend.getUnclippedBoundsInRoot().top
 
         val shortHeight = calendarBottom()

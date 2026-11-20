@@ -203,10 +203,11 @@ private fun collapsedExerciseSummary(
             minReps == maxReps -> pluralStringResource(R.plurals.pulse_fitness_workout_reps, minReps, minReps)
             bodyweight -> {
                 val locale = LocalConfiguration.current.locales[0]
-                val sequence = remember(sets, locale) {
-                    val format = NumberFormat.getIntegerInstance(locale).apply { isGroupingUsed = false }
-                    sets.joinToString(" / ") { format.format(it.reps) }
-                }
+                val sequence =
+                    remember(sets, locale) {
+                        val format = NumberFormat.getIntegerInstance(locale).apply { isGroupingUsed = false }
+                        sets.joinToString(" / ") { format.format(it.reps) }
+                    }
                 stringResource(R.string.pulse_fitness_workout_reps_sequence, sequence)
             }
             else -> stringResource(R.string.pulse_fitness_workout_reps_range, minReps, maxReps)
@@ -217,12 +218,13 @@ private fun collapsedExerciseSummary(
         when {
             weights.size < sets.size -> stringResource(R.string.pulse_fitness_workout_mixed_weights)
             else -> {
-                val amount = remember(weights) {
-                    val min = weights.min()
-                    val max = weights.max()
-                    val value = min.stripTrailingZeros().toPlainString()
-                    if (min.compareTo(max) == 0) value else "$value–${max.stripTrailingZeros().toPlainString()}"
-                }
+                val amount =
+                    remember(weights) {
+                        val min = weights.min()
+                        val max = weights.max()
+                        val value = min.stripTrailingZeros().toPlainString()
+                        if (min.compareTo(max) == 0) value else "$value–${max.stripTrailingZeros().toPlainString()}"
+                    }
                 stringResource(R.string.pulse_fitness_weight_kg, amount)
             }
         }

@@ -3,6 +3,7 @@ use std::time::Duration;
 mod fitness_activity_rings;
 mod fitness_input;
 mod fitness_rings;
+mod sleep;
 
 use axum::{
     Extension, Json, Router,
@@ -32,6 +33,7 @@ struct FitnessData {
 pub fn router(state: AppState, metrics: std::sync::Arc<Metrics>) -> Router {
     let fitness_routes = Router::<AppState>::new()
         .route("/api/fitness-summary", get(fitness_summary))
+        .route("/api/health/latest", get(sleep::latest))
         .route("/api/shortcut/fitness-rings", post(fitness_rings::create))
         .route(
             "/api/fitness-activity-rings",

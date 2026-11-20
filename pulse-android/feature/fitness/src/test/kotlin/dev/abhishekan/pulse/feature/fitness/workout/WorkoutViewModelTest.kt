@@ -300,13 +300,32 @@ class WorkoutViewModelTest {
             vm.onAction(WorkoutAction.EditExercise())
             vm.onAction(WorkoutAction.SearchCatalogue("first"))
             advanceTimeBy(301)
-            assertEquals("first", vm.uiState.value.editor?.candidates?.single()?.id)
+            assertEquals(
+                "first",
+                vm.uiState.value.editor
+                    ?.candidates
+                    ?.single()
+                    ?.id,
+            )
 
             vm.onAction(WorkoutAction.SearchCatalogue("second"))
-            assertEquals(emptyList<CatalogExercise>(), vm.uiState.value.editor?.candidates)
-            assertTrue(vm.uiState.value.editor?.searching == true)
+            assertEquals(
+                emptyList<CatalogExercise>(),
+                vm.uiState.value.editor
+                    ?.candidates,
+            )
+            assertTrue(
+                vm.uiState.value.editor
+                    ?.searching == true,
+            )
             advanceTimeBy(301)
-            assertEquals("second", vm.uiState.value.editor?.candidates?.single()?.id)
+            assertEquals(
+                "second",
+                vm.uiState.value.editor
+                    ?.candidates
+                    ?.single()
+                    ?.id,
+            )
         }
 
     @Test fun supersededCatalogueSearchCannotReplaceNewerResults() =

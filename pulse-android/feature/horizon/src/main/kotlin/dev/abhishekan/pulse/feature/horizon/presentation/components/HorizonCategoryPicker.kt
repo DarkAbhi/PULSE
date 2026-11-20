@@ -35,11 +35,12 @@ internal fun HorizonCategoryPicker(
     var search by rememberSaveable { mutableStateOf("") }
     val focus = LocalFocusManager.current
     val none = stringResource(emptyChoice)
-    val selected = if (selectedId == null) {
-        none
-    } else {
-        categories.find { it.id == selectedId }?.displayName ?: stringResource(R.string.pulse_horizon_unavailable_selection)
-    }
+    val selected =
+        if (selectedId == null) {
+            none
+        } else {
+            categories.find { it.id == selectedId }?.displayName ?: stringResource(R.string.pulse_horizon_unavailable_selection)
+        }
     TransactionPickerField(label, selected, enabled) {
         focus.clearFocus()
         search = ""

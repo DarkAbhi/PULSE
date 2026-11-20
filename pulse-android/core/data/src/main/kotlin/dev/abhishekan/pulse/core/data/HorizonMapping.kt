@@ -90,21 +90,22 @@ internal fun HorizonOverviewDto.domain(): HorizonOverview {
         },
         categories.orEmpty().let { catalog ->
             val names = catalog.associate { it.id to it.name }
-            catalog.map {
-                checked(it.id, it.name)
-                val parentName = it.parentId?.let(names::get)
-                HorizonCategory(
-                    it.id,
-                    it.name,
-                    it.icon,
-                    it.color,
-                    it.isDefault,
-                    it.parentId,
-                    it.allowsSubcategories,
-                    it.isSubscriptionDefault,
-                    parentName?.let { parent -> "$parent / ${it.name}" } ?: it.name,
-                )
-            }.sortedBy { it.displayName.lowercase() }
+            catalog
+                .map {
+                    checked(it.id, it.name)
+                    val parentName = it.parentId?.let(names::get)
+                    HorizonCategory(
+                        it.id,
+                        it.name,
+                        it.icon,
+                        it.color,
+                        it.isDefault,
+                        it.parentId,
+                        it.allowsSubcategories,
+                        it.isSubscriptionDefault,
+                        parentName?.let { parent -> "$parent / ${it.name}" } ?: it.name,
+                    )
+                }.sortedBy { it.displayName.lowercase() }
         },
         subscriptions.orEmpty().map {
             checked(it.id, it.name)

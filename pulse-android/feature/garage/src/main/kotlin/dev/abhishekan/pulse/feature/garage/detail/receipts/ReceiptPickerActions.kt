@@ -40,9 +40,10 @@ private data class PendingDownload(
 private val pendingDownloadSaver =
     listSaver<PendingDownload?, Any>(
         save = { request ->
-            request?.let {
-                listOf(it.record, it.receipt.id, it.receipt.name, it.receipt.contentType, it.receipt.size)
-            }.orEmpty()
+            request
+                ?.let {
+                    listOf(it.record, it.receipt.id, it.receipt.name, it.receipt.contentType, it.receipt.size)
+                }.orEmpty()
         },
         restore = { values ->
             val (record, id, name, contentType, size) = values
@@ -56,7 +57,10 @@ internal fun rememberReceiptPickerActions(
     onAction: (VehicleDetailAction) -> Unit,
 ): ReceiptPickerActions {
     val dispatch by rememberUpdatedState(onAction)
-    fun reportError(@StringRes message: Int) {
+
+    fun reportError(
+        @StringRes message: Int,
+    ) {
         dispatch(VehicleDetailAction.FileError(uiText(message)))
     }
 

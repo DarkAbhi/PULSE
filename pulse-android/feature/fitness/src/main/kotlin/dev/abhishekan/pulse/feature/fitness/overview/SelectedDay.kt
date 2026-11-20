@@ -38,8 +38,8 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pulseDescription
 import dev.abhishekan.pulse.feature.fitness.R
-import dev.abhishekan.pulse.core.ui.R as CoreUiR
 import java.time.format.DateTimeFormatter
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 internal fun SelectedDay(

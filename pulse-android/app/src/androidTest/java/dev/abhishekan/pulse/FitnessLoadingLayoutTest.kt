@@ -17,10 +17,10 @@ import androidx.compose.ui.test.swipeDown
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
 import dev.abhishekan.pulse.feature.fitness.overview.FitnessAction
 import dev.abhishekan.pulse.feature.fitness.overview.FitnessScreen
 import dev.abhishekan.pulse.feature.fitness.overview.FitnessUiState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

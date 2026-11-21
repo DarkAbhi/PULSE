@@ -3,7 +3,7 @@ version: alpha
 name: Pulse
 description: A warm, data-first web design system for fitness, meals, finances, and vehicle care.
 colors:
-  background: "#F5F2EA"
+  background: "#F6F7FF"
   on-background: "#1C1C1A"
   surface: "#FFFDF8"
   on-surface: "#1C1C1A"
@@ -38,7 +38,7 @@ colors:
     blue: "#4C6BFF"
     magenta: "#FF2FD0"
   dark:
-    background: "#1C1C1A"
+    background: "#0D0A1F"
     on-background: "#F5F2EA"
     surface: "#242420"
     on-surface: "#F5F2EA"

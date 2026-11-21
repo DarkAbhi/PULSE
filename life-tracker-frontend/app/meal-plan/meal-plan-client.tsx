@@ -1,27 +1,31 @@
 "use client";
 
 import Select from "@/app/components/design-system/select";
-import type { MealPreferences } from "./onboarding/types";
+import type { MealKind, MealPreferences } from "./onboarding/types";
 import { isMealTimeEnabled, standardMealKind } from "./onboarding/questionnaire";
-import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
-import { dateKey } from "@/app/lib/time-zone.mjs";
+import { dateKey, toDateTimeInput } from "@/app/lib/time-zone.mjs";
 
-import Button from "@/app/components/design-system/button";
-
-import { useState, useEffect, useTransition, useId } from "react";
+import { useState, useEffect, useTransition, useId, type ReactNode } from "react";
 import BackLink from "@/app/components/design-system/back-link";
+import frame from "@/app/components/design-system/page-frame.module.css";
 import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  Trash2,
   Utensils,
   Clock,
   Loader2,
   Check,
+  Coffee,
+  LocateFixed,
+  Moon,
+  SlidersHorizontal,
+  Sun,
+  Sunrise,
+  X,
 } from "lucide-react";
 import Dialog, { DialogActions, DialogAction } from "@/app/components/design-system/dialog";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
@@ -33,6 +37,7 @@ import {
   getMealPlansAction,
   updateMealPlanConsumedAction,
 } from "./actions";
+import styles from "./meal-plan.module.css";
 
 interface MealPlanClientProps {
   preferences?: MealPreferences | null;
@@ -40,6 +45,49 @@ interface MealPlanClientProps {
   initialMeals: MealPlan[];
   initialMealTimes: MealTime[];
   initialTodayStr?: string;
+}
+
+const standardSlotIcons = {
+  breakfast: Sunrise,
+  lunch: Sun,
+  evening_snacks: Coffee,
+  dinner: Moon,
+} satisfies Record<MealKind, typeof Clock>;
+const standardSlots = Object.keys(standardSlotIcons) as MealKind[];
+type CalendarSlot = MealKind | "custom";
+
+function MealSlotCard({ kind, icon, name, timeRange, usualTime, isNow, children, onAdd, addDisabled }: {
+  kind: CalendarSlot;
+  icon: ReactNode;
+  name: string;
+  timeRange?: string;
+  usualTime?: string;
+  isNow?: boolean;
+  children: ReactNode;
+  onAdd?: () => void;
+  addDisabled?: boolean;
+}) {
+  return (
+    <article className={styles.slotCard}>
+      <div className="flex items-start gap-3">
+        <span className={styles.slotIcon} data-slot={kind} aria-hidden="true">{icon}</span>
+        <div className="min-w-0 self-center">
+          <h3 className="text-lg leading-tight font-extrabold tracking-tight wrap-anywhere">{name}</h3>
+          {timeRange && <p className={`${styles.muted} mt-1 text-sm font-semibold`}>{timeRange}</p>}
+          {usualTime && <p className={`${styles.muted} mt-1 text-xs`}>Your usual time: {usualTime}</p>}
+        </div>
+        {isNow && <span className={styles.now}>Now</span>}
+      </div>
+      {children}
+      {onAdd && (
+        <button className={styles.slotAdd} type="button" onClick={onAdd} disabled={addDisabled}
+          aria-label={`Add meal to ${name}`}
+        >
+          <Plus className="size-5" aria-hidden="true" /> Add meal
+        </button>
+      )}
+    </article>
+  );
 }
 
 
@@ -88,9 +136,15 @@ export default function MealPlanClient({
   initialTodayStr,
 }: MealPlanClientProps) {
   const { timeZone } = useTimeZone();
-  const [todayStr, setTodayStr] = useState(() => initialTodayStr ?? dateKey(new Date(), timeZone));
+  const [clock, setClock] = useState(() => ({
+    today: initialTodayStr ?? dateKey(new Date(), timeZone),
+    time: "",
+  }));
   useEffect(() => {
-    const update = () => setTodayStr(dateKey(new Date(), timeZone));
+    const update = () => {
+      const [today, time] = toDateTimeInput(new Date(), timeZone).split("T");
+      setClock({ today, time });
+    };
     update();
     const timer = window.setInterval(update, 60000);
     window.addEventListener("focus", update);
@@ -109,8 +163,6 @@ export default function MealPlanClient({
   const [mealName, setMealName] = useState("");
   const [mealModalError, setMealModalError] = useState("");
 
-  // New meal time Meal Time Modal state
-  // Deletion confirmation state
   const [mealToDelete, setMealToDelete] = useState<MealPlan | null>(null);
 
   const [isPending, startTransition] = useTransition();
@@ -119,6 +171,7 @@ export default function MealPlanClient({
   const addMealTitleId = useId();
 
   const currentMonday = getMonday(parseYMD(selectedDate));
+  const weekEnd = addDays(currentMonday, 6);
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = addDays(currentMonday, i);
     const dateStr = formatYMD(d);
@@ -128,13 +181,13 @@ export default function MealPlanClient({
       dayShort: d.toLocaleDateString("en-IN", { timeZone: "UTC", weekday: "short" }),
       dayFull: d.toLocaleDateString("en-IN", { timeZone: "UTC", weekday: "long" }),
       monthDay: d.toLocaleDateString("en-IN", { timeZone: "UTC", month: "short", day: "numeric" }),
-      isToday: dateStr === todayStr,
+      isToday: dateStr === clock.today,
       isSelected: dateStr === selectedDate,
     };
   });
 
   const weekStartStr = formatYMD(currentMonday);
-  const weekEndStr = formatYMD(addDays(currentMonday, 6));
+  const weekEndStr = formatYMD(weekEnd);
 
   useEffect(() => {
     let cancelled = false;
@@ -162,6 +215,18 @@ export default function MealPlanClient({
   const enabledMealTimes = orderedMealTimes.filter(time => isMealTimeEnabled(time, preferences));
   const otherMeals = dayMeals.filter((meal) => !mealTimes.some((time) => time.id === meal.meal_time_id));
   const eatenCount = dayMeals.filter((meal) => meal.is_consumed).length;
+  const isToday = selectedDate === clock.today;
+  const slotKindByID = new Map<number | undefined, MealKind | undefined>(
+    mealTimes.map(time => [time.id, standardMealKind(time)])
+  );
+  const plannedByDay = weekDays.map(day => {
+    const items = meals.filter(meal => meal.date === day.dateStr);
+    const slots = new Set<CalendarSlot>(items.map(meal => slotKindByID.get(meal.meal_time_id) ?? "custom"));
+    return { count: items.length, slots };
+  });
+  const calendarSlots: CalendarSlot[] = plannedByDay.some(day => day.slots.has("custom"))
+    ? [...standardSlots, "custom"]
+    : standardSlots;
 
   // Open add meal modal, optionally preselecting a meal time slot
   const handleOpenAddMeal = (mealTimeID?: number) => {
@@ -234,173 +299,181 @@ export default function MealPlanClient({
     });
   };
 
-  const formattedWeekRange = `${currentMonday.toLocaleDateString("en-IN", { timeZone: "UTC",
+  const weekRange = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "UTC",
     month: "short",
     day: "numeric",
-  })} – ${addDays(currentMonday, 6).toLocaleDateString("en-IN", { timeZone: "UTC",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })}`;
+    ...(currentMonday.getUTCFullYear() !== weekEnd.getUTCFullYear() && { year: "numeric" }),
+  }).formatRange(currentMonday, weekEnd);
 
   const renderMeals = (items: MealPlan[]) => (
-    <ul className="divide-y divide-divider/60">
+    <ul className="flex flex-col gap-2">
       {items.map((meal) => (
-        <li key={meal.id} className="flex items-center gap-2 py-2 first:pt-0 last:pb-0">
-          <Button
-            variant={meal.is_consumed ? "soft" : "tertiary"}
-            size="sm"
+        <li key={meal.id} className={styles.mealRow}>
+          <button
             type="button"
             role="checkbox"
             aria-checked={meal.is_consumed}
             aria-label={`Eaten: ${meal.name}`}
             onClick={() => handleToggleConsumed(meal)}
             disabled={isPending}
-            className="min-w-0 flex-1 justify-start! text-left"
+            className={styles.mealToggle}
           >
-            <span className="flex size-4 shrink-0 items-center justify-center rounded">
-              {meal.is_consumed && <Check className="size-3" aria-hidden="true" />}
+            <span className={styles.check} aria-hidden="true">
+              {meal.is_consumed && <Check className="size-5" strokeWidth={3} />}
             </span>
-            <span className={`min-w-0 wrap-anywhere text-sm ${meal.is_consumed ? "text-muted-foreground line-through" : "text-foreground"}`}>
+            <span className={`min-w-0 wrap-anywhere text-sm font-semibold ${meal.is_consumed ? `${styles.muted} line-through` : ""}`}>
               {meal.name}
             </span>
-          </Button>
-          <Button variant="iconDanger" size="md" type="button"
+          </button>
+          <button
+            type="button"
             onClick={() => { setDeleteError(""); setMealToDelete(meal); }}
             aria-label={`Delete ${meal.name}`}
             disabled={isPending}
-            className="shrink-0"
+            className={styles.removeMeal}
           >
-            <Trash2 className="size-4" aria-hidden="true" />
-          </Button>
+            <X className="size-5" aria-hidden="true" />
+          </button>
         </li>
       ))}
     </ul>
   );
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
-      <div className="mx-auto max-w-5xl" inert={isAddMealOpen || mealToDelete !== null}>
-        <BackLink href="/dashboard">Dashboard</BackLink>
+    <main className={`${frame.page} ${styles.page}`}>
+      <div className={frame.content} inert={isAddMealOpen || mealToDelete !== null}>
+        <BackLink href="/dashboard" className={styles.backLink}>Dashboard</BackLink>
 
-        <PulseCard as="section" aria-labelledby="meal-plan-title" className="mt-5 overflow-hidden">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-divider bg-accent px-4 py-6 text-accent-foreground sm:px-7 sm:py-8">
-            <div>
-              <h1 id="meal-plan-title" className="text-4xl font-bold tracking-tight sm:text-5xl">Meal Plan</h1>
-              <p className="mt-2 text-sm">Plan your week, one meal at a time.</p>
+        <div className={styles.layout}>
+          <section className={styles.hero} aria-labelledby="meal-plan-title">
+            <div className={styles.plate} aria-hidden="true">
+              {[-4, -2, 0].map(delay => (
+                <span key={delay} className={styles.ripple} style={{ animationDelay: `${delay}s` }} />
+              ))}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5.5" />
+                <circle cx="12" cy="12" r="2" />
+                <path d="M3 4.5v4a1.5 1.5 0 0 0 3 0v-4M4.5 10v9.5M21 4.5c-1.6 1-2.2 3-2.2 5.5h2.2v9.5" />
+              </svg>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {onEditPreferences && <Button variant="secondary" onClick={onEditPreferences}>Meal preferences</Button>}
+            <div className="relative">
+              <h1 id="meal-plan-title" className={styles.title}>Meal Plan</h1>
+              <p className="mt-2 text-base font-medium sm:text-xl">Plan your week and track meals eaten</p>
+              {onEditPreferences && (
+                <button className={styles.preferences} type="button" onClick={onEditPreferences}>
+                  <SlidersHorizontal className="size-5" aria-hidden="true" /> Meal preferences
+                </button>
+              )}
             </div>
-          </div>
+          </section>
 
-          <div className="p-3 sm:p-6">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4">
-              <h2 className="text-sm font-semibold sm:text-base">{formattedWeekRange}</h2>
-              <div className="flex items-center gap-1">
-                <Button variant="tertiary" size="sm" onClick={handleToday}>Today</Button>
-                <Button variant="iconSecondary" size="sm" onClick={() => moveWeek(-7)} aria-label="Previous week">
-                  <ChevronLeft className="size-4" aria-hidden="true" />
-                </Button>
-                <Button variant="iconSecondary" size="sm" onClick={() => moveWeek(7)} aria-label="Next week">
-                  <ChevronRight className="size-4" aria-hidden="true" />
-                </Button>
+          <section className={styles.calendar} aria-label="Weekly calendar">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <h2 aria-live="polite" className={styles.weekRange}>
+                {weekRange}
+                {currentMonday.getUTCFullYear() === weekEnd.getUTCFullYear() && (
+                  <span className={`${styles.muted} mt-1.5 block text-sm font-semibold tracking-normal`}>{weekEnd.getUTCFullYear()}</span>
+                )}
+              </h2>
+              <div className="flex items-center gap-2">
+                <button className={styles.weekArrow} type="button" onClick={() => moveWeek(-7)} aria-label="Previous week">
+                  <ChevronLeft className="size-5" aria-hidden="true" />
+                </button>
+                <button className={styles.primaryAction} type="button" onClick={handleToday} disabled={isToday}>
+                  <LocateFixed className="size-5" aria-hidden="true" /> Today
+                </button>
+                <button className={styles.weekArrow} type="button" onClick={() => moveWeek(7)} aria-label="Next week">
+                  <ChevronRight className="size-5" aria-hidden="true" />
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 sm:gap-2" role="group" aria-label="Days of the week">
-              {weekDays.map((day) => (
-                <Button
-                  key={day.dateStr}
-                  variant={day.isSelected ? "primary" : "iconSecondary"}
-                  aria-label={`${day.dayFull}, ${day.monthDay}`}
-                  aria-pressed={day.isSelected}
-                  aria-current={day.isToday ? "date" : undefined}
-                  onClick={() => setSelectedDate(day.dateStr)}
-                  className="h-auto min-h-16 w-full min-w-0 flex-col px-0 py-2 sm:min-h-20"
-                >
-                  <span className="text-xs font-medium">{day.dayShort}</span>
-                  <span className="text-lg leading-none tabular-nums sm:text-2xl">{day.date.getUTCDate()}</span>
-                  <span aria-hidden="true" className={`size-1 rounded-full ${day.isToday ? "bg-current" : "invisible"}`} />
-                </Button>
-              ))}
-            </div>
-          </div>
-        </PulseCard>
-
-        <section aria-labelledby="meal-agenda-title" className="mt-7 sm:mt-9">
-          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 id="meal-agenda-title" className="text-2xl font-bold tracking-tight sm:text-3xl">
-                {selectedDay.dayFull}, {selectedDay.monthDay}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground" role="status">
-                {isLoadingWeek ? "Loading meals…" : dayMeals.length ? `${eatenCount} of ${dayMeals.length} meals eaten` : "No meals planned yet"}
-              </p>
-            </div>
-            <Button onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek}>
-              <Plus className="size-4" aria-hidden="true" /> Add meal
-            </Button>
-          </div>
-
-          <PulseCard className="overflow-hidden" aria-busy={isLoadingWeek}>
-            {!isLoadingWeek && dayMeals.length === 0 && preferences && <div className="flex flex-wrap items-center gap-2 border-b border-divider px-4 py-4 sm:px-6">
-              <span className="mr-1 text-sm text-muted-foreground">Start with your usual meals</span>
-              {preferences.meals.map(preference => {
-                const slot = mealTimes.find(time => standardMealKind(time) === preference.kind);
-                return slot ? <Button key={preference.kind} variant="soft" size="sm" onClick={() => handleOpenAddMeal(slot.id)}>Plan {slot.name.toLowerCase()} · {formatTimeDisplay(preference.usual_time)}</Button> : null;
-              })}
-            </div>}
-            <div className="divide-y divide-divider">
-              {orderedMealTimes.map((time) => {
-                const items = dayMeals.filter((meal) => meal.meal_time_id === time.id);
-                const enabled = isMealTimeEnabled(time, preferences);
-                if (!enabled && items.length === 0) return null;
-                const usualTime = preferences?.meals.find(meal => meal.kind === standardMealKind(time))?.usual_time;
+            <div className={styles.weekDays} role="group" aria-label="Days of the week" aria-busy={isLoadingWeek}>
+              {weekDays.map((day, index) => {
+                const { count, slots } = plannedByDay[index];
+                const mealCountLabel = count ? `, ${count} ${count === 1 ? "meal" : "meals"} planned` : "";
                 return (
-                  <section key={time.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-5 gap-y-3 px-4 py-4 sm:grid-cols-[12rem_minmax(0,1fr)_auto] sm:items-start sm:px-6">
-                    <div className="col-start-1 row-start-1 flex min-w-0 items-start gap-3">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
-                        <Clock className="size-4" aria-hidden="true" />
-                      </span>
-                      <div className="min-w-0">
-                        <h3 className="font-semibold wrap-anywhere">{time.name}</h3>
-                        <p className="text-xs text-muted-foreground">{formatTimeDisplay(time.start_time)} – {formatTimeDisplay(time.end_time)}</p>
-                        {usualTime && <p className="mt-1 text-xs text-action">Your usual time: {formatTimeDisplay(usualTime)}</p>}
-                      </div>
-                    </div>
-                    <div className="col-span-2 row-start-2 min-w-0 sm:col-span-1 sm:col-start-2 sm:row-start-1">
-                      {items.length ? renderMeals(items) : <p className="py-2 text-sm text-muted-foreground">Nothing planned</p>}
-                    </div>
-                    {enabled && <Button variant="secondary" size="sm" className="col-start-2 row-start-1 justify-self-end sm:col-start-3"
-                      onClick={() => handleOpenAddMeal(time.id)}
-                      aria-label={`Add meal to ${time.name}`}
-                      disabled={isLoadingWeek}
-                    >
-                      <Plus className="size-3.5" aria-hidden="true" /> Add
-                    </Button>}
-                  </section>
+                  <button
+                    key={day.dateStr}
+                    className={styles.day}
+                    type="button"
+                    aria-label={`${day.dayFull}, ${day.monthDay}${mealCountLabel}`}
+                    aria-pressed={day.isSelected}
+                    aria-current={day.isToday ? "date" : undefined}
+                    onClick={() => setSelectedDate(day.dateStr)}
+                  >
+                    <span className={styles.dayLabel}>{day.dayShort}</span>
+                    <span className={styles.dayNumber}>{day.date.getUTCDate()}</span>
+                    <span className={styles.dots} aria-hidden="true">
+                      {calendarSlots.map(slot => (
+                        <span key={slot} className={styles.dot} data-slot={slot} data-planned={slots.has(slot)} />
+                      ))}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section aria-labelledby="meal-agenda-title">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2 id="meal-agenda-title" className={styles.agendaTitle}>{selectedDay.dayFull}</h2>
+                <div className={`${styles.muted} mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm sm:text-base`}>
+                  <time dateTime={selectedDate}>{selectedDay.monthDay} {selectedDay.date.getUTCFullYear()}</time>
+                  {isToday && <span className={styles.todayBadge}>Today</span>}
+                  <span role="status">
+                    {isLoadingWeek ? "Loading meals…" : dayMeals.length ? `${eatenCount} of ${dayMeals.length} meals eaten` : "No meals planned yet"}
+                  </span>
+                </div>
+              </div>
+              <button className={`${styles.primaryAction} ${styles.addMeal}`} type="button"
+                onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek || !enabledMealTimes.length}
+              >
+                <Plus className="size-5" aria-hidden="true" /> Add meal
+              </button>
+            </div>
+
+            <div className={styles.slotGrid} aria-busy={isLoadingWeek}>
+              {orderedMealTimes.map((time) => {
+                const items = dayMeals.filter(meal => meal.meal_time_id === time.id);
+                const enabled = isMealTimeEnabled(time, preferences);
+                if (!enabled && !items.length) return null;
+                const kind = standardMealKind(time);
+                const SlotIcon = kind ? standardSlotIcons[kind] : Clock;
+                const usualTime = preferences?.meals.find(meal => meal.kind === kind)?.usual_time;
+                const isNow = enabled && isToday && clock.time >= time.start_time.slice(0, 5) && clock.time < time.end_time.slice(0, 5);
+
+                return (
+                  <MealSlotCard
+                    key={time.id}
+                    name={time.name}
+                    kind={kind ?? "custom"}
+                    icon={<SlotIcon className="size-6" />}
+                    timeRange={`${formatTimeDisplay(time.start_time)} – ${formatTimeDisplay(time.end_time)}`}
+                    usualTime={usualTime && formatTimeDisplay(usualTime)}
+                    isNow={isNow}
+                    onAdd={enabled ? () => handleOpenAddMeal(time.id) : undefined}
+                    addDisabled={isLoadingWeek}
+                  >
+                    {items.length ? renderMeals(items) : !isLoadingWeek && (
+                      <p className={`${styles.muted} py-1 text-sm`}>Nothing planned</p>
+                    )}
+                  </MealSlotCard>
                 );
               })}
               {otherMeals.length > 0 && (
-                <section className="grid gap-3 px-4 py-4 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-5 sm:px-6">
-                  <h3 className="flex items-center gap-3 font-semibold">
-                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary">
-                      <Utensils className="size-4" aria-hidden="true" />
-                    </span>
-                    Other meals
-                  </h3>
+                <MealSlotCard name="Other meals" kind="custom" icon={<Utensils className="size-6" />}>
                   {renderMeals(otherMeals)}
-                </section>
+                </MealSlotCard>
               )}
-              {enabledMealTimes.length === 0 && dayMeals.length === 0 && (
-                <p className="px-4 py-8 text-sm text-muted-foreground sm:px-6">
-                  Add a meal to start planning this day.
-                </p>
+              {!isLoadingWeek && !enabledMealTimes.length && !dayMeals.length && (
+                <p className={styles.emptyState}>No meal times available.</p>
               )}
             </div>
-          </PulseCard>
-        </section>
+          </section>
+        </div>
       </div>
 
       {/* Add meal Modal Dialog */}

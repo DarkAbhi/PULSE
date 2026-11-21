@@ -1,7 +1,7 @@
 import { PulseCardLink } from "@/app/components/design-system/pulse-card";
 
-import { formatMoney } from "@/app/lib/currency.mjs";
-import { House, ArrowRight } from "lucide-react";
+import { formatMoneyParts } from "@/app/lib/currency.mjs";
+import { ArrowRight } from "lucide-react";
 
 export type BudgetItem = {
   id: number;
@@ -107,19 +107,41 @@ export default function FinancialHorizonCard({
   summary,
   error,
 }: FinancialHorizonCardProps) {
-  const unavailable = error || !summary;
+  const balance = summary && !error
+    ? formatMoneyParts(
+        summary.remaining_amount,
+        summary.currency,
+        summary.currency === "INR" ? "en-IN" : undefined,
+      )
+    : null;
+
   return (
-    <PulseCardLink href="/financial-horizon" className="pulse-summary-card pulse-horizon-card">
-      <span className="pulse-card-icon" aria-hidden="true"><House className="h-6 w-6" fill="currentColor" /></span>
-      <h2>Your room to move</h2>
-      {unavailable ? (
-        <p className="pulse-card-message">{error || "Set up your monthly income and fixed obligations to see your room to move."}</p>
-      ) : (
-        <p className="pulse-money">{formatMoney(summary.remaining_amount, summary.currency)}</p>
-      )}
-      <div className="pulse-card-footer">
-        <span className="pulse-card-cta">{unavailable ? "Set up horizon" : "Keep going"}<ArrowRight className="h-4 w-4" /></span>
-        <img src="/dashboard/cat.webp" width="240" height="160" alt="" className="pulse-card-art" />
+    <PulseCardLink href="/financial-horizon" className="pulse-horizon-card">
+      <svg
+        className="pulse-horizon-wave"
+        aria-hidden="true"
+        viewBox="0 0 400 80"
+        preserveAspectRatio="none"
+      >
+        <path d="M-30 49Q39 -2 105 36T240 36T375 36T510 36V80H-30Z" />
+      </svg>
+      <div className="pulse-horizon-content">
+        <h2>Your room to move</h2>
+        {balance ? (
+          <p className="pulse-horizon-amount">
+            {balance.map(({ type, value }, index) =>
+              type === "decimal" || type === "fraction"
+                ? <span key={index}>{value}</span>
+                : value,
+            )}
+          </p>
+        ) : (
+          <p className="pulse-card-message">{error || "Set up your monthly income and fixed obligations to see your room to move."}</p>
+        )}
+        <span className="pulse-card-cta">
+          {balance ? "Keep going" : "Set up horizon"}
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </span>
       </div>
     </PulseCardLink>
   );

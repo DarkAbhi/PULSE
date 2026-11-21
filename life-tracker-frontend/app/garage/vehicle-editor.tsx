@@ -136,8 +136,10 @@ function CatalogSelect({
 
 export default function VehicleEditor({
   vehicle,
+  triggerClassName,
 }: {
   vehicle?: VehicleIdentity;
+  triggerClassName?: string;
 }) {
   const uid = useId();
   const [open, setOpen] = useState(false);
@@ -192,6 +194,7 @@ export default function VehicleEditor({
       <Button
         id={vehicle ? undefined : "add-vehicle-button"}
         variant={vehicle ? "secondary" : "primary"}
+        className={triggerClassName}
         icon={vehicle ? undefined : <Plus className="size-4" aria-hidden="true" />}
         type="button"
         aria-haspopup="dialog"

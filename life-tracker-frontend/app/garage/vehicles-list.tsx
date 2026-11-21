@@ -8,13 +8,14 @@ import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Bike, Bus, Car, ChevronRight, Fuel, Gauge, Truck } from "lucide-react";
+import { Bus, CarFront, CircleDot, Droplet, Motorbike, Scooter, Truck, Van } from "lucide-react";
 import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import Dialog from "@/app/components/design-system/dialog";
 import { markAirFillAction, saveFuelAction } from "./actions";
+import styles from "./garage.module.css";
 
-type Vehicle = {
+export type Vehicle = {
   id: number;
   name: string;
   kind: string;
@@ -22,6 +23,22 @@ type Vehicle = {
   model_name: string;
   fuel_types: string[];
 };
+
+const vehicleIcons: Record<string, typeof CarFront> = {
+  car: CarFront,
+  motorcycle: Motorbike,
+  moped: Scooter,
+  scooter: Scooter,
+  van: Van,
+  truck: Truck,
+  bus: Bus,
+};
+
+function formatLabel(value: string) {
+  return value === "cng" || value === "lpg"
+    ? value.toUpperCase()
+    : value.charAt(0).toUpperCase() + value.slice(1);
+}
 
 type FuelItem = FuelFormItem;
 
@@ -113,56 +130,54 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
 
   return (
     <>
-      <PulseCard className="divide-y divide-divider px-4 sm:px-6">
+      <div className="grid grid-cols-1 gap-4 min-[680px]:grid-cols-2 min-[1040px]:grid-cols-3 xl:gap-6">
         {vehicles.map((vehicle) => {
-          const VehicleIcon = vehicle.kind === "motorcycle" || vehicle.kind === "moped" ? Bike
-            : vehicle.kind === "bus" ? Bus
-            : vehicle.kind === "truck" || vehicle.kind === "van" ? Truck
-            : Car;
+          const VehicleIcon = vehicleIcons[vehicle.kind] ?? CarFront;
+          const model = [vehicle.make_name, vehicle.model_name].filter(Boolean).join(" ");
 
           return (
-            <article key={vehicle.id} className="grid gap-3 py-4 sm:py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-6">
+            <PulseCard
+              as="article"
+              key={vehicle.id}
+              className={`${styles.vehicleCard} flex flex-col gap-4 p-4 sm:gap-5 sm:p-5 xl:p-7`}
+            >
               <Link
                 href={`/garage/${vehicle.id}`}
-                className="group flex min-w-0 items-center gap-3 rounded-xl p-2 hover:bg-secondary/60 focus-visible:outline-2 focus-visible:outline-ring sm:gap-4"
+                className="flex min-w-0 items-center gap-3 rounded-2xl sm:gap-4"
+                aria-label={`View ${vehicle.name} details`}
               >
-                <span aria-hidden="true" className="grid size-12 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground sm:size-14">
-                  <VehicleIcon className="size-6" strokeWidth={1.6} />
+                <span aria-hidden="true" data-kind={vehicle.kind} className={`${styles.vehicleIcon} grid size-14 shrink-0 place-items-center text-white sm:size-16 xl:size-20`}>
+                  <VehicleIcon className="size-7 xl:size-9" strokeWidth={2} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-lg leading-tight font-semibold break-words text-foreground">{vehicle.name}</h3>
-                  {(vehicle.make_name || vehicle.model_name) && (
-                    <p className="mt-1 text-sm break-words text-muted-foreground">{vehicle.make_name} {vehicle.model_name}</p>
+                  <h3 className="text-xl leading-tight font-extrabold tracking-tight wrap-anywhere sm:text-2xl xl:text-3xl">{vehicle.name}</h3>
+                  {model && (
+                    <p className={`${styles.muted} mt-0.5 text-sm wrap-anywhere sm:text-base`}>{model}</p>
                   )}
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    <span>{vehicle.kind === "unknown" ? "Kind not selected" : vehicle.kind.charAt(0).toUpperCase() + vehicle.kind.slice(1)}</span>
-                    {vehicle.fuel_types.length > 0 && (
-                      <span className="ml-2 border-l border-divider pl-2">{vehicle.fuel_types.join(" + ").toUpperCase()}</span>
-                    )}
-                  </p>
                 </div>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground group-hover:text-action" aria-hidden="true" />
               </Link>
 
-              <div className="flex flex-wrap gap-2 px-2">
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  icon={<Gauge className="size-4 shrink-0" aria-hidden="true" />}
-                  aria-label={`Mark air filled now for ${vehicle.name}`}
-                  onClick={() => {
-                    setAirFillError("");
-                    setPendingAirFillVehicle(vehicle);
-                  }}
-                  type="button"
-                >
-                  Mark air filled now
-                </Button>
+              <div className="flex flex-wrap gap-2">
+                <span className={styles.badge}>
+                  <VehicleIcon className="size-4 shrink-0" aria-hidden="true" />
+                  {vehicle.kind === "unknown" ? "Kind not selected" : formatLabel(vehicle.kind)}
+                </span>
+                {vehicle.fuel_types.map((fuel) => (
+                  <span key={fuel} className={styles.badge}>
+                    <span aria-hidden="true" data-fuel={fuel} className={styles.fuelDot} />
+                    {formatLabel(fuel)}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-auto grid grid-cols-2 gap-2 xl:gap-3">
                 <Button
                   variant="soft"
                   size="lg"
-                  icon={<Fuel className="size-4 shrink-0" aria-hidden="true" />}
+                  className={`${styles.quickAction} ${styles.addFuel}`}
+                  icon={<Droplet className="size-4 shrink-0" aria-hidden="true" />}
                   aria-label={`Add fuel for ${vehicle.name}`}
+                  aria-haspopup="dialog"
                   onClick={() => {
                     setFuelError("");
                     setEntryTimeZone(timeZone);
@@ -173,11 +188,26 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
                 >
                   Add fuel
                 </Button>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className={`${styles.quickAction} ${styles.markAirFill}`}
+                  icon={<CircleDot className="size-4 shrink-0" aria-hidden="true" />}
+                  aria-label={`Mark airfill now for ${vehicle.name}`}
+                  aria-haspopup="dialog"
+                  onClick={() => {
+                    setAirFillError("");
+                    setPendingAirFillVehicle(vehicle);
+                  }}
+                  type="button"
+                >
+                  Mark airfill
+                </Button>
               </div>
-            </article>
+            </PulseCard>
           );
         })}
-      </PulseCard>
+      </div>
 
       <ConfirmationDialog
         isOpen={!!pendingAirFillVehicle}

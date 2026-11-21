@@ -31,8 +31,7 @@ url: http://localhost:3000
     element: "Keep going|Set up horizon"
     direction: DOWN
 - assertVisible:
-    # Maestro excludes img nodes from its web hierarchy; match their visible container.
-    css: ".pulse-card-footer:has(img[src='/dashboard/cat.webp'])"
+    css: "a.pulse-horizon-card:has(svg.pulse-horizon-wave)"
 - assertVisible:
     css: "a[href='/financial-horizon'] .pulse-card-cta"
 
@@ -41,7 +40,7 @@ url: http://localhost:3000
     element: "View fitness|Get moving"
     direction: DOWN
 - assertVisible:
-    css: ".pulse-card-footer:has(img[src='/dashboard/fitness.webp'])"
+    css: "article[aria-label='Fitness today'] svg.pulse-workout-dial"
 - assertNotVisible: "Add workout"
 - assertNotVisible: "Mark workout completed"
 - assertNotVisible: "Log exercises"
@@ -64,7 +63,7 @@ url: http://localhost:3000
 - tapOn: '\s*Back to Dashboard\s*'
 - assertVisible: "Good to see you,"
 
-# Both smaller spaces remain reachable below the two illustrated cards.
+# Both smaller spaces remain reachable below the summary cards.
 - scrollUntilVisible:
     element: "Meal Plan"
     direction: DOWN

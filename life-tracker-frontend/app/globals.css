@@ -66,11 +66,11 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Shared with Android core/ui/PulseColors.kt. Keep both appearance palettes in sync. */
+/* Based on Android core/ui/PulseColors.kt, with a web-specific page background. */
 :root {
   color-scheme: light;
   --radius: 0.5rem;
-  --background: #f5f2ea;
+  --background: #f6f7ff;
   --foreground: #1c1c1a;
   --card: #fffdf8;
   --card-foreground: #1c1c1a;
@@ -118,7 +118,7 @@
 
 .dark {
   color-scheme: dark;
-  --background: #1c1c1a;
+  --background: #0d0a1f;
   --foreground: #f5f2ea;
   --card: #242420;
   --card-foreground: #f5f2ea;

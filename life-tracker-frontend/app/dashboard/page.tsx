@@ -1,14 +1,15 @@
 import { apiFetch } from "@/app/lib/server-api";
-import { PulseCardLink } from "@/app/components/design-system/pulse-card";
+import frame from "@/app/components/design-system/page-frame.module.css";
 import "./dashboard.css";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Car, ArrowRight, CalendarDays, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 import GreetingHeader from "./greeting-header";
 import GymVisitCard from "./gym-visit-card";
 import NotificationDropdown from "./notification-dropdown";
 import NamePromptDialog from "./name-prompt-dialog";
 import FinancialHorizonCard, { HorizonSummary } from "./financial-horizon-card";
+import SectionTiles from "./section-tiles";
 import { AppNotification } from "@/app/components/notification-list";
 
 export const metadata = {
@@ -75,8 +76,8 @@ export default async function DashboardPage() {
   const needsProfile = !profile.has_profile;
 
   return (
-    <main className="pulse-dashboard">
-      <div className="pulse-dashboard-content">
+    <main className={`pulse-dashboard ${frame.page}`}>
+      <div className={`pulse-dashboard-content ${frame.content}`}>
         <GreetingHeader username={username} displayName={displayName}>
           <NotificationDropdown initialNotifications={notifications} />
           <Link className="pulse-profile-link" href="/profile" aria-label="Profile">
@@ -87,18 +88,7 @@ export default async function DashboardPage() {
           <FinancialHorizonCard summary={horizonSummary} error={horizonError} />
           <GymVisitCard visited={gymVisited} />
         </section>
-        <nav className="pulse-spaces" aria-label="Your spaces">
-          <PulseCardLink className="pulse-space-link" href="/garage">
-            <span className="pulse-space-icon"><Car className="h-5 w-5" /></span>
-            <span><strong>Garage</strong><span>Vehicles, fuel & maintenance</span></span>
-            <ArrowRight className="h-4 w-4" />
-          </PulseCardLink>
-          <PulseCardLink className="pulse-space-link pulse-meal-plan-link" href="/meal-plan">
-            <span className="pulse-space-icon"><CalendarDays className="h-5 w-5" /></span>
-            <span><strong>Meal Plan</strong><span>Plan your week and track meals eaten</span></span>
-            <ArrowRight className="h-4 w-4" />
-          </PulseCardLink>
-        </nav>
+        <SectionTiles />
       </div>
 
       {needsProfile && <NamePromptDialog initialDisplayName={displayName} />}

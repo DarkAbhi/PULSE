@@ -24,8 +24,8 @@ url: http://localhost:3000
 - tapOn: "Garage"
 
 # 3. Garage page verification
-- assertVisible: Garage
-- assertVisible: Your vehicles
+- assertVisible:
+    css: "h1#garage-title"
 - assertVisible: Add vehicle
 
 # 4. Open Add Vehicle modal

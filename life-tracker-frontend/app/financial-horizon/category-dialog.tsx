@@ -1,14 +1,12 @@
 "use client";
 
-import theme from "./horizon-theme.module.css";
 import Select from "@/app/components/design-system/select";
 import type { CategoryItem } from "@/app/dashboard/financial-horizon-card";
 
-import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useId } from "react";
-import { X, Tag } from "lucide-react";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import { Tag } from "lucide-react";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
 export interface CategoryDialogProps {
   isOpen: boolean;
@@ -82,26 +80,10 @@ export default function CategoryDialog({
     <Dialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
-      panelClassName={`scale-100 transition-all duration-200 sm:p-6 ${theme.dialogPanel}`}
     >
-        <div className="flex items-center justify-between border-b border-divider pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-action">
-              <Tag className="h-5 w-5" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground" id={titleId}>
-              Add Custom Category
-            </h2>
-          </div>
-          <Button variant="icon"
-            className={theme.iconAction} onClick={onClose}
-            disabled={isPending}
-            aria-label="Close"
-            title="Close dialog"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+        <DialogHeader id={titleId} icon={<Tag className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+          Add Custom Category
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {(errorMsg || error) && (
@@ -118,7 +100,7 @@ export default function CategoryDialog({
               maxLength={100}
               value={catName}
               onChange={(e) => setCatName(e.target.value)}
-              className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+              className="w-full px-3.5 py-2.5 text-sm text-foreground"
             />
           </div>
 
@@ -127,7 +109,7 @@ export default function CategoryDialog({
             <Select
               value={parentId ?? ""}
               onChange={(e) => setParentId(e.target.value ? Number(e.target.value) : null)}
-              className={`w-full px-3 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+              className="w-full px-3 py-2.5 text-sm text-foreground"
             >
               <option value="">None (Top-level category)</option>
               {categories.filter(c => c.parent_id == null && c.allows_subcategories).map(c => (
@@ -149,8 +131,8 @@ export default function CategoryDialog({
             </div>
           </div>
 
-          <DialogActions className="border-t border-divider pt-4">
-            <DialogAction className={theme.softAction}
+          <DialogActions>
+            <DialogAction
               type="button"
               variant="secondary"
               disabled={isPending}
@@ -158,7 +140,7 @@ export default function CategoryDialog({
             >
               Cancel
             </DialogAction>
-            <DialogAction className={theme.primary}
+            <DialogAction
               type="submit"
               disabled={isPending}
             >

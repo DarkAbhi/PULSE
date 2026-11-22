@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Button from "@/app/components/design-system/button";
 import { Icon } from "./HorizonIcon";
 import theme from "../horizon-theme.module.css";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import Select from "@/app/components/design-system/select";
 import { listAccounts, saveAccount, setAccountArchived } from "../accounts";
@@ -12,7 +12,7 @@ import type { Account, AccountFields } from "../account-types";
 
 const networkLabels = { "": "Choose network", visa: "Visa", mastercard: "Mastercard", american_express: "American Express", diners_club: "Diners Club", rupay: "RuPay" };
 
-const fieldClass = `mt-1 block w-full px-3 py-2 ${theme.dialogField}`;
+const fieldClass = "mt-1 block w-full px-3 py-2";
 
 export default function AccountsTab({ currency }: { currency: string }) {
   const [accounts, setAccounts] = useState<Account[] | null>(null);
@@ -107,9 +107,9 @@ export default function AccountsTab({ currency }: { currency: string }) {
         ))}
       </ul>
       {fields && (
-        <Dialog panelClassName={theme.dialogPanel} labelledBy="account-editor-title">
-          <h3 id="account-editor-title" className="mb-4 text-xl font-semibold">{editor.id === null ? "Add account" : "Edit account"}</h3>
-          <form className="space-y-3" onSubmit={save}>
+        <Dialog labelledBy="account-editor-title">
+          <DialogHeader id="account-editor-title">{editor.id === null ? "Add account" : "Edit account"}</DialogHeader>
+          <form className="mt-4 space-y-3" onSubmit={save}>
             <label className="block">Account name<input className={fieldClass} required maxLength={100} value={fields.display_name} onChange={e => update({ display_name: e.target.value })} /></label>
             <label className="block">Institution<input className={fieldClass} required maxLength={150} value={fields.institution_name} onChange={e => update({ institution_name: e.target.value })} /></label>
             <div>
@@ -147,8 +147,8 @@ export default function AccountsTab({ currency }: { currency: string }) {
             </>}
             {error && <p role="alert">{error}</p>}
             <DialogActions>
-              <Button type="button" className={theme.softAction} disabled={pending} onClick={() => { setEditor(null); setError(""); }}>Cancel</Button>
-              <DialogAction className={theme.primary} disabled={pending}>{pending ? "Saving…" : "Save"}</DialogAction>
+              <DialogAction type="button" variant="secondary" disabled={pending} onClick={() => { setEditor(null); setError(""); }}>Cancel</DialogAction>
+              <DialogAction disabled={pending}>{pending ? "Saving…" : "Save"}</DialogAction>
             </DialogActions>
           </form>
         </Dialog>

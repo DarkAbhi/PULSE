@@ -23,6 +23,7 @@ const PATHS = {
       <path d="M8 11V8a4 4 0 0 1 8 0v3" />
     </>
   ),
+  spark: <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z" />,
   grid: (
     <>
       <rect x="4" y="4" width="7" height="7" rx="1.5" />

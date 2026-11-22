@@ -4,7 +4,7 @@ import { useEffect, useId, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { Clock, Loader2, Plus, Trash2 } from "lucide-react";
 import Button from "@/app/components/design-system/button";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { createMealTimeAction, deleteMealTimeAction, type MealTime } from "../actions";
 
@@ -116,18 +116,14 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
           size="sm"
         >
           <form onSubmit={handleSubmitAddMealTime}>
-            <div className="mb-5 flex items-start gap-3 border-b border-divider pb-4">
-              <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
-                <Clock className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 id={addMealTimeTitleId} className="text-xl font-bold tracking-tight text-foreground">
-                  New meal time
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Set the hours when this meal time appears in your daily plan.
-                </p>
-              </div>
+            <div className="mb-5">
+              <DialogHeader
+                id={addMealTimeTitleId}
+                icon={<Clock className="size-5" />}
+                description="Set the hours when this meal time appears in your daily plan."
+              >
+                New meal time
+              </DialogHeader>
             </div>
 
             {mealTimeModalError && (
@@ -193,7 +189,7 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
               </div>
             </div>
 
-            <DialogActions className="border-t border-divider pt-4">
+            <DialogActions>
               <DialogAction
                 type="button"
                 variant="secondary"

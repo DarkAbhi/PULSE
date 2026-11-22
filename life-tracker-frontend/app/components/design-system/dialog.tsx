@@ -2,7 +2,10 @@
 
 import { createContext, ReactNode, useContext, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 import Button, { type ButtonProps } from "./button";
+import styles from "./dialog.module.css";
+import horizon from "./horizon-palette.module.css";
 
 let openDialogs = 0;
 let previousBodyOverflow = "";
@@ -53,7 +56,7 @@ export default function Dialog({
     <div
       aria-labelledby={labelledBy}
       aria-modal="true"
-      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-overlay-bg p-4 backdrop-blur-xs sm:p-6 lg:p-8"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-[#0d0a1f]/40 p-4 backdrop-blur-xs sm:p-6 lg:p-8"
       role="dialog"
     >
       <div
@@ -61,7 +64,7 @@ export default function Dialog({
         onClick={onBackdropClick}
       >
         <section
-          className={`flex w-full ${widths[size]} max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl bg-card p-6 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-8 lg:max-h-[calc(100dvh-4rem)] ${panelClassName}`}
+          className={`${horizon.palette} ${styles.panel} flex w-full ${widths[size]} max-h-[calc(100dvh-2rem)] flex-col overflow-hidden bg-card p-6 shadow-2xl sm:max-h-[calc(100dvh-3rem)] lg:max-h-[calc(100dvh-4rem)] ${panelClassName}`}
         >
           <DialogFooterContext.Provider value={footer}>
             <div
@@ -76,6 +79,51 @@ export default function Dialog({
         </section>
       </div>
     </div>
+  );
+}
+
+type DialogHeaderProps = {
+  id: string;
+  children: ReactNode;
+  description?: ReactNode;
+  icon?: ReactNode;
+  onClose?: () => void;
+  closeDisabled?: boolean;
+  closeLabel?: string;
+  closeAutoFocus?: boolean;
+};
+
+export function DialogHeader({
+  id,
+  children,
+  description,
+  icon,
+  onClose,
+  closeDisabled,
+  closeLabel = "Close",
+  closeAutoFocus,
+}: DialogHeaderProps) {
+  return (
+    <header className={styles.header}>
+      {icon && <span className={styles.icon} aria-hidden="true">{icon}</span>}
+      <div className={styles.heading}>
+        <h2 className={styles.title} id={id}>{children}</h2>
+        {description && <p className={styles.description}>{description}</p>}
+      </div>
+      {onClose && (
+        <Button
+          aria-label={closeLabel}
+          autoFocus={closeAutoFocus}
+          className={styles.close}
+          disabled={closeDisabled}
+          onClick={onClose}
+          type="button"
+          variant="icon"
+        >
+          <X className="size-5" aria-hidden="true" />
+        </Button>
+      )}
+    </header>
   );
 }
 
@@ -97,7 +145,7 @@ export function DialogActions({ children, className = "" }: { children: ReactNod
 
   const actions = (
     <DialogFormContext.Provider value={formId}>
-      <div ref={actionsRef} className={`mt-6 grid gap-3 sm:grid-cols-2 ${className}`}>
+      <div ref={actionsRef} className={`${styles.actions} mt-6 grid gap-3 border-t border-divider pt-4 sm:grid-cols-2 ${className}`}>
         {children}
       </div>
     </DialogFormContext.Provider>
@@ -114,7 +162,8 @@ export function DialogAction({ className = "", variant = "primary", ...props }: 
   const formId = useContext(DialogFormContext);
   return (
     <Button
-      className={className}
+      className={`${styles.action} ${className}`}
+      data-variant={variant}
       size="lg"
       variant={variant}
       {...props}

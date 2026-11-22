@@ -1,14 +1,12 @@
 "use client";
 
-import theme from "./horizon-theme.module.css";
 import { currencySymbol } from "@/app/lib/currency.mjs";
 
-import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useId } from "react";
-import { X, Target } from "lucide-react";
+import { Target } from "lucide-react";
 import { BudgetItem } from "@/app/dashboard/financial-horizon-card";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
 export interface BudgetDialogProps {
   isOpen: boolean;
@@ -94,26 +92,10 @@ export default function BudgetDialog({
     <Dialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
-      panelClassName={`scale-100 transition-all duration-200 sm:p-6 ${theme.dialogPanel}`}
     >
-        <div className="flex items-center justify-between border-b border-divider pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-action">
-              <Target className="h-5 w-5" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground" id={titleId}>
-              {editingBudget ? "Edit Monthly Budget" : "Create Monthly Budget"}
-            </h2>
-          </div>
-          <Button variant="icon"
-            className={theme.iconAction} onClick={onClose}
-            disabled={isPending}
-            aria-label="Close"
-            title="Close dialog"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+        <DialogHeader id={titleId} icon={<Target className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+          {editingBudget ? "Edit Monthly Budget" : "Create Monthly Budget"}
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {errorMsg && (
@@ -130,7 +112,7 @@ export default function BudgetDialog({
               placeholder="e.g. Housing & Utilities, Subscriptions, Shopping"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+              className="w-full px-3.5 py-2.5 text-sm text-foreground"
             />
           </div>
 
@@ -146,12 +128,12 @@ export default function BudgetDialog({
               placeholder="0.00"
               value={allocatedAmount}
               onChange={(e) => setAllocatedAmount(e.target.value)}
-              className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+              className="w-full px-3.5 py-2.5 text-sm text-foreground"
             />
           </div>
 
-          <DialogActions className="border-t border-divider pt-4">
-            <DialogAction className={theme.softAction}
+          <DialogActions>
+            <DialogAction
               type="button"
               variant="secondary"
               disabled={isPending}
@@ -159,7 +141,7 @@ export default function BudgetDialog({
             >
               Cancel
             </DialogAction>
-            <DialogAction className={theme.primary}
+            <DialogAction
               type="submit"
               disabled={isPending}
             >

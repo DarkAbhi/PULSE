@@ -27,7 +27,7 @@ import {
   Sunrise,
   X,
 } from "lucide-react";
-import Dialog, { DialogActions, DialogAction } from "@/app/components/design-system/dialog";
+import Dialog, { DialogActions, DialogAction, DialogHeader } from "@/app/components/design-system/dialog";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import {
   MealPlan,
@@ -486,22 +486,18 @@ export default function MealPlanClient({
           size="sm"
         >
           <form onSubmit={handleSubmitAddMeal}>
-            <div className="mb-5 flex items-start gap-3 border-b border-divider pb-4">
-              <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
-                <Utensils className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 id={addMealTitleId} className="text-xl font-bold tracking-tight text-foreground">
-                  Add meal
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  For {selectedDay.dayFull},{" "}
-                  {parseYMD(selectedDate).toLocaleDateString("en-IN", { timeZone: "UTC",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
+            <div className="mb-5">
+              <DialogHeader
+                id={addMealTitleId}
+                icon={<Utensils className="size-5" />}
+                description={`For ${selectedDay.dayFull}, ${parseYMD(selectedDate).toLocaleDateString("en-IN", {
+                  timeZone: "UTC",
+                  month: "short",
+                  day: "numeric",
+                })}`}
+              >
+                Add meal
+              </DialogHeader>
             </div>
 
             {mealModalError && (
@@ -559,7 +555,7 @@ export default function MealPlanClient({
               </Select>
             </div>
 
-            <DialogActions className="border-t border-divider pt-4">
+            <DialogActions>
               <DialogAction
                 type="button"
                 variant="secondary"

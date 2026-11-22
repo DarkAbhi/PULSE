@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, ReactNode, useId } from "react";
-import Dialog, { DialogAction, DialogActions } from "./dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "./dialog";
 
 export interface ConfirmationDialogProps {
   isOpen: boolean;
@@ -53,18 +53,9 @@ export default function ConfirmationDialog({
   };
 
   return (
-    <Dialog
-      labelledBy={titleId}
-      onBackdropClick={handleBackdropClick}
-      panelClassName="scale-100 transition-all duration-300 ease-out"
-    >
-        <h2
-          className="text-2xl font-bold tracking-tight text-foreground"
-          id={titleId}
-        >
-          {title}
-        </h2>
-        <div className="mt-2 text-sm leading-6 text-muted-foreground">
+    <Dialog labelledBy={titleId} onBackdropClick={handleBackdropClick}>
+        <DialogHeader id={titleId}>{title}</DialogHeader>
+        <div className="mt-4 text-sm leading-6 text-muted-foreground">
           {description}
         </div>
 

@@ -1,6 +1,5 @@
 "use client";
 
-import theme from "./horizon-theme.module.css";
 import CategoryOptions from "./components/CategoryOptions";
 
 import Select from "@/app/components/design-system/select";
@@ -8,12 +7,11 @@ import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 import { dateKey } from "@/app/lib/time-zone.mjs";
 
-import Button from "@/app/components/design-system/button";
 
-import { useState, useEffect } from "react";
-import { X, CreditCard, Calendar, AlertCircle } from "lucide-react";
+import { useId, useState, useEffect } from "react";
+import { CreditCard, Calendar, AlertCircle } from "lucide-react";
 import { SubscriptionItem, BudgetItem, CategoryItem } from "@/app/dashboard/financial-horizon-card";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
 interface SubscriptionDialogProps {
   isOpen: boolean;
@@ -45,6 +43,7 @@ export default function SubscriptionDialog({
   currency,
 }: SubscriptionDialogProps) {
   const { timeZone } = useTimeZone();
+  const titleId = useId();
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [billingCycle, setBillingCycle] = useState<string>("monthly");
@@ -158,29 +157,15 @@ export default function SubscriptionDialog({
   };
 
   return (
-    <Dialog panelClassName={`p-6 sm:p-6 transition-all ${theme.dialogPanel}`} size="md">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-divider/60 pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-action">
-              <CreditCard className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-foreground">
-                {editingSubscription ? "Edit Subscription" : "Add Subscription"}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Track recurring monthly or annual payments
-              </p>
-            </div>
-          </div>
-          <Button variant="icon"
-            className={theme.iconAction} onClick={onClose}
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+    <Dialog labelledBy={titleId} size="md">
+        <DialogHeader
+          id={titleId}
+          icon={<CreditCard className="size-5" />}
+          description="Track recurring monthly or annual payments"
+          onClose={onClose}
+        >
+          {editingSubscription ? "Edit Subscription" : "Add Subscription"}
+        </DialogHeader>
 
         {/* Error alert */}
         {error && (
@@ -230,7 +215,7 @@ export default function SubscriptionDialog({
               <Select
                 value={billingCycle}
                 onChange={(e) => setBillingCycle(e.target.value)}
-                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3.5 py-2.5 text-sm text-foreground"
               >
                 <option value="monthly">Monthly</option>
                 <option value="yearly">Yearly (Annual)</option>
@@ -252,7 +237,7 @@ export default function SubscriptionDialog({
                   placeholder="1 - 31"
                   value={billingDay}
                   onChange={(e) => setBillingDay(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+                  className="w-full px-3.5 py-2.5 text-sm text-foreground"
                   required
                 />
               </div>
@@ -266,7 +251,7 @@ export default function SubscriptionDialog({
                     type="date"
                     value={renewalDate}
                     onChange={(e) => setRenewalDate(e.target.value)}
-                    className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+                    className="w-full px-3.5 py-2.5 text-sm text-foreground"
                     required
                   />
                 </div>
@@ -280,7 +265,7 @@ export default function SubscriptionDialog({
               <Select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3.5 py-2.5 text-sm text-foreground"
               >
                 <option value="active">Active</option>
                 <option value="paused">Paused</option>
@@ -299,7 +284,7 @@ export default function SubscriptionDialog({
                 aria-label="Category"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3.5 py-2.5 text-sm text-foreground"
               >
                 <option value="">None (Uncategorized)</option>
                 <CategoryOptions categories={categories} />
@@ -312,7 +297,7 @@ export default function SubscriptionDialog({
               <Select
                 value={budgetId}
                 onChange={(e) => setBudgetId(e.target.value)}
-                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3.5 py-2.5 text-sm text-foreground"
               >
                 <option value="">None (No Budget)</option>
                 {budgets.map((b) => (
@@ -339,15 +324,15 @@ export default function SubscriptionDialog({
           </div>
 
           {/* Footer Actions */}
-          <DialogActions className="border-t border-divider/60 pt-3">
-            <DialogAction className={theme.softAction}
+          <DialogActions>
+            <DialogAction
               type="button"
               variant="secondary"
               onClick={onClose}
             >
               Cancel
             </DialogAction>
-            <DialogAction className={theme.primary}
+            <DialogAction
               type="submit"
               disabled={isSubmitting}
             >

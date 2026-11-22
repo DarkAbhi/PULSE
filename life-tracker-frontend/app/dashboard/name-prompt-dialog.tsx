@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { saveNameAction } from "./actions";
-import Dialog, { DialogAction } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
 interface NamePromptDialogProps {
   initialDisplayName: string;
@@ -29,15 +29,9 @@ export default function NamePromptDialog({
 
   return (
     <Dialog labelledBy="name-dialog-title">
-        <h2
-          className="text-2xl font-bold tracking-tight text-foreground"
-          id="name-dialog-title"
-        >
+        <DialogHeader id="name-dialog-title" description="We’ll use it to personalize your dashboard.">
           What is your name?
-        </h2>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          We&apos;ll use it to personalize your dashboard.
-        </p>
+        </DialogHeader>
         <form className="mt-6 space-y-4" onSubmit={handleSave}>
           <label
             className="block text-sm font-medium text-muted-foreground"
@@ -59,13 +53,11 @@ export default function NamePromptDialog({
               {error}
             </p>
           )}
-          <DialogAction
-            className="mt-6 w-full"
-            disabled={isPending}
-            type="submit"
-          >
-            {isPending ? "Saving…" : "Continue"}
-          </DialogAction>
+          <DialogActions>
+            <DialogAction disabled={isPending} type="submit">
+              {isPending ? "Saving…" : "Continue"}
+            </DialogAction>
+          </DialogActions>
         </form>
     </Dialog>
   );

@@ -11,7 +11,7 @@ import Link from "next/link";
 import { Bus, CarFront, CircleDot, Droplet, Motorbike, Scooter, Truck, Van } from "lucide-react";
 import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
-import Dialog from "@/app/components/design-system/dialog";
+import Dialog, { DialogHeader } from "@/app/components/design-system/dialog";
 import { markAirFillAction, saveFuelAction } from "./actions";
 import styles from "./garage.module.css";
 
@@ -228,15 +228,9 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
 
       {fuelVehicle && (
         <Dialog labelledBy="fuel-title" size="lg">
-            <h2
-              className="text-2xl font-bold tracking-tight text-foreground"
-              id="fuel-title"
-            >
+            <DialogHeader id="fuel-title" icon={<Droplet className="size-5" />} description={fuelVehicle.name}>
               Add fuel
-            </h2>
-            <p className="mt-1 text-sm break-words text-muted-foreground">
-              {fuelVehicle.name}
-            </p>
+            </DialogHeader>
             <FuelForm
               error={fuelError}
               filledAt={fuelDateTime}

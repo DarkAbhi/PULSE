@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { createMaintenanceRecord, SaveMaintenancePayload, updateMaintenanceRecord } from "./actions";
 import MaintenanceWorkFields from "./maintenance-work-fields";
 import { MaintenanceAction, MaintenanceAttachment, MaintenanceRecord } from "./types";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
 type Category = (typeof categories)[number];
@@ -93,19 +93,13 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
   return (
     <Dialog labelledBy="maintenance-record-title" size="lg">
       <form onSubmit={submit}>
-        <header className="flex items-start gap-3 border-b border-divider pb-5 sm:gap-4">
-          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/15 text-action" aria-hidden="true">
-            <ClipboardList className="size-5" />
-          </span>
-          <div>
-            <h2 className="text-xl font-bold tracking-tight sm:text-2xl" id="maintenance-record-title">
-              {record ? "Edit maintenance record" : "Add maintenance or expense"}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {record ? "Update the details, work performed, or receipts." : "Log a service, repair, or other vehicle expense."}
-            </p>
-          </div>
-        </header>
+        <DialogHeader
+          id="maintenance-record-title"
+          icon={<ClipboardList className="size-5" />}
+          description={record ? "Update the details, work performed, or receipts." : "Log a service, repair, or other vehicle expense."}
+        >
+          {record ? "Edit maintenance record" : "Add maintenance or expense"}
+        </DialogHeader>
 
         <fieldset className="mt-5 min-w-0">
           <legend className="font-semibold">Record details</legend>
@@ -183,7 +177,7 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
           )}
         </section>
 
-        <DialogActions className="grid-cols-2 border-t border-divider pt-3">
+        <DialogActions className="grid-cols-2">
           {error && <p className="text-sm text-destructive col-span-2" role="alert">{error}</p>}
           <DialogAction variant="secondary" disabled={isPending} onClick={close} type="button">Cancel</DialogAction>
           <DialogAction disabled={isPending} type="submit">{isPending ? "Saving…" : record ? "Save changes" : "Save record"}</DialogAction>

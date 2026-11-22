@@ -7,9 +7,9 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import { useEffect, useRef, useState } from "react";
-import { Copy, KeyRound, Plus, Trash2, X } from "lucide-react";
+import { Copy, KeyRound, Plus, Trash2 } from "lucide-react";
 import Button from "@/app/components/design-system/button";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { copyApiKey } from "./copy-api-key";
 
@@ -127,13 +127,14 @@ export default function APIKeys() {
       )}
       {isOpen && (
         <Dialog labelledBy="api-key-dialog-title">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 id="api-key-dialog-title" className="text-xl font-bold text-foreground">{token ? "Save your API key" : "Create API key"}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{token ? "Copy it now. It will not be shown again." : "Give this key a name so you can recognize it later."}</p>
-            </div>
-            <Button variant="icon" size="sm" aria-label="Close" onClick={closeDialog}><X className="h-4 w-4" /></Button>
-          </div>
+          <DialogHeader
+            id="api-key-dialog-title"
+            icon={<KeyRound className="size-5" />}
+            description={token ? "Copy it now. It will not be shown again." : "Give this key a name so you can recognize it later."}
+            onClose={closeDialog}
+          >
+            {token ? "Save your API key" : "Create API key"}
+          </DialogHeader>
           {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
           {token ? (
             <div className="mt-6">

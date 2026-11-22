@@ -7,6 +7,7 @@ import Button from "@/app/components/design-system/button";
 import Dialog, {
   DialogAction,
   DialogActions,
+  DialogHeader,
 } from "@/app/components/design-system/dialog";
 import { catalogOptionsAction, saveVehicleAction } from "./actions";
 
@@ -208,19 +209,13 @@ export default function VehicleEditor({
       </Button>
       {open && (
         <Dialog size="lg" labelledBy={`${uid}-title`}>
-          <header className="flex items-start gap-3 rounded-xl bg-secondary p-4 sm:gap-4 sm:p-5">
-            <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
-              <CarFront className="size-6" strokeWidth={1.6} aria-hidden="true" />
-            </span>
-            <div>
-              <h2 id={`${uid}-title`} className="text-2xl font-bold tracking-tight">
-                {vehicle ? "Edit vehicle" : "Add a vehicle"}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Choose your vehicle from the catalog or enter its details manually.
-              </p>
-            </div>
-          </header>
+          <DialogHeader
+            id={`${uid}-title`}
+            icon={<CarFront className="size-5" strokeWidth={1.6} />}
+            description="Choose your vehicle from the catalog or enter its details manually."
+          >
+            {vehicle ? "Edit vehicle" : "Add a vehicle"}
+          </DialogHeader>
           <form className="mt-6 space-y-6" onSubmit={submit}>
             <fieldset className="grid min-w-0 gap-2 sm:grid-cols-2">
               <legend className="mb-2 text-sm font-semibold">Entry method</legend>
@@ -442,7 +437,7 @@ export default function VehicleEditor({
                 Sources and credits
               </a>
             </p>
-            <DialogActions className="grid-cols-2 border-t border-divider pt-4">
+            <DialogActions className="grid-cols-2">
               <DialogAction
                 type="button"
                 variant="secondary"

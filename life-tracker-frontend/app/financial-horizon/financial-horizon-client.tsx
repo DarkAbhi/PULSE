@@ -15,7 +15,7 @@ import frame from "@/app/components/design-system/page-frame.module.css";
 import { Compass, X } from "lucide-react";
 
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
-import Dialog, { DialogAction } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import TransactionDialog from "./transaction-dialog";
 import LinkSubscriptionPaymentDialog from "./link-subscription-payment-dialog";
 import CategoryDialog from "./category-dialog";
@@ -1067,23 +1067,15 @@ export default function FinancialHorizonClient({
 
       {/* Subscription Linked Transactions Dialog */}
       {viewingSubTransactions && (
-        <Dialog size="wide" panelClassName={`p-6 sm:p-6 ${theme.dialogPanel}`}>
-            <div className="flex items-center justify-between border-b border-divider pb-4">
-              <div>
-                <h3 className="text-lg font-bold text-foreground">
-                  {viewingSubTransactions.name} Payment History
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {subTransactionsList.length} recorded payments • Total spent: {formatMoney(subTransactionsList.reduce((sum, t) => sum + t.amount, 0), summary.currency)}
-                </p>
-              </div>
-              <Button variant="icon"
-                className={theme.iconAction} onClick={() => setViewingSubTransactions(null)}
-                aria-label="Close transactions"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
+        <Dialog size="wide" labelledBy="subscription-payment-history-title">
+            <DialogHeader
+              id="subscription-payment-history-title"
+              description={`${subTransactionsList.length} recorded payments • Total spent: ${formatMoney(subTransactionsList.reduce((sum, t) => sum + t.amount, 0), summary.currency)}`}
+              onClose={() => setViewingSubTransactions(null)}
+              closeLabel="Close transactions"
+            >
+              {viewingSubTransactions.name} Payment History
+            </DialogHeader>
 
             <div className="mt-4 max-h-96 overflow-y-auto space-y-2 pr-1">
               {isLoadingSubTx ? (
@@ -1118,15 +1110,15 @@ export default function FinancialHorizonClient({
               )}
             </div>
 
-            <div className="mt-5 border-t border-divider/60 pt-3">
+            <DialogActions>
               <DialogAction
-                className={`w-full ${theme.softAction}`}
+                type="button"
                 variant="secondary"
                 onClick={() => setViewingSubTransactions(null)}
               >
                 Close
               </DialogAction>
-            </div>
+            </DialogActions>
         </Dialog>
       )}
 

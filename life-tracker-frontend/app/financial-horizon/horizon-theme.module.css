@@ -1,94 +1,20 @@
 .theme {
-  --horizon-ink: #1a1740;
-  --horizon-surface: #ffffff;
-  --horizon-inset: #f1f2fb;
-  --horizon-muted: #5e5a7d;
-  --horizon-line: rgb(26 23 64 / 12%);
-  --horizon-chip: rgb(26 23 64 / 7%);
-  --horizon-shadow: 0 1px 2px rgb(26 23 64 / 6%), 0 14px 32px -20px rgb(76 107 255 / 40%);
-  --horizon-gradient: linear-gradient(90deg, #4c6bff, #b22bd8);
-  --horizon-button: var(--horizon-gradient);
-  --horizon-hero: linear-gradient(120deg, #252458, #432768 62%, #642d81);
-  --horizon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8 3 3 5-6' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-
-  /* Reuse Pulse controls with a palette scoped to Financial Horizon. */
-  --foreground: var(--horizon-ink);
-  --card: var(--horizon-surface);
-  --card-foreground: var(--horizon-ink);
-  --popover: var(--horizon-surface);
-  --popover-foreground: var(--horizon-ink);
-  --muted: var(--horizon-inset);
-  --muted-foreground: var(--horizon-muted);
-  --text-tertiary: var(--horizon-muted);
-  --secondary: var(--horizon-inset);
-  --secondary-foreground: var(--horizon-ink);
-  --btn-cancel-bg: var(--secondary);
-  --btn-cancel-text: var(--secondary-foreground);
-  --btn-cancel-hover: var(--surface-strong);
-  --divider: var(--horizon-line);
-  --surface-strong: #e6e5f5;
-  --primary: #4c6bff;
-  --primary-pressed: #3248bb;
-  --primary-foreground: #ffffff;
-  --accent: rgb(76 107 255 / 15%);
-  --accent-foreground: #342b76;
-  --ring: #4b4bc5;
-  --action: #4440ad;
-  --success: #087658;
-  --success-soft: #e1f5ec;
-  --destructive: #bf2d24;
-  --destructive-foreground: #ffffff;
-  --destructive-soft: #fceae7;
-  --warning: #925900;
-  --warning-soft: #fff2cd;
-  --info: #3856a5;
-  --info-soft: #e8eeff;
-  --lavender: #a48de0;
-  color: var(--foreground);
+  composes: palette from "../components/design-system/horizon-palette.module.css";
+  --horizon-sun: #ffe08a;
+  --horizon-amber: #b26a00;
+  --horizon-budget-available: #0e8a66;
+  --horizon-budget-deficit: #d6342a;
 }
 
 :global(.dark) .theme {
-  --horizon-ink: #f4f1ff;
-  --horizon-surface: #1a1636;
-  --horizon-inset: #231e45;
-  --horizon-muted: #a49ec4;
-  --horizon-line: rgb(244 241 255 / 14%);
-  --horizon-chip: rgb(244 241 255 / 10%);
-  --horizon-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 14px 32px -22px rgb(0 0 0 / 80%);
-  --horizon-button: #f4f1ff;
-  --horizon-hero: linear-gradient(120deg, #241e4a, #352158 62%, #4c2560);
-  --horizon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8 3 3 5-6' fill='none' stroke='%230d0a1f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  --surface-strong: #342c5d;
-  --primary: #f4f1ff;
-  --primary-pressed: #dcd5ff;
-  --primary-foreground: #0d0a1f;
-  --accent: rgb(76 107 255 / 15%);
-  --accent-foreground: #e5dcff;
-  --ring: #b6a6ff;
-  --action: #c1b4ff;
-  --success: #3ddca6;
-  --success-soft: #193c39;
-  --destructive: #ff7a6b;
-  --destructive-foreground: #0d0a1f;
-  --destructive-soft: #492638;
-  --warning: #ffc83d;
-  --warning-soft: #3c3129;
-  --info: #adc3ff;
-  --info-soft: #263054;
-  --lavender: #bd9de5;
+  --horizon-sun: #ffc83d;
+  --horizon-amber: #ffc83d;
+  --horizon-budget-available: #3ddca6;
+  --horizon-budget-deficit: #ff7a6b;
 }
 
 .theme :global(.pulse-card) {
   box-shadow: var(--horizon-shadow);
-}
-
-.theme input[type="checkbox"]:checked {
-  background-image: var(--horizon-check);
-}
-
-.theme :focus-visible {
-  outline: 3px solid #4c6bff;
-  outline-offset: 2px;
 }
 
 .tabs {
@@ -393,17 +319,6 @@
   padding: 0 1rem 0 2.75rem;
 }
 
-.dialogPanel {
-  border-radius: 28px;
-}
-
-.dialogField {
-  min-height: 44px;
-  border: 1.5px solid var(--horizon-line);
-  border-radius: 14px;
-  background-color: var(--horizon-surface);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .primary,
   .softAction,
@@ -415,30 +330,312 @@
   }
 }
 
-.hero {
-  background: var(--horizon-hero);
-  color: #f4f1ff;
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
 }
 
-.hero::before {
-  position: absolute;
-  z-index: -1;
-  inset-inline-end: -5rem;
-  inset-block-start: -9rem;
-  width: 24rem;
-  aspect-ratio: 1;
-  border: 1px solid rgb(244 241 255 / 16%);
-  border-radius: 50%;
-  box-shadow:
-    0 0 0 24px rgb(244 241 255 / 7%),
-    0 0 0 48px rgb(244 241 255 / 5%),
-    0 0 0 72px rgb(244 241 255 / 4%);
-  content: "";
-  pointer-events: none;
+.summaryCard {
+  display: flex;
+  min-height: 184px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+}
+
+.summaryHeader {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 12px;
+}
+
+.summaryIcon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--horizon-chip);
+}
+
+.summaryLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.summaryEditButton,
+.summaryBadge {
+  margin-inline-start: auto;
+}
+
+.summaryBadge {
+  white-space: nowrap;
+}
+
+.summaryBadge[data-tone="warn"] {
+  color: var(--horizon-amber);
+}
+
+.summaryValue {
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.summaryHint {
+  min-height: 2.7em;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.startingPool {
+  background: linear-gradient(135deg, #2b1b8f, #5b2ce0 60%, #9b2bd8);
+  color: white;
+}
+
+.startingPool .summaryIcon,
+.startingPool .summaryEditButton:hover:not(:disabled) {
+  background: rgb(255 255 255 / 18%);
+}
+
+.startingPool .summaryLabel,
+.startingPool .summaryHint {
+  color: rgb(255 255 255 / 85%);
+}
+
+.startingPool .summaryEditButton {
+  color: white;
+}
+
+.committedPool .summaryHint {
+  color: var(--horizon-muted);
+}
+
+.availablePool {
+  background: var(--horizon-sun);
+  color: #3a2a00;
+}
+
+.availablePool .summaryIcon {
+  background: rgb(58 42 0 / 12%);
+}
+
+.availablePool .summaryBadge {
+  background: rgb(58 42 0 / 14%);
+}
+
+.availablePool .summaryHint {
+  opacity: 0.85;
+}
+
+.summaryEditForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.summaryEditForm input {
+  height: 44px;
+  min-width: 0;
+  flex: 1 1 6.5rem;
+  padding-inline: 14px;
+  border: 2px solid rgb(255 255 255 / 60%);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 15%);
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.summaryEditForm .softAction {
+  padding-inline: 14px;
+  background: rgb(255 255 255 / 20%);
+  color: white;
+}
+
+.summaryEditForm .softAction:hover:not(:disabled) {
+  background: rgb(255 255 255 / 30%);
+}
+
+@media (max-width: 1000px) {
+  .summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .summaryCard,
+  .summaryHint {
+    min-height: 0;
+  }
 }
 
 .projectionBar {
   background: var(--horizon-gradient);
+}
+
+.budgetPeriod[data-tone="warn"] {
+  color: var(--horizon-amber);
+  white-space: nowrap;
+}
+
+.budgetGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: 20px;
+}
+
+.budgetCard {
+  container-type: inline-size;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 16px;
+  padding: 24px;
+}
+
+.budgetHeader {
+  display: flex;
+  min-height: 44px;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.budgetIcon {
+  background: rgb(76 107 255 / 14%);
+}
+
+.budgetTitle {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.budgetLinks {
+  margin-block-start: 2px;
+  color: var(--horizon-muted);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.budgetLinks summary {
+  width: fit-content;
+  cursor: pointer;
+}
+
+.budgetActions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
+@container (width < 300px) {
+  .budgetHeader {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 4px;
+  }
+
+  .budgetActions {
+    grid-column: 2;
+    justify-self: end;
+  }
+}
+
+.budgetAmounts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-radius: 18px;
+  background: var(--horizon-inset);
+}
+
+.budgetAmounts > div {
+  padding: 14px clamp(8px, 3.5cqi, 16px);
+}
+
+.budgetAmounts > div + div {
+  border-inline-start: 1px solid var(--horizon-line);
+}
+
+.budgetAmounts dt {
+  color: var(--horizon-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.budgetAmounts dd {
+  margin-block-start: 2px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.budgetBalance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  color: var(--horizon-muted);
+  font-size: 0.92rem;
+}
+
+.budgetBalance b {
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.budgetAmounts,
+.budgetBalance b,
+.budgetPercent {
+  font-variant-numeric: tabular-nums;
+}
+
+.budgetUsed {
+  color: var(--horizon-amber);
+}
+
+.budgetAvailable {
+  color: var(--horizon-budget-available);
+}
+
+.budgetDeficit {
+  color: var(--horizon-budget-deficit);
+}
+
+.budgetTrack {
+  height: 10px;
+  margin-block-start: 10px;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--horizon-chip);
+}
+
+.budgetTrack > div {
+  height: 100%;
+  border-radius: inherit;
+}
+
+.budgetPercent {
+  margin-block-start: 6px;
+  color: var(--horizon-muted);
+  font-size: 0.82rem;
+  text-align: end;
+}
+
+.budgetOver {
+  background: var(--horizon-budget-deficit);
 }
 
 .budgetLow {
@@ -471,7 +668,8 @@
   .projectionBar,
   .budgetLow,
   .budgetMedium,
-  .budgetHigh {
+  .budgetHigh,
+  .budgetOver {
     background: Highlight;
     forced-color-adjust: none;
   }

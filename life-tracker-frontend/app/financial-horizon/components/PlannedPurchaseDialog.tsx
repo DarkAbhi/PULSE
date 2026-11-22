@@ -1,13 +1,11 @@
 "use client";
 
-import theme from "../horizon-theme.module.css";
 import { currencySymbol } from "@/app/lib/currency.mjs";
 
-import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useId } from "react";
-import { X, ShoppingBag } from "lucide-react";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import { ShoppingBag } from "lucide-react";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
 export interface PlannedPurchaseDialogProps {
   isOpen: boolean;
@@ -88,25 +86,10 @@ export default function PlannedPurchaseDialog({
     <Dialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
-      panelClassName={`scale-100 transition-all duration-200 sm:p-6 ${theme.dialogPanel}`}
     >
-        <div className="flex items-center justify-between border-b border-divider pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10 text-warning">
-              <ShoppingBag className="h-5 w-5" />
-            </div>
-            <h3 id={titleId} className="text-lg font-bold text-foreground">
-              Add Planned Purchase
-            </h3>
-          </div>
-          <Button variant="icon"
-            className={theme.iconAction} onClick={onClose}
-            disabled={isPending}
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+        <DialogHeader id={titleId} icon={<ShoppingBag className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+          Add Planned Purchase
+        </DialogHeader>
 
         {errorMsg && (
           <div className="mt-4 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">
@@ -123,7 +106,7 @@ export default function PlannedPurchaseDialog({
               placeholder="e.g. Noise Cancelling Headphones"
               value={purchaseName}
               onChange={(e) => setPurchaseName(e.target.value)}
-              className={`w-full px-3.5 py-2 text-sm text-foreground ${theme.dialogField}`}
+              className="w-full px-3.5 py-2 text-sm text-foreground"
               autoFocus
             />
           </div>
@@ -138,7 +121,7 @@ export default function PlannedPurchaseDialog({
               placeholder="0.00"
               value={purchasePrice}
               onChange={(e) => setPurchasePrice(e.target.value)}
-              className={`w-full px-3.5 py-2 text-sm text-foreground ${theme.dialogField}`}
+              className="w-full px-3.5 py-2 text-sm text-foreground"
             />
           </div>
 
@@ -149,12 +132,12 @@ export default function PlannedPurchaseDialog({
               placeholder="https://..."
               value={purchaseURL}
               onChange={(e) => setPurchaseURL(e.target.value)}
-              className={`w-full px-3.5 py-2 text-sm text-foreground ${theme.dialogField}`}
+              className="w-full px-3.5 py-2 text-sm text-foreground"
             />
           </div>
 
           <DialogActions>
-            <DialogAction className={theme.softAction}
+            <DialogAction
               type="button"
               variant="secondary"
               onClick={onClose}
@@ -162,7 +145,7 @@ export default function PlannedPurchaseDialog({
             >
               Cancel
             </DialogAction>
-            <DialogAction className={theme.primary}
+            <DialogAction
               type="submit"
               disabled={isPending}
             >

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/app/components/design-system/button";
 import PulseCard from "@/app/components/design-system/pulse-card";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
 type PreferenceSettingsProps = {
   id: string;
@@ -71,8 +71,9 @@ export default function PreferenceSettings({ id, title, value, choices, label, p
     {message && <p role="status" className="mt-3 text-sm text-success">{message}</p>}
     {isOpen && <Dialog labelledBy={`${id}-dialog-title`}>
       <div>
-      <h2 id={`${id}-dialog-title`} className="text-lg font-semibold">Change {title.toLowerCase()}</h2>
-      {description && <p className="mt-2 text-sm text-muted-foreground">{description}</p>}
+      <DialogHeader id={`${id}-dialog-title`} description={description}>
+        Change {title.toLowerCase()}
+      </DialogHeader>
       <form className="mt-5 space-y-4" onSubmit={event => {
         event.preventDefault(); setError("");
         startTransition(async () => {

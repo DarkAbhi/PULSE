@@ -1,6 +1,5 @@
 "use client";
 
-import theme from "./horizon-theme.module.css";
 import { formatMoney } from "@/app/lib/currency.mjs";
 
 import { formatInstant } from "@/app/lib/time-zone.mjs";
@@ -8,9 +7,8 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import { useEffect, useId, useState } from "react";
-import { X } from "lucide-react";
 import Button from "@/app/components/design-system/button";
-import Dialog from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import type { SubscriptionItem, TransactionItem } from "@/app/dashboard/financial-horizon-card";
 import { getTransactionsPageAction } from "./actions";
 
@@ -94,14 +92,17 @@ export default function LinkSubscriptionPaymentDialog({
   };
 
   return (
-    <Dialog panelClassName={theme.dialogPanel} labelledBy={titleId} size="wide" onBackdropClick={(event) => {
+    <Dialog labelledBy={titleId} size="wide" onBackdropClick={(event) => {
       if (event.target === event.currentTarget && !saving) onClose();
     }}>
-      <div className="flex items-center justify-between gap-3">
-        <h2 id={titleId} className="text-xl font-bold text-foreground">Log payment for {subscription.name}</h2>
-        <Button variant="icon" className={theme.iconAction} onClick={onClose} disabled={saving} aria-label="Close"><X className="h-5 w-5" /></Button>
-      </div>
-      <p className="mt-2 text-sm text-muted-foreground">Select an existing debit transaction, including one imported from a statement.</p>
+      <DialogHeader
+        id={titleId}
+        description="Select an existing debit transaction, including one imported from a statement."
+        onClose={onClose}
+        closeDisabled={saving}
+      >
+        Log payment for {subscription.name}
+      </DialogHeader>
       <label className="mt-5 block text-xs font-semibold text-muted-foreground" htmlFor="payment-transaction-search">Search transactions</label>
       <input
         id="payment-transaction-search"
@@ -109,7 +110,7 @@ export default function LinkSubscriptionPaymentDialog({
         value={search}
         onChange={(event) => { setSearch(event.target.value); setPage(1); setSelectedId(null); }}
         placeholder="Search by name or notes"
-        className={`mt-1 w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+        className="mt-1 w-full px-3.5 py-2.5 text-sm text-foreground"
       />
       {error && <p className="mt-3 text-sm text-destructive" role="alert">{error}</p>}
       <div className="mt-4 max-h-72 space-y-2 overflow-y-auto" aria-busy={loading}>
@@ -135,13 +136,11 @@ export default function LinkSubscriptionPaymentDialog({
         <span>Page {page} of {totalPages}</span>
         <Button variant="secondary" size="sm" disabled={page === totalPages || loading} onClick={() => { setPage(page + 1); setSelectedId(null); }}>Next</Button>
       </div>}
-      <div className="mt-5 flex flex-wrap justify-between gap-3 border-t border-divider pt-4">
-        <Button variant="secondary" onClick={onCreateNew} disabled={saving}>Create new transaction</Button>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>
-          <Button onClick={link} disabled={!selected || saving}>{saving ? "Linking…" : "Link payment"}</Button>
-        </div>
-      </div>
+      <DialogActions className="sm:grid-cols-[1fr_auto_auto]">
+        <DialogAction type="button" variant="secondary" onClick={onCreateNew} disabled={saving}>Create new transaction</DialogAction>
+        <DialogAction type="button" variant="secondary" onClick={onClose} disabled={saving}>Cancel</DialogAction>
+        <DialogAction type="button" onClick={link} disabled={!selected || saving}>{saving ? "Linking…" : "Link payment"}</DialogAction>
+      </DialogActions>
     </Dialog>
   );
 }

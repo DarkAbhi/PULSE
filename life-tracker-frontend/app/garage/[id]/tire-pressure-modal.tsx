@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import PulseCard from "@/app/components/design-system/pulse-card";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import { saveTirePressure } from "./actions";
 import { Gauge, User, Users } from "lucide-react";
 
@@ -97,17 +97,13 @@ export default function TirePressureModal({
   return (
     <Dialog labelledBy="tire-pressure-title" size="md">
       <form onSubmit={handleSubmit}>
-        <div className="flex items-center gap-2">
-          <div className="rounded-xl bg-primary/10 p-2 text-action">
-            <Gauge className="h-5 w-5" />
-          </div>
-          <h2 className="text-xl font-bold tracking-tight text-foreground" id="tire-pressure-title">
-            Recommended tire pressure
-          </h2>
-        </div>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Set the recommended tire pressure values (in PSI) for solo riding and when riding with a pillion.
-        </p>
+        <DialogHeader
+          id="tire-pressure-title"
+          icon={<Gauge className="size-5" />}
+          description="Set the recommended tire pressure values (in PSI) for solo riding and when riding with a pillion."
+        >
+          Recommended tire pressure
+        </DialogHeader>
 
         <div className="mt-6 space-y-4">
           {/* Solo Riding */}

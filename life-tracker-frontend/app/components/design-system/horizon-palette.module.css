@@ -1,0 +1,86 @@
+.palette {
+  --horizon-ink: #1a1740;
+  --horizon-surface: #ffffff;
+  --horizon-inset: #f1f2fb;
+  --horizon-muted: #5e5a7d;
+  --horizon-line: rgb(26 23 64 / 12%);
+  --horizon-chip: rgb(26 23 64 / 7%);
+  --horizon-shadow: 0 1px 2px rgb(26 23 64 / 6%), 0 14px 32px -20px rgb(76 107 255 / 40%);
+  --horizon-gradient: linear-gradient(90deg, #4c6bff, #b22bd8);
+  --horizon-button: var(--horizon-gradient);
+  --horizon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8 3 3 5-6' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+  /* Map the Financial Horizon palette to shared Pulse controls. */
+  --foreground: var(--horizon-ink);
+  --card: var(--horizon-surface);
+  --card-foreground: var(--horizon-ink);
+  --popover: var(--horizon-surface);
+  --popover-foreground: var(--horizon-ink);
+  --muted: var(--horizon-inset);
+  --muted-foreground: var(--horizon-muted);
+  --text-tertiary: var(--horizon-muted);
+  --secondary: var(--horizon-inset);
+  --secondary-foreground: var(--horizon-ink);
+  --btn-cancel-bg: var(--secondary);
+  --btn-cancel-text: var(--secondary-foreground);
+  --btn-cancel-hover: var(--surface-strong);
+  --divider: var(--horizon-line);
+  --surface-strong: #e6e5f5;
+  --primary: #4c6bff;
+  --primary-pressed: #3248bb;
+  --primary-foreground: #ffffff;
+  --accent: rgb(76 107 255 / 15%);
+  --accent-foreground: #342b76;
+  --ring: #4b4bc5;
+  --action: #4440ad;
+  --success: #087658;
+  --success-soft: #e1f5ec;
+  --destructive: #bf2d24;
+  --destructive-foreground: #ffffff;
+  --destructive-soft: #fceae7;
+  --warning: #925900;
+  --warning-soft: #fff2cd;
+  --info: #3856a5;
+  --info-soft: #e8eeff;
+  --lavender: #a48de0;
+  color: var(--foreground);
+}
+
+:global(.dark) .palette {
+  --horizon-ink: #f4f1ff;
+  --horizon-surface: #1a1636;
+  --horizon-inset: #231e45;
+  --horizon-muted: #a49ec4;
+  --horizon-line: rgb(244 241 255 / 14%);
+  --horizon-chip: rgb(244 241 255 / 10%);
+  --horizon-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 14px 32px -22px rgb(0 0 0 / 80%);
+  --horizon-button: #f4f1ff;
+  --horizon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8 3 3 5-6' fill='none' stroke='%230d0a1f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --surface-strong: #342c5d;
+  --primary: #f4f1ff;
+  --primary-pressed: #dcd5ff;
+  --primary-foreground: #0d0a1f;
+  --accent: rgb(76 107 255 / 15%);
+  --accent-foreground: #e5dcff;
+  --ring: #b6a6ff;
+  --action: #c1b4ff;
+  --success: #3ddca6;
+  --success-soft: #193c39;
+  --destructive: #ff7a6b;
+  --destructive-foreground: #0d0a1f;
+  --destructive-soft: #492638;
+  --warning: #ffc83d;
+  --warning-soft: #3c3129;
+  --info: #adc3ff;
+  --info-soft: #263054;
+  --lavender: #bd9de5;
+}
+
+.palette input[type="checkbox"]:checked {
+  background-image: var(--horizon-check);
+}
+
+.palette :focus-visible {
+  outline: 3px solid #4c6bff;
+  outline-offset: 2px;
+}

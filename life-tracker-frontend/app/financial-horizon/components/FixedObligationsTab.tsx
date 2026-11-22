@@ -13,9 +13,9 @@ import { useTimeZone } from "@/app/components/time-zone-provider";
 import Button from "@/app/components/design-system/button";
 import theme from "../horizon-theme.module.css";
 
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import { useEffect, useId, useMemo } from "react";
-import { Home, TrendingUp, Zap, Tv, CreditCard, Receipt, X } from "lucide-react";
+import { Home, TrendingUp, Zap, Tv, CreditCard, Receipt } from "lucide-react";
 import { HorizonSummary, DeductionItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
 
 const CATEGORIES = [
@@ -209,30 +209,18 @@ export default function FixedObligationsTab({
         <Dialog
           labelledBy={titleId}
           size="md"
-          panelClassName={`sm:p-6 ${theme.dialogPanel}`}
           onBackdropClick={(event) => {
             if (event.target === event.currentTarget && !isPending) onCancelDeductionForm();
           }}
         >
-          <div className="flex items-center justify-between gap-3 border-b border-divider pb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-action">
-                <Icon name="calendar" className="h-5 w-5" />
-              </div>
-              <h2 id={titleId} className="text-xl font-bold text-foreground">
-                {editingDeductionId !== null ? "Edit Fixed Obligation" : "Add Fixed Obligation"}
-              </h2>
-            </div>
-            <Button
-              variant="icon"
-              className={theme.iconAction} type="button"
-              onClick={onCancelDeductionForm}
-              disabled={isPending}
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+          <DialogHeader
+            id={titleId}
+            icon={<Icon name="calendar" className="size-5" />}
+            onClose={onCancelDeductionForm}
+            closeDisabled={isPending}
+          >
+            {editingDeductionId !== null ? "Edit Fixed Obligation" : "Add Fixed Obligation"}
+          </DialogHeader>
 
           <form onSubmit={onSaveDeduction} className="mt-5 grid gap-4 sm:grid-cols-2">
             {error && (
@@ -250,7 +238,7 @@ export default function FixedObligationsTab({
                 placeholder="e.g. Apartment Rent, SIP"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={`w-full px-3 py-2 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3 py-2 text-sm text-foreground"
               />
             </div>
 
@@ -260,7 +248,7 @@ export default function FixedObligationsTab({
                 id={`${titleId}-category`}
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className={`w-full px-3 py-2 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3 py-2 text-sm text-foreground"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -281,7 +269,7 @@ export default function FixedObligationsTab({
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className={`w-full px-3 py-2 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3 py-2 text-sm text-foreground"
               />
             </div>
 
@@ -295,7 +283,7 @@ export default function FixedObligationsTab({
                 placeholder="e.g. 5"
                 value={dueDay}
                 onChange={(e) => setDueDay(e.target.value)}
-                className={`w-full px-3 py-2 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3 py-2 text-sm text-foreground"
               />
             </div>
 
@@ -305,7 +293,7 @@ export default function FixedObligationsTab({
                 id={`${titleId}-budget`}
                 value={selectedBudgetId ?? ""}
                 onChange={(e) => setSelectedBudgetId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className={`w-full px-3 py-2 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3 py-2 text-sm text-foreground"
               >
                 <option value="">-- No Budget Link --</option>
                 {(summary.budgets ?? []).map((b) => (
@@ -316,8 +304,8 @@ export default function FixedObligationsTab({
               </Select>
             </div>
 
-            <DialogActions className="border-t border-divider pt-4 sm:col-span-2">
-              <DialogAction className={theme.softAction}
+            <DialogActions>
+              <DialogAction
                 variant="secondary"
                 type="button"
                 onClick={onCancelDeductionForm}
@@ -325,7 +313,7 @@ export default function FixedObligationsTab({
               >
                 Cancel
               </DialogAction>
-              <DialogAction className={theme.primary} type="submit" disabled={isPending}>
+              <DialogAction type="submit" disabled={isPending}>
                 {isPending ? "Saving…" : editingDeductionId !== null ? "Update Obligation" : "Save Obligation"}
               </DialogAction>
             </DialogActions>

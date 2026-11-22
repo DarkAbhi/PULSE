@@ -1,11 +1,10 @@
 "use client";
 
-import theme from "../horizon-theme.module.css";
 import CategoryOptions from "./CategoryOptions";
 
 import { useEffect, useState, type FormEvent } from "react";
 import Button from "@/app/components/design-system/button";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import Select from "@/app/components/design-system/select";
 import type { CategoryItem } from "@/app/dashboard/financial-horizon-card";
 import type { Account } from "../account-types";
@@ -22,7 +21,7 @@ interface Props {
   onImported: (result: ImportResult) => void;
 }
 
-const inputClass = `block min-w-0 w-full px-2 py-1.5 text-base sm:text-sm ${theme.dialogField}`;
+const inputClass = "block min-w-0 w-full px-2 py-1.5 text-base sm:text-sm";
 const previewColumns = "lg:grid-cols-[3.75rem_minmax(0,1fr)_8.5rem_8rem_6rem_9rem]";
 const fieldLabel = "mb-1 block text-xs font-medium text-muted-foreground lg:sr-only";
 const descriptionClass = `${inputClass} min-h-10 whitespace-pre-wrap [overflow-wrap:anywhere] leading-5`;
@@ -133,15 +132,15 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
   return (
     <Dialog
       size={batch && !result ? "xl" : "sm"}
-      panelClassName={`${theme.dialogPanel} ${batch && !result ? "max-w-6xl! p-4! sm:p-6!" : ""}`}
+      panelClassName={batch && !result ? "max-w-6xl! p-4! sm:p-6!" : undefined}
       labelledBy="statement-import-title"
     >
-      <h2 id="statement-import-title" className="mb-4 text-xl font-semibold">Import statement</h2>
+      <div className="mb-4"><DialogHeader id="statement-import-title">Import statement</DialogHeader></div>
       {error && <p role="alert" className="my-3">{error}</p>}
       {result ? (
         <>
           <p role="status">{result.imported} imported · {result.duplicates_skipped} duplicates skipped · {result.excluded} excluded</p>
-          <DialogActions><Button onClick={onClose}>Done</Button></DialogActions>
+          <DialogActions><DialogAction type="button" onClick={onClose}>Done</DialogAction></DialogActions>
         </>
       ) : batch && page ? (
         <div className="space-y-4">
@@ -226,8 +225,8 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
           )}
           {errorCode === "STALE_REVISION" && <Button onClick={reload}>Reload preview</Button>}
           <DialogActions>
-            <Button variant="secondary" disabled={busy} onClick={close}>Cancel import</Button>
-            <Button disabled={busy || !confirmed || ["BATCH_EXPIRED", "STALE_REVISION"].includes(errorCode)} onClick={confirm}>{busy ? "Working…" : "Confirm import"}</Button>
+            <DialogAction type="button" variant="secondary" disabled={busy} onClick={close}>Cancel import</DialogAction>
+            <DialogAction type="button" disabled={busy || !confirmed || ["BATCH_EXPIRED", "STALE_REVISION"].includes(errorCode)} onClick={confirm}>{busy ? "Working…" : "Confirm import"}</DialogAction>
           </DialogActions>
         </div>
       ) : (
@@ -239,7 +238,7 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
           ) : (
             <>
               <label className="block">Financial account
-                <Select required disabled={busy} value={accountId} onChange={e => setAccountId(e.target.value)}>
+                <Select className="mt-1 block w-full px-3" required disabled={busy} value={accountId} onChange={e => setAccountId(e.target.value)}>
                   <option value="">Choose an account</option>
                   {accounts.map(item => <option key={item.id} value={item.id}>{item.display_name} · {item.institution_name}</option>)}
                 </Select>
@@ -251,8 +250,8 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
           )}
           {busy && <p role="status">{progress === 1 ? "Extracting and checking balances…" : progress === null ? "Uploading…" : `Uploading… ${Math.round(progress * 100)}%`}</p>}
           <DialogActions>
-            <Button type="button" variant="secondary" disabled={busy} onClick={close}>Close</Button>
-            <DialogAction className={theme.primary} disabled={busy || !accountId || !file}>Preview statement</DialogAction>
+            <DialogAction type="button" variant="secondary" disabled={busy} onClick={close}>Close</DialogAction>
+            <DialogAction disabled={busy || !accountId || !file}>Preview statement</DialogAction>
           </DialogActions>
         </form>
       )}

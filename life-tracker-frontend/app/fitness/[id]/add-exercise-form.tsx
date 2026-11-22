@@ -3,11 +3,11 @@
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import Button from "@/app/components/design-system/button";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import { addExercise, updateExercise, searchExercises, type CatalogSearch, type SavedExercise } from "./actions";
 
 type ExerciseSet = {
@@ -330,13 +330,15 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
           onBackdropClick={(event) => {
             if (event.target === event.currentTarget && !isPending) onClose?.();
           }}>
-          <div className="flex items-center justify-between gap-3 border-b border-divider pb-4">
-            <h2 id={titleID} className="text-xl font-bold text-foreground">Edit exercise</h2>
-            <Button autoFocus type="button" variant="icon" size="sm"
-              aria-label="Close exercise editor" disabled={isPending} onClick={onClose}>
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+          <DialogHeader
+            id={titleID}
+            onClose={onClose}
+            closeDisabled={isPending}
+            closeLabel="Close exercise editor"
+            closeAutoFocus
+          >
+            Edit exercise
+          </DialogHeader>
           {form}
         </Dialog>
       </div>,

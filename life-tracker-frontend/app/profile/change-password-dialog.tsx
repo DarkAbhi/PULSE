@@ -3,8 +3,8 @@
 import Button from "@/app/components/design-system/button";
 
 import { useState } from "react";
-import { Lock, Eye, EyeOff, X, CheckCircle2, KeyRound } from "lucide-react";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import { Lock, Eye, EyeOff, CheckCircle2, KeyRound } from "lucide-react";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
 interface ChangePasswordDialogProps {
   isOpen: boolean;
@@ -101,29 +101,16 @@ export default function ChangePasswordDialog({
   }
 
   return (
-    <Dialog labelledBy="change-password-title" panelClassName="relative">
-        <Button variant="icon" size="sm"
-          onClick={handleClose}
-          type="button"
-          aria-label="Close modal"
-          className="absolute right-4 top-4"
+    <Dialog labelledBy="change-password-title">
+        <DialogHeader
+          id="change-password-title"
+          icon={<KeyRound className="size-5" />}
+          description="Update your account password below."
+          onClose={handleClose}
+          closeLabel="Close modal"
         >
-          <X className="h-5 w-5" />
-        </Button>
-
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-action">
-            <KeyRound className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 id="change-password-title" className="text-xl font-bold tracking-tight text-foreground">
-              Change Password
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Update your account password below.
-            </p>
-          </div>
-        </div>
+          Change Password
+        </DialogHeader>
 
         {successMessage ? (
           <div className="mt-6 flex flex-col items-center justify-center py-6 text-center">

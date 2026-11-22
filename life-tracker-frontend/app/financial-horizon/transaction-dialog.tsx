@@ -1,6 +1,5 @@
 "use client";
 
-import theme from "./horizon-theme.module.css";
 import CategoryOptions from "./components/CategoryOptions";
 
 import Select from "@/app/components/design-system/select";
@@ -11,11 +10,11 @@ import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
 import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useId } from "react";
-import { X, Receipt, Wallet, ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { Receipt, Wallet, ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { TransactionItem, CategoryItem, BudgetItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
 import { listAccounts } from "./accounts";
 import type { Account } from "./account-types";
-import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
 export interface TransactionDialogProps {
   isOpen: boolean;
@@ -168,27 +167,11 @@ export default function TransactionDialog({
     <Dialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
-      panelClassName={`scale-100 transition-all duration-200 sm:p-6 ${theme.dialogPanel}`}
       size="wide"
     >
-        <div className="flex items-center justify-between border-b border-divider pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-action">
-              <Receipt className="h-5 w-5" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground" id={titleId}>
-              {editingTransaction ? "Edit Transaction" : "Log New Transaction"}
-            </h2>
-          </div>
-          <Button variant="icon"
-            className={theme.iconAction} onClick={onClose}
-            disabled={isPending}
-            aria-label="Close"
-            title="Close dialog"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+        <DialogHeader id={titleId} icon={<Receipt className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+          {editingTransaction ? "Edit Transaction" : "Log New Transaction"}
+        </DialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {errorMsg && (
@@ -226,7 +209,7 @@ export default function TransactionDialog({
               placeholder="e.g. Netflix Monthly Payment, Spotify"
               value={txName}
               onChange={(e) => setTxName(e.target.value)}
-              className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+              className="w-full px-3.5 py-2.5 text-sm text-foreground"
             />
           </div>
 
@@ -248,7 +231,7 @@ export default function TransactionDialog({
                 placeholder="0.00"
                 value={txAmount}
                 onChange={(e) => setTxAmount(e.target.value)}
-                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3.5 py-2.5 text-sm text-foreground"
               />
             </div>
 
@@ -259,7 +242,7 @@ export default function TransactionDialog({
                 required
                 value={txDate}
                 onChange={(e) => setTxDate(e.target.value)}
-                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3.5 py-2.5 text-sm text-foreground"
               />
             </div>
           </div>
@@ -271,7 +254,7 @@ export default function TransactionDialog({
                 aria-label="Category"
                 value={txCategoryId ?? ""}
                 onChange={(e) => setTxCategoryId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className={`w-full px-3 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3 py-2.5 text-sm text-foreground"
               >
                 <option value="">Uncategorized</option>
                 <CategoryOptions categories={categories} />
@@ -283,7 +266,7 @@ export default function TransactionDialog({
               <Select
                 value={txBudgetId ?? ""}
                 onChange={(e) => setTxBudgetId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className={`w-full px-3 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3 py-2.5 text-sm text-foreground"
               >
                 <option value="">-- Unlinked --</option>
                 {budgets.map((b) => (
@@ -299,7 +282,7 @@ export default function TransactionDialog({
               <Select
                 value={txSubscriptionId ?? ""}
                 onChange={(e) => setTxSubscriptionId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className={`w-full px-3 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+                className="w-full px-3 py-2.5 text-sm text-foreground"
               >
                 <option value="">-- Unlinked --</option>
                 {subscriptions.map((s) => (
@@ -318,7 +301,7 @@ export default function TransactionDialog({
               placeholder="e.g. Paid via UPI, invoice #1234"
               value={txNotes}
               onChange={(e) => setTxNotes(e.target.value)}
-              className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
+              className="w-full px-3.5 py-2.5 text-sm text-foreground"
             />
           </div>
 
@@ -342,8 +325,8 @@ export default function TransactionDialog({
               </Select>
             </label>
           )}
-          <DialogActions className="border-t border-divider pt-4">
-            <DialogAction className={theme.softAction}
+          <DialogActions>
+            <DialogAction
               type="button"
               variant="secondary"
               disabled={isPending}
@@ -351,7 +334,7 @@ export default function TransactionDialog({
             >
               Cancel
             </DialogAction>
-            <DialogAction className={theme.primary}
+            <DialogAction
               type="submit"
               disabled={isPending}
             >

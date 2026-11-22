@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
 import { FuelFill, FuelItem } from "./types";
 import { saveFuelFill } from "./actions";
-import Dialog from "@/app/components/design-system/dialog";
+import Dialog, { DialogHeader } from "@/app/components/design-system/dialog";
 
 interface EditFuelModalProps {
   vehicleId: string;
@@ -84,12 +84,7 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
   return (
     <>
       <Dialog labelledBy="fuel-title" size="lg">
-          <h2
-            className="text-2xl font-bold tracking-tight text-foreground"
-            id="fuel-title"
-          >
-            Edit fuel fill-up
-          </h2>
+          <DialogHeader id="fuel-title">Edit fuel fill-up</DialogHeader>
           <FuelForm
             error=""
             filledAt={filledAt}

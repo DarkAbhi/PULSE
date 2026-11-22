@@ -1,0 +1,117 @@
+.panel {
+  position: relative;
+  border-radius: 28px;
+}
+
+.panel :is(input, select, textarea):not(
+  [type="checkbox"], [type="radio"], [type="hidden"], [type="file"], :global(.sr-only)
+) {
+  min-height: 44px;
+  border: 1.5px solid var(--horizon-line);
+  border-radius: 14px;
+  background-color: var(--horizon-surface);
+  color: var(--horizon-ink);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--horizon-line);
+  padding-bottom: 1rem;
+}
+
+.heading {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.description {
+  margin-top: 0.25rem;
+  color: var(--horizon-muted);
+  font-size: 0.875rem;
+}
+
+.icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--action);
+}
+
+.close {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 9999px;
+  color: var(--horizon-muted);
+}
+
+.close:hover:not(:disabled) {
+  background: var(--horizon-chip);
+  color: var(--horizon-ink);
+}
+
+.panel .action {
+  border-radius: 9999px;
+  padding: 0.5rem 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.panel .action:active:not(:disabled) {
+  scale: 0.95;
+}
+
+.panel .action[data-variant="primary"] {
+  background: var(--horizon-button);
+  color: var(--primary-foreground);
+}
+
+.panel .action[data-variant="primary"]:hover:not(:disabled) {
+  filter: brightness(0.93);
+}
+
+.panel .action[data-variant="secondary"] {
+  background: var(--horizon-chip);
+  color: var(--horizon-ink);
+}
+
+.panel .action[data-variant="secondary"]:hover:not(:disabled) {
+  background: var(--horizon-line);
+}
+
+.panel .action[data-variant="destructive"] {
+  background: color-mix(in oklab, var(--destructive) 15%, transparent);
+  color: var(--destructive);
+}
+
+.panel .action[data-variant="destructive"]:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--destructive) 22%, transparent);
+}
+
+.actions > :only-child {
+  grid-column: 1 / -1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel .action,
+  .close {
+    transition: none;
+  }
+
+  .panel .action:active:not(:disabled) {
+    scale: none;
+  }
+}

@@ -34,11 +34,11 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
-import dev.abhishekan.pulse.core.ui.components.PulseFormAction
-import dev.abhishekan.pulse.core.ui.components.PulseFormActions
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormAction
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormActions
 import dev.abhishekan.pulse.feature.garage.R
 import dev.abhishekan.pulse.feature.garage.shared.GarageActionPair
 import dev.abhishekan.pulse.feature.garage.shared.decimal

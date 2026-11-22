@@ -23,13 +23,13 @@ import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
-import dev.abhishekan.pulse.core.ui.components.PulseErrorState
-import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
+import dev.abhishekan.pulse.core.ui.patterns.PulseCenteredLoadingState
+import dev.abhishekan.pulse.core.ui.patterns.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
+import dev.abhishekan.pulse.core.ui.patterns.PulseLoadingState
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 

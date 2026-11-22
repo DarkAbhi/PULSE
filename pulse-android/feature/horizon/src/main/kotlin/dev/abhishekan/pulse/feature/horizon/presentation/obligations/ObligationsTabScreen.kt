@@ -10,12 +10,12 @@ import androidx.compose.ui.res.stringResource
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
-import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.patterns.PulseCenteredLoadingState
+import dev.abhishekan.pulse.core.ui.patterns.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
 import dev.abhishekan.pulse.feature.horizon.R
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonForm

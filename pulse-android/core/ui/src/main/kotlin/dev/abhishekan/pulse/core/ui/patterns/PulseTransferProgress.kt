@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse.core.ui.components
+package dev.abhishekan.pulse.core.ui.patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -10,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.R
+import dev.abhishekan.pulse.core.ui.components.PulseText
 
 @Composable
 fun PulseTransferProgress(

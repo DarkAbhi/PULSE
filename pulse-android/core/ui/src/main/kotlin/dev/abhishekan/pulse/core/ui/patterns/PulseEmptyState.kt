@@ -1,9 +1,11 @@
-package dev.abhishekan.pulse.core.ui.components
+package dev.abhishekan.pulse.core.ui.patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.components.PulseText
+import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 
 @Composable
 fun PulseEmptyState(

@@ -25,13 +25,13 @@ import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
-import dev.abhishekan.pulse.core.ui.components.PulseErrorState
-import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
-import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseSegmentedTabs
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
-import dev.abhishekan.pulse.core.ui.components.PulseTransferProgress
+import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormLayout
+import dev.abhishekan.pulse.core.ui.patterns.PulseScreenScaffold
+import dev.abhishekan.pulse.core.ui.patterns.PulseTransferProgress
 import dev.abhishekan.pulse.feature.garage.air.PressureCard
 import dev.abhishekan.pulse.feature.garage.air.TiresAirSection
 import dev.abhishekan.pulse.feature.garage.collection.GarageCollectionHeader

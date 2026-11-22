@@ -11,8 +11,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import dev.abhishekan.pulse.core.domain.model.NotificationTarget
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
-import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
-import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
+import dev.abhishekan.pulse.core.ui.patterns.PulseScreenScaffold
+import dev.abhishekan.pulse.core.ui.patterns.PulseSnackbarEffect
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 

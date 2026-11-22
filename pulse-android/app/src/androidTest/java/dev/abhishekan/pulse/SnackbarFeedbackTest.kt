@@ -18,9 +18,9 @@ import androidx.compose.ui.test.onNodeWithText
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbar
-import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
-import dev.abhishekan.pulse.core.ui.components.PulseSnackbarProvider
 import dev.abhishekan.pulse.core.ui.components.PulseText
+import dev.abhishekan.pulse.core.ui.patterns.PulseSnackbarEffect
+import dev.abhishekan.pulse.core.ui.patterns.PulseSnackbarProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule

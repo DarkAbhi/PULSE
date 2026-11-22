@@ -13,7 +13,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
+import dev.abhishekan.pulse.core.ui.patterns.PulseScreenScaffold
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

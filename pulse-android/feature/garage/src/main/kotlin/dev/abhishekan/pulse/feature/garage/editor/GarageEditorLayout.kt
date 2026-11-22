@@ -40,15 +40,15 @@ import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
-import dev.abhishekan.pulse.core.ui.components.PulseFormAction
-import dev.abhishekan.pulse.core.ui.components.PulseFormActions
-import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
-import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pagePadding
+import dev.abhishekan.pulse.core.ui.patterns.PulseCenteredLoadingState
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormAction
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormActions
+import dev.abhishekan.pulse.core.ui.patterns.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.patterns.PulseScreenScaffold
 import dev.abhishekan.pulse.feature.garage.R
 import dev.abhishekan.pulse.feature.garage.fuel.fuelFormWidth
 import dev.abhishekan.pulse.core.ui.R as CoreUiR

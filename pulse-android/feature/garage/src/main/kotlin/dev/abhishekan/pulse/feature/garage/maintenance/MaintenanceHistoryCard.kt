@@ -47,7 +47,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
-import dev.abhishekan.pulse.core.ui.components.PulseTransferProgress
+import dev.abhishekan.pulse.core.ui.patterns.PulseTransferProgress
 import dev.abhishekan.pulse.core.ui.pulseDescription
 import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.feature.garage.R

@@ -43,14 +43,14 @@ import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
-import dev.abhishekan.pulse.core.ui.components.PulseErrorState
-import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbar
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTopAppBar
-import dev.abhishekan.pulse.core.ui.components.PulseTransferProgress
+import dev.abhishekan.pulse.core.ui.patterns.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
+import dev.abhishekan.pulse.core.ui.patterns.PulseLoadingState
+import dev.abhishekan.pulse.core.ui.patterns.PulseTransferProgress
 import kotlinx.coroutines.launch
 
 internal enum class GalleryCategory(
@@ -68,7 +68,7 @@ internal enum class GalleryCategory(
     Dialogs("Dialogs", "Alerts, custom content, date and time pickers."),
     Menus("Menus", "Dropdown menus and menu item states."),
     Calendar("Calendar", "Day selections, today and activity markers."),
-    States("States", "Loading, empty and recoverable error states."),
+    States("State patterns", "Loading, empty and recoverable error states."),
     Icons("Icons", "The complete shared vector icon set."),
     Images("Images", "Shared image assets at different sizes."),
     Foundations("Foundations", "Color, spacing, shape and elevation tokens."),

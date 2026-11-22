@@ -25,10 +25,10 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
-import dev.abhishekan.pulse.core.ui.components.PulseErrorState
-import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.pagePadding
+import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormLayout
 import dev.abhishekan.pulse.feature.fitness.shared.MutationReview
 import dev.abhishekan.pulse.feature.fitness.shared.fitnessFailureMessage
 import dev.abhishekan.pulse.feature.fitness.workout.ServerExercises

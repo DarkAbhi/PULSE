@@ -21,12 +21,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseBottomSheet
-import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseFilterChip
-import dev.abhishekan.pulse.core.ui.components.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.components.PulseRadioButton
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
+import dev.abhishekan.pulse.core.ui.patterns.PulseLoadingState
 import dev.abhishekan.pulse.feature.horizon.R
 import dev.abhishekan.pulse.feature.horizon.presentation.components.categoryCards
 

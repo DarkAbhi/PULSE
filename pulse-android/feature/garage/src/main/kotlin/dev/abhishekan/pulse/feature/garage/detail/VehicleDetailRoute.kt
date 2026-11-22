@@ -14,8 +14,8 @@ import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseHideNavigation
 import dev.abhishekan.pulse.core.ui.PulseScreenTransition
-import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.patterns.PulseSnackbarEffect
 import dev.abhishekan.pulse.feature.garage.R
 import dev.abhishekan.pulse.feature.garage.detail.receipts.rememberReceiptPickerActions
 import dev.abhishekan.pulse.feature.garage.editor.GarageEditorAction

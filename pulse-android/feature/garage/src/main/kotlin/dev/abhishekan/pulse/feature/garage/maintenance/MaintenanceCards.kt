@@ -22,9 +22,9 @@ import dev.abhishekan.pulse.core.domain.model.GarageReceipt
 import dev.abhishekan.pulse.core.domain.model.VehicleHistory
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
+import dev.abhishekan.pulse.core.ui.patterns.PulseEmptyState
 import dev.abhishekan.pulse.feature.garage.R
 import dev.abhishekan.pulse.feature.garage.editor.GarageDraft
 

@@ -1,4 +1,4 @@
-package dev.abhishekan.pulse.core.ui.components
+package dev.abhishekan.pulse.core.ui.patterns
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +12,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.components.PulseText
 
 /** Centers loading feedback within the bounds supplied by the caller. */
 @Composable

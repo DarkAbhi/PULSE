@@ -35,12 +35,12 @@ import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
-import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.patterns.PulseCenteredLoadingState
+import dev.abhishekan.pulse.core.ui.patterns.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
 import dev.abhishekan.pulse.core.ui.R as UiR
 
 @Composable

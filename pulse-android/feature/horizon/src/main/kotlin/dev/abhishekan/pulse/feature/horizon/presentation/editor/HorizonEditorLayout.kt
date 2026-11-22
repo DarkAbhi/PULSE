@@ -18,11 +18,11 @@ import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
-import dev.abhishekan.pulse.core.ui.components.PulseFormAction
-import dev.abhishekan.pulse.core.ui.components.PulseFormActions
-import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
-import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.pagePadding
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormAction
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormActions
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormLayout
+import dev.abhishekan.pulse.core.ui.patterns.PulseScreenScaffold
 import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable

@@ -17,14 +17,14 @@ import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
-import dev.abhishekan.pulse.core.ui.components.PulseCenteredLoadingState
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
-import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
 import dev.abhishekan.pulse.core.ui.pagePadding
+import dev.abhishekan.pulse.core.ui.patterns.PulseCenteredLoadingState
+import dev.abhishekan.pulse.core.ui.patterns.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
 import dev.abhishekan.pulse.feature.horizon.R
 import dev.abhishekan.pulse.feature.horizon.presentation.components.HorizonTabScroll
 import dev.abhishekan.pulse.feature.horizon.presentation.components.horizonGutter

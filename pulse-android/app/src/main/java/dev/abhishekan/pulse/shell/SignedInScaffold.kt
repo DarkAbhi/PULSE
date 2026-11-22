@@ -33,7 +33,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseBottomNavigationBar
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationItem
 import dev.abhishekan.pulse.core.ui.components.PulseNavigationRail
 import dev.abhishekan.pulse.core.ui.components.PulseSnackbar
-import dev.abhishekan.pulse.core.ui.components.PulseSnackbarProvider
+import dev.abhishekan.pulse.core.ui.patterns.PulseSnackbarProvider
 import dev.abhishekan.pulse.navigation.AppDestination
 
 @Composable

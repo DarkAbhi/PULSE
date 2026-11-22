@@ -15,7 +15,7 @@ import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormLayout
 import dev.abhishekan.pulse.feature.mealplan.editor.MealDraft
 import dev.abhishekan.pulse.feature.mealplan.editor.MealEditor
 import dev.abhishekan.pulse.feature.mealplan.editor.MealEditorFooter

@@ -6,7 +6,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.ui.PulseHideNavigation
-import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
+import dev.abhishekan.pulse.core.ui.patterns.PulseSnackbarEffect
 import dev.abhishekan.pulse.feature.garage.editor.GarageEditorAction
 import org.koin.androidx.compose.koinViewModel
 

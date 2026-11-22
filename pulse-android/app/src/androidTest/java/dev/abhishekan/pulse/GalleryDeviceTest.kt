@@ -45,7 +45,7 @@ class GalleryDeviceTest {
         selectTab("Buttons")
         compose.onNodeWithText("Continue · sample").performScrollTo().performClick()
         compose.onNodeWithText("Sample action completed").assertIsDisplayed()
-        selectTab("States")
+        selectTab("State patterns")
         compose.onNodeWithText("Loading sample section").assertIsDisplayed()
         restoration.emulateSavedInstanceStateRestore()
         compose.onNodeWithText("Loading sample section").assertIsDisplayed()
@@ -95,7 +95,7 @@ class GalleryDeviceTest {
             "Dialogs" to "Alert dialog",
             "Menus" to "Dropdown menu",
             "Calendar" to "Today with activity",
-            "States" to "Loading sample section",
+            "State patterns" to "Loading sample section",
             "Icons" to "Home",
             "Images" to "Pulse logo · 48dp",
             "Foundations" to "Color palette",

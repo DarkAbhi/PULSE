@@ -8,7 +8,7 @@ import androidx.compose.ui.res.stringResource
 import dev.abhishekan.pulse.core.domain.model.Vehicle
 import dev.abhishekan.pulse.core.ui.PulseScreenTransition
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.components.PulseEmptyState
+import dev.abhishekan.pulse.core.ui.patterns.PulseEmptyState
 import dev.abhishekan.pulse.feature.garage.R
 import dev.abhishekan.pulse.feature.garage.editor.GarageEditorAction
 import dev.abhishekan.pulse.feature.garage.editor.GarageEditorLayout

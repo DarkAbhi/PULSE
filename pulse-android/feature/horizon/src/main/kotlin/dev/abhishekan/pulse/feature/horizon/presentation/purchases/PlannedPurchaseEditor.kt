@@ -42,12 +42,12 @@ import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
-import dev.abhishekan.pulse.core.ui.components.PulseFormAction
-import dev.abhishekan.pulse.core.ui.components.PulseFormActions
-import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormAction
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormActions
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormLayout
 import dev.abhishekan.pulse.core.ui.uiText
 import dev.abhishekan.pulse.feature.horizon.R
 import dev.abhishekan.pulse.feature.horizon.presentation.editor.HorizonDraft

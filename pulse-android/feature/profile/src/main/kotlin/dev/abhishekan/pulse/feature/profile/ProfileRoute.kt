@@ -24,8 +24,8 @@ import dev.abhishekan.pulse.core.ui.PulseHideNavigation
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.asString
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
-import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
-import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
+import dev.abhishekan.pulse.core.ui.patterns.PulseScreenScaffold
+import dev.abhishekan.pulse.core.ui.patterns.PulseSnackbarEffect
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
 

@@ -10,8 +10,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
-import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
-import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
+import dev.abhishekan.pulse.core.ui.patterns.PulseScreenScaffold
+import dev.abhishekan.pulse.core.ui.patterns.PulseSnackbarEffect
 import dev.abhishekan.pulse.feature.fitness.R
 import org.koin.androidx.compose.koinViewModel
 

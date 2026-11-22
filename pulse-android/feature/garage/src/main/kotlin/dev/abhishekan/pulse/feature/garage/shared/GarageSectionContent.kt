@@ -1,8 +1,8 @@
 package dev.abhishekan.pulse.feature.garage.shared
 
 import androidx.compose.runtime.Composable
-import dev.abhishekan.pulse.core.ui.components.PulseErrorState
 import dev.abhishekan.pulse.core.ui.message
+import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
 
 @Composable
 internal fun <T> GarageSectionContent(

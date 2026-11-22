@@ -15,8 +15,8 @@ import androidx.lifecycle.flowWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseHideNavigation
 import dev.abhishekan.pulse.core.ui.PulseScreenTransition
-import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
-import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
+import dev.abhishekan.pulse.core.ui.patterns.PulseScreenScaffold
+import dev.abhishekan.pulse.core.ui.patterns.PulseSnackbarEffect
 import dev.abhishekan.pulse.feature.mealplan.mealtimes.CustomMealTimes
 import dev.abhishekan.pulse.feature.mealplan.onboarding.MealOnboardingAction
 import dev.abhishekan.pulse.feature.mealplan.onboarding.MealOnboardingScreen

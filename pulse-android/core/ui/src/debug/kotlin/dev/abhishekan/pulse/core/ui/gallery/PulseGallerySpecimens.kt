@@ -38,7 +38,6 @@ import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.R
 import dev.abhishekan.pulse.core.ui.UiText
-import dev.abhishekan.pulse.core.ui.components.PulseBackNavigation
 import dev.abhishekan.pulse.core.ui.components.PulseBottomNavigationBar
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
@@ -66,8 +65,9 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseTopAppBar
-import dev.abhishekan.pulse.core.ui.components.PulseTransferProgress
 import dev.abhishekan.pulse.core.ui.label
+import dev.abhishekan.pulse.core.ui.patterns.PulseBackNavigation
+import dev.abhishekan.pulse.core.ui.patterns.PulseTransferProgress
 import dev.abhishekan.pulse.core.ui.uiText
 import kotlinx.coroutines.launch
 import java.time.LocalDate

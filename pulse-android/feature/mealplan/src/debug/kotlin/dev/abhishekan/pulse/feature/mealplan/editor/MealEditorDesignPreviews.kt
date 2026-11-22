@@ -7,8 +7,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.core.ui.components.PulseFormLayout
-import dev.abhishekan.pulse.core.ui.components.PulseScreenScaffold
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormLayout
+import dev.abhishekan.pulse.core.ui.patterns.PulseScreenScaffold
 import java.time.LocalTime
 
 @Preview(name = "Add meal · phone", widthDp = 360, heightDp = 800)

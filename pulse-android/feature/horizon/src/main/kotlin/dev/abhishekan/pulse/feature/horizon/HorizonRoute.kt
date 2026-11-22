@@ -10,7 +10,7 @@ import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseHideNavigation
 import dev.abhishekan.pulse.core.ui.PulseScreenTransition
-import dev.abhishekan.pulse.core.ui.components.PulseSnackbarEffect
+import dev.abhishekan.pulse.core.ui.patterns.PulseSnackbarEffect
 import dev.abhishekan.pulse.feature.horizon.presentation.navigation.HorizonDestination
 import dev.abhishekan.pulse.feature.horizon.presentation.navigation.HorizonHost
 import dev.abhishekan.pulse.feature.horizon.presentation.navigation.destination

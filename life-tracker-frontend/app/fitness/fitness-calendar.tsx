@@ -1,178 +1,255 @@
 "use client";
 
-import PulseCard from "@/app/components/design-system/pulse-card";
-
-import { useState, useTransition } from "react";
+import { useState, useTransition, type CSSProperties } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Check, ChevronLeft, ChevronRight, Clock, Dumbbell, Flame, List, Sun, Timer, Weight,
+} from "lucide-react";
 import Button from "@/app/components/design-system/button";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import PulseCard from "@/app/components/design-system/pulse-card";
 import GymVisitsList, { type WorkoutGroup } from "./gym-visits-list";
 import { calendarDays, shiftMonth } from "./calendar-utils.mjs";
 import { markGymVisitAction } from "./actions";
+import styles from "./fitness.module.css";
 
-const monthFormatter = new Intl.DateTimeFormat("en-IN", {
-  month: "long", year: "numeric", timeZone: "UTC",
+const monthFormatter = new Intl.DateTimeFormat("en-IN", { month: "long", timeZone: "UTC" });
+const dayFormatter = new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeZone: "UTC" });
+const selectedDayFormatter = new Intl.DateTimeFormat("en-IN", {
+  weekday: "short", day: "numeric", month: "short", timeZone: "UTC",
 });
-const dayFormatter = new Intl.DateTimeFormat("en-IN", {
-  dateStyle: "full", timeZone: "UTC",
-});
+const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-const shortDayFormatter = new Intl.DateTimeFormat("en-IN", {
-  day: "numeric", month: "short", timeZone: "UTC",
-});
+const statIcons = {
+  workouts: { icon: Check, tone: "bg-[#4c6bff] text-white" },
+  trained: { icon: Timer, tone: "bg-[#19d3f3] text-[#06303a]" },
+  volume: { icon: Weight, tone: "bg-[#7b2ce0] text-white" },
+  sets: { icon: List, tone: "bg-[#d91cab] text-white" },
+  preference: { icon: Sun, tone: "bg-[#ffc83d] text-[#3a2a00]" },
+};
+
+type FitnessStat = { id: string; label: string; value: string; subtitle: string; tooltip?: string };
 
 export type FitnessOverview = {
   today: string;
-  cards: { id: string; label: string; value: string; subtitle: string; tooltip?: string }[];
+  cards: FitnessStat[];
   calendar_workouts: Record<string, WorkoutGroup>;
   recent_workouts: WorkoutGroup[];
 };
 
+function parseDate(date: string) {
+  return new Date(`${date}T00:00:00Z`);
+}
+
+function FitnessSummary({ last, streak, today, workouts }: {
+  last?: FitnessStat;
+  streak?: FitnessStat;
+  today: string;
+  workouts: FitnessOverview["calendar_workouts"];
+}) {
+  return (
+    <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2 lg:gap-6">
+      {last && (
+        <section className={`${styles.last} relative isolate flex min-h-40 flex-col justify-between gap-4 overflow-hidden rounded-4xl p-5 text-white sm:p-6`}>
+          <h2 className="flex items-center gap-2.5 font-semibold"><Clock size={21} aria-hidden="true" />{last.label}</h2>
+          <div>
+            <p className={styles.summaryValue}>{last.value}</p>
+            {Object.keys(workouts).length > 0 && <p className="mt-1">{last.subtitle}</p>}
+          </div>
+          <Dumbbell aria-hidden="true" className="pointer-events-none absolute -right-5 -bottom-7 -z-10 size-40 -rotate-12 text-white/20" strokeWidth={1.4} />
+        </section>
+      )}
+      {streak && (
+        <PulseCard as="section" className={`${styles.surface} flex flex-col justify-between gap-3 p-5 sm:p-6`}>
+          <h2 className={`${styles.muted} flex items-center gap-2.5 font-semibold`}><Flame size={21} aria-hidden="true" />{streak.label}</h2>
+          <div>
+            <p className={styles.summaryValue}>{streak.value}</p>
+            <p className={`${styles.muted} mt-1`}>{streak.subtitle}</p>
+          </div>
+          <ul aria-label="Workouts in the last seven days" className="flex flex-wrap gap-1.5 sm:gap-2">
+            {Array.from({ length: 7 }, (_, index) => {
+              const date = parseDate(today);
+              date.setUTCDate(date.getUTCDate() + index - 6);
+              const hasWorkout = (workouts[date.toISOString().slice(0, 10)]?.workouts.length ?? 0) > 0;
+              return (
+                <li key={index} className={`${styles.streakDay} grid size-7 place-items-center rounded-full text-xs font-bold sm:size-8`} data-workout={hasWorkout}>
+                  <span aria-hidden="true">{weekdays[(date.getUTCDay() + 6) % 7][0]}</span>
+                  <span className="sr-only">{dayFormatter.format(date)}, {hasWorkout ? "workout logged" : "no workout logged"}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </PulseCard>
+      )}
+    </div>
+  );
+}
+
+function FitnessStats({ cards }: { cards: FitnessStat[] }) {
+  if (!cards.length) return null;
+
+  return (
+    <section aria-labelledby="fitness-stats-heading">
+      <h2 id="fitness-stats-heading" className={styles.sectionTitle}>Your stats</h2>
+      <ul className={styles.tileGrid}>
+        {cards.map((card) => {
+          const icon = statIcons[card.id as keyof typeof statIcons];
+          const Icon = icon?.icon ?? List;
+          const attendance = card.id === "attendance" ? Number.parseFloat(card.value) : NaN;
+          return (
+            <PulseCard as="li" key={card.id} className={`${styles.surface} flex items-center gap-4 p-4 sm:p-5`}>
+              {Number.isFinite(attendance) ? (
+                <span aria-hidden="true" className={styles.attendance} style={{ "--attendance": `${attendance}%` } as CSSProperties} />
+              ) : (
+                <span aria-hidden="true" className={`grid size-12 shrink-0 place-items-center rounded-2xl sm:size-14 ${icon?.tone ?? statIcons.workouts.tone}`}>
+                  <Icon size={25} />
+                </span>
+              )}
+              <div className="min-w-0">
+                <h3 className={`${styles.muted} text-sm font-semibold`}>{card.label}</h3>
+                <p className="mt-0.5 text-xl font-extrabold tracking-tight tabular-nums wrap-anywhere sm:text-2xl">{card.value}</p>
+                <p className={`${styles.muted} mt-0.5 text-xs`}>{card.subtitle}{card.tooltip && ` · ${card.tooltip}`}</p>
+              </div>
+            </PulseCard>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export default function FitnessCalendar({ overview }: { overview: FitnessOverview }) {
   const { today, cards, calendar_workouts: workoutsByDate, recent_workouts: recentWorkouts } = overview;
-  const [month, setMonth] = useState(today.slice(0, 7));
   const [selectedDate, setSelectedDate] = useState(today);
   const [isMarking, startMarking] = useTransition();
   const [markError, setMarkError] = useState("");
   const [dateToMark, setDateToMark] = useState<string | null>(null);
   const router = useRouter();
+  const month = selectedDate.slice(0, 7);
   const selectedGroup = workoutsByDate[selectedDate];
-  const day = new Date(`${selectedDate}T00:00:00Z`);
-  const summaryCards = cards.filter(({ id }) => id === "last_workout" || id === "streak");
-  const yearCards = cards.filter(({ id }) => id !== "last_workout" && id !== "streak");
-
-  function selectDate(date: string) {
-    setMarkError("");
-    setSelectedDate(date);
-    setMonth(date.slice(0, 7));
-  }
+  const day = parseDate(selectedDate);
+  const last = cards.find(({ id }) => id === "last_workout");
+  const streak = cards.find(({ id }) => id === "streak");
+  const yearCards = cards.filter(({ id, value }) => id !== "last_workout" && id !== "streak" && value !== "Not available");
 
   function navigateMonth(offset: number) {
     const next = shiftMonth(month, offset);
-    selectDate(next === today.slice(0, 7) ? today : `${next}-01`);
+    setSelectedDate(next === today.slice(0, 7) ? today : `${next}-01`);
+  }
+
+  function openLog(date: string) {
+    setMarkError("");
+    setDateToMark(date);
   }
 
   return (
-    <div className="space-y-8">
-      <PulseCard className="grid items-start lg:grid-cols-[1.3fr_1fr] lg:gap-6 lg:bg-transparent">
-        <PulseCard as="section" aria-label="Workout calendar" className="p-4 sm:p-6">
-          <div className="flex items-center justify-between gap-3 border-b border-divider pb-2 sm:pb-3">
-            <h2 aria-live="polite" className="text-xl font-semibold sm:text-2xl">
-              {monthFormatter.format(new Date(`${month}-01T00:00:00Z`))}
+    <div className={`${styles.fitness} grid gap-6 sm:gap-8`}>
+      <section aria-labelledby="fitness-title" className={styles.hero}>
+        <div className="relative">
+          <h1 id="fitness-title" className={styles.title}>Fitness</h1>
+          <p className="mt-2 text-base font-medium sm:text-xl">Workouts, streaks &amp; stats</p>
+          <Button
+            type="button"
+            className={`${styles.heroAction} mt-5`}
+            size="lg"
+            icon={<Dumbbell size={20} aria-hidden="true" />}
+            disabled={isMarking}
+            onClick={() => openLog(selectedDate <= today ? selectedDate : today)}
+          >
+            Log gym visit
+          </Button>
+        </div>
+        <div className={styles.ecg} aria-hidden="true">
+          {[-4, -2, 0].map((delay) => (
+            <span key={delay} className={styles.ripple} style={{ animationDelay: `${delay}s` }} />
+          ))}
+          <svg viewBox="0 0 200 100" fill="none">
+            <path d="M0 50H72L84 18L100 82L112 34L122 50H200" pathLength="1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-6">
+        <PulseCard as="section" aria-label="Workout calendar" className={`${styles.surface} min-w-0 p-3 sm:p-6`}>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 aria-live="polite" className="text-2xl leading-none font-extrabold tracking-tight sm:text-3xl">
+              {monthFormatter.format(parseDate(`${month}-01`))}
+              <span className={`${styles.muted} mt-1 block text-sm font-semibold tracking-normal`}>{month.slice(0, 4)}</span>
             </h2>
-            <div className="flex gap-1">
-              <Button type="button" variant="icon" aria-label="Previous month" onClick={() => navigateMonth(-1)}>
-                <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            <div className="flex gap-2">
+              <Button type="button" variant="iconSecondary" size="lg" className={styles.monthButton} aria-label="Previous month" onClick={() => navigateMonth(-1)}>
+                <ChevronLeft size={20} aria-hidden="true" />
               </Button>
-              <Button type="button" variant="icon" aria-label="Next month" onClick={() => navigateMonth(1)}>
-                <ChevronRight className="h-5 w-5" aria-hidden="true" />
+              <Button type="button" variant="iconSecondary" size="lg" className={styles.monthButton} aria-label="Next month" onClick={() => navigateMonth(1)}>
+                <ChevronRight size={20} aria-hidden="true" />
               </Button>
             </div>
           </div>
-          <div className="mt-3 grid grid-cols-7 text-center text-xs font-semibold text-muted-foreground sm:text-sm" aria-hidden="true">
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => <span key={day}>{day}</span>)}
-          </div>
-          <div className="mt-2 grid grid-cols-7 gap-y-1 sm:gap-y-2">
+          <div role="group" aria-label="Select a date" className="grid grid-cols-7 gap-1 sm:gap-2">
+            {weekdays.map((weekday) => (
+              <span key={weekday} aria-hidden="true" className={`${styles.muted} pb-1 text-center text-xs font-bold sm:text-sm`}>{weekday}</span>
+            ))}
             {calendarDays(month).map((date) => {
               const count = workoutsByDate[date]?.workouts.length ?? 0;
-              const selected = date === selectedDate;
               return (
-                <div key={date} className="flex min-w-0 justify-center">
-                  <button
-                    type="button"
-                    aria-pressed={selected}
-                    aria-current={date === today ? "date" : undefined}
-                    aria-label={`${dayFormatter.format(new Date(`${date}T00:00:00Z`))}, ${count ? `${count} completed workout${count === 1 ? "" : "s"}` : "no workouts"}`}
-                    onClick={() => selectDate(date)}
-                    className={`relative flex h-11 w-full max-w-11 items-center justify-center rounded-full text-sm font-semibold transition sm:text-base ${selected ? "bg-primary text-primary-foreground" : count ? "border-2 border-success bg-success-soft text-success hover:bg-success-soft dark:bg-success/15 dark:text-success dark:hover:bg-success/25" : date.slice(0, 7) !== month ? "text-muted-foreground/50 hover:bg-secondary" : "text-foreground hover:bg-secondary"}`}
-                  >
-                    {Number(date.slice(8))}
-                    {count > 0 && (
-                      <span aria-hidden="true" className="absolute -bottom-1 h-2 w-2 rounded-full bg-success ring-2 ring-card dark:bg-success" />
-                    )}
-                  </button>
-                </div>
+                <button
+                  key={date}
+                  type="button"
+                  aria-pressed={date === selectedDate}
+                  aria-current={date === today ? "date" : undefined}
+                  aria-label={`${dayFormatter.format(parseDate(date))}, ${count ? `${count} completed workout${count === 1 ? "" : "s"}` : "no workouts"}`}
+                  data-outside={date.slice(0, 7) !== month}
+                  data-workout={count > 0}
+                  onClick={() => setSelectedDate(date)}
+                  className={styles.day}
+                >
+                  {Number(date.slice(8))}
+                </button>
               );
             })}
           </div>
-          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-success" />
-            Workout completed
-          </p>
-        </PulseCard>
-        <PulseCard
-          as="section"
-          aria-labelledby="selected-workouts-heading"
-          className="border-t border-divider p-4 max-lg:rounded-t-none sm:p-6 lg:border-t-0"
-        >
-          <div aria-live="polite" className="space-y-3">
-            <h2 id="selected-workouts-heading" className="text-lg font-semibold sm:text-xl">
-              {selectedDate === today ? `Today, ${shortDayFormatter.format(day)}` : dayFormatter.format(day)}
-            </h2>
-            {selectedGroup ? <GymVisitsList groups={[selectedGroup]} hideDate /> : (
-              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                <p className="text-sm text-muted-foreground">No workout logged</p>
-                <Button
-                  type="button"
-                  size="lg"
-                  disabled={isMarking}
-                  onClick={() => {
-                    setMarkError("");
-                    setDateToMark(selectedDate);
-                  }}
-                >
-                  {isMarking ? "Logging…" : "Log gym visit"}
-                </Button>
-              </div>
+          <ul aria-hidden="true" className={`${styles.muted} mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold sm:text-sm`}>
+            <li className="flex items-center gap-1.5"><span className={styles.legendToday} />Today</li>
+            <li className="flex items-center gap-1.5"><span className={styles.legendSelected} />Selected</li>
+            <li className="flex items-center gap-1.5"><span className={styles.legendWorkout} />Workout logged</li>
+          </ul>
+          <div aria-live="polite" className={`${styles.selectedDate} mt-4 flex flex-wrap items-center justify-between gap-3 rounded-3xl py-3 pr-3.5 pl-4.5`}>
+            <div>
+              <h3 className="font-extrabold"><time dateTime={selectedDate}>{selectedDayFormatter.format(day)}</time></h3>
+              {selectedGroup ? (
+                <ul className={styles.selectedDateDetails}>
+                  {selectedGroup.workouts.map((visit) => (
+                    <li key={visit.id}>
+                      <Link href={`/fitness/${visit.id}`} className="underline-offset-2 hover:underline focus-visible:underline">
+                        Gym visit at {visit.time_label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className={styles.selectedDateDetails}>No workout logged</p>
+              )}
+            </div>
+            {!selectedGroup && selectedDate <= today && (
+              <Button type="button" size="lg" className={styles.logAction} disabled={isMarking} onClick={() => openLog(selectedDate)}>
+                Log visit
+              </Button>
             )}
           </div>
         </PulseCard>
-      </PulseCard>
-      <div className="grid items-start gap-8 lg:grid-cols-[1.3fr_1fr] lg:gap-6">
-        <section aria-labelledby="recent-workouts-heading" className="space-y-3 lg:col-start-2 lg:row-start-1">
-          <h2 id="recent-workouts-heading" className="text-xl font-semibold">Recent workouts</h2>
-          {recentWorkouts.length ? <GymVisitsList groups={recentWorkouts} /> : (
-            <PulseCard className="p-4">
-              <p className="font-semibold">No workouts yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">Select a date in the calendar to log a gym visit.</p>
-            </PulseCard>
-          )}
-        </section>
-        <section aria-labelledby="fitness-stats-heading" className="space-y-3 lg:col-start-1 lg:row-start-1">
-          <h2 id="fitness-stats-heading" className="text-xl font-semibold">Your fitness stats</h2>
-          <PulseCard className="grid grid-cols-2 divide-x divide-divider">
-            {summaryCards.map((card) => (
-              <div key={card.id} className="min-w-0 p-3 sm:p-4">
-                <h3 className="text-sm font-medium">{card.label}</h3>
-                <p className="mt-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{card.value}</p>
-                <p className="text-xs text-muted-foreground">{card.subtitle}</p>
-              </div>
-            ))}
-          </PulseCard>
-          <PulseCard className="px-4 pt-4">
-            <h3 className="text-sm font-semibold">Year to date</h3>
-            <dl className="mt-1 divide-y divide-divider">
-              {yearCards.map((card) => {
-                const note = card.subtitle.replace(/(?:^This year$| this year\b)/i, "");
-                return (
-                  <div key={card.id} className="flex items-baseline justify-between gap-3 py-2.5 text-sm">
-                    <dt>
-                      {card.label}
-                      {(note || card.tooltip) && (
-                        <span className="block text-xs text-muted-foreground">
-                          {[note, card.tooltip].filter(Boolean).join(". ")}
-                        </span>
-                      )}
-                    </dt>
-                    <dd className="max-w-[50%] break-words text-right font-semibold tabular-nums">{card.value}</dd>
-                  </div>
-                );
-              })}
-            </dl>
-          </PulseCard>
-        </section>
+        <FitnessSummary last={last} streak={streak} today={today} workouts={workoutsByDate} />
       </div>
+
+      <section aria-labelledby="recent-workouts-heading">
+        <h2 id="recent-workouts-heading" className={styles.sectionTitle}>Recent workouts</h2>
+        {recentWorkouts.length ? <GymVisitsList groups={recentWorkouts} /> : (
+          <p className={styles.empty}>No workouts yet.</p>
+        )}
+      </section>
+
+      <FitnessStats cards={yearCards} />
+
       <ConfirmationDialog
         isOpen={dateToMark !== null}
         onClose={() => { setDateToMark(null); setMarkError(""); }}
@@ -185,12 +262,13 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
               setMarkError(result.error ?? "We couldn't save your gym visit.");
               return;
             }
+            setSelectedDate(dateToMark);
             setDateToMark(null);
             router.refresh();
           });
         }}
         title="Log gym visit?"
-        description={dateToMark ? `Log a gym visit for ${dayFormatter.format(new Date(`${dateToMark}T00:00:00Z`))}?` : ""}
+        description={dateToMark ? `Log a gym visit for ${dayFormatter.format(parseDate(dateToMark))}?` : ""}
         confirmText="Log gym visit"
         confirmLoadingText="Logging…"
         isLoading={isMarking}

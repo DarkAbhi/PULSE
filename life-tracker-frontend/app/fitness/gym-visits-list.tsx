@@ -1,5 +1,6 @@
 import { PulseCardLink } from "@/app/components/design-system/pulse-card";
-import { ChevronRight } from "lucide-react";
+import { Clock } from "lucide-react";
+import styles from "./fitness.module.css";
 
 export type WorkoutGroup = {
   date: string;
@@ -7,30 +8,37 @@ export type WorkoutGroup = {
   workouts: { id: number; time_label: string }[];
 };
 
-interface GymVisitsListProps {
-  groups: WorkoutGroup[];
-  hideDate?: boolean;
-}
+const monthFormatter = new Intl.DateTimeFormat("en-IN", { month: "short", timeZone: "UTC" });
+const dateFormatter = new Intl.DateTimeFormat("en-IN", {
+  weekday: "short", day: "numeric", month: "short", timeZone: "UTC",
+});
 
-export default function GymVisitsList({ groups, hideDate = false }: GymVisitsListProps) {
+export default function GymVisitsList({ groups }: { groups: WorkoutGroup[] }) {
   return (
-    <ul className="space-y-2">
-      {groups.flatMap((group) =>
-        group.workouts.map((visit) => (
-          <li key={visit.id}>
+    <ul className={styles.recentGrid}>
+      {groups.flatMap((group) => {
+        const date = new Date(`${group.date}T00:00:00Z`);
+        return group.workouts.map((visit) => (
+          <li key={visit.id} className="min-w-0">
             <PulseCardLink
-              className="flex min-h-12 items-center justify-between gap-3 px-4 py-2.5 text-sm hover:bg-secondary"
+              className={`${styles.surface} ${styles.workoutCard}`}
               href={`/fitness/${visit.id}`}
             >
-              <span>
-                <span className="block font-semibold">{hideDate ? visit.time_label : group.date_label}</span>
-                <span className="block text-xs text-muted-foreground">{hideDate ? "View workout" : visit.time_label}</span>
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-action" aria-hidden="true" />
+              <div aria-hidden="true" className={styles.dateBadge}>
+                <span className={styles.dateBadgeDay}>{date.getUTCDate()}</span>
+                <span className={styles.dateBadgeMonth}>{monthFormatter.format(date)}</span>
+              </div>
+              <div className="min-w-0">
+                <h3 className={styles.workoutTitle}>Gym visit</h3>
+                <time dateTime={group.date} aria-label={group.date_label} className={styles.workoutDate}>{dateFormatter.format(date)}</time>
+                <span className={styles.timeChip}>
+                  <Clock size={15} className="shrink-0" aria-hidden="true" />{visit.time_label}
+                </span>
+              </div>
             </PulseCardLink>
           </li>
-        )),
-      )}
+        ));
+      })}
     </ul>
   );
 }

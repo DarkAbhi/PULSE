@@ -28,6 +28,7 @@ import AccountsTab from "./components/AccountsTab";
 import TabNavigation, { HorizonTab } from "./components/TabNavigation";
 import HeaderMetrics from "./components/HeaderMetrics";
 import OverviewTab from "./components/OverviewTab";
+import BudgetsTab from "./components/BudgetsTab";
 import TransactionsTab from "./components/TransactionsTab";
 import SubscriptionsTab from "./components/SubscriptionsTab";
 import FixedObligationsTab from "./components/FixedObligationsTab";
@@ -870,8 +871,14 @@ export default function FinancialHorizonClient({
         {activeTab === "accounts" && <AccountsTab currency={summary.currency} />}
         {activeTab === "overview" && (
           <OverviewTab
-            summary={summary}
+            currency={summary.currency}
             uncommittedPool={uncommittedPool}
+          />
+        )}
+
+        {activeTab === "budgets" && (
+          <BudgetsTab
+            summary={summary}
             onOpenAddBudget={handleOpenAddBudgetForm}
             onOpenEditBudget={handleOpenEditBudgetForm}
             onConfirmDeleteBudget={setBudgetToDelete}

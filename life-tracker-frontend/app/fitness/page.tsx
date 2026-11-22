@@ -1,6 +1,7 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
 import BackLink from "@/app/components/design-system/back-link";
+import frame from "@/app/components/design-system/page-frame.module.css";
 import FitnessCalendar, { type FitnessOverview } from "./fitness-calendar";
 
 export const metadata = {
@@ -11,7 +12,7 @@ const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
   "http://localhost:8080";
 
-export default async function GymVisitsPage() {
+export default async function FitnessPage() {
   // Validate session on the server
   const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
   if (!sessionResponse.ok) {
@@ -35,19 +36,17 @@ export default async function GymVisitsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-10 sm:py-10 lg:px-16">
-      <div className="mx-auto max-w-6xl">
+    <main className={frame.page}>
+      <div className={frame.content}>
         <BackLink href="/dashboard">Dashboard</BackLink>
-        <h1 className="mt-3 text-3xl sm:mt-5 font-bold tracking-tight text-foreground sm:text-4xl">
-          Fitness
-        </h1>
-        <div className="mt-5 sm:mt-8">
-          {error ? (
-            <p className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
-              {error}
-            </p>
-          ) : (
-            overview && <FitnessCalendar overview={overview} />
+        <div className="mt-3">
+          {overview ? <FitnessCalendar overview={overview} /> : (
+            <>
+              <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">Fitness</h1>
+              <p className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            </>
           )}
         </div>
       </div>

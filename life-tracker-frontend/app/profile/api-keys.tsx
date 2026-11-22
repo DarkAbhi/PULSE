@@ -139,7 +139,7 @@ export default function APIKeys() {
             <div className="mt-6">
               <label htmlFor="created-api-key" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your API key</label>
               <div className="flex gap-2">
-                <input ref={tokenInput} id="created-api-key" readOnly value={token} onFocus={(event) => event.target.select()} className="min-w-0 flex-1 rounded-xl bg-secondary px-3 py-2 font-mono text-xs text-foreground" />
+                <input ref={tokenInput} id="created-api-key" readOnly value={token} onFocus={(event) => event.target.select()} className="min-w-0 flex-1 rounded-xl bg-secondary px-3 py-2 text-xs text-foreground" />
                 <Button type="button" variant="secondary" size="sm" aria-label="Copy API key" onClick={copyKey}><Copy className="h-4 w-4" /></Button>
               </div>
               <DialogActions><DialogAction type="button" onClick={closeDialog}>Done</DialogAction></DialogActions>

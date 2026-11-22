@@ -144,7 +144,7 @@ export default function CategoryDialog({
                 onChange={(e) => setCatColor(e.target.value)}
                 className="h-10 w-16 cursor-pointer rounded-lg bg-secondary p-1"
               />
-              <span className="text-sm font-mono text-muted-foreground">{catColor}</span>
+              <span className="text-sm text-muted-foreground">{catColor}</span>
             </div>
           </div>
 

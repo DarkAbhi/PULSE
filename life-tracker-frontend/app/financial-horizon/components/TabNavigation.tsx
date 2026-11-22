@@ -2,9 +2,9 @@
 
 import Button from "@/app/components/design-system/button";
 
-import { LayoutDashboard, Receipt, Calendar, CreditCard, ShoppingBag, Landmark } from "lucide-react";
+import { LayoutDashboard, Target, Receipt, Calendar, CreditCard, ShoppingBag, Landmark } from "lucide-react";
 
-export type HorizonTab = "overview" | "transactions" | "subscriptions" | "fixed" | "planner" | "accounts";
+export type HorizonTab = "overview" | "budgets" | "transactions" | "subscriptions" | "fixed" | "planner" | "accounts";
 
 interface TabNavigationProps {
   activeTab: HorizonTab;
@@ -20,6 +20,11 @@ export default function TabNavigation({
       id: "overview" as HorizonTab,
       label: "Overview",
       icon: LayoutDashboard,
+    },
+    {
+      id: "budgets" as HorizonTab,
+      label: "Budgets",
+      icon: Target,
     },
     {
       id: "transactions" as HorizonTab,

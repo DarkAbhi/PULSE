@@ -32,7 +32,7 @@ export default function BudgetsTab({
   const money = (amount: number) => formatMoney(amount, summary.currency);
 
   return (
-    <section className="space-y-5">
+    <section className={`${theme.budgets} space-y-5`}>
       <div className={theme.sectionHeader}>
         <div>
           <div className="flex flex-wrap items-center gap-2.5">

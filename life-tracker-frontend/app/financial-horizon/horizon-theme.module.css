@@ -487,10 +487,26 @@
   white-space: nowrap;
 }
 
+.budgets {
+  container: budgets / inline-size;
+}
+
 .budgetGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  grid-template-columns: minmax(0, 420px);
   gap: 20px;
+}
+
+@container budgets (width >= 740px) {
+  .budgetGrid {
+    grid-template-columns: repeat(2, minmax(0, 420px));
+  }
+}
+
+@container budgets (width >= 1120px) {
+  .budgetGrid {
+    grid-template-columns: repeat(3, minmax(0, 420px));
+  }
 }
 
 .budgetCard {

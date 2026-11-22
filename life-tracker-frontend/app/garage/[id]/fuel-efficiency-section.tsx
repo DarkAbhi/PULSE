@@ -1,8 +1,7 @@
-import PulseCard from "@/app/components/design-system/pulse-card";
-import { Gauge } from "lucide-react";
+import { Info } from "lucide-react";
 import { formatMoney } from "@/app/lib/currency.mjs";
-import { getUserCurrency } from "@/app/lib/user-currency";
-import { FuelEfficiencyStats } from "./types";
+import type { FuelEfficiencyStats } from "./types";
+import styles from "./vehicle-detail.module.css";
 
 const emptyStats: FuelEfficiencyStats = {
   total_cost: 0,
@@ -21,20 +20,18 @@ const formatNumber = (value: number | null, decimals: number) =>
         maximumFractionDigits: decimals,
       });
 
-export default async function FuelEfficiencySection({
-  stats,
+export default function FuelEfficiencySection({
+  stats, currency,
 }: {
   stats: Record<string, FuelEfficiencyStats>;
+  currency: string;
 }) {
-  const currency = await getUserCurrency();
   const entries = Object.entries(stats).sort(([a], [b]) => a.localeCompare(b));
   const groups = entries.length > 0 ? entries : [["", emptyStats] as const];
 
   return (
-    <PulseCard as="section" className="mt-4 px-4 py-5 sm:px-5" aria-labelledby="fuel-efficiency-heading">
-      <h3 id="fuel-efficiency-heading" className="flex items-center gap-2 font-semibold">
-        <Gauge className="size-5 text-action" aria-hidden="true" /> Fuel economy
-      </h3>
+    <section aria-labelledby="fuel-efficiency-heading" className={styles.section}>
+      <h3 id="fuel-efficiency-heading" className={styles.subheading}>Fuel economy</h3>
       {groups.map(([fuelType, summary]) => {
         const readings = [
           { label: "Average", value: formatNumber(summary.average_km_per_litre, 3), unit: "km/L" },
@@ -45,35 +42,34 @@ export default async function FuelEfficiencySection({
           { label: "Total spent", value: formatMoney(summary.total_cost, currency) },
         ];
         return (
-          <div className="mt-3" key={fuelType}>
+          <div className="grid gap-3" key={fuelType}>
             {fuelType && (
-              <h4 className="mb-2 text-sm font-semibold capitalize">{fuelType}</h4>
+              <h4 className={styles.label}>{fuelType}</h4>
             )}
-            <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-divider sm:grid-cols-3">
+            <dl className={styles.tiles}>
               {readings.map(({ label, value, unit }) => (
-                <div className={`min-w-0 rounded-lg px-3 py-2.5 ${label === "Average" ? "bg-accent text-accent-foreground" : "bg-card"}`} key={label}>
-                  <dt className={`text-xs ${label === "Average" ? "font-semibold" : "text-muted-foreground"}`}>{label}</dt>
-                  <dd className="mt-0.5 break-words text-lg font-semibold tabular-nums tracking-tight">
+                <div className={`${styles.card} ${styles.stat} grid content-start gap-2`} key={label}>
+                  <dt className={styles.label}>{label}</dt>
+                  <dd className={`${styles.metric} tabular-nums`}>
                     {value}
-                    {unit && value !== "—" && <span className="ml-1 text-xs font-normal tracking-normal">{unit}</span>}
+                    {unit && value !== "—" && <small>{unit}</small>}
                   </dd>
                 </div>
               ))}
             </dl>
-            {summary.average_km_per_litre === null && (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Add two full-tank entries{fuelType ? ` for ${fuelType}` : ""} with increasing odometer readings to calculate efficiency.
-              </p>
-            )}
           </div>
         );
       })}
-      <details className="mt-2 text-xs text-muted-foreground">
-        <summary className="w-fit cursor-pointer rounded py-2 font-medium text-action focus-visible:outline-2 focus-visible:outline-ring">
+      <div className={styles.note}>
+        <Info aria-hidden="true" />
+        <p>Add two full tank entries with increasing odometer readings to calculate efficiency.</p>
+      </div>
+      <details className={`${styles.muted} text-sm`}>
+        <summary className="w-fit cursor-pointer rounded py-2 font-bold underline focus-visible:outline-2 focus-visible:outline-ring">
           How fuel economy is calculated
         </summary>
         <p>Efficiency uses complete full-tank intervals, including partial fills. Missed fills reset the calculation. Average is weighted by fuel used, and latest is the most recent complete interval.</p>
       </details>
-    </PulseCard>
+    </section>
   );
 }

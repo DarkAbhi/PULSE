@@ -28,6 +28,9 @@ class SeedExportTest(unittest.TestCase):
         self.assertEqual(transform("vehicles", "vehicle_type", "text", "two_wheeler"), "two_wheeler")
         self.assertEqual(transform("vehicles", "kind", "text", "car"), "car")
         self.assertEqual(transform("vehicles", "catalog_id", "text", "car/honda/civic"), "car/honda/civic")
+        self.assertEqual(transform("meal_plans", "recipe_id", "text", "catalog-id"), r"\N")
+        self.assertEqual(transform("financial_horizon_transactions", "import_batch_id", "uuid", "private-id"), r"\N")
+        self.assertEqual(transform("financial_horizon_transactions", "source", "text", "statement"), "manual")
         self.assertEqual(transform("vehicles", "fuel_types", "ARRAY", "{cng,petrol}"), "{petrol}")
         self.assertEqual(transform("user_profiles", "timezone", "text", "Asia/Kolkata"), "UTC")
         self.assertEqual(transform("user_profiles", "currency", "text", "GBP"), "INR")
@@ -49,6 +52,10 @@ class SeedExportTest(unittest.TestCase):
         self.assertNotIn("private-hash", sql)
         for table in seed.EXCLUDED:
             self.assertNotIn(f"COPY public.{table} ", sql)
+        truncate = next(line for line in sql.splitlines() if line.startswith("TRUNCATE "))
+        for table in seed.RECIPE_CATALOG:
+            self.assertNotIn(f"public.{table}", truncate)
+            self.assertNotIn(f"NOT EXISTS (SELECT FROM public.{table})", sql)
         self.assertIn("BEGIN;", sql)
         self.assertIn("COMMIT;", sql)
         self.assertIn("LOCK TABLE", sql)

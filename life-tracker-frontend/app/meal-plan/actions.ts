@@ -20,6 +20,7 @@ export type MealPlan = {
   id: number;
   date: string;
   name: string;
+  recipe_id?: string;
   meal_time_id?: number;
   meal_time_name?: string;
   start_time?: string;
@@ -109,14 +110,14 @@ export async function getMealPlansAction(startDate?: string, endDate?: string, d
   }
 }
 
-export async function addMealPlanAction(date: string, name: string, mealTimeID?: number) {
+export async function addMealPlanAction(date: string, name: string, mealTimeID?: number, recipeID?: string) {
   try {
     const res = await apiFetch(`${apiBaseURL}/api/meal-plans`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ date, name, meal_time_id: mealTimeID ?? null }),
+      body: JSON.stringify({ date, name, meal_time_id: mealTimeID ?? null, recipe_id: recipeID }),
     });
 
     const body = await res.json().catch(() => ({}));
@@ -194,4 +195,23 @@ export async function updateMealPlanAction(
   } catch {
     return { ok: false, error: "Network error while updating meal." };
   }
+}
+
+export type RecipeSummary = {
+  id: string;
+  name: string;
+  dish_type: string;
+  is_ready_to_eat: boolean;
+  ready_in_minutes?: number;
+};
+
+export async function searchRecipesAction(search: string, page: number) {
+  const query = new URLSearchParams({ q: search, page: String(page) });
+  try {
+    const response = await apiFetch(`${apiBaseURL}/api/meal-recipes?${query}`, { cache: "no-store" });
+    if (response.ok) return await response.json() as { recipes: RecipeSummary[]; has_more: boolean };
+  } catch {
+    // Render the same retry state for both API and network errors.
+  }
+  return null;
 }

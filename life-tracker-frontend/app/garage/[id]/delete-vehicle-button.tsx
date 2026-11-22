@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { deleteVehicle } from "./actions";
+import styles from "./vehicle-detail.module.css";
 
 interface DeleteVehicleButtonProps {
   vehicleId: string;
@@ -38,11 +39,13 @@ export default function DeleteVehicleButton({
     <>
       <Button
         variant="destructive"
-        size="md"
+        size="lg"
+        className={`${styles.button} ${styles.dangerButton}`}
+        aria-haspopup="dialog"
         onClick={() => setIsConfirmingDelete(true)}
         type="button"
       >
-        <Trash2 className="h-4 w-4" /> Delete vehicle
+        <Trash2 className="size-4" aria-hidden="true" /> Delete vehicle
       </Button>
 
       <ConfirmationDialog

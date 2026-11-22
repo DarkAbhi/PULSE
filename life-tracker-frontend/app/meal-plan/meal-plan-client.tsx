@@ -6,7 +6,7 @@ import { isMealTimeEnabled, standardMealKind } from "./onboarding/questionnaire"
 
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
-import { dateKey, toDateTimeInput } from "@/app/lib/time-zone.mjs";
+import { dateKey } from "@/app/lib/time-zone.mjs";
 
 import { useState, useEffect, useTransition, useId, type ReactNode } from "react";
 import BackLink from "@/app/components/design-system/back-link";
@@ -32,11 +32,14 @@ import ConfirmationDialog from "@/app/components/design-system/confirmation-dial
 import {
   MealPlan,
   MealTime,
+  type RecipeSummary,
   addMealPlanAction,
   deleteMealPlanAction,
   getMealPlansAction,
   updateMealPlanConsumedAction,
 } from "./actions";
+import Button from "@/app/components/design-system/button";
+import { RecipePicker } from "./recipe-picker";
 import styles from "./meal-plan.module.css";
 
 interface MealPlanClientProps {
@@ -56,13 +59,12 @@ const standardSlotIcons = {
 const standardSlots = Object.keys(standardSlotIcons) as MealKind[];
 type CalendarSlot = MealKind | "custom";
 
-function MealSlotCard({ kind, icon, name, timeRange, usualTime, isNow, children, onAdd, addDisabled }: {
+function MealSlotCard({ kind, icon, name, timeRange, usualTime, children, onAdd, addDisabled }: {
   kind: CalendarSlot;
   icon: ReactNode;
   name: string;
   timeRange?: string;
   usualTime?: string;
-  isNow?: boolean;
   children: ReactNode;
   onAdd?: () => void;
   addDisabled?: boolean;
@@ -76,7 +78,6 @@ function MealSlotCard({ kind, icon, name, timeRange, usualTime, isNow, children,
           {timeRange && <p className={`${styles.muted} mt-1 text-sm font-semibold`}>{timeRange}</p>}
           {usualTime && <p className={`${styles.muted} mt-1 text-xs`}>Your usual time: {usualTime}</p>}
         </div>
-        {isNow && <span className={styles.now}>Now</span>}
       </div>
       {children}
       {onAdd && (
@@ -138,12 +139,10 @@ export default function MealPlanClient({
   const { timeZone } = useTimeZone();
   const [clock, setClock] = useState(() => ({
     today: initialTodayStr ?? dateKey(new Date(), timeZone),
-    time: "",
   }));
   useEffect(() => {
     const update = () => {
-      const [today, time] = toDateTimeInput(new Date(), timeZone).split("T");
-      setClock({ today, time });
+      setClock({ today: dateKey(new Date(), timeZone) });
     };
     update();
     const timer = window.setInterval(update, 60000);
@@ -161,6 +160,8 @@ export default function MealPlanClient({
   const [isAddMealOpen, setIsAddMealOpen] = useState(false);
   const [selectedMealTimeID, setSelectedMealTimeID] = useState<number | null>(null);
   const [mealName, setMealName] = useState("");
+  const [customMeal, setCustomMeal] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState<RecipeSummary | null>(null);
   const [mealModalError, setMealModalError] = useState("");
 
   const [mealToDelete, setMealToDelete] = useState<MealPlan | null>(null);
@@ -231,6 +232,8 @@ export default function MealPlanClient({
   // Open add meal modal, optionally preselecting a meal time slot
   const handleOpenAddMeal = (mealTimeID?: number) => {
     setMealName("");
+    setCustomMeal(false);
+    setSelectedRecipe(null);
     setMealModalError("");
     setSelectedMealTimeID(enabledMealTimes.find(time => time.id === mealTimeID)?.id ?? enabledMealTimes[0]?.id ?? null);
     setIsAddMealOpen(true);
@@ -245,8 +248,8 @@ export default function MealPlanClient({
   const handleSubmitAddMeal = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = mealName.trim();
-    if (!trimmed) {
-      setMealModalError("Please enter a meal name.");
+    if (customMeal ? !trimmed : !selectedRecipe) {
+      setMealModalError(customMeal ? "Please enter a meal name." : "Choose a recipe.");
       return;
     }
     if (!enabledMealTimes.some(time => time.id === selectedMealTimeID)) {
@@ -256,7 +259,9 @@ export default function MealPlanClient({
 
     startTransition(async () => {
       setMealModalError("");
-      const res = await addMealPlanAction(selectedDate, trimmed, selectedMealTimeID ?? undefined);
+      const res = await addMealPlanAction(
+        selectedDate, customMeal ? trimmed : "", selectedMealTimeID ?? undefined, customMeal ? undefined : selectedRecipe?.id,
+      );
       if (!res.ok || !res.meal) {
         setMealModalError(res.error ?? "Failed to add meal.");
         return;
@@ -443,7 +448,6 @@ export default function MealPlanClient({
                 const kind = standardMealKind(time);
                 const SlotIcon = kind ? standardSlotIcons[kind] : Clock;
                 const usualTime = preferences?.meals.find(meal => meal.kind === kind)?.usual_time;
-                const isNow = enabled && isToday && clock.time >= time.start_time.slice(0, 5) && clock.time < time.end_time.slice(0, 5);
 
                 return (
                   <MealSlotCard
@@ -453,7 +457,6 @@ export default function MealPlanClient({
                     icon={<SlotIcon className="size-6" />}
                     timeRange={`${formatTimeDisplay(time.start_time)} – ${formatTimeDisplay(time.end_time)}`}
                     usualTime={usualTime && formatTimeDisplay(usualTime)}
-                    isNow={isNow}
                     onAdd={enabled ? () => handleOpenAddMeal(time.id) : undefined}
                     addDisabled={isLoadingWeek}
                   >
@@ -509,24 +512,54 @@ export default function MealPlanClient({
               </div>
             )}
 
-            {/* Meal name Input */}
-            <div className="mb-4 space-y-1.5">
-              <label
-                htmlFor="meal-name-input"
-                className="block text-sm font-semibold text-foreground"
+            <div className="mb-4 flex flex-wrap gap-2" aria-label="Meal source" role="group">
+              <Button
+                type="button"
+                size="sm"
+                variant={customMeal ? "secondary" : "primary"}
+                aria-pressed={!customMeal}
+                disabled={isPending}
+                onClick={() => { setCustomMeal(false); setMealModalError(""); }}
               >
-                Meal name
-              </label>
-              <input
-                id="meal-name-input"
-                type="text"
-                autoFocus
-                value={mealName}
-                onChange={(e) => setMealName(e.target.value)}
-                placeholder="e.g. Scrambled eggs on toast"
-                className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
-              />
+                Recipe catalog
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={customMeal ? "primary" : "secondary"}
+                aria-pressed={customMeal}
+                disabled={isPending}
+                onClick={() => { setCustomMeal(true); setMealModalError(""); }}
+              >
+                Custom meal
+              </Button>
             </div>
+
+            <div className="mb-4" hidden={customMeal || !!selectedRecipe}>
+              <RecipePicker onSelect={setSelectedRecipe} />
+            </div>
+
+            {customMeal ? (
+              <div className="mb-4 space-y-1.5">
+                <label htmlFor="meal-name-input" className="block text-sm font-semibold">Meal name</label>
+                <input
+                  id="meal-name-input"
+                  type="text"
+                  autoFocus
+                  value={mealName}
+                  onChange={(e) => setMealName(e.target.value)}
+                  placeholder="e.g. Scrambled eggs on toast"
+                  className="min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+            ) : selectedRecipe && (
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <h3 className="text-base font-extrabold wrap-anywhere">{selectedRecipe.name}</h3>
+                <Button type="button" size="sm" variant="secondary" autoFocus disabled={isPending} onClick={() => setSelectedRecipe(null)}>
+                  Change
+                </Button>
+              </div>
+            )}
 
             {/* Meal Time Selector */}
             <div className="space-y-1.5 mb-4">
@@ -567,7 +600,7 @@ export default function MealPlanClient({
               <DialogAction
                 type="submit"
                 variant="primary"
-                disabled={isPending || !mealName.trim()}
+                disabled={isPending || (customMeal ? !mealName.trim() : !selectedRecipe)}
               >
                 {isPending ? (
                   <span className="flex items-center justify-center gap-2">

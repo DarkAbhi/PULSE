@@ -42,6 +42,7 @@ class SeedDatabaseTest(unittest.TestCase):
 
     def test_fresh_restore_repeated_restore_and_sequences(self):
         self.assertIn("Applied anonymized", self.restore().stdout)
+        self.assertEqual(self.run_psql("-c", "SELECT count(*) FROM catalog_recipes").stdout.strip(), "749")
         self.assertEqual(self.run_psql("-c", "SELECT timezone, currency FROM user_profiles WHERE user_id = 1").stdout.strip(), "UTC|INR")
         count = self.run_psql("-c", "SELECT count(*) FROM fitness_activity_rings").stdout
         self.assertGreater(int(count), 0)

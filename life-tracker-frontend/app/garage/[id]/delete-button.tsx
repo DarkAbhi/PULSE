@@ -6,6 +6,7 @@ import { useState, useEffect, useTransition } from "react";
 import { deleteAirFill, deleteFuelFill } from "./actions";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { Trash2 } from "lucide-react";
+import styles from "./vehicle-detail.module.css";
 
 interface DeleteButtonProps {
   vehicleId: string;
@@ -44,11 +45,16 @@ export default function DeleteButton({
 
   return (
     <>
-      <Button variant="destructive" size="sm"
+      <Button
+        variant="icon"
+        size="lg"
+        className={`${styles.iconButton} ${styles.delete}`}
         onClick={() => setIsOpen(true)}
         type="button"
+        aria-haspopup="dialog"
+        aria-label={kind === "air-fills" ? "Delete air fill" : "Delete fuel fill-up"}
       >
-        <Trash2 className="h-4 w-4" /> Delete
+        <Trash2 className="size-5" aria-hidden="true" />
       </Button>
 
       <ConfirmationDialog

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Pencil } from "lucide-react";
+import styles from "./workout-detail.module.css";
 import Button from "@/app/components/design-system/button";
 import AddExerciseForm from "./add-exercise-form";
 import type { SavedExercise } from "./actions";
@@ -17,10 +18,10 @@ export default function EditExerciseButton({ visitID, exercise }: { visitID: str
 
   return (
     <>
-      <Button ref={triggerRef} type="button" variant="secondary" size="lg"
+      <Button ref={triggerRef} type="button" variant="icon" size="lg" className={styles.iconButton}
         aria-haspopup="dialog" aria-label={`Edit ${exercise.name}`}
         onClick={() => setIsEditing(true)}>
-        <Pencil className="h-4 w-4" /> Edit
+        <Pencil size={19} aria-hidden="true" />
       </Button>
       {isEditing && <AddExerciseForm visitID={visitID} exercise={exercise} onClose={closeEditor} />}
     </>

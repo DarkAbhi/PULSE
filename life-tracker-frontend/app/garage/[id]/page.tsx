@@ -1,11 +1,11 @@
 import { apiFetch } from "@/app/lib/server-api";
-import PulseCard, { PulseCardLink } from "@/app/components/design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 import { getUserCurrency } from "@/app/lib/user-currency";
 import { formatMoney } from "@/app/lib/currency.mjs";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import BackLink from "@/app/components/design-system/back-link";
-import { VehicleHistoryData } from "./types";
+import type { AirFill, FuelFill, VehicleHistoryData } from "./types";
 import DeleteButton from "./delete-button";
 import DeleteVehicleButton from "./delete-vehicle-button";
 import EditFuelModal from "./edit-fuel-modal";
@@ -16,7 +16,10 @@ import FuelEfficiencySection from "./fuel-efficiency-section";
 import TirePressureCard from "./tire-pressure-card";
 import LocalDate from "@/app/components/local-date";
 import VehicleEditor from "../vehicle-editor";
-import { Bike, Bus, CarFront, ChevronRight, Fuel, Plus, ReceiptText, Truck, Wind } from "lucide-react";
+import { Bell, Bus, CarFront, Fuel, Motorbike, Pencil, Plus, Scooter, Truck, Van, Wrench } from "lucide-react";
+import frame from "@/app/components/design-system/page-frame.module.css";
+import garage from "../garage.module.css";
+import styles from "./vehicle-detail.module.css";
 
 export const metadata = { title: "Vehicle details | PULSE" };
 
@@ -94,204 +97,133 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
     : maintenance === "new" || editingMaintenanceRecord ? "maintenance"
     : vehicleTabs.find((item) => item.id === tab)?.id ?? "overview";
 
-  const VehicleIcon = data.kind === "motorcycle" || data.kind === "moped" ? Bike
+  const VehicleIcon = data.kind === "motorcycle" ? Motorbike
+    : data.kind === "moped" || data.kind === "scooter" ? Scooter
     : data.kind === "bus" ? Bus
-    : data.kind === "truck" || data.kind === "van" ? Truck
+    : data.kind === "van" ? Van
+    : data.kind === "truck" ? Truck
     : CarFront;
+  const formatFuel = (fuel: string) => fuel === "lpg" || fuel === "cng" ? fuel.toUpperCase() : fuel;
   const specs = [
-    { label: "Type", value: data.kind === "unknown" ? "" : data.kind },
+    { label: "Type", value: data.kind === "unknown" ? "" : data.kind, capitalize: true },
     { label: "Make", value: data.make_name },
     { label: "Model", value: data.model_name },
-    { label: "Fuel", value: data.fuel_types.map((fuel) => fuel === "lpg" || fuel === "cng" ? fuel.toUpperCase() : fuel).join(" + ") },
+    { label: "Fuel type", value: data.fuel_types.map(formatFuel).join(" + "), capitalize: true },
   ];
+  const detailHref = `/garage/${id}`;
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
-      <div className="mx-auto max-w-5xl">
-        <BackLink href="/garage">Garage</BackLink>
+    <main className={`${frame.page} ${styles.page}`}>
+      <div className={`${frame.content} ${styles.content}`}>
+        <BackLink href="/garage" className={styles.back}>Garage</BackLink>
 
-        <PulseCard as="section" aria-labelledby="vehicle-title" className="mt-3 bg-secondary px-5 py-6 sm:px-8 sm:py-8">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-4">
-              <span className="grid size-14 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground sm:size-20">
-                <VehicleIcon className="size-8 sm:size-11" strokeWidth={1.4} aria-hidden="true" />
-              </span>
-              <h1 id="vehicle-title" className="min-w-0 break-words text-3xl font-bold tracking-tight sm:text-5xl">{data.vehicle_name}</h1>
-            </div>
-            <VehicleEditor key={`${data.catalog_id}/${data.vehicle_name}/${data.kind}/${data.make_name}/${data.model_name}/${data.fuel_types.join()}`} vehicle={{ id, name: data.vehicle_name, kind: data.kind, catalog_id: data.catalog_id, make_name: data.make_name, model_name: data.model_name, fuel_types: data.fuel_types }} />
+        <section aria-labelledby="vehicle-title" className={styles.hero}>
+          <div className={styles.heroDecoration} aria-hidden="true">
+            <VehicleIcon className={styles.watermark} strokeWidth={1} />
           </div>
-          <dl className="mt-6 grid grid-cols-2 gap-4 border-t border-divider pt-5 sm:grid-cols-4">
-            {specs.map(({ label, value }) => (
-              <div key={label} className="min-w-0">
-                <dt className="text-xs text-muted-foreground">{label}</dt>
-                <dd className={`mt-1 break-words text-sm font-semibold ${label === "Type" || label === "Fuel" ? "capitalize" : ""}`}>{value || "Not selected"}</dd>
+          <div className={styles.identity}>
+            <span className={styles.glyph} aria-hidden="true"><VehicleIcon strokeWidth={1.8} /></span>
+            <div className="min-w-0 flex-1">
+              <h1 id="vehicle-title" className={styles.title}>{data.vehicle_name}</h1>
+              <div className="mt-2.5 flex flex-wrap gap-2 capitalize">
+                {data.kind !== "unknown" && <span className={styles.tag}>{data.kind}</span>}
+                {data.fuel_types.map((fuel) => (
+                  <span key={fuel} className={styles.tag}>
+                    <span aria-hidden="true" data-fuel={fuel} className={garage.fuelDot} />
+                    {formatFuel(fuel)}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <VehicleEditor
+              key={JSON.stringify([data.catalog_id, data.vehicle_name, data.kind, data.make_name, data.model_name, data.fuel_types])}
+              triggerClassName={`${styles.button} ${styles.heroButton}`}
+              vehicle={{ id, name: data.vehicle_name, kind: data.kind, catalog_id: data.catalog_id, make_name: data.make_name, model_name: data.model_name, fuel_types: data.fuel_types }}
+            />
+          </div>
+          <dl className={styles.specs}>
+            {specs.map(({ label, value, capitalize }) => (
+              <div key={label}>
+                <dt>{label}</dt>
+                <dd className={capitalize && value ? "capitalize" : undefined}>{value || "Not selected"}</dd>
               </div>
             ))}
           </dl>
           {data.kind === "unknown" && (
-            <p className="mt-4 text-sm text-muted-foreground">Use Edit vehicle to choose a vehicle type or link a catalog model.</p>
+            <p className="relative text-sm">Use Edit vehicle to choose a vehicle type or link a catalog model.</p>
           )}
-        </PulseCard>
+        </section>
 
-        <nav aria-label="Vehicle sections" className="mt-4 grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1 sm:grid-cols-4">
+        <nav aria-label="Vehicle sections" className={styles.tabs}>
           {vehicleTabs.map(({ id: tabId, label }) => (
             <Link
               key={tabId}
-              href={tabId === "overview" ? `/garage/${id}` : `/garage/${id}?tab=${tabId}`}
+              href={tabId === "overview" ? detailHref : `${detailHref}?tab=${tabId}`}
               scroll={false}
               aria-current={activeTab === tabId ? "page" : undefined}
-              className="flex min-h-11 items-center justify-center rounded-lg px-2 py-2 text-center text-sm font-semibold text-muted-foreground hover:bg-card/60 focus-visible:outline-2 focus-visible:outline-ring aria-[current=page]:bg-card aria-[current=page]:text-action aria-[current=page]:shadow-xs"
             >
               {label}
             </Link>
           ))}
         </nav>
 
-        {activeTab === "overview" && (
-          <div className="mt-6">
-            {data.coming_up?.length ? (
-              <ComingUp items={data.coming_up} vehicleId={id} />
-            ) : (
-              <PulseCard as="section" className="p-5 sm:p-6" aria-labelledby="coming-up-heading">
-                <h2 id="coming-up-heading" className="text-xl font-semibold">Coming up</h2>
-                <p className="mt-2 text-sm text-muted-foreground">No upcoming reminders for this vehicle.</p>
-                <Link href={`/garage/${id}/reminders`} className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-action underline">
-                  Reminder settings
-                </Link>
-              </PulseCard>
-            )}
-          </div>
-        )}
+        {activeTab === "overview" && <ComingUp items={data.coming_up ?? []} vehicleId={id} />}
 
         {activeTab === "fuel" && (
-          <section id="fuel" aria-labelledby="fuel-heading" className="mt-6 min-w-0">
-            <h2 id="fuel-heading" className="flex items-center gap-2 text-xl font-semibold">
-              <Fuel className="size-5 text-action" aria-hidden="true" /> Fuel
-            </h2>
-            <FuelEfficiencySection stats={data.fuel_efficiency} />
-            <h3 className="mt-5 font-semibold">Fuel fill-ups</h3>
-            <PulseCard className="mt-2 divide-y divide-divider px-4 sm:px-5">
-              {data.fuel_fillups.length === 0 ? (
-                <p className="py-4 text-sm text-muted-foreground">No fuel entries yet.</p>
-              ) : (
-                data.fuel_fillups.map((fill) => (
-                  <article className="py-3" key={fill.id}>
-                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                      <div className="flex min-w-0 items-center gap-2.5">
-                        <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent text-accent-foreground">
-                          <Fuel className="size-4" aria-hidden="true" />
-                        </span>
-                        <div className="min-w-0">
-                          <p className="break-words text-sm font-semibold">
-                            {fill.station_name || <LocalDate dateString={fill.filled_at} />}
-                          </p>
-                          <p className="text-xs tabular-nums text-muted-foreground">
-                            {fill.odometer_km.toLocaleString("en-IN")} km
-                            {fill.station_name && <> · <LocalDate dateString={fill.filled_at} /></>}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="flex items-center gap-3">
-                        <Link
-                          className="rounded px-1 py-2 text-sm font-semibold text-action hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-                          href={`/garage/${id}?edit=${fill.id}`}
-                        >
-                          Edit
-                        </Link>
-                        <DeleteButton
-                          vehicleId={id}
-                          recordId={fill.id}
-                          kind="fuel-fillups"
-                        />
-                      </span>
-                    </div>
-                    <ul aria-label="Fuel items" className="mt-2 space-y-1 pl-[2.625rem]">
-                      {fill.items.map((item, index) => (
-                        <li className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 text-sm" key={index}>
-                          <span className="font-medium capitalize">{item.fuel_type}</span>
-                          <span className="tabular-nums text-muted-foreground">{item.quantity} L</span>
-                          <span className="border-l border-divider pl-2.5 font-medium tabular-nums text-action">
-                            {formatMoney(item.total_cost, currency)}
-                          </span>
-                          <span className="text-xs capitalize text-muted-foreground">{item.fill_type}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </article>
-                ))
-              )}
-            </PulseCard>
+          <section id="fuel" aria-labelledby="fuel-heading" className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2 id="fuel-heading"><Fuel className="size-6" aria-hidden="true" /> Fuel</h2>
+            </div>
+            <FuelEfficiencySection stats={data.fuel_efficiency} currency={currency} />
+            <FuelHistory fills={data.fuel_fillups} vehicleId={id} currency={currency} />
           </section>
         )}
 
         {activeTab === "tires" && (
-          <section id="tires-air" aria-labelledby="tires-heading" className="mt-6 min-w-0">
-            <h2 id="tires-heading" className="flex items-center gap-2 text-xl font-semibold">
-              <Wind className="size-5 text-action" aria-hidden="true" /> Tires & air
-            </h2>
-            <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:grid-rows-[auto_1fr]">
-              <TirePressureCard
-                frontTirePressurePillion={data.front_tire_pressure_pillion}
-                frontTirePressureSolo={data.front_tire_pressure_solo}
-                rearTirePressurePillion={data.rear_tire_pressure_pillion}
-                rearTirePressureSolo={data.rear_tire_pressure_solo}
-                vehicleId={id}
-              />
-              <PulseCard as="section" aria-labelledby="air-fill-history-heading" className="min-w-0 p-4 sm:p-5 lg:col-start-2 lg:row-start-2">
-                <h3 id="air-fill-history-heading" className="font-semibold">Air fill history</h3>
-                {data.air_fills.length === 0 ? (
-                  <p className="mt-2 text-sm text-muted-foreground">Record an air fill to start your history.</p>
-                ) : (
-                  <ul className="mt-3 divide-y divide-divider border-t border-divider">
-                    {data.air_fills.map((fill) => (
-                      <li className="flex items-center justify-between gap-3 py-2.5 text-sm" key={fill.id}>
-                        <div className="min-w-0">
-                          <div className="font-medium"><LocalDate dateString={fill.filled_at} /></div>
-                          {fill.odometer_km != null && (
-                            <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
-                              {fill.odometer_km.toLocaleString("en-IN")} km
-                            </p>
-                          )}
-                        </div>
-                        <DeleteButton vehicleId={id} recordId={fill.id} kind="air-fills" />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </PulseCard>
-            </div>
-          </section>
+          <TirePressureCard
+            frontTirePressurePillion={data.front_tire_pressure_pillion}
+            frontTirePressureSolo={data.front_tire_pressure_solo}
+            rearTirePressurePillion={data.rear_tire_pressure_pillion}
+            rearTirePressureSolo={data.rear_tire_pressure_solo}
+            vehicleId={id}
+          >
+            <AirFillHistory fills={data.air_fills} vehicleId={id} />
+          </TirePressureCard>
         )}
 
         {activeTab === "maintenance" && (
-          <section id="maintenance" aria-labelledby="maintenance-heading" className="mt-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 id="maintenance-heading" className="flex items-center gap-2 text-xl font-semibold">
-                <ReceiptText className="size-5 text-action" aria-hidden="true" /> Maintenance & expenses
-              </h2>
-              <Link className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" href={`/garage/${id}?maintenance=new`}>
+          <section id="maintenance" aria-labelledby="maintenance-heading" className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <h2 id="maintenance-heading"><Wrench className="size-6" aria-hidden="true" /> Maintenance &amp; expenses</h2>
+              <Link className={`${styles.button} ${styles.primary}`} href={`${detailHref}?maintenance=new`}>
                 <Plus className="size-4" aria-hidden="true" /> Add record
               </Link>
             </div>
-            <PulseCardLink href={`/garage/${id}/reminders`} className="mt-4 flex items-center justify-between gap-4 p-4 sm:px-5">
-              <span>
-                <span className="block font-semibold">Reminder settings</span>
-                <span className="mt-1 block text-sm text-muted-foreground">Set intervals for engine oil, tire pressure and general service.</span>
-              </span>
-              <ChevronRight className="size-4 shrink-0 text-action" aria-hidden="true" />
-            </PulseCardLink>
-            <div className="mt-4 space-y-3">
-              <MaintenanceHistory records={data.maintenance_records} vehicleId={id} currency={currency} />
-            </div>
+            <MaintenanceHistory records={data.maintenance_records} vehicleId={id} currency={currency} />
           </section>
         )}
 
-        <footer className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-divider py-5">
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
-            <span>Vehicle data by <a className="text-action underline" href="https://vehiclesdb.com">VehiclesDB</a></span>
-            <Link className="text-action underline" href="/vehicle-data">Sources and credits</Link>
+        {(activeTab === "overview" || activeTab === "maintenance") && (
+          <section aria-labelledby="reminders-heading" className={`${styles.card} flex flex-wrap items-center justify-between gap-4`}>
+            <div>
+              <h2 id="reminders-heading" className={`${styles.subheading} flex items-center gap-2`}><Bell className="size-5" aria-hidden="true" /> Reminders</h2>
+              <p className={`${styles.muted} mt-1 text-sm`}>Set intervals for engine oil, tire pressure and general service.</p>
+            </div>
+            <Link className={`${styles.button} ${styles.secondary}`} href={`${detailHref}/reminders`}>Reminder settings</Link>
+          </section>
+        )}
+
+        <section aria-labelledby="delete-vehicle-heading" className={`${styles.card} ${styles.dangerCard} flex flex-wrap items-center justify-between gap-4`}>
+          <div>
+            <h2 id="delete-vehicle-heading" className={`${styles.subheading} ${styles.dangerText}`}>Delete vehicle</h2>
+            <p className={`${styles.muted} mt-1 text-sm`}>Permanently removes this vehicle and its fuel, air fill and maintenance history.</p>
           </div>
           <DeleteVehicleButton vehicleId={id} vehicleName={data.vehicle_name} />
+        </section>
+
+        <footer className={`${styles.muted} flex flex-wrap gap-x-4 gap-y-2 text-xs`}>
+          <span>Vehicle data by <a className="underline" href="https://vehiclesdb.com">VehiclesDB</a></span>
+          <Link className="underline" href="/vehicle-data">Sources and credits</Link>
         </footer>
       </div>
       {editingFill && <EditFuelModal vehicleId={id} fill={editingFill} />}
@@ -299,4 +231,75 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
       {editingMaintenanceRecord && <MaintenanceRecordModal vehicleId={id} record={editingMaintenanceRecord} />}
     </main>
   );
+}
+
+function FuelHistory({ fills, vehicleId, currency }: { fills: FuelFill[]; vehicleId: string; currency: string }) {
+  return (
+    <section aria-labelledby="fuel-history-heading">
+      <h3 id="fuel-history-heading" className={`${styles.subheading} mb-3`}>Fuel fill-ups</h3>
+      {fills.length === 0 ? <p className={styles.empty}>No fuel entries yet.</p> : (
+        <div className={`${styles.recordList} ${styles.fuelHistory}`}>
+          <div className={styles.rowHeader} aria-hidden="true">
+            <span>Fill-up</span><span>Odometer</span>
+            <div className={styles.fuelItems}><span>Fuel</span><span>Quantity</span><span>Amount</span></div>
+            <span className={styles.rowActions} />
+          </div>
+          <ul aria-labelledby="fuel-history-heading">
+            {fills.map((fill) => (
+              <li key={fill.id} className={styles.row}>
+                <div className={styles.rowMain}>
+                  <p className="font-bold">{fill.station_name || <LocalDate dateString={fill.filled_at} />}</p>
+                  {fill.station_name && <p className={`${styles.muted} text-sm`}><LocalDate dateString={fill.filled_at} /></p>}
+                </div>
+                <div className="tabular-nums"><CellLabel>Odometer</CellLabel>{fill.odometer_km.toLocaleString("en-IN")} km</div>
+                <div className={`${styles.fuelGroup} flex flex-col gap-3`} role="group" aria-label="Fuel items">
+                  {fill.items.map((item, index) => (
+                    <div className={styles.fuelItems} key={index}>
+                      <div><p className="font-semibold capitalize">{item.fuel_type}</p><p className={`${styles.muted} text-xs capitalize`}>{item.fill_type}</p></div>
+                      <div className="tabular-nums"><CellLabel>Quantity</CellLabel>{item.quantity} L</div>
+                      <div className="font-extrabold tabular-nums"><CellLabel>Amount</CellLabel>{formatMoney(item.total_cost, currency)}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.rowActions}>
+                  <Link className={styles.iconButton} aria-label="Edit fuel fill-up" href={`/garage/${vehicleId}?edit=${fill.id}`}>
+                    <Pencil className="size-5" aria-hidden="true" />
+                  </Link>
+                  <DeleteButton vehicleId={vehicleId} recordId={fill.id} kind="fuel-fillups" />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AirFillHistory({ fills, vehicleId }: { fills: AirFill[]; vehicleId: string }) {
+  return (
+    <section aria-labelledby="air-fill-history-heading" className={`${styles.recordList} ${styles.airHistory}`}>
+      <h3 id="air-fill-history-heading" className={`${styles.subheading} px-[var(--detail-pad)] pt-[var(--detail-pad)] pb-3`}>Air fill history</h3>
+      {fills.length === 0 ? (
+        <p className={`${styles.muted} px-[var(--detail-pad)] pb-[var(--detail-pad)] text-sm`}>Record an air fill to start your history.</p>
+      ) : (
+        <>
+          <div className={styles.rowHeader} aria-hidden="true"><span>Date</span><span>Odometer</span><span className={styles.rowActions} /></div>
+          <ul aria-labelledby="air-fill-history-heading">
+            {fills.map((fill) => (
+              <li key={fill.id} className={styles.row}>
+                <div className="font-bold"><LocalDate dateString={fill.filled_at} /></div>
+                <div className="tabular-nums"><CellLabel>Odometer</CellLabel>{fill.odometer_km == null ? "—" : `${fill.odometer_km.toLocaleString("en-IN")} km`}</div>
+                <div className={styles.rowActions}><DeleteButton vehicleId={vehicleId} recordId={fill.id} kind="air-fills" /></div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
+function CellLabel({ children }: { children: string }) {
+  return <span className={`${styles.label} ${styles.cellLabel} sr-only block`}>{children}</span>;
 }

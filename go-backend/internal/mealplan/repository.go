@@ -40,6 +40,7 @@ type planRow struct {
 	ID           int64
 	Date         string
 	Name         string
+	RecipeID     *string
 	MealTimeID   sql.NullInt64
 	MealTimeName sql.NullString
 	StartTime    string
@@ -54,12 +55,16 @@ type ListRecentPlansRow = planRow
 type SetPlanConsumedRow = planRow
 type UpdatePlanRow = planRow
 
-func makePlanRow(id int64, date, name string, mealTimeID sql.NullInt64, mealTimeName sql.NullString, start, end string, isConsumed bool, created pgtype.Timestamptz) planRow {
-	return planRow{ID: id, Date: date, Name: name, MealTimeID: mealTimeID, MealTimeName: mealTimeName, StartTime: start, EndTime: end, IsConsumed: isConsumed, CreatedAt: created.Time}
+func makePlanRow(id int64, date, name string, mealTimeID sql.NullInt64, mealTimeName sql.NullString, start, end string, isConsumed bool, created pgtype.Timestamptz, recipeID pgtype.Text) planRow {
+	row := planRow{ID: id, Date: date, Name: name, MealTimeID: mealTimeID, MealTimeName: mealTimeName, StartTime: start, EndTime: end, IsConsumed: isConsumed, CreatedAt: created.Time}
+	if recipeID.Valid {
+		row.RecipeID = &recipeID.String
+	}
+	return row
 }
 func (r *Repository) CreatePlan(ctx context.Context, arg CreatePlanParams) (CreatePlanRow, error) {
 	row, err := r.queries.CreateMealPlan(ctx, arg)
-	return makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
+	return makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt, row.RecipeID), err
 }
 func (r *Repository) CreateTime(ctx context.Context, arg CreateTimeParams) (CreateTimeRow, error) {
 	return r.queries.CreateMealTime(ctx, arg)
@@ -86,7 +91,7 @@ func (r *Repository) ListPlansByDate(ctx context.Context, arg ListPlansByDatePar
 	}
 	out := make([]ListPlansByDateRow, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
+		out = append(out, makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt, row.RecipeID))
 	}
 	return out, nil
 }
@@ -97,7 +102,7 @@ func (r *Repository) ListPlansByRange(ctx context.Context, arg ListPlansByRangeP
 	}
 	out := make([]ListPlansByRangeRow, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
+		out = append(out, makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt, row.RecipeID))
 	}
 	return out, nil
 }
@@ -111,15 +116,15 @@ func (r *Repository) ListRecentPlans(ctx context.Context, userID int64) ([]ListR
 	}
 	out := make([]ListRecentPlansRow, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
+		out = append(out, makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt, row.RecipeID))
 	}
 	return out, nil
 }
 func (r *Repository) SetPlanConsumed(ctx context.Context, arg SetPlanConsumedParams) (SetPlanConsumedRow, error) {
 	row, err := r.queries.SetMealPlanConsumed(ctx, arg)
-	return makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
+	return makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt, row.RecipeID), err
 }
 func (r *Repository) UpdatePlan(ctx context.Context, arg UpdatePlanParams) (UpdatePlanRow, error) {
 	row, err := r.queries.UpdateMealPlan(ctx, arg)
-	return makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), err
+	return makePlanRow(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt, row.RecipeID), err
 }

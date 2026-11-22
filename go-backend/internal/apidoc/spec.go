@@ -542,6 +542,7 @@ func operation19() {}
 
 // operation20 documents POST /api/meal-plans.
 // @Summary Create meal plan
+// @Description Supply a custom name or a recipe_id. When recipe_id is supplied, Pulse uses the catalog name.
 // @Tags meal plans
 // @Accept json
 // @Produce json
@@ -549,6 +550,7 @@ func operation19() {}
 // @Security SessionBearer
 // @Success 201 {object} mealplan.PlanDTO
 // @Failure 400 {object} Error
+// @Failure 404 {object} Error
 // @Failure 401 {object} Error
 // @Failure 500 {object} Error
 // @Router /api/meal-plans [post]

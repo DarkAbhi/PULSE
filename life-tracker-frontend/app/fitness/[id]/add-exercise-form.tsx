@@ -1,14 +1,13 @@
 "use client";
 
-import PulseCard from "@/app/components/design-system/pulse-card";
-
 import Button from "@/app/components/design-system/button";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
-import { useEffect, useId, useRef, useState, useTransition } from "react";
+import { createContext, useContext, useEffect, useId, useRef, useState, useTransition, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { addExercise, updateExercise, searchExercises, type CatalogSearch, type SavedExercise } from "./actions";
+import styles from "./workout-detail.module.css";
 
 type ExerciseSet = {
   reps: string;
@@ -19,13 +18,33 @@ function newSet(): ExerciseSet {
   return { reps: "", weight: "" };
 }
 
-const addExerciseNameID = "add-exercise-name";
+const OpenExerciseForm = createContext<(trigger: HTMLButtonElement) => void>(() => {});
 
-export function AddExerciseShortcut() {
+export function AddExerciseProvider({ visitID, children }: { visitID: string; children: ReactNode }) {
+  const [trigger, setTrigger] = useState<HTMLButtonElement | null>(null);
+
   return (
-    <Button type="button" variant="soft" size="lg" className="mt-4 lg:hidden"
-      icon={<Plus aria-hidden="true" className="h-4 w-4" />}
-      onClick={() => document.getElementById(addExerciseNameID)?.focus()}>
+    <OpenExerciseForm.Provider value={setTrigger}>
+      {children}
+      {trigger && (
+        <AddExerciseForm visitID={visitID} onClose={() => {
+          setTrigger(null);
+          requestAnimationFrame(() => {
+            (trigger.isConnected ? trigger : document.getElementById("exercises-heading"))?.focus();
+          });
+        }} />
+      )}
+    </OpenExerciseForm.Provider>
+  );
+}
+
+export function AddExerciseButton() {
+  const openForm = useContext(OpenExerciseForm);
+
+  return (
+    <Button type="button" className={`${styles.pill} ${styles.primary}`}
+      aria-haspopup="dialog" icon={<Plus size={20} aria-hidden="true" />}
+      onClick={(event) => openForm(event.currentTarget)}>
       Add exercise
     </Button>
   );
@@ -34,14 +53,15 @@ export function AddExerciseShortcut() {
 interface AddExerciseFormProps {
   visitID: string;
   exercise?: SavedExercise;
-  onClose?: () => void;
+  onClose: () => void;
 }
 
 export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerciseFormProps) {
-  const editFieldID = useId();
-  const fieldID = exercise ? editFieldID : addExerciseNameID;
+  const fieldID = useId();
   const titleID = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const refocusName = useRef(false);
   const [exerciseName, setExerciseName] = useState(exercise?.name ?? "");
   const [searchRequest, setSearchRequest] = useState<{ name: string } | null>(() => {
     const name = exercise?.name.trim();
@@ -78,6 +98,13 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
     return () => { cancelled = true; clearTimeout(timer); };
   }, [searchRequest]);
 
+  useEffect(() => {
+    if (!isPending && refocusName.current) {
+      refocusName.current = false;
+      nameRef.current?.focus();
+    }
+  }, [isPending]);
+
   function changeName(value: string, resetMatch = false) {
     setExerciseName(value);
     setRememberAlias(false);
@@ -111,7 +138,10 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
 
   function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isPending || searching) return;
     setError("");
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const addAnother = !exercise && submitter?.getAttribute("data-save-another") === "true";
 
     const payloadSets = sets.map((set) => ({
       reps: Number(set.reps),
@@ -125,10 +155,12 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
         : await addExercise(visitID, exerciseName, payloadSets, catalogID, rememberAlias);
       if (!res.ok) {
         setError(res.error ?? "We couldn't save that exercise.");
-      } else {
-        if (exercise) { onClose?.(); return; }
+      } else if (addAnother) {
+        refocusName.current = true;
         changeName("", true);
         setSets([newSet()]);
+      } else {
+        onClose();
       }
     });
   }
@@ -136,7 +168,7 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
   function handleDialogKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     if (event.key === "Escape" && !isPending) {
       event.preventDefault();
-      onClose?.();
+      onClose();
     }
 
     if (event.key !== "Tab") return;
@@ -146,6 +178,10 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
       (!(control instanceof HTMLInputElement) || control.type !== "radio" || control.checked));
     const first = controls[0];
     const last = controls.at(-1);
+    if (!first) {
+      event.preventDefault();
+      return;
+    }
 
     if (document.activeElement === event.currentTarget) {
       event.preventDefault();
@@ -161,6 +197,8 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
 
   const form = (
     <form className="mt-6 space-y-5" onSubmit={handleSave}>
+      {/* Implicit submission saves and closes, even when the footer offers both actions. */}
+      {!exercise && <button type="submit" hidden disabled={isPending || searching} />}
       <div>
         <label
           className="mb-2 block text-sm font-medium text-muted-foreground"
@@ -169,11 +207,13 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
           Exercise name
         </label>
         <input
-          className="w-full rounded-lg bg-secondary text-foreground px-4 py-3 transition"
+          className={styles.formField}
           id={fieldID}
+          ref={nameRef}
+          autoFocus={!exercise}
           maxLength={100}
           onChange={(event) => changeName(event.target.value)}
-          placeholder="e.g. Barbell squat"
+          placeholder="Search the library or type your own"
           required
           disabled={isPending}
           value={exerciseName}
@@ -244,60 +284,52 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
         </>}
       </div>
 
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-muted-foreground">Sets</legend>
+      <fieldset className="min-w-0 space-y-3">
+        <legend className={styles.setLegend}>Sets</legend>
+        <div className={`${styles.setEditorRow} ${styles.setEditorLabels}`} aria-hidden="true">
+          <span>Set</span><span>Reps</span><span>Weight (kg), optional</span>
+        </div>
         {sets.map((set, index) => (
-          <div
-            className="grid grid-cols-[auto_1fr_1fr] items-end gap-2"
-            key={index}
-          >
-            <span className="pb-3 text-sm font-semibold text-muted-foreground">
-              {index + 1}
-            </span>
-            <label className="text-xs font-medium text-muted-foreground">
-              Reps
-              <input
-                className="mt-1 w-full rounded-lg bg-secondary text-foreground px-3 py-2 text-sm"
-                min="1"
-                onChange={(event) =>
-                  updateSet(index, "reps", event.target.value)
-                }
-                required
-                disabled={isPending}
-                type="number"
-                value={set.reps}
-              />
-            </label>
-            <label className="text-xs font-medium text-muted-foreground">
-              Weight (kg)
-              <input
-                className="mt-1 w-full rounded-lg bg-secondary text-foreground px-3 py-2 text-sm"
-                min="0"
-                disabled={isPending}
-                onChange={(event) =>
-                  updateSet(index, "weight", event.target.value)
-                }
-                placeholder="Optional"
-                step="0.5"
-                type="number"
-                value={set.weight}
-              />
-            </label>
-            {exercise && sets.length > 1 && <Button type="button" variant="tertiary" size="sm"
-              disabled={isPending} className="col-span-3 justify-self-end"
-              onClick={() => setSets((current) => current.filter((_, i) => i !== index))}>
-              Remove set {index + 1}
-            </Button>}
+          <div className={styles.setEditorRow} key={index}>
+            <span className={styles.setNumber}>{index + 1}</span>
+            <input
+              aria-label={`Set ${index + 1} reps`}
+              className={styles.formField}
+              min="1"
+              onChange={(event) => updateSet(index, "reps", event.target.value)}
+              required
+              disabled={isPending}
+              type="number"
+              value={set.reps}
+            />
+            <input
+              aria-label={`Set ${index + 1} weight (kg)`}
+              className={styles.formField}
+              min="0"
+              disabled={isPending}
+              onChange={(event) => updateSet(index, "weight", event.target.value)}
+              step="any"
+              type="number"
+              value={set.weight}
+            />
+            {sets.length > 1 && (
+              <Button type="button" variant="icon" className={`${styles.iconButton} ${styles.deleteExercise}`}
+                aria-label={`Remove set ${index + 1}`} disabled={isPending}
+                onClick={() => setSets((current) => current.filter((_, i) => i !== index))}>
+                <Trash2 size={18} aria-hidden="true" />
+              </Button>
+            )}
           </div>
         ))}
-        <Button variant="tertiary" size="md"
-          icon={<Plus className="h-4 w-4" />}
+        <Button variant="secondary" className={`${styles.pill} ${styles.soft}`}
+          icon={<Plus size={18} aria-hidden="true" />}
           onClick={() => setSets((currentSets) => [...currentSets, newSet()])}
           type="button"
           disabled={isPending || sets.length >= 20}
         >
-          Add another set
+          Add set
         </Button>
+        <p className={styles.muted}>Leave the weight empty for a body weight exercise.</p>
       </fieldset>
 
       {error && (
@@ -305,51 +337,39 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
           {error}
         </p>
       )}
-      {exercise ? (
-        <DialogActions>
-          <DialogAction type="button" variant="secondary" disabled={isPending} onClick={onClose}>
-            Cancel
+      <DialogActions className={styles.formActions}>
+        <DialogAction type="button" variant="secondary" disabled={isPending} onClick={onClose}>
+          Cancel
+        </DialogAction>
+        {!exercise && (
+          <DialogAction variant="secondary" data-save-another="true" disabled={isPending || searching}>
+            Save and add another
           </DialogAction>
-          <DialogAction disabled={isPending || searching}>
-            {isPending ? "Saving exercise…" : "Save changes"}
-          </DialogAction>
-        </DialogActions>
-      ) : (
-        <Button variant="primary" size="lg" className="w-full"
-          disabled={isPending || searching} type="submit">
-          {isPending ? "Saving exercise…" : "Save exercise"}
-        </Button>
-      )}
+        )}
+        <DialogAction disabled={isPending || searching}>
+          {isPending ? "Saving exercise…" : exercise ? "Save changes" : "Save exercise"}
+        </DialogAction>
+      </DialogActions>
     </form>
   );
 
-  if (exercise) {
-    return createPortal(
-      <div ref={dialogRef} tabIndex={-1} onKeyDown={handleDialogKeyDown}>
-        <Dialog labelledBy={titleID} size="md"
-          onBackdropClick={(event) => {
-            if (event.target === event.currentTarget && !isPending) onClose?.();
-          }}>
-          <DialogHeader
-            id={titleID}
-            onClose={onClose}
-            closeDisabled={isPending}
-            closeLabel="Close exercise editor"
-            closeAutoFocus
-          >
-            Edit exercise
-          </DialogHeader>
-          {form}
-        </Dialog>
-      </div>,
-      document.body,
-    );
-  }
-
-  return (
-    <PulseCard as="aside" className="min-w-0 p-4 sm:p-8 lg:col-start-2 lg:row-start-1 lg:row-span-2">
-      <h2 className="text-xl font-semibold text-foreground">Add an exercise</h2>
-      {form}
-    </PulseCard>
+  return createPortal(
+    <div ref={dialogRef} tabIndex={-1} onKeyDown={handleDialogKeyDown}>
+      <Dialog labelledBy={titleID} size="lg" panelClassName={styles.palette}
+        onBackdropClick={(event) => {
+          if (event.target === event.currentTarget && !isPending) onClose();
+        }}>
+        <DialogHeader
+          id={titleID}
+          onClose={onClose}
+          closeDisabled={isPending}
+          closeAutoFocus={Boolean(exercise)}
+        >
+          {exercise ? "Edit exercise" : "Add exercise"}
+        </DialogHeader>
+        {form}
+      </Dialog>
+    </div>,
+    document.body,
   );
 }

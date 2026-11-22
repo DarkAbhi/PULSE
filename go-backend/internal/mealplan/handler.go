@@ -27,6 +27,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/meal-times", h.ListTimes)
 	r.Post("/meal-times", h.CreateTime)
 	r.Delete("/meal-times/{id}", h.DeleteTime)
+	r.Get("/meal-recipes", h.ListRecipes)
+	r.Get("/meal-recipes/{id}", h.GetRecipe)
 	r.Get("/meal-plans", h.ListPlans)
 	r.Post("/meal-plans", h.CreatePlan)
 	r.Patch("/meal-plans/{id}/consumed", h.UpdatePlanConsumed)
@@ -57,6 +59,8 @@ func writeError(w http.ResponseWriter, err error) {
 		webutil.BadRequest(w, "a meal time with this name already exists")
 	case errors.Is(err, ErrTimeNotFound):
 		webutil.BadRequest(w, "specified meal time id not found")
+	case errors.Is(err, ErrRecipeNotFound):
+		webutil.WriteJSON(w, http.StatusNotFound, map[string]string{"error": "recipe not found"})
 	case errors.Is(err, ErrPlanNotFound):
 		webutil.WriteJSON(w, http.StatusNotFound, map[string]string{"error": "meal not found"})
 	default:

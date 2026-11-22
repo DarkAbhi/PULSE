@@ -1,24 +1,70 @@
 "use client";
 
 import { useState } from "react";
-import PulseCard from "@/app/components/design-system/pulse-card";
+import { Search } from "lucide-react";
 import LocalDate from "@/app/components/local-date";
 import { formatMoney } from "@/app/lib/currency.mjs";
 import MaintenanceRecordActions from "./maintenance-record-actions";
-import { MaintenanceRecord } from "./types";
+import type { MaintenanceRecord } from "./types";
 import { workLabel } from "./maintenance-work-fields";
+import styles from "./vehicle-detail.module.css";
 
 export default function MaintenanceHistory({ records, vehicleId, currency }: { records: MaintenanceRecord[]; vehicleId: string; currency: string }) {
   const [query, setQuery] = useState("");
-  const matches = records.filter((r) => !query.trim() || r.actions?.some((a) => `${workLabel(a.component)} ${workLabel(a.action)} ${a.description}`.toLowerCase().includes(query.trim().toLowerCase())));
-  return <>
-    <label className="block text-sm font-medium">Search component or work<input className="mt-2 w-full rounded-lg bg-secondary px-3 py-2" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="e.g. clutch cable" /></label>
-    {matches.length === 0 && <PulseCard as="p" className="p-5 text-sm text-muted-foreground">{query ? "No matching maintenance records." : "No maintenance or expense records yet."}</PulseCard>}
-    {matches.map((record) => <PulseCard as="article" className="p-5" key={record.id}>
-      <div className="flex flex-wrap justify-between gap-3"><div><p className="font-semibold">{record.title}</p><p className="mt-1 text-sm text-muted-foreground"><span className="capitalize">{record.category}</span> · <LocalDate dateString={record.occurred_at} />{record.odometer_km != null ? ` · ${record.odometer_km} km` : ""}</p></div><div className="flex items-start gap-4"><p className="font-semibold">{formatMoney(record.amount, currency)}</p><MaintenanceRecordActions vehicleId={vehicleId} recordId={record.id} /></div></div>
-      {record.provider_name && <p className="mt-2 text-sm text-muted-foreground">{record.provider_name}</p>}
-      {record.notes && <p className="mt-2 text-sm text-muted-foreground">{record.notes}</p>}
-      {!!record.actions?.length && <ul className="mt-3 space-y-2 border-t border-divider pt-3" aria-label="Work performed">{record.actions.map((a) => <li key={`${a.component}:${a.action}`}><p className="text-sm font-medium">{workLabel(a.component)} · {workLabel(a.action)}</p>{a.description && <p className="text-sm text-muted-foreground">{a.description}</p>}</li>)}</ul>}
-    </PulseCard>)}
-  </>;
+  const term = query.trim().toLowerCase();
+  const matches = records.filter((record) => !term || record.title.toLowerCase().includes(term) ||
+    record.actions?.some((action) => `${workLabel(action.component)} ${workLabel(action.action)} ${action.description}`.toLowerCase().includes(term)));
+  const cellLabel = `${styles.label} ${styles.cellLabel} sr-only block`;
+
+  return (
+    <>
+      <label className={`${styles.search} relative block`}>
+        <span className="sr-only">Search maintenance records</span>
+        <Search className={`${styles.muted} pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2`} aria-hidden="true" />
+        <input type="search" className={styles.field} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search component or work…" />
+      </label>
+      {matches.length === 0 ? (
+        <p className={styles.empty}>{term ? "No matching maintenance records." : "No maintenance or expense records yet."}</p>
+      ) : (
+        <div className={`${styles.recordList} ${styles.maintenanceHistory}`}>
+          <div className={styles.rowHeader} aria-hidden="true">
+            <span>Work done</span><span>Category</span><span>Date and time</span><span>Odometer</span><span>Amount</span><span className={styles.rowActions} />
+          </div>
+          {matches.map((record) => (
+            <article key={record.id}>
+              <div className={styles.row}>
+                <div className={styles.rowMain}>
+                  <h3 className="font-bold">{record.title}</h3>
+                  {record.provider_name && <p className={`${styles.muted} mt-1 text-sm`}>{record.provider_name}</p>}
+                </div>
+                <div>
+                  <span className={cellLabel}>Category</span>
+                  <span className={`${styles.chip} capitalize`} data-category={record.category}>{record.category}</span>
+                </div>
+                <div className="text-sm tabular-nums"><span className={cellLabel}>Date and time</span><LocalDate dateString={record.occurred_at} /></div>
+                <div className="tabular-nums"><span className={cellLabel}>Odometer</span>{record.odometer_km == null ? "—" : `${record.odometer_km.toLocaleString("en-IN")} km`}</div>
+                <div className="font-extrabold tabular-nums"><span className={cellLabel}>Amount</span>{formatMoney(record.amount, currency)}</div>
+                <div className={styles.rowActions}><MaintenanceRecordActions vehicleId={vehicleId} recordId={record.id} /></div>
+              </div>
+              {(record.notes || !!record.actions?.length) && (
+                <div className={`${styles.recordDetails} grid gap-2 text-sm`}>
+                  {record.notes && <p className={`${styles.muted} whitespace-pre-wrap wrap-anywhere`}>{record.notes}</p>}
+                  {!!record.actions?.length && (
+                    <ul className="grid gap-2" aria-label="Work performed">
+                      {record.actions.map((action) => (
+                        <li key={`${action.component}:${action.action}`} className="wrap-anywhere">
+                          <p className="font-semibold">{workLabel(action.component)} · {workLabel(action.action)}</p>
+                          {action.description && <p className={styles.muted}>{action.description}</p>}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
+    </>
+  );
 }

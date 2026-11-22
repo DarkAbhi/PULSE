@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -31,24 +32,36 @@ func StartPostgresWithDSN(t *testing.T) (*sql.DB, string, func()) {
 	t.Helper()
 
 	ctx := context.Background()
-	req := testcontainers.ContainerRequest{
-		Image:        "postgres:17.6",
-		ExposedPorts: []string{"5432/tcp"},
-		Env: map[string]string{
-			"POSTGRES_PASSWORD": "pass",
-			"POSTGRES_USER":     "user",
-			"POSTGRES_DB":       "testdb",
+	req := testcontainers.GenericContainerRequest{
+		Started: true,
+		ContainerRequest: testcontainers.ContainerRequest{
+			Image:        "postgres:17.6",
+			ExposedPorts: []string{"5432/tcp"},
+			Env: map[string]string{
+				"POSTGRES_PASSWORD": "pass",
+				"POSTGRES_USER":     "user",
+				"POSTGRES_DB":       "testdb",
+			},
+			WaitingFor: wait.ForSQL("5432/tcp", "pgx", func(host string, port network.Port) string {
+				return fmt.Sprintf("postgres://user:pass@%s:%s/testdb?sslmode=disable", host, port.Port())
+			}).WithStartupTimeout(60 * time.Second),
 		},
-		WaitingFor: wait.ForSQL("5432/tcp", "pgx", func(host string, port network.Port) string {
-			return fmt.Sprintf("postgres://user:pass@%s:%s/testdb?sslmode=disable", host, port.Port())
-		}).WithStartupTimeout(60 * time.Second),
 	}
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: req,
-		Started:          true,
-	})
-	if err != nil {
-		t.Fatalf("container start: %v", err)
+	container, err := testcontainers.GenericContainer(ctx, req)
+	// Parallel Go packages share Ryuk. One package can find it after Docker
+	// creates it but before it starts, which Testcontainers v0.45.0 treats as fatal.
+	for retries := 0; err != nil; retries++ {
+		// Testcontainers may already have created PostgreSQL before connecting to Ryuk.
+		if cleanupErr := testcontainers.TerminateContainer(container); cleanupErr != nil {
+			t.Fatalf("container start: %v (cleanup: %v)", err, cleanupErr)
+		}
+		if retries == 3 ||
+			!strings.HasPrefix(err.Error(), "create container: reaper: from container ") ||
+			!strings.HasSuffix(err.Error(), `unexpected container status "created"`) {
+			t.Fatalf("container start: %v", err)
+		}
+		time.Sleep(500 * time.Millisecond)
+		container, err = testcontainers.GenericContainer(ctx, req)
 	}
 
 	host, _ := container.Host(ctx)

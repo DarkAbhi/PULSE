@@ -2,7 +2,6 @@
 package mealplan
 
 import (
-	"database/sql"
 	"errors"
 	"strings"
 	"time"
@@ -40,6 +39,7 @@ type PlanDTO struct {
 	ID           int64     `json:"id"`
 	Date         string    `json:"date"`
 	Name         string    `json:"name"`
+	RecipeID     *string   `json:"recipe_id,omitempty"`
 	MealTimeID   *int64    `json:"meal_time_id,omitempty"`
 	MealTimeName *string   `json:"meal_time_name,omitempty"`
 	StartTime    *string   `json:"start_time,omitempty"`
@@ -49,10 +49,11 @@ type PlanDTO struct {
 }
 
 type CreatePlanInput struct {
-	Date       string `json:"date"`
-	Name       string `json:"name"`
-	MealTimeID *int64 `json:"meal_time_id,omitempty"`
-	IsConsumed *bool  `json:"is_consumed,omitempty"`
+	Date       string  `json:"date"`
+	Name       string  `json:"name"`
+	RecipeID   *string `json:"recipe_id,omitempty"`
+	MealTimeID *int64  `json:"meal_time_id,omitempty"`
+	IsConsumed *bool   `json:"is_consumed,omitempty"`
 }
 
 type UpdatePlanConsumedInput struct {
@@ -84,8 +85,9 @@ func parseTimeFlexible(val string) (string, error) {
 	return "", errors.New("invalid time format, expected hh:mm")
 }
 
-func planDTO(id int64, date, name string, mealTimeID sql.NullInt64, mealTimeName sql.NullString, start, end string, isConsumed bool, created time.Time) PlanDTO {
-	item := PlanDTO{ID: id, Date: date, Name: name, IsConsumed: isConsumed, CreatedAt: created}
+func planDTO(row planRow) PlanDTO {
+	item := PlanDTO{ID: row.ID, Date: row.Date, Name: row.Name, RecipeID: row.RecipeID, IsConsumed: row.IsConsumed, CreatedAt: row.CreatedAt}
+	mealTimeID, mealTimeName, start, end := row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime
 	if mealTimeID.Valid {
 		item.MealTimeID = &mealTimeID.Int64
 	}

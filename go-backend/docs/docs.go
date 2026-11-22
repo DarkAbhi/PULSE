@@ -1952,7 +1952,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "meal-plan"
+                    "meal plans"
                 ],
                 "summary": "Read meal setup and preferences",
                 "parameters": [
@@ -1998,7 +1998,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "meal-plan"
+                    "meal plans"
                 ],
                 "summary": "Finish or skip meal setup",
                 "parameters": [
@@ -2122,6 +2122,7 @@ const docTemplate = `{
                         "SessionBearer": []
                     }
                 ],
+                "description": "Supply a custom name or a recipe_id. When recipe_id is supplied, Pulse uses the catalog name.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2158,6 +2159,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/apidoc.Error"
                         }
@@ -2443,7 +2450,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "meal-plan"
+                    "meal plans"
                 ],
                 "summary": "Update meal preferences after setup",
                 "parameters": [
@@ -2486,6 +2493,120 @@ const docTemplate = `{
                         "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/mealplan.OnboardingConflictResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/meal-recipes": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Searches names, aliases, dish types, categories, tags, collections and meal times.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meal plans"
+                ],
+                "summary": "Browse and search the recipe catalog",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Literal search text, at most 100 characters",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number, starting at 1",
+                        "name": "page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/mealplan.RecipePage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/meal-recipes/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meal plans"
+                ],
+                "summary": "Get a recipe and its ingredients, instructions and classifications",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Catalog recipe ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/mealplan.RecipeDetail"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
                         }
                     },
                     "500": {
@@ -6992,6 +7113,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "recipe_id": {
+                    "type": "string"
                 }
             }
         },
@@ -7151,8 +7275,101 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "recipe_id": {
+                    "type": "string"
+                },
                 "start_time": {
                     "type": "string"
+                }
+            }
+        },
+        "mealplan.RecipeDetail": {
+            "type": "object",
+            "properties": {
+                "alternate_names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "object"
+                },
+                "dish_type": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "ingredients": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                },
+                "is_ready_to_eat": {
+                    "type": "boolean"
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ready_in_minutes": {
+                    "type": "integer"
+                },
+                "related": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                },
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                }
+            }
+        },
+        "mealplan.RecipePage": {
+            "type": "object",
+            "properties": {
+                "has_more": {
+                    "type": "boolean"
+                },
+                "recipes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/mealplan.RecipeSummary"
+                    }
+                }
+            }
+        },
+        "mealplan.RecipeSummary": {
+            "type": "object",
+            "properties": {
+                "dish_type": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_ready_to_eat": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ready_in_minutes": {
+                    "type": "integer"
                 }
             }
         },

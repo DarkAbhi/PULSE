@@ -5,6 +5,14 @@ const states = new Map();
 const failures = new Map();
 const writes = new Map();
 const customTimes = new Map();
+const mealsByUser = new Map();
+const pongal = {
+  id: "fixture-pongal", name: "Ven Pongal", dish_type: "Rice", is_ready_to_eat: false, ready_in_minutes: 30,
+  description: "A South Indian breakfast made with rice and moong dal.", alternate_names: ["Khara Pongal"],
+  ingredients: [{ name: "Rice", quantity: 1, unit: "Cup", important: true }],
+  labels: [{ kind: "meal_time", name: "Breakfast" }],
+  steps: [{ id: "cook", name: "Cook the rice and dal", instructions: "Simmer the rice and dal until soft.", ingredients: [], equipment: [], type: "cook_method" }],
+};
 const accountsByUser = new Map();
 const horizonCategories = [
   { id: 1, name: "Test category", allows_subcategories: true, parent_id: null },
@@ -90,7 +98,24 @@ http.createServer(async (req, res) => {
     res.writeHead(204).end();
     return;
   }
-  if (url.pathname === "/api/meal-plans") return send(200, []);
+  if (url.pathname === "/api/meal-recipes") {
+    const term = (url.searchParams.get("q") ?? "").toLowerCase();
+    const matches = [pongal.name, ...pongal.alternate_names].some(name => name.toLowerCase().includes(term));
+    const { id, name, dish_type, is_ready_to_eat, ready_in_minutes } = pongal;
+    return send(200, { recipes: matches ? [{ id, name, dish_type, is_ready_to_eat, ready_in_minutes }] : [], has_more: false });
+  }
+  if (url.pathname === `/api/meal-recipes/${pongal.id}`) return send(200, pongal);
+  if (url.pathname === "/api/meal-plans") {
+    const meals = mealsByUser.get(token) ?? [];
+    if (req.method === "GET") return send(200, meals);
+    const time = times.find(item => item.id === body.meal_time_id);
+    const meal = {
+      ...body, name: body.recipe_id === pongal.id ? pongal.name : body.name, id: meals.length + 1,
+      meal_time_name: time?.name, is_consumed: false, created_at: new Date().toISOString(),
+    };
+    mealsByUser.set(token, [...meals, meal]);
+    return send(201, meal);
+  }
   if (url.pathname === "/api/meal-plan-onboarding" && req.method === "GET") {
     if (failures.get(token) === "read") return send(503, { error: "Unable to load preferences" });
     return send(200, states.get(token) ?? pending());

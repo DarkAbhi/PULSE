@@ -1071,6 +1071,8 @@ definitions:
         type: integer
       name:
         type: string
+      recipe_id:
+        type: string
     type: object
   mealplan.CreateTimeInput:
     properties:
@@ -1179,8 +1181,69 @@ definitions:
         type: string
       name:
         type: string
+      recipe_id:
+        type: string
       start_time:
         type: string
+    type: object
+  mealplan.RecipeDetail:
+    properties:
+      alternate_names:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      details:
+        type: object
+      dish_type:
+        type: string
+      id:
+        type: string
+      ingredients:
+        items:
+          type: object
+        type: array
+      is_ready_to_eat:
+        type: boolean
+      labels:
+        items:
+          type: object
+        type: array
+      name:
+        type: string
+      ready_in_minutes:
+        type: integer
+      related:
+        items:
+          type: object
+        type: array
+      steps:
+        items:
+          type: object
+        type: array
+    type: object
+  mealplan.RecipePage:
+    properties:
+      has_more:
+        type: boolean
+      recipes:
+        items:
+          $ref: '#/definitions/mealplan.RecipeSummary'
+        type: array
+    type: object
+  mealplan.RecipeSummary:
+    properties:
+      dish_type:
+        type: string
+      id:
+        type: string
+      is_ready_to_eat:
+        type: boolean
+      name:
+        type: string
+      ready_in_minutes:
+        type: integer
     type: object
   mealplan.TimeDTO:
     properties:
@@ -2539,7 +2602,7 @@ paths:
       - SessionBearer: []
       summary: Read meal setup and preferences
       tags:
-      - meal-plan
+      - meal plans
     put:
       consumes:
       - application/json
@@ -2583,7 +2646,7 @@ paths:
       - SessionBearer: []
       summary: Finish or skip meal setup
       tags:
-      - meal-plan
+      - meal plans
   /api/meal-plans:
     get:
       parameters:
@@ -2628,6 +2691,8 @@ paths:
     post:
       consumes:
       - application/json
+      description: Supply a custom name or a recipe_id. When recipe_id is supplied,
+        Pulse uses the catalog name.
       parameters:
       - description: Request body
         in: body
@@ -2648,6 +2713,10 @@ paths:
             $ref: '#/definitions/apidoc.Error'
         "401":
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/apidoc.Error'
         "500":
@@ -2867,7 +2936,80 @@ paths:
       - SessionBearer: []
       summary: Update meal preferences after setup
       tags:
-      - meal-plan
+      - meal plans
+  /api/meal-recipes:
+    get:
+      description: Searches names, aliases, dish types, categories, tags, collections
+        and meal times.
+      parameters:
+      - description: Literal search text, at most 100 characters
+        in: query
+        name: q
+        type: string
+      - description: Page number, starting at 1
+        in: query
+        name: page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/mealplan.RecipePage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Browse and search the recipe catalog
+      tags:
+      - meal plans
+  /api/meal-recipes/{id}:
+    get:
+      parameters:
+      - description: Catalog recipe ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/mealplan.RecipeDetail'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Get a recipe and its ingredients, instructions and classifications
+      tags:
+      - meal plans
   /api/meal-times:
     get:
       produces:

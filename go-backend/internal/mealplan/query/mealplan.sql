@@ -1,13 +1,13 @@
 -- name: CreateMealPlan :one
 WITH inserted AS (
-    INSERT INTO meal_plans (user_id, date, name, meal_time_id, start_time, end_time, is_consumed)
-    VALUES ($1, ($2::text)::date, $3, $4, NULLIF($5::text, '')::time, NULLIF($6::text, '')::time, $7)
-    RETURNING id, user_id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
+    INSERT INTO meal_plans (user_id, date, name, meal_time_id, start_time, end_time, is_consumed, recipe_id)
+    VALUES ($1, ($2::text)::date, $3, $4, NULLIF($5::text, '')::time, NULLIF($6::text, '')::time, $7, sqlc.narg('recipe_id'))
+    RETURNING id, user_id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at, recipe_id
 )
 SELECT i.id, TO_CHAR(i.date, 'YYYY-MM-DD') AS date, i.name, i.meal_time_id, mt.name AS meal_time_name,
        (COALESCE(TO_CHAR(COALESCE(i.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
        (COALESCE(TO_CHAR(COALESCE(i.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       i.is_consumed, i.created_at
+       i.is_consumed, i.created_at, i.recipe_id
 FROM inserted i LEFT JOIN meal_times mt ON i.meal_time_id = mt.id AND (mt.user_id=i.user_id OR (mt.user_id IS NULL AND mt.is_default));
 
 -- name: CreateMealTime :one
@@ -38,7 +38,7 @@ FROM meal_times WHERE id = $1 AND ((user_id IS NULL AND is_default) OR user_id =
 SELECT mp.id, TO_CHAR(mp.date, 'YYYY-MM-DD') AS date, mp.name, mp.meal_time_id, mt.name AS meal_time_name,
        (COALESCE(TO_CHAR(COALESCE(mp.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
        (COALESCE(TO_CHAR(COALESCE(mp.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       mp.is_consumed, mp.created_at
+       mp.is_consumed, mp.created_at, mp.recipe_id
 FROM meal_plans mp LEFT JOIN meal_times mt ON mp.meal_time_id = mt.id AND (mt.user_id=mp.user_id OR (mt.user_id IS NULL AND mt.is_default))
 WHERE mp.user_id = $1 AND mp.date = ($2::text)::date
 ORDER BY COALESCE(mp.start_time, mt.start_time) ASC NULLS LAST, mp.created_at ASC, mp.id ASC;
@@ -47,7 +47,7 @@ ORDER BY COALESCE(mp.start_time, mt.start_time) ASC NULLS LAST, mp.created_at AS
 SELECT mp.id, TO_CHAR(mp.date, 'YYYY-MM-DD') AS date, mp.name, mp.meal_time_id, mt.name AS meal_time_name,
        (COALESCE(TO_CHAR(COALESCE(mp.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
        (COALESCE(TO_CHAR(COALESCE(mp.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       mp.is_consumed, mp.created_at
+       mp.is_consumed, mp.created_at, mp.recipe_id
 FROM meal_plans mp LEFT JOIN meal_times mt ON mp.meal_time_id = mt.id AND (mt.user_id=mp.user_id OR (mt.user_id IS NULL AND mt.is_default))
 WHERE mp.user_id = $1 AND mp.date >= ($2::text)::date AND mp.date <= ($3::text)::date
 ORDER BY mp.date ASC, COALESCE(mp.start_time, mt.start_time) ASC NULLS LAST, mp.created_at ASC, mp.id ASC;
@@ -61,7 +61,7 @@ ORDER BY start_time ASC, id ASC;
 SELECT mp.id, TO_CHAR(mp.date, 'YYYY-MM-DD') AS date, mp.name, mp.meal_time_id, mt.name AS meal_time_name,
        (COALESCE(TO_CHAR(COALESCE(mp.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
        (COALESCE(TO_CHAR(COALESCE(mp.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       mp.is_consumed, mp.created_at
+       mp.is_consumed, mp.created_at, mp.recipe_id
 FROM meal_plans mp LEFT JOIN meal_times mt ON mp.meal_time_id = mt.id AND (mt.user_id=mp.user_id OR (mt.user_id IS NULL AND mt.is_default))
 WHERE mp.user_id = $1
 ORDER BY mp.date DESC, COALESCE(mp.start_time, mt.start_time) ASC NULLS LAST, mp.created_at ASC, mp.id ASC
@@ -71,12 +71,12 @@ LIMIT 100;
 WITH updated AS (
     UPDATE meal_plans SET is_consumed = $1, updated_at = CURRENT_TIMESTAMP
     WHERE meal_plans.id = $2 AND meal_plans.user_id = $3
-    RETURNING id, user_id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
+    RETURNING id, user_id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at, recipe_id
 )
 SELECT u.id, TO_CHAR(u.date, 'YYYY-MM-DD') AS date, u.name, u.meal_time_id, mt.name AS meal_time_name,
        (COALESCE(TO_CHAR(COALESCE(u.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
        (COALESCE(TO_CHAR(COALESCE(u.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       u.is_consumed, u.created_at
+       u.is_consumed, u.created_at, u.recipe_id
 FROM updated u LEFT JOIN meal_times mt ON u.meal_time_id = mt.id AND (mt.user_id=u.user_id OR (mt.user_id IS NULL AND mt.is_default));
 
 -- name: UpdateMealPlan :one
@@ -86,10 +86,10 @@ WITH updated AS (
         start_time = NULLIF($4::text, '')::time, end_time = NULLIF($5::text, '')::time,
         is_consumed = $6, updated_at = CURRENT_TIMESTAMP
     WHERE meal_plans.id = $7 AND meal_plans.user_id = $8
-    RETURNING id, user_id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at
+    RETURNING id, user_id, date, name, meal_time_id, start_time, end_time, is_consumed, created_at, recipe_id
 )
 SELECT u.id, TO_CHAR(u.date, 'YYYY-MM-DD') AS date, u.name, u.meal_time_id, mt.name AS meal_time_name,
        (COALESCE(TO_CHAR(COALESCE(u.start_time, mt.start_time), 'HH24:MI'), ''))::text AS start_time,
        (COALESCE(TO_CHAR(COALESCE(u.end_time, mt.end_time), 'HH24:MI'), ''))::text AS end_time,
-       u.is_consumed, u.created_at
+       u.is_consumed, u.created_at, u.recipe_id
 FROM updated u LEFT JOIN meal_times mt ON u.meal_time_id = mt.id AND (mt.user_id=u.user_id OR (mt.user_id IS NULL AND mt.is_default));

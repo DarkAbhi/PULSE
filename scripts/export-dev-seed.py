@@ -13,17 +13,23 @@ import uuid
 
 ROOT = Path(__file__).resolve().parent.parent
 PASSWORD_HASH = "$2y$12$bB7WwVq7nGJ4cfNTCX6kQODcNRLQvMjRhIFuH4Qv2.GAxlqNac4/S"
-EXCLUDED = {"schema_migrations", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports", "api_keys", "user_sessions",
+RECIPE_CATALOG = set("""catalog_recipes catalog_recipe_labels catalog_recipe_label_links
+catalog_ingredients catalog_recipe_steps catalog_recipe_step_links catalog_recipe_step_equipment
+catalog_recipe_ingredient_amounts catalog_step_ingredient_amounts catalog_recipe_links
+catalog_meal_templates catalog_meal_template_recipes""".split())
+PRIVATE_TABLES = set("""bank_accounts credit_cards financial_accounts fitness_sleep statement_import_batches
+statement_import_rows statement_import_structures statement_import_dedupe statement_category_rules""".split())
+EXCLUDED = RECIPE_CATALOG | PRIVATE_TABLES | {"schema_migrations", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports", "api_keys", "user_sessions",
             "vehicle_maintenance_attachments", "vehicle_maintenance_actions", "vehicle_maintenance_schedules",
             "meal_plan_onboarding", "meal_preferences", "meal_preference_times"}
-TABLES = set("""vehicle_catalog vehicle_catalog_imports api_keys exercise_aliases exercise_catalog
+TABLES = RECIPE_CATALOG | PRIVATE_TABLES | set("""vehicle_catalog vehicle_catalog_imports api_keys exercise_aliases exercise_catalog
 financial_horizon_budgets financial_horizon_categories financial_horizon_configs
 financial_horizon_deductions financial_horizon_subscriptions financial_horizon_transactions
 fitness_activity_rings fitness_workouts gym_exercise_sets gym_visit_exercises gym_visits
 meal_plan_onboarding meal_preferences meal_preference_times meal_plans meal_times next_month_purchases notifications schema_migrations
 users user_profiles user_sessions vehicle_air_fills vehicle_fuel_fillups vehicle_fuel_items
 vehicle_maintenance_actions vehicle_maintenance_schedules vehicle_maintenance_attachments vehicle_maintenance_records vehicles workout_activity_types""".split())
-BASELINE = {"users", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports", "schema_migrations",
+BASELINE = RECIPE_CATALOG | {"users", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports", "schema_migrations",
             "financial_horizon_categories", "meal_times"}
 ENUMS = {
     "billing_cycle": {"monthly", "yearly"}, "status": {"active", "paused", "cancelled"},
@@ -77,6 +83,13 @@ def anonymize(table, column, kind, value, row, offset, admin_id):
         return "{petrol}"
     if table == "vehicles" and column == "catalog_id":
         return value  # Public reference identity, not personal data.
+    if table == "meal_plans" and column == "recipe_id":
+        return r"\N"
+    if table == "financial_horizon_transactions":
+        if column == "source":
+            return "manual"
+        if column in {"account_id", "import_batch_id", "import_row_ordinal", "dedupe_hash"}:
+            return r"\N"
     if column == "password_hash":
         return PASSWORD_HASH
     if column == "username":
@@ -145,7 +158,9 @@ def anonymize(table, column, kind, value, row, offset, admin_id):
 def export(env):
     columns = json.loads(query("""SELECT json_agg(c) FROM (
         SELECT table_name, column_name, data_type FROM information_schema.columns
-        WHERE table_schema = 'public' ORDER BY table_name, ordinal_position) c""", env))
+        JOIN information_schema.tables USING (table_catalog, table_schema, table_name)
+        WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+        ORDER BY table_name, ordinal_position) c""", env))
     kinds = {(c["table_name"], c["column_name"]): c["data_type"] for c in columns}
     if {c["table_name"] for c in columns} != TABLES:
         raise ValueError("Schema tables changed; review the seed exporter before sharing data")
@@ -197,7 +212,7 @@ def export(env):
               f"'{PASSWORD_HASH}') AND (SELECT count(*) FROM users) = 1"
               " AND NOT EXISTS (SELECT FROM financial_horizon_categories WHERE user_id IS NOT NULL)"
               " AND NOT EXISTS (SELECT FROM meal_times WHERE user_id IS NOT NULL)")
-    truncate = ", ".join(f"public.{table}" for table in sorted(TABLES - {"schema_migrations", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports"}))
+    truncate = ", ".join(f"public.{table}" for table in sorted(TABLES - RECIPE_CATALOG - {"schema_migrations", "exercise_catalog", "vehicle_catalog", "vehicle_catalog_imports"}))
     header = f"""-- Anonymized development snapshot; regenerate with make dev-seed-export.
 -- Data values are fictional. Relationships and relative dates follow the source.
 \\set ON_ERROR_STOP on

@@ -127,7 +127,6 @@
 }
 
 .primaryAction,
-.now,
 .todayBadge {
   background: var(--meal-gradient);
   color: white;
@@ -265,19 +264,12 @@
   color: #3a2a00;
 }
 
-.now,
 .todayBadge {
   flex: none;
   padding: 3px 10px;
   border-radius: 999px;
   font-size: .75rem;
   font-weight: 750;
-}
-
-.now {
-  align-self: center;
-  margin-inline-start: auto;
-  animation: blink 2s ease-in-out infinite;
 }
 
 .slotAdd {
@@ -377,11 +369,36 @@
   to { transform: scale(1.5); opacity: 0; }
 }
 
-@keyframes blink {
-  50% { opacity: .72; }
+@media (prefers-reduced-motion: reduce) {
+  .plate svg { animation: none; }
+  .ripple { display: none; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .plate svg, .now { animation: none; }
-  .ripple { display: none; }
+.recipeResults {
+  max-height: 15rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--divider);
+  border-radius: 0.75rem;
+}
+
+.recipeResults li + li {
+  border-top: 1px solid var(--divider);
+}
+
+.recipeResult {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.625rem 0.75rem;
+  cursor: pointer;
+  text-align: start;
+}
+
+.recipeResult:hover,
+.recipeResult:focus-visible {
+  background: var(--secondary);
 }

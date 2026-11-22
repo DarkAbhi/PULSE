@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
+
+	"github.com/DarkAbhi/life-backend/internal/mealplan/query"
 )
 
 var ErrPlanNotFound = errors.New("mealplan: meal not found")
@@ -20,6 +23,9 @@ type ValidationError struct{ Message string }
 func (e ValidationError) Error() string { return e.Message }
 
 type store interface {
+	ListCatalogRecipes(context.Context, query.ListCatalogRecipesParams) ([]query.ListCatalogRecipesRow, error)
+	GetCatalogRecipe(context.Context, string) (query.GetCatalogRecipeRow, error)
+	GetCatalogRecipeName(context.Context, string) (string, error)
 	GetOnboarding(context.Context, int64) (OnboardingState, error)
 	ResolveOnboarding(context.Context, int64, OnboardingInput) (OnboardingState, error)
 	SavePreferences(context.Context, int64, MealPreferences) (OnboardingState, error)
@@ -121,7 +127,7 @@ func (s *Service) ListPlans(ctx context.Context, userID int64, date, startDate, 
 			return nil, fmt.Errorf("list meal plans by date: %w", err)
 		}
 		for _, row := range rows {
-			items = append(items, planDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
+			items = append(items, planDTO(row))
 		}
 	case startDate != "" && endDate != "":
 		if _, err := time.Parse("2006-01-02", startDate); err != nil {
@@ -135,7 +141,7 @@ func (s *Service) ListPlans(ctx context.Context, userID int64, date, startDate, 
 			return nil, fmt.Errorf("list meal plans by range: %w", err)
 		}
 		for _, row := range rows {
-			items = append(items, planDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
+			items = append(items, planDTO(row))
 		}
 	default:
 		rows, err := s.store.ListRecentPlans(ctx, userID)
@@ -143,7 +149,7 @@ func (s *Service) ListPlans(ctx context.Context, userID int64, date, startDate, 
 			return nil, fmt.Errorf("list recent meal plans: %w", err)
 		}
 		for _, row := range rows {
-			items = append(items, planDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt))
+			items = append(items, planDTO(row))
 		}
 	}
 	return items, nil
@@ -157,7 +163,7 @@ func (s *Service) CreatePlan(ctx context.Context, userID int64, in CreatePlanInp
 	if _, err := time.Parse("2006-01-02", in.Date); err != nil {
 		return PlanDTO{}, ValidationError{"invalid date format, expected yyyy-mm-dd"}
 	}
-	if in.Name == "" {
+	if in.RecipeID == nil && in.Name == "" {
 		return PlanDTO{}, ValidationError{"meal name cannot be empty"}
 	}
 	if in.MealTimeID == nil || *in.MealTimeID <= 0 {
@@ -171,13 +177,33 @@ func (s *Service) CreatePlan(ctx context.Context, userID int64, in CreatePlanInp
 	if err != nil {
 		return PlanDTO{}, fmt.Errorf("get meal time: %w", err)
 	}
+	var recipeID pgtype.Text
+	if in.RecipeID != nil {
+		id, err := validateRecipeID(*in.RecipeID)
+		if err != nil {
+			return PlanDTO{}, err
+		}
+		name, err := s.store.GetCatalogRecipeName(ctx, id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return PlanDTO{}, ErrRecipeNotFound
+		}
+		if err != nil {
+			return PlanDTO{}, fmt.Errorf("get recipe name: %w", err)
+		}
+		in.Name = name
+		recipeID = pgtype.Text{String: id, Valid: true}
+	}
 	start, end := rangeRow.StartTime, rangeRow.EndTime
 	isConsumed := in.IsConsumed != nil && *in.IsConsumed
-	row, err := s.store.CreatePlan(ctx, CreatePlanParams{UserID: userID, Column2: in.Date, Name: in.Name, MealTimeID: mtID, Column5: start, Column6: end, IsConsumed: isConsumed})
+	row, err := s.store.CreatePlan(ctx, CreatePlanParams{UserID: userID, Column2: in.Date, Name: in.Name, MealTimeID: mtID, Column5: start, Column6: end, IsConsumed: isConsumed, RecipeID: recipeID})
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" && pgErr.ConstraintName == "meal_plans_recipe_id_fkey" {
+			return PlanDTO{}, ErrRecipeNotFound
+		}
 		return PlanDTO{}, fmt.Errorf("create meal plan: %w", err)
 	}
-	return planDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), nil
+	return planDTO(row), nil
 }
 
 func (s *Service) DeletePlan(ctx context.Context, userID, id int64) error {
@@ -199,7 +225,7 @@ func (s *Service) SetConsumed(ctx context.Context, userID, id int64, isConsumed 
 	if err != nil {
 		return PlanDTO{}, fmt.Errorf("set meal consumed: %w", err)
 	}
-	return planDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), nil
+	return planDTO(row), nil
 }
 
 func (s *Service) UpdatePlan(ctx context.Context, userID, id int64, in UpdatePlanInput) (PlanDTO, error) {
@@ -247,5 +273,5 @@ func (s *Service) UpdatePlan(ctx context.Context, userID, id int64, in UpdatePla
 	if err != nil {
 		return PlanDTO{}, fmt.Errorf("update meal plan: %w", err)
 	}
-	return planDTO(row.ID, row.Date, row.Name, row.MealTimeID, row.MealTimeName, row.StartTime, row.EndTime, row.IsConsumed, row.CreatedAt), nil
+	return planDTO(row), nil
 }

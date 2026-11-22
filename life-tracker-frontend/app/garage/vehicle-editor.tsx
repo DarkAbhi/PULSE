@@ -196,7 +196,7 @@ export default function VehicleEditor({
         id={vehicle ? undefined : "add-vehicle-button"}
         variant={vehicle ? "secondary" : "primary"}
         className={triggerClassName}
-        icon={vehicle ? undefined : <Plus className="size-4" aria-hidden="true" />}
+        icon={vehicle ? <PencilLine className="size-4" aria-hidden="true" /> : <Plus className="size-4" aria-hidden="true" />}
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}

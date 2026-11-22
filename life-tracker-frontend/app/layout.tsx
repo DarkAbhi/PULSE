@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import CurrencyProvider from "./components/currency-provider";
@@ -7,13 +7,8 @@ import { getUserCurrency } from "./lib/user-currency";
 import TimeZoneProvider from "./components/time-zone-provider";
 import { getUserTimeZone } from "./lib/user-time-zone";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const bricolageGrotesque = Bricolage_Grotesque({
+  variable: "--font-bricolage-grotesque",
   subsets: ["latin"],
 });
 
@@ -32,10 +27,8 @@ export default async function RootLayout({
 }>) {
   const [timeZone, currency] = await Promise.all([getUserTimeZone(), getUserCurrency()]);
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" className={bricolageGrotesque.variable} suppressHydrationWarning>
+      <body className="antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -1,8 +1,8 @@
 "use client";
 
-import Button from "@/app/components/design-system/button";
-
-import { LayoutDashboard, Target, Receipt, Calendar, CreditCard, ShoppingBag, Landmark } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { Icon, type IconName } from "./HorizonIcon";
+import theme from "../horizon-theme.module.css";
 
 export type HorizonTab = "overview" | "budgets" | "transactions" | "subscriptions" | "fixed" | "planner" | "accounts";
 
@@ -15,62 +15,86 @@ export default function TabNavigation({
   activeTab,
   onTabChange,
 }: TabNavigationProps) {
-  const tabs = [
+  const navigationRef = useRef<HTMLElement>(null);
+  const activeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const navigation = navigationRef.current;
+    const button = activeButtonRef.current;
+    if (!navigation || !button) return;
+
+    function revealActiveTab() {
+      if (!navigation || !button || navigation.scrollHeight <= navigation.clientHeight) return;
+
+      const container = navigation.getBoundingClientRect();
+      const active = button.getBoundingClientRect();
+      const padding = parseFloat(getComputedStyle(navigation).paddingBlockStart);
+      const above = active.top - container.top - padding;
+      const below = active.bottom - container.bottom + padding;
+      if (above < 0) navigation.scrollTop += above;
+      else if (below > 0) navigation.scrollTop += below;
+    }
+
+    const observer = new ResizeObserver(revealActiveTab);
+    observer.observe(navigation);
+    return () => observer.disconnect();
+  }, [activeTab]);
+
+  const tabs: { id: HorizonTab; label: string; icon: IconName }[] = [
     {
-      id: "overview" as HorizonTab,
+      id: "overview",
       label: "Overview",
-      icon: LayoutDashboard,
+      icon: "grid",
     },
     {
-      id: "budgets" as HorizonTab,
+      id: "budgets",
       label: "Budgets",
-      icon: Target,
+      icon: "target",
     },
     {
-      id: "transactions" as HorizonTab,
+      id: "transactions",
       label: "Transactions",
-      icon: Receipt,
+      icon: "receipt",
     },
     {
-      id: "subscriptions" as HorizonTab,
+      id: "subscriptions",
       label: "Subscriptions",
-      icon: CreditCard,
+      icon: "card",
     },
     {
-      id: "fixed" as HorizonTab,
-      label: "Fixed Obligations",
-      icon: Calendar,
+      id: "fixed",
+      label: "Obligations",
+      icon: "calendar",
     },
     {
-      id: "planner" as HorizonTab,
-      label: "Planner & Future Horizon",
-      icon: ShoppingBag,
+      id: "planner",
+      label: "Planner",
+      icon: "bag",
     },
-    { id: "accounts" as HorizonTab, label: "Accounts", icon: Landmark },
+    { id: "accounts", label: "Accounts", icon: "bank" },
   ];
 
   return (
     <nav
+      ref={navigationRef}
       aria-label="Financial Horizon sections"
-      className="grid grid-cols-2 gap-1 rounded-2xl bg-card p-1.5 lg:flex"
+      className={`grid grid-cols-1 gap-1 p-2 max-sm:max-h-46 max-sm:overflow-y-auto max-sm:scroll-py-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-7 ${theme.tabs}`}
     >
-      {tabs.map(({ id, label, icon: Icon }) => {
+      {tabs.map(({ id, label, icon }) => {
         const isActive = activeTab === id;
 
         return (
-          <Button
+          <button
             key={id}
-            variant={isActive ? "primary" : "menuItem"}
-            size="lg"
+            ref={isActive ? activeButtonRef : undefined}
+            type="button"
             aria-current={isActive ? "true" : undefined}
             onClick={() => onTabChange(id)}
-            className="min-w-0 flex-auto text-left lg:w-auto"
+            className={theme.tab}
           >
-            <span className="flex w-full items-center gap-2 lg:justify-center">
-              <Icon aria-hidden="true" className="hidden h-4 w-4 shrink-0 min-[400px]:block" />
-              {label}
-            </span>
-          </Button>
+            <Icon name={icon} className="hidden size-5 min-[360px]:block" />
+            <span>{label}</span>
+          </button>
         );
       })}
     </nav>

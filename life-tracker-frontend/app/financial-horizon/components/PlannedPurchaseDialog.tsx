@@ -1,5 +1,6 @@
 "use client";
 
+import theme from "../horizon-theme.module.css";
 import { currencySymbol } from "@/app/lib/currency.mjs";
 
 import Button from "@/app/components/design-system/button";
@@ -87,7 +88,7 @@ export default function PlannedPurchaseDialog({
     <Dialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
-      panelClassName="scale-100 transition-all duration-200 sm:p-6"
+      panelClassName={`scale-100 transition-all duration-200 sm:p-6 ${theme.dialogPanel}`}
     >
         <div className="flex items-center justify-between border-b border-divider pb-4">
           <div className="flex items-center gap-2.5">
@@ -99,7 +100,7 @@ export default function PlannedPurchaseDialog({
             </h3>
           </div>
           <Button variant="icon"
-            onClick={onClose}
+            className={theme.iconAction} onClick={onClose}
             disabled={isPending}
             aria-label="Close"
           >
@@ -122,7 +123,7 @@ export default function PlannedPurchaseDialog({
               placeholder="e.g. Noise Cancelling Headphones"
               value={purchaseName}
               onChange={(e) => setPurchaseName(e.target.value)}
-              className="w-full rounded-xl bg-secondary px-3.5 py-2 text-sm text-foreground"
+              className={`w-full px-3.5 py-2 text-sm text-foreground ${theme.dialogField}`}
               autoFocus
             />
           </div>
@@ -137,7 +138,7 @@ export default function PlannedPurchaseDialog({
               placeholder="0.00"
               value={purchasePrice}
               onChange={(e) => setPurchasePrice(e.target.value)}
-              className="w-full rounded-xl bg-secondary px-3.5 py-2 text-sm text-foreground"
+              className={`w-full px-3.5 py-2 text-sm text-foreground ${theme.dialogField}`}
             />
           </div>
 
@@ -148,12 +149,12 @@ export default function PlannedPurchaseDialog({
               placeholder="https://..."
               value={purchaseURL}
               onChange={(e) => setPurchaseURL(e.target.value)}
-              className="w-full rounded-xl bg-secondary px-3.5 py-2 text-sm text-foreground"
+              className={`w-full px-3.5 py-2 text-sm text-foreground ${theme.dialogField}`}
             />
           </div>
 
           <DialogActions>
-            <DialogAction
+            <DialogAction className={theme.softAction}
               type="button"
               variant="secondary"
               onClick={onClose}
@@ -161,7 +162,7 @@ export default function PlannedPurchaseDialog({
             >
               Cancel
             </DialogAction>
-            <DialogAction
+            <DialogAction className={theme.primary}
               type="submit"
               disabled={isPending}
             >

@@ -1,5 +1,6 @@
 "use client";
 
+import theme from "./horizon-theme.module.css";
 import { currencySymbol } from "@/app/lib/currency.mjs";
 
 import Button from "@/app/components/design-system/button";
@@ -93,7 +94,7 @@ export default function BudgetDialog({
     <Dialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
-      panelClassName="scale-100 transition-all duration-200 sm:p-6"
+      panelClassName={`scale-100 transition-all duration-200 sm:p-6 ${theme.dialogPanel}`}
     >
         <div className="flex items-center justify-between border-b border-divider pb-4">
           <div className="flex items-center gap-2.5">
@@ -105,7 +106,7 @@ export default function BudgetDialog({
             </h2>
           </div>
           <Button variant="icon"
-            onClick={onClose}
+            className={theme.iconAction} onClick={onClose}
             disabled={isPending}
             aria-label="Close"
             title="Close dialog"
@@ -129,7 +130,7 @@ export default function BudgetDialog({
               placeholder="e.g. Housing & Utilities, Subscriptions, Shopping"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+              className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
             />
           </div>
 
@@ -145,12 +146,12 @@ export default function BudgetDialog({
               placeholder="0.00"
               value={allocatedAmount}
               onChange={(e) => setAllocatedAmount(e.target.value)}
-              className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+              className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
             />
           </div>
 
           <DialogActions className="border-t border-divider pt-4">
-            <DialogAction
+            <DialogAction className={theme.softAction}
               type="button"
               variant="secondary"
               disabled={isPending}
@@ -158,7 +159,7 @@ export default function BudgetDialog({
             >
               Cancel
             </DialogAction>
-            <DialogAction
+            <DialogAction className={theme.primary}
               type="submit"
               disabled={isPending}
             >

@@ -1,5 +1,6 @@
 "use client";
 
+import theme from "./horizon-theme.module.css";
 import { formatMoney } from "@/app/lib/currency.mjs";
 
 import { formatInstant } from "@/app/lib/time-zone.mjs";
@@ -93,12 +94,12 @@ export default function LinkSubscriptionPaymentDialog({
   };
 
   return (
-    <Dialog labelledBy={titleId} size="wide" onBackdropClick={(event) => {
+    <Dialog panelClassName={theme.dialogPanel} labelledBy={titleId} size="wide" onBackdropClick={(event) => {
       if (event.target === event.currentTarget && !saving) onClose();
     }}>
       <div className="flex items-center justify-between gap-3">
         <h2 id={titleId} className="text-xl font-bold text-foreground">Log payment for {subscription.name}</h2>
-        <Button variant="icon" onClick={onClose} disabled={saving} aria-label="Close"><X className="h-5 w-5" /></Button>
+        <Button variant="icon" className={theme.iconAction} onClick={onClose} disabled={saving} aria-label="Close"><X className="h-5 w-5" /></Button>
       </div>
       <p className="mt-2 text-sm text-muted-foreground">Select an existing debit transaction, including one imported from a statement.</p>
       <label className="mt-5 block text-xs font-semibold text-muted-foreground" htmlFor="payment-transaction-search">Search transactions</label>
@@ -108,7 +109,7 @@ export default function LinkSubscriptionPaymentDialog({
         value={search}
         onChange={(event) => { setSearch(event.target.value); setPage(1); setSelectedId(null); }}
         placeholder="Search by name or notes"
-        className="mt-1 w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+        className={`mt-1 w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
       />
       {error && <p className="mt-3 text-sm text-destructive" role="alert">{error}</p>}
       <div className="mt-4 max-h-72 space-y-2 overflow-y-auto" aria-busy={loading}>

@@ -6,8 +6,7 @@
   --color-divider: var(--divider);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-bricolage-grotesque);
   
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -251,8 +250,7 @@
     }
   }
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+    @apply bg-background font-sans text-foreground;
     transition: background-color 0.25s ease, color 0.25s ease;
   }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "./HorizonIcon";
 import Select from "@/app/components/design-system/select";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
@@ -10,26 +11,11 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import Button from "@/app/components/design-system/button";
+import theme from "../horizon-theme.module.css";
 
 import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
 import { useEffect, useId, useMemo } from "react";
-import {
-  Calendar,
-  Plus,
-  Edit2,
-  Trash2,
-  ToggleLeft,
-  ToggleRight,
-  Target,
-  Home,
-  TrendingUp,
-  Zap,
-  Tv,
-  CreditCard,
-  Receipt,
-  X,
-  ExternalLink,
-} from "lucide-react";
+import { Home, TrendingUp, Zap, Tv, CreditCard, Receipt, X } from "lucide-react";
 import { HorizonSummary, DeductionItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
 
 const CATEGORIES = [
@@ -167,19 +153,19 @@ export default function FixedObligationsTab({
   return (
     <section className="space-y-6">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-divider pb-4">
+      <div className={theme.sectionHeader}>
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Calendar className="h-5 w-5 text-action" />
-            <h2 className="text-xl font-bold text-foreground">Fixed Obligations & Subscriptions</h2>
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-action">
+            <Icon name="calendar" aria-hidden="true" className={`size-6 ${theme.sectionIcon}`} />
+            <h2 className={theme.sectionTitle}>Fixed Obligations & Subscriptions</h2>
+            <span className={theme.badge}>
               {totalActiveCount} Active
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-lavender/10 px-2.5 py-0.5 text-xs font-semibold text-foreground">
+            <span className={theme.badge}>
               {formatMoney(totalFixedCommitments, summary.currency)}/mo
             </span>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className={theme.sectionDescription}>
             Non-negotiable monthly expenses and active recurring subscriptions subtracted directly from your starting baseline income.
           </p>
         </div>
@@ -187,15 +173,17 @@ export default function FixedObligationsTab({
         <Button variant="primary" size="sm"
           onClick={onOpenAddDeduction}
           disabled={isPending}
-          className="shrink-0"
+          className={`${theme.primary} shrink-0`}
         >
-          <Plus className="h-4 w-4" /> Add Fixed Obligation
+          <Icon name="plus" className="h-4 w-4" /> Add Fixed Obligation
         </Button>
       </div>
 
       {/* Category Filter Pills */}
-      <div className="flex flex-wrap gap-2">
-        <Button variant={activeCategory === "all" ? "primary" : "secondary"} size="sm"
+      <div role="group" aria-label="Obligation category" className="inline-flex flex-wrap gap-0.5 rounded-full bg-(--horizon-chip) p-1">
+        <Button variant="secondary" size="sm"
+          className={theme.segment}
+          aria-pressed={activeCategory === "all"}
           onClick={() => setActiveCategory("all")}
         >
           All ({totalItemsCount})
@@ -205,7 +193,9 @@ export default function FixedObligationsTab({
           const subCount = cat.id === "subscription" ? activeSubscriptions.length : 0;
           const count = deductionCount + subCount;
           return (
-            <Button variant={activeCategory === cat.id ? "primary" : "secondary"} size="sm"
+            <Button variant="secondary" size="sm"
+              className={theme.segment}
+              aria-pressed={activeCategory === cat.id}
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
             >
@@ -219,7 +209,7 @@ export default function FixedObligationsTab({
         <Dialog
           labelledBy={titleId}
           size="md"
-          panelClassName="sm:p-6"
+          panelClassName={`sm:p-6 ${theme.dialogPanel}`}
           onBackdropClick={(event) => {
             if (event.target === event.currentTarget && !isPending) onCancelDeductionForm();
           }}
@@ -227,7 +217,7 @@ export default function FixedObligationsTab({
           <div className="flex items-center justify-between gap-3 border-b border-divider pb-4">
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-action">
-                <Calendar className="h-5 w-5" />
+                <Icon name="calendar" className="h-5 w-5" />
               </div>
               <h2 id={titleId} className="text-xl font-bold text-foreground">
                 {editingDeductionId !== null ? "Edit Fixed Obligation" : "Add Fixed Obligation"}
@@ -235,7 +225,7 @@ export default function FixedObligationsTab({
             </div>
             <Button
               variant="icon"
-              type="button"
+              className={theme.iconAction} type="button"
               onClick={onCancelDeductionForm}
               disabled={isPending}
               aria-label="Close"
@@ -260,7 +250,7 @@ export default function FixedObligationsTab({
                 placeholder="e.g. Apartment Rent, SIP"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl bg-secondary px-3 py-2 text-sm text-foreground"
+                className={`w-full px-3 py-2 text-sm text-foreground ${theme.dialogField}`}
               />
             </div>
 
@@ -270,7 +260,7 @@ export default function FixedObligationsTab({
                 id={`${titleId}-category`}
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full rounded-xl bg-secondary px-3 py-2 text-sm text-foreground"
+                className={`w-full px-3 py-2 text-sm text-foreground ${theme.dialogField}`}
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -291,7 +281,7 @@ export default function FixedObligationsTab({
                 placeholder="0.00"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-full rounded-xl bg-secondary px-3 py-2 text-sm text-foreground"
+                className={`w-full px-3 py-2 text-sm text-foreground ${theme.dialogField}`}
               />
             </div>
 
@@ -305,7 +295,7 @@ export default function FixedObligationsTab({
                 placeholder="e.g. 5"
                 value={dueDay}
                 onChange={(e) => setDueDay(e.target.value)}
-                className="w-full rounded-xl bg-secondary px-3 py-2 text-sm text-foreground"
+                className={`w-full px-3 py-2 text-sm text-foreground ${theme.dialogField}`}
               />
             </div>
 
@@ -315,7 +305,7 @@ export default function FixedObligationsTab({
                 id={`${titleId}-budget`}
                 value={selectedBudgetId ?? ""}
                 onChange={(e) => setSelectedBudgetId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className="w-full rounded-xl bg-secondary px-3 py-2 text-sm text-foreground"
+                className={`w-full px-3 py-2 text-sm text-foreground ${theme.dialogField}`}
               >
                 <option value="">-- No Budget Link --</option>
                 {(summary.budgets ?? []).map((b) => (
@@ -327,7 +317,7 @@ export default function FixedObligationsTab({
             </div>
 
             <DialogActions className="border-t border-divider pt-4 sm:col-span-2">
-              <DialogAction
+              <DialogAction className={theme.softAction}
                 variant="secondary"
                 type="button"
                 onClick={onCancelDeductionForm}
@@ -335,7 +325,7 @@ export default function FixedObligationsTab({
               >
                 Cancel
               </DialogAction>
-              <DialogAction type="submit" disabled={isPending}>
+              <DialogAction className={theme.primary} type="submit" disabled={isPending}>
                 {isPending ? "Saving…" : editingDeductionId !== null ? "Update Obligation" : "Save Obligation"}
               </DialogAction>
             </DialogActions>
@@ -345,17 +335,17 @@ export default function FixedObligationsTab({
 
       {/* Cards Grid */}
       {filteredDeductions.length === 0 && filteredSubscriptions.length === 0 ? (
-        <PulseCard className="p-10 text-center">
-          <Receipt className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
+        <PulseCard className={`${theme.empty} text-center`}>
+          <Icon name="receipt" className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
           <h3 className="mt-3 text-base font-semibold text-foreground">No fixed obligations found</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className={theme.sectionDescription}>
             Add your rent, SIP investments, bills, or debt EMIs to calculate your exact baseline.
           </p>
           <Button variant="primary" size="md"
             onClick={onOpenAddDeduction}
-            className="mt-4"
+            className={`${theme.primary} mt-4`}
           >
-            <Plus className="h-4 w-4" /> Add Obligation
+            <Icon name="plus" className="h-4 w-4" /> Add Obligation
           </Button>
         </PulseCard>
       ) : (
@@ -369,8 +359,8 @@ export default function FixedObligationsTab({
             return (
               <PulseCard
                 key={`deduction-${item.id}`}
-                className={`group relative p-5 ${
-                  item.is_active ? "" : "opacity-60 bg-secondary/20"
+                className={`group relative p-6 ${
+                  item.is_active ? "" : "opacity-60"
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -388,16 +378,15 @@ export default function FixedObligationsTab({
                     </div>
                   </div>
 
-                  <Button variant="icon" size="sm"
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={item.is_active}
+                    aria-label={`Activate ${item.name}`}
+                    className={theme.switch}
                     onClick={() => onToggleDeductionActive(item)}
                     title={item.is_active ? "Deactivate obligation" : "Activate obligation"}
-                  >
-                    {item.is_active ? (
-                      <ToggleRight className="h-6 w-6 text-success" />
-                    ) : (
-                      <ToggleLeft className="h-6 w-6 text-muted-foreground" />
-                    )}
-                  </Button>
+                  />
                 </div>
 
                 <div className="mt-4 flex items-baseline justify-between">
@@ -409,32 +398,34 @@ export default function FixedObligationsTab({
                   </div>
 
                   {item.due_day && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground bg-secondary/60 px-2 py-1 rounded-lg">
-                      <Calendar className="h-3 w-3" />
+                    <div className={theme.chip} data-tone="dim">
+                      <Icon name="calendar" className="h-3 w-3" />
                       <span>Due {formatOrdinalDay(item.due_day)}</span>
                     </div>
                   )}
                 </div>
 
                 {linkedBudget && (
-                  <div className="mt-3 flex items-center gap-1.5 text-xs text-action bg-primary/10 px-2.5 py-1 rounded-lg">
-                    <Target className="h-3.5 w-3.5" />
+                  <div className={`mt-3 ${theme.chip}`}>
+                    <Icon name="target" className="h-3.5 w-3.5" />
                     <span>Budget: <strong>{linkedBudget.name}</strong></span>
                   </div>
                 )}
 
-                <div className="mt-4 flex items-center justify-end gap-2 border-t border-divider/50 pt-3">
+                <div className="mt-4 flex items-center justify-end gap-2 border-t border-divider pt-3">
                   <Button variant="icon"
+                    className={theme.iconAction}
                     onClick={() => onOpenEditDeduction(item)}
                     title="Edit obligation"
                   >
-                    <Edit2 className="h-4 w-4" />
+                    <Icon name="edit" className="h-4 w-4" />
                   </Button>
                   <Button variant="iconDanger"
+                    className={theme.dangerIcon}
                     onClick={() => onDeleteDeduction(item)}
                     title="Delete obligation"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Icon name="trash" className="h-4 w-4" />
                   </Button>
                 </div>
               </PulseCard>
@@ -448,7 +439,7 @@ export default function FixedObligationsTab({
             return (
               <PulseCard
                 key={`subscription-${sub.id}`}
-                className="group relative flex flex-col justify-between bg-gradient-to-br from-card via-card to-lavender/5 p-5"
+                className="group relative flex flex-col justify-between p-6"
               >
                 <div>
                   <div className="flex items-start justify-between">
@@ -461,11 +452,11 @@ export default function FixedObligationsTab({
                           {sub.name}
                         </h4>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="inline-flex items-center gap-1 rounded-md bg-lavender/10 px-2 py-0.5 text-xs font-semibold text-foreground">
+                          <span className={theme.chip}>
                             Subscription
                           </span>
                           {sub.billing_cycle === "yearly" && (
-                            <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+                            <span className={theme.chip} data-tone="dim">
                               Yearly
                             </span>
                           )}
@@ -487,8 +478,8 @@ export default function FixedObligationsTab({
                       )}
                     </div>
 
-                    <div className="flex items-center gap-1 text-xs text-foreground bg-lavender/10 px-2 py-1 rounded-lg">
-                      <Calendar className="h-3 w-3" />
+                    <div className={theme.chip}>
+                      <Icon name="calendar" className="h-3 w-3" />
                       <span>
                         {sub.billing_cycle === "yearly"
                           ? `Renews ${formatInstant(sub.next_renewal_date, timeZone, { month: "short", day: "numeric" })}`
@@ -498,14 +489,14 @@ export default function FixedObligationsTab({
                   </div>
 
                   {sub.budget_name && (
-                    <div className="mt-3 flex items-center gap-1.5 text-xs text-action bg-primary/10 px-2.5 py-1 rounded-lg">
-                      <Target className="h-3.5 w-3.5" />
+                    <div className={`mt-3 ${theme.chip}`}>
+                      <Icon name="target" className="h-3.5 w-3.5" />
                       <span>Budget: <strong>{sub.budget_name}</strong></span>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-divider/50 pt-3 text-xs">
+                <div className="mt-4 flex items-center justify-between border-t border-divider pt-3 text-xs">
                   <span className="text-muted-foreground italic truncate max-w-[150px]">
                     {sub.category_name ?? "Recurring Subscription"}
                   </span>
@@ -520,7 +511,7 @@ export default function FixedObligationsTab({
                     }}
                   >
                     <span>Manage</span>
-                    <ExternalLink className="h-3 w-3" />
+                    <Icon name="external" className="h-3 w-3" />
                   </Button>
                 </div>
               </PulseCard>

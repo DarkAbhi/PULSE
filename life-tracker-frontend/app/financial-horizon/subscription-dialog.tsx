@@ -1,5 +1,6 @@
 "use client";
 
+import theme from "./horizon-theme.module.css";
 import CategoryOptions from "./components/CategoryOptions";
 
 import Select from "@/app/components/design-system/select";
@@ -157,7 +158,7 @@ export default function SubscriptionDialog({
   };
 
   return (
-    <Dialog panelClassName="p-6 sm:p-6 transition-all" size="md">
+    <Dialog panelClassName={`p-6 sm:p-6 transition-all ${theme.dialogPanel}`} size="md">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-divider/60 pb-4">
           <div className="flex items-center gap-2.5">
@@ -174,7 +175,7 @@ export default function SubscriptionDialog({
             </div>
           </div>
           <Button variant="icon"
-            onClick={onClose}
+            className={theme.iconAction} onClick={onClose}
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -229,7 +230,7 @@ export default function SubscriptionDialog({
               <Select
                 value={billingCycle}
                 onChange={(e) => setBillingCycle(e.target.value)}
-                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
               >
                 <option value="monthly">Monthly</option>
                 <option value="yearly">Yearly (Annual)</option>
@@ -251,7 +252,7 @@ export default function SubscriptionDialog({
                   placeholder="1 - 31"
                   value={billingDay}
                   onChange={(e) => setBillingDay(e.target.value)}
-                  className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+                  className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
                   required
                 />
               </div>
@@ -265,7 +266,7 @@ export default function SubscriptionDialog({
                     type="date"
                     value={renewalDate}
                     onChange={(e) => setRenewalDate(e.target.value)}
-                    className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+                    className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
                     required
                   />
                 </div>
@@ -279,7 +280,7 @@ export default function SubscriptionDialog({
               <Select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
               >
                 <option value="active">Active</option>
                 <option value="paused">Paused</option>
@@ -298,7 +299,7 @@ export default function SubscriptionDialog({
                 aria-label="Category"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
               >
                 <option value="">None (Uncategorized)</option>
                 <CategoryOptions categories={categories} />
@@ -311,7 +312,7 @@ export default function SubscriptionDialog({
               <Select
                 value={budgetId}
                 onChange={(e) => setBudgetId(e.target.value)}
-                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
               >
                 <option value="">None (No Budget)</option>
                 {budgets.map((b) => (
@@ -339,14 +340,14 @@ export default function SubscriptionDialog({
 
           {/* Footer Actions */}
           <DialogActions className="border-t border-divider/60 pt-3">
-            <DialogAction
+            <DialogAction className={theme.softAction}
               type="button"
               variant="secondary"
               onClick={onClose}
             >
               Cancel
             </DialogAction>
-            <DialogAction
+            <DialogAction className={theme.primary}
               type="submit"
               disabled={isSubmitting}
             >

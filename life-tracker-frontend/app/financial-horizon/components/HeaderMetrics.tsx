@@ -1,13 +1,14 @@
 "use client";
 
-import PulseCard from "@/app/components/design-system/pulse-card";
-
-import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
+import { Icon } from "./HorizonIcon";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
 import Button from "@/app/components/design-system/button";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import type { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
+import { currencySymbol, formatMoney } from "@/app/lib/currency.mjs";
 
-import { Edit2, Sparkles, Wallet, Lock } from "lucide-react";
-import { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
+import theme from "../horizon-theme.module.css";
 
 interface HeaderMetricsProps {
   summary: HorizonSummary;
@@ -34,134 +35,111 @@ export default function HeaderMetrics({
   handleSaveBaseConfig,
   isPending = false,
 }: HeaderMetricsProps) {
+  const money = (amount: number) => formatMoney(amount, summary.currency);
+  const subscriptionBurn = summary.total_subscription_burn ?? 0;
+  const isDeficit = uncommittedPool < 0;
+  const PoolIcon = isDeficit ? ArrowDownRight : ArrowUpRight;
+
   return (
-    <section className="grid gap-5 sm:grid-cols-3">
-      {/* Card 1: Starting Pool (Base Income) */}
-      <PulseCard className="relative overflow-hidden p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-action">
-              <Wallet className="h-4 w-4" />
-            </div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <section aria-label="Monthly pool summary" className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
+      <PulseCard className={`${theme.hero} relative isolate flex flex-col justify-between gap-8 overflow-hidden p-6 sm:p-8`}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h2 className="flex items-center gap-3 text-base font-semibold sm:text-lg">
+            <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/12">
+              <PoolIcon aria-hidden="true" className="size-5" />
+            </span>
+            Net Available Pool
+          </h2>
+          {uncommittedPool !== 0 && (
+            <span className={`rounded-full bg-black/25 px-3 py-1 text-xs font-semibold ${isDeficit ? "text-[#ffc4b8]" : "text-[#adf4d9]"}`}>
+              {isDeficit ? "Deficit" : "Surplus"}
+            </span>
+          )}
+        </div>
+        <div>
+          <p className="wrap-anywhere text-4xl leading-none font-bold tracking-tight tabular-nums sm:text-5xl xl:text-6xl">
+            {money(uncommittedPool)}
+          </p>
+          <p className="mt-3 text-sm text-[#e8defa]">After monthly fixed obligations and subscriptions</p>
+        </div>
+      </PulseCard>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+        <PulseCard className="p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2.5 text-sm font-semibold text-muted-foreground">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-action">
+                <Icon name="wallet" aria-hidden="true" className="size-4" />
+              </span>
               Starting Pool (Base Income)
-            </span>
+            </h2>
+            <Button
+              variant="icon"
+              size="sm"
+              type="button"
+              onClick={() => setIsEditingBase(!isEditingBase)}
+              title="Edit Base Income"
+              aria-label="Edit Base Income"
+              aria-expanded={isEditingBase}
+              className={theme.iconAction}
+            >
+              <Icon name="edit" aria-hidden="true" className="size-4" />
+            </Button>
           </div>
-          <Button variant="icon"
-            onClick={() => setIsEditingBase(!isEditingBase)}
-            title="Edit Base Income"
-          >
-            <Edit2 className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {isEditingBase ? (
-          <form onSubmit={handleSaveBaseConfig} className="mt-3 space-y-2">
-            <div className="flex gap-2">
-              <span className="self-center text-sm font-semibold">{currencySymbol(summary.currency)}</span>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={baseInput}
-                onChange={(e) => setBaseInput(e.target.value)}
-                className="w-full rounded-xl bg-secondary px-3 py-1 text-sm font-bold text-foreground"
-                placeholder="100000"
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button variant="secondary" size="sm"
-                type="button"
-                onClick={() => setIsEditingBase(false)}
-              >
-                Cancel
-              </Button>
-              <Button variant="primary" size="sm"
-                type="submit"
-                disabled={isPending}
-              >
-                Save
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <div className="mt-3">
-            <p className="text-2xl font-extrabold text-foreground tracking-tight">
-              {formatMoney(summary.base_amount, summary.currency)}
+          {isEditingBase ? (
+            <form onSubmit={handleSaveBaseConfig} className="mt-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span aria-hidden="true" className="text-sm font-semibold">{currencySymbol(summary.currency)}</span>
+                <input
+                  aria-label="Monthly base income"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={baseInput}
+                  onChange={(e) => setBaseInput(e.target.value)}
+                  className="min-w-0 flex-1 rounded-xl bg-secondary px-3 py-2 text-sm font-bold text-foreground"
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" size="sm" type="button" className={theme.softAction} onClick={() => setIsEditingBase(false)}>
+                  Cancel
+                </Button>
+                <Button className={theme.primary} size="sm" type="submit" disabled={isPending}>
+                  Save
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <p className="mt-3 wrap-anywhere text-2xl font-bold tracking-tight tabular-nums sm:text-3xl">
+              {money(summary.base_amount)}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">Baseline monthly revenue stream</p>
-          </div>
-        )}
-      </PulseCard>
+          )}
+        </PulseCard>
 
-      {/* Card 2: Total Committed */}
-      <PulseCard className="p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-warning/10 text-warning">
-              <Lock className="h-4 w-4" />
-            </div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <PulseCard className="p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2.5 text-sm font-semibold text-muted-foreground">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-warning-soft text-warning">
+                <Icon name="lock" aria-hidden="true" className="size-4" />
+              </span>
               Total Committed
-            </span>
-          </div>
-          <span className="rounded-full bg-warning/10 px-2.5 py-0.5 text-xs font-bold text-warning">
-            {totalCommittedRatio.toFixed(1)}% of pool
-          </span>
-        </div>
-        <div className="mt-3">
-          <p className="text-2xl font-extrabold text-foreground tracking-tight">
-            {formatMoney(totalCommitted, summary.currency)}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground flex items-center gap-2">
-            <span>Fixed ({formatMoney(summary.total_deductions, summary.currency)})</span>
-            {(summary.total_subscription_burn ?? 0) > 0 && (
-              <>
-                <span>+</span>
-                <span>Subscriptions ({formatMoney((summary.total_subscription_burn ?? 0), summary.currency)})</span>
-              </>
+            </h2>
+            {summary.base_amount > 0 && (
+              <span className="rounded-full bg-warning-soft px-2.5 py-1 text-xs font-semibold text-warning">
+                {totalCommittedRatio.toFixed(1)}% of pool
+              </span>
             )}
-          </p>
-        </div>
-      </PulseCard>
-
-      {/* Card 3: Net Available Pool (Primary visual focus) */}
-      <PulseCard className="bg-gradient-to-br from-card via-card to-success/10 p-5 relative overflow-hidden">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-success/20 text-success">
-              <Sparkles className="h-4.5 w-4.5" />
-            </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-success">
-              Net Available Pool
-            </span>
           </div>
-          <span
-            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
-              uncommittedPool >= 0
-                ? "bg-success/10 text-success"
-                : "bg-destructive/10 text-destructive"
-            }`}
-          >
-            {uncommittedPool >= 0 ? "Surplus" : "Deficit"}
-          </span>
-        </div>
-        <div className="mt-3">
-          <p
-            className={`text-2xl font-extrabold tracking-tight ${
-              uncommittedPool >= 0
-                ? "text-success dark:text-success"
-                : "text-destructive dark:text-destructive"
-            }`}
-          >
-            {formatMoney(uncommittedPool, summary.currency)}
+          <p className="mt-3 wrap-anywhere text-2xl font-bold tracking-tight tabular-nums sm:text-3xl">
+            {money(totalCommitted)}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground font-medium">
-            Uncommitted cash remaining after fixed obligations &amp; subscriptions
+          <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <span>Fixed {money(summary.total_deductions)}</span>
+            {subscriptionBurn > 0 && <span>Subscriptions {money(subscriptionBurn)}</span>}
           </p>
-        </div>
-      </PulseCard>
+        </PulseCard>
+      </div>
     </section>
   );
 }

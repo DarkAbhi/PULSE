@@ -1,18 +1,13 @@
 "use client";
 
+import { Icon } from "./HorizonIcon";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
 
 import Button from "@/app/components/design-system/button";
+import theme from "../horizon-theme.module.css";
 
-import {
-  Target,
-  Plus,
-  Wallet,
-  Edit2,
-  Trash2,
-} from "lucide-react";
 import {
   HorizonSummary,
   BudgetItem,
@@ -35,35 +30,35 @@ export default function BudgetsTab({
 }: BudgetsTabProps) {
   return (
     <section className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-divider pb-4">
+      <div className={theme.sectionHeader}>
         <div>
-          <div className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-action" />
-            <h2 className="text-xl font-bold text-foreground">
+          <div className="flex flex-wrap items-center gap-2">
+            <Icon name="target" aria-hidden="true" className={`size-6 ${theme.sectionIcon}`} />
+            <h2 className={theme.sectionTitle}>
               Active Monthly Budgets
             </h2>
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-action">
+            <span className={theme.badge}>
               1st – End of Month
             </span>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className={theme.sectionDescription}>
             Set monthly spending allocations. Assigning fixed obligations
             automatically deducts from your available budget balance.
           </p>
         </div>
 
-        <Button variant="soft" size="sm"
+        <Button variant="primary" size="sm"
           onClick={onOpenAddBudget}
           disabled={isPending}
-          className="shrink-0"
+          className={`${theme.primary} shrink-0`}
         >
-          <Plus className="h-4 w-4" /> Add Monthly Budget
+          <Icon name="plus" className="h-4 w-4" /> Add Monthly Budget
         </Button>
       </div>
 
       {(summary.budgets ?? []).length === 0 ? (
-        <PulseCard className="p-10 text-center">
-          <Target className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
+        <PulseCard className={`${theme.empty} text-center`}>
+          <Icon name="target" className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
           <h3 className="mt-3 text-base font-semibold text-foreground">
             No monthly budgets configured
           </h3>
@@ -73,9 +68,9 @@ export default function BudgetsTab({
           </p>
           <Button variant="primary" size="md"
             onClick={onOpenAddBudget}
-            className="mt-4"
+            className={`${theme.primary} mt-4`}
           >
-            <Plus className="h-4 w-4" /> Add Your First Budget
+            <Icon name="plus" className="h-4 w-4" /> Add Your First Budget
           </Button>
         </PulseCard>
       ) : (
@@ -86,17 +81,21 @@ export default function BudgetsTab({
             );
             const isOverBudget = b.available_amount < 0;
             const pct = Math.min(100, Math.max(0, b.usage_percentage));
+            const progressStyle = isOverBudget ? "bg-destructive"
+              : pct > 85 ? theme.budgetHigh
+              : pct > 60 ? theme.budgetMedium
+              : theme.budgetLow;
 
             return (
               <PulseCard
                 key={b.id}
-                className="group relative p-5 flex flex-col justify-between"
+                className="group relative p-6 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-action">
-                        <Wallet className="h-4 w-4" />
+                      <div className={theme.iconTile}>
+                        <Icon name="wallet" className="h-4 w-4" />
                       </div>
                       <div>
                         <h4 className="font-bold text-foreground text-base leading-tight">
@@ -111,16 +110,18 @@ export default function BudgetsTab({
 
                     <div className="flex items-center gap-1">
                       <Button variant="icon"
+                        className={theme.iconAction}
                         onClick={() => onOpenEditBudget(b)}
                         title="Edit Budget"
                       >
-                        <Edit2 className="h-3.5 w-3.5" />
+                        <Icon name="edit" className="h-3.5 w-3.5" />
                       </Button>
                       <Button variant="iconDanger"
+                        className={theme.dangerIcon}
                         onClick={() => onConfirmDeleteBudget(b)}
                         title="Delete Budget"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Icon name="trash" className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -161,15 +162,9 @@ export default function BudgetsTab({
                         {formatMoney(b.available_amount, summary.currency)}
                       </span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+                    <div aria-hidden="true" className="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
                       <div
-                        className={`h-full transition-all duration-500 rounded-full ${
-                          isOverBudget
-                            ? "bg-destructive"
-                            : pct > 80
-                              ? "bg-warning"
-                              : "bg-success"
-                        }`}
+                        className={`${progressStyle} h-full rounded-full transition-[width] duration-500 motion-reduce:transition-none`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -183,7 +178,7 @@ export default function BudgetsTab({
 
                 {/* Linked items chips */}
                 {linkedDeductions.length > 0 && (
-                  <div className="mt-4 border-t border-divider/50 pt-3">
+                  <div className="mt-4 border-t border-divider pt-3">
                     <span className="text-[11px] font-semibold text-muted-foreground uppercase">
                       Linked Obligations:
                     </span>
@@ -191,7 +186,7 @@ export default function BudgetsTab({
                       {linkedDeductions.map((item) => (
                         <span
                           key={item.id}
-                          className="inline-flex items-center gap-1 rounded-md bg-background px-2 py-0.5 text-[11px] font-medium text-foreground"
+                          className={theme.chip}
                         >
                           {item.name} ({currencySymbol(summary.currency)}
                           {item.amount})

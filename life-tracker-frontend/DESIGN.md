@@ -64,60 +64,60 @@ colors:
     info-container: "#253F49"
 typography:
   display:
-    fontFamily: Geist
+    fontFamily: Bricolage Grotesque
     fontSize: 48px
     fontWeight: "700"
     lineHeight: 1.05
     letterSpacing: -0.035em
   headline-lg:
-    fontFamily: Geist
+    fontFamily: Bricolage Grotesque
     fontSize: 36px
     fontWeight: "700"
     lineHeight: 40px
     letterSpacing: -0.025em
   headline-md:
-    fontFamily: Geist
+    fontFamily: Bricolage Grotesque
     fontSize: 30px
     fontWeight: "700"
     lineHeight: 36px
     letterSpacing: -0.025em
   headline-sm:
-    fontFamily: Geist
+    fontFamily: Bricolage Grotesque
     fontSize: 24px
     fontWeight: "700"
     lineHeight: 32px
     letterSpacing: -0.025em
   title-lg:
-    fontFamily: Geist
+    fontFamily: Bricolage Grotesque
     fontSize: 20px
     fontWeight: "600"
     lineHeight: 28px
   body-md:
-    fontFamily: Geist
+    fontFamily: Bricolage Grotesque
     fontSize: 16px
     fontWeight: "400"
     lineHeight: 24px
   body-sm:
-    fontFamily: Geist
+    fontFamily: Bricolage Grotesque
     fontSize: 14px
     fontWeight: "400"
     lineHeight: 20px
   label-md:
-    fontFamily: Geist
+    fontFamily: Bricolage Grotesque
     fontSize: 14px
     fontWeight: "600"
     lineHeight: 20px
   label-sm:
-    fontFamily: Geist
+    fontFamily: Bricolage Grotesque
     fontSize: 12px
     fontWeight: "500"
     lineHeight: 16px
   label-caps:
-    fontFamily: Geist
+    fontFamily: Bricolage Grotesque
     fontSize: 13px
     lineHeight: 1.4
   code-sm:
-    fontFamily: Geist Mono
+    fontFamily: Bricolage Grotesque
     fontSize: 12px
     lineHeight: 16px
 rounded:
@@ -233,7 +233,7 @@ Pair status text with its corresponding soft background and a readable label suc
 
 ## Typography
 
-Use Geist for interface text and Geist Mono for technical strings such as API keys. Standard feature headings use the page heading scale, with a larger desktop size where space allows. The dashboard greeting scales from 48px to 72px with the viewport. The fonts are loaded in `@app/layout.tsx`.
+Use Bricolage Grotesque throughout the interface, including technical strings such as API keys. Standard feature headings use the page heading scale, with a larger desktop size where space allows. The dashboard greeting scales from 48px to 72px with the viewport. The font is loaded in `@app/layout.tsx`.
 
 Give the most useful number visual priority, with its unit beside it. Use tabular numerals when comparing amounts, dates, or measurements. Use uppercase labels sparingly for short metadata.
 

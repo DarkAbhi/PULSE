@@ -1,5 +1,6 @@
 "use client";
 
+import theme from "./horizon-theme.module.css";
 import CategoryOptions from "./components/CategoryOptions";
 
 import Select from "@/app/components/design-system/select";
@@ -167,7 +168,7 @@ export default function TransactionDialog({
     <Dialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
-      panelClassName="scale-100 transition-all duration-200 sm:p-6"
+      panelClassName={`scale-100 transition-all duration-200 sm:p-6 ${theme.dialogPanel}`}
       size="wide"
     >
         <div className="flex items-center justify-between border-b border-divider pb-4">
@@ -180,7 +181,7 @@ export default function TransactionDialog({
             </h2>
           </div>
           <Button variant="icon"
-            onClick={onClose}
+            className={theme.iconAction} onClick={onClose}
             disabled={isPending}
             aria-label="Close"
             title="Close dialog"
@@ -225,7 +226,7 @@ export default function TransactionDialog({
               placeholder="e.g. Netflix Monthly Payment, Spotify"
               value={txName}
               onChange={(e) => setTxName(e.target.value)}
-              className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+              className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
             />
           </div>
 
@@ -247,7 +248,7 @@ export default function TransactionDialog({
                 placeholder="0.00"
                 value={txAmount}
                 onChange={(e) => setTxAmount(e.target.value)}
-                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
               />
             </div>
 
@@ -258,7 +259,7 @@ export default function TransactionDialog({
                 required
                 value={txDate}
                 onChange={(e) => setTxDate(e.target.value)}
-                className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+                className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
               />
             </div>
           </div>
@@ -270,7 +271,7 @@ export default function TransactionDialog({
                 aria-label="Category"
                 value={txCategoryId ?? ""}
                 onChange={(e) => setTxCategoryId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className="w-full rounded-xl bg-secondary px-3 py-2.5 text-sm text-foreground"
+                className={`w-full px-3 py-2.5 text-sm text-foreground ${theme.dialogField}`}
               >
                 <option value="">Uncategorized</option>
                 <CategoryOptions categories={categories} />
@@ -282,7 +283,7 @@ export default function TransactionDialog({
               <Select
                 value={txBudgetId ?? ""}
                 onChange={(e) => setTxBudgetId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className="w-full rounded-xl bg-secondary px-3 py-2.5 text-sm text-foreground"
+                className={`w-full px-3 py-2.5 text-sm text-foreground ${theme.dialogField}`}
               >
                 <option value="">-- Unlinked --</option>
                 {budgets.map((b) => (
@@ -298,7 +299,7 @@ export default function TransactionDialog({
               <Select
                 value={txSubscriptionId ?? ""}
                 onChange={(e) => setTxSubscriptionId(e.target.value ? parseInt(e.target.value, 10) : null)}
-                className="w-full rounded-xl bg-secondary px-3 py-2.5 text-sm text-foreground"
+                className={`w-full px-3 py-2.5 text-sm text-foreground ${theme.dialogField}`}
               >
                 <option value="">-- Unlinked --</option>
                 {subscriptions.map((s) => (
@@ -317,7 +318,7 @@ export default function TransactionDialog({
               placeholder="e.g. Paid via UPI, invoice #1234"
               value={txNotes}
               onChange={(e) => setTxNotes(e.target.value)}
-              className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+              className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
             />
           </div>
 
@@ -342,7 +343,7 @@ export default function TransactionDialog({
             </label>
           )}
           <DialogActions className="border-t border-divider pt-4">
-            <DialogAction
+            <DialogAction className={theme.softAction}
               type="button"
               variant="secondary"
               disabled={isPending}
@@ -350,7 +351,7 @@ export default function TransactionDialog({
             >
               Cancel
             </DialogAction>
-            <DialogAction
+            <DialogAction className={theme.primary}
               type="submit"
               disabled={isPending}
             >

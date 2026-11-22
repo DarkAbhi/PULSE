@@ -11,6 +11,7 @@ import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition, useEffect, useRef } from "react";
 import BackLink from "@/app/components/design-system/back-link";
+import frame from "@/app/components/design-system/page-frame.module.css";
 import { Compass, X } from "lucide-react";
 
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
@@ -33,6 +34,7 @@ import TransactionsTab from "./components/TransactionsTab";
 import SubscriptionsTab from "./components/SubscriptionsTab";
 import FixedObligationsTab from "./components/FixedObligationsTab";
 import PlannedPurchasesTab from "./components/PlannedPurchasesTab";
+import theme from "./horizon-theme.module.css";
 
 import { HorizonSummary, DeductionItem, BudgetItem, CategoryItem, TransactionItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
 import {
@@ -805,18 +807,18 @@ export default function FinancialHorizonClient({
   };
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-10 sm:py-10 lg:px-16">
-      <div className="mx-auto max-w-6xl space-y-8">
-        {/* Navigation & Unified Header */}
-        <div>
+    <main className={`${frame.page} ${theme.theme}`}>
+      <div className={`${frame.content} space-y-6 sm:space-y-7`}>
+        <header>
           <BackLink href="/dashboard">Back to Dashboard</BackLink>
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="flex items-center gap-2.5 text-2xl font-bold tracking-tight sm:text-3xl">
-              <Compass aria-hidden="true" className="h-6 w-6 shrink-0 text-action" />
+          <div className="mt-3 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="flex items-center gap-3 text-3xl leading-tight font-extrabold tracking-tight sm:gap-4 sm:text-5xl">
+              <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent text-action sm:size-14">
+                <Compass aria-hidden="true" className="size-6 sm:size-7" />
+              </span>
               Financial Horizon
             </h1>
 
-            {/* Unified Quick Action Trigger */}
             <div className="shrink-0">
               <QuickActionDropdown
                 onLogTransaction={handleOpenAddTransaction}
@@ -831,7 +833,7 @@ export default function FinancialHorizonClient({
               />
             </div>
           </div>
-        </div>
+        </header>
 
         {/* Global Error Banner */}
         {errorMsg && !(activeTab === "fixed" && (isAddingDeduction || editingDeductionId !== null)) && (
@@ -840,8 +842,8 @@ export default function FinancialHorizonClient({
             role="alert"
           >
             <span>{errorMsg}</span>
-            <Button variant="iconDanger" size="sm" onClick={() => setErrorMsg("")}>
-              <X className="h-4 w-4" />
+            <Button variant="iconDanger" size="sm" aria-label="Dismiss error" onClick={() => setErrorMsg("")}>
+              <X aria-hidden="true" className="size-4" />
             </Button>
           </div>
         )}
@@ -1065,7 +1067,7 @@ export default function FinancialHorizonClient({
 
       {/* Subscription Linked Transactions Dialog */}
       {viewingSubTransactions && (
-        <Dialog size="wide" panelClassName="p-6 sm:p-6">
+        <Dialog size="wide" panelClassName={`p-6 sm:p-6 ${theme.dialogPanel}`}>
             <div className="flex items-center justify-between border-b border-divider pb-4">
               <div>
                 <h3 className="text-lg font-bold text-foreground">
@@ -1076,7 +1078,7 @@ export default function FinancialHorizonClient({
                 </p>
               </div>
               <Button variant="icon"
-                onClick={() => setViewingSubTransactions(null)}
+                className={theme.iconAction} onClick={() => setViewingSubTransactions(null)}
                 aria-label="Close transactions"
               >
                 <X className="h-5 w-5" />
@@ -1118,7 +1120,7 @@ export default function FinancialHorizonClient({
 
             <div className="mt-5 border-t border-divider/60 pt-3">
               <DialogAction
-                className="w-full"
+                className={`w-full ${theme.softAction}`}
                 variant="secondary"
                 onClick={() => setViewingSubTransactions(null)}
               >

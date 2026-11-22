@@ -1,5 +1,6 @@
 "use client";
 
+import theme from "../horizon-theme.module.css";
 import CategoryOptions from "./CategoryOptions";
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -21,7 +22,7 @@ interface Props {
   onImported: (result: ImportResult) => void;
 }
 
-const inputClass = "block min-w-0 w-full rounded-lg border border-divider bg-card px-2 py-1.5 text-base sm:text-sm";
+const inputClass = `block min-w-0 w-full px-2 py-1.5 text-base sm:text-sm ${theme.dialogField}`;
 const previewColumns = "lg:grid-cols-[3.75rem_minmax(0,1fr)_8.5rem_8rem_6rem_9rem]";
 const fieldLabel = "mb-1 block text-xs font-medium text-muted-foreground lg:sr-only";
 const descriptionClass = `${inputClass} min-h-10 whitespace-pre-wrap [overflow-wrap:anywhere] leading-5`;
@@ -132,7 +133,7 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
   return (
     <Dialog
       size={batch && !result ? "xl" : "sm"}
-      panelClassName={batch && !result ? "max-w-6xl! p-4! sm:p-6!" : undefined}
+      panelClassName={`${theme.dialogPanel} ${batch && !result ? "max-w-6xl! p-4! sm:p-6!" : ""}`}
       labelledBy="statement-import-title"
     >
       <h2 id="statement-import-title" className="mb-4 text-xl font-semibold">Import statement</h2>
@@ -251,7 +252,7 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
           {busy && <p role="status">{progress === 1 ? "Extracting and checking balances…" : progress === null ? "Uploading…" : `Uploading… ${Math.round(progress * 100)}%`}</p>}
           <DialogActions>
             <Button type="button" variant="secondary" disabled={busy} onClick={close}>Close</Button>
-            <DialogAction disabled={busy || !accountId || !file}>Preview statement</DialogAction>
+            <DialogAction className={theme.primary} disabled={busy || !accountId || !file}>Preview statement</DialogAction>
           </DialogActions>
         </form>
       )}

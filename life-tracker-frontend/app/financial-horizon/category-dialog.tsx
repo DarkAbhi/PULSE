@@ -1,5 +1,6 @@
 "use client";
 
+import theme from "./horizon-theme.module.css";
 import Select from "@/app/components/design-system/select";
 import type { CategoryItem } from "@/app/dashboard/financial-horizon-card";
 
@@ -81,7 +82,7 @@ export default function CategoryDialog({
     <Dialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
-      panelClassName="scale-100 transition-all duration-200 sm:p-6"
+      panelClassName={`scale-100 transition-all duration-200 sm:p-6 ${theme.dialogPanel}`}
     >
         <div className="flex items-center justify-between border-b border-divider pb-4">
           <div className="flex items-center gap-2.5">
@@ -93,7 +94,7 @@ export default function CategoryDialog({
             </h2>
           </div>
           <Button variant="icon"
-            onClick={onClose}
+            className={theme.iconAction} onClick={onClose}
             disabled={isPending}
             aria-label="Close"
             title="Close dialog"
@@ -117,7 +118,7 @@ export default function CategoryDialog({
               maxLength={100}
               value={catName}
               onChange={(e) => setCatName(e.target.value)}
-              className="w-full rounded-xl bg-secondary px-3.5 py-2.5 text-sm text-foreground"
+              className={`w-full px-3.5 py-2.5 text-sm text-foreground ${theme.dialogField}`}
             />
           </div>
 
@@ -126,7 +127,7 @@ export default function CategoryDialog({
             <Select
               value={parentId ?? ""}
               onChange={(e) => setParentId(e.target.value ? Number(e.target.value) : null)}
-              className="w-full rounded-xl bg-secondary px-3 py-2.5 text-sm text-foreground"
+              className={`w-full px-3 py-2.5 text-sm text-foreground ${theme.dialogField}`}
             >
               <option value="">None (Top-level category)</option>
               {categories.filter(c => c.parent_id == null && c.allows_subcategories).map(c => (
@@ -149,7 +150,7 @@ export default function CategoryDialog({
           </div>
 
           <DialogActions className="border-t border-divider pt-4">
-            <DialogAction
+            <DialogAction className={theme.softAction}
               type="button"
               variant="secondary"
               disabled={isPending}
@@ -157,7 +158,7 @@ export default function CategoryDialog({
             >
               Cancel
             </DialogAction>
-            <DialogAction
+            <DialogAction className={theme.primary}
               type="submit"
               disabled={isPending}
             >

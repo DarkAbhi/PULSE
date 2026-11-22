@@ -1,9 +1,13 @@
 "use client";
 
-import { ArrowUpRight, Info } from "lucide-react";
+import { Icon } from "./HorizonIcon";
+import { ArrowUpRight } from "lucide-react";
 
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { formatMoney } from "@/app/lib/currency.mjs";
+import theme from "../horizon-theme.module.css";
+
+const projectionMonths = [3, 6, 12];
 
 interface OverviewTabProps {
   currency: string;
@@ -12,32 +16,38 @@ interface OverviewTabProps {
 
 export default function OverviewTab({ currency, uncommittedPool }: OverviewTabProps) {
   return (
-    <PulseCard as="section" aria-labelledby="horizon-projections-title" className="p-4 sm:p-6">
+    <PulseCard as="section" aria-labelledby="horizon-projections-title" className="p-6">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-action">
+        <div className={theme.iconTile}>
           <ArrowUpRight aria-hidden="true" className="h-5 w-5" />
         </div>
         <div>
-          <h2 id="horizon-projections-title" className="text-lg font-bold text-foreground sm:text-xl">
+          <h2 id="horizon-projections-title" className={theme.sectionTitle}>
             Future Horizon Projections
           </h2>
           <p className="text-sm text-muted-foreground">Estimated cash you could set aside</p>
         </div>
       </div>
 
-      <dl className="mt-5 divide-y divide-divider rounded-xl bg-background/50 sm:grid sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-        {[3, 6, 12].map((months) => (
-          <div key={months} className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1 p-4 sm:block">
-            <dt className="text-sm font-medium text-muted-foreground">{months} months</dt>
-            <dd className="min-w-0 wrap-anywhere text-xl font-bold tracking-tight text-foreground tabular-nums sm:mt-1 sm:text-2xl">
+      <dl className="mt-5 grid gap-3 sm:grid-cols-3">
+        {projectionMonths.map((months) => (
+          <div key={months} className="min-w-0 rounded-2xl bg-secondary p-4 sm:p-5">
+            <dt className="text-sm font-semibold text-muted-foreground">{months} months</dt>
+            <dd className="mt-1 wrap-anywhere text-2xl font-bold tracking-tight tabular-nums lg:text-3xl">
               {formatMoney(Math.max(0, uncommittedPool * months), currency)}
+              <span aria-hidden="true" className="mt-3 block h-1.5 overflow-hidden rounded-full bg-surface-strong">
+                <span
+                  className={`${theme.projectionBar} block h-full rounded-full`}
+                  style={{ width: `${uncommittedPool > 0 ? months / 12 * 100 : 0}%` }}
+                />
+              </span>
             </dd>
           </div>
         ))}
       </dl>
 
-      <div className="mt-4 flex items-start gap-2.5 rounded-xl bg-secondary/50 p-3 text-sm">
-        <Info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-action" />
+      <div className="mt-5 flex items-start gap-2.5 border-t border-divider pt-4 text-sm">
+        <Icon name="info" aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-action" />
         <div>
           <p className="font-semibold text-foreground">Projection assumptions</p>
           <p className="mt-0.5 text-muted-foreground">

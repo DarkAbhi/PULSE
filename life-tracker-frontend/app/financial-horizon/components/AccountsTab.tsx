@@ -2,14 +2,17 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Button from "@/app/components/design-system/button";
+import { Icon } from "./HorizonIcon";
+import theme from "../horizon-theme.module.css";
 import Dialog, { DialogAction, DialogActions } from "@/app/components/design-system/dialog";
+import PulseCard from "@/app/components/design-system/pulse-card";
 import Select from "@/app/components/design-system/select";
 import { listAccounts, saveAccount, setAccountArchived } from "../accounts";
 import type { Account, AccountFields } from "../account-types";
 
 const networkLabels = { "": "Choose network", visa: "Visa", mastercard: "Mastercard", american_express: "American Express", diners_club: "Diners Club", rupay: "RuPay" };
 
-const fieldClass = "mt-1 block w-full rounded-lg border border-divider bg-card px-3 py-2";
+const fieldClass = `mt-1 block w-full px-3 py-2 ${theme.dialogField}`;
 
 export default function AccountsTab({ currency }: { currency: string }) {
   const [accounts, setAccounts] = useState<Account[] | null>(null);
@@ -73,14 +76,14 @@ export default function AccountsTab({ currency }: { currency: string }) {
   const fields = editor?.fields;
 
   return (
-    <section className="space-y-4 rounded-2xl bg-card p-4 sm:p-6" aria-labelledby="accounts-heading">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="accounts-heading" className="text-lg font-semibold">Financial accounts</h2>
-        <Button variant="primary" disabled={pending} onClick={() => open()}>Add account</Button>
+    <PulseCard as="section" className="space-y-4 p-6" aria-labelledby="accounts-heading">
+      <header className={theme.sectionHeader}>
+        <h2 id="accounts-heading" className={`flex items-center gap-2.5 ${theme.sectionTitle}`}><Icon name="bank" className={`size-6 ${theme.sectionIcon}`} /> Financial accounts</h2>
+        <Button variant="primary" className={theme.primary} disabled={pending} onClick={() => open()}><Icon name="plus" /> Add account</Button>
       </header>
       {!editor && error && <p role="alert">{error}</p>}
-      {!accounts && (error ? <Button onClick={load}>Retry</Button> : <p role="status">Loading accounts…</p>)}
-      {accounts?.length === 0 && <p className="text-muted-foreground">Add a bank account or credit card to assign transactions to it.</p>}
+      {!accounts && (error ? <Button className={theme.softAction} onClick={load}>Retry</Button> : <p role="status">Loading accounts…</p>)}
+      {accounts?.length === 0 && <PulseCard as="p" className={`${theme.empty} text-center text-muted-foreground`}>Add a bank account or credit card to assign transactions to it.</PulseCard>}
       <ul className="divide-y divide-divider">
         {accounts?.map(account => (
           <li key={account.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
@@ -95,8 +98,8 @@ export default function AccountsTab({ currency }: { currency: string }) {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button disabled={pending} onClick={() => open(account)} aria-label={`Edit ${account.display_name}`}>Edit</Button>
-              <Button disabled={pending} onClick={() => archive(account)} aria-label={`${account.archived_at ? "Restore" : "Archive"} ${account.display_name}`}>
+              <Button variant="secondary" className={theme.iconAction} disabled={pending} onClick={() => open(account)} aria-label={`Edit ${account.display_name}`}><Icon name="edit" /></Button>
+              <Button variant="tertiary" className={theme.outlineAction} disabled={pending} onClick={() => archive(account)} aria-label={`${account.archived_at ? "Restore" : "Archive"} ${account.display_name}`}>
                 {account.archived_at ? "Restore" : "Archive"}
               </Button>
             </div>
@@ -104,7 +107,7 @@ export default function AccountsTab({ currency }: { currency: string }) {
         ))}
       </ul>
       {fields && (
-        <Dialog labelledBy="account-editor-title">
+        <Dialog panelClassName={theme.dialogPanel} labelledBy="account-editor-title">
           <h3 id="account-editor-title" className="mb-4 text-xl font-semibold">{editor.id === null ? "Add account" : "Edit account"}</h3>
           <form className="space-y-3" onSubmit={save}>
             <label className="block">Account name<input className={fieldClass} required maxLength={100} value={fields.display_name} onChange={e => update({ display_name: e.target.value })} /></label>
@@ -144,12 +147,12 @@ export default function AccountsTab({ currency }: { currency: string }) {
             </>}
             {error && <p role="alert">{error}</p>}
             <DialogActions>
-              <Button type="button" disabled={pending} onClick={() => { setEditor(null); setError(""); }}>Cancel</Button>
-              <DialogAction disabled={pending}>{pending ? "Saving…" : "Save"}</DialogAction>
+              <Button type="button" className={theme.softAction} disabled={pending} onClick={() => { setEditor(null); setError(""); }}>Cancel</Button>
+              <DialogAction className={theme.primary} disabled={pending}>{pending ? "Saving…" : "Save"}</DialogAction>
             </DialogActions>
           </form>
         </Dialog>
       )}
-    </section>
+    </PulseCard>
   );
 }

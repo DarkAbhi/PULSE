@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, type LucideIcon } from "lucide-react";
 import Button from "@/app/components/design-system/button";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
-import styles from "./profile.module.css";
+import { iconTileClass, labelClass, settingButtonClass, settingRowClass, settingValueClass } from "./profile-classes";
 
 type PreferenceSettingsProps = {
   id: string;
@@ -105,19 +105,19 @@ export default function PreferenceSettings({
   }
 
   return (
-    <div className={styles.row}>
-      <span className={styles.tile} aria-hidden="true"><Icon /></span>
+    <div className={settingRowClass}>
+      <span className={iconTileClass} aria-hidden="true"><Icon /></span>
       <div className="min-w-0">
-        <p className={styles.rowLabel}>{title}</p>
-        <p className={styles.rowValue}>{displayValue}</p>
-        {detail && <p className={styles.rowNote}>{detail}</p>}
+        <p className={labelClass}>{title}</p>
+        <p className={settingValueClass}>{displayValue}</p>
+        {detail && <p className="text-[0.88rem] text-(--profile-muted)">{detail}</p>}
         <p role="status" className="text-sm text-success">{message}</p>
       </div>
       <Button
         ref={trigger}
         type="button"
         variant="secondary"
-        className={`${styles.pill} ${styles.secondary}`}
+        className={settingButtonClass}
         onClick={open}
         aria-label={`Change ${title.toLowerCase()}`}
       >
@@ -140,27 +140,28 @@ export default function PreferenceSettings({
                 disabled={pending}
                 onChange={event => setSearch(event.target.value)}
                 placeholder={placeholder}
-                className={styles.pickerSearch}
+                className="mt-1.5 w-full px-3.5"
               />
             </div>
-            <div className={styles.pickerChoices} role="radiogroup" aria-label={`Choose a ${title.toLowerCase()}`}>
+            <div className="-mx-1 grid max-h-[min(340px,45dvh)] gap-1.5 overflow-y-auto p-1" role="radiogroup" aria-label={`Choose a ${title.toLowerCase()}`}>
               {matches.map(choice => (
-                <label key={choice.value} className={styles.pickerChoice}>
+                <label key={choice.value} className="group relative cursor-pointer">
                   <input
                     type="radio"
+                    className="peer absolute inset-0 size-full cursor-inherit opacity-0"
                     name={`${id}-choice`}
                     value={choice.value}
                     checked={draft === choice.value}
                     disabled={pending}
                     onChange={() => { setDraft(choice.value); setError(""); }}
                   />
-                  <span>
+                  <span className="flex min-h-14 items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-(--profile-inset) px-3.5 py-2 font-bold wrap-anywhere peer-checked:border-(--profile-accent) peer-checked:bg-[color-mix(in_srgb,var(--profile-accent)_10%,var(--profile-surface))] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-1 peer-focus-visible:outline-(--profile-accent) group-hover:peer-not-checked:border-(--profile-line) peer-checked:[&_svg]:visible">
                     {choice.label}
-                    <Check className="size-5 shrink-0" aria-hidden="true" />
+                    <Check className="invisible size-5 shrink-0 text-(--profile-accent)" aria-hidden="true" />
                   </span>
                 </label>
               ))}
-              {!matches.length && <p className={styles.rowNote}>No matching {plural}.</p>}
+              {!matches.length && <p className="text-[0.88rem] text-(--profile-muted)">No matching {plural}.</p>}
             </div>
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <DialogActions>

@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
-import styles from "./profile.module.css";
+import { pillClass } from "./profile-classes";
 
 const apiBaseURL = "";
 
@@ -56,7 +56,7 @@ export default function LogoutButton() {
   return (
     <>
         <Button variant="destructive" size="lg"
-          className={`${styles.pill} ${styles.danger}`}
+          className={`${pillClass} border-[1.5px] border-(--profile-danger) bg-transparent! text-(--profile-danger)! hover:bg-(--profile-danger)/12!`}
           onClick={() => {
             setLogoutError("");
             setIsConfirmingLogout(true);

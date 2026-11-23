@@ -10,7 +10,7 @@ import Button from "@/app/components/design-system/button";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { copyApiKey } from "./copy-api-key";
-import styles from "./profile.module.css";
+import { cardClass, iconTileClass, labelClass, pillClass, sectionClass, sectionDescriptionClass, sectionHeadingClass } from "./profile-classes";
 
 type APIKey = {
   id: number;
@@ -18,6 +18,9 @@ type APIKey = {
   token_prefix: string;
   created_at: string;
 };
+
+const keyTableHeadingClass = `${labelClass} px-6 py-3`;
+const keyTableCellClass = "h-[72px] px-6 py-3 max-[761px]:h-auto max-[761px]:min-w-0 max-[761px]:p-0";
 
 export default function APIKeys() {
   const { timeZone } = useTimeZone();
@@ -115,16 +118,16 @@ export default function APIKeys() {
   }
 
   return (
-    <section className={styles.section} aria-labelledby="profile-api-keys">
-      <header className={styles.sectionHeader}>
+    <section className={sectionClass} aria-labelledby="profile-api-keys">
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 id="profile-api-keys"><KeyRound aria-hidden="true" />API keys</h2>
-          <p>Create keys so external services can access your Pulse data. Treat them like passwords.</p>
+          <h2 id="profile-api-keys" className={sectionHeadingClass}><KeyRound aria-hidden="true" />API keys</h2>
+          <p className={sectionDescriptionClass}>Create keys so external services can access your Pulse data. Treat them like passwords.</p>
         </div>
         <Button
           ref={createTrigger}
           type="button"
-          className={`${styles.pill} ${styles.primary}`}
+          className={`${pillClass} [background:var(--profile-primary)]! text-(--profile-primary-ink)!`}
           disabled={loading}
           icon={<Plus className="size-5" aria-hidden="true" />}
           onClick={() => { setError(""); setIsOpen(true); }}
@@ -133,48 +136,48 @@ export default function APIKeys() {
         </Button>
       </header>
       {loading || keys.length === 0 ? (
-        <div className={`${styles.card} ${styles.empty}`}>
-          <span className={styles.tile} aria-hidden="true"><KeyRound /></span>
+        <div className={`${cardClass} grid justify-items-center gap-2.5 px-6 py-9 text-center text-(--profile-muted)`}>
+          <span className={iconTileClass} aria-hidden="true"><KeyRound /></span>
           {loading ? <p role="status">Loading keys…</p> : !loadError && (
             <>
-              <strong>No API keys yet</strong>
+              <strong className="text-(--profile-ink)">No API keys yet</strong>
               <p>Create a key to let an external service access your Pulse data.</p>
             </>
           )}
           {loadError && <p className="text-destructive" role="alert">{loadError}</p>}
         </div>
       ) : (
-        <div className={`${styles.card} ${styles.keyCard}`}>
+        <div className={`${cardClass} overflow-hidden`}>
           {error && !isOpen && !revokeKey && <p className="px-6 py-3 text-sm text-destructive" role="alert">{error}</p>}
-          <table role="table" className={styles.keyTable} aria-labelledby="profile-api-keys">
-            <thead role="rowgroup">
+          <table role="table" className="w-full table-fixed border-collapse text-left max-[761px]:block" aria-labelledby="profile-api-keys">
+            <thead role="rowgroup" className="bg-(--profile-inset) max-[761px]:sr-only">
               <tr role="row">
-                <th scope="col">Name</th>
-                <th scope="col">Key</th>
-                <th scope="col">Created</th>
-                <th scope="col"><span className="sr-only">Actions</span></th>
+                <th scope="col" className={keyTableHeadingClass}>Name</th>
+                <th scope="col" className={keyTableHeadingClass}>Key</th>
+                <th scope="col" className={`${keyTableHeadingClass} w-[174px]`}>Created</th>
+                <th scope="col" className={`${keyTableHeadingClass} w-[92px]`}><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
-            <tbody role="rowgroup">
+            <tbody role="rowgroup" className="divide-y divide-(--profile-line) max-[761px]:block">
               {keys.map((key) => (
-                <tr key={key.id} role="row">
-                  <td role="cell">
-                    <div className={styles.keyName}>
-                      <span className={styles.keyIcon} aria-hidden="true"><KeyRound className="size-[18px]" /></span>
+                <tr key={key.id} role="row" className="max-[761px]:grid max-[761px]:grid-cols-[minmax(0,1fr)_auto] max-[761px]:items-center max-[761px]:gap-x-4 max-[761px]:gap-y-2.5 max-[761px]:px-6 max-[761px]:py-3.5">
+                  <td role="cell" className={`${keyTableCellClass} max-[761px]:col-span-full`}>
+                    <div className="flex items-center gap-3 font-bold wrap-anywhere">
+                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-(--profile-chip) text-(--profile-muted)" aria-hidden="true"><KeyRound className="size-[18px]" /></span>
                       <span>{key.name}</span>
                     </div>
                   </td>
-                  <td role="cell"><code>{key.token_prefix}…</code></td>
-                  <td role="cell" className="tabular-nums">
-                    <span className={styles.createdLabel} aria-hidden="true">Created</span>
+                  <td role="cell" className={`${keyTableCellClass} max-[761px]:col-span-full`}><code className="inline-block rounded-[10px] bg-(--profile-inset) px-2.5 py-[5px] text-[0.9rem] wrap-anywhere">{key.token_prefix}…</code></td>
+                  <td role="cell" className={`${keyTableCellClass} tabular-nums`}>
+                    <span className="text-[0.72rem] font-bold text-(--profile-muted) uppercase min-[761px]:hidden max-[761px]:block" aria-hidden="true">Created</span>
                     <time dateTime={key.created_at}>{formatInstant(key.created_at, timeZone, { dateStyle: "medium" })}</time>
                   </td>
-                  <td role="cell">
+                  <td role="cell" className={`${keyTableCellClass} text-right`}>
                     <Button
                       type="button"
                       variant="iconDanger"
                       size="lg"
-                      className={styles.revoke}
+                      className="rounded-full! text-(--profile-muted)! hover:bg-(--profile-chip)! hover:text-(--profile-danger)!"
                       aria-label={`Revoke ${key.name}`}
                       onClick={() => { setError(""); setRevokeKey(key); }}
                     >

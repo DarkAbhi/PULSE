@@ -205,11 +205,9 @@ export default function MealOnboarding({ notifications, initial, editing = false
         backLabel={editing ? "Back to Meal Plan" : "Back to Dashboard"}
         notifications={notifications}
       />
-      <div className="flex justify-end">
-        {editing
-          ? <PulseButton variant="tertiary" onClick={onCancel} disabled={busy}>Cancel editing</PulseButton>
-          : <PulseButton variant="tertiary" onClick={() => void commit(true)} disabled={busy}>Skip setup</PulseButton>}
-      </div>
+      {!editing && <div className="flex justify-end">
+        <PulseButton variant="tertiary" onClick={() => void commit(true)} disabled={busy}>Skip setup</PulseButton>
+      </div>}
       {failure?.skip && <p className={errorClass} role="alert">{failure.message}</p>}
 
       <header className={`relative isolate flex min-h-[170px] flex-col justify-center gap-2 overflow-hidden rounded-[40px] p-[clamp(22px,3vw,36px)] shadow-(--meal-hero-shadow) ${gradientClass}`}>

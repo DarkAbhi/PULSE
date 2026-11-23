@@ -40,7 +40,7 @@ import {
 } from "@/app/meal-plan/actions";
 import PulseButton from "@/app/components/design-system/pulse-button";
 import PulseCard from "@/app/components/design-system/pulse-card";
-import { MealPlate, mealSlotColors, type MealSlot } from "@/app/meal-plan/meal-visuals";
+import { mealSlotColors, type MealSlot } from "@/app/meal-plan/meal-visuals";
 import { addDays, formatYMD, getMonday, mealWeekBounds, parseYMD } from "@/app/meal-plan/week";
 import { mealPlanStyles as styles } from "@/app/meal-plan/meal-plan-classes";
 
@@ -338,25 +338,7 @@ export default function MealPlanClient({
         {appBar}
 
         <div className={styles.layout}>
-          <section className={styles.hero} aria-labelledby="meal-plan-title">
-            <div className={styles.plate} aria-hidden="true">
-              {["[animation-delay:-4s]", "[animation-delay:-2s]", ""].map(delay => (
-                <span key={delay} className={`${styles.ripple} ${delay}`} />
-              ))}
-              <MealPlate />
-            </div>
-            <div className="relative">
-              <h1 id="meal-plan-title" className={styles.title}>Meal Plan</h1>
-              <p className="mt-2 text-base font-medium sm:text-xl">Plan your week and track meals eaten</p>
-              {onEditPreferences && (
-                <PulseButton variant="secondary" shape="pill" size="xl" labelStyle="strong" className={styles.preferences} type="button"
-                  onClick={onEditPreferences} icon={<SlidersHorizontal className="size-5" aria-hidden="true" />}
-                >
-                  Meal preferences
-                </PulseButton>
-              )}
-            </div>
-          </section>
+          <h1 tabIndex={0} className="sr-only focus:not-sr-only">Meal plan</h1>
 
           <PulseCard as="section" className={styles.calendar} aria-label="Weekly calendar">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -420,11 +402,20 @@ export default function MealPlanClient({
                   </span>
                 </div>
               </div>
-              <PulseButton variant="gradient" shape="pill" size="xl" labelStyle="strong" className={`${styles.primaryAction} ${styles.addMeal}`} type="button"
-                onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek || weekError || !enabledMealTimes.length} icon={<Plus className="size-5" aria-hidden="true" />}
-              >
-                Add meal
-              </PulseButton>
+              <div className="flex items-center gap-2">
+                {onEditPreferences && (
+                  <PulseButton variant="secondary" shape="pill" size="xl" labelStyle="strong" className="px-3 sm:px-4" type="button"
+                    onClick={onEditPreferences} icon={<SlidersHorizontal className="size-5" aria-hidden="true" />}
+                  >
+                    <span className="sr-only sm:not-sr-only">Meal preferences</span>
+                  </PulseButton>
+                )}
+                <PulseButton variant="gradient" shape="pill" size="xl" labelStyle="strong" className={`${styles.primaryAction} ${styles.addMeal}`} type="button"
+                  onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek || weekError || !enabledMealTimes.length} icon={<Plus className="size-5" aria-hidden="true" />}
+                >
+                  Add meal
+                </PulseButton>
+              </div>
             </div>
 
             {weekError && (

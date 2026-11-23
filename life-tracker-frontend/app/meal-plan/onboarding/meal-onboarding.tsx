@@ -1,146 +1,289 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, Moon, Sun, Sunrise, Sunset, Utensils } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Check, Leaf, Soup, Sprout } from "lucide-react";
 import Button from "@/app/components/design-system/button";
 import BackLink from "@/app/components/design-system/back-link";
-import PulseCard from "@/app/components/design-system/pulse-card";
-import ChoiceGroup from "@/app/components/design-system/choice-group";
-import Switch from "@/app/components/design-system/switch";
-import TimeInput from "@/app/components/design-system/time-input";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 import { getMealOnboardingAction, resolveMealOnboardingAction, saveMealPreferencesAction } from "./actions";
-import { avoidances, barriers, choiceLabel, diets, firstInvalidStep, goals, initialPreferences, mealKinds, questions, stepError } from "./questionnaire";
-import type { MealPreferences, OnboardingState } from "./types";
+import { avoidances, barriers, choiceLabel, diets, firstInvalidStep, goals, initialPreferences, mealKinds, questions, stepError, toggleChoice } from "./questionnaire";
+import type { MealKind, MealPreferences, OnboardingState } from "./types";
 import type { MealTime } from "../actions";
 import CustomMealTimes from "./custom-meal-times";
+import styles from "./meal-preferences.module.css";
 
-const mealIcons = { breakfast: Sunrise, lunch: Sun, evening_snacks: Sunset, dinner: Moon };
+const goalIcons = [Soup, Leaf, Sprout];
+const mealColors = {
+  breakfast: "#FFC83D",
+  lunch: "#F0603A",
+  evening_snacks: "#D91CAB",
+  dinner: "#5B2CE0",
+};
+const questionTags = ["Required", "Optional", "Pick one", "Optional", "Pick at least one", "Times"];
+const hours = Array.from({ length: 12 }, (_, index) => index + 1);
+const minutes = Array.from({ length: 60 }, (_, index) => twoDigits(index));
+const periods = ["AM", "PM"] as const;
+
+function twoDigits(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function formatTime(value: string) {
+  const [hour, minute] = value.split(":");
+  const hour24 = Number(hour);
+  return `${hour24 % 12 || 12}:${minute} ${hour24 >= 12 ? "PM" : "AM"}`;
+}
+
+function UsualTime({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  const [hour, minute] = value.split(":");
+  const hour24 = Number(hour);
+  const hour12 = hour24 % 12 || 12;
+  const period = hour24 >= 12 ? "PM" : "AM";
+
+  function update(nextHour: number, nextMinute: string, nextPeriod: "AM" | "PM") {
+    onChange(`${twoDigits(nextHour % 12 + (nextPeriod === "PM" ? 12 : 0))}:${nextMinute}`);
+  }
+
+  return <div className={styles.timeControls} role="group" aria-label={`Usual time for ${label}`}>
+    <select aria-label={`${label} hour`} value={hour12} onChange={event => update(Number(event.target.value), minute, period)}>
+      {hours.map(option => <option key={option}>{option}</option>)}
+    </select>
+    <span aria-hidden="true">:</span>
+    <select aria-label={`${label} minutes`} value={minute} onChange={event => update(hour12, event.target.value, period)}>
+      {minutes.map(option => <option key={option}>{option}</option>)}
+    </select>
+    <div className={styles.period}>
+      {periods.map(option => <button key={option} type="button" aria-label={`${label} ${option}`} aria-pressed={period === option} onClick={() => update(hour12, minute, option)}>{option}</button>)}
+    </div>
+  </div>;
+}
+
+function Question({ index, error, children }: { index: number; error?: string; children: ReactNode }) {
+  const { title, description } = questions[index];
+  const id = `meal-question-${index + 1}`;
+  return <fieldset className={styles.question} aria-labelledby={id} aria-describedby={`${id}-hint${error ? ` ${id}-error` : ""}`}>
+    <div className={styles.questionHeader}>
+      <span className={styles.number} aria-hidden="true">{index + 1}</span>
+      <div>
+        <h2 id={id} tabIndex={-1}>{title}</h2>
+        <p id={`${id}-hint`}>{description}</p>
+      </div>
+      <span className={styles.tag}>{questionTags[index]}</span>
+    </div>
+    {children}
+    {error && <p className={styles.error} id={`${id}-error`} role="alert">{error}</p>}
+  </fieldset>;
+}
+
+function Choice({ name, value, label, checked, onChange, type = "checkbox", pill = false, icon }: {
+  name: string; value: string; label: string; checked: boolean; onChange: (checked: boolean) => void;
+  type?: "checkbox" | "radio" | "switch"; pill?: boolean; icon?: ReactNode;
+}) {
+  return <label className={pill ? styles.pill : styles.choice}>
+    <input type={type === "switch" ? "checkbox" : type} role={type === "switch" ? "switch" : undefined} name={name} value={value} checked={checked} onChange={event => onChange(event.target.checked)} />
+    {pill
+      ? <span><Check aria-hidden="true" />{label}</span>
+      : <span className={styles.choiceBox}>
+          {icon && <span className={styles.choiceIcon} aria-hidden="true">{icon}</span>}
+          <strong>{label}</strong>
+          <span className={styles.tick} aria-hidden="true"><Check /></span>
+        </span>}
+  </label>;
+}
+
 export default function MealOnboarding({ initial, editing = false, onDone, onCancel, onNotice, times, onCreated, onDeleted }: {
   initial: MealPreferences | null; editing?: boolean; onDone: (state: OnboardingState) => void; onCancel: () => void; onNotice: (message: string) => void;
   times: MealTime[]; onCreated: (time: MealTime) => void; onDeleted: (id: number) => void;
 }) {
-  const [preferences, setPreferences] = useState(() => initialPreferences(initial));
-  const [step, setStep] = useState(0);
-  const [error, setError] = useState("");
+  const [baseline] = useState(() => initialPreferences(initial));
+  const [preferences, setPreferences] = useState(baseline);
+  const [showValidation, setShowValidation] = useState(false);
+  const [failure, setFailure] = useState<{ message: string; skip: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
-  const [returnToReview, setReturnToReview] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
-  // Preserve edited meal times when the user toggles a meal off and back on.
-  const timeDrafts = useRef(Object.fromEntries(preferences.meals.map(m => [m.kind, m.usual_time])));
+  const timeDrafts = useRef(Object.fromEntries(baseline.meals.map(meal => [meal.kind, meal.usual_time])));
   const { timeZone } = useTimeZone();
-  const review = step === 6;
-  useEffect(() => { heading.current?.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "instant" }); }, [step]);
+  const unsaved = JSON.stringify(preferences) !== JSON.stringify(baseline);
+  const customTimes = times.filter(time => !time.is_default);
+  const enabledMeals = mealKinds.flatMap(meal => {
+    const selection = preferences.meals.find(slot => slot.kind === meal.kind);
+    return selection ? [{ ...meal, time: selection.usual_time }] : [];
+  });
 
-  function patch(value: Partial<MealPreferences>) { setPreferences(p => ({ ...p, ...value })); setError(""); }
-  function goTo(next: number) { setError(""); setStep(next); }
-  function continueJourney() {
-    const message = stepError(step, preferences);
-    if (message) { setError(message); return; }
-    goTo(returnToReview ? 6 : step + 1);
-    setReturnToReview(false);
+  useEffect(() => {
+    heading.current?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
+
+  function patch(value: Partial<MealPreferences>) {
+    setPreferences(current => ({ ...current, ...value }));
+    setFailure(null);
   }
+
+  function toggleMeal(kind: MealKind, selected: boolean) {
+    const meals = mealKinds.flatMap(meal => {
+      const current = preferences.meals.find(slot => slot.kind === meal.kind);
+      if (meal.kind !== kind) return current ? [current] : [];
+      return selected ? [{ kind, usual_time: timeDrafts.current[kind] ?? meal.defaultTime }] : [];
+    });
+    patch({ meals, planning_slots_configured: true });
+  }
+
+  function changeTime(kind: MealKind, usual_time: string) {
+    timeDrafts.current[kind] = usual_time;
+    patch({ meals: preferences.meals.map(meal => meal.kind === kind ? { ...meal, usual_time } : meal) });
+  }
+
+  function validationError(index: number) {
+    return showValidation ? stepError(index, preferences) : "";
+  }
+
   async function commit(skip: boolean) {
     if (busyRef.current) return;
+    setFailure(null);
     if (!skip) {
       const invalid = firstInvalidStep(preferences);
-      if (invalid !== -1) { goTo(invalid); setError(stepError(invalid, preferences)); return; }
+      if (invalid !== -1) {
+        setShowValidation(true);
+        document.getElementById(`meal-question-${invalid + 1}`)?.focus();
+        return;
+      }
     }
+
     busyRef.current = true;
-    setBusy(true); setError("");
+    setBusy(true);
     try {
-      const result = editing ? await saveMealPreferencesAction(preferences) : await resolveMealOnboardingAction(skip ? "skipped" : "completed", skip ? undefined : preferences);
+      const result = editing
+        ? await saveMealPreferencesAction(preferences)
+        : await resolveMealOnboardingAction(skip ? "skipped" : "completed", skip ? undefined : preferences);
       if (result.ok) { onDone(result.state); return; }
       if (result.state && result.state.status !== "pending") {
         onNotice("Meal setup was already finished in another tab. You can edit your preferences here anytime.");
-        onDone(result.state); return;
+        onDone(result.state);
+        return;
       }
-      // A timeout may have happened after the database committed. Reconcile before
-      // offering a retry, without persisting a browser-only dismissal flag.
+      // Reconcile a lost response before offering a retry.
       if (!editing) {
         const current = await getMealOnboardingAction();
         if (current.ok && current.state.status !== "pending") { onDone(current.state); return; }
       }
-      setError(result.error);
-    } catch { setError("Could not save. Your choices are still here. Please try again."); }
-    finally { busyRef.current = false; setBusy(false); }
+      setFailure({ message: result.error, skip });
+    } catch {
+      setFailure({ message: "Could not save. Your choices are still here. Please try again.", skip });
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
   }
 
-  const summary = [
-    { title: "Your goal", value: choiceLabel(goals, preferences.goal) },
-    { title: "What gets in the way", value: preferences.barriers.map(v => choiceLabel(barriers, v)).join(", ") || "None selected" },
-    { title: "Eating style", value: choiceLabel(diets, preferences.dietary_pattern) },
-    { title: "Foods to avoid", value: preferences.food_avoidances.map(v => choiceLabel(avoidances, v)).join(", ") || "None selected" },
-    { title: "Meals to plan", value: preferences.meals.map(m => mealKinds.find(k => k.kind === m.kind)?.label).join(", ") },
-    { title: "Usual meal times", value: preferences.meals.map(m => `${mealKinds.find(k => k.kind === m.kind)?.label}: ${m.usual_time}`).join(", ") },
-  ];
-
-  return <main className="min-h-screen bg-background text-foreground">
-    <div id="meal-setup-journey" className="mx-auto max-w-6xl px-4 pt-5 sm:px-8 sm:pt-8">
-      <header className="flex items-center justify-between gap-4">
+  return <main className={styles.page}>
+    <div id="meal-setup-journey" className={styles.wrap}>
+      <div className={styles.toolbar}>
         <BackLink href="/dashboard">Dashboard</BackLink>
-        {editing ? <Button variant="tertiary" onClick={onCancel} disabled={busy}>Cancel editing</Button> : <Button variant="tertiary" onClick={() => commit(true)} disabled={busy}>{busy ? "Saving…" : "Skip setup"}</Button>}
-      </header>
-      <div className="mt-5 grid gap-6 lg:mt-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-14">
-        <aside className="relative h-36 overflow-hidden rounded-3xl bg-accent sm:h-48 lg:sticky lg:top-8 lg:h-[min(720px,85dvh)]" aria-hidden="true">
-          <div className="absolute bottom-7 left-7 z-10 hidden max-w-64 lg:block">
-            <Utensils className="mb-4 size-7 text-action" />
-            <p className="text-3xl font-semibold tracking-tight text-accent-foreground">A little more you.<br />A little less figuring it out.</p>
-            <p className="mt-4 text-sm leading-6 text-accent-foreground">Make room for meals that fit your day.</p>
-          </div>
-          <Image src={step % 2 === 0 ? "/meal-plan/onboarding/salad.webp" : "/meal-plan/onboarding/pesto.webp"} alt="" width={900} height={900} priority className="absolute -right-10 -top-24 w-72 max-w-none rotate-[-12deg] sm:-top-32 sm:w-96 lg:-right-28 lg:-top-20 lg:w-[560px]" sizes="(min-width: 1024px) 560px, (min-width: 640px) 384px, 288px" />
-        </aside>
-        <section className="min-w-0 pb-4" aria-labelledby="meal-setup-heading" aria-busy={busy}>
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <Button variant="iconSecondary" aria-label={step === 0 ? "Back to meal planner" : "Previous question"} disabled={busy || (!editing && step === 0)} onClick={() => { if (step === 0) onCancel(); else { setReturnToReview(false); goTo(step - 1); } }}><ArrowLeft className="size-4" /></Button>
-            <span className="text-sm text-muted-foreground" aria-live="polite">{review ? "Ready when you are" : `Question ${step + 1} of 6`}</span>
-          </div>
-          <div role="progressbar" aria-label="Meal setup progress" aria-valuemin={0} aria-valuemax={6} aria-valuenow={Math.min(step + 1, 6)} className="mb-7 flex gap-1.5">
-            {questions.map((_, index) => <span key={index} className={`h-1 flex-1 rounded-full ${index <= step ? "bg-action" : "bg-surface-strong"}`} />)}
-          </div>
-          <h1 ref={heading} id="meal-setup-heading" tabIndex={-1} className="max-w-xl text-3xl font-bold leading-tight tracking-tight outline-none sm:text-4xl">{review ? "A plan that feels like you." : questions[step].title}</h1>
-          <p className="mt-3 max-w-lg text-base leading-7 text-muted-foreground">{review ? "Take a look, then save your preferences. You can change them anytime." : questions[step].description}</p>
-          <form className="mt-7" onSubmit={e => { e.preventDefault(); if (review) void commit(false); else continueJourney(); }}>
-            <fieldset disabled={busy} className="min-w-0" aria-describedby={error ? "meal-setup-error" : undefined}>
-              <legend className="sr-only">{review ? "Review preferences" : questions[step].title}</legend>
-              {step === 0 && <ChoiceGroup label="Your goal" value={preferences.goal} options={goals.map(([value, label]) => ({ value, label }))} onChange={goal => patch({ goal })} />}
-              {step === 1 && <ChoiceGroup multiple label="What gets in the way" value={preferences.barriers} options={barriers.map(([value, label]) => ({ value, label }))} onChange={barriers => patch({ barriers })} />}
-              {step === 2 && <ChoiceGroup label="Eating style" value={preferences.dietary_pattern} options={diets.map(([value, label]) => ({ value, label }))} onChange={dietary_pattern => patch({ dietary_pattern })} />}
-              {step === 3 && <ChoiceGroup multiple columns label="Foods to avoid" value={preferences.food_avoidances} options={avoidances.map(([value, label, icon]) => ({ value, label, icon }))} onChange={food_avoidances => patch({ food_avoidances })} />}
-              {step === 4 && <div className="grid gap-3">
-                {initial && !initial.planning_slots_configured && !preferences.planning_slots_configured &&
-                  <p className="text-sm text-muted-foreground">All meal times are currently available in Add Meal. Change a switch and save to use these selections.</p>}
-                {mealKinds.map(meal => {
-                const Icon = mealIcons[meal.kind];
-                return <Switch key={meal.kind} checked={preferences.meals.some(m => m.kind === meal.kind)} onChange={selected => {
-                  const meals = selected ? [...preferences.meals, { kind: meal.kind, usual_time: timeDrafts.current[meal.kind] ?? meal.defaultTime }] : preferences.meals.filter(m => m.kind !== meal.kind);
-                  patch({ meals: mealKinds.flatMap(k => meals.filter(m => m.kind === k.kind)), planning_slots_configured: true });
-                }}><Icon className="size-6 text-action" aria-hidden="true" />{meal.label}</Switch>;
-              })}
-                <CustomMealTimes times={times} onCreated={onCreated} onDeleted={onDeleted} />
-              </div>}
-              {step === 5 && <div className="grid gap-3">
-                <p className="mb-1 text-sm text-muted-foreground">Local times in {timeZone}</p>
-                {preferences.meals.map(meal => <TimeInput key={meal.kind} label={mealKinds.find(m => m.kind === meal.kind)!.label} value={meal.usual_time} onChange={usual_time => {
-                  timeDrafts.current[meal.kind] = usual_time;
-                  patch({ meals: preferences.meals.map(m => m.kind === meal.kind ? { ...m, usual_time } : m) });
-                }} />)}
-              </div>}
-              {review && <PulseCard className="divide-y divide-divider px-5">{summary.map((item, index) => <div key={item.title} className="flex items-start justify-between gap-4 py-4">
-                <div><h2 className="text-xs font-medium text-muted-foreground">{item.title}</h2><p className="mt-1 text-sm leading-6">{item.value}</p></div>
-                <Button type="button" variant="tertiary" size="sm" aria-label={`Edit ${item.title.toLowerCase()}`} onClick={() => { setReturnToReview(true); goTo(index); }}>Edit</Button>
-              </div>)}</PulseCard>}
-            </fieldset>
-            <div className="bottom-0 z-20 -mx-4 mt-6 border-t border-divider bg-background px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:mx-0 sm:px-0 lg:sticky">
-              {error && <p id="meal-setup-error" role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
-              <Button type="submit" size="lg" className="w-full" disabled={busy} icon={review ? <Check className="size-4" aria-hidden="true" /> : undefined}>{busy ? "Saving…" : review ? "Save preferences" : returnToReview ? "Back to review" : "Continue"}</Button>
-              <p className="mt-3 text-center text-xs leading-5 text-muted-foreground">{editing ? "Changes are saved only when you choose Save preferences." : "Your answers are saved only when you choose Save preferences."}</p>
-            </div>
-          </form>
-        </section>
+        {editing
+          ? <Button variant="tertiary" onClick={onCancel} disabled={busy}>Cancel editing</Button>
+          : <Button variant="tertiary" onClick={() => void commit(true)} disabled={busy}>Skip setup</Button>}
       </div>
+      {failure?.skip && <p className={styles.error} role="alert">{failure.message}</p>}
+
+      <header className={styles.hero}>
+        <svg className={styles.watermark} viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="5.5" />
+          <circle cx="12" cy="12" r="2" />
+          <path d="M3 4.5v4a1.5 1.5 0 0 0 3 0v-4M4.5 10v9.5M21 4.5c-1.6 1-2.2 3-2.2 5.5h2.2v9.5" />
+        </svg>
+        <h1 ref={heading} tabIndex={-1}>Meal preferences</h1>
+        <p>Six quick questions to shape your meal plan. You can change any of them later.</p>
+      </header>
+
+      <form className={styles.layout} aria-label="Meal preference questions" aria-busy={busy} noValidate onSubmit={event => { event.preventDefault(); void commit(false); }}>
+        <fieldset className={styles.questions} disabled={busy} aria-label="Questions">
+          <Question index={0} error={validationError(0)}>
+            <div className={styles.goals}>
+              {goals.map(([value, label], index) => {
+                const Icon = goalIcons[index];
+                return <Choice key={value} type="radio" name="goal" value={value} label={label} icon={<Icon />} checked={preferences.goal === value} onChange={() => patch({ goal: value })} />;
+              })}
+            </div>
+          </Question>
+          <Question index={1}>
+            <div className={styles.options}>
+              {barriers.map(([value, label]) => <Choice key={value} name="barriers" value={value} label={label} checked={preferences.barriers.includes(value)} onChange={() => patch({ barriers: toggleChoice(preferences.barriers, value) })} />)}
+            </div>
+          </Question>
+          <Question index={2} error={validationError(2)}>
+            <div className={styles.pills}>
+              {diets.map(([value, label]) => <Choice key={value} pill type="radio" name="diet" value={value} label={label} checked={preferences.dietary_pattern === value} onChange={() => patch({ dietary_pattern: value })} />)}
+            </div>
+          </Question>
+          <Question index={3}>
+            <div>
+              <div className={styles.pills}>
+                {avoidances.map(([value, label]) => <Choice key={value} pill name="avoidances" value={value} label={label} checked={preferences.food_avoidances.includes(value)} onChange={() => patch({ food_avoidances: toggleChoice(preferences.food_avoidances, value) })} />)}
+              </div>
+              <div className={styles.count}>
+                <span aria-live="polite">{preferences.food_avoidances.length ? `${preferences.food_avoidances.length} selected` : "None selected"}</span>
+                <button type="button" className={styles.clear} disabled={!preferences.food_avoidances.length} onClick={() => patch({ food_avoidances: [] })}>Clear all</button>
+              </div>
+            </div>
+          </Question>
+          <Question index={4} error={validationError(4)}>
+            {initial && !initial.planning_slots_configured && !preferences.planning_slots_configured &&
+              <p className={styles.muted}>All meal times are currently available in Add Meal. Change a switch and save to use these selections.</p>}
+            <div className={styles.pills}>
+              {mealKinds.map(({ kind, label }) => <Choice key={kind} pill type="switch" name="meals" value={kind} label={label} checked={preferences.meals.some(meal => meal.kind === kind)} onChange={selected => toggleMeal(kind, selected)} />)}
+              <CustomMealTimes times={customTimes} onCreated={onCreated} onDeleted={onDeleted} />
+            </div>
+          </Question>
+          <Question index={5} error={validationError(5)}>
+            <p className={styles.muted}>Local times in {timeZone}</p>
+            {!enabledMeals.length && !customTimes.length && <p className={styles.muted}>Select a meal above to set its usual time.</p>}
+            <div className={styles.times}>
+              {enabledMeals.map(({ kind, label, time }) => <div key={kind} className={styles.timeRow}>
+                <span className={styles.timeName}><span className={styles.dot} style={{ background: mealColors[kind] }} />{label}</span>
+                <UsualTime label={label} value={time} onChange={value => changeTime(kind, value)} />
+              </div>)}
+              {customTimes.map(time => <div key={time.id} className={styles.timeRow}>
+                <span className={styles.timeName}><span className={styles.dot} />{time.name}</span>
+                <span className={styles.muted}>{formatTime(time.start_time)}–{formatTime(time.end_time)}</span>
+              </div>)}
+            </div>
+          </Question>
+        </fieldset>
+
+        <aside className={styles.summary} aria-label="Your plan so far">
+          <div className={styles.summaryDetails}>
+            <h2>Your plan so far</h2>
+            <dl>
+              <div><dt>Goal</dt><dd>{preferences.goal ? choiceLabel(goals, preferences.goal) : <span className={styles.muted}>Not chosen yet</span>}</dd></div>
+              <div><dt>How you like to eat</dt><dd>{preferences.dietary_pattern ? choiceLabel(diets, preferences.dietary_pattern) : <span className={styles.muted}>Not chosen yet</span>}</dd></div>
+              <div>
+                <dt>Avoiding</dt>
+                <dd>{preferences.food_avoidances.length
+                  ? <span className={styles.summaryPills}>{preferences.food_avoidances.map(value => <span key={value}>{choiceLabel(avoidances, value)}</span>)}</span>
+                  : <span className={styles.muted}>Nothing selected</span>}</dd>
+              </div>
+              <div>
+                <dt>Meals and usual times</dt>
+                <dd>{enabledMeals.length || customTimes.length
+                  ? <ul>
+                      {enabledMeals.map(meal => <li key={meal.kind}><span>{meal.label}</span><time dateTime={meal.time}>{formatTime(meal.time)}</time></li>)}
+                      {customTimes.map(time => <li key={time.id}><span>{time.name}</span><span className={styles.muted}>{formatTime(time.start_time)}–{formatTime(time.end_time)}</span></li>)}
+                    </ul>
+                  : <span className={styles.muted}>None selected</span>}</dd>
+              </div>
+            </dl>
+          </div>
+          {failure && !failure.skip && <p className={styles.error} role="alert">{failure.message}</p>}
+          <div className={styles.saveControls}>
+            <span className={styles.status} data-unsaved={unsaved} role="status">
+              {unsaved ? "Unsaved changes" : initial ? "All changes saved" : "Ready to customize"}
+            </span>
+            <button className={styles.save} type="submit" disabled={busy}>{busy ? "Saving…" : "Save preferences"}</button>
+          </div>
+        </aside>
+      </form>
     </div>
   </main>;
 }

@@ -37,9 +37,9 @@ export function initialPreferences(saved?: MealPreferences | null): MealPreferen
 }
 export function toggleChoice(values: string[], value: string) { return values.includes(value) ? values.filter(v => v !== value) : [...values, value]; }
 export function stepError(step: number, p: MealPreferences): string {
-  if (step === 0 && !goals.some(([code]) => code === p.goal)) return "Choose a goal to continue.";
+  if (step === 0 && !goals.some(([code]) => code === p.goal)) return "Choose a goal.";
   if (step === 2 && !diets.some(([code]) => code === p.dietary_pattern)) return "Choose how you like to eat.";
-  if (step === 4 && p.meals.length === 0) return "Choose at least one meal to continue.";
+  if (step === 4 && p.meals.length === 0) return "Choose at least one meal.";
   if (step === 5 && p.meals.some(m => !/^([01]\d|2[0-3]):[0-5]\d$/.test(m.usual_time))) return "Enter a valid time for every selected meal.";
   return "";
 }

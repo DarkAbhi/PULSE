@@ -2,11 +2,11 @@
 
 import { useEffect, useId, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { Clock, Loader2, Plus, Trash2 } from "lucide-react";
-import Button from "@/app/components/design-system/button";
+import { Clock, Loader2, Plus, X } from "lucide-react";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { createMealTimeAction, deleteMealTimeAction, type MealTime } from "../actions";
+import styles from "./meal-preferences.module.css";
 
 export default function CustomMealTimes({ times, onCreated, onDeleted }: {
   times: MealTime[];
@@ -89,23 +89,19 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
   };
 
   return <>
-    <Button variant="secondary" type="button" onClick={handleOpenAddMealTime} icon={<Plus className="size-4" aria-hidden="true" />}>
+    {times.map(time => (
+      <span key={time.id} className={styles.customChip}>
+        <span>{time.name}</span>
+        <button type="button" aria-label={`Delete ${time.name}`}
+          onClick={() => { setDeleteError(""); setMealTimeToDelete(time); }}>
+          <X aria-hidden="true" />
+        </button>
+      </span>
+    ))}
+    <button className={styles.addCustom} type="button" onClick={handleOpenAddMealTime}>
+      <Plus aria-hidden="true" />
       Add custom meal time
-    </Button>
-    <ul className="divide-y divide-divider empty:hidden">
-      {times.filter(time => !time.is_default).map(time => (
-        <li key={time.id} className="flex items-center justify-between gap-3 py-2">
-          <div className="min-w-0">
-            <p className="wrap-anywhere font-semibold">{time.name}</p>
-            <p className="text-sm text-muted-foreground">{time.start_time}–{time.end_time}</p>
-          </div>
-          <Button type="button" variant="iconDanger" size="sm" aria-label={`Delete ${time.name}`}
-            onClick={() => { setDeleteError(""); setMealTimeToDelete(time); }}>
-            <Trash2 className="size-4" aria-hidden="true" />
-          </Button>
-        </li>
-      ))}
-    </ul>
+    </button>
       {/* New meal time dialog */}
       {isAddMealTimeOpen && createPortal(
         <Dialog

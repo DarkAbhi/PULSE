@@ -3,6 +3,7 @@ import { Bricolage_Grotesque } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "@/app/globals.css";
 import ProfilePreferencesProvider from "@/app/components/profile-preferences-provider";
+import { dashboardViewStorageKey } from "@/app/lib/dashboard-view-storage";
 import { getUserCurrency } from "@/app/lib/user-currency";
 import { getUserTimeZone } from "@/app/lib/user-time-zone";
 
@@ -11,6 +12,13 @@ const bricolageGrotesque = Bricolage_Grotesque({
   subsets: ["latin"],
   display: "swap",
 });
+
+// Browser storage is available before the dashboard's server-rendered content is painted.
+const initializeDashboardView = `try {
+  if (localStorage.getItem(${JSON.stringify(dashboardViewStorageKey)}) === "compact") {
+    document.documentElement.dataset.initialDashboardView = "compact";
+  }
+} catch {}`;
 
 export const metadata: Metadata = {
   title: "Pulse",
@@ -28,6 +36,9 @@ export default async function RootLayout({
   const [timeZone, currency] = await Promise.all([getUserTimeZone(), getUserCurrency()]);
   return (
     <html lang="en" className={bricolageGrotesque.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: initializeDashboardView }} />
+      </head>
       <body className="antialiased">
         <ThemeProvider
           attribute="class"

@@ -12,6 +12,7 @@ import AboutPulse from "@/app/profile/about-pulse";
 import APIKeysSection from "@/app/profile/api-keys-section";
 import ChangePasswordButton from "@/app/profile/change-password-button";
 import CurrencySettings from "@/app/profile/currency-settings";
+import DashboardViewSettings from "@/app/profile/dashboard-view-settings";
 import ThemeSettings from "@/app/profile/theme-settings";
 import TimeZoneSettings from "@/app/profile/time-zone-settings";
 import { sectionClass, sectionHeadingClass } from "@/app/profile/profile-classes";
@@ -56,6 +57,8 @@ export default async function ProfilePage() {
 
           <ThemeSettings />
         </div>
+
+        <DashboardViewSettings />
 
         <Suspense fallback={<PulseCard className="p-6 shadow-card" role="status">Loading API keys…</PulseCard>}>
           <APIKeysSection />

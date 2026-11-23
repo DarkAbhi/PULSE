@@ -15,7 +15,8 @@ const heroArtClass =
 
 const heroClass =
   "relative isolate flex min-h-90 min-w-0 flex-col justify-between gap-16 rounded-hero p-6 text-foreground " +
-  "compact:min-h-100 compact:p-8 dark:text-white";
+  "compact:min-h-100 compact:p-8 dark:text-white dashboard-compact:min-h-44 dashboard-compact:gap-5 " +
+  "dashboard-compact:p-4 dashboard-compact:sm:px-7 dashboard-compact:sm:py-5 dashboard-compact:rounded-card";
 
 function PulseOrb() {
   return (
@@ -41,10 +42,12 @@ export default function GreetingHeader({ name, children }: GreetingHeaderProps) 
         <DashboardClock />
         <div className="flex shrink-0 gap-1">{children}</div>
       </div>
-      <div className="compact:max-w-[68%]">
-        <p className="dark:text-white/88 text-muted-foreground text-xl">Good to see you,</p>
-        <h1 className="mt-3 mb-7 wrap-anywhere text-[clamp(48px,6vw,72px)] leading-[1.05] font-bold tracking-[-.035em]">{name}</h1>
-        <p className="text-control max-w-[36ch]">A little perspective on your everyday.</p>
+      <div className="compact:max-w-[68%] dashboard-compact:compact:max-w-[60%]">
+        <p className="dark:text-white/88 text-muted-foreground text-xl dashboard-compact:text-base">Good to see you,</p>
+        <div className="dashboard-compact:mt-1 dashboard-compact:lg:flex dashboard-compact:lg:items-center dashboard-compact:lg:gap-5">
+          <h1 className="mt-3 mb-7 wrap-anywhere text-[clamp(48px,6vw,72px)] leading-[1.05] font-bold tracking-[-.035em] dashboard-compact:my-0 dashboard-compact:text-[clamp(2.25rem,4vw,3.5rem)]">{name}</h1>
+          <p className="text-control max-w-[36ch] dashboard-compact:mt-1 dashboard-compact:lg:mt-0 dashboard-compact:lg:border-s dashboard-compact:lg:border-current/35 dashboard-compact:lg:ps-5">A little perspective on your everyday.</p>
+        </div>
       </div>
     </section>
   );

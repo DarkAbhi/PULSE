@@ -4,6 +4,7 @@
 @import "./financial-horizon/financial-theme.css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant dashboard-compact (&:where([data-dashboard-view="compact"], [data-dashboard-view="compact"] *, [data-initial-dashboard-view="compact"] [data-dashboard-view="initial"], [data-initial-dashboard-view="compact"] [data-dashboard-view="initial"] *));
 @custom-variant normal-colors (@media (forced-colors: none));
 
 @theme inline {

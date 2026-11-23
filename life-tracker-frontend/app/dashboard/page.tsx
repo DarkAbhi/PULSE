@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import { UserRound } from "lucide-react";
+import DashboardFrame from "@/app/dashboard/dashboard-frame";
 import GreetingHeader from "@/app/dashboard/greeting-header";
 import GymVisitCard from "@/app/dashboard/gym-visit-card";
 import NotificationDropdown from "@/app/components/notification-dropdown";
@@ -23,6 +24,8 @@ export const metadata = {
 };
 
 type DashboardData = ReturnType<typeof getDashboardData>;
+
+const cardPlaceholderClass = "min-h-50 rounded-card bg-card dashboard-compact:min-h-36";
 
 async function DashboardGreeting({ username, profile, notifications }: {
   username: string;
@@ -64,21 +67,26 @@ export default async function DashboardPage() {
   const data = getDashboardData();
 
   return (
-    <main id="main-content" tabIndex={-1} className={`${dashboardClass} ${frame.page}`}>
-      <div className={`grid gap-6 ${frame.content}`}>
+    <DashboardFrame className={`${dashboardClass} ${frame.page} dashboard-compact:lg:pt-6`}>
+      <div className={`grid gap-6 dashboard-compact:gap-4 ${frame.content}`}>
         <Suspense fallback={<GreetingHeader name={session.username} />}>
           <DashboardGreeting username={session.username} profile={data.profile} notifications={data.notifications} />
         </Suspense>
-        <section className="grid gap-6 items-stretch md:grid-cols-2" aria-label="Your day at a glance">
-          <Suspense fallback={<div className="min-h-50 rounded-card bg-card" aria-busy="true" />}>
-            <DashboardBalance horizon={data.horizon} />
-          </Suspense>
-          <Suspense fallback={<div className="min-h-50 rounded-card bg-card" aria-busy="true" />}>
-            <DashboardWorkout workout={data.workout} />
-          </Suspense>
-        </section>
-        <SectionTiles />
+        <div className="@container grid gap-6 dashboard-compact:gap-3 dashboard-compact:md:auto-rows-fr dashboard-compact:xl:grid-cols-4">
+          <section
+            className="grid gap-6 items-stretch md:grid-cols-2 dashboard-compact:gap-3 dashboard-compact:xl:col-span-2 dashboard-compact:xl:grid-cols-subgrid dashboard-compact:xl:grid-rows-subgrid"
+            aria-label="Your day at a glance"
+          >
+            <Suspense fallback={<div className={cardPlaceholderClass} aria-busy="true" />}>
+              <DashboardBalance horizon={data.horizon} />
+            </Suspense>
+            <Suspense fallback={<div className={cardPlaceholderClass} aria-busy="true" />}>
+              <DashboardWorkout workout={data.workout} />
+            </Suspense>
+          </section>
+          <SectionTiles />
+        </div>
       </div>
-    </main>
+    </DashboardFrame>
   );
 }

@@ -1,4 +1,4 @@
-import BackLink from "@/app/components/design-system/back-link";
+import TopAppBar from "@/app/components/top-app-bar";
 import { notFound } from "next/navigation";
 import MaintenanceScheduleForm from "../../maintenance-schedules";
 import { loadReminderSettings, reminderDetails } from "../data";
@@ -15,7 +15,7 @@ export default async function ReminderPage({ params }: { params: Promise<{ id: s
 
   return (
     <>
-      <BackLink href={`/garage/${id}/reminders`}>Back to reminder settings</BackLink>
+      <TopAppBar backHref={`/garage/${id}/reminders`} backLabel="Back to reminder settings" />
       <header className="mt-4 flex items-center gap-4 border-b border-divider pb-5 sm:pb-6">
         <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground sm:size-16">
           <Icon className="size-6 sm:size-8" aria-hidden="true" />

@@ -9,8 +9,7 @@ import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import Button from "@/app/components/design-system/button";
 
-import { useState, useTransition, useEffect, useRef } from "react";
-import BackLink from "@/app/components/design-system/back-link";
+import { useState, useTransition, useEffect, useRef, type ReactNode } from "react";
 import frame from "@/app/components/design-system/page-frame.module.css";
 import { Compass, X } from "lucide-react";
 
@@ -69,6 +68,7 @@ export type NextMonthPurchaseItem = {
 };
 
 interface FinancialHorizonClientProps {
+  appBar: ReactNode;
   initialSummary: HorizonSummary;
   initialPurchases: NextMonthPurchaseItem[];
   initialPurchasesTotal: number;
@@ -76,6 +76,7 @@ interface FinancialHorizonClientProps {
 }
 
 export default function FinancialHorizonClient({
+  appBar,
   initialSummary,
   initialPurchases,
   initialPurchasesTotal,
@@ -809,9 +810,9 @@ export default function FinancialHorizonClient({
   return (
     <main className={`${frame.page} ${theme.theme}`}>
       <div className={`${frame.content} space-y-6 sm:space-y-7`}>
+        {appBar}
         <header>
-          <BackLink href="/dashboard">Back to Dashboard</BackLink>
-          <div className="mt-3 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="flex items-center gap-3 text-3xl leading-tight font-extrabold tracking-tight sm:gap-4 sm:text-5xl">
               <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-accent text-action sm:size-14">
                 <Compass aria-hidden="true" className="size-6 sm:size-7" />

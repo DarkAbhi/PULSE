@@ -3,6 +3,7 @@ import { getUserTimeZone } from "@/app/lib/user-time-zone";
 
 import { dateKey } from "@/app/lib/time-zone.mjs";
 import { redirect } from "next/navigation";
+import { AppBarNotifications } from "@/app/components/top-app-bar";
 import MealPlanGate from "./onboarding/meal-plan-gate";
 import { getMealOnboardingAction } from "./onboarding/actions";
 import { MealPlan, MealTime } from "./actions";
@@ -52,6 +53,7 @@ export default async function MealPlanPage() {
 
   return (
     <MealPlanGate
+      notifications={<AppBarNotifications />}
       key={session.username}
       initialState={onboarding.ok ? onboarding.state : null}
       initialMeals={initialMeals}

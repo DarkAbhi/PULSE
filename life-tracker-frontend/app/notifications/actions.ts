@@ -1,7 +1,7 @@
 "use server";
 
 import { apiFetch } from "@/app/lib/server-api";
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 
 const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??
@@ -17,6 +17,7 @@ export async function dismissNotification(notificationID: number) {
     }
     revalidatePath("/notifications");
     revalidatePath("/dashboard");
+    refresh();
     return { ok: true };
   } catch (err) {
     return { ok: false, error: "We couldn't reach the server. Please try again." };

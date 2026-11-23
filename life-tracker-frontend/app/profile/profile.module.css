@@ -34,7 +34,6 @@
 }
 
 .page > * { min-width: 0; }
-.back { justify-self: start; margin-bottom: -6px; }
 
 .hero {
   position: relative;

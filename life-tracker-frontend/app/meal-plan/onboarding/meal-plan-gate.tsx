@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import AppBar from "@/app/components/design-system/app-bar";
 import Button from "@/app/components/design-system/button";
 import MealPlanClient from "../meal-plan-client";
 import type { MealPlan, MealTime } from "../actions";
@@ -9,7 +10,7 @@ import { getMealOnboardingAction } from "./actions";
 import { shouldShowOnboarding } from "./questionnaire";
 import type { OnboardingState } from "./types";
 
-export default function MealPlanGate({ initialState, ...plannerProps }: { initialState: OnboardingState | null; initialMeals: MealPlan[]; initialMealTimes: MealTime[]; initialTodayStr: string }) {
+export default function MealPlanGate({ initialState, notifications, ...plannerProps }: { notifications: ReactNode; initialState: OnboardingState | null; initialMeals: MealPlan[]; initialMealTimes: MealTime[]; initialTodayStr: string }) {
   const [state, setState] = useState(initialState);
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState("");
@@ -27,17 +28,25 @@ export default function MealPlanGate({ initialState, ...plannerProps }: { initia
     window.addEventListener("pageshow", reconcile);
     return () => { active = false; window.removeEventListener("pageshow", reconcile); };
   }, [state?.status]);
-  if (!state) return <main className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground"><div className="max-w-md text-center">
+  const appBar = <AppBar
+    back={{ href: "/dashboard" }}
+    backLabel="Back to Dashboard"
+    notifications={notifications}
+  />;
+
+  if (!state) return <main className="flex min-h-screen flex-col bg-background p-6 text-foreground">
+    <div className="mx-auto w-full max-w-[1280px]">{appBar}</div>
+    <div className="m-auto max-w-md py-6 text-center">
     <h1 className="text-2xl font-semibold">Let's load your meal preferences.</h1><p role="alert" className="my-4 text-muted-foreground">{error || "We couldn't check your meal setup. Please try again."}</p>
     <Button disabled={loading} onClick={async () => { setLoading(true); const result = await getMealOnboardingAction(); if (result.ok) setState(result.state); else setError(result.error); setLoading(false); }}>{loading ? "Loading…" : "Try again"}</Button>
   </div></main>;
-  if (shouldShowOnboarding(state) || editing) return <MealOnboarding key={editing ? "edit" : "setup"} initial={state.preferences} editing={editing} onDone={next => { setState(next); setEditing(false); setNotice(current => current || (next.preferences ? "Meal preferences saved. You can edit them anytime." : "Setup skipped. You can add meal preferences anytime.")); }} onCancel={() => setEditing(false)} onNotice={setNotice}
+  if (shouldShowOnboarding(state) || editing) return <MealOnboarding notifications={notifications} key={editing ? "edit" : "setup"} initial={state.preferences} editing={editing} onDone={next => { setState(next); setEditing(false); setNotice(current => current || (next.preferences ? "Meal preferences saved. You can edit them anytime." : "Setup skipped. You can add meal preferences anytime.")); }} onCancel={() => setEditing(false)} onNotice={setNotice}
     times={mealTimes}
     onCreated={time => setMealTimes(current => [...current.filter(slot => slot.id !== time.id), time])}
     onDeleted={id => setMealTimes(current => current.filter(time => time.id !== id))}
   />;
   return <>
     {notice && <div role="status" className="flex items-center justify-center gap-3 bg-success-soft px-4 py-2 text-sm text-success">{notice}<Button size="sm" variant="tertiary" aria-label="Dismiss message" onClick={() => setNotice("")}>Dismiss</Button></div>}
-    <MealPlanClient {...plannerProps} initialMealTimes={mealTimes} preferences={state.preferences} onEditPreferences={() => { setNotice(""); setEditing(true); }} />
+    <MealPlanClient appBar={appBar} {...plannerProps} initialMealTimes={mealTimes} preferences={state.preferences} onEditPreferences={() => { setNotice(""); setEditing(true); }} />
   </>;
 }

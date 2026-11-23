@@ -1,6 +1,6 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
-import BackLink from "@/app/components/design-system/back-link";
+import TopAppBar from "@/app/components/top-app-bar";
 import FinancialHorizonClient, { NextMonthPurchaseItem } from "./financial-horizon-client";
 import { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
 import type { TransactionPage } from "./actions";
@@ -17,7 +17,7 @@ export default async function FinancialHorizonPage() {
   const unavailable = (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10">
       <div className="mx-auto max-w-4xl">
-        <BackLink href="/dashboard">Back to Dashboard</BackLink>
+        <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />
         <h1 className="mt-6 text-3xl font-bold">Financial Horizon</h1>
         <p className="mt-8 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
           We couldn&apos;t reach your financial data. Please try again.
@@ -61,7 +61,7 @@ export default async function FinancialHorizonPage() {
     return (
       <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10">
         <div className="mx-auto max-w-4xl">
-          <BackLink href="/dashboard">Back to Dashboard</BackLink>
+          <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />
           <header className="mt-6">
             <h1 className="text-3xl font-bold text-foreground">Financial Horizon</h1>
           </header>
@@ -89,6 +89,7 @@ export default async function FinancialHorizonPage() {
 
   return (
     <FinancialHorizonClient
+      appBar={<TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />}
       initialSummary={initialSummary}
       initialTransactionPage={initialTransactionPage}
       initialPurchases={initialPurchases}

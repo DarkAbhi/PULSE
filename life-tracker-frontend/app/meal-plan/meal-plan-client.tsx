@@ -9,7 +9,6 @@ import { useTimeZone } from "@/app/components/time-zone-provider";
 import { dateKey } from "@/app/lib/time-zone.mjs";
 
 import { useState, useEffect, useTransition, useId, type ReactNode } from "react";
-import BackLink from "@/app/components/design-system/back-link";
 import frame from "@/app/components/design-system/page-frame.module.css";
 import {
   ChevronLeft,
@@ -43,6 +42,7 @@ import { RecipePicker } from "./recipe-picker";
 import styles from "./meal-plan.module.css";
 
 interface MealPlanClientProps {
+  appBar: ReactNode;
   preferences?: MealPreferences | null;
   onEditPreferences?: () => void;
   initialMeals: MealPlan[];
@@ -130,6 +130,7 @@ function formatTimeDisplay(timeStr?: string): string {
 }
 
 export default function MealPlanClient({
+  appBar,
   preferences,
   onEditPreferences,
   initialMeals,
@@ -348,7 +349,7 @@ export default function MealPlanClient({
   return (
     <main className={`${frame.page} ${styles.page}`}>
       <div className={frame.content} inert={isAddMealOpen || mealToDelete !== null}>
-        <BackLink href="/dashboard" className={styles.backLink}>Dashboard</BackLink>
+        {appBar}
 
         <div className={styles.layout}>
           <section className={styles.hero} aria-labelledby="meal-plan-title">

@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, Leaf, Soup, Sprout } from "lucide-react";
+import AppBar from "@/app/components/design-system/app-bar";
 import Button from "@/app/components/design-system/button";
-import BackLink from "@/app/components/design-system/back-link";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 import { getMealOnboardingAction, resolveMealOnboardingAction, saveMealPreferencesAction } from "./actions";
 import { avoidances, barriers, choiceLabel, diets, firstInvalidStep, goals, initialPreferences, mealKinds, questions, stepError, toggleChoice } from "./questionnaire";
@@ -91,7 +91,8 @@ function Choice({ name, value, label, checked, onChange, type = "checkbox", pill
   </label>;
 }
 
-export default function MealOnboarding({ initial, editing = false, onDone, onCancel, onNotice, times, onCreated, onDeleted }: {
+export default function MealOnboarding({ notifications, initial, editing = false, onDone, onCancel, onNotice, times, onCreated, onDeleted }: {
+  notifications: ReactNode;
   initial: MealPreferences | null; editing?: boolean; onDone: (state: OnboardingState) => void; onCancel: () => void; onNotice: (message: string) => void;
   times: MealTime[]; onCreated: (time: MealTime) => void; onDeleted: (id: number) => void;
 }) {
@@ -179,8 +180,12 @@ export default function MealOnboarding({ initial, editing = false, onDone, onCan
 
   return <main className={styles.page}>
     <div id="meal-setup-journey" className={styles.wrap}>
-      <div className={styles.toolbar}>
-        <BackLink href="/dashboard">Dashboard</BackLink>
+      <AppBar
+        back={editing ? { onClick: onCancel, disabled: busy } : { href: "/dashboard" }}
+        backLabel={editing ? "Back to Meal Plan" : "Back to Dashboard"}
+        notifications={notifications}
+      />
+      <div className="flex justify-end">
         {editing
           ? <Button variant="tertiary" onClick={onCancel} disabled={busy}>Cancel editing</Button>
           : <Button variant="tertiary" onClick={() => void commit(true)} disabled={busy}>Skip setup</Button>}

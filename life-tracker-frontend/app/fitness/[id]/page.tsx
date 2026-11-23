@@ -1,7 +1,7 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { getUserTimeZone } from "@/app/lib/user-time-zone";
 import { redirect } from "next/navigation";
-import BackLink from "@/app/components/design-system/back-link";
+import TopAppBar from "@/app/components/top-app-bar";
 import { Clock, Dumbbell, Flag, Flame, List, Timer, Watch } from "lucide-react";
 import { AddExerciseButton, AddExerciseProvider } from "./add-exercise-form";
 import DeleteVisitButton from "./delete-visit-button";
@@ -132,7 +132,7 @@ export default async function GymVisitPage({ params }: { params: Promise<{ id: s
   return (
     <main className={`${styles.palette} ${styles.page}`}>
       <div className={styles.content}>
-        <div><BackLink href="/fitness">Fitness</BackLink></div>
+        <TopAppBar backHref="/fitness" backLabel="Back to Fitness" />
         <WorkoutSummary visit={visit} timeZone={timeZone} error={detailsError} />
 
         <AddExerciseProvider visitID={visitID}>

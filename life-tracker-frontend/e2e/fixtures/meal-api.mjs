@@ -14,6 +14,7 @@ const pongal = {
   steps: [{ id: "cook", name: "Cook the rice and dal", instructions: "Simmer the rice and dal until soft.", ingredients: [], equipment: [], type: "cook_method" }],
 };
 const accountsByUser = new Map();
+const dismissedNotifications = new Set();
 const horizonCategories = [
   { id: 1, name: "Test category", allows_subcategories: true, parent_id: null },
   { id: 2, name: "Test detail", allows_subcategories: false, parent_id: 1 },
@@ -44,6 +45,33 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/__test/state") return send(200, { state: states.get(token) ?? pending(), writes: writes.get(token) ?? 0 });
   if (url.pathname === "/api/auth/session") return send(200, { username: token });
   if (url.pathname === "/api/profile") return send(200, { name: "Browser test", timezone: "Asia/Kolkata", currency: "INR" });
+  if (url.pathname === "/api/notifications") {
+    return send(200, token === "app-bar-test" && !dismissedNotifications.has(token) ? [{
+      id: 1, title: "Test reminder", body: "Check tire pressure", source: "garage",
+      target_path: null, priority: 0, created_at: "2026-01-02T10:00:00Z",
+    }] : []);
+  }
+  if (url.pathname === "/api/notifications/1" && req.method === "DELETE" && token === "app-bar-test") {
+    dismissedNotifications.add(token);
+    res.writeHead(204).end();
+    return;
+  }
+  if (url.pathname === "/api/vehicles/1/history") {
+    return send(200, {
+      vehicle_name: "Test motorcycle", kind: "motorcycle", fuel_types: ["petrol"],
+      fuel_fillups: [], air_fills: [], maintenance_records: [],
+      maintenance_schedules: [{
+        kind: "engine_oil", active_source: "personal",
+        personal: { kilometers: 1000, duration: 6 },
+        manual: { kilometers: 0, duration: 0 },
+        manual_reference: "",
+      }],
+    });
+  }
+  if (url.pathname === "/api/gym-visits/1/exercises") return send(200, []);
+  if (url.pathname === "/api/fitness-workouts/1") {
+    return send(200, { id: 1, created_at: "2026-01-02T10:00:00Z" });
+  }
   if (url.pathname === "/api/horizon") return send(200, {
     base_amount: 0, currency: "INR", total_deductions: 0, total_transactions: 0,
     remaining_amount: 0, committed_ratio: 0, total_budgets_allocated: 0, total_subscription_burn: 0,

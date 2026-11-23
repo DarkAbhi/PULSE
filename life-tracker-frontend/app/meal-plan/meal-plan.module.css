@@ -24,8 +24,7 @@
   margin-top: 12px;
 }
 
-.muted,
-.backLink {
+.muted {
   color: var(--meal-muted);
 }
 

@@ -1,6 +1,6 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
-import BackLink from "@/app/components/design-system/back-link";
+import TopAppBar from "@/app/components/top-app-bar";
 import frame from "@/app/components/design-system/page-frame.module.css";
 import FitnessCalendar, { type FitnessOverview } from "./fitness-calendar";
 
@@ -38,7 +38,7 @@ export default async function FitnessPage() {
   return (
     <main className={frame.page}>
       <div className={frame.content}>
-        <BackLink href="/dashboard">Dashboard</BackLink>
+        <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />
         <div className="mt-3">
           {overview ? <FitnessCalendar overview={overview} /> : (
             <>

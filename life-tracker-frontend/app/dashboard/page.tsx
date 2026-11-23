@@ -6,7 +6,7 @@ import Link from "next/link";
 import { UserRound } from "lucide-react";
 import GreetingHeader from "./greeting-header";
 import GymVisitCard from "./gym-visit-card";
-import NotificationDropdown from "./notification-dropdown";
+import NotificationDropdown from "@/app/components/notification-dropdown";
 import NamePromptDialog from "./name-prompt-dialog";
 import FinancialHorizonCard, { HorizonSummary } from "./financial-horizon-card";
 import SectionTiles from "./section-tiles";

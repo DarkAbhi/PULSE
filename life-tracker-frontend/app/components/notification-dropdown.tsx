@@ -2,26 +2,29 @@
 
 import Button from "@/app/components/design-system/button";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Bell, ArrowRight, X } from "lucide-react";
-import {
-  AppNotification,
-} from "@/app/components/notification-list";
-import { dismissNotificationAction } from "./actions";
+import type { AppNotification } from "./notification-list";
+import { dismissNotification } from "@/app/notifications/actions";
+import { AppBarBell, appBarControl } from "./design-system/app-bar";
 import LocalDate from "@/app/components/local-date";
 
 interface NotificationDropdownProps {
   initialNotifications: AppNotification[];
+  appBar?: boolean;
 }
 
 export default function NotificationDropdown({
   initialNotifications,
+  appBar = false,
 }: NotificationDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] =
-    useState<AppNotification[]>(initialNotifications);
-  const [dismissingIds, setDismissingIds] = useState<Set<number>>(new Set());
+  const [notifications, hideNotification] = useOptimistic(
+    initialNotifications,
+    (current, id: number) => current.filter((notification) => notification.id !== id),
+  );
+  const [, startTransition] = useTransition();
   const [error, setError] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -53,20 +56,14 @@ export default function NotificationDropdown({
     return () => document.removeEventListener("keydown", handleKey);
   }, [open]);
 
-  async function handleDismiss(id: number) {
+  function handleDismiss(id: number) {
     setError("");
-    setDismissingIds((s) => new Set(s).add(id));
-    const prev = notifications;
-    setNotifications((cur) => cur.filter((n) => n.id !== id));
-    const res = await dismissNotificationAction(id);
-    if (!res.ok) {
-      setError(res.error ?? "Couldn't dismiss that notification.");
-      setNotifications(prev);
-    }
-    setDismissingIds((s) => {
-      const next = new Set(s);
-      next.delete(id);
-      return next;
+    startTransition(async () => {
+      hideNotification(id);
+      const result = await dismissNotification(id);
+      if (!result.ok) {
+        setError(result.error ?? "Couldn't dismiss that notification.");
+      }
     });
   }
 
@@ -74,26 +71,41 @@ export default function NotificationDropdown({
 
   return (
     <div className="relative">
-      {/* Bell button */}
-      <Button variant="iconSecondary" size="lg"
-        ref={buttonRef}
-        type="button"
-        aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
-        aria-haspopup="true"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="relative"
-      >
-        <Bell className="h-5 w-5 text-foreground" />
-        {unreadCount > 0 && (
-          <span
-            aria-hidden="true"
-            className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
-          >
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
-      </Button>
+      {appBar ? (
+        <button
+          ref={buttonRef}
+          type="button"
+          aria-label={unreadCount ? "Notifications, unread updates" : "Notifications"}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+          className={`${appBarControl} cursor-pointer`}
+        >
+          <AppBarBell hasUnread={unreadCount > 0} />
+        </button>
+      ) : (
+        <Button
+          variant="iconSecondary"
+          size="lg"
+          ref={buttonRef}
+          type="button"
+          aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+          className="relative"
+        >
+          <Bell className="h-5 w-5 text-foreground" aria-hidden="true" />
+          {unreadCount > 0 && (
+            <span
+              aria-hidden="true"
+              className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground"
+            >
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </Button>
+      )}
 
       {/* Dropdown panel */}
       {open && (
@@ -101,7 +113,7 @@ export default function NotificationDropdown({
           ref={panelRef}
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 top-[calc(100%+10px)] z-50 w-[360px] max-w-[calc(100vw-2rem)] origin-top-right animate-dropdown rounded-2xl bg-card shadow-xl"
+          className="absolute right-0 top-[calc(100%+10px)] z-50 w-[360px] max-w-[calc(100vw-3rem)] origin-top-right animate-dropdown rounded-2xl bg-card shadow-xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-divider px-5 pt-5 pb-2">
@@ -140,7 +152,6 @@ export default function NotificationDropdown({
             ) : (
               <ul className="space-y-1">
                 {notifications.map((n) => {
-                  const isBusy = dismissingIds.has(n.id);
                   return (
                     <li
                       key={n.id}
@@ -175,11 +186,10 @@ export default function NotificationDropdown({
                         <Button variant="tertiary" size="sm"
                           type="button"
                           aria-label={`Dismiss ${n.title}`}
-                          disabled={isBusy}
-                          onClick={() => void handleDismiss(n.id)}
+                          onClick={() => handleDismiss(n.id)}
                           className="shrink-0"
                         >
-                          {dismissingIds.has(n.id) ? "…" : "Dismiss"}
+                          Dismiss
                         </Button>
                       </div>
 

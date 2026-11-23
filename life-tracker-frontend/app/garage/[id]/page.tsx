@@ -4,7 +4,7 @@ import { getUserCurrency } from "@/app/lib/user-currency";
 import { formatMoney } from "@/app/lib/currency.mjs";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import BackLink from "@/app/components/design-system/back-link";
+import TopAppBar from "@/app/components/top-app-bar";
 import type { AirFill, FuelFill, VehicleHistoryData } from "./types";
 import DeleteButton from "./delete-button";
 import DeleteVehicleButton from "./delete-vehicle-button";
@@ -57,14 +57,14 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
     return (
       <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
         <div className="mx-auto max-w-5xl">
-          <PulseCard className="p-8 text-center">
+          <TopAppBar backHref="/garage" backLabel="Back to Garage" />
+          <PulseCard className="mt-5 p-8 text-center">
             <h2 className="text-xl font-semibold text-foreground">
               Vehicle not found
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
               This vehicle may have been deleted or does not exist.
             </p>
-            <BackLink href="/garage" className="mt-6">Back to Garage</BackLink>
           </PulseCard>
         </div>
       </main>
@@ -75,9 +75,9 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
     return (
       <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
         <div className="mx-auto max-w-5xl">
-          <PulseCard className="p-6">
+          <TopAppBar backHref="/garage" backLabel="Back to Garage" />
+          <PulseCard className="mt-5 p-6">
             <p role="alert" className="text-destructive">We couldn&apos;t load this vehicle&apos;s history.</p>
-            <BackLink href="/garage" className="mt-4">Back to Garage</BackLink>
           </PulseCard>
         </div>
       </main>
@@ -115,7 +115,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
   return (
     <main className={`${frame.page} ${styles.page}`}>
       <div className={`${frame.content} ${styles.content}`}>
-        <BackLink href="/garage" className={styles.back}>Garage</BackLink>
+        <TopAppBar backHref="/garage" backLabel="Back to Garage" />
 
         <section aria-labelledby="vehicle-title" className={styles.hero}>
           <div className={styles.heroDecoration} aria-hidden="true">

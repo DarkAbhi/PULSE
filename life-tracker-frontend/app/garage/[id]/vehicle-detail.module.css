@@ -35,7 +35,6 @@
 }
 
 .content { display: flex; flex-direction: column; gap: clamp(20px, 3vw, 30px); }
-.back { align-self: flex-start; margin-bottom: -12px; }
 .muted { color: var(--detail-muted); }
 .dangerText { color: var(--detail-danger); }
 .warningText { color: var(--detail-warning); }

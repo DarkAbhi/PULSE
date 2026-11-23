@@ -1,6 +1,6 @@
 import { UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
-import BackLink from "@/app/components/design-system/back-link";
+import TopAppBar from "@/app/components/top-app-bar";
 import { apiFetch } from "@/app/lib/server-api";
 import AboutPulse from "./about-pulse";
 import APIKeys from "./api-keys";
@@ -27,7 +27,7 @@ export default async function ProfilePage() {
 
   return (
     <main className={styles.page}>
-      <BackLink href="/dashboard" className={styles.back}>Dashboard</BackLink>
+      <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" onProfilePage />
 
       <section className={styles.hero} aria-label="Your profile">
         <div className={styles.avatar} aria-hidden="true"><UserRound /></div>

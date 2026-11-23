@@ -1,4 +1,4 @@
-import BackLink from "@/app/components/design-system/back-link";
+import TopAppBar from "@/app/components/top-app-bar";
 import { ChevronRight } from "lucide-react";
 import PulseCard, { PulseCardLink } from "@/app/components/design-system/pulse-card";
 import { loadReminderSettings, reminderDetails } from "./data";
@@ -11,7 +11,7 @@ export default async function ReminderSettingsPage({ params }: { params: Promise
 
   return (
     <>
-      <BackLink href={`/garage/${id}?tab=maintenance`}>Back to Maintenance</BackLink>
+      <TopAppBar backHref={`/garage/${id}?tab=maintenance`} backLabel="Back to Maintenance" />
       <header className="mt-4 border-b border-divider pb-5 sm:pb-6">
         <p className="break-words text-sm font-medium text-muted-foreground">{vehicle.vehicle_name}</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">Reminder settings</h1>

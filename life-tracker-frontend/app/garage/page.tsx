@@ -2,7 +2,7 @@ import { apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import BackLink from "@/app/components/design-system/back-link";
+import TopAppBar from "@/app/components/top-app-bar";
 import frame from "@/app/components/design-system/page-frame.module.css";
 import AddVehicleButton from "./add-vehicle-button";
 import VehiclesList, { type Vehicle } from "./vehicles-list";
@@ -50,7 +50,7 @@ export default async function GaragePage() {
   return (
     <main className={`${styles.page} ${frame.page}`}>
       <div className={frame.content}>
-        <BackLink href="/dashboard" className={styles.backLink}>Dashboard</BackLink>
+        <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />
 
         <section aria-labelledby="garage-title" className={`${styles.banner} relative mt-3`}>
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">

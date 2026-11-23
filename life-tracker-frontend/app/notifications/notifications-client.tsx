@@ -4,17 +4,17 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 
 import Button from "@/app/components/design-system/button";
 
-import BackLink from "@/app/components/design-system/back-link";
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { AppNotification, NotificationList } from "@/app/components/notification-list";
 import { dismissNotification, clearAllNotifications } from "./actions";
 import { Trash2 } from "lucide-react";
 
 interface NotificationsClientProps {
   notifications: AppNotification[];
+  appBar: ReactNode;
 }
 
-export default function NotificationsClient({ notifications }: NotificationsClientProps) {
+export default function NotificationsClient({ notifications, appBar }: NotificationsClientProps) {
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -44,7 +44,7 @@ export default function NotificationsClient({ notifications }: NotificationsClie
   return (
     <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
       <div className="mx-auto max-w-6xl">
-        <BackLink href="/dashboard">Dashboard</BackLink>
+        {appBar}
         <header className="mt-5 flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold tracking-[0.18em] text-action">NOTIFICATIONS</p>

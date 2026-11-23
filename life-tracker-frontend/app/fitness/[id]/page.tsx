@@ -1,6 +1,7 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { getUserTimeZone } from "@/app/lib/user-time-zone";
 import { redirect } from "next/navigation";
+import frame from "@/app/components/design-system/page-frame.module.css";
 import TopAppBar from "@/app/components/top-app-bar";
 import { Clock, Dumbbell, Flag, Flame, List, Timer, Watch } from "lucide-react";
 import { AddExerciseButton, AddExerciseProvider } from "./add-exercise-form";
@@ -137,8 +138,8 @@ export default async function GymVisitPage({ params }: { params: Promise<{ id: s
   const setCount = `${sets.length} ${sets.length === 1 ? "set" : "sets"}`;
 
   return (
-    <main className={`${workoutPalette} min-h-dvh bg-background p-[clamp(16px,2.4vw,32px)] leading-[1.4] text-(--workout-ink)`}>
-      <div className="mx-auto grid min-w-0 max-w-[1200px] gap-[30px]">
+    <main className={`${frame.page} ${workoutPalette} bg-background leading-[1.4] text-(--workout-ink)`}>
+      <div className={`${frame.content} grid min-w-0 gap-[30px]`}>
         <TopAppBar backHref="/fitness" backLabel="Back to Fitness" />
         <WorkoutSummary visit={visit} timeZone={timeZone} error={detailsError} />
 

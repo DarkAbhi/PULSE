@@ -11,15 +11,26 @@ import { avoidances, barriers, choiceLabel, diets, firstInvalidStep, goals, init
 import type { MealKind, MealPreferences, OnboardingState } from "./types";
 import type { MealTime } from "../actions";
 import CustomMealTimes from "./custom-meal-times";
-import styles from "./meal-preferences.module.css";
+import { gradientClass, mealPreferencePalette, pillClass } from "./meal-preference-classes";
 
 const goalIcons = [Soup, Leaf, Sprout];
-const mealColors = {
-  breakfast: "#FFC83D",
-  lunch: "#F0603A",
-  evening_snacks: "#D91CAB",
-  dinner: "#5B2CE0",
+const mealDotColors = {
+  breakfast: "bg-[#FFC83D]",
+  lunch: "bg-[#F0603A]",
+  evening_snacks: "bg-[#D91CAB]",
+  dinner: "bg-[#5B2CE0]",
 };
+const mutedClass = "text-[0.95rem]/[1.4] text-(--meal-muted)";
+const errorClass = "text-[0.92rem] font-bold text-(--meal-error)";
+const cardClass = "rounded-[28px] bg-(--meal-surface) p-[clamp(16px,2.4vw,24px)] shadow-(--meal-shadow)";
+const pillGroupClass = "flex flex-wrap gap-2.5";
+const choiceFocusClass = "peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#4c6bff]";
+const timeSelectClass = "h-11 min-w-[74px] cursor-pointer rounded-[14px] border-[1.5px] border-(--meal-line) bg-(--meal-surface) px-3 font-bold tabular-nums max-[401px]:min-w-[50px] max-[401px]:px-[5px]";
+const timeRowClass = "flex flex-wrap items-center justify-between gap-4 px-[18px] py-3.5 max-[761px]:flex-col max-[761px]:items-start max-[761px]:gap-2 max-[401px]:px-2.5";
+const timeNameClass = "flex min-w-0 items-center gap-3 font-bold wrap-anywhere";
+const dotClass = "size-3 shrink-0 rounded-full";
+const summaryTimeClass = "shrink-0 text-(--meal-muted) tabular-nums";
+
 const questionTags = ["Required", "Optional", "Pick one", "Optional", "Pick at least one", "Times"];
 const hours = Array.from({ length: 12 }, (_, index) => index + 1);
 const minutes = Array.from({ length: 60 }, (_, index) => twoDigits(index));
@@ -45,16 +56,16 @@ function UsualTime({ label, value, onChange }: { label: string; value: string; o
     onChange(`${twoDigits(nextHour % 12 + (nextPeriod === "PM" ? 12 : 0))}:${nextMinute}`);
   }
 
-  return <div className={styles.timeControls} role="group" aria-label={`Usual time for ${label}`}>
-    <select aria-label={`${label} hour`} value={hour12} onChange={event => update(Number(event.target.value), minute, period)}>
+  return <div className="flex max-w-full flex-wrap items-center gap-2 font-extrabold max-[401px]:gap-[5px]" role="group" aria-label={`Usual time for ${label}`}>
+    <select className={timeSelectClass} aria-label={`${label} hour`} value={hour12} onChange={event => update(Number(event.target.value), minute, period)}>
       {hours.map(option => <option key={option}>{option}</option>)}
     </select>
     <span aria-hidden="true">:</span>
-    <select aria-label={`${label} minutes`} value={minute} onChange={event => update(hour12, event.target.value, period)}>
+    <select className={timeSelectClass} aria-label={`${label} minutes`} value={minute} onChange={event => update(hour12, event.target.value, period)}>
       {minutes.map(option => <option key={option}>{option}</option>)}
     </select>
-    <div className={styles.period}>
-      {periods.map(option => <button key={option} type="button" aria-label={`${label} ${option}`} aria-pressed={period === option} onClick={() => update(hour12, minute, option)}>{option}</button>)}
+    <div className="ml-1 inline-flex rounded-full bg-(--meal-chip) p-1 max-[401px]:ml-0 max-[401px]:p-0.5">
+      {periods.map(option => <button key={option} className="min-h-9 min-w-11 rounded-full px-2.5 text-[0.9rem] font-bold text-(--meal-muted) aria-pressed:bg-(--meal-surface) aria-pressed:text-(--meal-ink) aria-pressed:shadow-(--meal-shadow) max-[401px]:px-[5px]" type="button" aria-label={`${label} ${option}`} aria-pressed={period === option} onClick={() => update(hour12, minute, option)}>{option}</button>)}
     </div>
   </div>;
 }
@@ -62,17 +73,17 @@ function UsualTime({ label, value, onChange }: { label: string; value: string; o
 function Question({ index, error, children }: { index: number; error?: string; children: ReactNode }) {
   const { title, description } = questions[index];
   const id = `meal-question-${index + 1}`;
-  return <fieldset className={styles.question} aria-labelledby={id} aria-describedby={`${id}-hint${error ? ` ${id}-error` : ""}`}>
-    <div className={styles.questionHeader}>
-      <span className={styles.number} aria-hidden="true">{index + 1}</span>
+  return <fieldset className={`grid min-w-0 gap-5 ${cardClass}`} aria-labelledby={id} aria-describedby={`${id}-hint${error ? ` ${id}-error` : ""}`}>
+    <div className="flex items-start gap-3.5">
+      <span className={`grid size-[38px] shrink-0 place-items-center rounded-full font-extrabold ${gradientClass}`} aria-hidden="true">{index + 1}</span>
       <div>
-        <h2 id={id} tabIndex={-1}>{title}</h2>
-        <p id={`${id}-hint`}>{description}</p>
+        <h2 id={id} tabIndex={-1} className="scroll-mt-5 scroll-mb-28 text-[clamp(1.25rem,2vw,1.5rem)] leading-[1.2] font-extrabold tracking-[-0.03em]">{title}</h2>
+        <p id={`${id}-hint`} className={`mt-[3px] ${mutedClass}`}>{description}</p>
       </div>
-      <span className={styles.tag}>{questionTags[index]}</span>
+      <span className="ml-auto hidden shrink-0 rounded-full bg-(--meal-chip) px-2.5 py-1 text-xs/[inherit] font-bold text-(--meal-muted) min-[761px]:inline">{questionTags[index]}</span>
     </div>
     {children}
-    {error && <p className={styles.error} id={`${id}-error`} role="alert">{error}</p>}
+    {error && <p className={errorClass} id={`${id}-error`} role="alert">{error}</p>}
   </fieldset>;
 }
 
@@ -80,14 +91,26 @@ function Choice({ name, value, label, checked, onChange, type = "checkbox", pill
   name: string; value: string; label: string; checked: boolean; onChange: (checked: boolean) => void;
   type?: "checkbox" | "radio" | "switch"; pill?: boolean; icon?: ReactNode;
 }) {
-  return <label className={pill ? styles.pill : styles.choice}>
-    <input type={type === "switch" ? "checkbox" : type} role={type === "switch" ? "switch" : undefined} name={name} value={value} checked={checked} onChange={event => onChange(event.target.checked)} />
+  const unselectedBorder = "border-(--meal-line) group-hover:border-[color-mix(in_srgb,var(--meal-selected)_45%,var(--meal-line))]";
+  const choiceBorder = checked
+    ? "border-(--meal-selected) bg-[color-mix(in_srgb,var(--meal-selected)_9%,var(--meal-surface))]"
+    : unselectedBorder;
+  const pillColor = checked
+    ? `border-transparent ${gradientClass}`
+    : unselectedBorder;
+
+  return <label className="group relative cursor-pointer">
+    <input className="peer absolute inset-0 size-full cursor-pointer opacity-0 disabled:cursor-default" type={type === "switch" ? "checkbox" : type} role={type === "switch" ? "switch" : undefined} name={name} value={value} checked={checked} onChange={event => onChange(event.target.checked)} />
     {pill
-      ? <span><Check aria-hidden="true" />{label}</span>
-      : <span className={styles.choiceBox}>
-          {icon && <span className={styles.choiceIcon} aria-hidden="true">{icon}</span>}
-          <strong>{label}</strong>
-          <span className={styles.tick} aria-hidden="true"><Check /></span>
+      ? <span className={`${pillClass} gap-2 px-[18px] font-semibold ${pillColor} ${choiceFocusClass}`}>
+          {checked && <Check className="size-4 shrink-0 stroke-3" aria-hidden="true" />}{label}
+        </span>
+      : <span className={`flex h-full min-h-[68px] items-center rounded-[20px] border-2 px-4 py-3.5 leading-tight max-[401px]:px-3 ${icon ? "justify-between gap-3 min-[761px]:min-h-[150px] min-[761px]:flex-col min-[761px]:items-start" : "gap-3.5 max-[401px]:gap-2.5"} ${choiceBorder} ${choiceFocusClass}`}>
+          {icon && <span className={`grid size-11 shrink-0 place-items-center rounded-[14px] [&_svg]:size-5 ${checked ? gradientClass : "bg-(--meal-chip) text-(--meal-selected)"}`} aria-hidden="true">{icon}</span>}
+          <strong className={icon ? "flex-1 text-[1.05rem] min-[761px]:flex-none" : "flex-1"}>{label}</strong>
+          <span className={`grid size-[26px] shrink-0 place-items-center rounded-full border-2 ${icon ? "min-[761px]:absolute min-[761px]:top-3.5 min-[761px]:right-3.5" : ""} ${checked ? `border-transparent ${gradientClass}` : "border-(--meal-line) text-transparent"}`} aria-hidden="true">
+            <Check className="size-[15px] stroke-3" />
+          </span>
         </span>}
   </label>;
 }
@@ -179,8 +202,8 @@ export default function MealOnboarding({ notifications, initial, editing = false
     }
   }
 
-  return <main className={`${frame.page} ${styles.page}`}>
-    <div id="meal-setup-journey" className={`${frame.content} ${styles.wrap}`}>
+  return <main className={`${frame.page} bg-background ${mealPreferencePalette} text-(--meal-ink) [&_button:enabled]:cursor-pointer [&_button:disabled]:cursor-default [&_button:disabled]:opacity-55 [&_:is(button,select):focus-visible]:outline-3 [&_:is(button,select):focus-visible]:outline-offset-2 [&_:is(button,select):focus-visible]:outline-[#4c6bff]`}>
+    <div id="meal-setup-journey" className={`${frame.content} grid gap-5`}>
       <AppBar
         back={editing ? { onClick: onCancel, disabled: busy } : { href: "/dashboard" }}
         backLabel={editing ? "Back to Meal Plan" : "Back to Dashboard"}
@@ -191,22 +214,22 @@ export default function MealOnboarding({ notifications, initial, editing = false
           ? <Button variant="tertiary" onClick={onCancel} disabled={busy}>Cancel editing</Button>
           : <Button variant="tertiary" onClick={() => void commit(true)} disabled={busy}>Skip setup</Button>}
       </div>
-      {failure?.skip && <p className={styles.error} role="alert">{failure.message}</p>}
+      {failure?.skip && <p className={errorClass} role="alert">{failure.message}</p>}
 
-      <header className={styles.hero}>
-        <svg className={styles.watermark} viewBox="0 0 24 24" aria-hidden="true">
+      <header className={`relative isolate flex min-h-[170px] flex-col justify-center gap-2 overflow-hidden rounded-[40px] p-[clamp(22px,3vw,36px)] shadow-[0_22px_44px_-26px_rgb(201_26_142/90%)] ${gradientClass}`}>
+        <svg className="absolute top-1/2 -right-5 -z-10 size-[260px] -translate-y-1/2 fill-none stroke-white opacity-[0.14]" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="12" r="5.5" />
           <circle cx="12" cy="12" r="2" />
           <path d="M3 4.5v4a1.5 1.5 0 0 0 3 0v-4M4.5 10v9.5M21 4.5c-1.6 1-2.2 3-2.2 5.5h2.2v9.5" />
         </svg>
-        <h1 ref={heading} tabIndex={-1}>Meal preferences</h1>
-        <p>Six quick questions to shape your meal plan. You can change any of them later.</p>
+        <h1 ref={heading} tabIndex={-1} className="text-[clamp(2.2rem,5vw,3.6rem)] leading-none font-extrabold tracking-[-0.045em]">Meal preferences</h1>
+        <p className="max-w-[46ch] text-[clamp(1rem,1.6vw,1.2rem)] leading-[1.4] font-medium">Six quick questions to shape your meal plan. You can change any of them later.</p>
       </header>
 
-      <form className={styles.layout} aria-label="Meal preference questions" aria-busy={busy} noValidate onSubmit={event => { event.preventDefault(); void commit(false); }}>
-        <fieldset className={styles.questions} disabled={busy} aria-label="Questions">
+      <form className="grid grid-cols-1 items-start gap-5 min-[1051px]:grid-cols-[minmax(0,1fr)_340px]" aria-label="Meal preference questions" aria-busy={busy} noValidate onSubmit={event => { event.preventDefault(); void commit(false); }}>
+        <fieldset className="grid min-w-0 gap-5" disabled={busy} aria-label="Questions">
           <Question index={0} error={validationError(0)}>
-            <div className={styles.goals}>
+            <div className="grid gap-3 min-[761px]:grid-cols-3">
               {goals.map(([value, label], index) => {
                 const Icon = goalIcons[index];
                 return <Choice key={value} type="radio" name="goal" value={value} label={label} icon={<Icon />} checked={preferences.goal === value} onChange={() => patch({ goal: value })} />;
@@ -214,79 +237,79 @@ export default function MealOnboarding({ notifications, initial, editing = false
             </div>
           </Question>
           <Question index={1}>
-            <div className={styles.options}>
+            <div className="grid gap-3">
               {barriers.map(([value, label]) => <Choice key={value} name="barriers" value={value} label={label} checked={preferences.barriers.includes(value)} onChange={() => patch({ barriers: toggleChoice(preferences.barriers, value) })} />)}
             </div>
           </Question>
           <Question index={2} error={validationError(2)}>
-            <div className={styles.pills}>
+            <div className={pillGroupClass}>
               {diets.map(([value, label]) => <Choice key={value} pill type="radio" name="diet" value={value} label={label} checked={preferences.dietary_pattern === value} onChange={() => patch({ dietary_pattern: value })} />)}
             </div>
           </Question>
           <Question index={3}>
             <div>
-              <div className={styles.pills}>
+              <div className={pillGroupClass}>
                 {avoidances.map(([value, label]) => <Choice key={value} pill name="avoidances" value={value} label={label} checked={preferences.food_avoidances.includes(value)} onChange={() => patch({ food_avoidances: toggleChoice(preferences.food_avoidances, value) })} />)}
               </div>
-              <div className={styles.count}>
+              <div className="mt-1.5 flex min-h-11 items-center justify-between gap-3 text-[0.9rem] font-semibold text-(--meal-muted)">
                 <span aria-live="polite">{preferences.food_avoidances.length ? `${preferences.food_avoidances.length} selected` : "None selected"}</span>
-                <button type="button" className={styles.clear} disabled={!preferences.food_avoidances.length} onClick={() => patch({ food_avoidances: [] })}>Clear all</button>
+                <button type="button" className="min-h-11 px-1.5 font-bold text-(--meal-selected)" disabled={!preferences.food_avoidances.length} onClick={() => patch({ food_avoidances: [] })}>Clear all</button>
               </div>
             </div>
           </Question>
           <Question index={4} error={validationError(4)}>
             {initial && !initial.planning_slots_configured && !preferences.planning_slots_configured &&
-              <p className={styles.muted}>All meal times are currently available in Add Meal. Change a switch and save to use these selections.</p>}
-            <div className={styles.pills}>
+              <p className={mutedClass}>All meal times are currently available in Add Meal. Change a switch and save to use these selections.</p>}
+            <div className={pillGroupClass}>
               {mealKinds.map(({ kind, label }) => <Choice key={kind} pill type="switch" name="meals" value={kind} label={label} checked={preferences.meals.some(meal => meal.kind === kind)} onChange={selected => toggleMeal(kind, selected)} />)}
               <CustomMealTimes times={customTimes} onCreated={onCreated} onDeleted={onDeleted} />
             </div>
           </Question>
           <Question index={5} error={validationError(5)}>
-            <p className={styles.muted}>Local times in {timeZone}</p>
-            {!enabledMeals.length && !customTimes.length && <p className={styles.muted}>Select a meal above to set its usual time.</p>}
-            <div className={styles.times}>
-              {enabledMeals.map(({ kind, label, time }) => <div key={kind} className={styles.timeRow}>
-                <span className={styles.timeName}><span className={styles.dot} style={{ background: mealColors[kind] }} />{label}</span>
+            <p className={mutedClass}>Local times in {timeZone}</p>
+            {!enabledMeals.length && !customTimes.length && <p className={mutedClass}>Select a meal above to set its usual time.</p>}
+            <div className="divide-y divide-(--meal-line) rounded-[20px] bg-(--meal-inset)">
+              {enabledMeals.map(({ kind, label, time }) => <div key={kind} className={timeRowClass}>
+                <span className={timeNameClass}><span className={`${dotClass} ${mealDotColors[kind]}`} />{label}</span>
                 <UsualTime label={label} value={time} onChange={value => changeTime(kind, value)} />
               </div>)}
-              {customTimes.map(time => <div key={time.id} className={styles.timeRow}>
-                <span className={styles.timeName}><span className={styles.dot} />{time.name}</span>
-                <span className={styles.muted}>{formatTime(time.start_time)}–{formatTime(time.end_time)}</span>
+              {customTimes.map(time => <div key={time.id} className={timeRowClass}>
+                <span className={timeNameClass}><span className={`${dotClass} bg-[#4c6bff]`} />{time.name}</span>
+                <span className={mutedClass}>{formatTime(time.start_time)}–{formatTime(time.end_time)}</span>
               </div>)}
             </div>
           </Question>
         </fieldset>
 
-        <aside className={styles.summary} aria-label="Your plan so far">
-          <div className={styles.summaryDetails}>
-            <h2>Your plan so far</h2>
-            <dl>
-              <div><dt>Goal</dt><dd>{preferences.goal ? choiceLabel(goals, preferences.goal) : <span className={styles.muted}>Not chosen yet</span>}</dd></div>
-              <div><dt>How you like to eat</dt><dd>{preferences.dietary_pattern ? choiceLabel(diets, preferences.dietary_pattern) : <span className={styles.muted}>Not chosen yet</span>}</dd></div>
+        <aside className={`sticky bottom-[max(12px,env(safe-area-inset-bottom))] z-[8] flex flex-col gap-2 border border-(--meal-line) bg-(--meal-surface) p-2.5 shadow-[0_12px_30px_-10px_rgb(0_0_0/35%)] min-[1051px]:top-4 min-[1051px]:bottom-auto min-[1051px]:z-auto min-[1051px]:max-h-[calc(100dvh-32px)] min-[1051px]:gap-[18px] min-[1051px]:rounded-[28px] min-[1051px]:border-0 min-[1051px]:p-[clamp(16px,2.4vw,24px)] min-[1051px]:shadow-(--meal-shadow) ${failure && !failure.skip ? "rounded-[28px]" : "rounded-full"}`} aria-label="Your plan so far">
+          <div className="hidden overflow-y-auto border-b border-(--meal-line) pb-[18px] min-[1051px]:block [&_dt]:text-[0.72rem] [&_dt]:font-bold [&_dt]:tracking-[0.05em] [&_dt]:text-(--meal-muted) [&_dt]:uppercase [&_dd]:mt-[3px] [&_dd]:leading-[1.3] [&_dd]:font-bold">
+            <h2 className="mb-[18px] text-[1.2rem] font-extrabold tracking-[-0.02em]">Your plan so far</h2>
+            <dl className="grid gap-3.5">
+              <div><dt>Goal</dt><dd>{preferences.goal ? choiceLabel(goals, preferences.goal) : <span className={mutedClass}>Not chosen yet</span>}</dd></div>
+              <div><dt>How you like to eat</dt><dd>{preferences.dietary_pattern ? choiceLabel(diets, preferences.dietary_pattern) : <span className={mutedClass}>Not chosen yet</span>}</dd></div>
               <div>
                 <dt>Avoiding</dt>
                 <dd>{preferences.food_avoidances.length
-                  ? <span className={styles.summaryPills}>{preferences.food_avoidances.map(value => <span key={value}>{choiceLabel(avoidances, value)}</span>)}</span>
-                  : <span className={styles.muted}>Nothing selected</span>}</dd>
+                  ? <span className="mt-1.5 flex flex-wrap gap-1.5 [&>span]:rounded-full [&>span]:bg-(--meal-chip) [&>span]:px-2.5 [&>span]:py-[3px] [&>span]:text-[0.82rem] [&>span]:font-semibold">{preferences.food_avoidances.map(value => <span key={value}>{choiceLabel(avoidances, value)}</span>)}</span>
+                  : <span className={mutedClass}>Nothing selected</span>}</dd>
               </div>
               <div>
                 <dt>Meals and usual times</dt>
                 <dd>{enabledMeals.length || customTimes.length
-                  ? <ul>
-                      {enabledMeals.map(meal => <li key={meal.kind}><span>{meal.label}</span><time dateTime={meal.time}>{formatTime(meal.time)}</time></li>)}
-                      {customTimes.map(time => <li key={time.id}><span>{time.name}</span><span className={styles.muted}>{formatTime(time.start_time)}–{formatTime(time.end_time)}</span></li>)}
+                  ? <ul className="mt-1.5 grid gap-1.5 text-[0.95rem] font-semibold [&>li]:flex [&>li]:justify-between [&>li]:gap-2.5 [&>li]:wrap-anywhere">
+                      {enabledMeals.map(meal => <li key={meal.kind}><span>{meal.label}</span><time className={summaryTimeClass} dateTime={meal.time}>{formatTime(meal.time)}</time></li>)}
+                      {customTimes.map(time => <li key={time.id}><span>{time.name}</span><span className={`leading-[1.4] ${summaryTimeClass}`}>{formatTime(time.start_time)}–{formatTime(time.end_time)}</span></li>)}
                     </ul>
-                  : <span className={styles.muted}>None selected</span>}</dd>
+                  : <span className={mutedClass}>None selected</span>}</dd>
               </div>
             </dl>
           </div>
-          {failure && !failure.skip && <p className={styles.error} role="alert">{failure.message}</p>}
-          <div className={styles.saveControls}>
-            <span className={styles.status} data-unsaved={unsaved} role="status">
+          {failure && !failure.skip && <p className={`${errorClass} max-[1051px]:px-2`} role="alert">{failure.message}</p>}
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 pl-2 min-[1051px]:grid-cols-1 min-[1051px]:gap-[18px] min-[1051px]:pl-0">
+            <span className="flex items-center gap-2 text-[0.88rem]/[1.2] font-semibold text-(--meal-muted) before:size-[9px] before:shrink-0 before:rounded-full before:bg-[#12a37a] data-[unsaved=true]:before:bg-[#ffc83d]" data-unsaved={unsaved} role="status">
               {unsaved ? "Unsaved changes" : initial ? "All changes saved" : "Ready to customize"}
             </span>
-            <button className={styles.save} type="submit" disabled={busy}>{busy ? "Saving…" : "Save preferences"}</button>
+            <button className={`min-h-11 rounded-full px-[clamp(10px,3vw,20px)] text-[0.95rem] font-bold whitespace-nowrap min-[1051px]:px-5 ${gradientClass}`} type="submit" disabled={busy}>{busy ? "Saving…" : "Save preferences"}</button>
           </div>
         </aside>
       </form>

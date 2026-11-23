@@ -6,7 +6,7 @@ import { Clock, Loader2, Plus, X } from "lucide-react";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { createMealTimeAction, deleteMealTimeAction, type MealTime } from "../actions";
-import styles from "./meal-preferences.module.css";
+import { gradientClass, pillClass } from "./meal-preference-classes";
 
 export default function CustomMealTimes({ times, onCreated, onDeleted }: {
   times: MealTime[];
@@ -90,16 +90,16 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
 
   return <>
     {times.map(time => (
-      <span key={time.id} className={styles.customChip}>
+      <span key={time.id} className={`${pillClass} border-transparent pr-0.5 pl-[18px] font-semibold wrap-anywhere ${gradientClass}`}>
         <span>{time.name}</span>
-        <button type="button" aria-label={`Delete ${time.name}`}
+        <button className="grid h-10 w-11 shrink-0 place-items-center rounded-full" type="button" aria-label={`Delete ${time.name}`}
           onClick={() => { setDeleteError(""); setMealTimeToDelete(time); }}>
-          <X aria-hidden="true" />
+          <X className="size-[26px] rounded-full bg-white/22 p-1.5 stroke-3" aria-hidden="true" />
         </button>
       </span>
     ))}
-    <button className={styles.addCustom} type="button" onClick={handleOpenAddMealTime}>
-      <Plus aria-hidden="true" />
+    <button className={`${pillClass} gap-2 border-dashed border-(--meal-line) px-[18px] text-left font-bold text-(--meal-muted) hover:border-(--meal-selected) hover:text-(--meal-ink)`} type="button" onClick={handleOpenAddMealTime}>
+      <Plus className="size-4 shrink-0" aria-hidden="true" />
       Add custom meal time
     </button>
       {/* New meal time dialog */}

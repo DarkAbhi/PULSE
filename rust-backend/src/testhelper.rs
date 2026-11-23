@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 
 use tokio::process::Command;
 
-use sqlx::{PgPool, postgres::PgPoolOptions};
+use sqlx::{Connection, PgConnection, PgPool, postgres::PgPoolOptions};
 
 #[derive(Debug)]
 pub struct TestDatabase {
@@ -38,29 +38,55 @@ impl TestDatabase {
         // Install cleanup before port discovery or connection can fail.
         let container = TestContainer(String::from_utf8(output.stdout).unwrap().trim().to_owned());
         let output = docker(&["port", &container.0, "5432/tcp"]).await;
-        assert!(output.status.success(), "discover test PostgreSQL port");
-        let address = String::from_utf8(output.stdout).unwrap();
-        let url = format!(
-            "postgres://pulse:pass@{}/pulse_test?sslmode=disable",
-            address.trim()
+        assert!(
+            output.status.success(),
+            "discover test PostgreSQL port for {}: {}",
+            container.0,
+            String::from_utf8_lossy(&output.stderr)
         );
-        let pool = tokio::time::timeout(Duration::from_secs(60), async {
-            loop {
-                if let Ok(pool) = PgPoolOptions::new()
-                    .max_connections(1)
-                    .acquire_timeout(Duration::from_secs(2))
-                    .connect(&url)
-                    .await
-                {
-                    break pool;
-                }
-                tokio::time::sleep(Duration::from_millis(200)).await;
+        let address = String::from_utf8(output.stdout).unwrap();
+        let address = address.trim();
+        let url = format!("postgres://pulse:pass@{address}/pulse_test?sslmode=disable");
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(60);
+        loop {
+            // A direct connection preserves socket errors that a pool retries internally.
+            let attempt_deadline =
+                deadline.min(tokio::time::Instant::now() + Duration::from_secs(2));
+            let error = match tokio::time::timeout_at(attempt_deadline, PgConnection::connect(&url))
+                .await
+            {
+                Ok(Ok(_)) => break,
+                Ok(Err(error)) => error.to_string(),
+                Err(_) => "connection attempt timed out".to_owned(),
+            };
+            if tokio::time::Instant::now() >= deadline {
+                let mut logs = Command::new("docker");
+                logs.args(["logs", "--tail", "20", &container.0])
+                    .kill_on_drop(true);
+                let logs = match tokio::time::timeout(Duration::from_secs(5), logs.output()).await {
+                    Ok(Ok(output)) => format!(
+                        "{}{}",
+                        String::from_utf8_lossy(&output.stdout),
+                        String::from_utf8_lossy(&output.stderr)
+                    ),
+                    Ok(Err(error)) => error.to_string(),
+                    Err(_) => "docker logs timed out".to_owned(),
+                };
+                panic!(
+                    "test PostgreSQL at {address} did not become ready within 60 seconds: {error}\n{logs}"
+                );
             }
-        })
-        .await
-        .expect("test PostgreSQL did not become ready within 60 seconds");
+            tokio::time::sleep_until(
+                deadline.min(tokio::time::Instant::now() + Duration::from_millis(200)),
+            )
+            .await;
+        }
         Self {
-            pool,
+            pool: PgPoolOptions::new()
+                .max_connections(1)
+                .acquire_timeout(Duration::from_secs(2))
+                .connect_lazy(&url)
+                .expect("valid test PostgreSQL connection URL"),
             _container: container,
         }
     }

@@ -1,7 +1,7 @@
 import { Info } from "lucide-react";
 import { formatMoney } from "@/app/lib/currency.mjs";
 import type { FuelEfficiencyStats } from "./types";
-import styles from "./vehicle-detail.module.css";
+import { detail } from "./vehicle-detail-classes";
 
 const emptyStats: FuelEfficiencyStats = {
   total_cost: 0,
@@ -30,8 +30,8 @@ export default function FuelEfficiencySection({
   const groups = entries.length > 0 ? entries : [["", emptyStats] as const];
 
   return (
-    <section aria-labelledby="fuel-efficiency-heading" className={styles.section}>
-      <h3 id="fuel-efficiency-heading" className={styles.subheading}>Fuel economy</h3>
+    <section aria-labelledby="fuel-efficiency-heading" className={detail.section}>
+      <h3 id="fuel-efficiency-heading" className={detail.subheading}>Fuel economy</h3>
       {groups.map(([fuelType, summary]) => {
         const readings = [
           { label: "Average", value: formatNumber(summary.average_km_per_litre, 3), unit: "km/L" },
@@ -44,15 +44,15 @@ export default function FuelEfficiencySection({
         return (
           <div className="grid gap-3" key={fuelType}>
             {fuelType && (
-              <h4 className={styles.label}>{fuelType}</h4>
+              <h4 className={detail.label}>{fuelType}</h4>
             )}
-            <dl className={styles.tiles}>
+            <dl className={detail.tiles}>
               {readings.map(({ label, value, unit }) => (
-                <div className={`${styles.card} ${styles.stat} grid content-start gap-2`} key={label}>
-                  <dt className={styles.label}>{label}</dt>
-                  <dd className={`${styles.metric} tabular-nums`}>
+                <div className={`${detail.card} min-h-[116px] grid content-start gap-2`} key={label}>
+                  <dt className={detail.label}>{label}</dt>
+                  <dd className={`${detail.metric} tabular-nums`}>
                     {value}
-                    {unit && value !== "—" && <small>{unit}</small>}
+                    {unit && value !== "—" && <small className={detail.metricUnit}>{unit}</small>}
                   </dd>
                 </div>
               ))}
@@ -60,11 +60,11 @@ export default function FuelEfficiencySection({
           </div>
         );
       })}
-      <div className={styles.note}>
-        <Info aria-hidden="true" />
+      <div className="flex items-start gap-3 rounded-[18px] bg-(--detail-inset) px-[18px] py-3.5 text-[0.9rem] leading-[1.4] text-(--detail-muted)">
+        <Info className="mt-px size-5 flex-none text-(--detail-accent)" aria-hidden="true" />
         <p>Add two full tank entries with increasing odometer readings to calculate efficiency.</p>
       </div>
-      <details className={`${styles.muted} text-sm`}>
+      <details className={`${detail.muted} text-sm`}>
         <summary className="w-fit cursor-pointer rounded py-2 font-bold underline focus-visible:outline-2 focus-visible:outline-ring">
           How fuel economy is calculated
         </summary>

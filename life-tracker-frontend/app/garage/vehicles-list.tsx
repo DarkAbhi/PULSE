@@ -14,6 +14,7 @@ import ConfirmationDialog from "@/app/components/design-system/confirmation-dial
 import Dialog, { DialogHeader } from "@/app/components/design-system/dialog";
 import { markAirFillAction, saveFuelAction } from "./actions";
 import styles from "./garage.module.css";
+import FuelTypeDot from "./fuel-type-dot";
 
 export type Vehicle = {
   id: number;
@@ -164,7 +165,7 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
                 </span>
                 {vehicle.fuel_types.map((fuel) => (
                   <span key={fuel} className={styles.badge}>
-                    <span aria-hidden="true" data-fuel={fuel} className={styles.fuelDot} />
+                    <FuelTypeDot fuel={fuel} />
                     {formatLabel(fuel)}
                   </span>
                 ))}

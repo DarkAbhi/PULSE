@@ -19,7 +19,7 @@ repos:
         always_run: true
       - id: rust-tests
         name: Rust backend tests
-        entry: bash -c 'cd rust-backend && cargo test'
+        entry: bash -c 'cd rust-backend && cargo test -- --test-threads=1'
         language: system
         pass_filenames: false
         always_run: true

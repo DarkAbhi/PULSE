@@ -123,20 +123,6 @@
   line-height: 1.25;
 }
 
-.fuelDot {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  flex: none;
-  background-color: #9086ab;
-}
-
-.fuelDot[data-fuel="petrol"] { background-color: #ff8c42; }
-.fuelDot[data-fuel="diesel"] { background-color: #526bff; }
-.fuelDot[data-fuel="cng"] { background-color: #38b38e; }
-.fuelDot[data-fuel="lpg"] { background-color: #aa6ee5; }
-.fuelDot[data-fuel="electric"] { background-color: #36b4db; }
-
 .quickAction {
   min-width: 0;
   min-height: clamp(2.75rem, 4vw, 3.75rem);

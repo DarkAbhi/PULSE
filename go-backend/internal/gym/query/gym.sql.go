@@ -164,6 +164,47 @@ func (q *Queries) DeleteVisit(ctx context.Context, arg DeleteVisitParams) (int64
 	return result.RowsAffected(), nil
 }
 
+const fitnessToday = `-- name: FitnessToday :one
+SELECT a.steps_count, a.move_calories, a.move_calories_goal,
+    a.exercise_minutes, a.exercise_minutes_goal, a.stand_hours, a.stand_hours_goal,
+    s.total_asleep_seconds
+FROM (SELECT $1::bigint AS user_id, $2::date AS day) AS requested
+LEFT JOIN fitness_activity_rings a ON a.user_id = requested.user_id AND a.summary_date = requested.day
+LEFT JOIN fitness_sleep s ON s.user_id = requested.user_id AND s.sleep_date = requested.day
+`
+
+type FitnessTodayParams struct {
+	UserID int64
+	Day    pgtype.Date
+}
+
+type FitnessTodayRow struct {
+	StepsCount          *int32
+	MoveCalories        *float64
+	MoveCaloriesGoal    *float64
+	ExerciseMinutes     *int32
+	ExerciseMinutesGoal *int32
+	StandHours          *int32
+	StandHoursGoal      *int32
+	TotalAsleepSeconds  *int32
+}
+
+func (q *Queries) FitnessToday(ctx context.Context, arg FitnessTodayParams) (FitnessTodayRow, error) {
+	row := q.db.QueryRow(ctx, fitnessToday, arg.UserID, arg.Day)
+	var i FitnessTodayRow
+	err := row.Scan(
+		&i.StepsCount,
+		&i.MoveCalories,
+		&i.MoveCaloriesGoal,
+		&i.ExerciseMinutes,
+		&i.ExerciseMinutesGoal,
+		&i.StandHours,
+		&i.StandHoursGoal,
+		&i.TotalAsleepSeconds,
+	)
+	return i, err
+}
+
 const getCatalogExercise = `-- name: GetCatalogExercise :one
 SELECT id, name, equipment, data FROM exercise_catalog WHERE id=$1
 `

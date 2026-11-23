@@ -276,6 +276,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/fitness/today": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Uses the profile time zone (UTC by default). Metrics with no record for the selected day are null.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fitness"
+                ],
+                "summary": "Get today's activity rings, steps, and total sleep",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/gym.FitnessTodaySummary"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/gym-visits": {
             "get": {
                 "security": [
@@ -6655,6 +6692,38 @@ const docTemplate = `{
                 },
                 "visited": {
                     "type": "boolean"
+                }
+            }
+        },
+        "gym.FitnessTodaySummary": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "exercise_minutes": {
+                    "type": "integer"
+                },
+                "exercise_minutes_goal": {
+                    "type": "integer"
+                },
+                "move_calories": {
+                    "type": "number"
+                },
+                "move_calories_goal": {
+                    "type": "number"
+                },
+                "stand_hours": {
+                    "type": "integer"
+                },
+                "stand_hours_goal": {
+                    "type": "integer"
+                },
+                "steps_count": {
+                    "type": "integer"
+                },
+                "total_asleep_seconds": {
+                    "type": "integer"
                 }
             }
         },

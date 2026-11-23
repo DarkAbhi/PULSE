@@ -4,6 +4,12 @@
   --dashboard-hero-light: radial-gradient(ellipse at 85% 85%, #ff2fd059, transparent 70%), radial-gradient(ellipse at 100% 45%, #19d3f366, transparent 70%), radial-gradient(ellipse at 55% 100%, #4c6bff4d, transparent 70%);
   --dashboard-hero-dark: linear-gradient(150deg, var(--brand-indigo) 25%, var(--brand-purple) 65%, var(--brand-violet));
   --dashboard-fitness-surface: #f6f5ff;
+  --dashboard-metric-icon-surface: #e9e2ff;
+  --dashboard-metric-icon: #6747bc;
+  --dashboard-metric-energy: #cb482d;
+  --dashboard-ring-move: #d02688;
+  --dashboard-ring-exercise: #008e9e;
+  --dashboard-ring-stand: #a26400;
   --dashboard-fitness-action: linear-gradient(90deg, #404fce, #a31c83);
   --dashboard-fitness-action-shadow: 0 12px 24px -10px color-mix(in srgb, var(--brand-pink) 60%, transparent);
   --dashboard-fitness-dial-shadow: 0 18px 40px -18px color-mix(in srgb, var(--brand-blue) 35%, transparent);
@@ -21,6 +27,12 @@
   --dashboard-orb-fill: radial-gradient(circle at 35% 30%, #daf5ff, #64ccf3 20%, #446bff 40%, var(--brand-pink) 78%);
   --dashboard-orb-shadow: none;
   --dashboard-fitness-surface: #211d3c;
+  --dashboard-metric-icon-surface: #302755;
+  --dashboard-metric-icon: #b79afa;
+  --dashboard-metric-energy: #ff7350;
+  --dashboard-ring-move: #ff30ac;
+  --dashboard-ring-exercise: #2bdeec;
+  --dashboard-ring-stand: #ffce47;
   --dashboard-fitness-action: var(--primary-fill);
   --dashboard-fitness-ring: color-mix(in srgb, var(--foreground) 20%, transparent);
   --dashboard-finance-shadow: none;

@@ -38,6 +38,7 @@ func NewHandler(service *Service, userID func(*http.Request) (int64, error)) *Ha
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/exercise-catalog", h.SearchExerciseCatalog)
 	r.Get("/fitness/overview", h.Overview)
+	r.Get("/fitness/today", h.FitnessToday)
 	r.Get("/workout/today", h.VisitedToday)
 	r.Post("/workout/today", h.AddWorkoutForDay)
 	r.Get("/gym-visits", h.ListVisits)
@@ -71,6 +72,30 @@ func (h *Handler) Overview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := h.service.Overview(r.Context(), userID, time.Now())
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	webutil.WriteJSON(w, http.StatusOK, result)
+}
+
+// FitnessToday documents GET /api/fitness/today.
+// @Summary Get today's activity rings, steps, and total sleep
+// @Description Uses the profile time zone (UTC by default). Metrics with no record for the selected day are null.
+// @Tags fitness
+// @Produce json
+// @Security SessionBearer
+// @Success 200 {object} FitnessTodaySummary
+// @Failure 401 {object} apidoc.Error
+// @Failure 500 {object} apidoc.Error
+// @Router /api/fitness/today [get]
+func (h *Handler) FitnessToday(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.sessionUserID(w, r)
+	if !ok {
+		return
+	}
+	result, err := h.service.FitnessToday(r.Context(), userID, time.Now())
 	if err != nil {
 		writeError(w, r, err)
 		return

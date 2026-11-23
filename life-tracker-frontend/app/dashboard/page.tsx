@@ -13,6 +13,7 @@ import NotificationDropdown from "@/app/components/notification-dropdown";
 import NamePromptDialog from "@/app/dashboard/name-prompt-dialog";
 import FinancialHorizonCard from "@/app/dashboard/financial-horizon-card";
 import SectionTiles from "@/app/dashboard/section-tiles";
+import { FitnessAtAGlance, FitnessAtAGlanceSkeleton } from "@/app/dashboard/fitness-at-a-glance";
 
 const dashboardClass =
   "bg-background text-foreground [&_:is(a,button)]:[-webkit-tap-highlight-color:transparent] " +
@@ -60,6 +61,10 @@ async function DashboardWorkout({ workout }: { workout: DashboardData["workout"]
   return <GymVisitCard visited={(await workout)?.visited ?? null} />;
 }
 
+async function DashboardFitness({ fitness }: { fitness: DashboardData["fitness"] }) {
+  return <FitnessAtAGlance data={await fitness} />;
+}
+
 export default async function DashboardPage() {
   const session = await getSession();
   if (!session) redirect("/");
@@ -86,6 +91,9 @@ export default async function DashboardPage() {
           </section>
           <SectionTiles />
         </div>
+        <Suspense fallback={<FitnessAtAGlanceSkeleton />}>
+          <DashboardFitness fitness={data.fitness} />
+        </Suspense>
       </div>
     </DashboardFrame>
   );

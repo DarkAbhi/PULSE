@@ -1,6 +1,14 @@
 -- name: VisitToday :one
 SELECT id FROM gym_visits WHERE user_id=$1 AND created_at >= $2 AND created_at < $3 ORDER BY created_at DESC LIMIT 1;
 
+-- name: FitnessToday :one
+SELECT a.steps_count, a.move_calories, a.move_calories_goal,
+    a.exercise_minutes, a.exercise_minutes_goal, a.stand_hours, a.stand_hours_goal,
+    s.total_asleep_seconds
+FROM (SELECT sqlc.arg(user_id)::bigint AS user_id, sqlc.arg(day)::date AS day) AS requested
+LEFT JOIN fitness_activity_rings a ON a.user_id = requested.user_id AND a.summary_date = requested.day
+LEFT JOIN fitness_sleep s ON s.user_id = requested.user_id AND s.sleep_date = requested.day;
+
 -- name: AddVisit :one
 INSERT INTO gym_visits (user_id) VALUES ($1) RETURNING id;
 

@@ -20,6 +20,7 @@ func (e ValidationError) Error() string { return e.Message }
 type store interface {
 	TimeZone(context.Context, int64) (string, error)
 	OverviewData(context.Context, int64, time.Time, time.Time) (overviewData, error)
+	FitnessToday(context.Context, int64, time.Time) (FitnessTodaySummary, error)
 	VisitToday(context.Context, int64, time.Time, time.Time) (int64, error)
 	AddVisit(context.Context, int64) (int64, error)
 	AddVisitOnDate(context.Context, int64, time.Time) (int64, error)

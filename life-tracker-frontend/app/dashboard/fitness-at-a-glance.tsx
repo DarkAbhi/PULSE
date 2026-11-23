@@ -2,6 +2,7 @@ import { ArrowRight, Flame, Footprints, Moon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import PulseCard from "@/app/components/design-system/pulse-card";
+import ActivityBreakdown from "@/app/dashboard/activity-breakdown";
 
 export type FitnessToday = {
   date: string;
@@ -104,32 +105,34 @@ function ActivityCard({ rings }: { rings: Ring[] }) {
 
   return (
     <PulseCard className={`relative ${surfaceClass}`}>
-      <details>
-        <summary className={`${rowClass} cursor-pointer list-none rounded-card hover:bg-foreground/5 focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden`}>
-          <span className={`${iconClass} p-1.5`}><ActivityRings rings={rings} /></span>
-          <span className="min-w-0">
-            <span className="block text-lg leading-tight font-extrabold tracking-tight lg:text-xl">Activity</span>
-            <span className="mt-0.5 block text-sm font-medium text-muted-foreground">
-              {goals.length > 0 ? (
-                <><strong className="font-bold text-foreground">{achieved}</strong> / {goals.length} goals</>
-              ) : hasActivity ? "No goals set" : "No data"}
-            </span>
+      <ActivityBreakdown
+        className={`${rowClass} w-full rounded-card text-left hover:bg-foreground/5`}
+        breakdown={(
+          <dl className="grid gap-2 rounded-card border border-border bg-card p-4 text-sm shadow-lg">
+            {rings.map(({ label, value, goal, unit, color }) => (
+              <div key={label} className="flex flex-wrap items-baseline justify-between gap-x-2">
+                <dt className="flex items-center gap-2 font-semibold">
+                  <span aria-hidden="true" className={`size-2 rounded-full bg-current ${color}`} />
+                  {label}
+                </dt>
+                <dd className="text-right text-muted-foreground tabular-nums">
+                  {value === null ? "No data" : `${number.format(value)}${goal ? ` / ${number.format(goal)}` : ""} ${unit}`}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      >
+        <span className={`${iconClass} p-1.5`}><ActivityRings rings={rings} /></span>
+        <span className="min-w-0">
+          <span className="block text-lg leading-tight font-extrabold tracking-tight lg:text-xl">Activity</span>
+          <span className="mt-0.5 block text-sm font-medium text-muted-foreground">
+            {goals.length > 0 ? (
+              <><strong className="font-bold text-foreground">{achieved}</strong> / {goals.length} goals</>
+            ) : hasActivity ? "No goals set" : "No data"}
           </span>
-        </summary>
-        <dl className="absolute inset-x-0 bottom-full z-10 mb-2 grid gap-2 rounded-card border border-border bg-card p-4 text-sm shadow-lg">
-          {rings.map(({ label, value, goal, unit, color }) => (
-            <div key={label} className="flex flex-wrap items-baseline justify-between gap-x-2">
-              <dt className="flex items-center gap-2 font-semibold">
-                <span aria-hidden="true" className={`size-2 rounded-full bg-current ${color}`} />
-                {label}
-              </dt>
-              <dd className="text-right text-muted-foreground tabular-nums">
-                {value === null ? "No data" : `${number.format(value)}${goal ? ` / ${number.format(goal)}` : ""} ${unit}`}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </details>
+        </span>
+      </ActivityBreakdown>
     </PulseCard>
   );
 }

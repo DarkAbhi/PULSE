@@ -22,6 +22,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
+	"github.com/DarkAbhi/life-backend/internal/activity"
 	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/DarkAbhi/life-backend/internal/db"
 	"github.com/DarkAbhi/life-backend/internal/gym"
@@ -155,6 +156,7 @@ func run(ctx context.Context) error {
 		Vehicle:        vehicleHandler,
 		Horizon:        horizon.NewHandler(pool, horizonService, sessionLookup),
 		Profile:        profile.NewHandler(profileService, sessionID),
+		Activity:       activity.NewHandler(pool, sessionID),
 		ObsConfig:      obs.Config,
 	}
 	if extractorURL := os.Getenv("STATEMENT_EXTRACTOR_URL"); extractorURL != "" {

@@ -1,0 +1,30 @@
+BEGIN;
+
+DROP TRIGGER recent_activity_fuel_fillup ON vehicle_fuel_fillups;
+DROP TRIGGER recent_activity_air_fill ON vehicle_air_fills;
+DROP TRIGGER recent_activity_maintenance ON vehicle_maintenance_records;
+DROP TRIGGER recent_activity_vehicle_added ON vehicles;
+DROP TRIGGER recent_activity_reminder_configured ON vehicle_maintenance_schedules;
+DROP TRIGGER recent_activity_maintenance_attachment ON vehicle_maintenance_attachments;
+DROP TRIGGER recent_activity_meal_added ON meal_plans;
+DROP TRIGGER recent_activity_meal_eaten ON meal_plans;
+DROP TRIGGER recent_activity_meal_time_added ON meal_times;
+DROP TRIGGER recent_activity_workout_logged ON gym_visits;
+DROP TRIGGER recent_activity_workout_synced ON fitness_workouts;
+DROP TRIGGER recent_activity_exercise_added ON gym_visit_exercises;
+DROP TRIGGER recent_activity_sleep_synced ON fitness_sleep;
+DROP TRIGGER recent_activity_daily_activity_synced ON fitness_activity_rings;
+DROP TRIGGER recent_activity_transaction_logged ON financial_horizon_transactions;
+DROP TRIGGER recent_activity_subscription_added ON financial_horizon_subscriptions;
+DROP TRIGGER recent_activity_budget_added ON financial_horizon_budgets;
+DROP TRIGGER recent_activity_obligation_added ON financial_horizon_deductions;
+DROP TRIGGER recent_activity_planned_purchase_added ON next_month_purchases;
+DROP TRIGGER recent_activity_account_added ON financial_accounts;
+DROP TRIGGER recent_activity_account_archived ON financial_accounts;
+DROP TRIGGER recent_activity_account_restored ON financial_accounts;
+DROP TRIGGER recent_activity_category_added ON financial_horizon_categories;
+DROP TRIGGER recent_activity_statement_imported ON statement_import_batches;
+DROP FUNCTION capture_recent_activity();
+DROP TABLE recent_activity;
+
+COMMIT;

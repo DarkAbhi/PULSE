@@ -39,7 +39,8 @@ test("dashboard view switches through profile navigation and persists in this br
   const dashboard = page.getByRole("main");
   const hero = page.getByRole("region", { name: "Welcome" });
   await expect(dashboard).toHaveAttribute("data-dashboard-view", "large");
-  const largeHeroHeight = (await hero.boundingBox())!.height;
+  const largeHero = (await hero.boundingBox())!;
+  const largeBottomPadding = await dashboard.evaluate(element => getComputedStyle(element).paddingBottom);
   await page.evaluate(() => { document.documentElement.dataset.dashboardTestDocument = "original"; });
 
   await page.getByRole("link", { name: "Profile", exact: true }).click();
@@ -50,7 +51,10 @@ test("dashboard view switches through profile navigation and persists in this br
 
   await expect(dashboard).toHaveAttribute("data-dashboard-view", "compact");
   await expect(page.locator("html")).toHaveAttribute("data-dashboard-test-document", "original");
-  expect((await hero.boundingBox())!.height).toBeLessThan(largeHeroHeight);
+  const compactHero = (await hero.boundingBox())!;
+  expect(compactHero.y).toBe(largeHero.y);
+  expect(compactHero.height).toBeLessThan(largeHero.height);
+  await expect(dashboard).toHaveCSS("padding-bottom", largeBottomPadding);
 
   const balance = page.getByRole("link", { name: /^Your room to move/ });
   const fitness = page.getByRole("article", { name: "Fitness today" });

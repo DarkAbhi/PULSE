@@ -14,6 +14,9 @@ import NamePromptDialog from "@/app/dashboard/name-prompt-dialog";
 import FinancialHorizonCard from "@/app/dashboard/financial-horizon-card";
 import SectionTiles from "@/app/dashboard/section-tiles";
 import { FitnessAtAGlance, FitnessAtAGlanceSkeleton } from "@/app/dashboard/fitness-at-a-glance";
+import { RecentActivity, RecentActivitySkeleton } from "@/app/dashboard/recent-activity";
+import { getUserCurrency } from "@/app/lib/user-currency";
+import { getUserTimeZone } from "@/app/lib/user-time-zone";
 
 const dashboardClass =
   "bg-background text-foreground [&_:is(a,button)]:[-webkit-tap-highlight-color:transparent] " +
@@ -65,6 +68,11 @@ async function DashboardFitness({ fitness }: { fitness: DashboardData["fitness"]
   return <FitnessAtAGlance data={await fitness} />;
 }
 
+async function DashboardRecentActivity({ activity }: { activity: DashboardData["recentActivity"] }) {
+  const [entries, currency, timeZone] = await Promise.all([activity, getUserCurrency(), getUserTimeZone()]);
+  return <RecentActivity entries={entries} currency={currency} timeZone={timeZone} />;
+}
+
 export default async function DashboardPage() {
   const session = await getSession();
   if (!session) redirect("/");
@@ -72,7 +80,7 @@ export default async function DashboardPage() {
   const data = getDashboardData();
 
   return (
-    <DashboardFrame className={`${dashboardClass} ${frame.page} dashboard-compact:lg:pt-6`}>
+    <DashboardFrame className={`${dashboardClass} ${frame.page}`}>
       <div className={`grid gap-6 dashboard-compact:gap-4 ${frame.content}`}>
         <Suspense fallback={<GreetingHeader name={session.username} />}>
           <DashboardGreeting username={session.username} profile={data.profile} notifications={data.notifications} />
@@ -93,6 +101,9 @@ export default async function DashboardPage() {
         </div>
         <Suspense fallback={<FitnessAtAGlanceSkeleton />}>
           <DashboardFitness fitness={data.fitness} />
+        </Suspense>
+        <Suspense fallback={<RecentActivitySkeleton />}>
+          <DashboardRecentActivity activity={data.recentActivity} />
         </Suspense>
       </div>
     </DashboardFrame>

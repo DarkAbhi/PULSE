@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/swaggo/http-swagger/v2"
 
+	"github.com/DarkAbhi/life-backend/internal/activity"
 	"github.com/DarkAbhi/life-backend/internal/auth"
 	"github.com/DarkAbhi/life-backend/internal/gym"
 	"github.com/DarkAbhi/life-backend/internal/health"
@@ -38,6 +39,7 @@ type API struct {
 	StatementImport *statementimport.Handler
 	Auth            *auth.Handler
 	Profile         *profile.Handler
+	Activity        *activity.Handler
 	ObsConfig       observability.Config
 }
 
@@ -88,6 +90,9 @@ func (a *API) Router() http.Handler {
 		api.Get("/version", pulseVersion)
 		if a.Auth != nil {
 			a.Auth.RegisterRoutes(api)
+		}
+		if a.Activity != nil {
+			a.Activity.RegisterRoutes(api)
 		}
 		if a.Profile != nil {
 			a.Profile.RegisterRoutes(api)

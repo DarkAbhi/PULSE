@@ -165,18 +165,26 @@ func (q *Queries) GetUserCategoryName(ctx context.Context, arg GetUserCategoryNa
 }
 
 const linkSubscriptionTransaction = `-- name: LinkSubscriptionTransaction :one
-UPDATE financial_horizon_transactions
-SET subscription_id = $1::bigint, updated_at = CURRENT_TIMESTAMP
-WHERE financial_horizon_transactions.id = $2
-  AND financial_horizon_transactions.user_id = $3
-  AND financial_horizon_transactions.type = 'debit'
-  AND financial_horizon_transactions.subscription_id IS NULL
-  AND EXISTS (
-    SELECT 1 FROM financial_horizon_subscriptions s
-    WHERE s.id = $1 AND s.user_id = $3
-  )
-RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source,
-    COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = financial_horizon_transactions.import_batch_id AND r.ordinal = financial_horizon_transactions.import_row_ordinal), '')::text AS original_narration
+WITH linked AS (
+    UPDATE financial_horizon_transactions
+    SET subscription_id = $1::bigint, updated_at = CURRENT_TIMESTAMP
+    WHERE financial_horizon_transactions.id = $2
+      AND financial_horizon_transactions.user_id = $3
+      AND financial_horizon_transactions.type = 'debit'
+      AND financial_horizon_transactions.subscription_id IS NULL
+      AND EXISTS (
+        SELECT 1 FROM financial_horizon_subscriptions s
+        WHERE s.id = $1 AND s.user_id = $3
+      )
+    RETURNING id, user_id, name, amount, type, transaction_date, category_id, category_name,
+        budget_id, subscription_id, notes, created_at, account_id, source, import_batch_id, import_row_ordinal
+), activity AS (
+    INSERT INTO recent_activity (kind, user_id, transaction_id, payment_subscription_id)
+    SELECT 'subscription_payment_linked', user_id, id, subscription_id FROM linked
+)
+SELECT id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source,
+    COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = linked.import_batch_id AND r.ordinal = linked.import_row_ordinal), '')::text AS original_narration
+FROM linked
 `
 
 type LinkSubscriptionTransactionParams struct {

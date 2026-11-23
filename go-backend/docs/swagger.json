@@ -12,6 +12,45 @@
     },
     "basePath": "/",
     "paths": {
+        "/api/activity/recent": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "activity"
+                ],
+                "summary": "List the three most recent activity entries for the signed-in user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/activity.Entry"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/auth/login": {
             "post": {
                 "description": "Sets the life_session HTTP-only cookie.",
@@ -5554,6 +5593,23 @@
         }
     },
     "definitions": {
+        "activity.Entry": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "object"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "recorded_at": {
+                    "type": "string"
+                }
+            }
+        },
         "apidoc.AirFill": {
             "type": "object",
             "properties": {

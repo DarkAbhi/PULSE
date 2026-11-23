@@ -62,6 +62,17 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/api/profile") {
     return send(200, { has_profile: true, name: "Browser test", timezone: "Asia/Kolkata", currency: "INR" });
   }
+  if (url.pathname === "/api/activity/recent") {
+    if (token === "dashboard-activity-test") {
+      const recorded_at = new Date().toISOString();
+      return send(200, [
+        { id: "3", kind: "fuel_fillup", recorded_at, details: { name: "Himalayan 411", quantity: 12.4, amount: 1478 } },
+        { id: "2", kind: "meal_added", recorded_at, details: { name: "Paneer burrito bowl", meal_time: "Lunch" } },
+        { id: "1", kind: "statement_imported", recorded_at, details: { name: "HDFC Millennia" } },
+      ]);
+    }
+    return send(200, []);
+  }
   if (url.pathname === "/api/workout/today") {
     if (token === "dashboard-missing-workout") {
       res.writeHead(200, { "Content-Type": "application/json" });

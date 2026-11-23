@@ -1,5 +1,16 @@
 basePath: /
 definitions:
+  activity.Entry:
+    properties:
+      details:
+        type: object
+      id:
+        type: string
+      kind:
+        type: string
+      recorded_at:
+        type: string
+    type: object
   apidoc.AirFill:
     properties:
       filled_at:
@@ -1363,6 +1374,30 @@ info:
   title: PULSE Backend API
   version: "1.0"
 paths:
+  /api/activity/recent:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/activity.Entry'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List the three most recent activity entries for the signed-in user
+      tags:
+      - activity
   /api/auth/login:
     post:
       consumes:

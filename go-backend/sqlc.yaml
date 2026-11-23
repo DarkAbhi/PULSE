@@ -173,3 +173,12 @@ sql:
         out: internal/statementimport/query
         sql_package: pgx/v5
         omit_unused_structs: true
+  - engine: postgresql
+    schema: migrations
+    queries: internal/activity/query
+    gen:
+      go:
+        package: query
+        out: internal/activity/query
+        sql_package: pgx/v5
+        omit_unused_structs: true

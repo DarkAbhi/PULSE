@@ -8,7 +8,7 @@ import DeleteVisitButton from "./delete-visit-button";
 import ExerciseCard from "./exercise-card";
 import { formatDuration } from "./format-duration.mjs";
 import type { SavedExercise } from "./actions";
-import styles from "./workout-detail.module.css";
+import { workoutPalette } from "./workout-detail-classes";
 
 export const metadata = {
   title: "Fitness Workout | PULSE",
@@ -27,6 +27,11 @@ type GymVisit = {
 };
 
 const numberFormat = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
+
+const weekdayClass = "block text-[clamp(1.4rem,3vw,2.2rem)] leading-[1.1] font-extrabold tracking-[-0.03em]";
+const tagClass = "flex items-center gap-2 rounded-full border-[1.5px] px-3.5 py-[5px] text-[0.9rem] font-bold [&_svg]:size-4";
+const exerciseNoticeClass = "grid justify-items-center gap-3.5 rounded-[28px] border-[1.5px] border-dashed border-(--workout-line) px-6 py-9 text-center";
+const sectionDescriptionClass = "mt-1 text-[0.95rem] text-(--workout-muted)";
 
 function WorkoutSummary({ visit, timeZone, error }: {
   visit: GymVisit | null;
@@ -51,35 +56,37 @@ function WorkoutSummary({ visit, timeZone, error }: {
   ] : [];
 
   return (
-    <header className={styles.hero}>
-      <svg className={styles.watermark} viewBox="0 0 24 24" aria-hidden="true">
+    <header className="relative isolate grid gap-[clamp(20px,3vw,30px)] overflow-hidden rounded-[40px] bg-[linear-gradient(135deg,#3a2cd9,#7b2ce0_55%,#d41fb0)] p-[clamp(22px,3vw,36px)] text-white shadow-[0_22px_44px_-26px_rgb(91_44_224/90%)]">
+      <svg className="absolute -top-2.5 -right-6 -z-10 size-[300px] fill-none stroke-white opacity-10" strokeWidth={1} strokeLinecap="round" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
       </svg>
-      <div className={styles.tags}>
-        <span className={styles.tag}><Dumbbell aria-hidden="true" />Gym visit</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className={`${tagClass} border-white/40 bg-white/20`}><Dumbbell aria-hidden="true" />Gym visit</span>
         {visit?.synced_from_apple_watch && (
-          <span className={`${styles.tag} ${styles.synced}`}>
+          <span className={`${tagClass} border-transparent bg-white/95 text-[#4a2bd0]`}>
             <Watch aria-hidden="true" />Synced from watch
           </span>
         )}
       </div>
       {date ? (
-        <h1 className={styles.date}>
-          <span className={styles.day}>{day}</span>
+        <h1 className="flex items-center gap-[clamp(14px,2.4vw,24px)]">
+          <span className="text-[clamp(4rem,10vw,7rem)] leading-[0.85] font-extrabold tracking-[-0.06em] tabular-nums">{day}</span>
           <span>
-            <span className={styles.weekday}>{weekday}</span>
-            <span className={styles.monthYear}>{monthYear}</span>
+            <span className={weekdayClass}>{weekday}</span>
+            <span className="mt-1 block text-[clamp(1.05rem,2vw,1.4rem)] font-semibold opacity-90">{monthYear}</span>
           </span>
         </h1>
-      ) : <h1 className={styles.weekday}>Workout</h1>}
+      ) : <h1 className={weekdayClass}>Workout</h1>}
       {metrics.some(({ value }) => value !== null) && (
-        <dl className={styles.metrics}>
+        <dl className="grid grid-cols-4 rounded-[22px] border border-white/22 bg-white/14 max-[701px]:grid-cols-2">
           {metrics.map(({ label, Icon, value, unit }) => (
-            <div key={label}>
-              <dt><Icon aria-hidden="true" />{label}</dt>
-              <dd>
+            <div key={label} className="border-white/22 px-[18px] py-3.5 not-first:border-s max-[701px]:nth-3:border-s-0 max-[701px]:nth-[n+3]:border-t">
+              <dt className="flex items-center gap-1.5 text-[0.72rem] font-bold tracking-[0.06em] uppercase opacity-85">
+                <Icon size={14} className="shrink-0" aria-hidden="true" />{label}
+              </dt>
+              <dd className="mt-1 text-[clamp(1.15rem,2vw,1.5rem)] font-extrabold tracking-[-0.02em] tabular-nums">
                 {value ?? <span aria-label="Not available">—</span>}
-                {value !== null && unit && <small>{unit}</small>}
+                {value !== null && unit && <small className="ms-1 text-[0.6em] font-semibold tracking-normal opacity-85">{unit}</small>}
               </dd>
             </div>
           ))}
@@ -130,18 +137,20 @@ export default async function GymVisitPage({ params }: { params: Promise<{ id: s
   const setCount = `${sets.length} ${sets.length === 1 ? "set" : "sets"}`;
 
   return (
-    <main className={`${styles.palette} ${styles.page}`}>
-      <div className={styles.content}>
+    <main className={`${workoutPalette} min-h-dvh bg-background p-[clamp(16px,2.4vw,32px)] leading-[1.4] text-(--workout-ink)`}>
+      <div className="mx-auto grid min-w-0 max-w-[1200px] gap-[30px]">
         <TopAppBar backHref="/fitness" backLabel="Back to Fitness" />
         <WorkoutSummary visit={visit} timeZone={timeZone} error={detailsError} />
 
         <AddExerciseProvider visitID={visitID}>
-          <section className={styles.section} aria-labelledby="exercises-heading">
-            <div className={styles.sectionHeader}>
+          <section className="grid min-w-0 gap-5" aria-labelledby="exercises-heading">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-(--workout-line) pb-5">
               <div>
-                <h2 id="exercises-heading" tabIndex={-1}><List size={26} aria-hidden="true" />Exercises</h2>
+                <h2 id="exercises-heading" tabIndex={-1} className="flex items-center gap-2.5 text-[clamp(1.3rem,2.2vw,1.65rem)] leading-[1.2] font-extrabold tracking-[-0.03em]">
+                  <List size={26} className="shrink-0 text-(--workout-accent)" aria-hidden="true" />Exercises
+                </h2>
                 {!error && (
-                  <p>{exercises.length
+                  <p className={sectionDescriptionClass}>{exercises.length
                     ? [exerciseCount, setCount, volume > 0 && `${numberFormat.format(volume)} kg lifted`].filter(Boolean).join(" · ")
                     : "Nothing added to this workout yet"}
                   </p>
@@ -150,13 +159,13 @@ export default async function GymVisitPage({ params }: { params: Promise<{ id: s
               <AddExerciseButton />
             </div>
             {error ? (
-              <p className={styles.error} role="alert">{error}</p>
+              <p className={`${exerciseNoticeClass} text-(--workout-danger)`} role="alert">{error}</p>
             ) : exercises.length ? (
-              <div className={styles.exerciseGrid}>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,440px),1fr))] gap-5">
                 {exercises.map((exercise) => <ExerciseCard key={exercise.id} visitID={visitID} exercise={exercise} />)}
               </div>
             ) : (
-              <div className={styles.empty}>
+              <div className={`${exerciseNoticeClass} text-(--workout-muted)`}>
                 <p>No exercises yet. Add your first exercise to start logging sets.</p>
                 <AddExerciseButton />
               </div>
@@ -164,10 +173,10 @@ export default async function GymVisitPage({ params }: { params: Promise<{ id: s
           </section>
         </AddExerciseProvider>
 
-        <section className={styles.danger} aria-labelledby="delete-workout-heading">
+        <section className="flex flex-wrap items-center justify-between gap-4 rounded-[28px] border-[1.5px] border-(--workout-danger)/40 bg-(--workout-card) p-6" aria-labelledby="delete-workout-heading">
           <div>
-            <h2 id="delete-workout-heading">Delete workout</h2>
-            <p>Permanently removes this workout and all of its exercises and sets.</p>
+            <h2 id="delete-workout-heading" className="text-[1.15rem] font-extrabold text-(--workout-danger)">Delete workout</h2>
+            <p className={sectionDescriptionClass}>Permanently removes this workout and all of its exercises and sets.</p>
           </div>
           <DeleteVisitButton visitID={visitID} />
         </section>

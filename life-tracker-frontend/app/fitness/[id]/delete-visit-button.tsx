@@ -1,6 +1,6 @@
 "use client";
 
-import styles from "./workout-detail.module.css";
+import { workoutDeleteClass } from "./workout-detail-classes";
 import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition } from "react";
@@ -34,7 +34,7 @@ export default function DeleteVisitButton({ visitID }: DeleteVisitButtonProps) {
 
   return (
     <>
-      <Button type="button" variant="destructive" className={`${styles.pill} ${styles.deleteWorkout}`}
+      <Button type="button" variant="destructive" className={workoutDeleteClass}
         aria-haspopup="dialog" onClick={() => { setError(""); setIsConfirmingDelete(true); }}
         icon={<Trash2 size={19} aria-hidden="true" />}>
         Delete workout

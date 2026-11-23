@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
-import styles from "./workout-detail.module.css";
+import { workoutDeleteIconClass } from "./workout-detail-classes";
 import Button from "@/app/components/design-system/button";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { deleteExercise } from "./actions";
@@ -27,7 +27,7 @@ export default function DeleteExerciseButton({ visitID, exerciseID, exerciseName
 
   return (
     <>
-      <Button type="button" variant="icon" size="lg" className={`${styles.iconButton} ${styles.deleteExercise}`}
+      <Button type="button" variant="icon" size="lg" className={workoutDeleteIconClass}
         title="Delete exercise"
         aria-label={`Delete ${exerciseName}`}
         disabled={isPending}

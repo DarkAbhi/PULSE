@@ -3,8 +3,8 @@
 import { useEffect, useId, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock, Search } from "lucide-react";
 import Button from "@/app/components/design-system/button";
-import { searchRecipesAction, type RecipeSummary } from "./actions";
-import styles from "./meal-plan.module.css";
+import { searchRecipesAction, type RecipeSummary } from "@/app/meal-plan/actions";
+import { mealPlanStyles as styles } from "@/app/meal-plan/meal-plan-classes";
 
 function RecipeMetadata({ recipe }: { recipe: RecipeSummary }) {
   return (

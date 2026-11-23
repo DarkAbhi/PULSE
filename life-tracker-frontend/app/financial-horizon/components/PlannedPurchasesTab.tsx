@@ -1,12 +1,12 @@
 "use client";
 
-import { Icon } from "./HorizonIcon";
+import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { formatMoney } from "@/app/lib/currency.mjs";
 
 import Button from "@/app/components/design-system/button";
-import theme from "../horizon-theme.module.css";
+import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 import { TrendingDown } from "lucide-react";
 import { HorizonSummary } from "@/app/dashboard/financial-horizon-card";

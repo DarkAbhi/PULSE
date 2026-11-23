@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "./HorizonIcon";
+import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
 import Select from "@/app/components/design-system/select";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
@@ -11,7 +11,7 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import Button from "@/app/components/design-system/button";
-import theme from "../horizon-theme.module.css";
+import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import { useEffect, useId, useMemo } from "react";

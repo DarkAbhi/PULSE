@@ -1,15 +1,15 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { getUserTimeZone } from "@/app/lib/user-time-zone";
 import { redirect } from "next/navigation";
-import frame from "@/app/components/design-system/page-frame.module.css";
+import { frame } from "@/app/components/design-system/page-frame";
 import TopAppBar from "@/app/components/top-app-bar";
 import { Clock, Dumbbell, Flag, Flame, List, Timer, Watch } from "lucide-react";
-import { AddExerciseButton, AddExerciseProvider } from "./add-exercise-form";
-import DeleteVisitButton from "./delete-visit-button";
-import ExerciseCard from "./exercise-card";
-import { formatDuration } from "./format-duration.mjs";
-import type { SavedExercise } from "./actions";
-import { workoutPalette } from "./workout-detail-classes";
+import { AddExerciseButton, AddExerciseProvider } from "@/app/fitness/[id]/add-exercise-form";
+import DeleteVisitButton from "@/app/fitness/[id]/delete-visit-button";
+import ExerciseCard from "@/app/fitness/[id]/exercise-card";
+import { formatDuration } from "@/app/fitness/[id]/format-duration.mjs";
+import type { SavedExercise } from "@/app/fitness/[id]/actions";
+import { workoutPalette } from "@/app/fitness/[id]/workout-detail-classes";
 
 export const metadata = {
   title: "Fitness Workout | PULSE",

@@ -1,7 +1,7 @@
 "use client";
 
-import { Icon } from "./HorizonIcon";
-import { HorizonSearch, HorizonSelect } from "./HorizonFilters";
+import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
+import { HorizonSearch, HorizonSelect } from "@/app/financial-horizon/components/HorizonFilters";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { formatMoney } from "@/app/lib/currency.mjs";
@@ -11,7 +11,7 @@ import { formatInstant, formatCalendarDate, dateKey, calendarDayNumber } from "@
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import Button from "@/app/components/design-system/button";
-import theme from "../horizon-theme.module.css";
+import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 import { useState, useMemo } from "react";
 import { CheckCircle2, PauseCircle, XCircle } from "lucide-react";

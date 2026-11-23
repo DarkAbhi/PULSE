@@ -72,11 +72,12 @@ start containers.
 
 Tests always use disposable containers and ignore application database settings;
 there is no external test database option. Tests run on the host and communicate
-with PostgreSQL through its random loopback port. `docker run --detach --rm
+with PostgreSQL through its random loopback port. `docker run --detach
 --publish 127.0.0.1::5432` starts each container; the helper discovers the assigned
-port with `docker port`, waits up to 60 seconds for a connection, and runs
-`docker rm --force` when the database guard is dropped, including on assertion
-failure. No volume is mounted, so test data disappears with the container.
+port with `docker port` and waits up to 60 seconds for a connection. If the
+container exits during startup, the helper reports the exit and its logs. When
+the database guard is dropped, `docker rm --force --volumes` removes the
+container and its anonymous data volume, including on assertion failure.
 
 Docker startup and port discovery run asynchronously with a 30-second command
 timeout. Cleanup runs on a blocking worker, including during test failure, with a
@@ -87,6 +88,6 @@ ownership/bounds test applies the actual baseline, fitness, API-key, and gym
 migrations instead of handwritten table definitions.
 
 A forcibly terminated test process can leave a container behind; remove it
-with `docker rm -f <container-id>`. Running the test process inside another
+with `docker rm -fv <container-id>`. Running the test process inside another
 container is not configured by these commands: that would require access to
 the Docker daemon and networking to reach the database on the Docker host.

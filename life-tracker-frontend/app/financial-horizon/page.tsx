@@ -1,10 +1,10 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
-import frame from "@/app/components/design-system/page-frame.module.css";
+import { frame } from "@/app/components/design-system/page-frame";
 import TopAppBar from "@/app/components/top-app-bar";
-import FinancialHorizonClient, { NextMonthPurchaseItem } from "./financial-horizon-client";
+import FinancialHorizonClient, { NextMonthPurchaseItem } from "@/app/financial-horizon/financial-horizon-client";
 import { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
-import type { TransactionPage } from "./actions";
+import type { TransactionPage } from "@/app/financial-horizon/actions";
 
 export const metadata = {
   title: "Financial Horizon | PULSE",

@@ -3,8 +3,8 @@
 import { createContext, ReactNode, useContext, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import Button, { type ButtonProps } from "./button";
-import horizon from "./horizon-palette.module.css";
+import Button, { type ButtonProps } from "@/app/components/design-system/button";
+import { horizonPalette } from "@/app/components/design-system/horizon-palette";
 
 let openDialogs = 0;
 let previousBodyOverflow = "";
@@ -80,7 +80,7 @@ export default function Dialog({
         }}
       >
         <section
-          className={`${horizon.palette} dialog-fields relative flex max-h-[calc(100dvh-24px)] w-full ${widths[size]} flex-col overflow-hidden rounded-[32px] bg-card p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-[0_30px_80px_-20px_rgb(0_0_0/55%)] motion-safe:animate-dialog-in max-[761px]:min-w-full max-[761px]:rounded-t-[28px] max-[761px]:rounded-b-none ${panelClassName}`}
+          className={`${horizonPalette} dialog-fields relative flex max-h-[calc(100dvh-24px)] w-full ${widths[size]} flex-col overflow-hidden rounded-[32px] bg-card p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-[0_30px_80px_-20px_rgb(0_0_0/55%)] motion-safe:animate-dialog-in max-[761px]:min-w-full max-[761px]:rounded-t-[28px] max-[761px]:rounded-b-none ${panelClassName}`}
         >
           <DialogFooterContext.Provider value={footer}>
             <div

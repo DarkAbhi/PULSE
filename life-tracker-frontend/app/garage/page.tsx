@@ -3,10 +3,10 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import TopAppBar from "@/app/components/top-app-bar";
-import frame from "@/app/components/design-system/page-frame.module.css";
-import AddVehicleButton from "./add-vehicle-button";
-import VehiclesList, { type Vehicle } from "./vehicles-list";
-import styles from "./garage.module.css";
+import { frame } from "@/app/components/design-system/page-frame";
+import AddVehicleButton from "@/app/garage/add-vehicle-button";
+import VehiclesList, { type Vehicle } from "@/app/garage/vehicles-list";
+import { garageStyles as styles } from "@/app/garage/garage-classes";
 
 export const metadata = {
   title: "Garage | PULSE",
@@ -55,16 +55,15 @@ export default async function GaragePage() {
         <section aria-labelledby="garage-title" className={`${styles.banner} relative mt-3`}>
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
             <svg className={styles.gauge} viewBox="0 0 400 400" fill="none">
-              {[-4, -2, 0].map((delay) => (
+              {["motion-safe:[animation-delay:-4s]", "motion-safe:[animation-delay:-2s]", ""].map((delay) => (
                 <circle
                   key={delay}
-                  className={styles.gaugeRipple}
+                  className={`${styles.gaugeRipple} ${delay}`}
                   cx="200"
                   cy="200"
                   r="153"
                   stroke="white"
                   strokeWidth="2"
-                  style={{ animationDelay: `${delay}s` }}
                 />
               ))}
               <path d="M60 275a140 140 0 0 1 280 0" pathLength="140" stroke="white" strokeOpacity=".56" strokeWidth="17" strokeLinecap="round" strokeDasharray="1.8 8.2" />

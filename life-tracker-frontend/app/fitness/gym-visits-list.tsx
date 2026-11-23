@@ -1,6 +1,6 @@
 import { PulseCardLink } from "@/app/components/design-system/pulse-card";
 import { Clock } from "lucide-react";
-import styles from "./fitness.module.css";
+import { fitnessStyles as styles } from "@/app/fitness/fitness-classes";
 
 export type WorkoutGroup = {
   date: string;

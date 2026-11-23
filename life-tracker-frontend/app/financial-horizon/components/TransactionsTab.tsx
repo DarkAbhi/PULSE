@@ -1,9 +1,9 @@
 "use client";
 
-import { Icon } from "./HorizonIcon";
-import CategoryOptions from "./CategoryOptions";
+import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
+import CategoryOptions from "@/app/financial-horizon/components/CategoryOptions";
 
-import { HorizonSearch, HorizonSelect } from "./HorizonFilters";
+import { HorizonSearch, HorizonSelect } from "@/app/financial-horizon/components/HorizonFilters";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { formatMoney } from "@/app/lib/currency.mjs";
@@ -13,7 +13,7 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import Button from "@/app/components/design-system/button";
-import theme from "../horizon-theme.module.css";
+import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 import { HorizonSummary, TransactionItem, CategoryItem } from "@/app/dashboard/financial-horizon-card";
 import type { TransactionPage } from "@/app/financial-horizon/actions";

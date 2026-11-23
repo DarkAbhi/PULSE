@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import frame from "@/app/components/design-system/page-frame.module.css";
+import { frame } from "@/app/components/design-system/page-frame";
 
 export default function RemindersLayout({ children }: { children: ReactNode }) {
   return (

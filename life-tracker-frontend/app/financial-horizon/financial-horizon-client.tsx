@@ -10,30 +10,30 @@ import { useTimeZone } from "@/app/components/time-zone-provider";
 import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition, useEffect, useRef, type ReactNode } from "react";
-import frame from "@/app/components/design-system/page-frame.module.css";
+import { frame } from "@/app/components/design-system/page-frame";
 import { Compass, X } from "lucide-react";
 
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
-import TransactionDialog from "./transaction-dialog";
-import LinkSubscriptionPaymentDialog from "./link-subscription-payment-dialog";
-import CategoryDialog from "./category-dialog";
-import BudgetDialog from "./budget-dialog";
-import SubscriptionDialog from "./subscription-dialog";
-import PlannedPurchaseDialog from "./components/PlannedPurchaseDialog";
-import StatementUploadDialog from "./components/StatementUploadDialog";
+import TransactionDialog from "@/app/financial-horizon/transaction-dialog";
+import LinkSubscriptionPaymentDialog from "@/app/financial-horizon/link-subscription-payment-dialog";
+import CategoryDialog from "@/app/financial-horizon/category-dialog";
+import BudgetDialog from "@/app/financial-horizon/budget-dialog";
+import SubscriptionDialog from "@/app/financial-horizon/subscription-dialog";
+import PlannedPurchaseDialog from "@/app/financial-horizon/components/PlannedPurchaseDialog";
+import StatementUploadDialog from "@/app/financial-horizon/components/StatementUploadDialog";
 
-import QuickActionDropdown from "./components/QuickActionDropdown";
-import AccountsTab from "./components/AccountsTab";
-import TabNavigation, { HorizonTab } from "./components/TabNavigation";
-import HeaderMetrics from "./components/HeaderMetrics";
-import OverviewTab from "./components/OverviewTab";
-import BudgetsTab from "./components/BudgetsTab";
-import TransactionsTab from "./components/TransactionsTab";
-import SubscriptionsTab from "./components/SubscriptionsTab";
-import FixedObligationsTab from "./components/FixedObligationsTab";
-import PlannedPurchasesTab from "./components/PlannedPurchasesTab";
-import theme from "./horizon-theme.module.css";
+import QuickActionDropdown from "@/app/financial-horizon/components/QuickActionDropdown";
+import AccountsTab from "@/app/financial-horizon/components/AccountsTab";
+import TabNavigation, { HorizonTab } from "@/app/financial-horizon/components/TabNavigation";
+import HeaderMetrics from "@/app/financial-horizon/components/HeaderMetrics";
+import OverviewTab from "@/app/financial-horizon/components/OverviewTab";
+import BudgetsTab from "@/app/financial-horizon/components/BudgetsTab";
+import TransactionsTab from "@/app/financial-horizon/components/TransactionsTab";
+import SubscriptionsTab from "@/app/financial-horizon/components/SubscriptionsTab";
+import FixedObligationsTab from "@/app/financial-horizon/components/FixedObligationsTab";
+import PlannedPurchasesTab from "@/app/financial-horizon/components/PlannedPurchasesTab";
+import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 import { HorizonSummary, DeductionItem, BudgetItem, CategoryItem, TransactionItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
 import {
@@ -57,8 +57,8 @@ import {
   getSubscriptionTransactionsAction,
   getTransactionsPageAction,
   linkSubscriptionTransactionAction,
-} from "./actions";
-import type { TransactionPage } from "./actions";
+} from "@/app/financial-horizon/actions";
+import type { TransactionPage } from "@/app/financial-horizon/actions";
 
 export type NextMonthPurchaseItem = {
   id: number;
@@ -808,7 +808,7 @@ export default function FinancialHorizonClient({
   };
 
   return (
-    <main className={`${frame.page} ${theme.theme}`}>
+    <main className={`${frame.page} ${theme.page}`}>
       <div className={`${frame.content} space-y-6 sm:space-y-7`}>
         {appBar}
         <header>

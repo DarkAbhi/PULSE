@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
+const mealDayClass =
+  "grid place-items-center w-[clamp(22px,2.05cqi,26px)] aspect-square border-[1.5px] border-[rgb(255_255_255_/_50%)] " +
+  "rounded-full text-[.72rem] font-bold data-[today=true]:border-white data-[today=true]:[background:white] " +
+  "data-[today=true]:text-(--tile-start)";
+
 const DAYS = [
   ["Mon", "M"],
   ["Tue", "T"],
@@ -26,9 +31,9 @@ export default function MealPlanWeekStrip() {
   }, [timeZone]);
 
   return (
-    <span className="pulse-meal-week">
+    <span className="flex gap-[clamp(4px,.45cqi,6px)]">
       {DAYS.map(([day, label]) => (
-        <span key={day} className="pulse-meal-day" data-today={day === today}>
+        <span key={day} className={mealDayClass} data-today={day === today}>
           {label}
         </span>
       ))}

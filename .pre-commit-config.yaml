@@ -19,10 +19,10 @@ repos:
         always_run: true
       - id: rust-tests
         name: Rust backend tests
-        entry: bash -c 'cd rust-backend && cargo test -- --test-threads=1'
+        entry: bash -c 'cd rust-backend && cargo test'
         language: system
         pass_filenames: false
-        always_run: true
+        files: '^(rust-backend/|go-backend/migrations/|release\.json$)'
       - id: frontend-tests
         name: Next.js frontend tests
         entry: bash -c 'cd life-tracker-frontend && node --test'

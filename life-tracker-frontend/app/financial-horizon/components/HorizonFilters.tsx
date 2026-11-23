@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
-import { Icon } from "./HorizonIcon";
-import theme from "../horizon-theme.module.css";
+import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
+import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 export function HorizonSelect({
   compact = false,
@@ -9,7 +9,7 @@ export function HorizonSelect({
 }: Omit<ComponentProps<"select">, "aria-label"> & { compact?: boolean; "aria-label": string }) {
   return (
     <div className={`relative inline-flex max-w-full max-sm:flex-1 ${className}`}>
-      <select {...props} className={`${theme.select} ${compact ? theme.compactSelect : ""}`} />
+      <select {...props} className={`${theme.select} ${compact ? "h-10 min-w-30" : "h-11 min-w-37.5"}`} />
       <Icon name="chevronDown" className="pointer-events-none absolute top-1/2 right-3.5 size-5 -translate-y-1/2 text-muted-foreground" />
     </div>
   );

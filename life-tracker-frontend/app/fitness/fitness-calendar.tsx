@@ -9,10 +9,10 @@ import {
 import Button from "@/app/components/design-system/button";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import PulseCard from "@/app/components/design-system/pulse-card";
-import GymVisitsList, { type WorkoutGroup } from "./gym-visits-list";
-import { calendarDays, shiftMonth } from "./calendar-utils.mjs";
-import { markGymVisitAction } from "./actions";
-import styles from "./fitness.module.css";
+import GymVisitsList, { type WorkoutGroup } from "@/app/fitness/gym-visits-list";
+import { calendarDays, shiftMonth } from "@/app/fitness/calendar-utils.mjs";
+import { markGymVisitAction } from "@/app/fitness/actions";
+import { fitnessStyles as styles } from "@/app/fitness/fitness-classes";
 
 const monthFormatter = new Intl.DateTimeFormat("en-IN", { month: "long", timeZone: "UTC" });
 const dayFormatter = new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeZone: "UTC" });
@@ -161,8 +161,8 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
           </Button>
         </div>
         <div className={styles.ecg} aria-hidden="true">
-          {[-4, -2, 0].map((delay) => (
-            <span key={delay} className={styles.ripple} style={{ animationDelay: `${delay}s` }} />
+          {["motion-safe:[animation-delay:-4s]", "motion-safe:[animation-delay:-2s]", ""].map((delay) => (
+            <span key={delay} className={`${styles.ripple} ${delay}`} />
           ))}
           <svg viewBox="0 0 200 100" fill="none">
             <path d="M0 50H72L84 18L100 82L112 34L122 50H200" pathLength="1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />

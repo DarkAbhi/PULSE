@@ -3,13 +3,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import AppBar from "@/app/components/design-system/app-bar";
 import Button from "@/app/components/design-system/button";
-import frame from "@/app/components/design-system/page-frame.module.css";
-import MealPlanClient from "../meal-plan-client";
-import type { MealPlan, MealTime } from "../actions";
-import MealOnboarding from "./meal-onboarding";
-import { getMealOnboardingAction } from "./actions";
-import { shouldShowOnboarding } from "./questionnaire";
-import type { OnboardingState } from "./types";
+import { frame } from "@/app/components/design-system/page-frame";
+import MealPlanClient from "@/app/meal-plan/meal-plan-client";
+import type { MealPlan, MealTime } from "@/app/meal-plan/actions";
+import MealOnboarding from "@/app/meal-plan/onboarding/meal-onboarding";
+import { getMealOnboardingAction } from "@/app/meal-plan/onboarding/actions";
+import { shouldShowOnboarding } from "@/app/meal-plan/onboarding/questionnaire";
+import type { OnboardingState } from "@/app/meal-plan/onboarding/types";
 
 export default function MealPlanGate({ initialState, notifications, ...plannerProps }: { notifications: ReactNode; initialState: OnboardingState | null; initialMeals: MealPlan[]; initialMealTimes: MealTime[]; initialTodayStr: string }) {
   const [state, setState] = useState(initialState);

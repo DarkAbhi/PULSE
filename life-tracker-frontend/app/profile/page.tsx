@@ -1,15 +1,15 @@
 import { UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
-import frame from "@/app/components/design-system/page-frame.module.css";
+import { frame } from "@/app/components/design-system/page-frame";
 import TopAppBar from "@/app/components/top-app-bar";
 import { apiFetch } from "@/app/lib/server-api";
-import AboutPulse from "./about-pulse";
-import APIKeys from "./api-keys";
-import ChangePasswordButton from "./change-password-button";
-import CurrencySettings from "./currency-settings";
-import ThemeSettings from "./theme-settings";
-import TimeZoneSettings from "./time-zone-settings";
-import { cardClass, profilePalette, sectionClass, sectionHeadingClass } from "./profile-classes";
+import AboutPulse from "@/app/profile/about-pulse";
+import APIKeys from "@/app/profile/api-keys";
+import ChangePasswordButton from "@/app/profile/change-password-button";
+import CurrencySettings from "@/app/profile/currency-settings";
+import ThemeSettings from "@/app/profile/theme-settings";
+import TimeZoneSettings from "@/app/profile/time-zone-settings";
+import { cardClass, profilePalette, sectionClass, sectionHeadingClass } from "@/app/profile/profile-classes";
 
 export const metadata = {
   title: "Profile | PULSE",

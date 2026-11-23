@@ -1,13 +1,13 @@
 "use client";
 
-import { Icon } from "./HorizonIcon";
+import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
 
 import Button from "@/app/components/design-system/button";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import type { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
 import { formatMoney } from "@/app/lib/currency.mjs";
 
-import theme from "../horizon-theme.module.css";
+import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 interface HeaderMetricsProps {
   summary: HorizonSummary;
@@ -38,7 +38,7 @@ export default function HeaderMetrics({
   const subscriptionBurn = summary.total_subscription_burn ?? 0;
   return (
     <section aria-label="Monthly pool summary" className={theme.summary}>
-      <PulseCard as="article" className={`${theme.summaryCard} ${theme.startingPool}`}>
+      <PulseCard as="article" data-pool="starting" className={`${theme.summaryCard} ${theme.startingPool}`}>
         <div className={theme.summaryHeader}>
           <span className={theme.summaryIcon}><Icon name="wallet" /></span>
           <h2 className={theme.summaryLabel}>Starting pool (base income)</h2>
@@ -65,10 +65,10 @@ export default function HeaderMetrics({
               autoFocus
             />
             <div className="flex gap-2">
-              <Button type="submit" className={theme.softAction} disabled={isPending}>
+              <Button type="submit" className={`${theme.softAction} ${theme.summaryEditAction}`} disabled={isPending}>
                 Save
               </Button>
-              <Button variant="secondary" type="button" className={theme.softAction} onClick={() => setIsEditingBase(false)}>
+              <Button variant="secondary" type="button" className={`${theme.softAction} ${theme.summaryEditAction}`} onClick={() => setIsEditingBase(false)}>
                 Cancel
               </Button>
             </div>
@@ -79,7 +79,7 @@ export default function HeaderMetrics({
         <p className={theme.summaryHint}>Baseline monthly revenue stream</p>
       </PulseCard>
 
-      <PulseCard as="article" className={`${theme.summaryCard} ${theme.committedPool}`}>
+      <PulseCard as="article" data-pool="committed" className={`${theme.summaryCard} ${theme.committedPool}`}>
         <div className={theme.summaryHeader}>
           <span className={theme.summaryIcon}><Icon name="lock" /></span>
           <h2 className={theme.summaryLabel}>Total committed</h2>
@@ -93,7 +93,7 @@ export default function HeaderMetrics({
         </p>
       </PulseCard>
 
-      <PulseCard as="article" className={`${theme.summaryCard} ${theme.availablePool}`}>
+      <PulseCard as="article" data-pool="available" className={`${theme.summaryCard} ${theme.availablePool}`}>
         <div className={theme.summaryHeader}>
           <span className={theme.summaryIcon}><Icon name="spark" /></span>
           <h2 className={theme.summaryLabel}>Net available pool</h2>

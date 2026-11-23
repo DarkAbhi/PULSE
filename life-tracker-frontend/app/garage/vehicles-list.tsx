@@ -12,9 +12,9 @@ import { Bus, CarFront, CircleDot, Droplet, Motorbike, Scooter, Truck, Van } fro
 import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import Dialog, { DialogHeader } from "@/app/components/design-system/dialog";
-import { markAirFillAction, saveFuelAction } from "./actions";
-import styles from "./garage.module.css";
-import FuelTypeDot from "./fuel-type-dot";
+import { markAirFillAction, saveFuelAction } from "@/app/garage/actions";
+import { garageStyles as styles } from "@/app/garage/garage-classes";
+import FuelTypeDot from "@/app/garage/fuel-type-dot";
 
 export type Vehicle = {
   id: number;

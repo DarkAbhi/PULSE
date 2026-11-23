@@ -1,16 +1,20 @@
 import { apiFetch } from "@/app/lib/server-api";
-import frame from "@/app/components/design-system/page-frame.module.css";
-import "./dashboard.css";
+import { frame } from "@/app/components/design-system/page-frame";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { UserRound } from "lucide-react";
-import GreetingHeader from "./greeting-header";
-import GymVisitCard from "./gym-visit-card";
+import GreetingHeader from "@/app/dashboard/greeting-header";
+import GymVisitCard from "@/app/dashboard/gym-visit-card";
 import NotificationDropdown from "@/app/components/notification-dropdown";
-import NamePromptDialog from "./name-prompt-dialog";
-import FinancialHorizonCard, { HorizonSummary } from "./financial-horizon-card";
-import SectionTiles from "./section-tiles";
+import NamePromptDialog from "@/app/dashboard/name-prompt-dialog";
+import FinancialHorizonCard, { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
+import SectionTiles from "@/app/dashboard/section-tiles";
 import { AppNotification } from "@/app/components/notification-list";
+
+const dashboardClass =
+  "bg-background text-foreground [&_:is(a,button)]:[-webkit-tap-highlight-color:transparent] " +
+  "[&_:is(a,button):focus-visible]:outline-3 [&_:is(a,button):focus-visible]:outline-ring " +
+  "[&_:is(a,button):focus-visible]:outline-offset-4";
 
 export const metadata = {
   title: "Dashboard | PULSE",
@@ -76,15 +80,15 @@ export default async function DashboardPage() {
   const needsProfile = !profile.has_profile;
 
   return (
-    <main className={`pulse-dashboard ${frame.page}`}>
-      <div className={`pulse-dashboard-content ${frame.content}`}>
+    <main className={`${dashboardClass} ${frame.page}`}>
+      <div className={`grid gap-6 ${frame.content}`}>
         <GreetingHeader username={username} displayName={displayName}>
           <NotificationDropdown initialNotifications={notifications} />
-          <Link className="pulse-profile-link" href="/profile" aria-label="Profile">
+          <Link className="inline-flex items-center justify-center w-11 h-11 rounded-full [background:transparent] text-inherit hover:[background:#ffffff26]" href="/profile" aria-label="Profile">
             <UserRound className="h-5 w-5" />
           </Link>
         </GreetingHeader>
-        <section className="pulse-dashboard-cards" aria-label="Your day at a glance">
+        <section className="grid gap-6 items-stretch md:grid-cols-2" aria-label="Your day at a glance">
           <FinancialHorizonCard summary={horizonSummary} error={horizonError} />
           <GymVisitCard visited={gymVisited} />
         </section>

@@ -1,8 +1,8 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
 import TopAppBar from "@/app/components/top-app-bar";
-import frame from "@/app/components/design-system/page-frame.module.css";
-import FitnessCalendar, { type FitnessOverview } from "./fitness-calendar";
+import { frame } from "@/app/components/design-system/page-frame";
+import FitnessCalendar, { type FitnessOverview } from "@/app/fitness/fitness-calendar";
 
 export const metadata = {
   title: "Fitness | PULSE",

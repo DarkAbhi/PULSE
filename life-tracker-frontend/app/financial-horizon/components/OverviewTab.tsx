@@ -1,11 +1,11 @@
 "use client";
 
-import { Icon } from "./HorizonIcon";
+import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
 import { ArrowUpRight } from "lucide-react";
 
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { formatMoney } from "@/app/lib/currency.mjs";
-import theme from "../horizon-theme.module.css";
+import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 const projectionMonths = [3, 6, 12];
 

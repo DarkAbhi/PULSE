@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Button from "@/app/components/design-system/button";
-import { Icon } from "./HorizonIcon";
-import theme from "../horizon-theme.module.css";
+import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
+import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import Select from "@/app/components/design-system/select";
-import { listAccounts, saveAccount, setAccountArchived } from "../accounts";
-import type { Account, AccountFields } from "../account-types";
+import { listAccounts, saveAccount, setAccountArchived } from "@/app/financial-horizon/accounts";
+import type { Account, AccountFields } from "@/app/financial-horizon/account-types";
 
 const networkLabels = { "": "Choose network", visa: "Visa", mastercard: "Mastercard", american_express: "American Express", diners_club: "Diners Club", rupay: "RuPay" };
 

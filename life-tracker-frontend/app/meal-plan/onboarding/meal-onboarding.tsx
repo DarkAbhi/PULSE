@@ -4,14 +4,14 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, Leaf, Soup, Sprout } from "lucide-react";
 import AppBar from "@/app/components/design-system/app-bar";
 import Button from "@/app/components/design-system/button";
-import frame from "@/app/components/design-system/page-frame.module.css";
+import { frame } from "@/app/components/design-system/page-frame";
 import { useTimeZone } from "@/app/components/time-zone-provider";
-import { getMealOnboardingAction, resolveMealOnboardingAction, saveMealPreferencesAction } from "./actions";
-import { avoidances, barriers, choiceLabel, diets, firstInvalidStep, goals, initialPreferences, mealKinds, questions, stepError, toggleChoice } from "./questionnaire";
-import type { MealKind, MealPreferences, OnboardingState } from "./types";
-import type { MealTime } from "../actions";
-import CustomMealTimes from "./custom-meal-times";
-import { gradientClass, mealPreferencePalette, pillClass } from "./meal-preference-classes";
+import { getMealOnboardingAction, resolveMealOnboardingAction, saveMealPreferencesAction } from "@/app/meal-plan/onboarding/actions";
+import { avoidances, barriers, choiceLabel, diets, firstInvalidStep, goals, initialPreferences, mealKinds, questions, stepError, toggleChoice } from "@/app/meal-plan/onboarding/questionnaire";
+import type { MealKind, MealPreferences, OnboardingState } from "@/app/meal-plan/onboarding/types";
+import type { MealTime } from "@/app/meal-plan/actions";
+import CustomMealTimes from "@/app/meal-plan/onboarding/custom-meal-times";
+import { gradientClass, mealPreferencePalette, pillClass } from "@/app/meal-plan/onboarding/meal-preference-classes";
 
 const goalIcons = [Soup, Leaf, Sprout];
 const mealDotColors = {

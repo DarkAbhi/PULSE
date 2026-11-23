@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Icon, type IconName } from "./HorizonIcon";
-import theme from "../horizon-theme.module.css";
+import { Icon, type IconName } from "@/app/financial-horizon/components/HorizonIcon";
+import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 export type HorizonTab = "overview" | "budgets" | "transactions" | "subscriptions" | "fixed" | "planner" | "accounts";
 

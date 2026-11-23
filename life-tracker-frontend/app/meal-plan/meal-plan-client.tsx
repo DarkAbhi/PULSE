@@ -1,15 +1,15 @@
 "use client";
 
 import Select from "@/app/components/design-system/select";
-import type { MealKind, MealPreferences } from "./onboarding/types";
-import { isMealTimeEnabled, standardMealKind } from "./onboarding/questionnaire";
+import type { MealKind, MealPreferences } from "@/app/meal-plan/onboarding/types";
+import { isMealTimeEnabled, standardMealKind } from "@/app/meal-plan/onboarding/questionnaire";
 
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import { dateKey } from "@/app/lib/time-zone.mjs";
 
 import { useState, useEffect, useTransition, useId, type ReactNode } from "react";
-import frame from "@/app/components/design-system/page-frame.module.css";
+import { frame } from "@/app/components/design-system/page-frame";
 import {
   ChevronLeft,
   ChevronRight,
@@ -36,10 +36,10 @@ import {
   deleteMealPlanAction,
   getMealPlansAction,
   updateMealPlanConsumedAction,
-} from "./actions";
+} from "@/app/meal-plan/actions";
 import Button from "@/app/components/design-system/button";
-import { RecipePicker } from "./recipe-picker";
-import styles from "./meal-plan.module.css";
+import { RecipePicker } from "@/app/meal-plan/recipe-picker";
+import { mealPlanStyles as styles } from "@/app/meal-plan/meal-plan-classes";
 
 interface MealPlanClientProps {
   appBar: ReactNode;
@@ -59,6 +59,14 @@ const standardSlotIcons = {
 const standardSlots = Object.keys(standardSlotIcons) as MealKind[];
 type CalendarSlot = MealKind | "custom";
 
+const slotColors: Record<CalendarSlot, string> = {
+  breakfast: "[--slot-color:#ffc83d] text-[#3a2a00]",
+  lunch: "[--slot-color:#f0603a] text-[#3a2a00]",
+  evening_snacks: "[--slot-color:#d91cab] text-white",
+  dinner: "[--slot-color:#5b2ce0] text-white",
+  custom: "[--slot-color:#3e59bc] text-white",
+};
+
 function MealSlotCard({ kind, icon, name, timeRange, usualTime, children, onAdd, addDisabled }: {
   kind: CalendarSlot;
   icon: ReactNode;
@@ -72,7 +80,7 @@ function MealSlotCard({ kind, icon, name, timeRange, usualTime, children, onAdd,
   return (
     <article className={styles.slotCard}>
       <div className="flex items-start gap-3">
-        <span className={styles.slotIcon} data-slot={kind} aria-hidden="true">{icon}</span>
+        <span className={`${styles.slotIcon} ${slotColors[kind]}`} aria-hidden="true">{icon}</span>
         <div className="min-w-0 self-center">
           <h3 className="text-lg leading-tight font-extrabold tracking-tight wrap-anywhere">{name}</h3>
           {timeRange && <p className={`${styles.muted} mt-1 text-sm font-semibold`}>{timeRange}</p>}
@@ -354,8 +362,8 @@ export default function MealPlanClient({
         <div className={styles.layout}>
           <section className={styles.hero} aria-labelledby="meal-plan-title">
             <div className={styles.plate} aria-hidden="true">
-              {[-4, -2, 0].map(delay => (
-                <span key={delay} className={styles.ripple} style={{ animationDelay: `${delay}s` }} />
+              {["[animation-delay:-4s]", "[animation-delay:-2s]", ""].map(delay => (
+                <span key={delay} className={`${styles.ripple} ${delay}`} />
               ))}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="5.5" />
@@ -386,7 +394,7 @@ export default function MealPlanClient({
                 <button className={styles.weekArrow} type="button" onClick={() => moveWeek(-7)} aria-label="Previous week">
                   <ChevronLeft className="size-5" aria-hidden="true" />
                 </button>
-                <button className={styles.primaryAction} type="button" onClick={handleToday} disabled={isToday}>
+                <button className={`${styles.primaryAction} ${styles.todayAction}`} type="button" onClick={handleToday} disabled={isToday}>
                   <LocateFixed className="size-5" aria-hidden="true" /> Today
                 </button>
                 <button className={styles.weekArrow} type="button" onClick={() => moveWeek(7)} aria-label="Next week">
@@ -413,7 +421,7 @@ export default function MealPlanClient({
                     <span className={styles.dayNumber}>{day.date.getUTCDate()}</span>
                     <span className={styles.dots} aria-hidden="true">
                       {calendarSlots.map(slot => (
-                        <span key={slot} className={styles.dot} data-slot={slot} data-planned={slots.has(slot)} />
+                        <span key={slot} className={`${styles.dot} ${slotColors[slot]}`} data-planned={slots.has(slot)} />
                       ))}
                     </span>
                   </button>

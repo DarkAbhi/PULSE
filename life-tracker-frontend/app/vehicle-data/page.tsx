@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import frame from "@/app/components/design-system/page-frame.module.css";
+import { frame } from "@/app/components/design-system/page-frame";
 import TopAppBar from "@/app/components/top-app-bar";
 import PulseCard from "@/app/components/design-system/pulse-card";
 

@@ -1,11 +1,11 @@
 "use client";
 
-import { Icon } from "./HorizonIcon";
+import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
 import Button from "@/app/components/design-system/button";
 
 import { useState, useRef, useEffect } from "react";
 import { Tag } from "lucide-react";
-import theme from "../horizon-theme.module.css";
+import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 interface QuickActionDropdownProps {
   onLogTransaction: () => void;

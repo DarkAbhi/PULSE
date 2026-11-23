@@ -1,9 +1,9 @@
 import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
-import frame from "@/app/components/design-system/page-frame.module.css";
+import { frame } from "@/app/components/design-system/page-frame";
 import TopAppBar from "@/app/components/top-app-bar";
 import { AppNotification } from "@/app/components/notification-list";
-import NotificationsClient from "./notifications-client";
+import NotificationsClient from "@/app/notifications/notifications-client";
 
 const apiBaseURL =
   process.env.INTERNAL_API_BASE_URL ??

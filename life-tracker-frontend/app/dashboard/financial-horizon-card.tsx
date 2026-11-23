@@ -3,6 +3,15 @@ import { PulseCardLink } from "@/app/components/design-system/pulse-card";
 import { formatMoneyParts } from "@/app/lib/currency.mjs";
 import { ArrowRight } from "lucide-react";
 
+const horizonAmountClass =
+  "max-w-full text-[clamp(2rem,13cqi,5rem)] font-extrabold leading-none tracking-[-.04em] tabular-nums wrap-anywhere " +
+  "[&_span]:text-[.38em] [&_span]:font-semibold [&_span]:tracking-normal [&_span]:opacity-78";
+
+const horizonCardClass =
+  "@container relative isolate flex flex-col min-h-50 overflow-hidden rounded-[32px_32px_32px_clamp(56px,8vw,96px)] " +
+  "[background:#ffe08a] text-[#3a2a00] shadow-[0_18px_40px_-20px_rgb(255_170_0_/_70%)] dark:[background:#ffc83d] " +
+  "dark:shadow-none";
+
 export type BudgetItem = {
   id: number;
   name: string;
@@ -116,19 +125,19 @@ export default function FinancialHorizonCard({
     : null;
 
   return (
-    <PulseCardLink href="/financial-horizon" className="pulse-horizon-card">
+    <PulseCardLink href="/financial-horizon" className={horizonCardClass}>
       <svg
-        className="pulse-horizon-wave"
+        className="absolute inset-[auto_0_0] -z-1 w-full h-[33%] pointer-events-none fill-white opacity-50 motion-safe:[&_path]:animate-pulse-drift dark:opacity-35"
         aria-hidden="true"
         viewBox="0 0 400 80"
         preserveAspectRatio="none"
       >
         <path d="M-30 49Q39 -2 105 36T240 36T375 36T510 36V80H-30Z" />
       </svg>
-      <div className="pulse-horizon-content">
-        <h2>Your room to move</h2>
+      <div className="flex flex-1 flex-col items-start gap-4 p-[clamp(20px,5cqi,32px)]">
+        <h2 className="mb-auto text-[clamp(1.125rem,4cqi,1.4rem)] font-semibold">Your room to move</h2>
         {balance ? (
-          <p className="pulse-horizon-amount">
+          <p className={horizonAmountClass}>
             {balance.map(({ type, value }, index) =>
               type === "decimal" || type === "fraction"
                 ? <span key={index}>{value}</span>
@@ -136,9 +145,9 @@ export default function FinancialHorizonCard({
             )}
           </p>
         ) : (
-          <p className="pulse-card-message">{error || "Set up your monthly income and fixed obligations to see your room to move."}</p>
+          <p className="max-w-[45ch] text-[15px] leading-[1.5] wrap-anywhere">{error || "Set up your monthly income and fixed obligations to see your room to move."}</p>
         )}
-        <span className="pulse-card-cta">
+        <span className="inline-flex shrink-0 justify-center items-center gap-2 rounded-full bg-[#fff5ce] py-3 px-4 min-h-11 text-[14px] font-medium hover:brightness-[.96]">
           {balance ? "Keep going" : "Set up horizon"}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </span>

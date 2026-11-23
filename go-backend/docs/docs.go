@@ -5945,6 +5945,9 @@ const docTemplate = `{
         "apidoc.FitnessOverviewWorkout": {
             "type": "object",
             "properties": {
+                "duration_seconds": {
+                    "type": "number"
+                },
                 "id": {
                     "type": "integer"
                 },

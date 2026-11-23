@@ -86,8 +86,9 @@ type FitnessStatCard struct {
 	Tooltip  string `json:"tooltip,omitempty"`
 }
 type FitnessOverviewWorkout struct {
-	ID        int64  `json:"id"`
-	TimeLabel string `json:"time_label"`
+	ID              int64    `json:"id"`
+	TimeLabel       string   `json:"time_label"`
+	DurationSeconds *float64 `json:"duration_seconds,omitempty"`
 }
 type FitnessWorkoutGroup struct {
 	Date      string                   `json:"date"`

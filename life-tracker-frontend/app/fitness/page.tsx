@@ -28,6 +28,7 @@ export default async function FitnessPage() {
       <div className={frame.content}>
         <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />
         <div className="mt-3">
+          <h1 className={overview ? "sr-only" : "mb-4 text-3xl font-bold tracking-tight sm:text-4xl"}>Fitness</h1>
           {overview ? (
             <FitnessCalendar
               today={overview.today}
@@ -43,12 +44,9 @@ export default async function FitnessPage() {
               <FitnessStats cards={overview.cards.filter(({ id, value }) => id !== "last_workout" && id !== "streak" && value !== "Not available")} />
             </FitnessCalendar>
           ) : (
-            <>
-              <h1 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl">Fitness</h1>
-              <p className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
-                {error}
-              </p>
-            </>
+            <p className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
+              {error}
+            </p>
           )}
         </div>
       </div>

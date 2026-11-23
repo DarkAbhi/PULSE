@@ -1,18 +1,7 @@
 export const fitnessStyles = {
-  hero: "relative isolate flex items-center overflow-hidden min-h-[clamp(12rem,23vw,16rem)] p-[clamp(1.25rem,3.5vw,3rem)] rounded-[clamp(1.75rem,4.2vw,3.25rem)] bg-(image:--fitness-hero) shadow-(--fitness-hero-shadow) text-white",
-  title: "text-[clamp(3rem,7vw,6rem)] font-[850] tracking-[-.065em] leading-[.95]",
-  ecg:
-    "absolute -z-1 inset-bs-[50%] end-[clamp(-2rem,3vw,3rem)] w-[clamp(9rem,31vw,21rem)] aspect-square " +
-    "-translate-y-1/2 opacity-48 pointer-events-none " +
-    "[&_svg]:absolute [&_svg]:inset-bs-[50%] [&_svg]:w-full [&_svg]:-translate-y-1/2 " +
-    "sm:opacity-90 " +
-    "motion-safe:[&_path]:[stroke-dasharray:1] motion-safe:[&_path]:animate-fitness-trace",
-  ripple:
-    "hidden absolute inset-0 border-2 border-white/60 rounded-full " +
-    "motion-safe:block motion-safe:animate-fitness-ripple",
   surface: "rounded-[clamp(1.5rem,3vw,2.25rem)] shadow-(--fitness-shadow)",
   muted: "text-(--fitness-muted)",
-  selectedDate: "bg-(--fitness-chip)",
+  selectedDate: "mt-4 rounded-3xl border border-foreground/25 px-3 sm:px-4",
   timeChip:
     "bg-(--fitness-chip) " +
     "inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-sm font-semibold",

@@ -59,8 +59,15 @@ func TestOverviewIntegration(t *testing.T) {
 			t.Errorf("%s = %q, want %q", got.Cards[i].ID, got.Cards[i].Value, want)
 		}
 	}
-	if len(got.CalendarWorkouts) != 3 || len(got.CalendarWorkouts["2026-01-01"].Workouts) != 2 {
-		t.Errorf("calendar visits: %+v", got.CalendarWorkouts)
+	visits := got.CalendarWorkouts["2026-01-01"].Workouts
+	if len(got.CalendarWorkouts) != 3 || len(visits) != 2 {
+		t.Fatalf("calendar visits: %+v", got.CalendarWorkouts)
+	}
+	if visits[0].ID != 11 || visits[0].DurationSeconds != nil {
+		t.Errorf("manual visit: %+v", visits[0])
+	}
+	if visits[1].ID != 10 || visits[1].DurationSeconds == nil || *visits[1].DurationSeconds != 1800 {
+		t.Errorf("linked visit: %+v", visits[1])
 	}
 	if got.Cards[5].Subtitle != "recorded sets this year · 1 set missing weight" {
 		t.Errorf("volume subtitle: %s", got.Cards[5].Subtitle)

@@ -22,8 +22,9 @@ type statCard struct {
 }
 
 type overviewWorkout struct {
-	ID        int64  `json:"id"`
-	TimeLabel string `json:"time_label"`
+	ID              int64    `json:"id"`
+	TimeLabel       string   `json:"time_label"`
+	DurationSeconds *float64 `json:"duration_seconds,omitempty"`
 }
 
 type workoutGroup struct {
@@ -102,7 +103,11 @@ func buildOverview(data overviewData, now time.Time) fitnessOverview {
 	for i, visit := range data.Visits {
 		local := visit.CreatedAt.Time.In(now.Location())
 		date := local.Format(dateFormat)
-		workout := overviewWorkout{ID: visit.ID, TimeLabel: local.Format("3:04 PM")}
+		workout := overviewWorkout{
+			ID:              visit.ID,
+			TimeLabel:       local.Format("3:04 PM"),
+			DurationSeconds: visit.DurationSeconds,
+		}
 		group := result.CalendarWorkouts[date]
 		group.Date, group.DateLabel = date, local.Format("Monday, 2 January 2006")
 		group.Workouts = append(group.Workouts, workout)

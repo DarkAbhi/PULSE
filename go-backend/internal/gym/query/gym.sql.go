@@ -442,15 +442,16 @@ func (q *Queries) OverviewSessions(ctx context.Context, arg OverviewSessionsPara
 }
 
 const overviewVisits = `-- name: OverviewVisits :many
-SELECT g.id, g.created_at,
+SELECT g.id, g.created_at, w.duration_seconds,
     COUNT(s.id)::bigint AS sets,
     COALESCE(SUM(s.reps * s.weight), 0)::double precision AS volume,
     COUNT(s.id) FILTER (WHERE s.weight IS NULL)::bigint AS unweighted_sets
 FROM gym_visits g
+LEFT JOIN fitness_workouts w ON w.id = g.fitness_workout_id AND w.user_id = g.user_id
 LEFT JOIN gym_visit_exercises e ON e.gym_visit_id = g.id
 LEFT JOIN gym_exercise_sets s ON s.gym_visit_exercise_id = e.id
 WHERE g.user_id = $1 AND g.created_at <= $2
-GROUP BY g.id
+GROUP BY g.id, w.duration_seconds
 ORDER BY g.created_at DESC, g.id DESC
 `
 
@@ -460,11 +461,12 @@ type OverviewVisitsParams struct {
 }
 
 type OverviewVisitsRow struct {
-	ID             int64
-	CreatedAt      pgtype.Timestamptz
-	Sets           int64
-	Volume         float64
-	UnweightedSets int64
+	ID              int64
+	CreatedAt       pgtype.Timestamptz
+	DurationSeconds *float64
+	Sets            int64
+	Volume          float64
+	UnweightedSets  int64
 }
 
 func (q *Queries) OverviewVisits(ctx context.Context, arg OverviewVisitsParams) ([]OverviewVisitsRow, error) {
@@ -479,6 +481,7 @@ func (q *Queries) OverviewVisits(ctx context.Context, arg OverviewVisitsParams) 
 		if err := rows.Scan(
 			&i.ID,
 			&i.CreatedAt,
+			&i.DurationSeconds,
 			&i.Sets,
 			&i.Volume,
 			&i.UnweightedSets,

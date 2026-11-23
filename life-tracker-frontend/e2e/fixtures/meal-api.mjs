@@ -15,6 +15,8 @@ const pongal = {
 };
 const accountsByUser = new Map();
 const dismissedNotifications = new Set();
+const fitnessTestDay = "2026-01-02";
+const fitnessTestVisits = [{ id: 1, time_label: "7:00 AM", duration_seconds: 4320 }];
 const horizonCategories = [
   { id: 1, name: "Test category", allows_subcategories: true, parent_id: null },
   { id: 2, name: "Test detail", allows_subcategories: false, parent_id: 1 },
@@ -103,6 +105,22 @@ http.createServer(async (req, res) => {
         manual_reference: "",
       }],
     });
+  }
+  if (url.pathname === "/api/fitness/overview" && token === "fitness-repeat-visit") {
+    return send(200, {
+      today: fitnessTestDay,
+      cards: [],
+      calendar_workouts: {
+        [fitnessTestDay]: { date: fitnessTestDay, date_label: "Friday, 2 January 2026", workouts: fitnessTestVisits },
+      },
+      recent_workouts: [],
+    });
+  }
+  if (url.pathname === "/api/gym-visits" && req.method === "POST" && token === "fitness-repeat-visit") {
+    if (body?.date !== fitnessTestDay) return send(400, { error: "Incorrect visit date" });
+    const id = fitnessTestVisits.length + 1;
+    fitnessTestVisits.unshift({ id, time_label: "5:00 PM" });
+    return send(201, { id });
   }
   if (url.pathname === "/api/gym-visits/1/exercises") return send(200, []);
   if (url.pathname === "/api/fitness-workouts/1") {

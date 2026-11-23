@@ -5,7 +5,7 @@ import { fitnessStyles as styles } from "@/app/fitness/fitness-classes";
 export type WorkoutGroup = {
   date: string;
   date_label: string;
-  workouts: { id: number; time_label: string }[];
+  workouts: { id: number; time_label: string; duration_seconds?: number | null }[];
 };
 
 const monthFormatter = new Intl.DateTimeFormat("en-IN", { month: "short", timeZone: "UTC" });

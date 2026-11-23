@@ -2,12 +2,11 @@
 
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
-import {
-  ChevronLeft, ChevronRight, Dumbbell,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import PulseButton from "@/app/components/design-system/pulse-button";
 import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import PulseCard from "@/app/components/design-system/pulse-card";
+import { formatDuration } from "@/app/fitness/[id]/format-duration.mjs";
 import type { FitnessOverview } from "@/app/fitness/types";
 import { calendarDays, shiftMonth } from "@/app/fitness/calendar-utils.mjs";
 import { markGymVisitAction } from "@/app/fitness/actions";
@@ -35,47 +34,24 @@ export default function FitnessCalendar({ today, workoutsByDate, summary, childr
   const [markError, setMarkError] = useState("");
   const [dateToMark, setDateToMark] = useState<string | null>(null);
   const month = selectedDate.slice(0, 7);
-  const selectedGroup = workoutsByDate[selectedDate];
-  const day = parseDate(selectedDate);
+  const selectedVisits = workoutsByDate[selectedDate]?.workouts ?? [];
+  const selectedDayHeading = (
+    <h3 className="text-lg leading-tight font-extrabold tracking-tight">
+      <time dateTime={selectedDate}>{selectedDayFormatter.format(parseDate(selectedDate))}</time>
+    </h3>
+  );
   function navigateMonth(offset: number) {
     const next = shiftMonth(month, offset);
     setSelectedDate(next === today.slice(0, 7) ? today : `${next}-01`);
   }
 
-  function openLog(date: string) {
+  function openLog() {
     setMarkError("");
-    setDateToMark(date);
+    setDateToMark(selectedDate);
   }
 
   return (
     <div className="grid gap-6 sm:gap-8">
-      <section aria-labelledby="fitness-title" className={styles.hero}>
-        <div className="relative">
-          <h1 id="fitness-title" className={styles.title}>Fitness</h1>
-          <p className="mt-2 text-base font-medium sm:text-xl">Workouts, streaks &amp; stats</p>
-          <PulseButton
-            type="button"
-            className="mt-5 min-h-[clamp(2.75rem,4vw,3.5rem)] px-[clamp(1rem,2vw,1.5rem)] focus-visible:outline-white"
-            shape="pill"
-            variant="onHero"
-            size="lg"
-            icon={<Dumbbell size={20} aria-hidden="true" />}
-            disabled={isMarking}
-            onClick={() => openLog(selectedDate <= today ? selectedDate : today)}
-          >
-            Log gym visit
-          </PulseButton>
-        </div>
-        <div className={styles.ecg} aria-hidden="true">
-          {["motion-safe:[animation-delay:-4s]", "motion-safe:[animation-delay:-2s]", ""].map((delay) => (
-            <span key={delay} className={`${styles.ripple} ${delay}`} />
-          ))}
-          <svg viewBox="0 0 200 100" fill="none">
-            <path d="M0 50H72L84 18L100 82L112 34L122 50H200" pathLength="1" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-      </section>
-
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-6">
         <PulseCard as="section" aria-label="Workout calendar" className={`${styles.surface} min-w-0 p-3 sm:p-6`}>
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -120,29 +96,43 @@ export default function FitnessCalendar({ today, workoutsByDate, summary, childr
             <li className="flex items-center gap-1.5"><span className={styles.legendSelected} />Selected</li>
             <li className="flex items-center gap-1.5"><span className={styles.legendWorkout} />Workout logged</li>
           </ul>
-          <div aria-live="polite" className={`${styles.selectedDate} mt-4 flex flex-wrap items-center justify-between gap-3 rounded-3xl py-3 pr-3.5 pl-4.5`}>
-            <div>
-              <h3 className="font-extrabold"><time dateTime={selectedDate}>{selectedDayFormatter.format(day)}</time></h3>
-              {selectedGroup ? (
-                <ul className={styles.selectedDateDetails}>
-                  {selectedGroup.workouts.map((visit) => (
-                    <li key={visit.id}>
-                      <Link href={`/fitness/${visit.id}`} className="underline-offset-2 hover:underline focus-visible:underline">
-                        Gym visit at {visit.time_label}
+          <div aria-live="polite" className={styles.selectedDate}>
+            {selectedVisits.length > 0 ? (
+              <ul role="list" className="divide-y divide-divider">
+                {selectedVisits.map((visit, index) => {
+                  const duration = visit.duration_seconds == null ? "" : ` for ${formatDuration(visit.duration_seconds, "short")}`;
+                  return (
+                    <li key={visit.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
+                      <div className="min-w-32 flex-1">
+                        {index === 0 && selectedDayHeading}
+                        <p className={`${styles.selectedDateDetails} tabular-nums`}>Gym visit at {visit.time_label}{duration}</p>
+                      </div>
+                      <Link
+                        href={`/fitness/${visit.id}`}
+                        aria-label={`View workout for gym visit at ${visit.time_label}${duration}`}
+                        className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-chip px-4 text-sm font-bold hover:bg-divider"
+                      >
+                        View workout
+                        <ChevronRight aria-hidden="true" className="size-4" />
                       </Link>
                     </li>
-                  ))}
-                </ul>
-              ) : (
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="py-3">
+                {selectedDayHeading}
                 <p className={styles.selectedDateDetails}>No workout logged</p>
-              )}
-            </div>
-            {!selectedGroup && selectedDate <= today && (
-              <PulseButton type="button" size="lg" shape="pill" variant="gradient" className="[--button-fill:var(--fitness-gradient)] [--button-foreground:white]" disabled={isMarking} onClick={() => openLog(selectedDate)}>
-                Log visit
-              </PulseButton>
+              </div>
             )}
           </div>
+          {selectedDate <= today && (
+            <div className="mt-3 flex justify-end">
+              <PulseButton type="button" size="lg" shape="pill" variant="gradient" className="[--button-fill:var(--fitness-gradient)] [--button-foreground:white]" disabled={isMarking} onClick={openLog}>
+                Log Visit
+              </PulseButton>
+            </div>
+          )}
         </PulseCard>
         {summary}
       </div>

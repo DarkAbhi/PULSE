@@ -23,6 +23,7 @@ func TestBuildOverview(t *testing.T) {
 	visit := func(id int64, date string) query.OverviewVisitsRow {
 		return query.OverviewVisitsRow{ID: id, CreatedAt: at(date)}
 	}
+	linkedDuration := 900.0
 	cases := []struct {
 		name   string
 		now    string
@@ -34,7 +35,7 @@ func TestBuildOverview(t *testing.T) {
 		}},
 		{"duplicates and multiple sessions", "2026-01-05 12:00", overviewData{
 			Visits: []query.OverviewVisitsRow{
-				{ID: 4, CreatedAt: at("2026-01-05 08:00"), Sets: 2, Volume: 118675.5},
+				{ID: 4, CreatedAt: at("2026-01-05 08:00"), DurationSeconds: &linkedDuration, Sets: 2, Volume: 118675.5},
 				visit(3, "2026-01-05 07:00"), visit(2, "2026-01-01 08:00"), visit(1, "2025-12-23 08:00"),
 			},
 			Sessions: []query.OverviewSessionsRow{
@@ -90,7 +91,11 @@ func TestBuildOverview(t *testing.T) {
 			if tc.name == "duplicates and multiple sessions" {
 				group := got.CalendarWorkouts["2026-01-05"]
 				if len(group.Workouts) != 2 || group.Workouts[0].ID != 4 || group.Workouts[0].TimeLabel != "8:00 AM" {
-					t.Errorf("calendar group = %+v", group)
+					t.Fatalf("calendar group = %+v", group)
+				}
+				duration := group.Workouts[0].DurationSeconds
+				if duration == nil || *duration != linkedDuration || group.Workouts[1].DurationSeconds != nil {
+					t.Errorf("calendar visits did not preserve the linked and missing durations: %+v", group.Workouts)
 				}
 			}
 			if tc.name == "current week grace and missing data" {

@@ -218,8 +218,6 @@
 
   --animate-dialog-in: dialog-in 200ms ease-out;
   --animate-gauge-ripple: gauge-ripple 6s ease-out infinite;
-  --animate-fitness-ripple: fitness-ripple 6s ease-out infinite;
-  --animate-fitness-trace: fitness-trace 3.2s ease-in-out infinite;
   --animate-pulse-sway: pulse-sway 14s ease-in-out infinite alternate;
   --animate-pulse-breathe: pulse-breathe 6s ease-in-out infinite;
   --animate-pulse-ripple: pulse-ripple 6s ease-out infinite;
@@ -230,17 +228,6 @@
   @keyframes gauge-ripple {
     from { transform: scale(.95); opacity: .45; }
     to { transform: scale(1.5); opacity: 0; }
-  }
-
-  @keyframes fitness-ripple {
-    from { transform: scale(.7); opacity: .8; }
-    to { transform: scale(1.3); opacity: 0; }
-  }
-
-  @keyframes fitness-trace {
-    0% { stroke-dashoffset: 1; }
-    55%, 80% { stroke-dashoffset: 0; opacity: 1; }
-    100% { stroke-dashoffset: 0; opacity: 0; }
   }
 
   @keyframes pulse-breathe {

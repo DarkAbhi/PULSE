@@ -215,10 +215,6 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
           <DeleteVehicleButton vehicleId={id} vehicleName={data.vehicle_name} />
         </PulseCard>
 
-        <footer className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-2 text-xs">
-          <span>Vehicle data by <a className="underline" href="https://vehiclesdb.com">VehiclesDB</a></span>
-          <Link className="underline" href="/vehicle-data">Sources and credits</Link>
-        </footer>
       </div>
       {editingFill && <EditFuelModal vehicleId={id} fill={editingFill} />}
       {maintenance === "new" && <MaintenanceRecordModal vehicleId={id} />}

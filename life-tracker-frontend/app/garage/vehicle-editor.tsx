@@ -427,19 +427,6 @@ export default function VehicleEditor({
                 {error}
               </p>
             )}
-            <p className="text-xs text-muted-foreground">
-              Vehicle data by{" "}
-              <a
-                className="text-action underline"
-                href="https://vehiclesdb.com"
-              >
-                VehiclesDB
-              </a>{" "}
-              ·{" "}
-              <a className="text-action underline" href="/vehicle-data">
-                Sources and credits
-              </a>
-            </p>
             <PulseDialogActions className="grid-cols-2">
               <PulseDialogAction
                 type="button"

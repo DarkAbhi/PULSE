@@ -1,7 +1,6 @@
 import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import TopAppBar from "@/app/components/top-app-bar";
 import { frame } from "@/app/components/design-system/page-frame";
 import VehicleEditor from "@/app/garage/vehicle-editor";
@@ -73,10 +72,6 @@ export default async function GaragePage() {
           )}
         </section>
 
-        <footer className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 px-1 text-xs text-muted-foreground">
-          <span>Vehicle data by <a className="underline" href="https://vehiclesdb.com">VehiclesDB</a></span>
-          <Link className="underline" href="/vehicle-data">Sources and credits</Link>
-        </footer>
       </div>
     </main>
   );

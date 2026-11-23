@@ -236,6 +236,7 @@ See [testing and CI](docs/guides/testing.md), [seed data](docs/guides/developmen
 
 ## Documentation
 
+- Vehicle data by [VehiclesDB](https://vehiclesdb.com), release [2026.10.4](https://github.com/vehiclesdb/vehiclesdb/releases/tag/v2026.10.4), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Pulse adapts the catalog for vehicle selection. See the [upstream source notices](go-backend/data/vehiclesdb/ATTRIBUTION.md).
 - [Documentation index](docs/README.md): configuration, monitoring, testing, pre-commit, seeds and releases.
 - [Development history](docs/development-history/README.md): categorized feature plans, design rationale, reviews and verification evidence across backend, web and Android.
 - [Development timeline](docs/development-history/timeline.md): dated index of the existing build records.

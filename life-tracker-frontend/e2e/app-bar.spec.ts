@@ -11,7 +11,6 @@ test("screen back links go to their parent from direct entry", async ({ page }) 
     ["/garage/999", "/garage"],
     ["/garage/1/reminders", "/garage/1?tab=maintenance"],
     ["/garage/1/reminders/engine_oil", "/garage/1/reminders"],
-    ["/vehicle-data", "/garage"],
     ["/fitness", "/dashboard"],
     ["/fitness/1", "/fitness"],
     ["/financial-horizon", "/dashboard"],

@@ -33,7 +33,6 @@ import TransactionsTab from "@/app/financial-horizon/components/TransactionsTab"
 import SubscriptionsTab from "@/app/financial-horizon/components/SubscriptionsTab";
 import FixedObligationsTab from "@/app/financial-horizon/components/FixedObligationsTab";
 import PlannedPurchasesTab from "@/app/financial-horizon/components/PlannedPurchasesTab";
-import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 import { HorizonSummary, DeductionItem, BudgetItem, CategoryItem, TransactionItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
 import {
@@ -808,7 +807,7 @@ export default function FinancialHorizonClient({
   };
 
   return (
-    <main className={`${frame.page} ${theme.page}`}>
+    <main className={`${frame.page} [&_.pulse-card]:shadow-card`}>
       <div className={`${frame.content} space-y-6 sm:space-y-7`}>
         {appBar}
         <header>

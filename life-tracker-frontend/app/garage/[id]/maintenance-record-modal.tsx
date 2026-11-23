@@ -1,5 +1,6 @@
 "use client";
 
+import { maintenanceField } from "@/app/garage/[id]/vehicle-detail-classes";
 import Select from "@/app/components/design-system/select";
 import { currencySymbol } from "@/app/lib/currency.mjs";
 import { useCurrency } from "@/app/components/currency-provider";
@@ -11,15 +12,14 @@ import { ClipboardList, Paperclip, Upload } from "lucide-react";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createMaintenanceRecord, SaveMaintenancePayload, updateMaintenanceRecord } from "./actions";
-import MaintenanceWorkFields from "./maintenance-work-fields";
-import { MaintenanceAction, MaintenanceAttachment, MaintenanceRecord } from "./types";
+import { createMaintenanceRecord, SaveMaintenancePayload, updateMaintenanceRecord } from "@/app/garage/[id]/actions";
+import MaintenanceWorkFields from "@/app/garage/[id]/maintenance-work-fields";
+import { MaintenanceAction, MaintenanceAttachment, MaintenanceRecord } from "@/app/garage/[id]/types";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
 type Category = (typeof categories)[number];
 const apiBaseURL = "";
-const fieldClass = "mt-1.5 min-h-11 w-full min-w-0 rounded-lg bg-secondary px-3 py-2 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:text-sm";
 const optionalClass = "font-normal text-muted-foreground";
 export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleId: string; record?: MaintenanceRecord }) {
   const { currency } = useCurrency();
@@ -106,33 +106,33 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
           <div className="mt-3 grid min-w-0 gap-x-4 gap-y-4 sm:grid-cols-2">
             <label className="min-w-0 text-sm font-medium sm:col-span-2">
               Title
-              <input className={fieldClass} maxLength={160} required placeholder="e.g. Annual service" value={title} onChange={(e) => setTitle(e.target.value)} />
+              <input className={maintenanceField} maxLength={160} required placeholder="e.g. Annual service" value={title} onChange={(e) => setTitle(e.target.value)} />
             </label>
             <label className="min-w-0 text-sm font-medium">
               Category
-              <Select className={fieldClass} value={category} onChange={(e) => setCategory(e.target.value as Category)}>
+              <Select className={maintenanceField} value={category} onChange={(e) => setCategory(e.target.value as Category)}>
                 {categories.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}
               </Select>
             </label>
             <label className="min-w-0 text-sm font-medium">
               Date
-              <input className={fieldClass} type="date" required value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
+              <input className={maintenanceField} type="date" required value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} />
             </label>
             <label className="min-w-0 text-sm font-medium">
               Amount <span className={optionalClass}>({currencySymbol(currency)})</span>
-              <input className={fieldClass} min="0" required step="0.01" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <input className={maintenanceField} min="0" required step="0.01" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} />
             </label>
             <label className="min-w-0 text-sm font-medium">
               Odometer <span className={optionalClass}>(km, optional)</span>
-              <input className={fieldClass} min="0" step="0.1" type="number" value={odometer} onChange={(e) => setOdometer(e.target.value)} />
+              <input className={maintenanceField} min="0" step="0.1" type="number" value={odometer} onChange={(e) => setOdometer(e.target.value)} />
             </label>
             <label className="min-w-0 text-sm font-medium sm:col-span-2">
               Service centre or provider <span className={optionalClass}>(optional)</span>
-              <input className={fieldClass} maxLength={160} value={provider} onChange={(e) => setProvider(e.target.value)} />
+              <input className={maintenanceField} maxLength={160} value={provider} onChange={(e) => setProvider(e.target.value)} />
             </label>
             <label className="min-w-0 text-sm font-medium sm:col-span-2">
               Notes <span className={optionalClass}>(optional)</span>
-              <textarea className={fieldClass} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+              <textarea className={maintenanceField} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
             </label>
           </div>
         </fieldset>

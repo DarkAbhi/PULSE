@@ -9,7 +9,7 @@ import Dialog, {
   DialogActions,
   DialogHeader,
 } from "@/app/components/design-system/dialog";
-import { catalogOptionsAction, saveVehicleAction } from "./actions";
+import { catalogOptionsAction, saveVehicleAction } from "@/app/garage/actions";
 
 export type VehicleIdentity = {
   id?: number | string;
@@ -194,8 +194,11 @@ export default function VehicleEditor({
     <>
       <Button
         id={vehicle ? undefined : "add-vehicle-button"}
-        variant={vehicle ? "secondary" : "primary"}
-        className={triggerClassName}
+        variant="onHero"
+        shape="pill"
+        size="lg"
+        labelStyle="strong"
+        className={`focus-visible:outline-white ${vehicle ? "" : "sm:min-h-12 lg:min-h-14 lg:px-6 lg:text-base xl:min-h-16"} ${triggerClassName ?? ""}`}
         icon={vehicle ? <PencilLine className="size-4" aria-hidden="true" /> : <Plus className="size-4" aria-hidden="true" />}
         type="button"
         aria-haspopup="dialog"

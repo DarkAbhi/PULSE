@@ -1,13 +1,12 @@
 "use client";
 
-import { workoutDeleteClass } from "./workout-detail-classes";
 import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
-import { deleteVisit } from "./actions";
+import { deleteVisit } from "@/app/fitness/[id]/actions";
 
 interface DeleteVisitButtonProps {
   visitID: string;
@@ -34,7 +33,7 @@ export default function DeleteVisitButton({ visitID }: DeleteVisitButtonProps) {
 
   return (
     <>
-      <Button type="button" variant="destructive" className={workoutDeleteClass}
+      <Button type="button" variant="outlineDanger" size="lg" shape="pill" labelStyle="strong"
         aria-haspopup="dialog" onClick={() => { setError(""); setIsConfirmingDelete(true); }}
         icon={<Trash2 size={19} aria-hidden="true" />}>
         Delete workout

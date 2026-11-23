@@ -1,0 +1,33 @@
+:root {
+  --meal-hero-start: #b81780;
+  --meal-hero-end: #e5483f;
+  --meal-action-end: #c93532;
+  --meal-pink: #c91a8e;
+  --meal-accent: var(--meal-pink);
+  --meal-action-gradient: linear-gradient(135deg, var(--meal-hero-start), var(--meal-action-end));
+  --meal-hero-gradient: linear-gradient(135deg, var(--meal-hero-start), var(--meal-hero-end));
+  --meal-preferences-gradient: linear-gradient(135deg, var(--meal-pink), var(--meal-hero-end));
+  --meal-action-shadow: 0 14px 28px -14px color-mix(in srgb, var(--meal-pink) 85%, transparent);
+  --meal-selected-shadow: 0 16px 28px -16px color-mix(in srgb, var(--meal-pink) 90%, transparent);
+  --meal-hero-control: rgb(64 0 45 / 25%);
+  --meal-hero-control-hover: rgb(64 0 45 / 40%);
+  --meal-hero-shadow: 0 22px 44px -24px color-mix(in srgb, var(--meal-pink) 85%, transparent);
+
+  --meal-calendar-inset: #f0eff4;
+  --meal-calendar-outline: #b6b1c6;
+  --meal-calendar-shadow: 0 18px 40px -18px color-mix(in srgb, var(--brand-blue) 35%, transparent);
+
+  --meal-breakfast: var(--brand-gold);
+  --meal-lunch: var(--brand-orange);
+  --meal-snack: var(--brand-magenta);
+  --meal-dinner: var(--brand-purple);
+  --meal-custom: #3e59bc;
+  --meal-slot-ink: var(--on-gold);
+}
+
+.dark {
+  --meal-accent: #ff6fb5;
+  --meal-calendar-inset: #2e2949;
+  --meal-calendar-outline: #746d90;
+  --meal-calendar-shadow: 0 18px 40px -24px rgb(0 0 0 / 70%);
+}

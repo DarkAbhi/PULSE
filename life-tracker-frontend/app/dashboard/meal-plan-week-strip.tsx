@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
 const mealDayClass =
-  "grid place-items-center w-[clamp(22px,2.05cqi,26px)] aspect-square border-[1.5px] border-[rgb(255_255_255_/_50%)] " +
+  "grid place-items-center w-[clamp(22px,2.05cqi,26px)] aspect-square border-[1.5px] border-white/50 " +
   "rounded-full text-[.72rem] font-bold data-[today=true]:border-white data-[today=true]:[background:white] " +
   "data-[today=true]:text-(--tile-start)";
 

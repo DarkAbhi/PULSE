@@ -5,8 +5,11 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { formatMoney } from "@/app/lib/currency.mjs";
 
+import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
 import Button from "@/app/components/design-system/button";
-import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
+import SectionHeader from "@/app/financial-horizon/components/SectionHeader";
+import HorizonTag from "@/app/financial-horizon/components/HorizonTag";
+import HorizonEmpty from "@/app/financial-horizon/components/HorizonEmpty";
 
 import { TrendingDown } from "lucide-react";
 import { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
@@ -112,63 +115,55 @@ export default function PlannedPurchasesTab({
       <div className="space-y-10">
       {/* Planned Purchases Section */}
       <PulseCard as="section" className="space-y-6 p-6">
-        <div className={theme.sectionHeader}>
-          <div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Icon name="bag" aria-hidden="true" className={`size-6 ${theme.sectionIcon}`} />
-              <h2 className={theme.sectionTitle}>Next Month Planned Purchases</h2>
-            </div>
-            <p className={theme.sectionDescription}>
-              Planned variable purchases subtracted directly from your uncommitted pool for next month.
-            </p>
-          </div>
-
+        <SectionHeader
+          title="Next Month Planned Purchases"
+          icon="bag"
+          description="Planned variable purchases subtracted directly from your uncommitted pool for next month."
+        >
           <div className="flex flex-wrap items-center gap-3">
-            <div className={theme.badge} data-tone="warn">
+            <HorizonTag emphasis tone="warn">
               Total Planned: {formatMoney(purchasesTotal, summary.currency)}
-            </div>
+            </HorizonTag>
 
-            <Button variant="primary" size="sm"
+            <HorizonAction
               onClick={onOpenAddPurchase}
               disabled={isPending}
-              className={theme.primary}
             >
-              <Icon name="plus" className="h-4 w-4" /> Add Planned Purchase
-            </Button>
+              <Icon name="plus" /> Add Planned Purchase
+            </HorizonAction>
 
             {purchases.length > 0 && (
-              <Button variant="destructive" size="sm"
-                className={theme.dangerAction}
+              <HorizonAction variant="destructive"
                 onClick={onConfirmClearAllPurchases}
                 disabled={isPending || isClearingPurchases}
               >
-                <Icon name="trash" className="h-3.5 w-3.5" /> Clear All
-              </Button>
+                <Icon name="trash" /> Clear All
+              </HorizonAction>
             )}
           </div>
-        </div>
+        </SectionHeader>
 
         {/* List of Next Month Purchases */}
         {purchases.length === 0 ? (
-          <PulseCard className={`${theme.empty} text-center`}>
+          <HorizonEmpty>
             <Icon name="bag" className="mx-auto h-10 w-10 text-warning/50" />
             <h3 className="mt-3 text-base font-semibold text-foreground">No planned purchases added</h3>
             <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
               Planning major buys next month? Add them here to calculate how much surplus pool remains after accounting for them.
             </p>
-            <Button variant="primary" size="md"
+            <HorizonAction
               onClick={onOpenAddPurchase}
-              className={`${theme.primary} mt-4`}
+              className="mt-4"
             >
-              <Icon name="plus" className="h-4 w-4" /> Add Next Month Purchase
-            </Button>
-          </PulseCard>
+              <Icon name="plus" /> Add Next Month Purchase
+            </HorizonAction>
+          </HorizonEmpty>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {purchases.map((item) => (
               <PulseCard
                 key={item.id}
-                className="flex flex-wrap items-center justify-between gap-3 bg-(--horizon-chip) p-6"
+                className="flex flex-wrap items-center justify-between gap-3 bg-chip p-6"
               >
                 <div className="min-w-0 flex-1">
                   <h4 className="font-semibold text-foreground text-sm truncate">{item.name}</h4>
@@ -187,12 +182,11 @@ export default function PlannedPurchasesTab({
                   <span className="font-bold text-foreground text-sm">
                     {formatMoney(item.price, summary.currency)}
                   </span>
-                  <Button variant="iconDanger"
-                    className={theme.dangerIcon}
+                  <Button variant="iconChipDanger" size="lg" shape="pill"
                     onClick={() => onConfirmDeletePurchase(item)}
                     title="Delete purchase"
                   >
-                    <Icon name="trash" className="h-4 w-4" />
+                    <Icon name="trash" className="size-5" />
                   </Button>
                 </div>
               </PulseCard>

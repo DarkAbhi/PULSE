@@ -7,8 +7,8 @@ import Button from "@/app/components/design-system/button";
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
-import { FuelFill, FuelItem } from "./types";
-import { saveFuelFill } from "./actions";
+import { FuelFill, FuelItem } from "@/app/garage/[id]/types";
+import { saveFuelFill } from "@/app/garage/[id]/actions";
 import Dialog, { DialogHeader } from "@/app/components/design-system/dialog";
 
 interface EditFuelModalProps {

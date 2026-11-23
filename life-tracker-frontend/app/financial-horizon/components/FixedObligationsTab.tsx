@@ -10,8 +10,12 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
+import HorizonSegments from "@/app/financial-horizon/components/HorizonSegments";
+import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
 import Button from "@/app/components/design-system/button";
-import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
+import SectionHeader from "@/app/financial-horizon/components/SectionHeader";
+import HorizonTag from "@/app/financial-horizon/components/HorizonTag";
+import HorizonEmpty from "@/app/financial-horizon/components/HorizonEmpty";
 
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import { useEffect, useId, useMemo } from "react";
@@ -153,57 +157,40 @@ export default function FixedObligationsTab({
   return (
     <section className="space-y-6">
       {/* Section Header */}
-      <div className={theme.sectionHeader}>
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Icon name="calendar" aria-hidden="true" className={`size-6 ${theme.sectionIcon}`} />
-            <h2 className={theme.sectionTitle}>Fixed Obligations & Subscriptions</h2>
-            <span className={theme.badge}>
-              {totalActiveCount} Active
-            </span>
-            <span className={theme.badge}>
-              {formatMoney(totalFixedCommitments, summary.currency)}/mo
-            </span>
-          </div>
-          <p className={theme.sectionDescription}>
-            Non-negotiable monthly expenses and active recurring subscriptions subtracted directly from your starting baseline income.
-          </p>
-        </div>
-
-        <Button variant="primary" size="sm"
+      <SectionHeader
+        title="Fixed Obligations & Subscriptions"
+        icon="calendar"
+        description="Non-negotiable monthly expenses and active recurring subscriptions subtracted directly from your starting baseline income."
+        badges={
+          <>
+            <HorizonTag emphasis>{totalActiveCount} Active</HorizonTag>
+            <HorizonTag emphasis>{formatMoney(totalFixedCommitments, summary.currency)}/mo</HorizonTag>
+          </>
+        }
+      >
+        <HorizonAction
           onClick={onOpenAddDeduction}
           disabled={isPending}
-          className={`${theme.primary} shrink-0`}
+          className="shrink-0"
         >
-          <Icon name="plus" className="h-4 w-4" /> Add Fixed Obligation
-        </Button>
-      </div>
+          <Icon name="plus" /> Add Fixed Obligation
+        </HorizonAction>
+      </SectionHeader>
 
-      {/* Category Filter Pills */}
-      <div role="group" aria-label="Obligation category" className="inline-flex flex-wrap gap-0.5 rounded-full bg-(--horizon-chip) p-1">
-        <Button variant="secondary" size="sm"
-          className={theme.segment}
-          aria-pressed={activeCategory === "all"}
-          onClick={() => setActiveCategory("all")}
-        >
-          All ({totalItemsCount})
-        </Button>
-        {CATEGORIES.map((cat) => {
-          const deductionCount = summary.deductions.filter((d) => d.category === cat.id).length;
-          const subCount = cat.id === "subscription" ? activeSubscriptions.length : 0;
-          const count = deductionCount + subCount;
-          return (
-            <Button variant="secondary" size="sm"
-              className={theme.segment}
-              aria-pressed={activeCategory === cat.id}
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-            >
-              {cat.label} ({count})
-            </Button>
-          );
-        })}
-      </div>
+      <HorizonSegments
+        label="Obligation category"
+        className="flex-wrap"
+        value={activeCategory}
+        onChange={setActiveCategory}
+        options={[
+          { value: "all", label: `All (${totalItemsCount})` },
+          ...CATEGORIES.map(category => {
+            const deductionCount = summary.deductions.filter(item => item.category === category.id).length;
+            const subscriptionCount = category.id === "subscription" ? activeSubscriptions.length : 0;
+            return { value: category.id, label: `${category.label} (${deductionCount + subscriptionCount})` };
+          }),
+        ]}
+      />
 
       {isFormOpen && (
         <Dialog
@@ -323,19 +310,19 @@ export default function FixedObligationsTab({
 
       {/* Cards Grid */}
       {filteredDeductions.length === 0 && filteredSubscriptions.length === 0 ? (
-        <PulseCard className={`${theme.empty} text-center`}>
+        <HorizonEmpty>
           <Icon name="receipt" className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
           <h3 className="mt-3 text-base font-semibold text-foreground">No fixed obligations found</h3>
-          <p className={theme.sectionDescription}>
+          <p className="mt-1 max-w-prose text-control text-muted-foreground">
             Add your rent, SIP investments, bills, or debt EMIs to calculate your exact baseline.
           </p>
-          <Button variant="primary" size="md"
+          <HorizonAction
             onClick={onOpenAddDeduction}
-            className={`${theme.primary} mt-4`}
+            className="mt-4"
           >
-            <Icon name="plus" className="h-4 w-4" /> Add Obligation
-          </Button>
-        </PulseCard>
+            <Icon name="plus" /> Add Obligation
+          </HorizonAction>
+        </HorizonEmpty>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {/* Render Manual Fixed Obligations */}
@@ -371,7 +358,7 @@ export default function FixedObligationsTab({
                     role="switch"
                     aria-checked={item.is_active}
                     aria-label={`Activate ${item.name}`}
-                    className={theme.switch}
+                    className="relative flex-none h-7 w-12 rounded-full mt-2 bg-divider transition-colors aria-checked:bg-(image:--primary-gradient) after:absolute after:start-1 after:top-1 after:size-5 after:rounded-full after:bg-white after:transition-transform aria-checked:after:translate-x-5 rtl:aria-checked:after:-translate-x-5 motion-reduce:transition-none motion-reduce:after:transition-none forced-colors:outline-1 forced-colors:outline-[ButtonText] forced-colors:after:bg-[ButtonText]"
                     onClick={() => onToggleDeductionActive(item)}
                     title={item.is_active ? "Deactivate obligation" : "Activate obligation"}
                   />
@@ -386,34 +373,32 @@ export default function FixedObligationsTab({
                   </div>
 
                   {item.due_day && (
-                    <div className={theme.chip} data-tone="dim">
+                    <HorizonTag tone="dim">
                       <Icon name="calendar" className="h-3 w-3" />
                       <span>Due {formatOrdinalDay(item.due_day)}</span>
-                    </div>
+                    </HorizonTag>
                   )}
                 </div>
 
                 {linkedBudget && (
-                  <div className={`mt-3 ${theme.chip}`}>
+                  <HorizonTag className="mt-3">
                     <Icon name="target" className="h-3.5 w-3.5" />
                     <span>Budget: <strong>{linkedBudget.name}</strong></span>
-                  </div>
+                  </HorizonTag>
                 )}
 
                 <div className="mt-4 flex items-center justify-end gap-2 border-t border-divider pt-3">
-                  <Button variant="icon"
-                    className={theme.iconAction}
+                  <Button variant="iconChip" size="lg" shape="pill"
                     onClick={() => onOpenEditDeduction(item)}
                     title="Edit obligation"
                   >
-                    <Icon name="edit" className="h-4 w-4" />
+                    <Icon name="edit" className="size-5" />
                   </Button>
-                  <Button variant="iconDanger"
-                    className={theme.dangerIcon}
+                  <Button variant="iconChipDanger" size="lg" shape="pill"
                     onClick={() => onDeleteDeduction(item)}
                     title="Delete obligation"
                   >
-                    <Icon name="trash" className="h-4 w-4" />
+                    <Icon name="trash" className="size-5" />
                   </Button>
                 </div>
               </PulseCard>
@@ -440,13 +425,13 @@ export default function FixedObligationsTab({
                           {sub.name}
                         </h4>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className={theme.chip}>
+                          <HorizonTag>
                             Subscription
-                          </span>
+                          </HorizonTag>
                           {sub.billing_cycle === "yearly" && (
-                            <span className={theme.chip} data-tone="dim">
+                            <HorizonTag tone="dim">
                               Yearly
-                            </span>
+                            </HorizonTag>
                           )}
                         </div>
                       </div>
@@ -466,21 +451,21 @@ export default function FixedObligationsTab({
                       )}
                     </div>
 
-                    <div className={theme.chip}>
+                    <HorizonTag>
                       <Icon name="calendar" className="h-3 w-3" />
                       <span>
                         {sub.billing_cycle === "yearly"
                           ? `Renews ${formatInstant(sub.next_renewal_date, timeZone, { month: "short", day: "numeric" })}`
                           : `Due ${formatOrdinalDay(sub.billing_day ?? 1)}`}
                       </span>
-                    </div>
+                    </HorizonTag>
                   </div>
 
                   {sub.budget_name && (
-                    <div className={`mt-3 ${theme.chip}`}>
+                    <HorizonTag className="mt-3">
                       <Icon name="target" className="h-3.5 w-3.5" />
                       <span>Budget: <strong>{sub.budget_name}</strong></span>
-                    </div>
+                    </HorizonTag>
                   )}
                 </div>
 

@@ -4,8 +4,9 @@ import { useEffect, useRef, useState, useTransition, type FormEvent } from "reac
 import { useRouter } from "next/navigation";
 import { Check, type LucideIcon } from "lucide-react";
 import Button from "@/app/components/design-system/button";
+import { ChoiceControl } from "@/app/components/design-system/choice-group";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
-import { iconTileClass, labelClass, settingButtonClass, settingRowClass, settingValueClass } from "./profile-classes";
+import { iconTileClass, labelClass, settingButtonClass, settingRowClass, settingValueClass } from "@/app/profile/profile-classes";
 
 type PreferenceSettingsProps = {
   id: string;
@@ -110,13 +111,13 @@ export default function PreferenceSettings({
       <div className="min-w-0">
         <p className={labelClass}>{title}</p>
         <p className={settingValueClass}>{displayValue}</p>
-        {detail && <p className="text-[0.88rem] text-(--profile-muted)">{detail}</p>}
+        {detail && <p className="text-[0.88rem] text-muted-foreground">{detail}</p>}
         <p role="status" className="text-sm text-success">{message}</p>
       </div>
       <Button
         ref={trigger}
         type="button"
-        variant="secondary"
+        variant="chip" size="lg" shape="pill" labelStyle="strong"
         className={settingButtonClass}
         onClick={open}
         aria-label={`Change ${title.toLowerCase()}`}
@@ -145,23 +146,22 @@ export default function PreferenceSettings({
             </div>
             <div className="-mx-1 grid max-h-[min(340px,45dvh)] gap-1.5 overflow-y-auto p-1" role="radiogroup" aria-label={`Choose a ${title.toLowerCase()}`}>
               {matches.map(choice => (
-                <label key={choice.value} className="group relative cursor-pointer">
-                  <input
-                    type="radio"
-                    className="peer absolute inset-0 size-full cursor-inherit opacity-0"
-                    name={`${id}-choice`}
-                    value={choice.value}
-                    checked={draft === choice.value}
-                    disabled={pending}
-                    onChange={() => { setDraft(choice.value); setError(""); }}
-                  />
-                  <span className="flex min-h-14 items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-(--profile-inset) px-3.5 py-2 font-bold wrap-anywhere peer-checked:border-(--profile-accent) peer-checked:bg-[color-mix(in_srgb,var(--profile-accent)_10%,var(--profile-surface))] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-1 peer-focus-visible:outline-(--profile-accent) group-hover:peer-not-checked:border-(--profile-line) peer-checked:[&_svg]:visible">
+                <ChoiceControl
+                  key={choice.value}
+                  type="radio"
+                  name={`${id}-choice`}
+                  value={choice.value}
+                  checked={draft === choice.value}
+                  disabled={pending}
+                  onCheckedChange={() => { setDraft(choice.value); setError(""); }}
+                >
+                  <span className="flex min-h-14 items-center justify-between gap-3 rounded-2xl border-2 border-transparent bg-muted px-3.5 py-2 font-bold wrap-anywhere peer-checked:border-brand peer-checked:bg-[color-mix(in_srgb,var(--brand)_10%,var(--card))] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-1 peer-focus-visible:outline-brand group-hover:peer-not-checked:border-divider peer-checked:[&_svg]:visible">
                     {choice.label}
-                    <Check className="invisible size-5 shrink-0 text-(--profile-accent)" aria-hidden="true" />
+                    <Check className="invisible size-5 shrink-0 text-brand" aria-hidden="true" />
                   </span>
-                </label>
+                </ChoiceControl>
               ))}
-              {!matches.length && <p className="text-[0.88rem] text-(--profile-muted)">No matching {plural}.</p>}
+              {!matches.length && <p className="text-[0.88rem] text-muted-foreground">No matching {plural}.</p>}
             </div>
             {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <DialogActions>

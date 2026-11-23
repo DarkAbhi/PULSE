@@ -6,8 +6,8 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Pencil, Trash2 } from "lucide-react";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
-import { deleteMaintenanceRecord } from "./actions";
-import { detail } from "./vehicle-detail-classes";
+import { deleteMaintenanceRecord } from "@/app/garage/[id]/actions";
+import { detail } from "@/app/garage/[id]/vehicle-detail-classes";
 
 export default function MaintenanceRecordActions({ vehicleId, recordId }: { vehicleId: string; recordId: number }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,13 +22,13 @@ export default function MaintenanceRecordActions({ vehicleId, recordId }: { vehi
     });
   }
   return <>
-    <Link className={detail.iconButton} aria-label="Edit maintenance record" href={`/garage/${vehicleId}?edit-maintenance=${recordId}`}>
+    <Link className={detail.iconLink} aria-label="Edit maintenance record" href={`/garage/${vehicleId}?edit-maintenance=${recordId}`}>
       <Pencil className="size-5" aria-hidden="true" />
     </Link>
     <Button
-      variant="icon"
+      variant="iconChipDanger"
       size="lg"
-      className={detail.deleteIcon}
+      shape="pill"
       onClick={() => setIsOpen(true)}
       type="button"
       aria-label="Delete maintenance record"

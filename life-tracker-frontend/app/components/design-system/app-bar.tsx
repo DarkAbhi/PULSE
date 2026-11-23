@@ -4,7 +4,7 @@ import { ArrowLeft, UserRound } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-export const appBarControl = "relative grid size-11 shrink-0 place-items-center rounded-full bg-white text-[#1a1740] shadow-[0_1px_2px_rgb(26_23_64/6%),0_14px_32px_-20px_rgb(76_107_255/40%)] hover:bg-[#f1f2fb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring dark:bg-[#1a1636] dark:text-[#f4f1ff] dark:shadow-[0_1px_2px_rgb(0_0_0/30%),0_14px_32px_-22px_rgb(0_0_0/80%)] dark:hover:bg-[#231e45]";
+export const appBarControl = "relative grid size-11 shrink-0 place-items-center rounded-full bg-card text-foreground shadow-card hover:bg-muted";
 
 export function AppBarBell({ hasUnread = false }: { hasUnread?: boolean }) {
   return (
@@ -13,7 +13,7 @@ export function AppBarBell({ hasUnread = false }: { hasUnread?: boolean }) {
         <path d="M12 22a2.4 2.4 0 0 0 2.3-1.8H9.7A2.4 2.4 0 0 0 12 22Zm7-6.2V11a7 7 0 0 0-5.2-6.8V3.5a1.8 1.8 0 0 0-3.6 0v.7A7 7 0 0 0 5 11v4.8l-1.6 1.6V19h17.2v-1.6L19 15.8Z" />
       </svg>
       {hasUnread && (
-        <span aria-hidden="true" className="absolute top-2.5 right-[11px] size-[9px] rounded-full bg-[#ff2fd0] ring-[3px] ring-white dark:ring-[#1a1636]" />
+        <span aria-hidden="true" className="absolute top-2.5 right-2.5 size-2.5 rounded-full bg-brand-pink ring-3 ring-card" />
       )}
     </>
   );
@@ -38,7 +38,7 @@ export default function AppBar({ back, backLabel, notifications, onProfilePage =
   const arrow = <ArrowLeft className="size-5" aria-hidden="true" />;
 
   return (
-    <nav aria-label="App navigation" className="flex items-center justify-between gap-3 text-[#1a1740] dark:text-[#f4f1ff]">
+    <nav aria-label="App navigation" className="flex items-center justify-between gap-3 text-foreground">
       {"href" in back ? (
         <Link href={back.href} aria-label={backLabel} className={appBarControl}>{arrow}</Link>
       ) : (

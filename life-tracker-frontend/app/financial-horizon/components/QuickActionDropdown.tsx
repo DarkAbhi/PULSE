@@ -1,11 +1,10 @@
 "use client";
 
-import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
+import { Icon, type IconName } from "@/app/financial-horizon/components/HorizonIcon";
+import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
 import Button from "@/app/components/design-system/button";
 
 import { useState, useRef, useEffect } from "react";
-import { Tag } from "lucide-react";
-import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
 
 interface QuickActionDropdownProps {
   onLogTransaction: () => void;
@@ -56,85 +55,64 @@ export default function QuickActionDropdown({
 
   return (
     <div className="relative inline-block text-left" ref={containerRef}>
-      <Button variant="primary" size="md"
-        className={theme.primary}
+      <HorizonAction
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={isPending}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <Icon name="plus" className="h-4 w-4 stroke-[2.5]" />
+        <Icon name="plus" strokeWidth={2.5} />
         <span>Quick Action</span>
-        <Icon name="chevronDown" className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
-      </Button>
+        <Icon name="chevronDown" className={`size-5 transition-transform duration-200 motion-reduce:transition-none ${isOpen ? "rotate-180" : ""}`} />
+      </HorizonAction>
 
       {isOpen && (
-        <div className="absolute left-0 z-50 mt-2 w-64 rounded-[28px] bg-popover p-2 shadow-(--horizon-shadow) sm:right-0 sm:left-auto">
+        <div className="absolute left-0 z-50 mt-2 w-64 rounded-card bg-popover p-2 shadow-card sm:right-0 sm:left-auto">
           <div className="space-y-1">
-            <Button variant="menuItem"
-              onClick={() => handleAction(onLogTransaction)}
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/10 text-success">
-                <Icon name="receipt" className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <div className="font-semibold leading-tight">Log Transaction</div>
-                <div className="text-[11px] text-muted-foreground">Record daily expense/income</div>
-              </div>
-            </Button>
-
-            <Button variant="menuItem"
-              onClick={() => handleAction(onAddFixedObligation)}
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-info/10 text-info">
-                <Icon name="calendar" className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <div className="font-semibold leading-tight">Add Fixed Obligation</div>
-                <div className="text-[11px] text-muted-foreground">Rent, EMI, SIP, subscriptions</div>
-              </div>
-            </Button>
-
-            <Button variant="menuItem"
-              onClick={() => handleAction(onAddPlannedPurchase)}
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning/10 text-warning">
-                <Icon name="bag" className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <div className="font-semibold leading-tight">Add Planned Purchase</div>
-                <div className="text-[11px] text-muted-foreground">Next month target items</div>
-              </div>
-            </Button>
-
-            <div className="my-1 border-t border-divider" />
-
-            <Button variant="menuItem"
-              onClick={() => handleAction(onAddBudget)}
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-lavender/10 text-foreground">
-                <Icon name="target" className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <div className="font-semibold leading-tight">Add Monthly Budget</div>
-                <div className="text-[11px] text-muted-foreground">Allocate category target</div>
-              </div>
-            </Button>
-
-            <Button variant="menuItem"
-              onClick={() => handleAction(onAddCategory)}
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/10 text-muted-foreground">
-                <Icon name="tag" className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <div className="font-semibold leading-tight">Add Category Tag</div>
-                <div className="text-[11px] text-muted-foreground">Create custom tx category</div>
-              </div>
-            </Button>
+            <QuickActionItem icon="receipt" tone="success" label="Log Transaction" description="Record daily expense/income" onClick={() => handleAction(onLogTransaction)} />
+            <QuickActionItem icon="calendar" tone="info" label="Add Fixed Obligation" description="Rent, EMI, SIP, subscriptions" onClick={() => handleAction(onAddFixedObligation)} />
+            <QuickActionItem icon="bag" tone="warning" label="Add Planned Purchase" description="Next month target items" onClick={() => handleAction(onAddPlannedPurchase)} />
+            <div aria-hidden="true" className="my-1 border-t border-divider" />
+            <QuickActionItem icon="target" tone="lavender" label="Add Monthly Budget" description="Allocate category target" onClick={() => handleAction(onAddBudget)} />
+            <QuickActionItem icon="tag" tone="muted" label="Add Category Tag" description="Create custom tx category" onClick={() => handleAction(onAddCategory)} />
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+
+const actionIconTones = {
+  success: "bg-success/10 text-success",
+  info: "bg-info/10 text-info",
+  warning: "bg-warning/10 text-warning",
+  lavender: "bg-lavender/10 text-foreground",
+  muted: "bg-muted/10 text-muted-foreground",
+};
+
+function QuickActionItem({
+  icon,
+  tone,
+  label,
+  description,
+  onClick,
+}: {
+  icon: IconName;
+  tone: keyof typeof actionIconTones;
+  label: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <Button type="button" variant="menuItem" onClick={onClick}>
+      <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${actionIconTones[tone]}`}>
+        <Icon name={icon} className="size-4" />
+      </span>
+      <span className="grid text-start">
+        <span className="font-semibold leading-tight">{label}</span>
+        <span className="text-caption text-muted-foreground">{description}</span>
+      </span>
+    </Button>
   );
 }

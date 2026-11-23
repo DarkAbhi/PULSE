@@ -1,6 +1,38 @@
 "use client";
 
-import { useId } from "react";
+import { useId, type ReactNode } from "react";
+
+type ChoiceControlProps = {
+  children: ReactNode;
+  type: "radio" | "checkbox" | "switch";
+  name: string;
+  value: string;
+  checked: boolean;
+  disabled?: boolean;
+  className?: string;
+  onCheckedChange: (checked: boolean) => void;
+};
+
+/** Native choice input for custom labels that style checked and focus states through the peer. */
+export function ChoiceControl({
+  children, type, name, value, checked, disabled, className = "", onCheckedChange,
+}: ChoiceControlProps) {
+  return (
+    <label className={`group relative cursor-pointer ${className}`}>
+      <input
+        className="peer absolute inset-0 size-full cursor-inherit opacity-0 disabled:cursor-default"
+        type={type === "switch" ? "checkbox" : type}
+        role={type === "switch" ? "switch" : undefined}
+        name={name}
+        value={value}
+        checked={checked}
+        disabled={disabled}
+        onChange={event => onCheckedChange(event.target.checked)}
+      />
+      {children}
+    </label>
+  );
+}
 
 type Choice = { value: string; label: string; icon?: string };
 type Props = { label: string; options: Choice[]; disabled?: boolean; columns?: boolean } & (

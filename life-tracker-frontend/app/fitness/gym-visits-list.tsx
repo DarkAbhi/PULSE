@@ -21,7 +21,7 @@ export default function GymVisitsList({ groups }: { groups: WorkoutGroup[] }) {
         return group.workouts.map((visit) => (
           <li key={visit.id} className="min-w-0">
             <PulseCardLink
-              className={`${styles.surface} ${styles.workoutCard}`}
+              className={styles.workoutCard}
               href={`/fitness/${visit.id}`}
             >
               <div aria-hidden="true" className={styles.dateBadge}>

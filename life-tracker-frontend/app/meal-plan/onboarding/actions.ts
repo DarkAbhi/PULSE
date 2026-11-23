@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { apiFetch } from "@/app/lib/server-api";
-import type { MealPreferences, OnboardingState, PreferenceResult } from "./types";
+import type { MealPreferences, OnboardingState, PreferenceResult } from "@/app/meal-plan/onboarding/types";
 
 const base = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
 async function request(path: string, init: RequestInit = {}): Promise<PreferenceResult> {

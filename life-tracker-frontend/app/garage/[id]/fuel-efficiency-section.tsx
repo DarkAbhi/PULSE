@@ -1,7 +1,8 @@
 import { Info } from "lucide-react";
+import PulseCard from "@/app/components/design-system/pulse-card";
 import { formatMoney } from "@/app/lib/currency.mjs";
-import type { FuelEfficiencyStats } from "./types";
-import { detail } from "./vehicle-detail-classes";
+import type { FuelEfficiencyStats } from "@/app/garage/[id]/types";
+import { detail } from "@/app/garage/[id]/vehicle-detail-classes";
 
 const emptyStats: FuelEfficiencyStats = {
   total_cost: 0,
@@ -48,23 +49,23 @@ export default function FuelEfficiencySection({
             )}
             <dl className={detail.tiles}>
               {readings.map(({ label, value, unit }) => (
-                <div className={`${detail.card} min-h-[116px] grid content-start gap-2`} key={label}>
+                <PulseCard className={`${detail.card} grid min-h-29 content-start gap-2`} key={label}>
                   <dt className={detail.label}>{label}</dt>
                   <dd className={`${detail.metric} tabular-nums`}>
                     {value}
                     {unit && value !== "—" && <small className={detail.metricUnit}>{unit}</small>}
                   </dd>
-                </div>
+                </PulseCard>
               ))}
             </dl>
           </div>
         );
       })}
-      <div className="flex items-start gap-3 rounded-[18px] bg-(--detail-inset) px-[18px] py-3.5 text-[0.9rem] leading-[1.4] text-(--detail-muted)">
-        <Info className="mt-px size-5 flex-none text-(--detail-accent)" aria-hidden="true" />
+      <div className="flex items-start gap-3 rounded-2xl bg-muted px-4 py-3.5 text-sm leading-normal text-muted-foreground">
+        <Info className="mt-px size-5 flex-none text-action" aria-hidden="true" />
         <p>Add two full tank entries with increasing odometer readings to calculate efficiency.</p>
       </div>
-      <details className={`${detail.muted} text-sm`}>
+      <details className="text-muted-foreground text-sm">
         <summary className="w-fit cursor-pointer rounded py-2 font-bold underline focus-visible:outline-2 focus-visible:outline-ring">
           How fuel economy is calculated
         </summary>

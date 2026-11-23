@@ -9,8 +9,9 @@ import { Check, Copy, Info, KeyRound, Plus, Trash2 } from "lucide-react";
 import Button from "@/app/components/design-system/button";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
-import { copyApiKey } from "./copy-api-key";
-import { cardClass, iconTileClass, labelClass, pillClass, sectionClass, sectionDescriptionClass, sectionHeadingClass } from "./profile-classes";
+import { copyApiKey } from "@/app/profile/copy-api-key";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import { iconTileClass, labelClass, sectionClass, sectionDescriptionClass, sectionHeadingClass } from "@/app/profile/profile-classes";
 
 type APIKey = {
   id: number;
@@ -20,7 +21,7 @@ type APIKey = {
 };
 
 const keyTableHeadingClass = `${labelClass} px-6 py-3`;
-const keyTableCellClass = "h-[72px] px-6 py-3 max-[761px]:h-auto max-[761px]:min-w-0 max-[761px]:p-0";
+const keyTableCellClass = "h-[72px] px-6 py-3 max-sheet:h-auto max-sheet:min-w-0 max-sheet:p-0";
 
 export default function APIKeys() {
   const { timeZone } = useTimeZone();
@@ -127,7 +128,7 @@ export default function APIKeys() {
         <Button
           ref={createTrigger}
           type="button"
-          className={`${pillClass} [background:var(--profile-primary)]! text-(--profile-primary-ink)!`}
+          variant="gradient" size="lg" shape="pill" labelStyle="strong"
           disabled={loading}
           icon={<Plus className="size-5" aria-hidden="true" />}
           onClick={() => { setError(""); setIsOpen(true); }}
@@ -136,21 +137,21 @@ export default function APIKeys() {
         </Button>
       </header>
       {loading || keys.length === 0 ? (
-        <div className={`${cardClass} grid justify-items-center gap-2.5 px-6 py-9 text-center text-(--profile-muted)`}>
+        <PulseCard className="grid justify-items-center gap-2.5 px-6 py-9 text-center text-muted-foreground shadow-card">
           <span className={iconTileClass} aria-hidden="true"><KeyRound /></span>
           {loading ? <p role="status">Loading keys…</p> : !loadError && (
             <>
-              <strong className="text-(--profile-ink)">No API keys yet</strong>
+              <strong className="text-foreground">No API keys yet</strong>
               <p>Create a key to let an external service access your Pulse data.</p>
             </>
           )}
           {loadError && <p className="text-destructive" role="alert">{loadError}</p>}
-        </div>
+        </PulseCard>
       ) : (
-        <div className={`${cardClass} overflow-hidden`}>
+        <PulseCard className="overflow-hidden shadow-card">
           {error && !isOpen && !revokeKey && <p className="px-6 py-3 text-sm text-destructive" role="alert">{error}</p>}
-          <table role="table" className="w-full table-fixed border-collapse text-left max-[761px]:block" aria-labelledby="profile-api-keys">
-            <thead role="rowgroup" className="bg-(--profile-inset) max-[761px]:sr-only">
+          <table role="table" className="w-full table-fixed border-collapse text-left max-sheet:block" aria-labelledby="profile-api-keys">
+            <thead role="rowgroup" className="bg-muted max-sheet:sr-only">
               <tr role="row">
                 <th scope="col" className={keyTableHeadingClass}>Name</th>
                 <th scope="col" className={keyTableHeadingClass}>Key</th>
@@ -158,26 +159,26 @@ export default function APIKeys() {
                 <th scope="col" className={`${keyTableHeadingClass} w-[92px]`}><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
-            <tbody role="rowgroup" className="divide-y divide-(--profile-line) max-[761px]:block">
+            <tbody role="rowgroup" className="divide-y divide-divider max-sheet:block">
               {keys.map((key) => (
-                <tr key={key.id} role="row" className="max-[761px]:grid max-[761px]:grid-cols-[minmax(0,1fr)_auto] max-[761px]:items-center max-[761px]:gap-x-4 max-[761px]:gap-y-2.5 max-[761px]:px-6 max-[761px]:py-3.5">
-                  <td role="cell" className={`${keyTableCellClass} max-[761px]:col-span-full`}>
+                <tr key={key.id} role="row" className="max-sheet:grid max-sheet:grid-cols-[minmax(0,1fr)_auto] max-sheet:items-center max-sheet:gap-x-4 max-sheet:gap-y-2.5 max-sheet:px-6 max-sheet:py-3.5">
+                  <td role="cell" className={`${keyTableCellClass} max-sheet:col-span-full`}>
                     <div className="flex items-center gap-3 font-bold wrap-anywhere">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-(--profile-chip) text-(--profile-muted)" aria-hidden="true"><KeyRound className="size-[18px]" /></span>
+                      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-chip text-muted-foreground" aria-hidden="true"><KeyRound className="size-4.5" /></span>
                       <span>{key.name}</span>
                     </div>
                   </td>
-                  <td role="cell" className={`${keyTableCellClass} max-[761px]:col-span-full`}><code className="inline-block rounded-[10px] bg-(--profile-inset) px-2.5 py-[5px] text-[0.9rem] wrap-anywhere">{key.token_prefix}…</code></td>
+                  <td role="cell" className={`${keyTableCellClass} max-sheet:col-span-full`}><code className="inline-block rounded-[10px] bg-muted px-2.5 py-[5px] text-sm wrap-anywhere">{key.token_prefix}…</code></td>
                   <td role="cell" className={`${keyTableCellClass} tabular-nums`}>
-                    <span className="text-[0.72rem] font-bold text-(--profile-muted) uppercase min-[761px]:hidden max-[761px]:block" aria-hidden="true">Created</span>
+                    <span className="text-caption font-bold text-muted-foreground uppercase sheet:hidden max-sheet:block" aria-hidden="true">Created</span>
                     <time dateTime={key.created_at}>{formatInstant(key.created_at, timeZone, { dateStyle: "medium" })}</time>
                   </td>
                   <td role="cell" className={`${keyTableCellClass} text-right`}>
                     <Button
                       type="button"
-                      variant="iconDanger"
+                      variant="iconChipDanger"
                       size="lg"
-                      className="rounded-full! text-(--profile-muted)! hover:bg-(--profile-chip)! hover:text-(--profile-danger)!"
+                      shape="pill"
                       aria-label={`Revoke ${key.name}`}
                       onClick={() => { setError(""); setRevokeKey(key); }}
                     >
@@ -188,7 +189,7 @@ export default function APIKeys() {
               ))}
             </tbody>
           </table>
-        </div>
+        </PulseCard>
       )}
       {isOpen && (
         <Dialog labelledBy="api-key-dialog-title" onDismiss={busy ? undefined : closeDialog}>
@@ -197,7 +198,7 @@ export default function APIKeys() {
           </DialogHeader>
           {token ? (
             <div className="mt-4 space-y-4">
-              <p className="flex gap-3 rounded-2xl bg-[#ffc83d]/22 px-4 py-3.5 text-[0.92rem]">
+              <p className="flex gap-3 rounded-2xl bg-warning-soft px-4 py-3.5 text-[0.92rem]">
                 <Info className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden="true" />
                 <span>Copy this key now. For your security, it won’t be shown again.</span>
               </p>
@@ -206,25 +207,25 @@ export default function APIKeys() {
                 <textarea
                   ref={tokenInput}
                   id="created-api-key"
-                  className="min-h-0! min-w-0 flex-1 field-sizing-content resize-none rounded-none! border-0! font-mono text-[0.9rem] wrap-anywhere"
+                  className="min-h-0! min-w-0 flex-1 field-sizing-content resize-none rounded-none! border-0! font-mono text-sm wrap-anywhere"
                   readOnly
                   rows={2}
                   value={token}
                   onFocus={event => event.target.select()}
                 />
-                <Button type="button" variant="secondary" autoFocus className="min-h-11! shrink-0 rounded-full! bg-(--horizon-chip)! px-3.5! text-[0.9rem]! hover:bg-(--horizon-line)!" onClick={copyKey}>
-                  {copied ? <Check className="size-[18px]" aria-hidden="true" /> : <Copy className="size-[18px]" aria-hidden="true" />}
+                <Button type="button" variant="chip" size="lg" shape="pill" autoFocus className="shrink-0" onClick={copyKey}>
+                  {copied ? <Check className="size-4.5" aria-hidden="true" /> : <Copy className="size-4.5" aria-hidden="true" />}
                   {copied ? "Copied" : "Copy"}
                 </Button>
               </div>
               <span className="sr-only" role="status">{copied ? "API key copied" : ""}</span>
-              {error && <p className="text-[0.9rem] font-semibold text-destructive" role="alert">{error}</p>}
+              {error && <p className="text-sm font-semibold text-destructive" role="alert">{error}</p>}
               <DialogActions><DialogAction type="button" onClick={closeDialog}>Done</DialogAction></DialogActions>
             </div>
           ) : (
             <form className="mt-4 space-y-4" onSubmit={createKey}>
               <div>
-                <label htmlFor="api-key-name" className="mb-1.5 block text-[0.88rem] font-bold text-muted-foreground">Key name</label>
+                <label htmlFor="api-key-name" className="mb-1.5 block text-sm font-bold text-muted-foreground">Key name</label>
                 <input
                   id="api-key-name"
                   className="w-full px-3.5"
@@ -239,8 +240,8 @@ export default function APIKeys() {
                   aria-describedby="api-key-name-hint"
                 />
               </div>
-              <p id="api-key-name-hint" className="text-[0.9rem] text-muted-foreground">Give it a name so you can recognise it later.</p>
-              {error && <p className="text-[0.9rem] font-semibold text-destructive" role="alert">{error}</p>}
+              <p id="api-key-name-hint" className="text-sm text-muted-foreground">Give it a name so you can recognise it later.</p>
+              {error && <p className="text-sm font-semibold text-destructive" role="alert">{error}</p>}
               <DialogActions>
                 <DialogAction type="button" variant="secondary" onClick={closeDialog} disabled={busy}>Cancel</DialogAction>
                 <DialogAction type="submit" disabled={busy}>{busy ? "Creating…" : "Create key"}</DialogAction>

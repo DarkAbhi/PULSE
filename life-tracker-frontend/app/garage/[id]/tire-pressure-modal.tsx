@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
-import { saveTirePressure } from "./actions";
+import { saveTirePressure } from "@/app/garage/[id]/actions";
 import { Gauge, User, Users } from "lucide-react";
 
 interface TirePressureModalProps {

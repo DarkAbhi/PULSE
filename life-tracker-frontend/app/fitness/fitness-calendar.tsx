@@ -22,11 +22,11 @@ const selectedDayFormatter = new Intl.DateTimeFormat("en-IN", {
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 const statIcons = {
-  workouts: { icon: Check, tone: "bg-[#4c6bff] text-white" },
-  trained: { icon: Timer, tone: "bg-[#19d3f3] text-[#06303a]" },
-  volume: { icon: Weight, tone: "bg-[#7b2ce0] text-white" },
-  sets: { icon: List, tone: "bg-[#d91cab] text-white" },
-  preference: { icon: Sun, tone: "bg-[#ffc83d] text-[#3a2a00]" },
+  workouts: { icon: Check, tone: "bg-brand-blue text-white" },
+  trained: { icon: Timer, tone: "bg-brand-cyan text-on-cyan" },
+  volume: { icon: Weight, tone: "bg-brand-purple-bright text-white" },
+  sets: { icon: List, tone: "bg-brand-magenta text-white" },
+  preference: { icon: Sun, tone: "bg-brand-gold text-on-gold" },
 };
 
 type FitnessStat = { id: string; label: string; value: string; subtitle: string; tooltip?: string };
@@ -144,14 +144,16 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
   }
 
   return (
-    <div className={`${styles.fitness} grid gap-6 sm:gap-8`}>
+    <div className="grid gap-6 sm:gap-8">
       <section aria-labelledby="fitness-title" className={styles.hero}>
         <div className="relative">
           <h1 id="fitness-title" className={styles.title}>Fitness</h1>
           <p className="mt-2 text-base font-medium sm:text-xl">Workouts, streaks &amp; stats</p>
           <Button
             type="button"
-            className={`${styles.heroAction} mt-5`}
+            className="mt-5 min-h-[clamp(2.75rem,4vw,3.5rem)] px-[clamp(1rem,2vw,1.5rem)] focus-visible:outline-white"
+            shape="pill"
+            variant="onHero"
             size="lg"
             icon={<Dumbbell size={20} aria-hidden="true" />}
             disabled={isMarking}
@@ -178,10 +180,10 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
               <span className={`${styles.muted} mt-1 block text-sm font-semibold tracking-normal`}>{month.slice(0, 4)}</span>
             </h2>
             <div className="flex gap-2">
-              <Button type="button" variant="iconSecondary" size="lg" className={styles.monthButton} aria-label="Previous month" onClick={() => navigateMonth(-1)}>
+              <Button type="button" variant="iconSecondary" size="lg" shape="pill" aria-label="Previous month" onClick={() => navigateMonth(-1)}>
                 <ChevronLeft size={20} aria-hidden="true" />
               </Button>
-              <Button type="button" variant="iconSecondary" size="lg" className={styles.monthButton} aria-label="Next month" onClick={() => navigateMonth(1)}>
+              <Button type="button" variant="iconSecondary" size="lg" shape="pill" aria-label="Next month" onClick={() => navigateMonth(1)}>
                 <ChevronRight size={20} aria-hidden="true" />
               </Button>
             </div>
@@ -232,7 +234,7 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
               )}
             </div>
             {!selectedGroup && selectedDate <= today && (
-              <Button type="button" size="lg" className={styles.logAction} disabled={isMarking} onClick={() => openLog(selectedDate)}>
+              <Button type="button" size="lg" shape="pill" variant="gradient" className="[--button-fill:var(--fitness-gradient)] [--button-foreground:white]" disabled={isMarking} onClick={() => openLog(selectedDate)}>
                 Log visit
               </Button>
             )}

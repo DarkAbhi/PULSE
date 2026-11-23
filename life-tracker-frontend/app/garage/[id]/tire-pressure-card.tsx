@@ -1,12 +1,13 @@
 "use client";
 
 import Button from "@/app/components/design-system/button";
-import { markAirFillAction } from "../actions";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import { markAirFillAction } from "@/app/garage/actions";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition, type ReactNode } from "react";
 import { CircleDot, Pencil } from "lucide-react";
-import TirePressureModal from "./tire-pressure-modal";
-import { detail } from "./vehicle-detail-classes";
+import TirePressureModal from "@/app/garage/[id]/tire-pressure-modal";
+import { detail } from "@/app/garage/[id]/vehicle-detail-classes";
 
 interface TirePressureCardProps {
   vehicleId: string;
@@ -42,23 +43,23 @@ export default function TirePressureCard({
     <section id="tires-air" aria-labelledby="tires-heading" className={detail.section}>
       <div className={detail.sectionHeader}>
         <h2 id="tires-heading" className={detail.sectionTitle}><CircleDot className="size-6" aria-hidden="true" /> Tires &amp; air</h2>
-        <Button className={detail.secondaryButton} variant="secondary" type="button" aria-haspopup="dialog" onClick={() => setIsOpen(true)}>
+        <Button variant="chip" shape="pill" size="lg" labelStyle="strong" type="button" aria-haspopup="dialog" onClick={() => setIsOpen(true)}>
           <Pencil className="size-4" aria-hidden="true" /> {hasAnyPressure ? "Edit pressure" : "Set pressure"}
         </Button>
       </div>
 
-      <section aria-labelledby="pressure-heading" className={detail.card}>
+      <PulseCard as="section" aria-labelledby="pressure-heading" className={detail.card}>
         <h3 id="pressure-heading" className={`${detail.subheading} mb-4`}>Target tire pressure</h3>
-        <div className="grid grid-cols-2 gap-5 max-[761px]:grid-cols-1">
+        <div className="grid grid-cols-2 gap-5 max-sheet:grid-cols-1">
           {pressureRows.map(({ label, readings }) => (
-            <div key={label} className="border-(--detail-line) [&+div]:border-s [&+div]:ps-5 max-[761px]:[&+div]:border-s-0 max-[761px]:[&+div]:border-t max-[761px]:[&+div]:ps-0 max-[761px]:[&+div]:pt-5">
+            <div key={label} className="border-divider [&+div]:border-s [&+div]:ps-5 max-sheet:[&+div]:border-s-0 max-sheet:[&+div]:border-t max-sheet:[&+div]:ps-0 max-sheet:[&+div]:pt-5">
               <h4 className="mb-3 text-base font-extrabold">{label}</h4>
               <dl className="grid grid-cols-2 gap-3">
                 {readings.map(({ position, pressure }) => (
-                  <div key={position} className="rounded-[20px] bg-(--detail-inset) p-[clamp(10px,2vw,18px)]">
+                  <div key={position} className="rounded-2xl bg-muted p-2.5 sm:p-4">
                     <dt className={detail.label}>{position}</dt>
                     <dd className={`${detail.metric} mt-1 tabular-nums`}>
-                      {pressure == null ? <span className={`${detail.muted} text-sm font-semibold`}>Not set</span> : <>{pressure}<small className={detail.metricUnit}>PSI</small></>}
+                      {pressure == null ? <span className="text-sm text-muted-foreground font-semibold">Not set</span> : <>{pressure}<small className={detail.metricUnit}>PSI</small></>}
                     </dd>
                   </div>
                 ))}
@@ -66,10 +67,10 @@ export default function TirePressureCard({
             </div>
           ))}
         </div>
-      </section>
+      </PulseCard>
 
-      <div className="grid grid-cols-2 gap-5 max-[1001px]:grid-cols-1">
-        <section aria-labelledby="air-fill-heading" className={detail.card}>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <PulseCard as="section" aria-labelledby="air-fill-heading" className={detail.card}>
           <h3 id="air-fill-heading" className={detail.subheading}>Record an air fill</h3>
           <form className="mt-4 grid gap-4" onSubmit={(event) => {
             event.preventDefault();
@@ -85,15 +86,15 @@ export default function TirePressureCard({
             });
           }}>
             <div>
-              <label htmlFor={odometerId} className={`${detail.muted} mb-1.5 block text-sm font-bold`}>Odometer (km, optional)</label>
-              <input id={odometerId} type="number" min="0" max="99999999999.9" step="0.1" value={odometer} onChange={(event) => setOdometer(event.target.value)} className={`${detail.field} rounded-[14px] px-3.5`} />
+              <label htmlFor={odometerId} className="text-muted-foreground mb-1.5 block text-sm font-bold">Odometer (km, optional)</label>
+              <input id={odometerId} type="number" min="0" max="99999999999.9" step="0.1" value={odometer} onChange={(event) => setOdometer(event.target.value)} className={`${detail.field} rounded-control px-3.5`} />
             </div>
-            <Button className={`${detail.primaryButton} justify-self-start`} type="submit" disabled={pending}>
+            <Button variant="gradient" shape="pill" size="lg" labelStyle="strong" className="justify-self-start" type="submit" disabled={pending}>
               <CircleDot className="size-4" aria-hidden="true" /> {pending ? "Saving…" : "Record air fill"}
             </Button>
-            {error && <p role="alert" className={`${detail.danger} text-sm`}>{error}</p>}
+            {error && <p role="alert" className="text-destructive text-sm">{error}</p>}
           </form>
-        </section>
+        </PulseCard>
         {children}
       </div>
 

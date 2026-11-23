@@ -3,10 +3,9 @@
 import Button from "@/app/components/design-system/button";
 
 import { useState, useEffect, useTransition } from "react";
-import { deleteAirFill, deleteFuelFill } from "./actions";
+import { deleteAirFill, deleteFuelFill } from "@/app/garage/[id]/actions";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { Trash2 } from "lucide-react";
-import { detail } from "./vehicle-detail-classes";
 
 interface DeleteButtonProps {
   vehicleId: string;
@@ -46,9 +45,9 @@ export default function DeleteButton({
   return (
     <>
       <Button
-        variant="icon"
+        variant="iconChipDanger"
         size="lg"
-        className={detail.deleteIcon}
+        shape="pill"
         onClick={() => setIsOpen(true)}
         type="button"
         aria-haspopup="dialog"

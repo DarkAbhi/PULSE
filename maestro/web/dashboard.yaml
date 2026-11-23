@@ -6,9 +6,9 @@ url: http://localhost:3000
 # Greeting and live clock: avoid matching a particular time, date, or profile name.
 - assertVisible: "A little perspective on your everyday."
 - assertVisible:
-    css: "section[aria-label='Welcome'] .pulse-clock-time"
+    css: "section[aria-label='Welcome'] [data-clock='time']"
 - assertVisible:
-    css: "section[aria-label='Welcome'] .pulse-clock-date"
+    css: "section[aria-label='Welcome'] [data-clock='date']"
 - assertVisible:
     css: "a[aria-label='Profile'][href='/profile']"
 
@@ -31,16 +31,14 @@ url: http://localhost:3000
     element: "Keep going|Set up horizon"
     direction: DOWN
 - assertVisible:
-    css: "a.pulse-horizon-card:has(svg.pulse-horizon-wave)"
-- assertVisible:
-    css: "a[href='/financial-horizon'] .pulse-card-cta"
+    css: "a[href='/financial-horizon']:has(svg)"
 
 # The fitness card is navigation only, regardless of today's workout status.
 - scrollUntilVisible:
     element: "View fitness|Get moving"
     direction: DOWN
 - assertVisible:
-    css: "article[aria-label='Fitness today'] svg.pulse-workout-dial"
+    css: "article[aria-label='Fitness today'] svg"
 - assertNotVisible: "Add workout"
 - assertNotVisible: "Mark workout completed"
 - assertNotVisible: "Log exercises"
@@ -48,9 +46,11 @@ url: http://localhost:3000
     css: "section[aria-label='Your day at a glance']:not(:has(button, a[href^='/fitness/']))"
 - tapOn:
     text: "View fitness|Get moving"
-- assertVisible: '\s*Dashboard\s*'
+- assertVisible:
+    css: "a[aria-label='Back to Dashboard'][href='/dashboard']"
 - assertVisible: "Fitness"
-- tapOn: '\s*Dashboard\s*'
+- tapOn:
+    css: "a[aria-label='Back to Dashboard'][href='/dashboard']"
 - assertVisible: "Good to see you,"
 
 # Verify the entire finance card opens the financial space.
@@ -60,7 +60,8 @@ url: http://localhost:3000
 - tapOn:
     text: "Keep going|Set up horizon"
 - assertVisible: "Financial Horizon"
-- tapOn: '\s*Back to Dashboard\s*'
+- tapOn:
+    css: "a[aria-label='Back to Dashboard'][href='/dashboard']"
 - assertVisible: "Good to see you,"
 
 # Both smaller spaces remain reachable below the summary cards.
@@ -70,7 +71,8 @@ url: http://localhost:3000
 - assertVisible:
     css: "nav[aria-label='Your spaces'] a[href='/garage']"
 - tapOn: "Meal Plan"
-- assertVisible: '\s*Dashboard\s*'
+- assertVisible:
+    css: "a[aria-label='Back to Dashboard'][href='/dashboard']"
 - runFlow:
     when:
       visible: "Skip setup"

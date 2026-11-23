@@ -5,9 +5,9 @@ import Button from "@/app/components/design-system/button";
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Bell, ArrowRight, X } from "lucide-react";
-import type { AppNotification } from "./notification-list";
+import type { AppNotification } from "@/app/components/notification-list";
 import { dismissNotification } from "@/app/notifications/actions";
-import { AppBarBell, appBarControl } from "./design-system/app-bar";
+import { AppBarBell, appBarControl } from "@/app/components/design-system/app-bar";
 import LocalDate from "@/app/components/local-date";
 
 interface NotificationDropdownProps {
@@ -85,7 +85,8 @@ export default function NotificationDropdown({
         </button>
       ) : (
         <Button
-          variant="iconSecondary"
+          variant="iconOverlay"
+          shape="pill"
           size="lg"
           ref={buttonRef}
           type="button"
@@ -95,7 +96,7 @@ export default function NotificationDropdown({
           onClick={() => setOpen((value) => !value)}
           className="relative"
         >
-          <Bell className="h-5 w-5 text-foreground" aria-hidden="true" />
+          <Bell className="size-5" aria-hidden="true" />
           {unreadCount > 0 && (
             <span
               aria-hidden="true"
@@ -113,7 +114,7 @@ export default function NotificationDropdown({
           ref={panelRef}
           role="dialog"
           aria-label="Notifications"
-          className="absolute right-0 top-[calc(100%+10px)] z-50 w-[360px] max-w-[calc(100vw-3rem)] origin-top-right animate-dropdown rounded-2xl bg-card shadow-xl"
+          className={`absolute right-0 top-full z-50 mt-2.5 w-90 max-w-[calc(100vw-3rem)] origin-top-right rounded-2xl bg-card shadow-xl motion-safe:animate-dropdown ${appBar ? "" : "max-compact:fixed max-compact:inset-x-4 max-compact:top-22 max-compact:mt-0 max-compact:max-h-[calc(100dvh-7rem)] max-compact:w-auto max-compact:max-w-none max-compact:overflow-y-auto"}`}
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-divider px-5 pt-5 pb-2">

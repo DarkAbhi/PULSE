@@ -1,0 +1,22 @@
+:root {
+  --finance-section-heading: clamp(1.3rem, 2.2vw, 1.65rem);
+  --finance-pool-value-size: clamp(1.9rem, 3vw, 2.5rem);
+  --finance-budget-card-max: 26.25rem;
+  --finance-pool-start-gradient: linear-gradient(135deg, var(--brand-indigo), var(--brand-purple) 60%, #9b2bd8);
+  --finance-pool-end: #ffe08a;
+  --finance-pool-end-foreground: var(--on-gold);
+  --finance-warning-fill: var(--brand-gold);
+  --finance-budget-warning: #b26a00;
+  --finance-budget-available: #0e8a66;
+  --finance-budget-deficit: #d6342a;
+  --finance-budget-low: linear-gradient(90deg, var(--brand-cyan), var(--brand-blue));
+  --finance-budget-medium: linear-gradient(90deg, var(--brand-gold), #f0a020);
+  --finance-budget-high: linear-gradient(90deg, #ff8a3d, var(--brand-pink));
+}
+
+.dark {
+  --finance-pool-end: var(--brand-gold);
+  --finance-budget-warning: var(--warning);
+  --finance-budget-available: var(--success);
+  --finance-budget-deficit: var(--destructive);
+}

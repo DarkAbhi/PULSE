@@ -6,13 +6,12 @@ import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/compone
 import { createContext, useContext, useEffect, useId, useRef, useState, useTransition, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Plus, Trash2 } from "lucide-react";
-import { addExercise, updateExercise, searchExercises, type CatalogSearch, type SavedExercise } from "./actions";
+import { addExercise, updateExercise, searchExercises, type CatalogSearch, type SavedExercise } from "@/app/fitness/[id]/actions";
 import {
-  setNumberClass, workoutDeleteIconClass, workoutFocusClass, workoutLabelClass,
-  workoutPalette, workoutPrimaryClass, workoutSoftClass,
-} from "./workout-detail-classes";
+  setNumberClass, workoutLabelClass,
+} from "@/app/fitness/[id]/workout-detail-classes";
 
-const formFieldClass = `min-h-12 w-full min-w-0 rounded-[14px] border-[1.5px] border-(--workout-line)! px-3.5 text-(--workout-ink)! max-[701px]:px-2.5 ${workoutFocusClass}`;
+const formFieldClass = "w-full min-w-0 px-3.5 max-[701px]:px-2.5";
 const setEditorRowClass = "grid grid-cols-[44px_minmax(0,1fr)_minmax(0,1.2fr)_44px] items-center gap-2 max-[701px]:grid-cols-[32px_minmax(0,1fr)_minmax(0,1fr)_40px]";
 
 type ExerciseSet = {
@@ -48,7 +47,7 @@ export function AddExerciseButton() {
   const openForm = useContext(OpenExerciseForm);
 
   return (
-    <Button type="button" className={workoutPrimaryClass}
+    <Button type="button" variant="gradient" size="lg" shape="pill" labelStyle="strong"
       aria-haspopup="dialog" icon={<Plus size={20} aria-hidden="true" />}
       onClick={(event) => openForm(event.currentTarget)}>
       Add exercise
@@ -291,7 +290,7 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
       </div>
 
       <fieldset className="min-w-0 space-y-3">
-        <legend className="mb-3 font-extrabold text-(--workout-ink)">Sets</legend>
+        <legend className="mb-3 font-extrabold text-foreground">Sets</legend>
         <div className={`${setEditorRowClass} ${workoutLabelClass}`} aria-hidden="true">
           <span>Set</span><span>Reps</span><span>Weight (kg), optional</span>
         </div>
@@ -319,7 +318,7 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
               value={set.weight}
             />
             {sets.length > 1 && (
-              <Button type="button" variant="icon" className={workoutDeleteIconClass}
+              <Button type="button" variant="iconChipDanger" shape="pill"
                 aria-label={`Remove set ${index + 1}`} disabled={isPending}
                 onClick={() => setSets((current) => current.filter((_, i) => i !== index))}>
                 <Trash2 size={18} aria-hidden="true" />
@@ -327,7 +326,7 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
             )}
           </div>
         ))}
-        <Button variant="secondary" className={workoutSoftClass}
+        <Button variant="chip" size="lg" shape="pill" labelStyle="strong"
           icon={<Plus size={18} aria-hidden="true" />}
           onClick={() => setSets((currentSets) => [...currentSets, newSet()])}
           type="button"
@@ -335,7 +334,7 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
         >
           Add set
         </Button>
-        <p className="text-(--workout-muted)">Leave the weight empty for a body weight exercise.</p>
+        <p className="text-muted-foreground">Leave the weight empty for a body weight exercise.</p>
       </fieldset>
 
       {error && (
@@ -361,7 +360,7 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
 
   return createPortal(
     <div ref={dialogRef} tabIndex={-1} onKeyDown={handleDialogKeyDown}>
-      <Dialog labelledBy={titleID} size="lg" panelClassName={workoutPalette}
+      <Dialog labelledBy={titleID} size="lg"
         onBackdropClick={(event) => {
           if (event.target === event.currentTarget && !isPending) onClose();
         }}>

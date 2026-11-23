@@ -38,6 +38,8 @@ import {
   updateMealPlanConsumedAction,
 } from "@/app/meal-plan/actions";
 import Button from "@/app/components/design-system/button";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import { MealPlate, mealSlotColors, type MealSlot } from "@/app/meal-plan/meal-visuals";
 import { RecipePicker } from "@/app/meal-plan/recipe-picker";
 import { mealPlanStyles as styles } from "@/app/meal-plan/meal-plan-classes";
 
@@ -57,18 +59,9 @@ const standardSlotIcons = {
   dinner: Moon,
 } satisfies Record<MealKind, typeof Clock>;
 const standardSlots = Object.keys(standardSlotIcons) as MealKind[];
-type CalendarSlot = MealKind | "custom";
-
-const slotColors: Record<CalendarSlot, string> = {
-  breakfast: "[--slot-color:#ffc83d] text-[#3a2a00]",
-  lunch: "[--slot-color:#f0603a] text-[#3a2a00]",
-  evening_snacks: "[--slot-color:#d91cab] text-white",
-  dinner: "[--slot-color:#5b2ce0] text-white",
-  custom: "[--slot-color:#3e59bc] text-white",
-};
 
 function MealSlotCard({ kind, icon, name, timeRange, usualTime, children, onAdd, addDisabled }: {
-  kind: CalendarSlot;
+  kind: MealSlot;
   icon: ReactNode;
   name: string;
   timeRange?: string;
@@ -78,9 +71,9 @@ function MealSlotCard({ kind, icon, name, timeRange, usualTime, children, onAdd,
   addDisabled?: boolean;
 }) {
   return (
-    <article className={styles.slotCard}>
+    <PulseCard as="article" className={styles.slotCard}>
       <div className="flex items-start gap-3">
-        <span className={`${styles.slotIcon} ${slotColors[kind]}`} aria-hidden="true">{icon}</span>
+        <span className={`${styles.slotIcon} ${mealSlotColors[kind]} ${kind === "breakfast" || kind === "lunch" ? "text-(--meal-slot-ink)" : "text-white"}`} aria-hidden="true">{icon}</span>
         <div className="min-w-0 self-center">
           <h3 className="text-lg leading-tight font-extrabold tracking-tight wrap-anywhere">{name}</h3>
           {timeRange && <p className={`${styles.muted} mt-1 text-sm font-semibold`}>{timeRange}</p>}
@@ -89,13 +82,13 @@ function MealSlotCard({ kind, icon, name, timeRange, usualTime, children, onAdd,
       </div>
       {children}
       {onAdd && (
-        <button className={styles.slotAdd} type="button" onClick={onAdd} disabled={addDisabled}
-          aria-label={`Add meal to ${name}`}
+        <Button variant="tertiary" shape="pill" size="xl" labelStyle="strong" className={styles.slotAdd} type="button"
+          onClick={onAdd} disabled={addDisabled} aria-label={`Add meal to ${name}`} icon={<Plus className="size-5" aria-hidden="true" />}
         >
-          <Plus className="size-5" aria-hidden="true" /> Add meal
-        </button>
+          Add meal
+        </Button>
       )}
-    </article>
+    </PulseCard>
   );
 }
 
@@ -231,10 +224,10 @@ export default function MealPlanClient({
   );
   const plannedByDay = weekDays.map(day => {
     const items = meals.filter(meal => meal.date === day.dateStr);
-    const slots = new Set<CalendarSlot>(items.map(meal => slotKindByID.get(meal.meal_time_id) ?? "custom"));
+    const slots = new Set<MealSlot>(items.map(meal => slotKindByID.get(meal.meal_time_id) ?? "custom"));
     return { count: items.length, slots };
   });
-  const calendarSlots: CalendarSlot[] = plannedByDay.some(day => day.slots.has("custom"))
+  const calendarSlots: MealSlot[] = plannedByDay.some(day => day.slots.has("custom"))
     ? [...standardSlots, "custom"]
     : standardSlots;
 
@@ -340,22 +333,25 @@ export default function MealPlanClient({
               {meal.name}
             </span>
           </button>
-          <button
+          <Button
             type="button"
+            variant="iconChipDanger"
+            shape="pill"
+            size="lg"
+            className="shrink-0"
             onClick={() => { setDeleteError(""); setMealToDelete(meal); }}
             aria-label={`Delete ${meal.name}`}
             disabled={isPending}
-            className={styles.removeMeal}
           >
             <X className="size-5" aria-hidden="true" />
-          </button>
+          </Button>
         </li>
       ))}
     </ul>
   );
 
   return (
-    <main className={`${frame.page} ${styles.page}`}>
+    <main className={`${frame.page} [&_:is(button,a):focus-visible]:outline-brand`}>
       <div className={frame.content} inert={isAddMealOpen || mealToDelete !== null}>
         {appBar}
 
@@ -365,24 +361,22 @@ export default function MealPlanClient({
               {["[animation-delay:-4s]", "[animation-delay:-2s]", ""].map(delay => (
                 <span key={delay} className={`${styles.ripple} ${delay}`} />
               ))}
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="5.5" />
-                <circle cx="12" cy="12" r="2" />
-                <path d="M3 4.5v4a1.5 1.5 0 0 0 3 0v-4M4.5 10v9.5M21 4.5c-1.6 1-2.2 3-2.2 5.5h2.2v9.5" />
-              </svg>
+              <MealPlate />
             </div>
             <div className="relative">
               <h1 id="meal-plan-title" className={styles.title}>Meal Plan</h1>
               <p className="mt-2 text-base font-medium sm:text-xl">Plan your week and track meals eaten</p>
               {onEditPreferences && (
-                <button className={styles.preferences} type="button" onClick={onEditPreferences}>
-                  <SlidersHorizontal className="size-5" aria-hidden="true" /> Meal preferences
-                </button>
+                <Button variant="secondary" shape="pill" size="xl" labelStyle="strong" className={styles.preferences} type="button"
+                  onClick={onEditPreferences} icon={<SlidersHorizontal className="size-5" aria-hidden="true" />}
+                >
+                  Meal preferences
+                </Button>
               )}
             </div>
           </section>
 
-          <section className={styles.calendar} aria-label="Weekly calendar">
+          <PulseCard as="section" className={styles.calendar} aria-label="Weekly calendar">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h2 aria-live="polite" className={styles.weekRange}>
                 {weekRange}
@@ -391,15 +385,17 @@ export default function MealPlanClient({
                 )}
               </h2>
               <div className="flex items-center gap-2">
-                <button className={styles.weekArrow} type="button" onClick={() => moveWeek(-7)} aria-label="Previous week">
+                <Button variant="iconSecondary" shape="pill" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(-7)} aria-label="Previous week">
                   <ChevronLeft className="size-5" aria-hidden="true" />
-                </button>
-                <button className={`${styles.primaryAction} ${styles.todayAction}`} type="button" onClick={handleToday} disabled={isToday}>
-                  <LocateFixed className="size-5" aria-hidden="true" /> Today
-                </button>
-                <button className={styles.weekArrow} type="button" onClick={() => moveWeek(7)} aria-label="Next week">
+                </Button>
+                <Button variant="gradient" shape="pill" size="xl" labelStyle="strong" className={styles.primaryAction} type="button"
+                  onClick={handleToday} disabled={isToday} icon={<LocateFixed className="size-5" aria-hidden="true" />}
+                >
+                  Today
+                </Button>
+                <Button variant="iconSecondary" shape="pill" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(7)} aria-label="Next week">
                   <ChevronRight className="size-5" aria-hidden="true" />
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -421,14 +417,14 @@ export default function MealPlanClient({
                     <span className={styles.dayNumber}>{day.date.getUTCDate()}</span>
                     <span className={styles.dots} aria-hidden="true">
                       {calendarSlots.map(slot => (
-                        <span key={slot} className={`${styles.dot} ${slotColors[slot]}`} data-planned={slots.has(slot)} />
+                        <span key={slot} className={`${styles.dot} ${mealSlotColors[slot]}`} data-planned={slots.has(slot)} />
                       ))}
                     </span>
                   </button>
                 );
               })}
             </div>
-          </section>
+          </PulseCard>
 
           <section aria-labelledby="meal-agenda-title">
             <div className="flex flex-wrap items-end justify-between gap-3">
@@ -442,11 +438,11 @@ export default function MealPlanClient({
                   </span>
                 </div>
               </div>
-              <button className={`${styles.primaryAction} ${styles.addMeal}`} type="button"
-                onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek || !enabledMealTimes.length}
+              <Button variant="gradient" shape="pill" size="xl" labelStyle="strong" className={`${styles.primaryAction} ${styles.addMeal}`} type="button"
+                onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek || !enabledMealTimes.length} icon={<Plus className="size-5" aria-hidden="true" />}
               >
-                <Plus className="size-5" aria-hidden="true" /> Add meal
-              </button>
+                Add meal
+              </Button>
             </div>
 
             <div className={styles.slotGrid} aria-busy={isLoadingWeek}>

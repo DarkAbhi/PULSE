@@ -1,9 +1,26 @@
 @import "tailwindcss";
+@import "./garage/garage-theme.css";
+@import "./meal-plan/meal-theme.css";
+@import "./financial-horizon/financial-theme.css";
 
 @custom-variant dark (&:is(.dark *));
 @custom-variant normal-colors (@media (forced-colors: none));
 
 @theme inline {
+  --color-chip: var(--chip);
+  --color-brand: var(--brand);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-cyan: var(--brand-cyan);
+  --color-brand-pink: var(--brand-pink);
+  --color-brand-gold: var(--brand-gold);
+  --color-on-gold: var(--on-gold);
+  --color-on-cyan: var(--on-cyan);
+  --color-brand-magenta: var(--brand-magenta);
+  --color-brand-purple-bright: var(--brand-purple-bright);
+  --color-scrim: var(--scrim);
+  --shadow-card: var(--card-shadow);
+  --shadow-dialog: var(--dialog-shadow);
+
   --color-divider: var(--divider);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -66,105 +83,138 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Based on Android core/ui/PulseColors.kt, with a web-specific page background. */
 :root {
   color-scheme: light;
   --radius: 0.5rem;
-  --background: #f6f7ff;
-  --foreground: #1c1c1a;
-  --card: #fffdf8;
-  --card-foreground: #1c1c1a;
-  --popover: #fffdf8;
-  --popover-foreground: #1c1c1a;
-  --primary: #edb937;
-  --primary-pressed: #d9a425;
-  --primary-foreground: #1c1c1a;
-  --secondary: #eae7df;
-  --secondary-foreground: #1c1c1a;
-  --muted: #eae7df;
-  --muted-foreground: #605d56;
-  --accent: #f8e7ad;
-  --accent-foreground: #3b3015;
-  --action: #745200;
-  --destructive: #ab3028;
-  --destructive-foreground: #f5f2ea;
-  --destructive-soft: #fbe2db;
-  --ring: #745200;
-  --surface-strong: #dedad1;
-  --divider: #e5e1d9;
-  --text-tertiary: #625f58;
-  --success: #3e642f;
-  --success-soft: #e3edd9;
-  --warning: #795200;
-  --warning-soft: #f8e7ad;
-  --info: #285c70;
-  --info-soft: #e0eff4;
+  --brand-blue: #4c6bff;
+  --brand-cyan: #19d3f3;
+  --brand-pink: #ff2fd0;
+  --brand-gold: #ffc83d;
+  --on-gold: #3a2a00;
+  --on-cyan: #06303a;
+  --brand-violet: #b22bd8;
+  --brand-indigo: #2b1b8f;
+  --brand-purple: #5b2ce0;
+  --brand-purple-bright: #7b2ce0;
+  --brand-orange: #f0603a;
+  --brand-magenta: #d91cab;
+  --purple-hero-shadow: 0 22px 44px -26px color-mix(in srgb, var(--brand-purple) 90%, transparent);
+  --on-hero-action: #5324c4;
+  --on-hero-hover: #f4eeff;
+  --brand: var(--brand-blue);
+  --light-background: #f6f7ff;
+  --dark-background: #0d0a1f;
+  --light-foreground: #1a1740;
+  --dark-foreground: #f4f1ff;
+  --light-card: #fff;
+  --dark-card: #1a1636;
+  --primary-blue: #415fe8;
+  --primary-gradient: linear-gradient(90deg, var(--primary-blue), var(--brand-violet));
+  --primary-fill: var(--primary-gradient);
+  --scrim: var(--dark-background);
+  --dialog-shadow: 0 30px 80px -20px rgb(0 0 0 / 55%);
+  --background: var(--light-background);
+  --foreground: var(--light-foreground);
+  --card: var(--light-card);
+  --muted: #f1f2fb;
+  --muted-foreground: #5e5a7d;
+  --chip: color-mix(in srgb, var(--foreground) 7%, transparent);
+  --divider: color-mix(in srgb, var(--foreground) 12%, transparent);
+  --card-shadow: 0 1px 2px rgb(26 23 64 / 6%), 0 14px 32px -20px rgb(76 107 255 / 40%);
+  --primary: var(--primary-blue);
+  --primary-pressed: #3248bb;
+  --primary-foreground: #fff;
+  --checkbox-stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8 3 3 5-6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --accent: color-mix(in srgb, var(--brand-blue) 15%, transparent);
+  --accent-foreground: #342b76;
+  --action: #4440ad;
+  --destructive: #bf2d24;
+  --destructive-foreground: #fff;
+  --destructive-soft: #fceae7;
+  --ring: #4b4bc5;
+  --surface-strong: #e6e5f5;
+  --success: #087658;
+  --success-soft: #e1f5ec;
+  --warning: #925900;
+  --warning-soft: #fff2cd;
+  --info: #3856a5;
+  --info-soft: #e8eeff;
   --coral: #d96a4f;
   --sage: #7e9b65;
   --sky: #79b9d1;
-  --lavender: #a58ac7;
-  --inverse-surface: #1c1c1a;
-  --inverse-text: #f5f2ea;
-  --inverse-action: #edc660;
-  --chart-1: #edb937;
-  --chart-2: #7e9b65;
-  --chart-3: #79b9d1;
-  --chart-4: #a58ac7;
-  --chart-5: #d96a4f;
-  --btn-cancel-bg: var(--secondary);
-  --btn-cancel-text: var(--secondary-foreground);
-  --btn-cancel-hover: var(--surface-strong);
+  --lavender: #a48de0;
+  --inverse-surface: #1a1740;
+  --inverse-text: #f4f1ff;
+  --inverse-action: #c1b4ff;
 }
 
 .dark {
   color-scheme: dark;
-  --background: #0d0a1f;
-  --foreground: #f5f2ea;
-  --card: #242420;
-  --card-foreground: #f5f2ea;
-  --popover: #242420;
-  --popover-foreground: #f5f2ea;
-  --primary: #edb937;
-  --primary-pressed: #d9a425;
-  --primary-foreground: #1c1c1a;
-  --secondary: #30302b;
-  --secondary-foreground: #f5f2ea;
-  --muted: #30302b;
-  --muted-foreground: #c8c4ba;
-  --accent: #494022;
-  --accent-foreground: #f8e7ad;
-  --action: #edc660;
-  --destructive: #ffb4a8;
-  --destructive-foreground: #1c1c1a;
-  --destructive-soft: #542c26;
-  --ring: #edc660;
-  --surface-strong: #3b3b34;
-  --divider: #41413a;
-  --text-tertiary: #b5b1a6;
-  --success: #add08e;
-  --success-soft: #2c3e25;
-  --warning: #f0ca6b;
-  --warning-soft: #494022;
-  --info: #a1d6e9;
-  --info-soft: #253f49;
+  --brand: #8fa2ff;
+  --primary-fill: var(--primary);
+  --background: var(--dark-background);
+  --foreground: var(--dark-foreground);
+  --card: var(--dark-card);
+  --muted: #231e45;
+  --muted-foreground: #a49ec4;
+  --chip: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --divider: color-mix(in srgb, var(--foreground) 14%, transparent);
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 14px 32px -22px rgb(0 0 0 / 80%);
+  --primary: var(--foreground);
+  --primary-pressed: #dcd5ff;
+  --primary-foreground: var(--background);
+  --checkbox-stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8 3 3 5-6' fill='none' stroke='%230d0a1f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --accent-foreground: #e5dcff;
+  --action: #c1b4ff;
+  --destructive: #ff7a6b;
+  --destructive-foreground: var(--background);
+  --destructive-soft: #492638;
+  --ring: #b6a6ff;
+  --surface-strong: #342c5d;
+  --success: #3ddca6;
+  --success-soft: #193c39;
+  --warning: var(--brand-gold);
+  --warning-soft: #3c3129;
+  --info: #adc3ff;
+  --info-soft: #263054;
   --coral: #e88b73;
   --sage: #9bb681;
   --sky: #95cde1;
-  --lavender: #bda5d9;
-  --inverse-surface: #f5f2ea;
-  --inverse-text: #1c1c1a;
-  --inverse-action: #745200;
-  --chart-1: #edb937;
-  --chart-2: #9bb681;
-  --chart-3: #95cde1;
-  --chart-4: #bda5d9;
-  --chart-5: #e88b73;
+  --lavender: #bd9de5;
+  --inverse-surface: #f4f1ff;
+  --inverse-text: #1a1740;
+  --inverse-action: #4440ad;
+}
+
+/* Resolve aliases in both modes so descendants pick up the active palette. */
+:root, .dark {
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+  --text-tertiary: var(--muted-foreground);
   --btn-cancel-bg: var(--secondary);
   --btn-cancel-text: var(--secondary-foreground);
   --btn-cancel-hover: var(--surface-strong);
+  --chart-1: var(--brand);
+  --chart-2: var(--sage);
+  --chart-3: var(--sky);
+  --chart-4: var(--lavender);
+  --chart-5: var(--coral);
 }
 
 @theme {
+  --radius-control: 0.875rem;
+  --radius-card: 1.75rem;
+  --radius-hero: 2rem;
+  --text-caption: 0.75rem;
+  --text-section: 1.15rem;
+  --text-control: 0.9375rem;
+  --text-control--line-height: 1.2;
+  --breakpoint-compact: 37.5rem;
+  --breakpoint-sheet: 47.5625rem;
+
   --animate-dialog-in: dialog-in 200ms ease-out;
   --animate-gauge-ripple: gauge-ripple 6s ease-out infinite;
   --animate-fitness-ripple: fitness-ripple 6s ease-out infinite;
@@ -226,14 +276,14 @@
 
 @utility dialog-fields {
   & :is(input, select, textarea):not(:where([type="checkbox"], [type="radio"], [type="hidden"], [type="file"], .sr-only)) {
-    @apply min-h-12 rounded-[14px] border-[1.5px] border-divider bg-transparent text-foreground;
+    @apply min-h-12 rounded-control border-[1.5px] border-divider bg-transparent text-foreground;
   }
 }
 
 @layer components {
   /* Shared with the dashboard: soft corners and a solid themed surface, without an outline. */
   .pulse-card {
-    @apply min-w-0 rounded-[28px] bg-card;
+    @apply min-w-0 rounded-card bg-card;
   }
 
   .pulse-card[href]:focus-visible {
@@ -271,11 +321,17 @@
   }
 
   input[type="checkbox"]:checked {
-    background: var(--primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8 3 3 5-6' fill='none' stroke='%231c1c1a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% no-repeat;
+    background: var(--primary) var(--checkbox-stroke) center / contain no-repeat;
   }
 
   input[type="radio"]:checked {
     background-image: radial-gradient(circle, var(--primary-foreground) 32%, transparent 36%);
+  }
+
+  @media (forced-colors: active) {
+    input:is([type="checkbox"], [type="radio"]):checked {
+      background: revert;
+    }
   }
 
   input:is([type="checkbox"], [type="radio"]):disabled {

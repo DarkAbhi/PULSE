@@ -11,7 +11,7 @@ const spaceIconClass =
 const spaceLinkClass =
   "flex items-center gap-[clamp(10px,1.25cqi,18px)] min-h-37.5 p-[clamp(16px,2.2cqi,30px)] " +
   "rounded-[clamp(28px,4cqi,40px)] [background:linear-gradient(135deg,var(--tile-start),var(--tile-end))] text-white " +
-  "shadow-[0_20px_40px_-22px_var(--tile-start)] dark:shadow-[0_20px_40px_-24px_rgb(0_0_0_/_70%)] " +
+  "shadow-[0_20px_40px_-22px_var(--tile-start)] dark:shadow-(--dashboard-tile-shadow) " +
   "motion-safe:[transition:transform_200ms_ease] motion-safe:active:[transform:scale(.985)]";
 
 type SectionTileProps = {
@@ -75,7 +75,7 @@ export default function SectionTiles() {
         description="Vehicles, fuel & maintenance"
         icon={<CarFront strokeWidth={1.8} />}
         decor={<GarageGauge />}
-        className="[--tile-start:#2440e0] [--tile-end:#0f75b3]"
+        className="[--tile-start:var(--dashboard-garage-start)] [--tile-end:var(--dashboard-garage-end)]"
       />
       <SectionTile
         href="/meal-plan"
@@ -83,7 +83,7 @@ export default function SectionTiles() {
         description="Plan your week and track meals eaten"
         icon={<Utensils strokeWidth={1.8} />}
         decor={<MealPlanWeekStrip />}
-        className="[--tile-start:#c91a8e] [--tile-end:#cf3c36]"
+        className="[--tile-start:var(--dashboard-meal-start)] [--tile-end:var(--dashboard-meal-end)]"
       />
     </nav>
   );

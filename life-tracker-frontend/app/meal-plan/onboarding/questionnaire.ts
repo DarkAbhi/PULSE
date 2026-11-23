@@ -1,4 +1,4 @@
-import type { MealKind, MealPreferences, OnboardingState } from "./types";
+import type { MealKind, MealPreferences, OnboardingState } from "@/app/meal-plan/onboarding/types";
 
 export const goals = [
   ["feel_satisfied", "Feel full and satisfied"],

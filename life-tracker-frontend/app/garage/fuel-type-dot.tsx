@@ -3,7 +3,7 @@ export default function FuelTypeDot({ fuel }: { fuel: string }) {
     <span
       aria-hidden="true"
       data-fuel={fuel}
-      className="size-[0.55rem] flex-none rounded-full bg-[#9086ab] data-[fuel=petrol]:bg-[#ff8c42] data-[fuel=diesel]:bg-[#526bff] data-[fuel=cng]:bg-[#38b38e] data-[fuel=lpg]:bg-[#aa6ee5] data-[fuel=electric]:bg-[#36b4db]"
+      className="size-2 flex-none rounded-full bg-garage-fuel-other data-[fuel=petrol]:bg-garage-fuel-petrol data-[fuel=diesel]:bg-garage-fuel-diesel data-[fuel=cng]:bg-garage-fuel-cng data-[fuel=lpg]:bg-garage-fuel-lpg data-[fuel=electric]:bg-garage-fuel-electric"
     />
   );
 }

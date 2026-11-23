@@ -12,8 +12,13 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
+import HorizonSegments from "@/app/financial-horizon/components/HorizonSegments";
+import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
 import Button from "@/app/components/design-system/button";
-import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
+import SectionHeader from "@/app/financial-horizon/components/SectionHeader";
+import HorizonTag from "@/app/financial-horizon/components/HorizonTag";
+import HorizonEmpty from "@/app/financial-horizon/components/HorizonEmpty";
+import HorizonIconTile from "@/app/financial-horizon/components/HorizonIconTile";
 
 import { HorizonSummary, TransactionItem, CategoryItem } from "@/app/dashboard/financial-horizon-card";
 import type { TransactionPage } from "@/app/financial-horizon/actions";
@@ -39,6 +44,12 @@ interface TransactionsTabProps {
   txCategoryFilter: number | null;
   onTxCategoryFilterChange: (v: number | null) => void;
 }
+
+const transactionTypes = [
+  { value: "all", label: "All Types" },
+  { value: "debit", label: "Debit" },
+  { value: "credit", label: "Credit" },
+] as const;
 
 export default function TransactionsTab({
   summary,
@@ -66,65 +77,40 @@ export default function TransactionsTab({
   return (
     <section className="space-y-6">
       {/* Header Bar */}
-      <div className={theme.sectionHeader}>
-        <div>
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Icon name="receipt" aria-hidden="true" className={`size-6 ${theme.sectionIcon}`} />
-            <h2 className={theme.sectionTitle}>Transaction History</h2>
-          </div>
-        </div>
-
+      <SectionHeader title="Transaction History" icon="receipt">
         <div className="flex flex-wrap items-center gap-2">
           {onOpenStatementUpload && (
-            <Button variant="soft" size="sm"
-              className={theme.softAction}
+            <HorizonAction variant="chip"
               onClick={onOpenStatementUpload}
               disabled={isPending}
             >
-              <Icon name="upload" className="h-3.5 w-3.5" /> Import Statement
-            </Button>
+              <Icon name="upload" /> Import Statement
+            </HorizonAction>
           )}
-          <Button variant="secondary" size="sm"
-            className={theme.softAction}
+          <HorizonAction variant="chip"
             onClick={onOpenAddCategory}
             disabled={isPending}
           >
-            <Icon name="tag" className="h-3.5 w-3.5 text-muted-foreground" /> Add Category
-          </Button>
-          <Button variant="primary" size="sm"
-            className={theme.primary}
+            <Icon name="tag" className="text-muted-foreground" /> Add Category
+          </HorizonAction>
+          <HorizonAction
             onClick={onOpenAddTransaction}
             disabled={isPending}
           >
-            <Icon name="plus" className="h-4 w-4" /> Add Transaction
-          </Button>
+            <Icon name="plus" /> Add Transaction
+          </HorizonAction>
         </div>
-      </div>
+      </SectionHeader>
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 flex-wrap">
-          {/* Transaction Type Filter Segment */}
-          <div role="group" aria-label="Transaction type" className="inline-flex items-center gap-0.5 rounded-full bg-(--horizon-chip) p-1">
-            <Button variant={txTypeFilter === "all" ? "primary" : "secondary"} size="sm" className={theme.segment}
-              aria-pressed={txTypeFilter === "all"}
-              onClick={() => onTxTypeFilterChange("all")}
-            >
-              All Types
-            </Button>
-            <Button variant={txTypeFilter === "debit" ? "primary" : "secondary"} size="sm" className={theme.segment}
-              aria-pressed={txTypeFilter === "debit"}
-              onClick={() => onTxTypeFilterChange("debit")}
-            >
-              Debit
-            </Button>
-            <Button variant={txTypeFilter === "credit" ? "primary" : "secondary"} size="sm" className={theme.segment}
-              aria-pressed={txTypeFilter === "credit"}
-              onClick={() => onTxTypeFilterChange("credit")}
-            >
-              Credit
-            </Button>
-          </div>
+          <HorizonSegments
+            label="Transaction type"
+            options={transactionTypes}
+            value={txTypeFilter}
+            onChange={onTxTypeFilterChange}
+          />
 
           <HorizonSelect className="sm:max-w-xs" aria-label="Filter by category"
             value={txCategoryFilter ?? ""}
@@ -145,7 +131,7 @@ export default function TransactionsTab({
 
       {/* Transactions List */}
       {transactions.length === 0 ? (
-        <PulseCard className={`${theme.empty} text-center`}>
+        <HorizonEmpty>
           <Icon name="receipt" className="mx-auto h-10 w-10 text-muted-foreground opacity-50" />
           <h3 className="mt-3 text-base font-semibold text-foreground">
             {hasFilters ? "No matching transactions found" : "No transactions recorded yet"}
@@ -156,14 +142,14 @@ export default function TransactionsTab({
               : "Log a transaction to start tracking your spending."}
           </p>
           {!hasFilters && (
-            <Button variant="primary" size="md"
+            <HorizonAction
               onClick={onOpenAddTransaction}
-              className={`${theme.primary} mt-4`}
+              className="mt-4"
             >
-              <Icon name="plus" className="h-4 w-4" /> Log First Transaction
-            </Button>
+              <Icon name="plus" /> Log First Transaction
+            </HorizonAction>
           )}
-        </PulseCard>
+        </HorizonEmpty>
       ) : (
         <div className="space-y-3">
           {transactions.map((tx) => {
@@ -183,30 +169,27 @@ export default function TransactionsTab({
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-6"
               >
                 <div className="flex items-start gap-3.5 min-w-0">
-                  <div className={theme.iconTile}>
+                  <HorizonIconTile>
                     <Icon name="receipt" aria-hidden="true" className="size-5" />
-                  </div>
+                  </HorizonIconTile>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="font-bold text-foreground text-base truncate">{tx.name}</h4>
                       {tx.category_name && (
-                        <span className={theme.chip} data-tone="dim">
+                        <HorizonTag tone="dim">
                           {matchingCat?.color && (
                             <span aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ backgroundColor: matchingCat.color }} />
                           )}
                           {tx.category_name}
-                        </span>
+                        </HorizonTag>
                       )}
-                      <span
-                        className={theme.chip}
-                        data-tone={isCredit ? "good" : "bad"}
-                      >
+                      <HorizonTag tone={isCredit ? "good" : "bad"}>
                         {isCredit ? "Credit" : "Debit"}
-                      </span>
+                      </HorizonTag>
                       {tx.budget_name && (
-                        <span className={theme.chip}>
+                        <HorizonTag>
                           <Icon name="wallet" className="h-3 w-3" /> {tx.budget_name}
-                        </span>
+                        </HorizonTag>
                       )}
                     </div>
 
@@ -229,19 +212,17 @@ export default function TransactionsTab({
                     {isCredit ? "+" : "-"}{formatMoney(tx.amount, summary.currency)}
                   </span>
                   <div className="flex items-center gap-1">
-                    <Button variant="icon"
-                      className={theme.iconAction}
+                    <Button variant="iconChip" size="lg" shape="pill"
                       onClick={() => onOpenEditTransaction(tx)}
                       title="Edit transaction"
                     >
-                      <Icon name="edit" className="h-4 w-4" />
+                      <Icon name="edit" className="size-5" />
                     </Button>
-                    <Button variant="iconDanger"
-                      className={theme.dangerIcon}
+                    <Button variant="iconChipDanger" size="lg" shape="pill"
                       onClick={() => onConfirmDeleteTransaction(tx)}
                       title="Delete transaction"
                     >
-                      <Icon name="trash" className="h-4 w-4" />
+                      <Icon name="trash" className="size-5" />
                     </Button>
                   </div>
                 </div>
@@ -261,8 +242,7 @@ export default function TransactionsTab({
               </HorizonSelect>
               <nav className="flex flex-wrap items-center justify-center gap-2" aria-label="Transaction pages">
                 {Array.from({ length: transactionPage.total_pages }, (_, index) => index + 1).map((page) => (
-                <Button variant={page === transactionPage.page ? "primary" : "secondary"} size="sm"
-                  className={page === transactionPage.page ? theme.primary : theme.softAction}
+                <HorizonAction variant={page === transactionPage.page ? "gradient" : "chip"}
                   key={page}
                   type="button"
                   onClick={() => onPageChange(page)}
@@ -270,7 +250,7 @@ export default function TransactionsTab({
                   aria-current={page === transactionPage.page ? "page" : undefined}
                 >
                   {page}
-                </Button>
+                </HorizonAction>
                 ))}
               </nav>
             </div>

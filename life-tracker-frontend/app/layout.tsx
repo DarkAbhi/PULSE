@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import "./globals.css";
-import CurrencyProvider from "./components/currency-provider";
-import { getUserCurrency } from "./lib/user-currency";
-import TimeZoneProvider from "./components/time-zone-provider";
-import { getUserTimeZone } from "./lib/user-time-zone";
+import "@/app/globals.css";
+import CurrencyProvider from "@/app/components/currency-provider";
+import { getUserCurrency } from "@/app/lib/user-currency";
+import TimeZoneProvider from "@/app/components/time-zone-provider";
+import { getUserTimeZone } from "@/app/lib/user-time-zone";
 
 const bricolageGrotesque = Bricolage_Grotesque({
   variable: "--font-bricolage-grotesque",

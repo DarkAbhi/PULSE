@@ -3,8 +3,7 @@
 import { createContext, ReactNode, useContext, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import Button, { type ButtonProps } from "@/app/components/design-system/button";
-import { horizonPalette } from "@/app/components/design-system/horizon-palette";
+import Button, { type ButtonProps, type ButtonVariant } from "@/app/components/design-system/button";
 
 let openDialogs = 0;
 let previousBodyOverflow = "";
@@ -69,18 +68,18 @@ export default function Dialog({
     <div
       aria-labelledby={labelledBy}
       aria-modal="true"
-      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-[#0d0a1f]/55 p-3 backdrop-blur-[4px] max-[761px]:p-0"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-scrim/55 backdrop-blur-xs sheet:p-3"
       role="dialog"
     >
       <div
-        className="flex min-h-full items-center justify-center max-[761px]:items-end"
+        className="flex min-h-full items-end justify-center sheet:items-center"
         onClick={event => {
           onBackdropClick?.(event);
           if (event.target === event.currentTarget && !event.defaultPrevented) onDismiss?.();
         }}
       >
         <section
-          className={`${horizonPalette} dialog-fields relative flex max-h-[calc(100dvh-24px)] w-full ${widths[size]} flex-col overflow-hidden rounded-[32px] bg-card p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-[0_30px_80px_-20px_rgb(0_0_0/55%)] motion-safe:animate-dialog-in max-[761px]:min-w-full max-[761px]:rounded-t-[28px] max-[761px]:rounded-b-none ${panelClassName}`}
+          className={`dialog-fields relative flex max-h-[calc(100dvh-1.5rem)] w-full ${widths[size]} flex-col overflow-hidden rounded-t-card bg-card p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] text-card-foreground shadow-dialog motion-safe:animate-dialog-in max-sheet:min-w-full sheet:rounded-hero ${panelClassName}`}
         >
           <DialogFooterContext.Provider value={footer}>
             <div
@@ -130,11 +129,13 @@ export function DialogHeader({
         <Button
           aria-label={closeLabel}
           autoFocus={closeAutoFocus}
-          className="size-11! shrink-0 rounded-full! enabled:hover:bg-(--horizon-chip)! motion-reduce:transition-none"
+          className="shrink-0"
           disabled={closeDisabled}
           onClick={onClose}
           type="button"
-          variant="icon"
+          shape="pill"
+          size="lg"
+          variant="iconChip"
         >
           <X className="size-5" aria-hidden="true" />
         </Button>
@@ -170,25 +171,27 @@ export function DialogActions({ children, className = "" }: { children: ReactNod
   return footer && ready ? createPortal(actions, footer) : actions;
 }
 
-type DialogActionProps = ButtonProps & {
+type DialogActionProps = Omit<ButtonProps, "variant"> & {
   variant?: "primary" | "secondary" | "destructive";
 };
 
-const actionVariants: Record<NonNullable<DialogActionProps["variant"]>, string> = {
-  primary: "[background:var(--horizon-button)]! enabled:hover:brightness-[0.93]",
-  secondary: "border-[1.5px] border-divider bg-transparent! enabled:hover:bg-(--horizon-chip)!",
-  destructive: "bg-destructive! text-destructive-foreground! enabled:hover:brightness-[0.93]",
+const actionVariants: Record<NonNullable<DialogActionProps["variant"]>, ButtonVariant> = {
+  primary: "gradient",
+  secondary: "outline",
+  destructive: "filledDanger",
 };
 
 export function DialogAction({ className = "", variant = "primary", ...props }: DialogActionProps) {
   const formId = useContext(DialogFormContext);
   return (
     <Button
-      className={`min-h-[50px]! rounded-full! px-3.5! py-2! text-[0.95rem]! leading-[1.2]! font-bold! wrap-anywhere motion-safe:enabled:active:scale-[0.96] motion-reduce:transition-none ${actionVariants[variant]} ${className}`}
+      className={`wrap-anywhere motion-safe:enabled:active:scale-95 ${className}`}
       data-variant={variant}
-      size="lg"
-      variant={variant}
       {...props}
+      size="touch"
+      shape="pill"
+      labelStyle="strong"
+      variant={actionVariants[variant]}
       form={props.form ?? (props.type !== "button" && props.type !== "reset" ? formId : undefined)}
       type={props.type ?? "submit"}
     />

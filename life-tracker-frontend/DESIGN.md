@@ -1,67 +1,70 @@
 ---
 version: alpha
 name: Pulse
-description: A warm, data-first web design system for fitness, meals, finances, and vehicle care.
+description: A data-first web design system for fitness, meals, finances, and vehicle care.
 colors:
   background: "#F6F7FF"
-  on-background: "#1C1C1A"
-  surface: "#FFFDF8"
-  on-surface: "#1C1C1A"
-  on-surface-variant: "#605D56"
-  surface-container: "#EAE7DF"
-  surface-container-high: "#DEDAD1"
-  outline-variant: "#E5E1D9"
-  inverse-surface: "#1C1C1A"
-  inverse-on-surface: "#F5F2EA"
-  primary: "#EDB937"
-  on-primary: "#1C1C1A"
-  primary-hover: "#D9A425"
-  primary-container: "#F8E7AD"
-  on-primary-container: "#3B3015"
-  action: "#745200"
-  secondary: "#EAE7DF"
-  on-secondary: "#1C1C1A"
-  secondary-hover: "#DEDAD1"
-  error: "#AB3028"
-  error-container: "#FBE2DB"
-  success: "#3E642F"
-  success-container: "#E3EDD9"
-  warning: "#795200"
-  warning-container: "#F8E7AD"
-  info: "#285C70"
-  info-container: "#E0EFF4"
+  on-background: "#1A1740"
+  surface: "#FFFFFF"
+  on-surface: "#1A1740"
+  on-surface-variant: "#5E5A7D"
+  surface-container: "#F1F2FB"
+  surface-container-high: "#E6E5F5"
+  outline-variant: "rgb(26 23 64 / 12%)"
+  inverse-surface: "#1A1740"
+  inverse-on-surface: "#F4F1FF"
+  primary: "#415FE8"
+  on-primary: "#FFFFFF"
+  primary-hover: "#3248BB"
+  primary-container: "rgb(76 107 255 / 15%)"
+  on-primary-container: "#342B76"
+  action: "#4440AD"
+  secondary: "#F1F2FB"
+  on-secondary: "#1A1740"
+  secondary-hover: "#E6E5F5"
+  error: "#BF2D24"
+  error-container: "#FCEAE7"
+  success: "#087658"
+  success-container: "#E1F5EC"
+  warning: "#925900"
+  warning-container: "#FFF2CD"
+  info: "#3856A5"
+  info-container: "#E8EEFF"
   horizon:
-    surface: "#FFE58C"
-    on-surface: "#20211B"
+    surface: "#FFE08A"
+    on-surface: "#3A2A00"
   brand:
     cyan: "#19D3F3"
     blue: "#4C6BFF"
     magenta: "#FF2FD0"
   dark:
     background: "#0D0A1F"
-    on-background: "#F5F2EA"
-    surface: "#242420"
-    on-surface: "#F5F2EA"
-    on-surface-variant: "#C8C4BA"
-    surface-container: "#30302B"
-    surface-container-high: "#3B3B34"
-    outline-variant: "#41413A"
-    inverse-surface: "#F5F2EA"
-    inverse-on-surface: "#1C1C1A"
-    primary-container: "#494022"
-    on-primary-container: "#F8E7AD"
-    action: "#EDC660"
-    secondary: "#30302B"
-    on-secondary: "#F5F2EA"
-    secondary-hover: "#3B3B34"
-    error: "#FFB4A8"
-    error-container: "#542C26"
-    success: "#ADD08E"
-    success-container: "#2C3E25"
-    warning: "#F0CA6B"
-    warning-container: "#494022"
-    info: "#A1D6E9"
-    info-container: "#253F49"
+    on-background: "#F4F1FF"
+    surface: "#1A1636"
+    on-surface: "#F4F1FF"
+    on-surface-variant: "#A49EC4"
+    surface-container: "#231E45"
+    surface-container-high: "#342C5D"
+    outline-variant: "rgb(244 241 255 / 14%)"
+    inverse-surface: "#F4F1FF"
+    inverse-on-surface: "#1A1740"
+    primary: "#F4F1FF"
+    on-primary: "#0D0A1F"
+    primary-hover: "#DCD5FF"
+    primary-container: "rgb(76 107 255 / 15%)"
+    on-primary-container: "#E5DCFF"
+    action: "#C1B4FF"
+    secondary: "#231E45"
+    on-secondary: "#F4F1FF"
+    secondary-hover: "#342C5D"
+    error: "#FF7A6B"
+    error-container: "#492638"
+    success: "#3DDCA6"
+    success-container: "#193C39"
+    warning: "#FFC83D"
+    warning-container: "#3C3129"
+    info: "#ADC3FF"
+    info-container: "#263054"
 typography:
   display:
     fontFamily: Bricolage Grotesque
@@ -126,6 +129,7 @@ rounded:
   DEFAULT: 8px
   lg: 8px
   xl: 12px
+  control: 14px
   card: 28px
   hero: 32px
   full: 999px
@@ -208,9 +212,9 @@ components:
     rounded: "{rounded.xl}"
     padding: "{spacing.base}"
   list-item-vehicle-hover:
-    backgroundColor: "color-mix(in oklab, #EAE7DF 60%, transparent)"
+    backgroundColor: "color-mix(in oklab, #F1F2FB 60%, transparent)"
   list-item-vehicle-dark-hover:
-    backgroundColor: "color-mix(in oklab, #30302B 60%, transparent)"
+    backgroundColor: "color-mix(in oklab, #231E45 60%, transparent)"
 ---
 
 ## Brand & Style
@@ -221,13 +225,13 @@ Pulse is a personal-data hub for fitness, meals, finances, and vehicle care. Its
 
 **Mission.** Make everyday activity easy to record, useful to review over time, and clear enough to act on.
 
-Warm paper and charcoal surfaces, mustard actions, and softly rounded cards give everyday screens a calm, practical feel. The [Pulse mark](public/pulse-logo.png) uses connected nodes and angular strokes in a cyan-to-magenta gradient. The dashboard greeting echoes that gradient in its artwork. Keep the mark at its native proportions with clear space around it.
+Cool neutral surfaces, indigo actions and softly rounded cards give the feature screens a consistent base. The [Pulse mark](public/pulse-logo.png) uses connected nodes and angular strokes in a cyan-to-magenta gradient. The dashboard greeting echoes that gradient in its artwork. Keep the mark at its native proportions with clear space around it.
 
 ## Colors
 
-Mustard fills the primary action and checked controls. Pair it with dark ink in both modes. Use the mode’s `action` color for text links and unfilled actions. Keyboard focus uses the same value through `--ring`.
+Primary actions and checked controls use indigo with white text in light mode and a pale fill with dark text in dark mode. Use `text-action` for unfilled actions and `outline-ring` for keyboard focus.
 
-Use `background` for the canvas, `surface` for content cards, and `surface-container` for input fills. Use `on-surface` for key text and `on-surface-variant` for captions and metadata. Light-mode roles sit at the top level of `colors`. The `dark` group overrides the roles that change with appearance. Use the semantic CSS variables in `@app/globals.css` so Light, Dark, and System preferences apply across features. The brand colors describe the existing dashboard artwork in `@app/dashboard/dashboard.css`.
+Use `background` for the canvas, `surface` for content cards, and `surface-container` for input fills. Use `on-surface` for key text and `on-surface-variant` for captions and metadata. Light-mode roles sit at the top level of `colors`. The `dark` group overrides the roles that change with appearance. Use the semantic CSS variables in `@app/globals.css` so Light, Dark, and System preferences apply across features. Feature theme stylesheets define named tones for hero artwork, charts and feature-specific states. Reference the shared brand tokens when an illustration uses those colors.
 
 Pair status text with its corresponding soft background and a readable label such as “Service overdue.” Give chart series a legend or direct labels.
 
@@ -254,7 +258,7 @@ Separate the canvas, cards, and controls with tonal fills. Shared cards have a s
 
 ## Shapes
 
-Standard buttons use an 8px radius. Shared cards use 28px corners, and the dashboard greeting uses 32px. Keep repeated controls and cards consistent within a screen.
+Standard buttons use an 8px radius. The shared control radius is 14px, cards use 28px and hero surfaces use 32px. Keep repeated controls and cards consistent within a screen.
 
 ## Motion & Micro-interaction
 
@@ -272,13 +276,13 @@ Apply the account’s currency and time zone when formatting values. Preserve ca
 
 ### Buttons & Inputs
 
-- **Buttons.** Use the shared variants in `@app/components/design-system/button.tsx`. Give the main action the mustard fill, use the neutral secondary variant for alternatives, and use the destructive variant for destructive actions. The standard medium button has a 40px minimum height and 8px vertical and 16px horizontal padding.
+- **Buttons.** Use the shared variants in `@app/components/design-system/button.tsx`. Use the primary fill for routine actions, the gradient variant for prominent actions, and the secondary or outline variant for alternatives. Pass the shared size and shape props for pill and icon controls. The standard medium button has a 40px minimum height and 8px vertical and 16px horizontal padding.
 - **Fields.** Keep labels visible and show errors by their field. The fuel form provides the reference treatment for `input-field` in `@app/components/fuel-form.tsx`. Use shared controls such as `@app/components/design-system/select.tsx` for choices.
 
 ### Cards & Elevation
 
 - **Cards.** Use `PulseCard` for content and `PulseCardLink` for cards that navigate. Set spacing and layout at the caller. Both share the surface treatment in `@app/components/design-system/pulse-card.tsx`.
-- **Financial Horizon.** The dashboard summary uses `card-horizon` with a warm yellow fill and 24px padding in both modes. See `@app/dashboard/dashboard.css`.
+- **Financial Horizon.** The dashboard summary uses `card-horizon` with a warm yellow fill and 24px padding in both modes. Its fill is defined in `@app/financial-horizon/financial-theme.css` and shared with the pool summary.
 
 ### Lists & Navigation
 

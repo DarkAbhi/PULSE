@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
+import { Icon, type IconName } from "@/app/financial-horizon/components/HorizonIcon";
 import { HorizonSearch, HorizonSelect } from "@/app/financial-horizon/components/HorizonFilters";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
@@ -10,10 +10,13 @@ import { formatInstant, formatCalendarDate, dateKey, calendarDayNumber } from "@
 
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
+import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
 import Button from "@/app/components/design-system/button";
-import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
+import SectionHeader from "@/app/financial-horizon/components/SectionHeader";
+import HorizonTag from "@/app/financial-horizon/components/HorizonTag";
+import HorizonEmpty from "@/app/financial-horizon/components/HorizonEmpty";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import { CheckCircle2, PauseCircle, XCircle } from "lucide-react";
 import {
   SubscriptionItem,
@@ -112,21 +115,21 @@ export default function SubscriptionsTab({
     switch (status) {
       case "active":
         return (
-          <span className={theme.chip} data-tone="good">
+          <HorizonTag tone="good">
             <CheckCircle2 className="h-3 w-3" /> Active
-          </span>
+          </HorizonTag>
         );
       case "paused":
         return (
-          <span className={theme.chip} data-tone="warn">
+          <HorizonTag tone="warn">
             <PauseCircle className="h-3 w-3" /> Paused
-          </span>
+          </HorizonTag>
         );
       case "cancelled":
         return (
-          <span className={theme.chip} data-tone="dim">
+          <HorizonTag tone="dim">
             <XCircle className="h-3 w-3" /> Cancelled
-          </span>
+          </HorizonTag>
         );
       default:
         return null;
@@ -136,104 +139,49 @@ export default function SubscriptionsTab({
   const getCycleBadge = (cycle: string) => {
     if (cycle === "yearly") {
       return (
-        <span className={theme.chip}>
+        <HorizonTag>
           Yearly
-        </span>
+        </HorizonTag>
       );
     }
     return (
-      <span className={theme.chip}>
+      <HorizonTag>
         Monthly
-      </span>
+      </HorizonTag>
     );
   };
 
   return (
     <section aria-labelledby="subscriptions-heading" className="space-y-6">
-      <header className={theme.sectionHeader}>
-        <h2 id="subscriptions-heading" className={`flex items-center gap-2.5 ${theme.sectionTitle}`}>
-          <Icon name="card" className={`size-6 ${theme.sectionIcon}`} /> Subscriptions
-        </h2>
-      </header>
-      {/* 1. Header Metrics Grid */}
+      <SectionHeader id="subscriptions-heading" title="Subscriptions" icon="card" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Metric 1: Monthly Burn Rate */}
-        <PulseCard className="relative overflow-hidden p-6">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-              Monthly Subscription Burn
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-lavender/10 text-foreground">
-              <Icon name="flame" className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-2xl font-black text-foreground">
-              {formatMoney(totalMonthlyBurn, currency)}
-            </span>
-            <span className="text-xs text-muted-foreground ml-1">/ month</span>
-          </div>
+        <SubscriptionMetric title="Monthly Subscription Burn" icon="flame">
+          <MetricAmount value={formatMoney(totalMonthlyBurn, currency)} unit="/ month" />
           <p className="mt-1 text-xs text-muted-foreground">
             Normalized cost across all active subscriptions
           </p>
-        </PulseCard>
+        </SubscriptionMetric>
 
-        {/* Metric 2: Annual Outlay */}
-        <PulseCard className="relative overflow-hidden p-6">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-              Annual Outlay
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-lavender/10 text-foreground">
-              <Icon name="trend" className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <span className="text-2xl font-black text-foreground">
-              {formatMoney(totalYearlyOutlay, currency)}
-            </span>
-            <span className="text-xs text-muted-foreground ml-1">/ year</span>
-          </div>
+        <SubscriptionMetric title="Annual Outlay" icon="trend">
+          <MetricAmount value={formatMoney(totalYearlyOutlay, currency)} unit="/ year" />
           <p className="mt-1 text-xs text-muted-foreground">
             Total projected yearly commitment
           </p>
-        </PulseCard>
+        </SubscriptionMetric>
 
-        {/* Metric 3: Active Subscriptions */}
-        <PulseCard className="relative overflow-hidden p-6">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-              Active Subscriptions
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/10 text-success">
-              <Icon name="card" className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-foreground">
-              {activeSubs.length}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              active ({subscriptions.length} total)
-            </span>
+        <SubscriptionMetric title="Active Subscriptions" icon="card" tone="success">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-foreground">{activeSubs.length}</span>
+            <span className="text-xs text-muted-foreground">active ({subscriptions.length} total)</span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             {subscriptions.length - activeSubs.length} paused or cancelled
           </p>
-        </PulseCard>
+        </SubscriptionMetric>
 
-        {/* Metric 4: Next Renewal */}
-        <PulseCard className="relative overflow-hidden p-6">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-              Next Upcoming Renewal
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10 text-warning">
-              <Icon name="calendar" className="h-5 w-5" />
-            </div>
-          </div>
+        <SubscriptionMetric title="Next Upcoming Renewal" icon="calendar" tone="warning">
           {nearestRenewal ? (
-            <div className="mt-3">
+            <div>
               <div className="flex items-center justify-between">
                 <span className="truncate font-bold text-foreground max-w-[140px]">
                   {nearestRenewal.name}
@@ -249,13 +197,13 @@ export default function SubscriptionsTab({
               </p>
             </div>
           ) : (
-            <div className="mt-3">
+            <div>
               <span className="text-sm font-semibold text-muted-foreground">
                 No active renewals
               </span>
             </div>
           )}
-        </PulseCard>
+        </SubscriptionMetric>
       </div>
 
       {/* 2. Control & Search Bar */}
@@ -291,18 +239,17 @@ export default function SubscriptionsTab({
           </HorizonSelect>
 
           {/* Add Subscription Button */}
-          <Button variant="primary" size="sm"
-            className={theme.primary}
+          <HorizonAction
             onClick={onAddSubscription}
           >
-            <Icon name="plus" className="h-4 w-4" /> Add Subscription
-          </Button>
+            <Icon name="plus" /> Add Subscription
+          </HorizonAction>
         </div>
       </div>
 
       {/* 3. Subscriptions Grid */}
       {filteredSubscriptions.length === 0 ? (
-        <PulseCard className={`${theme.empty} flex flex-col items-center justify-center text-center`}>
+        <HorizonEmpty className="flex flex-col items-center justify-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary text-muted-foreground mb-3">
             <Icon name="card" className="h-6 w-6" />
           </div>
@@ -315,14 +262,14 @@ export default function SubscriptionsTab({
               : "Keep track of your recurring monthly, yearly, and software subscriptions in one place."}
           </p>
           {!searchQuery && cycleFilter === "all" && statusFilter === "all" && (
-            <Button variant="primary" size="sm"
+            <HorizonAction
               onClick={onAddSubscription}
-              className={`${theme.primary} mt-4`}
+              className="mt-4"
             >
-              <Icon name="plus" className="h-4 w-4" /> Add Your First Subscription
-            </Button>
+              <Icon name="plus" /> Add Your First Subscription
+            </HorizonAction>
           )}
-        </PulseCard>
+        </HorizonEmpty>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredSubscriptions.map((sub) => {
@@ -346,9 +293,9 @@ export default function SubscriptionsTab({
                         {getStatusBadge(sub.status)}
                         {getCycleBadge(sub.billing_cycle)}
                         {sub.category_name && (
-                          <span className={theme.chip} data-tone="dim">
+                          <HorizonTag tone="dim">
                             {sub.category_name}
-                          </span>
+                          </HorizonTag>
                         )}
                       </div>
                     </div>
@@ -366,9 +313,9 @@ export default function SubscriptionsTab({
 
                   {/* Monthly Equivalent if yearly */}
                   {sub.billing_cycle !== "monthly" && sub.status === "active" && (
-                    <div className={`mt-2 ${theme.chip}`} data-tone="dim">
+                    <HorizonTag tone="dim" className="mt-2">
                       ≈ {formatMoney(sub.monthly_equivalent_amount, currency)}/mo equivalent
-                    </div>
+                    </HorizonTag>
                   )}
 
                   {/* Details: Start Date & Renewal */}
@@ -453,21 +400,19 @@ export default function SubscriptionsTab({
                     </Button>
 
                     {/* Edit Button */}
-                    <Button variant="icon"
-                      className={theme.iconAction}
+                    <Button variant="iconChip" size="lg" shape="pill"
                       onClick={() => onEditSubscription(sub)}
                       title="Edit Subscription"
                     >
-                      <Icon name="edit" className="h-3.5 w-3.5" />
+                      <Icon name="edit" className="size-5" />
                     </Button>
 
                     {/* Delete Button */}
-                    <Button variant="iconDanger" size="sm"
-                      className={theme.dangerIcon}
+                    <Button variant="iconChipDanger" size="lg" shape="pill"
                       onClick={() => onDeleteSubscription(sub)}
                       title="Delete Subscription"
                     >
-                      <Icon name="trash" className="h-3.5 w-3.5" />
+                      <Icon name="trash" className="size-5" />
                     </Button>
                   </div>
                 </div>
@@ -477,5 +422,44 @@ export default function SubscriptionsTab({
         </div>
       )}
     </section>
+  );
+}
+
+const metricIconTones = {
+  neutral: "bg-lavender/10 text-foreground",
+  success: "bg-success/10 text-success",
+  warning: "bg-warning/10 text-warning",
+};
+
+function SubscriptionMetric({
+  title,
+  icon,
+  tone = "neutral",
+  children,
+}: {
+  title: string;
+  icon: IconName;
+  tone?: keyof typeof metricIconTones;
+  children: ReactNode;
+}) {
+  return (
+    <PulseCard className="relative overflow-hidden p-6">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">{title}</span>
+        <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${metricIconTones[tone]}`}>
+          <Icon name={icon} aria-hidden="true" className="size-5" />
+        </span>
+      </div>
+      <div className="mt-3">{children}</div>
+    </PulseCard>
+  );
+}
+
+function MetricAmount({ value, unit }: { value: string; unit: string }) {
+  return (
+    <div>
+      <span className="text-2xl font-black text-foreground">{value}</span>
+      <span className="ms-1 text-xs text-muted-foreground">{unit}</span>
+    </div>
   );
 }

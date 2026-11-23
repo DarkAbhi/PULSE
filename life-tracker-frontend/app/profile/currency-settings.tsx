@@ -3,8 +3,8 @@
 import { useCurrency } from "@/app/components/currency-provider";
 import { CircleDollarSign } from "lucide-react";
 import { CURRENCIES, currencyLabel, currencySymbol, formatMoney } from "@/app/lib/currency.mjs";
-import { saveCurrencyAction } from "./currency-actions";
-import PreferenceSettings from "./preference-settings";
+import { saveCurrencyAction } from "@/app/profile/currency-actions";
+import PreferenceSettings from "@/app/profile/preference-settings";
 
 export default function CurrencySettings() {
   const { currency, setCurrency } = useCurrency();

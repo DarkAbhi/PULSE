@@ -3,10 +3,11 @@
 import { useEffect, useId, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { Clock, Loader2, Plus, X } from "lucide-react";
+import Button from "@/app/components/design-system/button";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
-import { createMealTimeAction, deleteMealTimeAction, type MealTime } from "../actions";
-import { gradientClass, pillClass } from "./meal-preference-classes";
+import { createMealTimeAction, deleteMealTimeAction, type MealTime } from "@/app/meal-plan/actions";
+import { gradientClass, pillClass } from "@/app/meal-plan/onboarding/meal-preference-classes";
 
 export default function CustomMealTimes({ times, onCreated, onDeleted }: {
   times: MealTime[];
@@ -90,18 +91,18 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
 
   return <>
     {times.map(time => (
-      <span key={time.id} className={`${pillClass} border-transparent pr-0.5 pl-[18px] font-semibold wrap-anywhere ${gradientClass}`}>
+      <span key={time.id} className={`${pillClass} border-transparent pr-0.5 pl-4 font-semibold wrap-anywhere ${gradientClass}`}>
         <span>{time.name}</span>
-        <button className="grid h-10 w-11 shrink-0 place-items-center rounded-full" type="button" aria-label={`Delete ${time.name}`}
+        <Button variant="icon" shape="pill" className="shrink-0 [--foreground:white] [--muted-foreground:white] [--secondary:transparent]" type="button" aria-label={`Delete ${time.name}`}
           onClick={() => { setDeleteError(""); setMealTimeToDelete(time); }}>
-          <X className="size-[26px] rounded-full bg-white/22 p-1.5 stroke-3" aria-hidden="true" />
-        </button>
+          <X className="size-6 rounded-full bg-white/20 p-1 stroke-3" aria-hidden="true" />
+        </Button>
       </span>
     ))}
-    <button className={`${pillClass} gap-2 border-dashed border-(--meal-line) px-[18px] text-left font-bold text-(--meal-muted) hover:border-(--meal-selected) hover:text-(--meal-ink)`} type="button" onClick={handleOpenAddMealTime}>
-      <Plus className="size-4 shrink-0" aria-hidden="true" />
+    <Button variant="outline" size="lg" shape="pill" labelStyle="strong" className="max-w-full border-dashed text-left hover:border-(--meal-accent)" type="button"
+      onClick={handleOpenAddMealTime} icon={<Plus className="size-4 shrink-0" aria-hidden="true" />}>
       Add custom meal time
-    </button>
+    </Button>
       {/* New meal time dialog */}
       {isAddMealTimeOpen && createPortal(
         <Dialog

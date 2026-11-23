@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ComponentProps, HTMLAttributes } from "react";
 
 export interface PulseCardProps extends HTMLAttributes<HTMLElement> {
-  as?: "div" | "section" | "article" | "aside" | "li" | "p";
+  as?: "div" | "section" | "article" | "aside" | "fieldset" | "li" | "p";
 }
 
 /** Dashboard-style surface. Callers control padding and layout; the design system owns its shape. */

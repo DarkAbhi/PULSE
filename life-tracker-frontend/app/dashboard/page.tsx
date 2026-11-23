@@ -1,3 +1,4 @@
+import "@/app/dashboard/dashboard-theme.css";
 import { apiFetch } from "@/app/lib/server-api";
 import { frame } from "@/app/components/design-system/page-frame";
 import { redirect } from "next/navigation";
@@ -84,7 +85,7 @@ export default async function DashboardPage() {
       <div className={`grid gap-6 ${frame.content}`}>
         <GreetingHeader username={username} displayName={displayName}>
           <NotificationDropdown initialNotifications={notifications} />
-          <Link className="inline-flex items-center justify-center w-11 h-11 rounded-full [background:transparent] text-inherit hover:[background:#ffffff26]" href="/profile" aria-label="Profile">
+          <Link className="inline-flex items-center justify-center size-11 rounded-full text-inherit hover:bg-white/15" href="/profile" aria-label="Profile">
             <UserRound className="h-5 w-5" />
           </Link>
         </GreetingHeader>

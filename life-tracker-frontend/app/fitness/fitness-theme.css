@@ -1,0 +1,21 @@
+:root {
+  --fitness-muted: var(--muted-foreground);
+  --fitness-chip: #eeedf6;
+  --fitness-done: #e6ebff;
+  --fitness-dot: #3e58dc;
+  --fitness-today: #dc229f;
+  --fitness-shadow: 0 18px 40px -18px #4c6bff4d;
+  --fitness-hero: linear-gradient(135deg, #3a2cd9, var(--brand-purple-bright) 55%, #bd199d);
+  --fitness-hero-shadow: 0 22px 44px -24px #5b2ce0d9;
+  --fitness-gradient: linear-gradient(135deg, #3a2cd9, #a420bd);
+  --fitness-spotlight-shadow: 0 20px 40px -22px #5b2ce0d9;
+}
+
+.dark {
+  --fitness-muted: #b7b0d1;
+  --fitness-chip: #2b2749;
+  --fitness-done: #193953;
+  --fitness-dot: #6adaf7;
+  --fitness-today: #ff55d1;
+  --fitness-shadow: 0 18px 40px -18px #0008;
+}

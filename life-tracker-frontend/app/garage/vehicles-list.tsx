@@ -8,12 +8,12 @@ import Button from "@/app/components/design-system/button";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Bus, CarFront, CircleDot, Droplet, Motorbike, Scooter, Truck, Van } from "lucide-react";
+import { CircleDot, Droplet } from "lucide-react";
 import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import Dialog, { DialogHeader } from "@/app/components/design-system/dialog";
 import { markAirFillAction, saveFuelAction } from "@/app/garage/actions";
-import { garageStyles as styles } from "@/app/garage/garage-classes";
+import { formatVehicleLabel, getVehicleIcon, vehicleCardClassName } from "@/app/garage/vehicle-presentation";
 import FuelTypeDot from "@/app/garage/fuel-type-dot";
 
 export type Vehicle = {
@@ -25,21 +25,7 @@ export type Vehicle = {
   fuel_types: string[];
 };
 
-const vehicleIcons: Record<string, typeof CarFront> = {
-  car: CarFront,
-  motorcycle: Motorbike,
-  moped: Scooter,
-  scooter: Scooter,
-  van: Van,
-  truck: Truck,
-  bus: Bus,
-};
-
-function formatLabel(value: string) {
-  return value === "cng" || value === "lpg"
-    ? value.toUpperCase()
-    : value.charAt(0).toUpperCase() + value.slice(1);
-}
+const vehicleBadge = "inline-flex items-center gap-1.5 rounded-full bg-chip px-3 py-1.5 text-sm leading-tight font-semibold";
 
 type FuelItem = FuelFormItem;
 
@@ -131,51 +117,52 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 min-[680px]:grid-cols-2 min-[1040px]:grid-cols-3 xl:gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:gap-6">
         {vehicles.map((vehicle) => {
-          const VehicleIcon = vehicleIcons[vehicle.kind] ?? CarFront;
+          const VehicleIcon = getVehicleIcon(vehicle.kind);
           const model = [vehicle.make_name, vehicle.model_name].filter(Boolean).join(" ");
 
           return (
             <PulseCard
               as="article"
               key={vehicle.id}
-              className={`${styles.vehicleCard} flex flex-col gap-4 p-4 sm:gap-5 sm:p-5 xl:p-7`}
+              className={`${vehicleCardClassName} flex flex-col gap-4 p-4 sm:gap-5 sm:p-5 xl:p-7`}
             >
               <Link
                 href={`/garage/${vehicle.id}`}
                 className="flex min-w-0 items-center gap-3 rounded-2xl sm:gap-4"
                 aria-label={`View ${vehicle.name} details`}
               >
-                <span aria-hidden="true" data-kind={vehicle.kind} className={`${styles.vehicleIcon} grid size-14 shrink-0 place-items-center text-white sm:size-16 xl:size-20`}>
+                <span aria-hidden="true" data-kind={vehicle.kind} className="grid size-14 shrink-0 place-items-center rounded-garage-vehicle-icon bg-garage-car text-white data-[kind=motorcycle]:bg-garage-motorcycle data-[kind=moped]:bg-garage-scooter data-[kind=scooter]:bg-garage-scooter sm:size-16 xl:size-20">
                   <VehicleIcon className="size-7 xl:size-9" strokeWidth={2} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-xl leading-tight font-extrabold tracking-tight wrap-anywhere sm:text-2xl xl:text-3xl">{vehicle.name}</h3>
                   {model && (
-                    <p className={`${styles.muted} mt-0.5 text-sm wrap-anywhere sm:text-base`}>{model}</p>
+                    <p className="mt-0.5 text-sm wrap-anywhere text-muted-foreground sm:text-base">{model}</p>
                   )}
                 </div>
               </Link>
 
               <div className="flex flex-wrap gap-2">
-                <span className={styles.badge}>
+                <span className={vehicleBadge}>
                   <VehicleIcon className="size-4 shrink-0" aria-hidden="true" />
-                  {vehicle.kind === "unknown" ? "Kind not selected" : formatLabel(vehicle.kind)}
+                  {vehicle.kind === "unknown" ? "Kind not selected" : formatVehicleLabel(vehicle.kind)}
                 </span>
                 {vehicle.fuel_types.map((fuel) => (
-                  <span key={fuel} className={styles.badge}>
+                  <span key={fuel} className={vehicleBadge}>
                     <FuelTypeDot fuel={fuel} />
-                    {formatLabel(fuel)}
+                    {formatVehicleLabel(fuel)}
                   </span>
                 ))}
               </div>
 
               <div className="mt-auto grid grid-cols-2 gap-2 xl:gap-3">
                 <Button
-                  variant="soft"
+                  variant="gradient"
                   size="lg"
-                  className={`${styles.quickAction} ${styles.addFuel}`}
+                  shape="pill"
+                  className="garage-fuel-action min-w-0 gap-1.5! px-1.5! leading-tight sm:min-h-12 lg:min-h-14"
                   icon={<Droplet className="size-4 shrink-0" aria-hidden="true" />}
                   aria-label={`Add fuel for ${vehicle.name}`}
                   aria-haspopup="dialog"
@@ -190,9 +177,10 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
                   Add fuel
                 </Button>
                 <Button
-                  variant="secondary"
+                  variant="outline"
                   size="lg"
-                  className={`${styles.quickAction} ${styles.markAirFill}`}
+                  shape="pill"
+                  className="min-w-0 gap-1.5! px-1.5! leading-tight sm:min-h-12 lg:min-h-14"
                   icon={<CircleDot className="size-4 shrink-0" aria-hidden="true" />}
                   aria-label={`Mark airfill now for ${vehicle.name}`}
                   aria-haspopup="dialog"
@@ -224,7 +212,7 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
         confirmLoadingText="Marking…"
         isLoading={isMarkingAirFill}
         error={airFillError}
-        variant="amber"
+        variant="positive"
       />
 
       {fuelVehicle && (

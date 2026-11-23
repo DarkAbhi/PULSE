@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
 import Button from "@/app/components/design-system/button";
-import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
-import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import PulseCard from "@/app/components/design-system/pulse-card";
+import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
+import SectionHeader from "@/app/financial-horizon/components/SectionHeader";
+import HorizonEmpty from "@/app/financial-horizon/components/HorizonEmpty";
+import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import Select from "@/app/components/design-system/select";
 import { listAccounts, saveAccount, setAccountArchived } from "@/app/financial-horizon/accounts";
 import type { Account, AccountFields } from "@/app/financial-horizon/account-types";
@@ -77,13 +79,12 @@ export default function AccountsTab({ currency }: { currency: string }) {
 
   return (
     <PulseCard as="section" className="space-y-4 p-6" aria-labelledby="accounts-heading">
-      <header className={theme.sectionHeader}>
-        <h2 id="accounts-heading" className={`flex items-center gap-2.5 ${theme.sectionTitle}`}><Icon name="bank" className={`size-6 ${theme.sectionIcon}`} /> Financial accounts</h2>
-        <Button variant="primary" className={theme.primary} disabled={pending} onClick={() => open()}><Icon name="plus" /> Add account</Button>
-      </header>
+      <SectionHeader id="accounts-heading" title="Financial accounts" icon="bank">
+        <HorizonAction disabled={pending} onClick={() => open()}><Icon name="plus" /> Add account</HorizonAction>
+      </SectionHeader>
       {!editor && error && <p role="alert">{error}</p>}
-      {!accounts && (error ? <Button className={theme.softAction} onClick={load}>Retry</Button> : <p role="status">Loading accounts…</p>)}
-      {accounts?.length === 0 && <PulseCard as="p" className={`${theme.empty} text-center text-muted-foreground`}>Add a bank account or credit card to assign transactions to it.</PulseCard>}
+      {!accounts && (error ? <HorizonAction variant="chip" onClick={load}>Retry</HorizonAction> : <p role="status">Loading accounts…</p>)}
+      {accounts?.length === 0 && <HorizonEmpty as="p" className="text-muted-foreground">Add a bank account or credit card to assign transactions to it.</HorizonEmpty>}
       <ul className="divide-y divide-divider">
         {accounts?.map(account => (
           <li key={account.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
@@ -98,10 +99,10 @@ export default function AccountsTab({ currency }: { currency: string }) {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="secondary" className={theme.iconAction} disabled={pending} onClick={() => open(account)} aria-label={`Edit ${account.display_name}`}><Icon name="edit" /></Button>
-              <Button variant="tertiary" className={theme.outlineAction} disabled={pending} onClick={() => archive(account)} aria-label={`${account.archived_at ? "Restore" : "Archive"} ${account.display_name}`}>
+              <Button variant="iconChip" size="lg" shape="pill" disabled={pending} onClick={() => open(account)} aria-label={`Edit ${account.display_name}`}><Icon name="edit" className="size-5" /></Button>
+              <HorizonAction variant="outline" disabled={pending} onClick={() => archive(account)} aria-label={`${account.archived_at ? "Restore" : "Archive"} ${account.display_name}`}>
                 {account.archived_at ? "Restore" : "Archive"}
-              </Button>
+              </HorizonAction>
             </div>
           </li>
         ))}

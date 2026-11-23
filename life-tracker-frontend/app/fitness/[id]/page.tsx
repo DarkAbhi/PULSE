@@ -1,7 +1,10 @@
+import "@/app/fitness/workout-theme.css";
+
 import { apiFetch } from "@/app/lib/server-api";
 import { getUserTimeZone } from "@/app/lib/user-time-zone";
 import { redirect } from "next/navigation";
 import { frame } from "@/app/components/design-system/page-frame";
+import PulseCard from "@/app/components/design-system/pulse-card";
 import TopAppBar from "@/app/components/top-app-bar";
 import { Clock, Dumbbell, Flag, Flame, List, Timer, Watch } from "lucide-react";
 import { AddExerciseButton, AddExerciseProvider } from "@/app/fitness/[id]/add-exercise-form";
@@ -9,7 +12,6 @@ import DeleteVisitButton from "@/app/fitness/[id]/delete-visit-button";
 import ExerciseCard from "@/app/fitness/[id]/exercise-card";
 import { formatDuration } from "@/app/fitness/[id]/format-duration.mjs";
 import type { SavedExercise } from "@/app/fitness/[id]/actions";
-import { workoutPalette } from "@/app/fitness/[id]/workout-detail-classes";
 
 export const metadata = {
   title: "Fitness Workout | PULSE",
@@ -31,8 +33,8 @@ const numberFormat = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }
 
 const weekdayClass = "block text-[clamp(1.4rem,3vw,2.2rem)] leading-[1.1] font-extrabold tracking-[-0.03em]";
 const tagClass = "flex items-center gap-2 rounded-full border-[1.5px] px-3.5 py-[5px] text-[0.9rem] font-bold [&_svg]:size-4";
-const exerciseNoticeClass = "grid justify-items-center gap-3.5 rounded-[28px] border-[1.5px] border-dashed border-(--workout-line) px-6 py-9 text-center";
-const sectionDescriptionClass = "mt-1 text-[0.95rem] text-(--workout-muted)";
+const exerciseNoticeClass = "grid justify-items-center gap-3.5 rounded-card border-[1.5px] border-dashed border-divider px-6 py-9 text-center";
+const sectionDescriptionClass = "mt-1 text-control text-muted-foreground";
 
 function WorkoutSummary({ visit, timeZone, error }: {
   visit: GymVisit | null;
@@ -57,14 +59,14 @@ function WorkoutSummary({ visit, timeZone, error }: {
   ] : [];
 
   return (
-    <header className="relative isolate grid gap-[clamp(20px,3vw,30px)] overflow-hidden rounded-[40px] bg-[linear-gradient(135deg,#3a2cd9,#7b2ce0_55%,#d41fb0)] p-[clamp(22px,3vw,36px)] text-white shadow-[0_22px_44px_-26px_rgb(91_44_224/90%)]">
+    <header className="relative isolate grid gap-[clamp(20px,3vw,30px)] overflow-hidden rounded-[40px] bg-(image:--workout-hero-gradient) p-[clamp(22px,3vw,36px)] text-white shadow-(--purple-hero-shadow)">
       <svg className="absolute -top-2.5 -right-6 -z-10 size-[300px] fill-none stroke-white opacity-10" strokeWidth={1} strokeLinecap="round" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
       </svg>
       <div className="flex flex-wrap items-center gap-2">
         <span className={`${tagClass} border-white/40 bg-white/20`}><Dumbbell aria-hidden="true" />Gym visit</span>
         {visit?.synced_from_apple_watch && (
-          <span className={`${tagClass} border-transparent bg-white/95 text-[#4a2bd0]`}>
+          <span className={`${tagClass} border-transparent bg-white/95 text-(--workout-synced-text)`}>
             <Watch aria-hidden="true" />Synced from watch
           </span>
         )}
@@ -82,7 +84,7 @@ function WorkoutSummary({ visit, timeZone, error }: {
         <dl className="grid grid-cols-4 rounded-[22px] border border-white/22 bg-white/14 max-[701px]:grid-cols-2">
           {metrics.map(({ label, Icon, value, unit }) => (
             <div key={label} className="border-white/22 px-[18px] py-3.5 not-first:border-s max-[701px]:nth-3:border-s-0 max-[701px]:nth-[n+3]:border-t">
-              <dt className="flex items-center gap-1.5 text-[0.72rem] font-bold tracking-[0.06em] uppercase opacity-85">
+              <dt className="flex items-center gap-1.5 text-caption font-bold tracking-[0.06em] uppercase opacity-85">
                 <Icon size={14} className="shrink-0" aria-hidden="true" />{label}
               </dt>
               <dd className="mt-1 text-[clamp(1.15rem,2vw,1.5rem)] font-extrabold tracking-[-0.02em] tabular-nums">
@@ -138,17 +140,17 @@ export default async function GymVisitPage({ params }: { params: Promise<{ id: s
   const setCount = `${sets.length} ${sets.length === 1 ? "set" : "sets"}`;
 
   return (
-    <main className={`${frame.page} ${workoutPalette} bg-background leading-[1.4] text-(--workout-ink)`}>
-      <div className={`${frame.content} grid min-w-0 gap-[30px]`}>
+    <main className={`${frame.page} leading-snug`}>
+      <div className={`${frame.content} grid min-w-0 gap-8`}>
         <TopAppBar backHref="/fitness" backLabel="Back to Fitness" />
         <WorkoutSummary visit={visit} timeZone={timeZone} error={detailsError} />
 
         <AddExerciseProvider visitID={visitID}>
           <section className="grid min-w-0 gap-5" aria-labelledby="exercises-heading">
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-(--workout-line) pb-5">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-divider pb-5">
               <div>
                 <h2 id="exercises-heading" tabIndex={-1} className="flex items-center gap-2.5 text-[clamp(1.3rem,2.2vw,1.65rem)] leading-[1.2] font-extrabold tracking-[-0.03em]">
-                  <List size={26} className="shrink-0 text-(--workout-accent)" aria-hidden="true" />Exercises
+                  <List size={26} className="shrink-0 text-brand" aria-hidden="true" />Exercises
                 </h2>
                 {!error && (
                   <p className={sectionDescriptionClass}>{exercises.length
@@ -160,13 +162,13 @@ export default async function GymVisitPage({ params }: { params: Promise<{ id: s
               <AddExerciseButton />
             </div>
             {error ? (
-              <p className={`${exerciseNoticeClass} text-(--workout-danger)`} role="alert">{error}</p>
+              <p className={`${exerciseNoticeClass} text-destructive`} role="alert">{error}</p>
             ) : exercises.length ? (
               <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,440px),1fr))] gap-5">
                 {exercises.map((exercise) => <ExerciseCard key={exercise.id} visitID={visitID} exercise={exercise} />)}
               </div>
             ) : (
-              <div className={`${exerciseNoticeClass} text-(--workout-muted)`}>
+              <div className={`${exerciseNoticeClass} text-muted-foreground`}>
                 <p>No exercises yet. Add your first exercise to start logging sets.</p>
                 <AddExerciseButton />
               </div>
@@ -174,13 +176,13 @@ export default async function GymVisitPage({ params }: { params: Promise<{ id: s
           </section>
         </AddExerciseProvider>
 
-        <section className="flex flex-wrap items-center justify-between gap-4 rounded-[28px] border-[1.5px] border-(--workout-danger)/40 bg-(--workout-card) p-6" aria-labelledby="delete-workout-heading">
+        <PulseCard as="section" className="flex flex-wrap items-center justify-between gap-4 border border-destructive/40 p-6" aria-labelledby="delete-workout-heading">
           <div>
-            <h2 id="delete-workout-heading" className="text-[1.15rem] font-extrabold text-(--workout-danger)">Delete workout</h2>
+            <h2 id="delete-workout-heading" className="text-[1.15rem] font-extrabold text-destructive">Delete workout</h2>
             <p className={sectionDescriptionClass}>Permanently removes this workout and all of its exercises and sets.</p>
           </div>
           <DeleteVisitButton visitID={visitID} />
-        </section>
+        </PulseCard>
       </div>
     </main>
   );

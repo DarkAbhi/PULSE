@@ -1,3 +1,4 @@
+import "@/app/fitness/fitness-theme.css";
 import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
 import TopAppBar from "@/app/components/top-app-bar";

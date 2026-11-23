@@ -4,9 +4,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import TopAppBar from "@/app/components/top-app-bar";
 import { frame } from "@/app/components/design-system/page-frame";
-import AddVehicleButton from "@/app/garage/add-vehicle-button";
+import VehicleEditor from "@/app/garage/vehicle-editor";
 import VehiclesList, { type Vehicle } from "@/app/garage/vehicles-list";
-import { garageStyles as styles } from "@/app/garage/garage-classes";
+import { vehicleCardClassName } from "@/app/garage/vehicle-presentation";
 
 export const metadata = {
   title: "Garage | PULSE",
@@ -48,17 +48,17 @@ export default async function GaragePage() {
   }
 
   return (
-    <main className={`${styles.page} ${frame.page}`}>
+    <main className={frame.page}>
       <div className={frame.content}>
         <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />
 
-        <section aria-labelledby="garage-title" className={`${styles.banner} relative mt-3`}>
+        <section aria-labelledby="garage-title" className="garage-banner relative mt-3 rounded-garage-banner bg-garage-banner p-garage-banner text-white shadow-garage-banner">
           <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
-            <svg className={styles.gauge} viewBox="0 0 400 400" fill="none">
+            <svg className="absolute inset-bs-1/2 end-[var(--garage-gauge-offset)] hidden h-auto w-[min(38%,30rem)] -translate-y-1/2 overflow-visible sm:block" viewBox="0 0 400 400" fill="none">
               {["motion-safe:[animation-delay:-4s]", "motion-safe:[animation-delay:-2s]", ""].map((delay) => (
                 <circle
                   key={delay}
-                  className={`${styles.gaugeRipple} ${delay}`}
+                  className={`hidden motion-safe:inline motion-safe:origin-center motion-safe:transform-fill motion-safe:animate-gauge-ripple ${delay}`}
                   cx="200"
                   cy="200"
                   r="153"
@@ -72,9 +72,9 @@ export default async function GaragePage() {
             </svg>
           </div>
           <div className="relative">
-            <h1 id="garage-title" className={`${styles.title} text-white`}>Garage</h1>
-            <p className="mt-3 text-base font-medium text-white sm:text-xl">Vehicles, fuel &amp; maintenance</p>
-            <AddVehicleButton triggerClassName={`${styles.addVehicle} mt-5 sm:mt-6`} />
+            <h1 id="garage-title" className="text-garage-title font-black tracking-garage-title">Garage</h1>
+            <p className="mt-3 text-base font-medium sm:text-xl">Vehicles, fuel &amp; maintenance</p>
+            <VehicleEditor triggerClassName="mt-5 sm:mt-6" />
           </div>
         </section>
 
@@ -85,9 +85,9 @@ export default async function GaragePage() {
               {error}
             </PulseCard>
           ) : vehicles.length === 0 ? (
-            <PulseCard className={`${styles.vehicleCard} px-6 py-8 sm:px-8`}>
+            <PulseCard className={`${vehicleCardClassName} px-6 py-8 sm:px-8`}>
               <p className="font-semibold">Your garage is empty</p>
-              <p className={`${styles.muted} mt-1 text-sm`}>
+              <p className="mt-1 text-sm text-muted-foreground">
                 Add your first vehicle to start logging fuel and tire air.
               </p>
             </PulseCard>
@@ -96,7 +96,7 @@ export default async function GaragePage() {
           )}
         </section>
 
-        <footer className={`${styles.muted} mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 px-1 text-xs`}>
+        <footer className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 px-1 text-xs text-muted-foreground">
           <span>Vehicle data by <a className="underline" href="https://vehiclesdb.com">VehiclesDB</a></span>
           <Link className="underline" href="/vehicle-data">Sources and credits</Link>
         </footer>

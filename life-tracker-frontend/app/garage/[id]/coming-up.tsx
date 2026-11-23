@@ -1,7 +1,8 @@
 import Link from "next/link";
+import PulseCard from "@/app/components/design-system/pulse-card";
 import { CircleDot, Droplet, Gauge, Plus, Wrench } from "lucide-react";
-import type { UpcomingMaintenance } from "./types";
-import { detail } from "./vehicle-detail-classes";
+import type { UpcomingMaintenance } from "@/app/garage/[id]/types";
+import { detail } from "@/app/garage/[id]/vehicle-detail-classes";
 
 export default function ComingUp({ items, vehicleId }: { items: UpcomingMaintenance[]; vehicleId: string }) {
   return (
@@ -9,7 +10,7 @@ export default function ComingUp({ items, vehicleId }: { items: UpcomingMaintena
       <div className={detail.sectionHeader}>
         <div>
           <h2 id="coming-up-heading" className={detail.sectionTitle}><Gauge className="size-6" aria-hidden="true" /> Overview</h2>
-          <p className={`${detail.muted} mt-1 text-sm`}>Coming up for this vehicle</p>
+          <p className="text-muted-foreground mt-1 text-sm">Coming up for this vehicle</p>
         </div>
       </div>
       {items.length === 0 ? (
@@ -19,7 +20,7 @@ export default function ComingUp({ items, vehicleId }: { items: UpcomingMaintena
           <div className={detail.tiles}>
             {items.map((item) => <ReminderCard key={item.kind} item={item} vehicleId={vehicleId} />)}
           </div>
-          <p className={`${detail.muted} text-sm`}>Uses the active schedule shown for each task. Mileage uses the last recorded reading.</p>
+          <p className="text-sm text-muted-foreground">Uses the active schedule shown for each task. Mileage uses the last recorded reading.</p>
         </>
       )}
     </section>
@@ -45,38 +46,38 @@ function ReminderCard({ item, vehicleId }: { item: UpcomingMaintenance; vehicleI
     : days != null && days >= 0 && days <= 7 ? "due_soon" : undefined;
 
   return (
-    <article className={`${detail.card} grid grid-rows-[auto_1fr_auto] gap-4`}>
+    <PulseCard as="article" className={`${detail.card} grid grid-rows-[auto_1fr_auto] gap-4`}>
       <div className="flex items-center gap-3">
-        <span className="grid size-11 flex-none place-items-center rounded-[14px] bg-[#7b2ce0] text-white data-[kind=engine_oil]:bg-[#f0a020] data-[kind=engine_oil]:text-[#3a2a00] data-[kind=tire_pressure]:bg-[#19d3f3] data-[kind=tire_pressure]:text-[#06303a]" data-kind={item.kind}><Icon className="size-5" aria-hidden="true" /></span>
+        <span className="grid size-11 flex-none place-items-center rounded-control bg-garage-service-violet text-white data-[kind=engine_oil]:bg-garage-oil data-[kind=engine_oil]:text-garage-oil-foreground data-[kind=tire_pressure]:bg-brand-cyan data-[kind=tire_pressure]:text-garage-air-foreground" data-kind={item.kind}><Icon className="size-5" aria-hidden="true" /></span>
         <div>
           <h3 className={detail.label}>{title}</h3>
-          <p className={`${detail.muted} text-sm`}>{item.source === "manual" ? "Vehicle manual" : "My intervals"}</p>
+          <p className="text-sm text-muted-foreground">{item.source === "manual" ? "Vehicle manual" : "My intervals"}</p>
         </div>
       </div>
       <div className="flex flex-col justify-center gap-2">
-        <p className={`${detail.metric} ${status === "overdue" ? detail.danger : status === "due_soon" ? detail.warning : ""}`}>{dueText}</p>
+        <p className={`${detail.metric} ${status === "overdue" ? "text-destructive" : status === "due_soon" ? "text-warning" : ""}`}>{dueText}</p>
         {km != null && item.due_date && days !== 0 && (days == null || days > 0) && (
-          <p className={`${detail.muted} text-sm`}>By {item.due_date}</p>
+          <p className="text-sm text-muted-foreground">By {item.due_date}</p>
         )}
         {(item.distance_unavailable || item.status === "needs_odometer") && (
-          <p className={`${detail.muted} text-sm`}>Record an odometer with this task to use its distance interval.</p>
+          <p className="text-sm text-muted-foreground">Record an odometer with this task to use its distance interval.</p>
         )}
         {pressure && item.last_at && (
-          <p className={`${detail.muted} text-sm`}>Last air fill: {new Date(item.last_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}</p>
+          <p className="text-sm text-muted-foreground">Last air fill: {new Date(item.last_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}</p>
         )}
         {!pressure && progress != null && (
-          <div className="group h-2 overflow-hidden rounded-full bg-(--detail-chip)" data-status={status} role="progressbar" aria-label={`${title} interval elapsed`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}>
-            <span className="block h-full rounded-[inherit] bg-[linear-gradient(90deg,#19d3f3,#4c6bff)] group-data-[status=due_soon]:bg-[linear-gradient(90deg,#ffc83d,#f0a020)] group-data-[status=overdue]:bg-none group-data-[status=overdue]:bg-(--detail-danger)" style={{ width: `${progress}%` }} />
+          <div className="group h-2 overflow-hidden rounded-full bg-chip" data-status={status} role="progressbar" aria-label={`${title} interval elapsed`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}>
+            <span className="block h-full rounded-[inherit] bg-garage-progress group-data-[status=due_soon]:bg-garage-progress-warning group-data-[status=overdue]:bg-none group-data-[status=overdue]:bg-destructive" style={{ width: `${progress}%` }} />
           </div>
         )}
       </div>
       <Link
-        className={`${item.status === "no_history" ? detail.primaryButton : detail.secondaryButton} justify-self-start`}
+        className={`${item.status === "no_history" ? detail.primaryLink : detail.secondaryLink} justify-self-start`}
         href={`/garage/${vehicleId}?${pressure ? "tab=tires" : "maintenance=new"}`}
       >
         <ActionIcon className="size-4 shrink-0" aria-hidden="true" /> {pressure ? "Record air fill" : "Add record"}
         {!pressure && <span className="sr-only"> for {title.toLowerCase()}</span>}
       </Link>
-    </article>
+    </PulseCard>
   );
 }

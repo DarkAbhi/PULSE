@@ -9,8 +9,7 @@ const horizonAmountClass =
 
 const horizonCardClass =
   "@container relative isolate flex flex-col min-h-50 overflow-hidden rounded-[32px_32px_32px_clamp(56px,8vw,96px)] " +
-  "[background:#ffe08a] text-[#3a2a00] shadow-[0_18px_40px_-20px_rgb(255_170_0_/_70%)] dark:[background:#ffc83d] " +
-  "dark:shadow-none";
+  "bg-(--finance-pool-end) text-(--finance-pool-end-foreground) shadow-(--dashboard-finance-shadow)";
 
 export type BudgetItem = {
   id: number;
@@ -145,9 +144,9 @@ export default function FinancialHorizonCard({
             )}
           </p>
         ) : (
-          <p className="max-w-[45ch] text-[15px] leading-[1.5] wrap-anywhere">{error || "Set up your monthly income and fixed obligations to see your room to move."}</p>
+          <p className="max-w-[45ch] text-control leading-normal wrap-anywhere">{error || "Set up your monthly income and fixed obligations to see your room to move."}</p>
         )}
-        <span className="inline-flex shrink-0 justify-center items-center gap-2 rounded-full bg-[#fff5ce] py-3 px-4 min-h-11 text-[14px] font-medium hover:brightness-[.96]">
+        <span className="inline-flex shrink-0 justify-center items-center gap-2 rounded-full bg-(--dashboard-finance-action) py-3 px-4 min-h-11 text-sm font-medium hover:brightness-95">
           {balance ? "Keep going" : "Set up horizon"}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </span>

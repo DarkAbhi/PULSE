@@ -5,7 +5,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { formatMoney } from "@/app/lib/currency.mjs";
-import { horizonClasses as theme } from "@/app/financial-horizon/horizon-theme-classes";
+import HorizonIconTile from "@/app/financial-horizon/components/HorizonIconTile";
 
 const projectionMonths = [3, 6, 12];
 
@@ -18,11 +18,11 @@ export default function OverviewTab({ currency, uncommittedPool }: OverviewTabPr
   return (
     <PulseCard as="section" aria-labelledby="horizon-projections-title" className="p-6">
       <div className="flex items-start gap-3">
-        <div className={theme.iconTile}>
+        <HorizonIconTile>
           <ArrowUpRight aria-hidden="true" className="h-5 w-5" />
-        </div>
+        </HorizonIconTile>
         <div>
-          <h2 id="horizon-projections-title" className={theme.sectionTitle}>
+          <h2 id="horizon-projections-title" className="text-(length:--finance-section-heading) font-extrabold leading-tight tracking-tight">
             Future Horizon Projections
           </h2>
           <p className="text-sm text-muted-foreground">Estimated cash you could set aside</p>
@@ -37,7 +37,7 @@ export default function OverviewTab({ currency, uncommittedPool }: OverviewTabPr
               {formatMoney(Math.max(0, uncommittedPool * months), currency)}
               <span aria-hidden="true" className="mt-3 block h-1.5 overflow-hidden rounded-full bg-surface-strong">
                 <span
-                  className={`${theme.projectionBar} block h-full rounded-full`}
+                  className={`bg-(image:--primary-gradient) forced-colors:[background:Highlight] forced-colors:forced-color-adjust-none block h-full rounded-full`}
                   style={{ width: `${uncommittedPool > 0 ? months / 12 * 100 : 0}%` }}
                 />
               </span>

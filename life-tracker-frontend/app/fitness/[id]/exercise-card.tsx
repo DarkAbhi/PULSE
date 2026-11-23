@@ -1,26 +1,27 @@
 import { Dumbbell } from "lucide-react";
-import type { SavedExercise } from "./actions";
-import DeleteExerciseButton from "./delete-exercise-button";
-import EditExerciseButton from "./edit-exercise-button";
-import ExerciseInstructions from "./exercise-instructions";
-import { setNumberClass, workoutChipClass, workoutLabelClass } from "./workout-detail-classes";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import type { SavedExercise } from "@/app/fitness/[id]/actions";
+import DeleteExerciseButton from "@/app/fitness/[id]/delete-exercise-button";
+import EditExerciseButton from "@/app/fitness/[id]/edit-exercise-button";
+import ExerciseInstructions from "@/app/fitness/[id]/exercise-instructions";
+import { setNumberClass, workoutChipClass, workoutLabelClass } from "@/app/fitness/[id]/workout-detail-classes";
 
 const muscleColorClasses: Record<string, string> = {
-  shoulders: "[--muscle-color:#f0603a]",
-  chest: "[--muscle-color:#d91cab]",
-  back: "[--muscle-color:#0f86c9]",
-  lats: "[--muscle-color:#0f86c9]",
-  "middle back": "[--muscle-color:#0f86c9]",
-  "lower back": "[--muscle-color:#0f86c9]",
-  biceps: "[--muscle-color:#7b2ce0]",
-  triceps: "[--muscle-color:#5b2ce0]",
-  legs: "[--muscle-color:#12a89a]",
-  quadriceps: "[--muscle-color:#12a89a]",
-  hamstrings: "[--muscle-color:#12a89a]",
-  calves: "[--muscle-color:#12a89a]",
-  glutes: "[--muscle-color:#12a89a]",
-  abdominals: "[--muscle-color:#d9930a]",
-  core: "[--muscle-color:#d9930a]",
+  shoulders: "[--muscle-color:var(--muscle-shoulders)]",
+  chest: "[--muscle-color:var(--muscle-chest)]",
+  back: "[--muscle-color:var(--muscle-back)]",
+  lats: "[--muscle-color:var(--muscle-back)]",
+  "middle back": "[--muscle-color:var(--muscle-back)]",
+  "lower back": "[--muscle-color:var(--muscle-back)]",
+  biceps: "[--muscle-color:var(--muscle-biceps)]",
+  triceps: "[--muscle-color:var(--muscle-triceps)]",
+  legs: "[--muscle-color:var(--muscle-legs)]",
+  quadriceps: "[--muscle-color:var(--muscle-legs)]",
+  hamstrings: "[--muscle-color:var(--muscle-legs)]",
+  calves: "[--muscle-color:var(--muscle-legs)]",
+  glutes: "[--muscle-color:var(--muscle-legs)]",
+  abdominals: "[--muscle-color:var(--muscle-core)]",
+  core: "[--muscle-color:var(--muscle-core)]",
 };
 
 const weightFormat = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 3 });
@@ -28,7 +29,7 @@ const weightFormat = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 3 }
 export default function ExerciseCard({ visitID, exercise }: { visitID: string; exercise: SavedExercise }) {
   const catalog = exercise.catalog_exercise;
   const muscles = catalog?.data.primaryMuscles ?? [];
-  const muscleColorClass = muscleColorClasses[muscles[0]?.toLowerCase()] ?? "[--muscle-color:#4c6bff]";
+  const muscleColorClass = muscleColorClasses[muscles[0]?.toLowerCase()] ?? "[--muscle-color:var(--brand-blue)]";
   const equipment = catalog?.equipment;
   const weightType = exercise.sets.length > 0 && exercise.sets.every((set) => set.weight == null)
     ? "Body weight"
@@ -41,20 +42,20 @@ export default function ExerciseCard({ visitID, exercise }: { visitID: string; e
   ];
 
   return (
-    <article className={`${muscleColorClass} grid min-w-0 grid-rows-[auto_auto_1fr_auto] gap-[18px] rounded-[28px] bg-(--workout-card) p-6 shadow-(--workout-shadow)`}>
+    <PulseCard as="article" className={`${muscleColorClass} grid grid-rows-[auto_auto_1fr_auto] gap-4 p-6 shadow-card`}>
       <div className="flex items-center gap-3.5">
         <span className="grid size-12 flex-none place-items-center rounded-2xl bg-(--muscle-color) text-white"><Dumbbell size={24} aria-hidden="true" /></span>
         <div>
           <h3 className="text-xl leading-[1.2] font-extrabold tracking-[-0.02em] wrap-anywhere">{exercise.name}</h3>
-          {catalog && catalog.name !== exercise.name && <p className="mt-[3px] text-[0.85rem] wrap-anywhere text-(--workout-muted)">{catalog.name}</p>}
+          {catalog && catalog.name !== exercise.name && <p className="mt-1 text-[0.85rem] wrap-anywhere text-muted-foreground">{catalog.name}</p>}
         </div>
       </div>
 
-      <dl className="grid grid-cols-3 rounded-[18px] bg-(--workout-inset) max-[701px]:grid-cols-1">
+      <dl className="grid grid-cols-3 rounded-2xl bg-muted max-[701px]:grid-cols-1">
         {metadata.map(({ label, value, dot }) => (
-          <div key={label} className="border-(--workout-line) px-3.5 py-3 not-first:border-s max-[701px]:not-first:border-s-0 max-[701px]:not-first:border-t">
+          <div key={label} className="border-divider px-3.5 py-3 not-first:border-s max-[701px]:not-first:border-s-0 max-[701px]:not-first:border-t">
             <dt className={workoutLabelClass}>{label}</dt>
-            <dd className="mt-[3px] flex items-center gap-[7px] text-[0.95rem] font-bold wrap-anywhere capitalize">{dot && value && <span className="size-[9px] flex-none rounded-full bg-(--muscle-color)" />}{value || "—"}</dd>
+            <dd className="mt-1 flex items-center gap-2 text-control font-bold wrap-anywhere capitalize">{dot && value && <span className="size-2 flex-none rounded-full bg-(--muscle-color)" />}{value || "—"}</dd>
           </div>
         ))}
       </dl>
@@ -69,7 +70,7 @@ export default function ExerciseCard({ visitID, exercise }: { visitID: string; e
           </thead>
           <tbody>
             {exercise.sets.map((set) => (
-              <tr key={set.id} className="[&>td]:h-11 [&>td]:border-t [&>td]:border-(--workout-line) [&>td]:font-bold">
+              <tr key={set.id} className="[&>td]:h-11 [&>td]:border-t [&>td]:border-divider [&>td]:font-bold">
                 <td><span className={setNumberClass}>{set.set_number}</span></td>
                 <td>{set.reps} reps</td>
                 <td>{set.weight === null
@@ -81,7 +82,7 @@ export default function ExerciseCard({ visitID, exercise }: { visitID: string; e
         </table>
       </div>
 
-      <footer className="flex min-h-[62px] flex-wrap items-center justify-between gap-2 border-t border-(--workout-line) pt-3">
+      <footer className="flex min-h-16 flex-wrap items-center justify-between gap-2 border-t border-divider pt-3">
         <ExerciseInstructions
           name={catalog?.name ?? exercise.name}
           metadata={metadata.flatMap(({ value }) => value ? [value] : [])}
@@ -92,6 +93,6 @@ export default function ExerciseCard({ visitID, exercise }: { visitID: string; e
           <DeleteExerciseButton visitID={visitID} exerciseID={exercise.id} exerciseName={exercise.name} />
         </div>
       </footer>
-    </article>
+    </PulseCard>
   );
 }

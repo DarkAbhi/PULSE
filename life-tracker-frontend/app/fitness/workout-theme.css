@@ -1,0 +1,13 @@
+:root {
+  --workout-hero-start: #3a2cd9;
+  --workout-hero-gradient: linear-gradient(135deg, var(--workout-hero-start), var(--brand-purple-bright) 55%, #d41fb0);
+  --workout-step-gradient: linear-gradient(135deg, var(--workout-hero-start), var(--brand-violet));
+  --workout-synced-text: #4a2bd0;
+  --muscle-shoulders: var(--brand-orange);
+  --muscle-chest: var(--brand-magenta);
+  --muscle-back: #0f86c9;
+  --muscle-biceps: var(--brand-purple-bright);
+  --muscle-triceps: var(--brand-purple);
+  --muscle-legs: #12a89a;
+  --muscle-core: #d9930a;
+}

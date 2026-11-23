@@ -80,7 +80,7 @@ const number = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 3 });
 const rowClass = "group grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 lg:gap-x-4";
 const contentClass = "grid min-w-0 gap-y-0.5 border-b border-divider py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-4 sm:py-4 dashboard-compact:sm:py-3";
 const iconSizeClass = "size-12 lg:size-15 dashboard-compact:lg:size-12";
-const iconClass = `mt-3 grid place-items-center self-start rounded-full bg-(--dashboard-metric-icon-surface) text-(--dashboard-metric-icon) sm:mt-4 dashboard-compact:sm:mt-3 ${iconSizeClass}`;
+const iconClass = `grid place-items-center self-center rounded-full bg-(--dashboard-metric-icon-surface) text-(--dashboard-metric-icon) ${iconSizeClass}`;
 
 function dateLabel(date: string, today: string) {
   const days = calendarDayNumber(today) - calendarDayNumber(date);
@@ -161,11 +161,11 @@ function activityDetail(entry: RecentActivityEntry, currency: string, timeZone: 
 
 function ActivitySection({ children, loading }: { children: ReactNode; loading?: boolean }) {
   return (
-    <section aria-labelledby="recent-activity-heading" aria-busy={loading} className="grid gap-3">
+    <section aria-labelledby="recent-activity-heading" aria-busy={loading} className="grid gap-6">
       <h2 id="recent-activity-heading" className="text-xl leading-tight font-extrabold tracking-tight lg:text-2xl">
         Recent activity
       </h2>
-      <PulseCard className="bg-(--dashboard-fitness-surface) px-4 pt-4 pb-2 sm:pt-5 dashboard-compact:sm:pt-4">
+      <PulseCard className="bg-(--dashboard-fitness-surface) px-4 py-2">
         {children}
       </PulseCard>
     </section>
@@ -200,7 +200,7 @@ export function RecentActivity({ entries, timeZone, currency }: {
   return (
     <ActivitySection>
       {entries?.length ? (
-        <ul className="mt-1">
+        <ul>
           {entries.map(entry => {
             const event = presentation[entry.kind];
             if (!event) return null;

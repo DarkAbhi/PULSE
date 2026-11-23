@@ -77,9 +77,10 @@ export type RecentActivityEntry = {
 };
 
 const number = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 3 });
-const rowClass = "group grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 sm:gap-x-4";
+const rowClass = "group grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 lg:gap-x-4";
 const contentClass = "grid min-w-0 gap-y-0.5 border-b border-divider py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-4 sm:py-4 dashboard-compact:sm:py-3";
-const iconClass = "mt-3 grid size-10 place-items-center self-start rounded-full bg-(--dashboard-metric-icon-surface) text-(--dashboard-metric-icon) sm:mt-4 sm:size-12 dashboard-compact:sm:mt-3 dashboard-compact:sm:size-10";
+const iconSizeClass = "size-12 lg:size-15 dashboard-compact:lg:size-12";
+const iconClass = `mt-3 grid place-items-center self-start rounded-full bg-(--dashboard-metric-icon-surface) text-(--dashboard-metric-icon) sm:mt-4 dashboard-compact:sm:mt-3 ${iconSizeClass}`;
 
 function dateLabel(date: string, today: string) {
   const days = calendarDayNumber(today) - calendarDayNumber(date);
@@ -158,25 +159,26 @@ function activityDetail(entry: RecentActivityEntry, currency: string, timeZone: 
   }
 }
 
-function ActivityCard({ children, loading }: { children: ReactNode; loading?: boolean }) {
+function ActivitySection({ children, loading }: { children: ReactNode; loading?: boolean }) {
   return (
-    <PulseCard as="section" aria-labelledby="recent-activity-heading" aria-busy={loading}
-      className="bg-(--dashboard-fitness-surface) px-4 pt-4 pb-2 sm:px-6 sm:pt-5 dashboard-compact:sm:px-5 dashboard-compact:sm:pt-4">
+    <section aria-labelledby="recent-activity-heading" aria-busy={loading} className="grid gap-3">
       <h2 id="recent-activity-heading" className="text-xl leading-tight font-extrabold tracking-tight lg:text-2xl">
         Recent activity
       </h2>
-      {children}
-    </PulseCard>
+      <PulseCard className="bg-(--dashboard-fitness-surface) px-4 pt-4 pb-2 sm:pt-5 dashboard-compact:sm:pt-4">
+        {children}
+      </PulseCard>
+    </section>
   );
 }
 
 export function RecentActivitySkeleton() {
   return (
-    <ActivityCard loading>
+    <ActivitySection loading>
       <div className="grid gap-4 py-4" aria-hidden="true">
         {[0, 1, 2].map(row => (
-          <div key={row} className="flex items-center gap-4">
-            <div className="size-10 rounded-full bg-muted sm:size-12 dashboard-compact:sm:size-10" />
+          <div key={row} className="flex items-center gap-x-3 lg:gap-x-4">
+            <div className={`shrink-0 rounded-full bg-muted ${iconSizeClass}`} />
             <div className="grid flex-1 gap-2">
               <div className="h-4 w-32 rounded bg-muted" />
               <div className="h-3 w-2/5 rounded bg-muted" />
@@ -184,7 +186,7 @@ export function RecentActivitySkeleton() {
           </div>
         ))}
       </div>
-    </ActivityCard>
+    </ActivitySection>
   );
 }
 
@@ -196,7 +198,7 @@ export function RecentActivity({ entries, timeZone, currency }: {
   const today = dateKey(Date.now(), timeZone);
 
   return (
-    <ActivityCard>
+    <ActivitySection>
       {entries?.length ? (
         <ul className="mt-1">
           {entries.map(entry => {
@@ -224,6 +226,6 @@ export function RecentActivity({ entries, timeZone, currency }: {
       ) : (
         <p className="py-4 text-sm text-muted-foreground">{entries ? "No recent activity yet." : "Recent activity is unavailable."}</p>
       )}
-    </ActivityCard>
+    </ActivitySection>
   );
 }

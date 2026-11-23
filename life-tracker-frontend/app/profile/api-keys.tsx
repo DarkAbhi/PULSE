@@ -5,7 +5,7 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import { useEffect, useRef, useState } from "react";
-import { Copy, KeyRound, Plus, Trash2 } from "lucide-react";
+import { Check, Copy, Info, KeyRound, Plus, Trash2 } from "lucide-react";
 import Button from "@/app/components/design-system/button";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
@@ -28,9 +28,11 @@ export default function APIKeys() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
   const [token, setToken] = useState("");
+  const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [revokeKey, setRevokeKey] = useState<APIKey | null>(null);
-  const tokenInput = useRef<HTMLInputElement>(null);
+  const tokenInput = useRef<HTMLTextAreaElement>(null);
+  const createTrigger = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -46,14 +48,23 @@ export default function APIKeys() {
   }, []);
 
   function closeDialog() {
+    if (busy) return;
     setIsOpen(false);
     setName("");
     setToken("");
+    setCopied(false);
     setError("");
+    createTrigger.current?.focus();
   }
 
   async function createKey(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
+    const keyName = name.trim();
+    if (!keyName) {
+      setError("Enter a name for this key.");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -61,7 +72,7 @@ export default function APIKeys() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ name: keyName }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Could not create API key.");
@@ -95,9 +106,12 @@ export default function APIKeys() {
   }
 
   async function copyKey() {
-    if (!tokenInput.current) return;
-    if (await copyApiKey(token, tokenInput.current)) setError("");
-    else setError("Could not copy the key. Select and copy it from the field.");
+    const input = tokenInput.current;
+    if (!input) return;
+    const didCopy = await copyApiKey(token, input);
+    if (tokenInput.current !== input) return;
+    setCopied(didCopy);
+    setError(didCopy ? "" : "Could not copy the key. Select and copy it from the field.");
   }
 
   return (
@@ -108,6 +122,7 @@ export default function APIKeys() {
           <p>Create keys so external services can access your Pulse data. Treat them like passwords.</p>
         </div>
         <Button
+          ref={createTrigger}
           type="button"
           className={`${styles.pill} ${styles.primary}`}
           disabled={loading}
@@ -173,29 +188,56 @@ export default function APIKeys() {
         </div>
       )}
       {isOpen && (
-        <Dialog labelledBy="api-key-dialog-title">
-          <DialogHeader
-            id="api-key-dialog-title"
-            icon={<KeyRound className="size-5" />}
-            description={token ? "Copy it now. It will not be shown again." : "Give this key a name so you can recognize it later."}
-            onClose={closeDialog}
-          >
-            {token ? "Save your API key" : "Create API key"}
+        <Dialog labelledBy="api-key-dialog-title" onDismiss={busy ? undefined : closeDialog}>
+          <DialogHeader id="api-key-dialog-title">
+            {token ? "Your new API key" : "Create API key"}
           </DialogHeader>
-          {error && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
           {token ? (
-            <div className="mt-6">
-              <label htmlFor="created-api-key" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your API key</label>
-              <div className="flex gap-2">
-                <input ref={tokenInput} id="created-api-key" readOnly value={token} onFocus={(event) => event.target.select()} className="min-w-0 flex-1 rounded-xl bg-secondary px-3 py-2 text-xs text-foreground" />
-                <Button type="button" variant="secondary" size="sm" aria-label="Copy API key" onClick={copyKey}><Copy className="h-4 w-4" /></Button>
+            <div className="mt-4 space-y-4">
+              <p className="flex gap-3 rounded-2xl bg-[#ffc83d]/22 px-4 py-3.5 text-[0.92rem]">
+                <Info className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden="true" />
+                <span>Copy this key now. For your security, it won’t be shown again.</span>
+              </p>
+              <div className="flex items-center gap-2.5 rounded-2xl border-[1.5px] border-dashed border-divider bg-secondary p-3.5">
+                <label htmlFor="created-api-key" className="sr-only">Your API key</label>
+                <textarea
+                  ref={tokenInput}
+                  id="created-api-key"
+                  className="min-h-0! min-w-0 flex-1 field-sizing-content resize-none rounded-none! border-0! font-mono text-[0.9rem] wrap-anywhere"
+                  readOnly
+                  rows={2}
+                  value={token}
+                  onFocus={event => event.target.select()}
+                />
+                <Button type="button" variant="secondary" autoFocus className="min-h-11! shrink-0 rounded-full! bg-(--horizon-chip)! px-3.5! text-[0.9rem]! hover:bg-(--horizon-line)!" onClick={copyKey}>
+                  {copied ? <Check className="size-[18px]" aria-hidden="true" /> : <Copy className="size-[18px]" aria-hidden="true" />}
+                  {copied ? "Copied" : "Copy"}
+                </Button>
               </div>
+              <span className="sr-only" role="status">{copied ? "API key copied" : ""}</span>
+              {error && <p className="text-[0.9rem] font-semibold text-destructive" role="alert">{error}</p>}
               <DialogActions><DialogAction type="button" onClick={closeDialog}>Done</DialogAction></DialogActions>
             </div>
           ) : (
-            <form className="mt-6" onSubmit={createKey}>
-              <label htmlFor="api-key-name" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name</label>
-              <input id="api-key-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} required autoFocus placeholder="e.g. Personal sync service" className="w-full rounded-xl bg-secondary px-4 py-2.5 text-sm text-foreground" />
+            <form className="mt-4 space-y-4" onSubmit={createKey}>
+              <div>
+                <label htmlFor="api-key-name" className="mb-1.5 block text-[0.88rem] font-bold text-muted-foreground">Key name</label>
+                <input
+                  id="api-key-name"
+                  className="w-full px-3.5"
+                  value={name}
+                  onChange={event => { setName(event.target.value); setError(""); }}
+                  maxLength={120}
+                  required
+                  autoFocus
+                  autoComplete="off"
+                  disabled={busy}
+                  placeholder="e.g. Home Assistant"
+                  aria-describedby="api-key-name-hint"
+                />
+              </div>
+              <p id="api-key-name-hint" className="text-[0.9rem] text-muted-foreground">Give it a name so you can recognise it later.</p>
+              {error && <p className="text-[0.9rem] font-semibold text-destructive" role="alert">{error}</p>}
               <DialogActions>
                 <DialogAction type="button" variant="secondary" onClick={closeDialog} disabled={busy}>Cancel</DialogAction>
                 <DialogAction type="submit" disabled={busy}>{busy ? "Creating…" : "Create key"}</DialogAction>

@@ -3,6 +3,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --animate-dialog-in: dialog-in 200ms ease-out;
+
+  @keyframes dialog-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  }
+
   --color-divider: var(--divider);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -176,6 +182,12 @@
 
 .animate-dropdown {
   animation: dropdown-in 0.15s ease-out both;
+}
+
+@utility dialog-fields {
+  & :is(input, select, textarea):not(:where([type="checkbox"], [type="radio"], [type="hidden"], [type="file"], .sr-only)) {
+    @apply min-h-12 rounded-[14px] border-[1.5px] border-divider bg-transparent text-foreground;
+  }
 }
 
 @layer components {

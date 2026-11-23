@@ -1,4 +1,4 @@
-export async function copyApiKey(token: string, input: HTMLInputElement): Promise<boolean> {
+export async function copyApiKey(token: string, input: HTMLInputElement | HTMLTextAreaElement): Promise<boolean> {
   if (navigator.clipboard) {
     try {
       await navigator.clipboard.writeText(token);

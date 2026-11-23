@@ -4,7 +4,6 @@ import { createContext, ReactNode, useContext, useEffect, useId, useRef, useStat
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import Button, { type ButtonProps } from "./button";
-import styles from "./dialog.module.css";
 import horizon from "./horizon-palette.module.css";
 
 let openDialogs = 0;
@@ -14,7 +13,7 @@ const DialogFooterContext = createContext<HTMLElement | null>(null);
 const DialogFormContext = createContext<string | undefined>(undefined);
 
 const widths = {
-  sm: "max-w-md",
+  sm: "max-w-[520px]",
   md: "max-w-lg",
   wide: "max-w-xl",
   lg: "max-w-2xl",
@@ -24,18 +23,20 @@ const widths = {
 export interface DialogProps {
   children: ReactNode;
   labelledBy?: string;
+  onDismiss?: () => void;
   onBackdropClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
   panelClassName?: string;
   size?: keyof typeof widths;
 }
 
 /**
- * Shared dialog frame that keeps every modal clear of the viewport edges.
- * Content scrolls inside the panel while DialogActions remain in its footer.
+ * Centered dialog on desktop and a bottom sheet on narrow screens.
+ * Content scrolls independently of the actions.
  */
 export default function Dialog({
   children,
   labelledBy,
+  onDismiss,
   onBackdropClick,
   panelClassName = "",
   size = "sm",
@@ -52,19 +53,34 @@ export default function Dialog({
     };
   }, []);
 
+  useEffect(() => {
+    if (!onDismiss) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        event.preventDefault();
+        onDismiss?.();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onDismiss]);
+
   return (
     <div
       aria-labelledby={labelledBy}
       aria-modal="true"
-      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-[#0d0a1f]/40 p-4 backdrop-blur-xs sm:p-6 lg:p-8"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-[#0d0a1f]/55 p-3 backdrop-blur-[4px] max-[761px]:p-0"
       role="dialog"
     >
       <div
-        className="flex min-h-full items-center justify-center"
-        onClick={onBackdropClick}
+        className="flex min-h-full items-center justify-center max-[761px]:items-end"
+        onClick={event => {
+          onBackdropClick?.(event);
+          if (event.target === event.currentTarget && !event.defaultPrevented) onDismiss?.();
+        }}
       >
         <section
-          className={`${horizon.palette} ${styles.panel} flex w-full ${widths[size]} max-h-[calc(100dvh-2rem)] flex-col overflow-hidden bg-card p-6 shadow-2xl sm:max-h-[calc(100dvh-3rem)] lg:max-h-[calc(100dvh-4rem)] ${panelClassName}`}
+          className={`${horizon.palette} dialog-fields relative flex max-h-[calc(100dvh-24px)] w-full ${widths[size]} flex-col overflow-hidden rounded-[32px] bg-card p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-[0_30px_80px_-20px_rgb(0_0_0/55%)] motion-safe:animate-dialog-in max-[761px]:min-w-full max-[761px]:rounded-t-[28px] max-[761px]:rounded-b-none ${panelClassName}`}
         >
           <DialogFooterContext.Provider value={footer}>
             <div
@@ -104,17 +120,17 @@ export function DialogHeader({
   closeAutoFocus,
 }: DialogHeaderProps) {
   return (
-    <header className={styles.header}>
-      {icon && <span className={styles.icon} aria-hidden="true">{icon}</span>}
-      <div className={styles.heading}>
-        <h2 className={styles.title} id={id}>{children}</h2>
-        {description && <p className={styles.description}>{description}</p>}
+    <header className="flex items-center gap-2.5">
+      {icon && <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-action" aria-hidden="true">{icon}</span>}
+      <div className="min-w-0 flex-1 wrap-anywhere">
+        <h2 className="text-[1.6rem] leading-[1.15] font-extrabold tracking-[-0.03em]" id={id}>{children}</h2>
+        {description && <p className="mt-1.5 text-[0.9rem] text-muted-foreground">{description}</p>}
       </div>
       {onClose && (
         <Button
           aria-label={closeLabel}
           autoFocus={closeAutoFocus}
-          className={styles.close}
+          className="size-11! shrink-0 rounded-full! enabled:hover:bg-(--horizon-chip)! motion-reduce:transition-none"
           disabled={closeDisabled}
           onClick={onClose}
           type="button"
@@ -145,7 +161,7 @@ export function DialogActions({ children, className = "" }: { children: ReactNod
 
   const actions = (
     <DialogFormContext.Provider value={formId}>
-      <div ref={actionsRef} className={`${styles.actions} mt-6 grid gap-3 border-t border-divider pt-4 sm:grid-cols-2 ${className}`}>
+      <div ref={actionsRef} className={`mt-5 grid grid-cols-2 gap-2.5 [&>:only-child]:col-span-full max-sm:[&>:first-child:nth-last-child(3)]:col-span-full ${className}`}>
         {children}
       </div>
     </DialogFormContext.Provider>
@@ -158,11 +174,17 @@ type DialogActionProps = ButtonProps & {
   variant?: "primary" | "secondary" | "destructive";
 };
 
+const actionVariants: Record<NonNullable<DialogActionProps["variant"]>, string> = {
+  primary: "[background:var(--horizon-button)]! enabled:hover:brightness-[0.93]",
+  secondary: "border-[1.5px] border-divider bg-transparent! enabled:hover:bg-(--horizon-chip)!",
+  destructive: "bg-destructive! text-destructive-foreground! enabled:hover:brightness-[0.93]",
+};
+
 export function DialogAction({ className = "", variant = "primary", ...props }: DialogActionProps) {
   const formId = useContext(DialogFormContext);
   return (
     <Button
-      className={`${styles.action} ${className}`}
+      className={`min-h-[50px]! rounded-full! px-3.5! py-2! text-[0.95rem]! leading-[1.2]! font-bold! wrap-anywhere motion-safe:enabled:active:scale-[0.96] motion-reduce:transition-none ${actionVariants[variant]} ${className}`}
       data-variant={variant}
       size="lg"
       variant={variant}

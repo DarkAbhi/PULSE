@@ -4,17 +4,16 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 
 import Button from "@/app/components/design-system/button";
 
-import { useState, useTransition, type ReactNode } from "react";
+import { useState, useTransition } from "react";
 import { AppNotification, NotificationList } from "@/app/components/notification-list";
 import { dismissNotification, clearAllNotifications } from "./actions";
 import { Trash2 } from "lucide-react";
 
 interface NotificationsClientProps {
   notifications: AppNotification[];
-  appBar: ReactNode;
 }
 
-export default function NotificationsClient({ notifications, appBar }: NotificationsClientProps) {
+export default function NotificationsClient({ notifications }: NotificationsClientProps) {
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -42,44 +41,41 @@ export default function NotificationsClient({ notifications, appBar }: Notificat
   }
 
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
-      <div className="mx-auto max-w-6xl">
-        {appBar}
-        <header className="mt-5 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold tracking-[0.18em] text-action">NOTIFICATIONS</p>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Notification center</h1>
-            <p className="mt-3 text-base text-muted-foreground">Stay in the loop across every part of PULSE.</p>
-          </div>
-          <Button variant="destructive" size="lg"
-            className="shrink-0"
-            disabled={isPending || notifications.length === 0}
-            onClick={handleClearAll}
-            type="button"
-          >
-            <Trash2 className="h-4 w-4" />
-            <span>{isPending ? "Clearing…" : "Clear all"}</span>
-          </Button>
-        </header>
+    <>
+      <header className="mt-5 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold tracking-[0.18em] text-action">NOTIFICATIONS</p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Notification center</h1>
+          <p className="mt-3 text-base text-muted-foreground">Stay in the loop across every part of PULSE.</p>
+        </div>
+        <Button variant="destructive" size="lg"
+          className="shrink-0"
+          disabled={isPending || notifications.length === 0}
+          onClick={handleClearAll}
+          type="button"
+        >
+          <Trash2 className="h-4 w-4" />
+          <span>{isPending ? "Clearing…" : "Clear all"}</span>
+        </Button>
+      </header>
 
-        <section className="mt-10" aria-label="All notifications">
-          {error ? (
-            <p className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive mb-4" role="alert">{error}</p>
-          ) : null}
+      <section className="mt-10" aria-label="All notifications">
+        {error ? (
+          <p className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive mb-4" role="alert">{error}</p>
+        ) : null}
 
-          {notifications.length === 0 ? (
-            <PulseCard className="p-10 text-center">
-              <p className="text-lg font-semibold text-foreground">You&apos;re all caught up.</p>
-              <p className="mt-2 text-sm text-muted-foreground">New updates from your life spaces will appear here.</p>
-            </PulseCard>
-          ) : (
-            <NotificationList
-              notifications={notifications}
-              onDismiss={handleDismiss}
-            />
-          )}
-        </section>
-      </div>
-    </main>
+        {notifications.length === 0 ? (
+          <PulseCard className="p-10 text-center">
+            <p className="text-lg font-semibold text-foreground">You&apos;re all caught up.</p>
+            <p className="mt-2 text-sm text-muted-foreground">New updates from your life spaces will appear here.</p>
+          </PulseCard>
+        ) : (
+          <NotificationList
+            notifications={notifications}
+            onDismiss={handleDismiss}
+          />
+        )}
+      </section>
+    </>
   );
 }

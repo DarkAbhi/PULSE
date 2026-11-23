@@ -11,9 +11,6 @@
   --profile-primary-ink: #fff;
   --profile-danger: #c93028;
   --profile-pad: 24px;
-  width: min(100% - 2 * clamp(16px, 2.4vw, 32px), 1200px);
-  margin-inline: auto;
-  padding-block: 24px 32px;
   display: grid;
   gap: 30px;
   color: var(--profile-ink);

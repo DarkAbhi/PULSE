@@ -1,5 +1,6 @@
 import { UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
+import frame from "@/app/components/design-system/page-frame.module.css";
 import TopAppBar from "@/app/components/top-app-bar";
 import { apiFetch } from "@/app/lib/server-api";
 import AboutPulse from "./about-pulse";
@@ -26,34 +27,36 @@ export default async function ProfilePage() {
   const { name } = (await profileResponse.json()) as { name?: string };
 
   return (
-    <main className={styles.page}>
-      <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" onProfilePage />
+    <main className={frame.page}>
+      <div className={`${frame.content} ${styles.page}`}>
+        <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" onProfilePage />
 
-      <section className={styles.hero} aria-label="Your profile">
-        <div className={styles.avatar} aria-hidden="true"><UserRound /></div>
-        <div className="min-w-0">
-          <h1>{name || username}</h1>
-          <span className={styles.handle}>@{username}</span>
-        </div>
-      </section>
-
-      <div className={styles.columns}>
-        <section className={styles.section} aria-labelledby="profile-account">
-          <header className={styles.sectionHeader}>
-            <h2 id="profile-account"><UserRound aria-hidden="true" />Account</h2>
-          </header>
-          <div className={styles.card}>
-            <ChangePasswordButton />
-            <TimeZoneSettings />
-            <CurrencySettings />
+        <section className={styles.hero} aria-label="Your profile">
+          <div className={styles.avatar} aria-hidden="true"><UserRound /></div>
+          <div className="min-w-0">
+            <h1>{name || username}</h1>
+            <span className={styles.handle}>@{username}</span>
           </div>
         </section>
 
-        <ThemeSettings />
-      </div>
+        <div className={styles.columns}>
+          <section className={styles.section} aria-labelledby="profile-account">
+            <header className={styles.sectionHeader}>
+              <h2 id="profile-account"><UserRound aria-hidden="true" />Account</h2>
+            </header>
+            <div className={styles.card}>
+              <ChangePasswordButton />
+              <TimeZoneSettings />
+              <CurrencySettings />
+            </div>
+          </section>
 
-      <APIKeys />
-      <AboutPulse />
+          <ThemeSettings />
+        </div>
+
+        <APIKeys />
+        <AboutPulse />
+      </div>
     </main>
   );
 }

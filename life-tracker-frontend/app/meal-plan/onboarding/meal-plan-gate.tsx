@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import AppBar from "@/app/components/design-system/app-bar";
 import Button from "@/app/components/design-system/button";
+import frame from "@/app/components/design-system/page-frame.module.css";
 import MealPlanClient from "../meal-plan-client";
 import type { MealPlan, MealTime } from "../actions";
 import MealOnboarding from "./meal-onboarding";
@@ -34,12 +35,18 @@ export default function MealPlanGate({ initialState, notifications, ...plannerPr
     notifications={notifications}
   />;
 
-  if (!state) return <main className="flex min-h-screen flex-col bg-background p-6 text-foreground">
-    <div className="mx-auto w-full max-w-[1280px]">{appBar}</div>
-    <div className="m-auto max-w-md py-6 text-center">
-    <h1 className="text-2xl font-semibold">Let's load your meal preferences.</h1><p role="alert" className="my-4 text-muted-foreground">{error || "We couldn't check your meal setup. Please try again."}</p>
-    <Button disabled={loading} onClick={async () => { setLoading(true); const result = await getMealOnboardingAction(); if (result.ok) setState(result.state); else setError(result.error); setLoading(false); }}>{loading ? "Loading…" : "Try again"}</Button>
-  </div></main>;
+  if (!state) return (
+    <main className={`${frame.page} flex flex-col bg-background text-foreground`}>
+      <div className={`${frame.content} flex w-full flex-1 flex-col`}>
+        {appBar}
+        <div className="m-auto max-w-md py-6 text-center">
+          <h1 className="text-2xl font-semibold">Let's load your meal preferences.</h1>
+          <p role="alert" className="my-4 text-muted-foreground">{error || "We couldn't check your meal setup. Please try again."}</p>
+          <Button disabled={loading} onClick={async () => { setLoading(true); const result = await getMealOnboardingAction(); if (result.ok) setState(result.state); else setError(result.error); setLoading(false); }}>{loading ? "Loading…" : "Try again"}</Button>
+        </div>
+      </div>
+    </main>
+  );
   if (shouldShowOnboarding(state) || editing) return <MealOnboarding notifications={notifications} key={editing ? "edit" : "setup"} initial={state.preferences} editing={editing} onDone={next => { setState(next); setEditing(false); setNotice(current => current || (next.preferences ? "Meal preferences saved. You can edit them anytime." : "Setup skipped. You can add meal preferences anytime.")); }} onCancel={() => setEditing(false)} onNotice={setNotice}
     times={mealTimes}
     onCreated={time => setMealTimes(current => [...current.filter(slot => slot.id !== time.id), time])}

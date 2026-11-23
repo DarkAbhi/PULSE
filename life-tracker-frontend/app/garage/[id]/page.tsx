@@ -55,8 +55,8 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
 
   if (response.status === 404) {
     return (
-      <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
-        <div className="mx-auto max-w-5xl">
+      <main className={`${frame.page} bg-background text-foreground`}>
+        <div className={frame.content}>
           <TopAppBar backHref="/garage" backLabel="Back to Garage" />
           <PulseCard className="mt-5 p-8 text-center">
             <h2 className="text-xl font-semibold text-foreground">
@@ -73,8 +73,8 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
 
   if (!response.ok) {
     return (
-      <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-8 sm:py-10">
-        <div className="mx-auto max-w-5xl">
+      <main className={`${frame.page} bg-background text-foreground`}>
+        <div className={frame.content}>
           <TopAppBar backHref="/garage" backLabel="Back to Garage" />
           <PulseCard className="mt-5 p-6">
             <p role="alert" className="text-destructive">We couldn&apos;t load this vehicle&apos;s history.</p>

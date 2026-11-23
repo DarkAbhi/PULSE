@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, Leaf, Soup, Sprout } from "lucide-react";
 import AppBar from "@/app/components/design-system/app-bar";
 import Button from "@/app/components/design-system/button";
+import frame from "@/app/components/design-system/page-frame.module.css";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 import { getMealOnboardingAction, resolveMealOnboardingAction, saveMealPreferencesAction } from "./actions";
 import { avoidances, barriers, choiceLabel, diets, firstInvalidStep, goals, initialPreferences, mealKinds, questions, stepError, toggleChoice } from "./questionnaire";
@@ -178,8 +179,8 @@ export default function MealOnboarding({ notifications, initial, editing = false
     }
   }
 
-  return <main className={styles.page}>
-    <div id="meal-setup-journey" className={styles.wrap}>
+  return <main className={`${frame.page} ${styles.page}`}>
+    <div id="meal-setup-journey" className={`${frame.content} ${styles.wrap}`}>
       <AppBar
         back={editing ? { onClick: onCancel, disabled: busy } : { href: "/dashboard" }}
         backLabel={editing ? "Back to Meal Plan" : "Back to Dashboard"}

@@ -13,10 +13,8 @@
   --card-padding: clamp(16px, 2.4vw, 24px);
   --gap: 20px;
 
-  min-height: 100dvh;
   background: var(--background);
   color: var(--ink);
-  padding: clamp(16px, 2.4vw, 32px);
 }
 
 :global(.dark) .page {
@@ -34,9 +32,6 @@
 .wrap {
   display: grid;
   gap: var(--gap);
-  width: 100%;
-  max-width: 1200px;
-  margin-inline: auto;
 }
 
 .hero {

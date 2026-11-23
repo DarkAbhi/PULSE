@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Check, type LucideIcon } from "lucide-react";
 import Button from "@/app/components/design-system/button";
-import PulseCard from "@/app/components/design-system/pulse-card";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import styles from "./profile.module.css";
 
 type PreferenceSettingsProps = {
   id: string;
   title: string;
   value: string;
+  icon: LucideIcon;
+  displayValue: string;
+  detail?: string;
   choices: readonly string[];
   label: (value: string) => string;
   placeholder: string;
@@ -18,7 +22,13 @@ type PreferenceSettingsProps = {
   onSaved: (value: string) => void;
 };
 
-export default function PreferenceSettings({ id, title, value, choices, label, placeholder, description, save, onSaved }: PreferenceSettingsProps) {
+function normalize(text: string) {
+  return text.replaceAll("_", " ").trim().toLowerCase();
+}
+
+export default function PreferenceSettings({
+  id, title, value, icon: Icon, displayValue, detail, choices, label, placeholder, description, save, onSaved,
+}: PreferenceSettingsProps) {
   const trigger = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -28,29 +38,41 @@ export default function PreferenceSettings({ id, title, value, choices, label, p
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
+  const dialogId = `${id}-dialog-title`;
+  const plural = id === "currency" ? "currencies" : "time zones";
+  const matches = isOpen ? choices.map(choice => ({ value: choice, label: label(choice) }))
+    .filter(choice => normalize(choice.label).includes(normalize(search))) : [];
+
   useEffect(() => { setDraft(value); }, [value]);
+
   useEffect(() => {
     if (!isOpen) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
+
+    function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape" && !pending) {
         event.preventDefault();
         setIsOpen(false);
         trigger.current?.focus();
       }
       if (event.key !== "Tab") return;
-      const items = document.querySelector<HTMLElement>(`[aria-labelledby="${id}-dialog-title"]`)?.querySelectorAll<HTMLElement>('input:not(:disabled), select:not(:disabled), button:not(:disabled)');
+
+      const dialog = document.querySelector(`[aria-labelledby="${dialogId}"]`);
+      const items = dialog?.querySelectorAll<HTMLElement>('input:not(:disabled), button:not(:disabled)');
       if (!items?.length) return;
       const first = items[0];
       const last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-    };
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [id, isOpen, pending]);
-  const plural = id === "currency" ? "currencies" : "time zones";
-  const normalize = (text: string) => text.replaceAll("_", " ").toLowerCase();
-  const matches = choices.filter(choice => normalize(label(choice)).includes(normalize(search.trim())));
+  }, [dialogId, isOpen, pending]);
 
   function open() {
     setDraft(value);
@@ -60,51 +82,96 @@ export default function PreferenceSettings({ id, title, value, choices, label, p
     setIsOpen(true);
   }
 
-  return <PulseCard as="section" aria-labelledby={`${id}-heading`} className="mt-6 w-full p-6 text-left sm:p-8">
-    <div className="flex flex-wrap items-center justify-between gap-4">
+  function close() {
+    setIsOpen(false);
+    trigger.current?.focus();
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending || draft === value || !matches.some(choice => choice.value === draft)) return;
+    setError("");
+    startTransition(async () => {
+      const result = await save(draft);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      onSaved(result.value);
+      close();
+      setMessage(`${title} saved.`);
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className={styles.row}>
+      <span className={styles.tile} aria-hidden="true"><Icon /></span>
       <div className="min-w-0">
-        <h2 id={`${id}-heading`} className="text-lg font-semibold">{title}</h2>
-        <p className="mt-2 break-words text-sm text-muted-foreground">{label(value)}</p>
+        <p className={styles.rowLabel}>{title}</p>
+        <p className={styles.rowValue}>{displayValue}</p>
+        {detail && <p className={styles.rowNote}>{detail}</p>}
+        <p role="status" className="text-sm text-success">{message}</p>
       </div>
-      <Button ref={trigger} type="button" variant="secondary" onClick={open} aria-label={`Change ${title.toLowerCase()}`}>Change</Button>
+      <Button
+        ref={trigger}
+        type="button"
+        variant="secondary"
+        className={`${styles.pill} ${styles.secondary}`}
+        onClick={open}
+        aria-label={`Change ${title.toLowerCase()}`}
+      >
+        Change
+      </Button>
+
+      {isOpen && (
+        <Dialog labelledBy={dialogId}>
+          <DialogHeader id={dialogId} description={description} icon={<Icon className="size-5" />}>
+            Change {title.toLowerCase()}
+          </DialogHeader>
+          <form className="mt-5 space-y-4" onSubmit={submit}>
+            <div>
+              <label htmlFor={`${id}-search`} className="text-sm font-medium">Search {plural}</label>
+              <input
+                autoFocus
+                id={`${id}-search`}
+                type="search"
+                value={search}
+                disabled={pending}
+                onChange={event => setSearch(event.target.value)}
+                placeholder={placeholder}
+                className={styles.pickerSearch}
+              />
+            </div>
+            <div className={styles.pickerChoices} role="radiogroup" aria-label={`Choose a ${title.toLowerCase()}`}>
+              {matches.map(choice => (
+                <label key={choice.value} className={styles.pickerChoice}>
+                  <input
+                    type="radio"
+                    name={`${id}-choice`}
+                    value={choice.value}
+                    checked={draft === choice.value}
+                    disabled={pending}
+                    onChange={() => { setDraft(choice.value); setError(""); }}
+                  />
+                  <span>
+                    {choice.label}
+                    <Check className="size-5 shrink-0" aria-hidden="true" />
+                  </span>
+                </label>
+              ))}
+              {!matches.length && <p className={styles.rowNote}>No matching {plural}.</p>}
+            </div>
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+            <DialogActions>
+              <DialogAction type="button" variant="secondary" disabled={pending} onClick={close}>Cancel</DialogAction>
+              <DialogAction type="submit" disabled={pending || draft === value || !matches.some(choice => choice.value === draft)}>
+                {pending ? "Saving…" : `Save ${title.toLowerCase()}`}
+              </DialogAction>
+            </DialogActions>
+          </form>
+        </Dialog>
+      )}
     </div>
-    {message && <p role="status" className="mt-3 text-sm text-success">{message}</p>}
-    {isOpen && <Dialog labelledBy={`${id}-dialog-title`}>
-      <div>
-      <DialogHeader id={`${id}-dialog-title`} description={description}>
-        Change {title.toLowerCase()}
-      </DialogHeader>
-      <form className="mt-5 space-y-4" onSubmit={event => {
-        event.preventDefault(); setError("");
-        startTransition(async () => {
-          const result = await save(draft);
-          if (!result.ok) { setError(result.error); return; }
-          onSaved(result.value);
-          setIsOpen(false);
-          trigger.current?.focus();
-          setMessage(`${title} saved.`);
-          router.refresh();
-        });
-      }}>
-        <div>
-          <label htmlFor={`${id}-search`} className="text-sm font-medium">Search {plural}</label>
-          <input autoFocus id={`${id}-search`} type="search" value={search} disabled={pending} onChange={event => setSearch(event.target.value)} placeholder={placeholder} className="mt-2 w-full rounded-lg bg-secondary px-3 py-2" />
-        </div>
-        <div>
-          <label htmlFor={`${id}-choice`} className="text-sm font-medium">Choose a {title.toLowerCase()}</label>
-          <select id={`${id}-choice`} size={6} value={matches.includes(draft) ? draft : ""} disabled={pending || !matches.length} onChange={event => { setDraft(event.target.value); setError(""); }} className="mt-2 w-full rounded-lg bg-secondary px-3 py-2">
-            {!matches.length ? <option value="">No matching {plural}</option> : <><option value="" disabled>Select a {title.toLowerCase()}</option>{matches.map(choice => <option key={choice} value={choice}>{label(choice)}</option>)}</>}
-          </select>
-        </div>
-        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-        <DialogActions>
-          <DialogAction type="button" variant="secondary" disabled={pending} onClick={() => { setIsOpen(false); trigger.current?.focus(); }}>Cancel</DialogAction>
-          <DialogAction type="submit" disabled={pending || draft === value || !matches.includes(draft)}>{pending ? "Saving…" : `Save ${title.toLowerCase()}`}</DialogAction>
-        </DialogActions>
-      </form>
-      </div>
-    </Dialog>}
-  </PulseCard>;
+  );
 }
-
-

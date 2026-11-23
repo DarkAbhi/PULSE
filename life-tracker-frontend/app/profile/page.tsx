@@ -1,104 +1,59 @@
-import { apiFetch } from "@/app/lib/server-api";
-import PulseCard from "@/app/components/design-system/pulse-card";
+import { UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
 import BackLink from "@/app/components/design-system/back-link";
-import CurrencySettings from "./currency-settings";
-import TimeZoneSettings from "./time-zone-settings";
-import ThemeSettings from "./theme-settings";
-import LogoutButton from "./logout-button";
-import ChangePasswordButton from "./change-password-button";
-import APIKeys from "./api-keys";
+import { apiFetch } from "@/app/lib/server-api";
 import AboutPulse from "./about-pulse";
+import APIKeys from "./api-keys";
+import ChangePasswordButton from "./change-password-button";
+import CurrencySettings from "./currency-settings";
+import ThemeSettings from "./theme-settings";
+import TimeZoneSettings from "./time-zone-settings";
+import styles from "./profile.module.css";
 
 export const metadata = {
   title: "Profile | PULSE",
 };
 
-const apiBaseURL =
-  process.env.INTERNAL_API_BASE_URL ??
-  "http://localhost:8080";
-
-type ProfileResponse = {
-  has_profile: boolean;
-  timezone?: string;
-  currency: string;
-  name?: string;
-};
+const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
 
 export default async function ProfilePage() {
-  // Validate session on the server
   const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
-  if (!sessionResponse.ok) {
-    redirect("/");
-  }
-  const session = (await sessionResponse.json()) as { username: string };
+  if (!sessionResponse.ok) redirect("/");
+  const { username } = (await sessionResponse.json()) as { username: string };
 
-  // Fetch profile on the server
   const profileResponse = await apiFetch(`${apiBaseURL}/api/profile`);
-  if (!profileResponse.ok) {
-    redirect("/");
-  }
-  const profile = (await profileResponse.json()) as ProfileResponse;
-
-  const username = session.username;
-  const displayName = profile.name ?? "";
+  if (!profileResponse.ok) redirect("/");
+  const { name } = (await profileResponse.json()) as { name?: string };
 
   return (
-    <main className="min-h-screen bg-background px-6 py-10 text-foreground sm:px-10 lg:px-16">
-      <div className="mx-auto max-w-6xl">
-        <BackLink href="/dashboard">Dashboard</BackLink>
+    <main className={styles.page}>
+      <BackLink href="/dashboard" className={styles.back}>Dashboard</BackLink>
 
-        <section className="mt-12 flex flex-col items-center text-center">
-          {/* Circular Profile Picture Placeholder on top */}
-          <div className="relative mb-6">
-            <div className="h-32 w-32 overflow-hidden rounded-full shadow-xl">
-              <img
-                alt="Profile picture placeholder"
-                className="h-full w-full object-cover"
-                src="/avatar-placeholder.jpg"
-              />
-            </div>
+      <section className={styles.hero} aria-label="Your profile">
+        <div className={styles.avatar} aria-hidden="true"><UserRound /></div>
+        <div className="min-w-0">
+          <h1>{name || username}</h1>
+          <span className={styles.handle}>@{username}</span>
+        </div>
+      </section>
+
+      <div className={styles.columns}>
+        <section className={styles.section} aria-labelledby="profile-account">
+          <header className={styles.sectionHeader}>
+            <h2 id="profile-account"><UserRound aria-hidden="true" />Account</h2>
+          </header>
+          <div className={styles.card}>
+            <ChangePasswordButton />
+            <TimeZoneSettings />
+            <CurrencySettings />
           </div>
-
-          <p className="text-xs font-semibold tracking-[0.18em] text-action uppercase">
-            Personal Profile
-          </p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            {displayName || username}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            @{username}
-          </p>
-
-          <PulseCard className="mt-10 w-full p-6 sm:p-8 text-left">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <h2 className="text-lg font-semibold text-foreground">Account Information</h2>
-              <ChangePasswordButton />
-            </div>
-            <div className="space-y-4 text-sm">
-              <div className="flex justify-between py-2 border-b border-divider">
-                <span className="text-muted-foreground">Display Name</span>
-                <span className="font-medium text-foreground">{displayName || "Not set"}</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-muted-foreground">Username</span>
-                <span className="font-medium text-foreground">{username}</span>
-              </div>
-            </div>
-          </PulseCard>
-
-          <TimeZoneSettings />
-          <CurrencySettings />
-
-          <ThemeSettings />
-
-          <APIKeys />
-
-          <AboutPulse />
-
-          <LogoutButton />
         </section>
+
+        <ThemeSettings />
       </div>
+
+      <APIKeys />
+      <AboutPulse />
     </main>
   );
 }

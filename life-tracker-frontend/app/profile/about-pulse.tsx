@@ -1,40 +1,56 @@
-import PulseCard from "@/app/components/design-system/pulse-card";
+import { Info } from "lucide-react";
 import LocalDate from "@/app/components/local-date";
+import LogoutButton from "./logout-button";
+import styles from "./profile.module.css";
 
 export default function AboutPulse() {
+  const version = process.env.NEXT_PUBLIC_PULSE_VERSION;
   const releasedAt = process.env.NEXT_PUBLIC_PULSE_RELEASE_DATE;
   const builtAt = process.env.NEXT_PUBLIC_PULSE_BUILD_DATE;
 
   return (
-    <PulseCard as="section" aria-labelledby="about-pulse-title" className="mt-8 w-full p-6 text-left sm:p-8">
-      <h2 id="about-pulse-title" className="text-lg font-semibold">About Pulse</h2>
-      <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <img src="/pulse-logo.png" alt="Pulse logo" width={72} height={72} className="h-18 w-18 object-contain" />
+    <section className={styles.section} aria-labelledby="about-pulse-title">
+      <header className={styles.sectionHeader}>
+        <h2 id="about-pulse-title"><Info aria-hidden="true" />About</h2>
+      </header>
+      <div className={`${styles.card} ${styles.about}`}>
+        <div className={styles.brand}>
+          <span className={styles.logo}>
+            <svg width="46" height="46" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="profile-pulse-logo" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0" stopColor="#19d3f3" />
+                  <stop offset="0.5" stopColor="#4c6bff" />
+                  <stop offset="1" stopColor="#ff2fd0" />
+                </linearGradient>
+              </defs>
+              <path d="M3 17h7l4-10 6 20 4-10h7" stroke="url(#profile-pulse-logo)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
           <div>
-            <p aria-label="Pulse" className="text-3xl font-bold tracking-[0.18em] text-action">PULSE</p>
-            <p className="mt-2 text-sm text-muted-foreground">Your life, in rhythm.</p>
+            <h3>Pulse</h3>
+            <p>Your Life in Rhythm</p>
           </div>
         </div>
-        <dl className="space-y-3 text-sm sm:min-w-72">
-          <div className="flex items-center justify-between gap-6">
-            <dt className="text-muted-foreground">Version</dt>
-            <dd className="rounded-full bg-primary/10 px-3 py-1 font-semibold text-action">v{process.env.NEXT_PUBLIC_PULSE_VERSION}</dd>
-          </div>
-          {releasedAt && (
-            <div className="flex justify-between gap-6">
-              <dt className="text-muted-foreground">Released</dt>
-              <dd><LocalDate dateString={releasedAt} /></dd>
-            </div>
-          )}
-          {builtAt && (
-            <div className="flex justify-between gap-6">
-              <dt className="text-muted-foreground">Built</dt>
-              <dd><LocalDate dateString={builtAt} /></dd>
-            </div>
-          )}
-        </dl>
+        <div className={styles.build}>
+          <dl>
+            {version && <div className={styles.detail}><dt>Version</dt><dd>v{version}</dd></div>}
+            {releasedAt && (
+              <div className={styles.detail}>
+                <dt>Released</dt>
+                <dd><LocalDate dateString={releasedAt} /></dd>
+              </div>
+            )}
+            {builtAt && (
+              <div className={styles.detail}>
+                <dt>Build date and time</dt>
+                <dd><LocalDate dateString={builtAt} /></dd>
+              </div>
+            )}
+          </dl>
+          <div className={styles.signOut}><LogoutButton /></div>
+        </div>
       </div>
-    </PulseCard>
+    </section>
   );
 }

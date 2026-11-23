@@ -1,7 +1,5 @@
 "use client";
 
-import PulseCard from "@/app/components/design-system/pulse-card";
-
 import { formatInstant } from "@/app/lib/time-zone.mjs";
 
 import { useTimeZone } from "@/app/components/time-zone-provider";
@@ -12,6 +10,7 @@ import Button from "@/app/components/design-system/button";
 import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
 import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
 import { copyApiKey } from "./copy-api-key";
+import styles from "./profile.module.css";
 
 type APIKey = {
   id: number;
@@ -25,6 +24,7 @@ export default function APIKeys() {
   const [keys, setKeys] = useState<APIKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
   const [token, setToken] = useState("");
@@ -40,7 +40,7 @@ export default function APIKeys() {
         return (await response.json()) as APIKey[];
       })
       .then((items) => { if (active) setKeys(items); })
-      .catch(() => { if (active) setError("Could not load API keys."); })
+      .catch(() => { if (active) setLoadError("Could not load API keys."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
@@ -101,29 +101,76 @@ export default function APIKeys() {
   }
 
   return (
-    <PulseCard as="section" className="mt-6 w-full p-6 text-left sm:p-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className={styles.section} aria-labelledby="profile-api-keys">
+      <header className={styles.sectionHeader}>
         <div>
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-foreground"><KeyRound className="h-5 w-5" /> API Keys</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Create keys for external services to access your data. Treat each key like a password.</p>
+          <h2 id="profile-api-keys"><KeyRound aria-hidden="true" />API keys</h2>
+          <p>Create keys so external services can access your Pulse data. Treat them like passwords.</p>
         </div>
-        <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => { setError(""); setIsOpen(true); }}>Create key</Button>
-      </div>
-      {error && !isOpen && !revokeKey && <p className="mt-4 text-sm text-destructive" role="alert">{error}</p>}
-      {loading ? <p className="mt-6 text-sm text-muted-foreground">Loading keys…</p> : keys.length === 0 ? (
-        <p className="mt-6 text-sm text-muted-foreground">No API keys yet.</p>
+        <Button
+          type="button"
+          className={`${styles.pill} ${styles.primary}`}
+          disabled={loading}
+          icon={<Plus className="size-5" aria-hidden="true" />}
+          onClick={() => { setError(""); setIsOpen(true); }}
+        >
+          Create API key
+        </Button>
+      </header>
+      {loading || keys.length === 0 ? (
+        <div className={`${styles.card} ${styles.empty}`}>
+          <span className={styles.tile} aria-hidden="true"><KeyRound /></span>
+          {loading ? <p role="status">Loading keys…</p> : !loadError && (
+            <>
+              <strong>No API keys yet</strong>
+              <p>Create a key to let an external service access your Pulse data.</p>
+            </>
+          )}
+          {loadError && <p className="text-destructive" role="alert">{loadError}</p>}
+        </div>
       ) : (
-        <ul className="mt-5 divide-y divide-divider">
-          {keys.map((key) => (
-            <li className="flex items-center justify-between gap-4 py-3" key={key.id}>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">{key.name}</p>
-                <p className="text-xs text-muted-foreground">{key.token_prefix}… · Created {formatInstant(key.created_at, timeZone, { dateStyle: "medium" })}</p>
-              </div>
-              <Button variant="iconDanger" size="sm" aria-label={`Revoke ${key.name}`} onClick={() => { setError(""); setRevokeKey(key); }}><Trash2 className="h-4 w-4" /></Button>
-            </li>
-          ))}
-        </ul>
+        <div className={`${styles.card} ${styles.keyCard}`}>
+          {error && !isOpen && !revokeKey && <p className="px-6 py-3 text-sm text-destructive" role="alert">{error}</p>}
+          <table role="table" className={styles.keyTable} aria-labelledby="profile-api-keys">
+            <thead role="rowgroup">
+              <tr role="row">
+                <th scope="col">Name</th>
+                <th scope="col">Key</th>
+                <th scope="col">Created</th>
+                <th scope="col"><span className="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody role="rowgroup">
+              {keys.map((key) => (
+                <tr key={key.id} role="row">
+                  <td role="cell">
+                    <div className={styles.keyName}>
+                      <span className={styles.keyIcon} aria-hidden="true"><KeyRound className="size-[18px]" /></span>
+                      <span>{key.name}</span>
+                    </div>
+                  </td>
+                  <td role="cell"><code>{key.token_prefix}…</code></td>
+                  <td role="cell" className="tabular-nums">
+                    <span className={styles.createdLabel} aria-hidden="true">Created</span>
+                    <time dateTime={key.created_at}>{formatInstant(key.created_at, timeZone, { dateStyle: "medium" })}</time>
+                  </td>
+                  <td role="cell">
+                    <Button
+                      type="button"
+                      variant="iconDanger"
+                      size="lg"
+                      className={styles.revoke}
+                      aria-label={`Revoke ${key.name}`}
+                      onClick={() => { setError(""); setRevokeKey(key); }}
+                    >
+                      <Trash2 className="size-5" aria-hidden="true" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       {isOpen && (
         <Dialog labelledBy="api-key-dialog-title">
@@ -167,6 +214,6 @@ export default function APIKeys() {
         isLoading={busy}
         error={revokeKey ? error : undefined}
       />
-    </PulseCard>
+    </section>
   );
 }

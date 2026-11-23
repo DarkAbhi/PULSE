@@ -3,26 +3,31 @@
 import Button from "@/app/components/design-system/button";
 
 import { useState } from "react";
-import { KeyRound } from "lucide-react";
+import { Lock } from "lucide-react";
 import ChangePasswordDialog from "./change-password-dialog";
+import styles from "./profile.module.css";
 
 export default function ChangePasswordButton() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   return (
-    <>
-      <Button variant="secondary" size="md"
+    <div className={styles.row}>
+      <span className={styles.tile} aria-hidden="true"><Lock /></span>
+      <div>
+        <p className={styles.rowLabel}>Password</p>
+        <p className={styles.rowValue} aria-hidden="true">••••••••••</p>
+      </div>
+      <Button variant="secondary" className={`${styles.pill} ${styles.secondary}`}
         onClick={() => setIsDialogOpen(true)}
         type="button"
       >
-        <KeyRound className="h-4 w-4 text-action" />
-        <span>Change Password</span>
+        Change password
       </Button>
 
       <ChangePasswordDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
       />
-    </>
+    </div>
   );
 }

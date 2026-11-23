@@ -239,6 +239,10 @@ definitions:
         type: integer
       time_label:
         type: string
+      workout_focus:
+        type: string
+      workout_type:
+        type: string
     type: object
   apidoc.FitnessStatCard:
     properties:
@@ -269,6 +273,10 @@ definitions:
         type: string
       synced_from_apple_watch:
         type: boolean
+      workout_focus:
+        type: string
+      workout_type:
+        type: string
     type: object
   apidoc.FitnessWorkoutGroup:
     properties:
@@ -783,6 +791,29 @@ definitions:
         type: integer
       visited:
         type: boolean
+    type: object
+  apidoc.WorkoutClassificationInput:
+    properties:
+      workout_focus:
+        example: Chest and triceps
+        maxLength: 120
+        type: string
+      workout_type:
+        example: push
+        type: string
+    required:
+    - workout_type
+    type: object
+  apidoc.WorkoutScheduleDay:
+    properties:
+      weekday:
+        maximum: 7
+        minimum: 1
+        type: integer
+      workout_focus:
+        type: string
+      workout_type:
+        type: string
     type: object
   gym.FitnessTodaySummary:
     properties:
@@ -1544,6 +1575,48 @@ paths:
       summary: Get workout details with linked fitness metrics
       tags:
       - fitness
+  /api/fitness-workouts/{id}/classification:
+    put:
+      consumes:
+      - application/json
+      description: Provide workout_type as an empty string to clear the classification.
+      parameters:
+      - description: Gym visit ID
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Workout classification
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.WorkoutClassificationInput'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Set the type and optional focus of a logged workout
+      tags:
+      - fitness
   /api/fitness/overview:
     get:
       description: Uses the profile time zone (UTC by default) for dates and year-to-date
@@ -1593,6 +1666,70 @@ paths:
       security:
       - SessionBearer: []
       summary: Get today's activity rings, steps, and total sleep
+      tags:
+      - fitness
+  /api/fitness/workout-schedule:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apidoc.WorkoutScheduleDay'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: List configured days in the recurring weekly workout schedule
+      tags:
+      - fitness
+  /api/fitness/workout-schedule/{weekday}:
+    put:
+      consumes:
+      - application/json
+      description: Use rest_day for a planned rest day or an empty workout_type to
+        remove the plan.
+      parameters:
+      - description: ISO weekday (Monday = 1)
+        in: path
+        maximum: 7
+        minimum: 1
+        name: weekday
+        required: true
+        type: integer
+      - description: Scheduled workout classification
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/apidoc.WorkoutClassificationInput'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/apidoc.Error'
+      security:
+      - SessionBearer: []
+      summary: Replace or clear the workout plan for a weekday
       tags:
       - fitness
   /api/gym-visits:

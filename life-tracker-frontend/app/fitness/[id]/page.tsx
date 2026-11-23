@@ -8,6 +8,8 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 import TopAppBar from "@/app/components/top-app-bar";
 import { Clock, Dumbbell, Flag, Flame, List, Timer, Watch } from "lucide-react";
 import { AddExerciseButton, AddExerciseProvider } from "@/app/fitness/[id]/add-exercise-form";
+import EditWorkoutButton from "@/app/fitness/[id]/edit-workout-button";
+import { workoutLabel, type WorkoutClassification } from "@/app/fitness/workout-types";
 import DeleteVisitButton from "@/app/fitness/[id]/delete-visit-button";
 import ExerciseCard from "@/app/fitness/[id]/exercise-card";
 import { formatDuration } from "@/app/fitness/[id]/format-duration.mjs";
@@ -17,7 +19,7 @@ export const metadata = {
   title: "Fitness Workout | PULSE",
 };
 
-type GymVisit = {
+type GymVisit = WorkoutClassification & {
   id: number;
   created_at: string;
   start_time: string | null;
@@ -39,6 +41,7 @@ function WorkoutSummary({ visit, timeZone, error }: {
   timeZone: string;
   error: string;
 }) {
+  const classification = visit && workoutLabel(visit);
   const date = visit ? new Date(visit.start_time ?? visit.created_at) : null;
   const dateParts = date && new Intl.DateTimeFormat("en-IN", {
     weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone,
@@ -61,12 +64,19 @@ function WorkoutSummary({ visit, timeZone, error }: {
       <svg className="absolute -top-2.5 -right-6 -z-10 size-[300px] fill-none stroke-white opacity-10" strokeWidth={1} strokeLinecap="round" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" />
       </svg>
-      <div className="flex flex-wrap items-center gap-2">
-        <span className={`${tagClass} border-white/40 bg-white/20`}><Dumbbell aria-hidden="true" />Gym visit</span>
-        {visit?.synced_from_apple_watch && (
-          <span className={`${tagClass} border-transparent bg-white/95 text-(--workout-synced-text)`}>
-            <Watch aria-hidden="true" />Synced from watch
-          </span>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <span className={`${tagClass} border-white/40 bg-white/20`}><Dumbbell aria-hidden="true" />Gym visit</span>
+          {visit?.synced_from_apple_watch && (
+            <span className={`${tagClass} border-transparent bg-white/95 text-(--workout-synced-text)`}>
+              <Watch aria-hidden="true" />Synced from watch
+            </span>
+          )}
+          {classification && <span className={`${tagClass} min-w-0 border-white/40 bg-white/20 wrap-anywhere`}>{classification}</span>}
+        </div>
+        {visit && (
+          <EditWorkoutButton visitID={visit.id}
+            classification={{ workout_type: visit.workout_type, workout_focus: visit.workout_focus }} />
         )}
       </div>
       {date ? (

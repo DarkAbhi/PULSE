@@ -2,10 +2,12 @@ import { PulseCardLink } from "@/app/components/design-system/pulse-card";
 import { Clock } from "lucide-react";
 import { fitnessStyles as styles } from "@/app/fitness/fitness-classes";
 
+import { workoutLabel, type WorkoutClassification } from "@/app/fitness/workout-types";
+
 export type WorkoutGroup = {
   date: string;
   date_label: string;
-  workouts: { id: number; time_label: string; duration_seconds?: number | null }[];
+  workouts: (WorkoutClassification & { id: number; time_label: string; duration_seconds?: number | null })[];
 };
 
 const monthFormatter = new Intl.DateTimeFormat("en-IN", { month: "short", timeZone: "UTC" });
@@ -29,7 +31,7 @@ export default function GymVisitsList({ groups }: { groups: WorkoutGroup[] }) {
                 <span className={styles.dateBadgeMonth}>{monthFormatter.format(date)}</span>
               </div>
               <div className="min-w-0">
-                <h3 className={styles.workoutTitle}>Gym visit</h3>
+                <h3 className={`${styles.workoutTitle} wrap-anywhere`}>{workoutLabel(visit) ?? "Gym visit"}</h3>
                 <time dateTime={group.date} aria-label={group.date_label} className={styles.workoutDate}>{dateFormatter.format(date)}</time>
                 <span className={styles.timeChip}>
                   <Clock size={15} className="shrink-0" aria-hidden="true" />{visit.time_label}

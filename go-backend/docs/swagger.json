@@ -275,6 +275,71 @@
                 }
             }
         },
+        "/api/fitness-workouts/{id}/classification": {
+            "put": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Provide workout_type as an empty string to clear the classification.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fitness"
+                ],
+                "summary": "Set the type and optional focus of a logged workout",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Gym visit ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Workout classification",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.WorkoutClassificationInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/api/fitness/overview": {
             "get": {
                 "security": [
@@ -332,6 +397,105 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/gym.FitnessTodaySummary"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/fitness/workout-schedule": {
+            "get": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fitness"
+                ],
+                "summary": "List configured days in the recurring weekly workout schedule",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/apidoc.WorkoutScheduleDay"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/fitness/workout-schedule/{weekday}": {
+            "put": {
+                "security": [
+                    {
+                        "SessionBearer": []
+                    }
+                ],
+                "description": "Use rest_day for a planned rest day or an empty workout_type to remove the plan.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "fitness"
+                ],
+                "summary": "Replace or clear the workout plan for a weekday",
+                "parameters": [
+                    {
+                        "maximum": 7,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "ISO weekday (Monday = 1)",
+                        "name": "weekday",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Scheduled workout classification",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.WorkoutClassificationInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/apidoc.Error"
                         }
                     },
                     "401": {
@@ -5950,6 +6114,12 @@
                 },
                 "time_label": {
                     "type": "string"
+                },
+                "workout_focus": {
+                    "type": "string"
+                },
+                "workout_type": {
+                    "type": "string"
                 }
             }
         },
@@ -5996,6 +6166,12 @@
                 },
                 "synced_from_apple_watch": {
                     "type": "boolean"
+                },
+                "workout_focus": {
+                    "type": "string"
+                },
+                "workout_type": {
+                    "type": "string"
                 }
             }
         },
@@ -6748,6 +6924,39 @@
                 },
                 "visited": {
                     "type": "boolean"
+                }
+            }
+        },
+        "apidoc.WorkoutClassificationInput": {
+            "type": "object",
+            "required": [
+                "workout_type"
+            ],
+            "properties": {
+                "workout_focus": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "example": "Chest and triceps"
+                },
+                "workout_type": {
+                    "type": "string",
+                    "example": "push"
+                }
+            }
+        },
+        "apidoc.WorkoutScheduleDay": {
+            "type": "object",
+            "properties": {
+                "weekday": {
+                    "type": "integer",
+                    "maximum": 7,
+                    "minimum": 1
+                },
+                "workout_focus": {
+                    "type": "string"
+                },
+                "workout_type": {
+                    "type": "string"
                 }
             }
         },

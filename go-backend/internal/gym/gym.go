@@ -13,6 +13,7 @@ type visitListItem struct {
 
 type visitDetail struct {
 	visitListItem
+	workoutClassification
 	StartTime            *time.Time `json:"start_time"`
 	EndTime              *time.Time `json:"end_time"`
 	DurationSeconds      *float64   `json:"duration_seconds"`

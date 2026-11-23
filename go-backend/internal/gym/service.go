@@ -26,6 +26,9 @@ type store interface {
 	AddVisitOnDate(context.Context, int64, time.Time) (int64, error)
 	ListVisits(context.Context, int64) ([]visitListItem, error)
 	GetVisit(context.Context, int64, int64) (visitDetail, error)
+	UpdateWorkoutClassification(context.Context, int64, int64, workoutClassification) (bool, error)
+	ListWorkoutSchedule(context.Context, int64) ([]workoutScheduleDay, error)
+	SaveWorkoutScheduleDay(context.Context, int64, int16, workoutClassification) error
 	DeleteVisit(context.Context, int64, int64) (bool, error)
 	DeleteExercise(context.Context, int64, int64, int64) (bool, error)
 	UpdateExercise(context.Context, int64, int64, int64, createExerciseBody) error

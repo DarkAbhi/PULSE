@@ -7,6 +7,7 @@ import PulseButton from "@/app/components/design-system/pulse-button";
 import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { formatDuration } from "@/app/fitness/[id]/format-duration.mjs";
+import { workoutLabel, type WorkoutScheduleDay } from "@/app/fitness/workout-types";
 import type { FitnessOverview } from "@/app/fitness/types";
 import { calendarDays, shiftMonth } from "@/app/fitness/calendar-utils.mjs";
 import { markGymVisitAction } from "@/app/fitness/actions";
@@ -23,9 +24,10 @@ function parseDate(date: string) {
   return new Date(`${date}T00:00:00Z`);
 }
 
-export default function FitnessCalendar({ today, workoutsByDate, summary, children }: {
+export default function FitnessCalendar({ today, workoutsByDate, schedule, summary, children }: {
   today: string;
   workoutsByDate: FitnessOverview["calendar_workouts"];
+  schedule: WorkoutScheduleDay[];
   summary: ReactNode;
   children: ReactNode;
 }) {
@@ -35,6 +37,8 @@ export default function FitnessCalendar({ today, workoutsByDate, summary, childr
   const [dateToMark, setDateToMark] = useState<string | null>(null);
   const month = selectedDate.slice(0, 7);
   const selectedVisits = workoutsByDate[selectedDate]?.workouts ?? [];
+  const selectedWeekday = parseDate(selectedDate).getUTCDay() || 7;
+  const plan = selectedDate >= today && schedule.find((day) => day.weekday === selectedWeekday);
   const selectedDayHeading = (
     <h3 className="text-lg leading-tight font-extrabold tracking-tight">
       <time dateTime={selectedDate}>{selectedDayFormatter.format(parseDate(selectedDate))}</time>
@@ -105,16 +109,17 @@ export default function FitnessCalendar({ today, workoutsByDate, summary, childr
             {selectedVisits.length > 0 ? (
               <ul role="list" className="divide-y divide-divider">
                 {selectedVisits.map((visit, index) => {
+                  const label = workoutLabel(visit);
                   const duration = visit.duration_seconds == null ? "" : ` for ${formatDuration(visit.duration_seconds, "short")}`;
                   return (
                     <li key={visit.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
                       <div className="min-w-32 flex-1">
                         {index === 0 && selectedDayHeading}
-                        <p className={`${styles.selectedDateDetails} tabular-nums`}>Gym visit at {visit.time_label}{duration}</p>
+                        <p className={`${styles.selectedDateDetails} tabular-nums wrap-anywhere`}>{label ?? "Gym visit"} at {visit.time_label}{duration}</p>
                       </div>
                       <Link
                         href={`/fitness/${visit.id}`}
-                        aria-label={`View workout for gym visit at ${visit.time_label}${duration}`}
+                        aria-label={`View workout for ${label ?? "gym visit"} at ${visit.time_label}${duration}`}
                         className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-chip px-4 text-sm font-bold hover:bg-divider"
                       >
                         View workout
@@ -130,6 +135,7 @@ export default function FitnessCalendar({ today, workoutsByDate, summary, childr
                 <p className={styles.selectedDateDetails}>No workout logged</p>
               </div>
             )}
+            {plan && <p className="border-t border-divider py-2 text-control font-semibold wrap-anywhere"><span className={styles.muted}>Scheduled</span> · {workoutLabel(plan)}</p>}
           </div>
         </PulseCard>
         {summary}

@@ -16,6 +16,8 @@ const pongal = {
 const accountsByUser = new Map();
 const dismissedNotifications = new Set();
 const fitnessTestDay = "2026-01-02";
+const fitnessSchedule = new Map();
+let fitnessClassification = {};
 const fitnessTestVisits = [{ id: 1, time_label: "7:00 AM", duration_seconds: 4320 }];
 const horizonCategories = [
   { id: 1, name: "Test category", allows_subcategories: true, parent_id: null },
@@ -106,14 +108,30 @@ http.createServer(async (req, res) => {
       }],
     });
   }
-  if (url.pathname === "/api/fitness/overview" && token === "fitness-repeat-visit") {
+  if (url.pathname === "/api/fitness/workout-schedule") {
+    return send(200, token === "fitness-workout-schedule" ? [...fitnessSchedule.values()] : []);
+  }
+  const schedulePath = url.pathname.match(/^\/api\/fitness\/workout-schedule\/([1-7])$/);
+  if (schedulePath && req.method === "PUT" && token === "fitness-workout-schedule") {
+    const weekday = Number(schedulePath[1]);
+    if (body.workout_type) fitnessSchedule.set(weekday, { weekday, ...body });
+    else fitnessSchedule.delete(weekday);
+    return send(204);
+  }
+  if (url.pathname === "/api/fitness-workouts/1/classification" && req.method === "PUT" && token === "fitness-workout-schedule") {
+    fitnessClassification = { workout_type: body.workout_type || null, workout_focus: body.workout_focus || null };
+    return send(204);
+  }
+  if (url.pathname === "/api/fitness/overview" && ["fitness-repeat-visit", "fitness-workout-schedule"].includes(token)) {
+    const visits = token === "fitness-repeat-visit"
+      ? fitnessTestVisits
+      : [{ ...fitnessTestVisits.find(visit => visit.id === 1), ...fitnessClassification }];
+    const group = { date: fitnessTestDay, date_label: "Friday, 2 January 2026", workouts: visits };
     return send(200, {
       today: fitnessTestDay,
       cards: [],
-      calendar_workouts: {
-        [fitnessTestDay]: { date: fitnessTestDay, date_label: "Friday, 2 January 2026", workouts: fitnessTestVisits },
-      },
-      recent_workouts: [],
+      calendar_workouts: { [fitnessTestDay]: group },
+      recent_workouts: token === "fitness-workout-schedule" ? [group] : [],
     });
   }
   if (url.pathname === "/api/gym-visits" && req.method === "POST" && token === "fitness-repeat-visit") {
@@ -124,7 +142,7 @@ http.createServer(async (req, res) => {
   }
   if (url.pathname === "/api/gym-visits/1/exercises") return send(200, []);
   if (url.pathname === "/api/fitness-workouts/1") {
-    return send(200, { id: 1, created_at: "2026-01-02T10:00:00Z" });
+    return send(200, { id: 1, created_at: "2026-01-02T10:00:00Z", ...(token === "fitness-workout-schedule" ? fitnessClassification : {}) });
   }
   if (url.pathname === "/api/horizon") return send(200, {
     base_amount: 0, currency: "INR", total_deductions: 0, total_transactions: 0,

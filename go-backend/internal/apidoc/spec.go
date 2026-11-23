@@ -69,8 +69,21 @@ type GymVisit struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 }
+type WorkoutClassification struct {
+	WorkoutType  *string `json:"workout_type"`
+	WorkoutFocus *string `json:"workout_focus"`
+}
+type WorkoutClassificationInput struct {
+	WorkoutType  string `json:"workout_type" example:"push" validate:"required"`
+	WorkoutFocus string `json:"workout_focus,omitempty" example:"Chest and triceps" maxLength:"120"`
+}
+type WorkoutScheduleDay struct {
+	Weekday int16 `json:"weekday" minimum:"1" maximum:"7"`
+	WorkoutClassification
+}
 type FitnessWorkoutDetail struct {
 	GymVisit
+	WorkoutClassification
 	StartTime            *time.Time `json:"start_time"`
 	EndTime              *time.Time `json:"end_time"`
 	DurationSeconds      *float64   `json:"duration_seconds"`
@@ -86,6 +99,7 @@ type FitnessStatCard struct {
 	Tooltip  string `json:"tooltip,omitempty"`
 }
 type FitnessOverviewWorkout struct {
+	WorkoutClassification
 	ID              int64    `json:"id"`
 	TimeLabel       string   `json:"time_label"`
 	DurationSeconds *float64 `json:"duration_seconds,omitempty"`
@@ -679,6 +693,48 @@ func gymVisitOnDate() {}
 // @Failure 500 {object} Error
 // @Router /api/fitness-workouts/{id} [get]
 func fitnessWorkoutDetail() {}
+
+// updateWorkoutClassification documents PUT /api/fitness-workouts/{id}/classification.
+// @Summary Set the type and optional focus of a logged workout
+// @Description Provide workout_type as an empty string to clear the classification.
+// @Tags fitness
+// @Accept json
+// @Param id path integer true "Gym visit ID" minimum(1)
+// @Param body body WorkoutClassificationInput true "Workout classification"
+// @Security SessionBearer
+// @Success 204
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 404 {string} string
+// @Failure 500 {object} Error
+// @Router /api/fitness-workouts/{id}/classification [put]
+func updateWorkoutClassification() {}
+
+// listWorkoutSchedule documents GET /api/fitness/workout-schedule.
+// @Summary List configured days in the recurring weekly workout schedule
+// @Tags fitness
+// @Produce json
+// @Security SessionBearer
+// @Success 200 {array} WorkoutScheduleDay
+// @Failure 401 {object} Error
+// @Failure 500 {object} Error
+// @Router /api/fitness/workout-schedule [get]
+func listWorkoutSchedule() {}
+
+// saveWorkoutScheduleDay documents PUT /api/fitness/workout-schedule/{weekday}.
+// @Summary Replace or clear the workout plan for a weekday
+// @Description Use rest_day for a planned rest day or an empty workout_type to remove the plan.
+// @Tags fitness
+// @Accept json
+// @Param weekday path integer true "ISO weekday (Monday = 1)" minimum(1) maximum(7)
+// @Param body body WorkoutClassificationInput true "Scheduled workout classification"
+// @Security SessionBearer
+// @Success 204
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Failure 500 {object} Error
+// @Router /api/fitness/workout-schedule/{weekday} [put]
+func saveWorkoutScheduleDay() {}
 
 // fitnessOverview documents GET /api/fitness/overview.
 // @Summary Get render-ready gym statistics, calendar visits, and three recent workouts

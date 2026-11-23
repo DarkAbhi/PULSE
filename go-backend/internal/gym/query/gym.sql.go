@@ -230,7 +230,7 @@ func (q *Queries) GetCatalogExercise(ctx context.Context, id string) (GetCatalog
 
 const getVisit = `-- name: GetVisit :one
 SELECT g.id, g.created_at, w.start_time, w.end_time,
-    w.duration_seconds, w.calories_burned,
+    w.duration_seconds, w.calories_burned, g.workout_type, g.workout_focus,
     CASE WHEN w.id IS NULL THEN FALSE ELSE TRUE END AS synced_from_apple_watch
 FROM gym_visits AS g
 LEFT JOIN fitness_workouts AS w ON w.id = g.fitness_workout_id AND w.user_id = g.user_id
@@ -249,6 +249,8 @@ type GetVisitRow struct {
 	EndTime              pgtype.Timestamptz
 	DurationSeconds      *float64
 	CaloriesBurned       *float64
+	WorkoutType          *string
+	WorkoutFocus         *string
 	SyncedFromAppleWatch bool
 }
 
@@ -262,6 +264,8 @@ func (q *Queries) GetVisit(ctx context.Context, arg GetVisitParams) (GetVisitRow
 		&i.EndTime,
 		&i.DurationSeconds,
 		&i.CaloriesBurned,
+		&i.WorkoutType,
+		&i.WorkoutFocus,
 		&i.SyncedFromAppleWatch,
 	)
 	return i, err
@@ -442,7 +446,7 @@ func (q *Queries) OverviewSessions(ctx context.Context, arg OverviewSessionsPara
 }
 
 const overviewVisits = `-- name: OverviewVisits :many
-SELECT g.id, g.created_at, w.duration_seconds,
+SELECT g.id, g.created_at, w.duration_seconds, g.workout_type, g.workout_focus,
     COUNT(s.id)::bigint AS sets,
     COALESCE(SUM(s.reps * s.weight), 0)::double precision AS volume,
     COUNT(s.id) FILTER (WHERE s.weight IS NULL)::bigint AS unweighted_sets
@@ -464,6 +468,8 @@ type OverviewVisitsRow struct {
 	ID              int64
 	CreatedAt       pgtype.Timestamptz
 	DurationSeconds *float64
+	WorkoutType     *string
+	WorkoutFocus    *string
 	Sets            int64
 	Volume          float64
 	UnweightedSets  int64
@@ -482,6 +488,8 @@ func (q *Queries) OverviewVisits(ctx context.Context, arg OverviewVisitsParams) 
 			&i.ID,
 			&i.CreatedAt,
 			&i.DurationSeconds,
+			&i.WorkoutType,
+			&i.WorkoutFocus,
 			&i.Sets,
 			&i.Volume,
 			&i.UnweightedSets,

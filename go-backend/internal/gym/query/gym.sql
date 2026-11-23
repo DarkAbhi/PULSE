@@ -19,7 +19,7 @@ INSERT INTO gym_visits (user_id, created_at) VALUES ($1, $2) RETURNING id;
 SELECT id,created_at FROM gym_visits WHERE user_id=$1 ORDER BY created_at DESC,id DESC;
 
 -- name: OverviewVisits :many
-SELECT g.id, g.created_at, w.duration_seconds,
+SELECT g.id, g.created_at, w.duration_seconds, g.workout_type, g.workout_focus,
     COUNT(s.id)::bigint AS sets,
     COALESCE(SUM(s.reps * s.weight), 0)::double precision AS volume,
     COUNT(s.id) FILTER (WHERE s.weight IS NULL)::bigint AS unweighted_sets
@@ -45,7 +45,7 @@ WHERE w.user_id = $1 AND a.raw_value = 50
 
 -- name: GetVisit :one
 SELECT g.id, g.created_at, w.start_time, w.end_time,
-    w.duration_seconds, w.calories_burned,
+    w.duration_seconds, w.calories_burned, g.workout_type, g.workout_focus,
     CASE WHEN w.id IS NULL THEN FALSE ELSE TRUE END AS synced_from_apple_watch
 FROM gym_visits AS g
 LEFT JOIN fitness_workouts AS w ON w.id = g.fitness_workout_id AND w.user_id = g.user_id

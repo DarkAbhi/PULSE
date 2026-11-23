@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { ChevronLeft, ChevronRight, Clock, Search } from "lucide-react";
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import { searchRecipesAction, type RecipeSummary } from "@/app/meal-plan/actions";
 import { mealPlanStyles as styles } from "@/app/meal-plan/meal-plan-classes";
 
@@ -63,7 +63,7 @@ export function RecipePicker({ onSelect }: { onSelect: (recipe: RecipeSummary) =
         : response === null ? (
           <div role="alert" className="flex items-center justify-between gap-2">
             <p className="text-sm text-destructive">Could not load recipes.</p>
-            <Button type="button" variant="secondary" onClick={() => setRetry(retry + 1)}>Retry</Button>
+            <PulseButton type="button" variant="secondary" onClick={() => setRetry(retry + 1)}>Retry</PulseButton>
           </div>
         ) : response.recipes.length === 0 ? (
           <p role="status" className="py-2 text-sm text-muted-foreground">No recipes found.</p>
@@ -86,13 +86,13 @@ export function RecipePicker({ onSelect }: { onSelect: (recipe: RecipeSummary) =
             </ul>
             {(page > 1 || response.has_more) && (
               <nav className="flex items-center justify-between gap-2" aria-label="Recipe results pages">
-                <Button type="button" variant="secondary" disabled={page === 1} onClick={() => setPage(page - 1)} aria-label="Previous recipe page">
+                <PulseButton type="button" variant="secondary" disabled={page === 1} onClick={() => setPage(page - 1)} aria-label="Previous recipe page">
                   <ChevronLeft className="size-4" aria-hidden="true" />
-                </Button>
+                </PulseButton>
                 <span className="text-xs text-muted-foreground">Page {page}</span>
-                <Button type="button" variant="secondary" disabled={!response.has_more} onClick={() => setPage(page + 1)} aria-label="Next recipe page">
+                <PulseButton type="button" variant="secondary" disabled={!response.has_more} onClick={() => setPage(page + 1)} aria-label="Next recipe page">
                   <ChevronRight className="size-4" aria-hidden="true" />
-                </Button>
+                </PulseButton>
               </nav>
             )}
           </>

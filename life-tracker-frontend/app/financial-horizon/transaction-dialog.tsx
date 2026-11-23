@@ -2,19 +2,19 @@
 
 import CategoryOptions from "./components/CategoryOptions";
 
-import Select from "@/app/components/design-system/select";
+import PulseSelect from "@/app/components/design-system/pulse-select";
 import { currencySymbol } from "@/app/lib/currency.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState, useEffect, useId } from "react";
 import { Receipt, Wallet, ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { TransactionItem, CategoryItem, BudgetItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
 import { listAccounts } from "./accounts";
 import type { Account } from "./account-types";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 export interface TransactionDialogProps {
   isOpen: boolean;
@@ -164,14 +164,14 @@ export default function TransactionDialog({
   };
 
   return (
-    <Dialog
+    <PulseDialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
       size="wide"
     >
-        <DialogHeader id={titleId} icon={<Receipt className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+        <PulseDialogHeader id={titleId} icon={<Receipt className="size-5" />} onClose={onClose} closeDisabled={isPending}>
           {editingTransaction ? "Edit Transaction" : "Log New Transaction"}
-        </DialogHeader>
+        </PulseDialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {errorMsg && (
@@ -184,20 +184,20 @@ export default function TransactionDialog({
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted-foreground">Transaction Type</label>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant={txType === "debit" ? "soft" : "secondary"} size="md"
+              <PulseButton variant={txType === "debit" ? "soft" : "secondary"} size="md"
                 type="button"
                 onClick={() => setTxType("debit")}
               >
                 <ArrowDownRight className="h-4 w-4 text-destructive" />
                 Debit (Expense)
-              </Button>
-              <Button variant={txType === "credit" ? "soft" : "secondary"} size="md"
+              </PulseButton>
+              <PulseButton variant={txType === "credit" ? "soft" : "secondary"} size="md"
                 type="button"
                 onClick={() => setTxType("credit")}
               >
                 <ArrowUpRight className="h-4 w-4 text-success" />
                 Credit (Income / Refund)
-              </Button>
+              </PulseButton>
             </div>
           </div>
 
@@ -250,7 +250,7 @@ export default function TransactionDialog({
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">Category</label>
-              <Select
+              <PulseSelect
                 aria-label="Category"
                 value={txCategoryId ?? ""}
                 onChange={(e) => setTxCategoryId(e.target.value ? parseInt(e.target.value, 10) : null)}
@@ -258,12 +258,12 @@ export default function TransactionDialog({
               >
                 <option value="">Uncategorized</option>
                 <CategoryOptions categories={categories} />
-              </Select>
+              </PulseSelect>
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">Link to Budget</label>
-              <Select
+              <PulseSelect
                 value={txBudgetId ?? ""}
                 onChange={(e) => setTxBudgetId(e.target.value ? parseInt(e.target.value, 10) : null)}
                 className="w-full px-3 py-2.5 text-sm text-foreground"
@@ -274,12 +274,12 @@ export default function TransactionDialog({
                     {b.name}
                   </option>
                 ))}
-              </Select>
+              </PulseSelect>
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-semibold text-muted-foreground">Link to Subscription</label>
-              <Select
+              <PulseSelect
                 value={txSubscriptionId ?? ""}
                 onChange={(e) => setTxSubscriptionId(e.target.value ? parseInt(e.target.value, 10) : null)}
                 className="w-full px-3 py-2.5 text-sm text-foreground"
@@ -290,7 +290,7 @@ export default function TransactionDialog({
                     {s.name} ({currencySymbol(currency)}{s.amount})
                   </option>
                 ))}
-              </Select>
+              </PulseSelect>
             </div>
           </div>
 
@@ -309,7 +309,7 @@ export default function TransactionDialog({
           {accountEditable && accounts.some(account => !account.archived_at || account.id === accountId) && (
             <label className="block text-sm font-medium">
               Financial account (optional)
-              <Select
+              <PulseSelect
                 value={accountId ?? ""}
                 onChange={event => setAccountId(event.target.value ? Number(event.target.value) : null)}
                 disabled={isPending}
@@ -322,26 +322,26 @@ export default function TransactionDialog({
                       {account.display_name}{account.archived_at ? " · Archived" : ""}
                     </option>
                   ))}
-              </Select>
+              </PulseSelect>
             </label>
           )}
-          <DialogActions>
-            <DialogAction
+          <PulseDialogActions>
+            <PulseDialogAction
               type="button"
               variant="secondary"
               disabled={isPending}
               onClick={onClose}
             >
               Cancel
-            </DialogAction>
-            <DialogAction
+            </PulseDialogAction>
+            <PulseDialogAction
               type="submit"
               disabled={isPending}
             >
               {isPending ? "Saving…" : editingTransaction ? "Update Transaction" : "Save Transaction"}
-            </DialogAction>
-          </DialogActions>
+            </PulseDialogAction>
+          </PulseDialogActions>
         </form>
-    </Dialog>
+    </PulseDialog>
   );
 }

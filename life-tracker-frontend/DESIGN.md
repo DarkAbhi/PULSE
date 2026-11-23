@@ -274,10 +274,12 @@ Apply the account’s currency and time zone when formatting values. Preserve ca
 
 ## Components
 
+Use the `Pulse` prefix for component names and `pulse-` for component filenames in the web design system.
+
 ### Buttons & Inputs
 
-- **Buttons.** Use the shared variants in `@app/components/design-system/button.tsx`. Use the primary fill for routine actions, the gradient variant for prominent actions, and the secondary or outline variant for alternatives. Pass the shared size and shape props for pill and icon controls. The standard medium button has a 40px minimum height and 8px vertical and 16px horizontal padding.
-- **Fields.** Keep labels visible and show errors by their field. The fuel form provides the reference treatment for `input-field` in `@app/components/fuel-form.tsx`. Use shared controls such as `@app/components/design-system/select.tsx` for choices.
+- **Buttons.** Use the shared variants in `@app/components/design-system/pulse-button.tsx`. Use the primary fill for routine actions, the gradient variant for prominent actions, and the secondary or outline variant for alternatives. Pass the shared size and shape props for pill and icon controls. The standard medium button has a 40px minimum height and 8px vertical and 16px horizontal padding.
+- **Fields.** Keep labels visible and show errors by their field. The fuel form provides the reference treatment for `input-field` in `@app/components/fuel-form.tsx`. Use shared controls such as `@app/components/design-system/pulse-select.tsx` for choices.
 
 ### Cards & Elevation
 
@@ -290,7 +292,7 @@ Apply the account’s currency and time zone when formatting values. Preserve ca
 
 ### Dialogs
 
-- **Dialogs.** Use `@app/components/design-system/dialog.tsx` for modal flows and `@app/components/design-system/confirmation-dialog.tsx` for confirmations. Name the action and its consequence.
+- **Dialogs.** Use `@app/components/design-system/pulse-dialog.tsx` for modal flows and `@app/components/design-system/pulse-confirmation-dialog.tsx` for confirmations. Name the action and its consequence.
 
 ## Do's and Don'ts
 

@@ -1,11 +1,11 @@
 "use client";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import { deleteVisit } from "@/app/fitness/[id]/actions";
 
 interface DeleteVisitButtonProps {
@@ -33,12 +33,12 @@ export default function DeleteVisitButton({ visitID }: DeleteVisitButtonProps) {
 
   return (
     <>
-      <Button type="button" variant="outlineDanger" size="lg" shape="pill" labelStyle="strong"
+      <PulseButton type="button" variant="outlineDanger" size="lg" shape="pill" labelStyle="strong"
         aria-haspopup="dialog" onClick={() => { setError(""); setIsConfirmingDelete(true); }}
         icon={<Trash2 size={19} aria-hidden="true" />}>
         Delete workout
-      </Button>
-      <ConfirmationDialog
+      </PulseButton>
+      <PulseConfirmationDialog
         isOpen={isConfirmingDelete}
         onClose={() => setIsConfirmingDelete(false)}
         onConfirm={handleDelete}

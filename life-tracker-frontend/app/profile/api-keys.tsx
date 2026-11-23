@@ -6,9 +6,9 @@ import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Info, KeyRound, Plus, Trash2 } from "lucide-react";
-import Button from "@/app/components/design-system/button";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import { copyApiKey } from "@/app/profile/copy-api-key";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { iconTileClass, labelClass, sectionClass, sectionDescriptionClass, sectionHeadingClass } from "@/app/profile/profile-classes";
@@ -125,7 +125,7 @@ export default function APIKeys() {
           <h2 id="profile-api-keys" className={sectionHeadingClass}><KeyRound aria-hidden="true" />API keys</h2>
           <p className={sectionDescriptionClass}>Create keys so external services can access your Pulse data. Treat them like passwords.</p>
         </div>
-        <Button
+        <PulseButton
           ref={createTrigger}
           type="button"
           variant="gradient" size="lg" shape="pill" labelStyle="strong"
@@ -134,7 +134,7 @@ export default function APIKeys() {
           onClick={() => { setError(""); setIsOpen(true); }}
         >
           Create API key
-        </Button>
+        </PulseButton>
       </header>
       {loading || keys.length === 0 ? (
         <PulseCard className="grid justify-items-center gap-2.5 px-6 py-9 text-center text-muted-foreground shadow-card">
@@ -174,7 +174,7 @@ export default function APIKeys() {
                     <time dateTime={key.created_at}>{formatInstant(key.created_at, timeZone, { dateStyle: "medium" })}</time>
                   </td>
                   <td role="cell" className={`${keyTableCellClass} text-right`}>
-                    <Button
+                    <PulseButton
                       type="button"
                       variant="iconChipDanger"
                       size="lg"
@@ -183,7 +183,7 @@ export default function APIKeys() {
                       onClick={() => { setError(""); setRevokeKey(key); }}
                     >
                       <Trash2 className="size-5" aria-hidden="true" />
-                    </Button>
+                    </PulseButton>
                   </td>
                 </tr>
               ))}
@@ -192,10 +192,10 @@ export default function APIKeys() {
         </PulseCard>
       )}
       {isOpen && (
-        <Dialog labelledBy="api-key-dialog-title" onDismiss={busy ? undefined : closeDialog}>
-          <DialogHeader id="api-key-dialog-title">
+        <PulseDialog labelledBy="api-key-dialog-title" onDismiss={busy ? undefined : closeDialog}>
+          <PulseDialogHeader id="api-key-dialog-title">
             {token ? "Your new API key" : "Create API key"}
-          </DialogHeader>
+          </PulseDialogHeader>
           {token ? (
             <div className="mt-4 space-y-4">
               <p className="flex gap-3 rounded-2xl bg-warning-soft px-4 py-3.5 text-[0.92rem]">
@@ -213,14 +213,14 @@ export default function APIKeys() {
                   value={token}
                   onFocus={event => event.target.select()}
                 />
-                <Button type="button" variant="chip" size="lg" shape="pill" autoFocus className="shrink-0" onClick={copyKey}>
+                <PulseButton type="button" variant="chip" size="lg" shape="pill" autoFocus className="shrink-0" onClick={copyKey}>
                   {copied ? <Check className="size-4.5" aria-hidden="true" /> : <Copy className="size-4.5" aria-hidden="true" />}
                   {copied ? "Copied" : "Copy"}
-                </Button>
+                </PulseButton>
               </div>
               <span className="sr-only" role="status">{copied ? "API key copied" : ""}</span>
               {error && <p className="text-sm font-semibold text-destructive" role="alert">{error}</p>}
-              <DialogActions><DialogAction type="button" onClick={closeDialog}>Done</DialogAction></DialogActions>
+              <PulseDialogActions><PulseDialogAction type="button" onClick={closeDialog}>Done</PulseDialogAction></PulseDialogActions>
             </div>
           ) : (
             <form className="mt-4 space-y-4" onSubmit={createKey}>
@@ -242,15 +242,15 @@ export default function APIKeys() {
               </div>
               <p id="api-key-name-hint" className="text-sm text-muted-foreground">Give it a name so you can recognise it later.</p>
               {error && <p className="text-sm font-semibold text-destructive" role="alert">{error}</p>}
-              <DialogActions>
-                <DialogAction type="button" variant="secondary" onClick={closeDialog} disabled={busy}>Cancel</DialogAction>
-                <DialogAction type="submit" disabled={busy}>{busy ? "Creating…" : "Create key"}</DialogAction>
-              </DialogActions>
+              <PulseDialogActions>
+                <PulseDialogAction type="button" variant="secondary" onClick={closeDialog} disabled={busy}>Cancel</PulseDialogAction>
+                <PulseDialogAction type="submit" disabled={busy}>{busy ? "Creating…" : "Create key"}</PulseDialogAction>
+              </PulseDialogActions>
             </form>
           )}
-        </Dialog>
+        </PulseDialog>
       )}
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={revokeKey !== null}
         onClose={() => { if (!busy) setRevokeKey(null); }}
         onConfirm={revoke}

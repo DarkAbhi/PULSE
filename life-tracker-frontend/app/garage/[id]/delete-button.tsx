@@ -1,10 +1,10 @@
 "use client";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState, useEffect, useTransition } from "react";
 import { deleteAirFill, deleteFuelFill } from "@/app/garage/[id]/actions";
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import { Trash2 } from "lucide-react";
 
 interface DeleteButtonProps {
@@ -44,7 +44,7 @@ export default function DeleteButton({
 
   return (
     <>
-      <Button
+      <PulseButton
         variant="iconChipDanger"
         size="lg"
         shape="pill"
@@ -54,9 +54,9 @@ export default function DeleteButton({
         aria-label={kind === "air-fills" ? "Delete air fill" : "Delete fuel fill-up"}
       >
         <Trash2 className="size-5" aria-hidden="true" />
-      </Button>
+      </PulseButton>
 
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         onConfirm={handleClear}
@@ -75,13 +75,13 @@ export default function DeleteButton({
           role="alert"
         >
           <span className="text-sm font-medium">{toastError}</span>
-          <Button variant="iconDanger" size="sm"
+          <PulseButton variant="iconDanger" size="sm"
             onClick={() => setToastError("")}
             type="button"
             aria-label="Close"
           >
             &times;
-          </Button>
+          </PulseButton>
         </div>
       )}
     </>

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { apiFetch } from "@/app/lib/server-api";
-import AppBar, { AppBarNotificationLink } from "./design-system/app-bar";
+import PulseAppBar, { PulseAppBarNotificationLink } from "@/app/components/design-system/pulse-app-bar";
 import NotificationDropdown from "./notification-dropdown";
 import type { AppNotification } from "./notification-list";
 
@@ -19,7 +19,7 @@ async function AppBarNotificationMenu() {
     // Keep the notification center reachable if the preview cannot be loaded.
   }
 
-  return <AppBarNotificationLink />;
+  return <PulseAppBarNotificationLink />;
 }
 
 export function AppBarNotifications({ notifications }: { notifications?: AppNotification[] }) {
@@ -28,7 +28,7 @@ export function AppBarNotifications({ notifications }: { notifications?: AppNoti
   }
 
   return (
-    <Suspense fallback={<AppBarNotificationLink />}>
+    <Suspense fallback={<PulseAppBarNotificationLink />}>
       <AppBarNotificationMenu />
     </Suspense>
   );
@@ -41,7 +41,7 @@ export default function TopAppBar({ backHref, backLabel, onProfilePage, notifica
   notifications?: AppNotification[];
 }) {
   return (
-    <AppBar
+    <PulseAppBar
       back={{ href: backHref }}
       backLabel={backLabel}
       onProfilePage={onProfilePage}

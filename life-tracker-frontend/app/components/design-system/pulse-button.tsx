@@ -2,7 +2,7 @@
 
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 
-export type ButtonVariant =
+export type PulseButtonVariant =
   | "primary"
   | "secondary"
   | "tertiary"
@@ -22,19 +22,19 @@ export type ButtonVariant =
   | "iconSecondary"
   | "iconDanger"
   | "menuItem";
-export type ButtonSize = "sm" | "md" | "lg" | "xl" | "touch";
-type ButtonShape = "default" | "control" | "pill";
+export type PulseButtonSize = "sm" | "md" | "lg" | "xl" | "touch";
+type PulseButtonShape = "default" | "control" | "pill";
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  shape?: ButtonShape;
+export interface PulseButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: PulseButtonVariant;
+  size?: PulseButtonSize;
+  shape?: PulseButtonShape;
   labelStyle?: "default" | "strong";
   icon?: ReactNode;
   iconPosition?: "start" | "end";
 }
 
-const variants: Record<ButtonVariant, string> = {
+const variants: Record<PulseButtonVariant, string> = {
   primary: "bg-primary text-primary-foreground hover:bg-primary-pressed",
   secondary: "bg-btn-cancel-bg text-btn-cancel-text hover:bg-btn-cancel-hover",
   tertiary: "text-action hover:bg-primary/10",
@@ -56,7 +56,7 @@ const variants: Record<ButtonVariant, string> = {
   menuItem: "w-full text-foreground hover:bg-primary/10 hover:text-action",
 };
 
-const sizes: Record<ButtonSize, string> = {
+const sizes: Record<PulseButtonSize, string> = {
   sm: "min-h-8 gap-1.5 px-3 py-1.5",
   md: "min-h-10 gap-2 px-4 py-2",
   lg: "min-h-11 gap-2 px-4 py-3",
@@ -64,7 +64,7 @@ const sizes: Record<ButtonSize, string> = {
   touch: "min-h-12.5 gap-2 px-3.5 py-2",
 };
 
-const iconSizes: Record<ButtonSize, string> = {
+const iconSizes: Record<PulseButtonSize, string> = {
   sm: "size-8",
   md: "size-10",
   lg: "size-11",
@@ -72,14 +72,14 @@ const iconSizes: Record<ButtonSize, string> = {
   touch: "size-12.5",
 };
 
-const shapes: Record<ButtonShape, string> = {
+const shapes: Record<PulseButtonShape, string> = {
   default: "rounded-lg",
   control: "rounded-control",
   pill: "rounded-full",
 };
 
 /** Shared button for actions. Native button props, including onClick and type, pass through. */
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+const PulseButton = forwardRef<HTMLButtonElement, PulseButtonProps>(function PulseButton(
   { children, className = "", icon, iconPosition = "start", size = "md", shape = "default", labelStyle = "default", variant = "primary", ...props },
   ref,
 ) {
@@ -101,4 +101,4 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   );
 });
 
-export default Button;
+export default PulseButton;

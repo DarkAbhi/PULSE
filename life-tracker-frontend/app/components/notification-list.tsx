@@ -2,7 +2,7 @@
 
 import PulseCard from "./design-system/pulse-card";
 
-import Button from "./design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useRef, useState } from "react";
 import LocalDate from "./local-date";
@@ -77,7 +77,7 @@ function NotificationCard({ notification, onDismiss }: { notification: AppNotifi
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-action">{notification.source}</p>
             <h3 className="mt-1 font-semibold text-foreground">{notification.title}</h3>
           </div>
-          <Button variant="tertiary" size="sm"
+          <PulseButton variant="tertiary" size="sm"
             aria-label={`Dismiss ${notification.title}`}
             disabled={isDismissing}
             onClick={(event) => {
@@ -89,7 +89,7 @@ function NotificationCard({ notification, onDismiss }: { notification: AppNotifi
             className="shrink-0"
           >
             Dismiss
-          </Button>
+          </PulseButton>
         </div>
         {notification.body && <p className="mt-2 text-sm leading-6 text-muted-foreground">{notification.body}</p>}
         <p className="mt-3 text-xs text-muted-foreground/80">

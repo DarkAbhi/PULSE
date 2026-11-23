@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import PulseCard from "@/app/components/design-system/pulse-card";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 import { saveTirePressure } from "@/app/garage/[id]/actions";
 import { Gauge, User, Users } from "lucide-react";
 
@@ -95,15 +95,15 @@ export default function TirePressureModal({
   };
 
   return (
-    <Dialog labelledBy="tire-pressure-title" size="md">
+    <PulseDialog labelledBy="tire-pressure-title" size="md">
       <form onSubmit={handleSubmit}>
-        <DialogHeader
+        <PulseDialogHeader
           id="tire-pressure-title"
           icon={<Gauge className="size-5" />}
           description="Set the recommended tire pressure values (in PSI) for solo riding and when riding with a pillion."
         >
           Recommended tire pressure
-        </DialogHeader>
+        </PulseDialogHeader>
 
         <div className="mt-6 space-y-4">
           {/* Solo Riding */}
@@ -195,20 +195,20 @@ export default function TirePressureModal({
           </p>
         )}
 
-        <DialogActions>
-          <DialogAction
+        <PulseDialogActions>
+          <PulseDialogAction
             disabled={isPending}
             type="button"
             variant="secondary"
             onClick={onClose}
           >
             Cancel
-          </DialogAction>
-          <DialogAction disabled={isPending} type="submit">
+          </PulseDialogAction>
+          <PulseDialogAction disabled={isPending} type="submit">
             {isPending ? "Saving…" : "Save"}
-          </DialogAction>
-        </DialogActions>
+          </PulseDialogAction>
+        </PulseDialogActions>
       </form>
-    </Dialog>
+    </PulseDialog>
   );
 }

@@ -3,9 +3,9 @@
 import { useEffect, useId, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { Clock, Loader2, Plus, X } from "lucide-react";
-import Button from "@/app/components/design-system/button";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import { createMealTimeAction, deleteMealTimeAction, type MealTime } from "@/app/meal-plan/actions";
 import { gradientClass, pillClass } from "@/app/meal-plan/onboarding/meal-preference-classes";
 
@@ -93,19 +93,19 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
     {times.map(time => (
       <span key={time.id} className={`${pillClass} border-transparent pr-0.5 pl-4 font-semibold wrap-anywhere ${gradientClass}`}>
         <span>{time.name}</span>
-        <Button variant="icon" shape="pill" className="shrink-0 [--foreground:white] [--muted-foreground:white] [--secondary:transparent]" type="button" aria-label={`Delete ${time.name}`}
+        <PulseButton variant="icon" shape="pill" className="shrink-0 [--foreground:white] [--muted-foreground:white] [--secondary:transparent]" type="button" aria-label={`Delete ${time.name}`}
           onClick={() => { setDeleteError(""); setMealTimeToDelete(time); }}>
           <X className="size-6 rounded-full bg-white/20 p-1 stroke-3" aria-hidden="true" />
-        </Button>
+        </PulseButton>
       </span>
     ))}
-    <Button variant="outline" size="lg" shape="pill" labelStyle="strong" className="max-w-full border-dashed text-left hover:border-(--meal-accent)" type="button"
+    <PulseButton variant="outline" size="lg" shape="pill" labelStyle="strong" className="max-w-full border-dashed text-left hover:border-(--meal-accent)" type="button"
       onClick={handleOpenAddMealTime} icon={<Plus className="size-4 shrink-0" aria-hidden="true" />}>
       Add custom meal time
-    </Button>
+    </PulseButton>
       {/* New meal time dialog */}
       {isAddMealTimeOpen && createPortal(
-        <Dialog
+        <PulseDialog
           labelledBy={addMealTimeTitleId}
           onBackdropClick={(e) => {
             if (!isPending && e.target === e.currentTarget) handleCloseAddMealTime();
@@ -114,13 +114,13 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
         >
           <form onSubmit={handleSubmitAddMealTime}>
             <div className="mb-5">
-              <DialogHeader
+              <PulseDialogHeader
                 id={addMealTimeTitleId}
                 icon={<Clock className="size-5" />}
                 description="Set the hours when this meal time appears in your daily plan."
               >
                 New meal time
-              </DialogHeader>
+              </PulseDialogHeader>
             </div>
 
             {mealTimeModalError && (
@@ -186,16 +186,16 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
               </div>
             </div>
 
-            <DialogActions>
-              <DialogAction
+            <PulseDialogActions>
+              <PulseDialogAction
                 type="button"
                 variant="secondary"
                 onClick={handleCloseAddMealTime}
                 disabled={isPending}
               >
                 Cancel
-              </DialogAction>
-              <DialogAction
+              </PulseDialogAction>
+              <PulseDialogAction
                 type="submit"
                 variant="primary"
                 disabled={isPending || !newMealTimeName.trim()}
@@ -207,15 +207,15 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
                 ) : (
                   "Create meal time"
                 )}
-              </DialogAction>
-            </DialogActions>
+              </PulseDialogAction>
+            </PulseDialogActions>
           </form>
-        </Dialog>,
+        </PulseDialog>,
         document.body,
       )}
 
       {/* Delete Meal Time Confirmation Dialog */}
-      {mealTimeToDelete && createPortal(<ConfirmationDialog
+      {mealTimeToDelete && createPortal(<PulseConfirmationDialog
         isOpen={mealTimeToDelete !== null}
         onClose={() => setMealTimeToDelete(null)}
         onConfirm={handleConfirmDeleteMealTime}

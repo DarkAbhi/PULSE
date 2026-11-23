@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Icon, type IconName } from "@/app/financial-horizon/components/HorizonIcon";
 
 import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import type { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
 import { formatMoney } from "@/app/lib/currency.mjs";
@@ -104,7 +104,7 @@ export default function HeaderMetrics({
         icon="wallet"
         description="Baseline monthly revenue stream"
         action={
-          <Button
+          <PulseButton
             variant="iconChip" size="lg" shape="pill"
             type="button"
             onClick={() => setIsEditingBase(!isEditingBase)}
@@ -113,7 +113,7 @@ export default function HeaderMetrics({
             className="ms-auto text-white! enabled:hover:bg-white/20! enabled:hover:text-white!"
           >
             <Icon name="edit" className="size-5" />
-          </Button>
+          </PulseButton>
         }
       >
         {isEditingBase ? (

@@ -6,7 +6,7 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 import { formatMoney } from "@/app/lib/currency.mjs";
 
 import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import SectionHeader from "@/app/financial-horizon/components/SectionHeader";
 import HorizonTag from "@/app/financial-horizon/components/HorizonTag";
 import HorizonEmpty from "@/app/financial-horizon/components/HorizonEmpty";
@@ -182,12 +182,12 @@ export default function PlannedPurchasesTab({
                   <span className="font-bold text-foreground text-sm">
                     {formatMoney(item.price, summary.currency)}
                   </span>
-                  <Button variant="iconChipDanger" size="lg" shape="pill"
+                  <PulseButton variant="iconChipDanger" size="lg" shape="pill"
                     onClick={() => onConfirmDeletePurchase(item)}
                     title="Delete purchase"
                   >
                     <Icon name="trash" className="size-5" />
-                  </Button>
+                  </PulseButton>
                 </div>
               </PulseCard>
             ))}

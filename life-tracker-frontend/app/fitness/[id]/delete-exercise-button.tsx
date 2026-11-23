@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
-import Button from "@/app/components/design-system/button";
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import { deleteExercise } from "@/app/fitness/[id]/actions";
 
 export default function DeleteExerciseButton({ visitID, exerciseID, exerciseName }: {
@@ -26,15 +26,15 @@ export default function DeleteExerciseButton({ visitID, exerciseID, exerciseName
 
   return (
     <>
-      <Button type="button" variant="iconChipDanger" size="lg" shape="pill"
+      <PulseButton type="button" variant="iconChipDanger" size="lg" shape="pill"
         title="Delete exercise"
         aria-label={`Delete ${exerciseName}`}
         disabled={isPending}
         onClick={() => { setError(""); setIsOpen(true); }}
       >
         <Trash2 aria-hidden="true" size={19} />
-      </Button>
-      <ConfirmationDialog
+      </PulseButton>
+      <PulseConfirmationDialog
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         onConfirm={handleDelete}

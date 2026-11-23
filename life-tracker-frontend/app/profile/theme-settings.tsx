@@ -3,7 +3,7 @@
 import { Check, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { ChoiceControl } from "@/app/components/design-system/choice-group";
+import { PulseChoiceControl } from "@/app/components/design-system/pulse-choice-group";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { sectionClass, sectionDescriptionClass, sectionHeadingClass } from "@/app/profile/profile-classes";
 
@@ -40,7 +40,7 @@ export default function ThemeSettings() {
       </header>
       <PulseCard className="grid flex-1 gap-3 p-6 sheet:grid-cols-3 shadow-card" role="radiogroup" aria-labelledby="profile-theme" aria-describedby="profile-theme-help">
         {options.map(({ value, label }) => (
-          <ChoiceControl key={value} className="block min-w-0" type="radio" name="theme" value={value} checked={mounted && theme === value} onCheckedChange={() => setTheme(value)}>
+          <PulseChoiceControl key={value} className="block min-w-0" type="radio" name="theme" value={value} checked={mounted && theme === value} onCheckedChange={() => setTheme(value)}>
             <span className="flex h-full flex-col gap-3 rounded-[20px] border-2 border-divider p-3 transition-colors group-hover:peer-not-checked:border-[color-mix(in_srgb,var(--brand)_45%,var(--divider))] peer-checked:border-brand peer-checked:bg-brand/9 peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand motion-reduce:transition-none max-sheet:flex-row max-sheet:items-center">
               <span className={`flex h-21 flex-col gap-1.5 rounded-control border border-current/20 p-2.5 max-sheet:w-24 max-sheet:shrink-0 ${previews[value].surface}`} aria-hidden="true">
                 <span className={`h-2.5 w-[55%] rounded-md ${previews[value].heading}`} />
@@ -52,7 +52,7 @@ export default function ThemeSettings() {
                 <span className="grid size-6 shrink-0 place-items-center rounded-full border-2 border-divider text-transparent group-has-checked:border-transparent group-has-checked:[background:var(--primary-fill)] group-has-checked:text-primary-foreground" aria-hidden="true"><Check className="size-3.5 stroke-3" /></span>
               </span>
             </span>
-          </ChoiceControl>
+          </PulseChoiceControl>
         ))}
       </PulseCard>
     </section>

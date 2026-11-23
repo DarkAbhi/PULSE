@@ -1,13 +1,13 @@
 "use client";
 
 import { maintenanceField } from "@/app/garage/[id]/vehicle-detail-classes";
-import Select from "@/app/components/design-system/select";
+import PulseSelect from "@/app/components/design-system/pulse-select";
 import { currencySymbol } from "@/app/lib/currency.mjs";
 import { useCurrency } from "@/app/components/currency-provider";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 import { dateKey, fromDateTimeInput, formatInstant } from "@/app/lib/time-zone.mjs";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import { ClipboardList, Paperclip, Upload } from "lucide-react";
 
 import { useState, useTransition } from "react";
@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 import { createMaintenanceRecord, SaveMaintenancePayload, updateMaintenanceRecord } from "@/app/garage/[id]/actions";
 import MaintenanceWorkFields from "@/app/garage/[id]/maintenance-work-fields";
 import { MaintenanceAction, MaintenanceAttachment, MaintenanceRecord } from "@/app/garage/[id]/types";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 const categories = ["service", "repair", "insurance", "washing", "tyres"] as const;
 type Category = (typeof categories)[number];
@@ -91,15 +91,15 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
   }
 
   return (
-    <Dialog labelledBy="maintenance-record-title" size="lg">
+    <PulseDialog labelledBy="maintenance-record-title" size="lg">
       <form onSubmit={submit}>
-        <DialogHeader
+        <PulseDialogHeader
           id="maintenance-record-title"
           icon={<ClipboardList className="size-5" />}
           description={record ? "Update the details, work performed, or receipts." : "Log a service, repair, or other vehicle expense."}
         >
           {record ? "Edit maintenance record" : "Add maintenance or expense"}
-        </DialogHeader>
+        </PulseDialogHeader>
 
         <fieldset className="mt-5 min-w-0">
           <legend className="font-semibold">Record details</legend>
@@ -110,9 +110,9 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
             </label>
             <label className="min-w-0 text-sm font-medium">
               Category
-              <Select className={maintenanceField} value={category} onChange={(e) => setCategory(e.target.value as Category)}>
+              <PulseSelect className={maintenanceField} value={category} onChange={(e) => setCategory(e.target.value as Category)}>
                 {categories.map((item) => <option key={item} value={item}>{item[0].toUpperCase() + item.slice(1)}</option>)}
-              </Select>
+              </PulseSelect>
             </label>
             <label className="min-w-0 text-sm font-medium">
               Date
@@ -170,19 +170,19 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
                       <span className="ml-2">{Math.max(1, Math.round(attachment.size_bytes / 1024))} KB</span>
                     </p>
                   </div>
-                  <Button variant="destructive" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</Button>
+                  <PulseButton variant="destructive" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</PulseButton>
                 </li>
               ))}
             </ul>
           )}
         </section>
 
-        <DialogActions className="grid-cols-2">
+        <PulseDialogActions className="grid-cols-2">
           {error && <p className="text-sm text-destructive col-span-2" role="alert">{error}</p>}
-          <DialogAction variant="secondary" disabled={isPending} onClick={close} type="button">Cancel</DialogAction>
-          <DialogAction disabled={isPending} type="submit">{isPending ? "Saving…" : record ? "Save changes" : "Save record"}</DialogAction>
-        </DialogActions>
+          <PulseDialogAction variant="secondary" disabled={isPending} onClick={close} type="button">Cancel</PulseDialogAction>
+          <PulseDialogAction disabled={isPending} type="submit">{isPending ? "Saving…" : record ? "Save changes" : "Save record"}</PulseDialogAction>
+        </PulseDialogActions>
       </form>
-    </Dialog>
+    </PulseDialog>
   );
 }

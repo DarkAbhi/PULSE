@@ -8,6 +8,6 @@ const selectClass =
   "normal-colors:bg-position-[right_0.75rem_center] normal-colors:bg-no-repeat normal-colors:bg-size-[1rem] " +
   "normal-colors:[&:dir(rtl)]:bg-position-[left_0.75rem_center]";
 
-export default function Select({ className = "", ...props }: ComponentPropsWithRef<"select">) {
+export default function PulseSelect({ className = "", ...props }: ComponentPropsWithRef<"select">) {
   return <select {...props} className={`${selectClass} ${className}`} />;
 }

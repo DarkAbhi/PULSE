@@ -1,10 +1,10 @@
 "use client";
 
-import Select from "@/app/components/design-system/select";
+import PulseSelect from "@/app/components/design-system/pulse-select";
 import { Fuel, Plus } from "lucide-react";
 import { SubmitEvent } from "react";
-import Button from "./design-system/button";
-import { DialogAction, DialogActions } from "./design-system/dialog";
+import PulseButton from "@/app/components/design-system/pulse-button";
+import { PulseDialogAction, PulseDialogActions } from "@/app/components/design-system/pulse-dialog";
 
 export type FuelFormItem = {
   fuelType: string;
@@ -93,21 +93,21 @@ export function FuelForm({
             <div className="grid grid-cols-2 gap-3">
               <label className={labelClass}>
                 Fuel type
-                <Select className={controlClass} onChange={(event) => updateItem(index, "fuelType", event.target.value)} value={item.fuelType}>
+                <PulseSelect className={controlClass} onChange={(event) => updateItem(index, "fuelType", event.target.value)} value={item.fuelType}>
                   <option value="petrol">Petrol</option>
                   <option value="diesel">Diesel</option>
                   <option value="lpg">LPG</option>
                   <option value="cng">CNG</option>
                   <option value="electric">Electric</option>
-                </Select>
+                </PulseSelect>
               </label>
               <label className={labelClass}>
                 Fill type
-                <Select className={controlClass} onChange={(event) => updateItem(index, "fillType", event.target.value)} value={item.fillType}>
+                <PulseSelect className={controlClass} onChange={(event) => updateItem(index, "fillType", event.target.value)} value={item.fillType}>
                   <option value="full">Full tank</option>
                   <option value="partial">Partial fill-up</option>
                   <option value="missed">Missed fill-up</option>
-                </Select>
+                </PulseSelect>
               </label>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3 border-t border-dashed border-divider pt-3 sm:grid-cols-3">
@@ -125,9 +125,9 @@ export function FuelForm({
           </fieldset>
         ))}
         {items.length < 2 && (
-          <Button variant="tertiary" size="md" icon={<Plus aria-hidden="true" className="size-4" />} onClick={() => onItemsChange([...items, newFuelItem()])} type="button">
+          <PulseButton variant="tertiary" size="md" icon={<Plus aria-hidden="true" className="size-4" />} onClick={() => onItemsChange([...items, newFuelItem()])} type="button">
             Add second fuel tank
-          </Button>
+          </PulseButton>
         )}
       </div>
 
@@ -142,10 +142,10 @@ export function FuelForm({
         </label>
       </div>
       {error && <p className="rounded-lg bg-destructive-soft px-3 py-2 text-sm text-destructive" role="alert">{error}</p>}
-      <DialogActions>
-        <DialogAction variant="secondary" disabled={isSaving} onClick={onCancel} type="button">Cancel</DialogAction>
-        <DialogAction disabled={isSaving} type="submit">{isSaving ? savingLabel : submitLabel}</DialogAction>
-      </DialogActions>
+      <PulseDialogActions>
+        <PulseDialogAction variant="secondary" disabled={isSaving} onClick={onCancel} type="button">Cancel</PulseDialogAction>
+        <PulseDialogAction disabled={isSaving} type="submit">{isSaving ? savingLabel : submitLabel}</PulseDialogAction>
+      </PulseDialogActions>
     </form>
   );
 }

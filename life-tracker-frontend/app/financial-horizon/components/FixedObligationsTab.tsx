@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
-import Select from "@/app/components/design-system/select";
+import PulseSelect from "@/app/components/design-system/pulse-select";
 import PulseCard from "@/app/components/design-system/pulse-card";
 
 import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
@@ -12,12 +12,12 @@ import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import HorizonSegments from "@/app/financial-horizon/components/HorizonSegments";
 import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import SectionHeader from "@/app/financial-horizon/components/SectionHeader";
 import HorizonTag from "@/app/financial-horizon/components/HorizonTag";
 import HorizonEmpty from "@/app/financial-horizon/components/HorizonEmpty";
 
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 import { useEffect, useId, useMemo } from "react";
 import { Home, TrendingUp, Zap, Tv, CreditCard, Receipt } from "lucide-react";
 import { HorizonSummary, DeductionItem, SubscriptionItem } from "@/app/dashboard/financial-horizon-card";
@@ -193,21 +193,21 @@ export default function FixedObligationsTab({
       />
 
       {isFormOpen && (
-        <Dialog
+        <PulseDialog
           labelledBy={titleId}
           size="md"
           onBackdropClick={(event) => {
             if (event.target === event.currentTarget && !isPending) onCancelDeductionForm();
           }}
         >
-          <DialogHeader
+          <PulseDialogHeader
             id={titleId}
             icon={<Icon name="calendar" className="size-5" />}
             onClose={onCancelDeductionForm}
             closeDisabled={isPending}
           >
             {editingDeductionId !== null ? "Edit Fixed Obligation" : "Add Fixed Obligation"}
-          </DialogHeader>
+          </PulseDialogHeader>
 
           <form onSubmit={onSaveDeduction} className="mt-5 grid gap-4 sm:grid-cols-2">
             {error && (
@@ -231,7 +231,7 @@ export default function FixedObligationsTab({
 
             <div className="space-y-1">
               <label htmlFor={`${titleId}-category`} className="text-xs font-semibold text-muted-foreground">Category</label>
-              <Select
+              <PulseSelect
                 id={`${titleId}-category`}
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
@@ -242,7 +242,7 @@ export default function FixedObligationsTab({
                     {c.label}
                   </option>
                 ))}
-              </Select>
+              </PulseSelect>
             </div>
 
             <div className="space-y-1">
@@ -276,7 +276,7 @@ export default function FixedObligationsTab({
 
             <div className="space-y-1 sm:col-span-2">
               <label htmlFor={`${titleId}-budget`} className="text-xs font-semibold text-muted-foreground">Link to Monthly Budget (Optional)</label>
-              <Select
+              <PulseSelect
                 id={`${titleId}-budget`}
                 value={selectedBudgetId ?? ""}
                 onChange={(e) => setSelectedBudgetId(e.target.value ? parseInt(e.target.value, 10) : null)}
@@ -288,24 +288,24 @@ export default function FixedObligationsTab({
                     {b.name} ({formatMoney(b.allocated_amount, summary.currency)})
                   </option>
                 ))}
-              </Select>
+              </PulseSelect>
             </div>
 
-            <DialogActions>
-              <DialogAction
+            <PulseDialogActions>
+              <PulseDialogAction
                 variant="secondary"
                 type="button"
                 onClick={onCancelDeductionForm}
                 disabled={isPending}
               >
                 Cancel
-              </DialogAction>
-              <DialogAction type="submit" disabled={isPending}>
+              </PulseDialogAction>
+              <PulseDialogAction type="submit" disabled={isPending}>
                 {isPending ? "Saving…" : editingDeductionId !== null ? "Update Obligation" : "Save Obligation"}
-              </DialogAction>
-            </DialogActions>
+              </PulseDialogAction>
+            </PulseDialogActions>
           </form>
-        </Dialog>
+        </PulseDialog>
       )}
 
       {/* Cards Grid */}
@@ -388,18 +388,18 @@ export default function FixedObligationsTab({
                 )}
 
                 <div className="mt-4 flex items-center justify-end gap-2 border-t border-divider pt-3">
-                  <Button variant="iconChip" size="lg" shape="pill"
+                  <PulseButton variant="iconChip" size="lg" shape="pill"
                     onClick={() => onOpenEditDeduction(item)}
                     title="Edit obligation"
                   >
                     <Icon name="edit" className="size-5" />
-                  </Button>
-                  <Button variant="iconChipDanger" size="lg" shape="pill"
+                  </PulseButton>
+                  <PulseButton variant="iconChipDanger" size="lg" shape="pill"
                     onClick={() => onDeleteDeduction(item)}
                     title="Delete obligation"
                   >
                     <Icon name="trash" className="size-5" />
-                  </Button>
+                  </PulseButton>
                 </div>
               </PulseCard>
             );
@@ -474,7 +474,7 @@ export default function FixedObligationsTab({
                     {sub.category_name ?? "Recurring Subscription"}
                   </span>
 
-                  <Button variant="soft" size="sm"
+                  <PulseButton variant="soft" size="sm"
                     onClick={() => {
                       if (onEditSubscription) {
                         onEditSubscription(sub);
@@ -485,7 +485,7 @@ export default function FixedObligationsTab({
                   >
                     <span>Manage</span>
                     <Icon name="external" className="h-3 w-3" />
-                  </Button>
+                  </PulseButton>
                 </div>
               </PulseCard>
             );

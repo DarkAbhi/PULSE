@@ -3,7 +3,7 @@
 import { createContext, ReactNode, useContext, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
-import Button, { type ButtonProps, type ButtonVariant } from "@/app/components/design-system/button";
+import PulseButton, { type PulseButtonProps, type PulseButtonVariant } from "@/app/components/design-system/pulse-button";
 
 let openDialogs = 0;
 let previousBodyOverflow = "";
@@ -19,7 +19,7 @@ const widths = {
   xl: "max-w-3xl",
 } as const;
 
-export interface DialogProps {
+export interface PulseDialogProps {
   children: ReactNode;
   labelledBy?: string;
   onDismiss?: () => void;
@@ -32,14 +32,14 @@ export interface DialogProps {
  * Centered dialog on desktop and a bottom sheet on narrow screens.
  * Content scrolls independently of the actions.
  */
-export default function Dialog({
+export default function PulseDialog({
   children,
   labelledBy,
   onDismiss,
   onBackdropClick,
   panelClassName = "",
   size = "sm",
-}: DialogProps) {
+}: PulseDialogProps) {
   const [footer, setFooter] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -97,7 +97,7 @@ export default function Dialog({
   );
 }
 
-type DialogHeaderProps = {
+type PulseDialogHeaderProps = {
   id: string;
   children: ReactNode;
   description?: ReactNode;
@@ -108,7 +108,7 @@ type DialogHeaderProps = {
   closeAutoFocus?: boolean;
 };
 
-export function DialogHeader({
+export function PulseDialogHeader({
   id,
   children,
   description,
@@ -117,7 +117,7 @@ export function DialogHeader({
   closeDisabled,
   closeLabel = "Close",
   closeAutoFocus,
-}: DialogHeaderProps) {
+}: PulseDialogHeaderProps) {
   return (
     <header className="flex items-center gap-2.5">
       {icon && <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-action" aria-hidden="true">{icon}</span>}
@@ -126,7 +126,7 @@ export function DialogHeader({
         {description && <p className="mt-1.5 text-[0.9rem] text-muted-foreground">{description}</p>}
       </div>
       {onClose && (
-        <Button
+        <PulseButton
           aria-label={closeLabel}
           autoFocus={closeAutoFocus}
           className="shrink-0"
@@ -138,13 +138,13 @@ export function DialogHeader({
           variant="iconChip"
         >
           <X className="size-5" aria-hidden="true" />
-        </Button>
+        </PulseButton>
       )}
     </header>
   );
 }
 
-export function DialogActions({ children, className = "" }: { children: ReactNode; className?: string }) {
+export function PulseDialogActions({ children, className = "" }: { children: ReactNode; className?: string }) {
   const footer = useContext(DialogFooterContext);
   const actionsRef = useRef<HTMLDivElement>(null);
   const generatedFormId = useId();
@@ -171,20 +171,20 @@ export function DialogActions({ children, className = "" }: { children: ReactNod
   return footer && ready ? createPortal(actions, footer) : actions;
 }
 
-type DialogActionProps = Omit<ButtonProps, "variant"> & {
+type PulseDialogActionProps = Omit<PulseButtonProps, "variant"> & {
   variant?: "primary" | "secondary" | "destructive";
 };
 
-const actionVariants: Record<NonNullable<DialogActionProps["variant"]>, ButtonVariant> = {
+const actionVariants: Record<NonNullable<PulseDialogActionProps["variant"]>, PulseButtonVariant> = {
   primary: "gradient",
   secondary: "outline",
   destructive: "filledDanger",
 };
 
-export function DialogAction({ className = "", variant = "primary", ...props }: DialogActionProps) {
+export function PulseDialogAction({ className = "", variant = "primary", ...props }: PulseDialogActionProps) {
   const formId = useContext(DialogFormContext);
   return (
-    <Button
+    <PulseButton
       className={`wrap-anywhere motion-safe:enabled:active:scale-95 ${className}`}
       data-variant={variant}
       {...props}

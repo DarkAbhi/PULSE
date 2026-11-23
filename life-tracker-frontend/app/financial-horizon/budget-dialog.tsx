@@ -6,7 +6,7 @@ import { currencySymbol } from "@/app/lib/currency.mjs";
 import { useState, useEffect, useId } from "react";
 import { Target } from "lucide-react";
 import { BudgetItem } from "@/app/dashboard/financial-horizon-card";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 export interface BudgetDialogProps {
   isOpen: boolean;
@@ -89,13 +89,13 @@ export default function BudgetDialog({
   };
 
   return (
-    <Dialog
+    <PulseDialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
     >
-        <DialogHeader id={titleId} icon={<Target className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+        <PulseDialogHeader id={titleId} icon={<Target className="size-5" />} onClose={onClose} closeDisabled={isPending}>
           {editingBudget ? "Edit Monthly Budget" : "Create Monthly Budget"}
-        </DialogHeader>
+        </PulseDialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {errorMsg && (
@@ -132,23 +132,23 @@ export default function BudgetDialog({
             />
           </div>
 
-          <DialogActions>
-            <DialogAction
+          <PulseDialogActions>
+            <PulseDialogAction
               type="button"
               variant="secondary"
               disabled={isPending}
               onClick={onClose}
             >
               Cancel
-            </DialogAction>
-            <DialogAction
+            </PulseDialogAction>
+            <PulseDialogAction
               type="submit"
               disabled={isPending}
             >
               {isPending ? "Saving…" : editingBudget ? "Update Budget" : "Save Budget"}
-            </DialogAction>
-          </DialogActions>
+            </PulseDialogAction>
+          </PulseDialogActions>
         </form>
-    </Dialog>
+    </PulseDialog>
   );
 }

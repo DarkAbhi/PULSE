@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, Leaf, Soup, Sprout } from "lucide-react";
-import AppBar from "@/app/components/design-system/app-bar";
-import Button from "@/app/components/design-system/button";
-import { ChoiceControl } from "@/app/components/design-system/choice-group";
+import PulseAppBar from "@/app/components/design-system/pulse-app-bar";
+import PulseButton from "@/app/components/design-system/pulse-button";
+import { PulseChoiceControl } from "@/app/components/design-system/pulse-choice-group";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { frame } from "@/app/components/design-system/page-frame";
 import { useTimeZone } from "@/app/components/time-zone-provider";
@@ -96,7 +96,7 @@ function Choice({ name, value, label, checked, onChange, type = "checkbox", pill
     ? `border-transparent ${gradientClass}`
     : unselectedBorder;
 
-  return <ChoiceControl type={type} name={name} value={value} checked={checked} onCheckedChange={onChange}>
+  return <PulseChoiceControl type={type} name={name} value={value} checked={checked} onCheckedChange={onChange}>
     {pill
       ? <span className={`${pillClass} gap-2 px-4 font-semibold ${pillColor} ${choiceFocusClass}`}>
           {checked && <Check className="size-4 shrink-0 stroke-3" aria-hidden="true" />}{label}
@@ -108,7 +108,7 @@ function Choice({ name, value, label, checked, onChange, type = "checkbox", pill
             <Check className="size-4 stroke-3" />
           </span>
         </span>}
-  </ChoiceControl>;
+  </PulseChoiceControl>;
 }
 
 export default function MealOnboarding({ notifications, initial, editing = false, onDone, onCancel, onNotice, times, onCreated, onDeleted }: {
@@ -200,15 +200,15 @@ export default function MealOnboarding({ notifications, initial, editing = false
 
   return <main className={`${frame.page} [&_:is(button,select):focus-visible]:outline-3 [&_:is(button,select):focus-visible]:outline-offset-2 [&_:is(button,select):focus-visible]:outline-brand`}>
     <div id="meal-setup-journey" className={`${frame.content} grid gap-5`}>
-      <AppBar
+      <PulseAppBar
         back={editing ? { onClick: onCancel, disabled: busy } : { href: "/dashboard" }}
         backLabel={editing ? "Back to Meal Plan" : "Back to Dashboard"}
         notifications={notifications}
       />
       <div className="flex justify-end">
         {editing
-          ? <Button variant="tertiary" onClick={onCancel} disabled={busy}>Cancel editing</Button>
-          : <Button variant="tertiary" onClick={() => void commit(true)} disabled={busy}>Skip setup</Button>}
+          ? <PulseButton variant="tertiary" onClick={onCancel} disabled={busy}>Cancel editing</PulseButton>
+          : <PulseButton variant="tertiary" onClick={() => void commit(true)} disabled={busy}>Skip setup</PulseButton>}
       </div>
       {failure?.skip && <p className={errorClass} role="alert">{failure.message}</p>}
 
@@ -301,9 +301,9 @@ export default function MealOnboarding({ notifications, initial, editing = false
             <span className="flex items-center gap-2 text-[0.88rem]/[1.2] font-semibold text-muted-foreground before:size-2 before:shrink-0 before:rounded-full before:bg-success data-[unsaved=true]:before:bg-warning" data-unsaved={unsaved} role="status">
               {unsaved ? "Unsaved changes" : initial ? "All changes saved" : "Ready to customize"}
             </span>
-            <Button variant="gradient" shape="pill" size="lg" labelStyle="strong" className="whitespace-nowrap [--button-fill:var(--meal-preferences-gradient)] [--button-foreground:white]" type="submit" disabled={busy}>
+            <PulseButton variant="gradient" shape="pill" size="lg" labelStyle="strong" className="whitespace-nowrap [--button-fill:var(--meal-preferences-gradient)] [--button-foreground:white]" type="submit" disabled={busy}>
               {busy ? "Saving…" : "Save preferences"}
-            </Button>
+            </PulseButton>
           </div>
         </PulseCard>
       </form>

@@ -5,7 +5,7 @@ import { currencySymbol } from "@/app/lib/currency.mjs";
 
 import { useState, useEffect, useId } from "react";
 import { ShoppingBag } from "lucide-react";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 export interface PlannedPurchaseDialogProps {
   isOpen: boolean;
@@ -83,13 +83,13 @@ export default function PlannedPurchaseDialog({
   };
 
   return (
-    <Dialog
+    <PulseDialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
     >
-        <DialogHeader id={titleId} icon={<ShoppingBag className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+        <PulseDialogHeader id={titleId} icon={<ShoppingBag className="size-5" />} onClose={onClose} closeDisabled={isPending}>
           Add Planned Purchase
-        </DialogHeader>
+        </PulseDialogHeader>
 
         {errorMsg && (
           <div className="mt-4 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">
@@ -136,23 +136,23 @@ export default function PlannedPurchaseDialog({
             />
           </div>
 
-          <DialogActions>
-            <DialogAction
+          <PulseDialogActions>
+            <PulseDialogAction
               type="button"
               variant="secondary"
               onClick={onClose}
               disabled={isPending}
             >
               Cancel
-            </DialogAction>
-            <DialogAction
+            </PulseDialogAction>
+            <PulseDialogAction
               type="submit"
               disabled={isPending}
             >
               {isPending ? "Adding…" : "Add Purchase"}
-            </DialogAction>
-          </DialogActions>
+            </PulseDialogAction>
+          </PulseDialogActions>
         </form>
-    </Dialog>
+    </PulseDialog>
   );
 }

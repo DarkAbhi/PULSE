@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, ReactNode, useId } from "react";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "./dialog";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
-export interface ConfirmationDialogProps {
+export interface PulseConfirmationDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void | Promise<void>;
@@ -17,7 +17,7 @@ export interface ConfirmationDialogProps {
   cancelText?: string;
 }
 
-export default function ConfirmationDialog({
+export default function PulseConfirmationDialog({
   isOpen,
   onClose,
   onConfirm,
@@ -29,7 +29,7 @@ export default function ConfirmationDialog({
   error,
   variant = "destructive",
   cancelText = "Cancel",
-}: ConfirmationDialogProps) {
+}: PulseConfirmationDialogProps) {
   const titleId = useId();
 
   // Escape key listener to close modal
@@ -53,8 +53,8 @@ export default function ConfirmationDialog({
   };
 
   return (
-    <Dialog labelledBy={titleId} onBackdropClick={handleBackdropClick}>
-        <DialogHeader id={titleId}>{title}</DialogHeader>
+    <PulseDialog labelledBy={titleId} onBackdropClick={handleBackdropClick}>
+        <PulseDialogHeader id={titleId}>{title}</PulseDialogHeader>
         <div className="mt-4 text-sm leading-6 text-muted-foreground">
           {description}
         </div>
@@ -65,8 +65,8 @@ export default function ConfirmationDialog({
           </p>
         )}
 
-        <DialogActions>
-          <DialogAction
+        <PulseDialogActions>
+          <PulseDialogAction
             className="w-full"
             variant="secondary"
             disabled={isLoading}
@@ -74,8 +74,8 @@ export default function ConfirmationDialog({
             type="button"
           >
             {cancelText}
-          </DialogAction>
-          <DialogAction
+          </PulseDialogAction>
+          <PulseDialogAction
             className="w-full"
             variant={variant === "destructive" ? "destructive" : "primary"}
             disabled={isLoading}
@@ -83,8 +83,8 @@ export default function ConfirmationDialog({
             type="button"
           >
             {isLoading ? confirmLoadingText ?? "Loading…" : confirmText}
-          </DialogAction>
-        </DialogActions>
-    </Dialog>
+          </PulseDialogAction>
+        </PulseDialogActions>
+    </PulseDialog>
   );
 }

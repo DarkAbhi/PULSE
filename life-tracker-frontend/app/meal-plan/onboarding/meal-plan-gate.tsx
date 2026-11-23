@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import AppBar from "@/app/components/design-system/app-bar";
-import Button from "@/app/components/design-system/button";
+import PulseAppBar from "@/app/components/design-system/pulse-app-bar";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import { frame } from "@/app/components/design-system/page-frame";
 import MealPlanClient from "@/app/meal-plan/meal-plan-client";
 import type { MealPlan, MealTime } from "@/app/meal-plan/actions";
@@ -29,7 +29,7 @@ export default function MealPlanGate({ initialState, notifications, ...plannerPr
     window.addEventListener("pageshow", reconcile);
     return () => { active = false; window.removeEventListener("pageshow", reconcile); };
   }, [state?.status]);
-  const appBar = <AppBar
+  const appBar = <PulseAppBar
     back={{ href: "/dashboard" }}
     backLabel="Back to Dashboard"
     notifications={notifications}
@@ -42,7 +42,7 @@ export default function MealPlanGate({ initialState, notifications, ...plannerPr
         <div className="m-auto max-w-md py-6 text-center">
           <h1 className="text-2xl font-semibold">Let's load your meal preferences.</h1>
           <p role="alert" className="my-4 text-muted-foreground">{error || "We couldn't check your meal setup. Please try again."}</p>
-          <Button disabled={loading} onClick={async () => { setLoading(true); const result = await getMealOnboardingAction(); if (result.ok) setState(result.state); else setError(result.error); setLoading(false); }}>{loading ? "Loading…" : "Try again"}</Button>
+          <PulseButton disabled={loading} onClick={async () => { setLoading(true); const result = await getMealOnboardingAction(); if (result.ok) setState(result.state); else setError(result.error); setLoading(false); }}>{loading ? "Loading…" : "Try again"}</PulseButton>
         </div>
       </div>
     </main>
@@ -53,7 +53,7 @@ export default function MealPlanGate({ initialState, notifications, ...plannerPr
     onDeleted={id => setMealTimes(current => current.filter(time => time.id !== id))}
   />;
   return <>
-    {notice && <div role="status" className="flex items-center justify-center gap-3 bg-success-soft px-4 py-2 text-sm text-success">{notice}<Button size="sm" variant="tertiary" aria-label="Dismiss message" onClick={() => setNotice("")}>Dismiss</Button></div>}
+    {notice && <div role="status" className="flex items-center justify-center gap-3 bg-success-soft px-4 py-2 text-sm text-success">{notice}<PulseButton size="sm" variant="tertiary" aria-label="Dismiss message" onClick={() => setNotice("")}>Dismiss</PulseButton></div>}
     <MealPlanClient appBar={appBar} {...plannerProps} initialMealTimes={mealTimes} preferences={state.preferences} onEditPreferences={() => { setNotice(""); setEditing(true); }} />
   </>;
 }

@@ -1,12 +1,12 @@
 "use client";
 
-import Select from "@/app/components/design-system/select";
+import PulseSelect from "@/app/components/design-system/pulse-select";
 import type { CategoryItem } from "@/app/dashboard/financial-horizon-card";
 
 
 import { useState, useEffect, useId } from "react";
 import { Tag } from "lucide-react";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 export interface CategoryDialogProps {
   isOpen: boolean;
@@ -77,13 +77,13 @@ export default function CategoryDialog({
   };
 
   return (
-    <Dialog
+    <PulseDialog
       labelledBy={titleId}
       onBackdropClick={handleBackdropClick}
     >
-        <DialogHeader id={titleId} icon={<Tag className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+        <PulseDialogHeader id={titleId} icon={<Tag className="size-5" />} onClose={onClose} closeDisabled={isPending}>
           Add Custom Category
-        </DialogHeader>
+        </PulseDialogHeader>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {(errorMsg || error) && (
@@ -106,7 +106,7 @@ export default function CategoryDialog({
 
           <label className="block space-y-1 text-xs font-semibold text-muted-foreground">
             Parent Category
-            <Select
+            <PulseSelect
               value={parentId ?? ""}
               onChange={(e) => setParentId(e.target.value ? Number(e.target.value) : null)}
               className="w-full px-3 py-2.5 text-sm text-foreground"
@@ -115,7 +115,7 @@ export default function CategoryDialog({
               {categories.filter(c => c.parent_id == null && c.allows_subcategories).map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
-            </Select>
+            </PulseSelect>
           </label>
 
           <div className="space-y-1">
@@ -131,23 +131,23 @@ export default function CategoryDialog({
             </div>
           </div>
 
-          <DialogActions>
-            <DialogAction
+          <PulseDialogActions>
+            <PulseDialogAction
               type="button"
               variant="secondary"
               disabled={isPending}
               onClick={onClose}
             >
               Cancel
-            </DialogAction>
-            <DialogAction
+            </PulseDialogAction>
+            <PulseDialogAction
               type="submit"
               disabled={isPending}
             >
               {isPending ? "Saving…" : "Save Category"}
-            </DialogAction>
-          </DialogActions>
+            </PulseDialogAction>
+          </PulseDialogActions>
         </form>
-    </Dialog>
+    </PulseDialog>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { saveNameAction } from "./actions";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 interface NamePromptDialogProps {
   initialDisplayName: string;
@@ -28,10 +28,10 @@ export default function NamePromptDialog({
   }
 
   return (
-    <Dialog labelledBy="name-dialog-title">
-        <DialogHeader id="name-dialog-title" description="We’ll use it to personalize your dashboard.">
+    <PulseDialog labelledBy="name-dialog-title">
+        <PulseDialogHeader id="name-dialog-title" description="We’ll use it to personalize your dashboard.">
           What is your name?
-        </DialogHeader>
+        </PulseDialogHeader>
         <form className="mt-6 space-y-4" onSubmit={handleSave}>
           <label
             className="block text-sm font-medium text-muted-foreground"
@@ -53,12 +53,12 @@ export default function NamePromptDialog({
               {error}
             </p>
           )}
-          <DialogActions>
-            <DialogAction disabled={isPending} type="submit">
+          <PulseDialogActions>
+            <PulseDialogAction disabled={isPending} type="submit">
               {isPending ? "Saving…" : "Continue"}
-            </DialogAction>
-          </DialogActions>
+            </PulseDialogAction>
+          </PulseDialogActions>
         </form>
-    </Dialog>
+    </PulseDialog>
   );
 }

@@ -1,14 +1,14 @@
 "use client";
 
-import Select from "@/app/components/design-system/select";
+import PulseSelect from "@/app/components/design-system/pulse-select";
 import { useEffect, useId, useState, useTransition } from "react";
 import { CarFront, ListFilter, PencilLine, Plus } from "lucide-react";
-import Button from "@/app/components/design-system/button";
-import Dialog, {
-  DialogAction,
-  DialogActions,
-  DialogHeader,
-} from "@/app/components/design-system/dialog";
+import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseDialog, {
+  PulseDialogAction,
+  PulseDialogActions,
+  PulseDialogHeader,
+} from "@/app/components/design-system/pulse-dialog";
 import { catalogOptionsAction, saveVehicleAction } from "@/app/garage/actions";
 
 export type VehicleIdentity = {
@@ -90,7 +90,7 @@ function CatalogSelect({
       <label className="block text-sm font-medium" htmlFor={id}>
         {label}
       </label>
-      <Select
+      <PulseSelect
         id={id}
         className={field}
         required
@@ -109,7 +109,7 @@ function CatalogSelect({
             {option.name}
           </option>
         ))}
-      </Select>
+      </PulseSelect>
       <p className="text-sm text-muted-foreground" role="status">
         {loading
           ? "Loading…"
@@ -192,7 +192,7 @@ export default function VehicleEditor({
   }
   return (
     <>
-      <Button
+      <PulseButton
         id={vehicle ? undefined : "add-vehicle-button"}
         variant="onHero"
         shape="pill"
@@ -209,16 +209,16 @@ export default function VehicleEditor({
         }}
       >
         {vehicle ? "Edit vehicle" : "Add vehicle"}
-      </Button>
+      </PulseButton>
       {open && (
-        <Dialog size="lg" labelledBy={`${uid}-title`}>
-          <DialogHeader
+        <PulseDialog size="lg" labelledBy={`${uid}-title`}>
+          <PulseDialogHeader
             id={`${uid}-title`}
             icon={<CarFront className="size-5" strokeWidth={1.6} />}
             description="Choose your vehicle from the catalog or enter its details manually."
           >
             {vehicle ? "Edit vehicle" : "Add a vehicle"}
-          </DialogHeader>
+          </PulseDialogHeader>
           <form className="mt-6 space-y-6" onSubmit={submit}>
             <fieldset className="grid min-w-0 gap-2 sm:grid-cols-2">
               <legend className="mb-2 text-sm font-semibold">Entry method</legend>
@@ -256,7 +256,7 @@ export default function VehicleEditor({
                 >
                   Vehicle type
                 </label>
-                <Select
+                <PulseSelect
                   id={`${uid}-kind`}
                   required
                   className={field}
@@ -275,7 +275,7 @@ export default function VehicleEditor({
                       {titleCase(k)}
                     </option>
                   ))}
-                </Select>
+                </PulseSelect>
               </div>
               {mode === "catalog" && kind && (
                 <CatalogSelect
@@ -369,7 +369,7 @@ export default function VehicleEditor({
               >
                 Fuel type
               </label>
-              <Select
+              <PulseSelect
                 id={`${uid}-fuel`}
                 className={field}
                 required
@@ -385,7 +385,7 @@ export default function VehicleEditor({
                     {titleCase(f)}
                   </option>
                 ))}
-              </Select>
+              </PulseSelect>
               <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg bg-secondary px-3 text-sm">
                 <input
                   type="checkbox"
@@ -403,7 +403,7 @@ export default function VehicleEditor({
                   >
                     Second fuel type
                   </label>
-                  <Select
+                  <PulseSelect
                     id={`${uid}-second`}
                     className={field}
                     required
@@ -418,7 +418,7 @@ export default function VehicleEditor({
                           {titleCase(f)}
                         </option>
                       ))}
-                  </Select>
+                  </PulseSelect>
                 </>
               )}
             </fieldset>
@@ -440,25 +440,25 @@ export default function VehicleEditor({
                 Sources and credits
               </a>
             </p>
-            <DialogActions className="grid-cols-2">
-              <DialogAction
+            <PulseDialogActions className="grid-cols-2">
+              <PulseDialogAction
                 type="button"
                 variant="secondary"
                 disabled={pending}
                 onClick={() => setOpen(false)}
               >
                 Cancel
-              </DialogAction>
-              <DialogAction
+              </PulseDialogAction>
+              <PulseDialogAction
                 id="add-vehicle-submit"
                 type="submit"
                 disabled={pending || (mode === "catalog" && !catalog)}
               >
                 {pending ? "Saving…" : vehicle ? "Save changes" : "Add vehicle"}
-              </DialogAction>
-            </DialogActions>
+              </PulseDialogAction>
+            </PulseDialogActions>
           </form>
-        </Dialog>
+        </PulseDialog>
       )}
     </>
   );

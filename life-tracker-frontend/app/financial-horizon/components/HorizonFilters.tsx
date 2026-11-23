@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import Select from "@/app/components/design-system/select";
+import PulseSelect from "@/app/components/design-system/pulse-select";
 import { Icon } from "@/app/financial-horizon/components/HorizonIcon";
 
 export function HorizonSelect({
@@ -9,7 +9,7 @@ export function HorizonSelect({
 }: Omit<ComponentProps<"select">, "aria-label"> & { compact?: boolean; "aria-label": string }) {
   return (
     <div className={`inline-flex max-w-full max-sm:flex-1 ${compact ? "min-w-30" : "min-w-37.5"} ${className}`}>
-      <Select {...props} className={`w-full border-[1.5px] border-divider rounded-full bg-card text-foreground py-0 ps-4 text-control font-semibold ${compact ? "h-10" : "h-11"}`} />
+      <PulseSelect {...props} className={`w-full border-[1.5px] border-divider rounded-full bg-card text-foreground py-0 ps-4 text-control font-semibold ${compact ? "h-10" : "h-11"}`} />
     </div>
   );
 }

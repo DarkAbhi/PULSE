@@ -2,7 +2,7 @@
 
 import { Icon, type IconName } from "@/app/financial-horizon/components/HorizonIcon";
 import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState, useRef, useEffect } from "react";
 
@@ -105,7 +105,7 @@ function QuickActionItem({
   onClick: () => void;
 }) {
   return (
-    <Button type="button" variant="menuItem" onClick={onClick}>
+    <PulseButton type="button" variant="menuItem" onClick={onClick}>
       <span className={`grid size-8 shrink-0 place-items-center rounded-lg ${actionIconTones[tone]}`}>
         <Icon name={icon} className="size-4" />
       </span>
@@ -113,6 +113,6 @@ function QuickActionItem({
         <span className="font-semibold leading-tight">{label}</span>
         <span className="text-caption text-muted-foreground">{description}</span>
       </span>
-    </Button>
+    </PulseButton>
   );
 }

@@ -1,6 +1,6 @@
-import Button, { type ButtonProps } from "@/app/components/design-system/button";
+import PulseButton, { type PulseButtonProps } from "@/app/components/design-system/pulse-button";
 
-type HorizonActionProps = Omit<ButtonProps, "size" | "shape" | "labelStyle">;
+type HorizonActionProps = Omit<PulseButtonProps, "size" | "shape" | "labelStyle">;
 
 export default function HorizonAction({
   variant = "gradient",
@@ -9,7 +9,7 @@ export default function HorizonAction({
   ...props
 }: HorizonActionProps) {
   return (
-    <Button
+    <PulseButton
       {...props}
       type={type}
       variant={variant}

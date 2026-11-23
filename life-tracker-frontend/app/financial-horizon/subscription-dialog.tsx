@@ -2,7 +2,7 @@
 
 import CategoryOptions from "./components/CategoryOptions";
 
-import Select from "@/app/components/design-system/select";
+import PulseSelect from "@/app/components/design-system/pulse-select";
 import { formatMoney, currencySymbol } from "@/app/lib/currency.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 import { dateKey } from "@/app/lib/time-zone.mjs";
@@ -11,7 +11,7 @@ import { dateKey } from "@/app/lib/time-zone.mjs";
 import { useId, useState, useEffect } from "react";
 import { CreditCard, Calendar, AlertCircle } from "lucide-react";
 import { SubscriptionItem, BudgetItem, CategoryItem } from "@/app/dashboard/financial-horizon-card";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 interface SubscriptionDialogProps {
   isOpen: boolean;
@@ -157,15 +157,15 @@ export default function SubscriptionDialog({
   };
 
   return (
-    <Dialog labelledBy={titleId} size="md">
-        <DialogHeader
+    <PulseDialog labelledBy={titleId} size="md">
+        <PulseDialogHeader
           id={titleId}
           icon={<CreditCard className="size-5" />}
           description="Track recurring monthly or annual payments"
           onClose={onClose}
         >
           {editingSubscription ? "Edit Subscription" : "Add Subscription"}
-        </DialogHeader>
+        </PulseDialogHeader>
 
         {/* Error alert */}
         {error && (
@@ -212,14 +212,14 @@ export default function SubscriptionDialog({
               <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
                 Billing Cycle *
               </label>
-              <Select
+              <PulseSelect
                 value={billingCycle}
                 onChange={(e) => setBillingCycle(e.target.value)}
                 className="w-full px-3.5 py-2.5 text-sm text-foreground"
               >
                 <option value="monthly">Monthly</option>
                 <option value="yearly">Yearly (Annual)</option>
-              </Select>
+              </PulseSelect>
             </div>
           </div>
 
@@ -262,7 +262,7 @@ export default function SubscriptionDialog({
               <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
                 Status *
               </label>
-              <Select
+              <PulseSelect
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full px-3.5 py-2.5 text-sm text-foreground"
@@ -270,7 +270,7 @@ export default function SubscriptionDialog({
                 <option value="active">Active</option>
                 <option value="paused">Paused</option>
                 <option value="cancelled">Cancelled</option>
-              </Select>
+              </PulseSelect>
             </div>
           </div>
 
@@ -280,7 +280,7 @@ export default function SubscriptionDialog({
               <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
                 Category
               </label>
-              <Select
+              <PulseSelect
                 aria-label="Category"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
@@ -288,13 +288,13 @@ export default function SubscriptionDialog({
               >
                 <option value="">None (Uncategorized)</option>
                 <CategoryOptions categories={categories} />
-              </Select>
+              </PulseSelect>
             </div>
             <div>
               <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
                 Link to Budget
               </label>
-              <Select
+              <PulseSelect
                 value={budgetId}
                 onChange={(e) => setBudgetId(e.target.value)}
                 className="w-full px-3.5 py-2.5 text-sm text-foreground"
@@ -305,7 +305,7 @@ export default function SubscriptionDialog({
                     {b.name} ({formatMoney(b.allocated_amount, currency)})
                   </option>
                 ))}
-              </Select>
+              </PulseSelect>
             </div>
           </div>
 
@@ -324,22 +324,22 @@ export default function SubscriptionDialog({
           </div>
 
           {/* Footer Actions */}
-          <DialogActions>
-            <DialogAction
+          <PulseDialogActions>
+            <PulseDialogAction
               type="button"
               variant="secondary"
               onClick={onClose}
             >
               Cancel
-            </DialogAction>
-            <DialogAction
+            </PulseDialogAction>
+            <PulseDialogAction
               type="submit"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Saving..." : editingSubscription ? "Save Changes" : "Add Subscription"}
-            </DialogAction>
-          </DialogActions>
+            </PulseDialogAction>
+          </PulseDialogActions>
         </form>
-    </Dialog>
+    </PulseDialog>
   );
 }

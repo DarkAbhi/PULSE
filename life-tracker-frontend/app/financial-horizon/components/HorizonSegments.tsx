@@ -1,4 +1,4 @@
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 interface HorizonSegmentsProps<T extends string> {
   label: string;
@@ -18,7 +18,7 @@ export default function HorizonSegments<T extends string>({
   return (
     <div role="group" aria-label={label} className={`inline-flex items-center gap-0.5 rounded-full bg-chip p-1 ${className}`}>
       {options.map(option => (
-        <Button
+        <PulseButton
           key={option.value}
           type="button"
           size="sm"
@@ -30,7 +30,7 @@ export default function HorizonSegments<T extends string>({
           onClick={() => onChange(option.value)}
         >
           {option.label}
-        </Button>
+        </PulseButton>
       ))}
     </div>
   );

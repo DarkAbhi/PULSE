@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-export default function Switch({ checked, onChange, children, disabled }: { checked: boolean; onChange: (checked: boolean) => void; children: ReactNode; disabled?: boolean }) {
+export default function PulseSwitch({ checked, onChange, children, disabled }: { checked: boolean; onChange: (checked: boolean) => void; children: ReactNode; disabled?: boolean }) {
   return <label className="flex min-h-20 cursor-pointer items-center justify-between gap-4 rounded-xl border border-divider bg-card p-4 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring">
     <span className="flex items-center gap-3 font-medium">{children}</span>
     <span className="relative inline-flex shrink-0">

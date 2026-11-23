@@ -14,7 +14,7 @@ type ChoiceControlProps = {
 };
 
 /** Native choice input for custom labels that style checked and focus states through the peer. */
-export function ChoiceControl({
+export function PulseChoiceControl({
   children, type, name, value, checked, disabled, className = "", onCheckedChange,
 }: ChoiceControlProps) {
   return (
@@ -41,7 +41,7 @@ type Props = { label: string; options: Choice[]; disabled?: boolean; columns?: b
 );
 
 /** Native radio/checkbox behavior, including keyboard navigation and form semantics. */
-export default function ChoiceGroup(props: Props) {
+export default function PulseChoiceGroup(props: Props) {
   const name = useId();
   return <fieldset disabled={props.disabled}>
     <legend className="sr-only">{props.label}</legend>

@@ -7,8 +7,8 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import { useEffect, useId, useState } from "react";
-import Button from "@/app/components/design-system/button";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 import type { SubscriptionItem, TransactionItem } from "@/app/dashboard/financial-horizon-card";
 import { getTransactionsPageAction } from "./actions";
 
@@ -92,17 +92,17 @@ export default function LinkSubscriptionPaymentDialog({
   };
 
   return (
-    <Dialog labelledBy={titleId} size="wide" onBackdropClick={(event) => {
+    <PulseDialog labelledBy={titleId} size="wide" onBackdropClick={(event) => {
       if (event.target === event.currentTarget && !saving) onClose();
     }}>
-      <DialogHeader
+      <PulseDialogHeader
         id={titleId}
         description="Select an existing debit transaction, including one imported from a statement."
         onClose={onClose}
         closeDisabled={saving}
       >
         Log payment for {subscription.name}
-      </DialogHeader>
+      </PulseDialogHeader>
       <label className="mt-5 block text-xs font-semibold text-muted-foreground" htmlFor="payment-transaction-search">Search transactions</label>
       <input
         id="payment-transaction-search"
@@ -132,15 +132,15 @@ export default function LinkSubscriptionPaymentDialog({
         ))}
       </div>
       {totalPages > 1 && <div className="mt-3 flex items-center justify-between text-sm">
-        <Button variant="secondary" size="sm" disabled={page === 1 || loading} onClick={() => { setPage(page - 1); setSelectedId(null); }}>Previous</Button>
+        <PulseButton variant="secondary" size="sm" disabled={page === 1 || loading} onClick={() => { setPage(page - 1); setSelectedId(null); }}>Previous</PulseButton>
         <span>Page {page} of {totalPages}</span>
-        <Button variant="secondary" size="sm" disabled={page === totalPages || loading} onClick={() => { setPage(page + 1); setSelectedId(null); }}>Next</Button>
+        <PulseButton variant="secondary" size="sm" disabled={page === totalPages || loading} onClick={() => { setPage(page + 1); setSelectedId(null); }}>Next</PulseButton>
       </div>}
-      <DialogActions className="sm:grid-cols-[1fr_auto_auto]">
-        <DialogAction type="button" variant="secondary" onClick={onCreateNew} disabled={saving}>Create new transaction</DialogAction>
-        <DialogAction type="button" variant="secondary" onClick={onClose} disabled={saving}>Cancel</DialogAction>
-        <DialogAction type="button" onClick={link} disabled={!selected || saving}>{saving ? "Linking…" : "Link payment"}</DialogAction>
-      </DialogActions>
-    </Dialog>
+      <PulseDialogActions className="sm:grid-cols-[1fr_auto_auto]">
+        <PulseDialogAction type="button" variant="secondary" onClick={onCreateNew} disabled={saving}>Create new transaction</PulseDialogAction>
+        <PulseDialogAction type="button" variant="secondary" onClick={onClose} disabled={saving}>Cancel</PulseDialogAction>
+        <PulseDialogAction type="button" onClick={link} disabled={!selected || saving}>{saving ? "Linking…" : "Link payment"}</PulseDialogAction>
+      </PulseDialogActions>
+    </PulseDialog>
   );
 }

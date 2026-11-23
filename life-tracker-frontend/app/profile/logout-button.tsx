@@ -1,12 +1,12 @@
 "use client";
 
 import { useTimeZone } from "@/app/components/time-zone-provider";
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 
 const apiBaseURL = "";
 
@@ -54,7 +54,7 @@ export default function LogoutButton() {
 
   return (
     <>
-        <Button variant="outlineDanger" size="lg" shape="pill" labelStyle="strong"
+        <PulseButton variant="outlineDanger" size="lg" shape="pill" labelStyle="strong"
           onClick={() => {
             setLogoutError("");
             setIsConfirmingLogout(true);
@@ -63,9 +63,9 @@ export default function LogoutButton() {
         >
           <LogOut className="size-5" aria-hidden="true" />
           <span>Sign out</span>
-        </Button>
+        </PulseButton>
 
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={isConfirmingLogout}
         onClose={() => setIsConfirmingLogout(false)}
         onConfirm={handleLogout}

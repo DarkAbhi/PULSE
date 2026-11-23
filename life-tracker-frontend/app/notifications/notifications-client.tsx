@@ -2,7 +2,7 @@
 
 import PulseCard from "@/app/components/design-system/pulse-card";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState, useTransition } from "react";
 import { AppNotification, NotificationList } from "@/app/components/notification-list";
@@ -48,7 +48,7 @@ export default function NotificationsClient({ notifications }: NotificationsClie
           <h1 className="mt-3 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Notification center</h1>
           <p className="mt-3 text-base text-muted-foreground">Stay in the loop across every part of PULSE.</p>
         </div>
-        <Button variant="destructive" size="lg"
+        <PulseButton variant="destructive" size="lg"
           className="shrink-0"
           disabled={isPending || notifications.length === 0}
           onClick={handleClearAll}
@@ -56,7 +56,7 @@ export default function NotificationsClient({ notifications }: NotificationsClie
         >
           <Trash2 className="h-4 w-4" />
           <span>{isPending ? "Clearing…" : "Clear all"}</span>
-        </Button>
+        </PulseButton>
       </header>
 
       <section className="mt-10" aria-label="All notifications">

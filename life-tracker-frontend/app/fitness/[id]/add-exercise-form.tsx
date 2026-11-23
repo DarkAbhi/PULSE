@@ -1,7 +1,7 @@
 "use client";
 
-import Button from "@/app/components/design-system/button";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 import { createContext, useContext, useEffect, useId, useRef, useState, useTransition, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -47,11 +47,11 @@ export function AddExerciseButton() {
   const openForm = useContext(OpenExerciseForm);
 
   return (
-    <Button type="button" variant="gradient" size="lg" shape="pill" labelStyle="strong"
+    <PulseButton type="button" variant="gradient" size="lg" shape="pill" labelStyle="strong"
       aria-haspopup="dialog" icon={<Plus size={20} aria-hidden="true" />}
       onClick={(event) => openForm(event.currentTarget)}>
       Add exercise
-    </Button>
+    </PulseButton>
   );
 }
 
@@ -269,8 +269,8 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
                 </span>
               </span>
             </label>
-            {catalogID && <Button type="button" variant="tertiary" size="sm" disabled={isPending}
-              onClick={() => changeName(exerciseName, true)}>Search for a different exercise</Button>}
+            {catalogID && <PulseButton type="button" variant="tertiary" size="sm" disabled={isPending}
+              onClick={() => changeName(exerciseName, true)}>Search for a different exercise</PulseButton>}
           </fieldset>
         )}
 
@@ -318,22 +318,22 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
               value={set.weight}
             />
             {sets.length > 1 && (
-              <Button type="button" variant="iconChipDanger" shape="pill"
+              <PulseButton type="button" variant="iconChipDanger" shape="pill"
                 aria-label={`Remove set ${index + 1}`} disabled={isPending}
                 onClick={() => setSets((current) => current.filter((_, i) => i !== index))}>
                 <Trash2 size={18} aria-hidden="true" />
-              </Button>
+              </PulseButton>
             )}
           </div>
         ))}
-        <Button variant="chip" size="lg" shape="pill" labelStyle="strong"
+        <PulseButton variant="chip" size="lg" shape="pill" labelStyle="strong"
           icon={<Plus size={18} aria-hidden="true" />}
           onClick={() => setSets((currentSets) => [...currentSets, newSet()])}
           type="button"
           disabled={isPending || sets.length >= 20}
         >
           Add set
-        </Button>
+        </PulseButton>
         <p className="text-muted-foreground">Leave the weight empty for a body weight exercise.</p>
       </fieldset>
 
@@ -342,38 +342,38 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
           {error}
         </p>
       )}
-      <DialogActions className="flex! flex-wrap [&>button]:w-auto [&>button]:flex-auto">
-        <DialogAction type="button" variant="secondary" disabled={isPending} onClick={onClose}>
+      <PulseDialogActions className="flex! flex-wrap [&>button]:w-auto [&>button]:flex-auto">
+        <PulseDialogAction type="button" variant="secondary" disabled={isPending} onClick={onClose}>
           Cancel
-        </DialogAction>
+        </PulseDialogAction>
         {!exercise && (
-          <DialogAction variant="secondary" data-save-another="true" disabled={isPending || searching}>
+          <PulseDialogAction variant="secondary" data-save-another="true" disabled={isPending || searching}>
             Save and add another
-          </DialogAction>
+          </PulseDialogAction>
         )}
-        <DialogAction disabled={isPending || searching}>
+        <PulseDialogAction disabled={isPending || searching}>
           {isPending ? "Saving exercise…" : exercise ? "Save changes" : "Save exercise"}
-        </DialogAction>
-      </DialogActions>
+        </PulseDialogAction>
+      </PulseDialogActions>
     </form>
   );
 
   return createPortal(
     <div ref={dialogRef} tabIndex={-1} onKeyDown={handleDialogKeyDown}>
-      <Dialog labelledBy={titleID} size="lg"
+      <PulseDialog labelledBy={titleID} size="lg"
         onBackdropClick={(event) => {
           if (event.target === event.currentTarget && !isPending) onClose();
         }}>
-        <DialogHeader
+        <PulseDialogHeader
           id={titleID}
           onClose={onClose}
           closeDisabled={isPending}
           closeAutoFocus={Boolean(exercise)}
         >
           {exercise ? "Edit exercise" : "Add exercise"}
-        </DialogHeader>
+        </PulseDialogHeader>
         {form}
-      </Dialog>
+      </PulseDialog>
     </div>,
     document.body,
   );

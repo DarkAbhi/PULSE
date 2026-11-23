@@ -2,7 +2,7 @@
 
 import PulseCard from "./components/design-system/pulse-card";
 
-import Button from "./components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { SubmitEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -124,13 +124,13 @@ export default function Home() {
             />
           </div>
 
-          <Button variant="primary" size="lg"
+          <PulseButton variant="primary" size="lg"
             className="w-full"
             disabled={isSubmitting}
             type="submit"
           >
             {isSubmitting ? "Signing in…" : "Continue"}
-          </Button>
+          </PulseButton>
           {error && <p className="text-center text-sm text-destructive" role="alert">{error}</p>}
         </form>
       </PulseCard>

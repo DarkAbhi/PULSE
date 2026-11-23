@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import PulseCard from "@/app/components/design-system/pulse-card";
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import { MaintenanceInterval, MaintenanceSchedule } from "./types";
 import { saveMaintenanceSchedule } from "./actions";
 
@@ -92,7 +92,7 @@ export default function MaintenanceScheduleForm({ initial, vehicleId }: { initia
       <div className="mt-5 flex flex-wrap items-center justify-end gap-3 border-t border-divider pt-4">
         {!valid && <p className="mr-auto text-sm text-muted-foreground">Enter at least one interval for the active schedule.</p>}
         {error && <p role="alert" className="mr-auto text-sm text-destructive">{error}</p>}
-        <Button type="submit" disabled={pending || !valid}>{pending ? "Saving…" : "Save reminder settings"}</Button>
+        <PulseButton type="submit" disabled={pending || !valid}>{pending ? "Saving…" : "Save reminder settings"}</PulseButton>
       </div>
     </form>
   );

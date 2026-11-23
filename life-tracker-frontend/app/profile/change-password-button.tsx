@@ -1,6 +1,6 @@
 "use client";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState } from "react";
 import { Lock } from "lucide-react";
@@ -17,12 +17,12 @@ export default function ChangePasswordButton() {
         <p className={labelClass}>Password</p>
         <p className={settingValueClass} aria-hidden="true">••••••••••</p>
       </div>
-      <Button variant="chip" size="lg" shape="pill" labelStyle="strong" className={settingButtonClass}
+      <PulseButton variant="chip" size="lg" shape="pill" labelStyle="strong" className={settingButtonClass}
         onClick={() => setIsDialogOpen(true)}
         type="button"
       >
         Change password
-      </Button>
+      </PulseButton>
 
       <ChangePasswordDialog
         isOpen={isDialogOpen}

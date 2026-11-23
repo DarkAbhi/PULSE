@@ -2,14 +2,14 @@
 import { useTimeZone } from "@/app/components/time-zone-provider";
 import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
 import { FuelFill, FuelItem } from "@/app/garage/[id]/types";
 import { saveFuelFill } from "@/app/garage/[id]/actions";
-import Dialog, { DialogHeader } from "@/app/components/design-system/dialog";
+import PulseDialog, { PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 interface EditFuelModalProps {
   vehicleId: string;
@@ -83,8 +83,8 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
 
   return (
     <>
-      <Dialog labelledBy="fuel-title" size="lg">
-          <DialogHeader id="fuel-title">Edit fuel fill-up</DialogHeader>
+      <PulseDialog labelledBy="fuel-title" size="lg">
+          <PulseDialogHeader id="fuel-title">Edit fuel fill-up</PulseDialogHeader>
           <FuelForm
             error=""
             filledAt={filledAt}
@@ -103,7 +103,7 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
             stationName={station}
             submitLabel="Save changes"
           />
-      </Dialog>
+      </PulseDialog>
 
       {/* Error Toast Notification */}
       {toastError && (
@@ -112,13 +112,13 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
           role="alert"
         >
           <span className="text-sm font-medium">{toastError}</span>
-          <Button variant="iconDanger" size="sm"
+          <PulseButton variant="iconDanger" size="sm"
             onClick={() => setToastError("")}
             type="button"
             aria-label="Close"
           >
             &times;
-          </Button>
+          </PulseButton>
         </div>
       )}
     </>

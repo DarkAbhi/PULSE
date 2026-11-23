@@ -3,9 +3,9 @@
 import CategoryOptions from "./CategoryOptions";
 
 import { useEffect, useState, type FormEvent } from "react";
-import Button from "@/app/components/design-system/button";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
-import Select from "@/app/components/design-system/select";
+import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
+import PulseSelect from "@/app/components/design-system/pulse-select";
 import type { CategoryItem } from "@/app/dashboard/financial-horizon-card";
 import type { Account } from "../account-types";
 import { listAccounts } from "../accounts";
@@ -130,17 +130,17 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
 
   const account = accounts?.find(item => String(item.id) === accountId);
   return (
-    <Dialog
+    <PulseDialog
       size={batch && !result ? "xl" : "sm"}
       panelClassName={batch && !result ? "max-w-6xl! p-4! sm:p-6!" : undefined}
       labelledBy="statement-import-title"
     >
-      <div className="mb-4"><DialogHeader id="statement-import-title">Import statement</DialogHeader></div>
+      <div className="mb-4"><PulseDialogHeader id="statement-import-title">Import statement</PulseDialogHeader></div>
       {error && <p role="alert" className="my-3">{error}</p>}
       {result ? (
         <>
           <p role="status">{result.imported} imported · {result.duplicates_skipped} duplicates skipped · {result.excluded} excluded</p>
-          <DialogActions><DialogAction type="button" onClick={onClose}>Done</DialogAction></DialogActions>
+          <PulseDialogActions><PulseDialogAction type="button" onClick={onClose}>Done</PulseDialogAction></PulseDialogActions>
         </>
       ) : batch && page ? (
         <div className="space-y-4">
@@ -197,14 +197,14 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
                   </label>
                   <label className="min-w-0">
                     <span className={fieldLabel}>Type</span>
-                    <Select className={inputClass} aria-label={`Type for row ${row.id}`} value={row.type} disabled={disabled} onChange={e => change({ id: row.id, type: e.target.value as "debit" | "credit" })}><option value="debit">Debit</option><option value="credit">Credit</option></Select>
+                    <PulseSelect className={inputClass} aria-label={`Type for row ${row.id}`} value={row.type} disabled={disabled} onChange={e => change({ id: row.id, type: e.target.value as "debit" | "credit" })}><option value="debit">Debit</option><option value="credit">Credit</option></PulseSelect>
                   </label>
                   <label className="min-w-0">
                     <span className={fieldLabel}>Category</span>
-                    <Select className={inputClass} aria-label={`Category for row ${row.id}`} value={row.category_id ?? ""} disabled={disabled} onChange={e => change({ id: row.id, category_id: e.target.value ? Number(e.target.value) : null })}>
+                    <PulseSelect className={inputClass} aria-label={`Category for row ${row.id}`} value={row.category_id ?? ""} disabled={disabled} onChange={e => change({ id: row.id, category_id: e.target.value ? Number(e.target.value) : null })}>
                       <option value="">Uncategorized</option>
                       <CategoryOptions categories={categories} />
-                    </Select>
+                    </PulseSelect>
                   </label>
                   {original.original_narration && (
                     <details className="min-w-0 col-span-full text-muted-foreground">
@@ -218,30 +218,30 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
           </ul>
           {page.total > page.page_size && (
             <nav className="flex items-center gap-2" aria-label="Preview pages">
-              <Button variant="secondary" disabled={busy || page.page <= 1} onClick={() => turnPage(page.page - 1)}>Previous</Button>
+              <PulseButton variant="secondary" disabled={busy || page.page <= 1} onClick={() => turnPage(page.page - 1)}>Previous</PulseButton>
               <span>Page {page.page} of {Math.ceil(page.total / page.page_size)}</span>
-              <Button variant="secondary" disabled={busy || page.page * page.page_size >= page.total} onClick={() => turnPage(page.page + 1)}>Next</Button>
+              <PulseButton variant="secondary" disabled={busy || page.page * page.page_size >= page.total} onClick={() => turnPage(page.page + 1)}>Next</PulseButton>
             </nav>
           )}
-          {errorCode === "STALE_REVISION" && <Button onClick={reload}>Reload preview</Button>}
-          <DialogActions>
-            <DialogAction type="button" variant="secondary" disabled={busy} onClick={close}>Cancel import</DialogAction>
-            <DialogAction type="button" disabled={busy || !confirmed || ["BATCH_EXPIRED", "STALE_REVISION"].includes(errorCode)} onClick={confirm}>{busy ? "Working…" : "Confirm import"}</DialogAction>
-          </DialogActions>
+          {errorCode === "STALE_REVISION" && <PulseButton onClick={reload}>Reload preview</PulseButton>}
+          <PulseDialogActions>
+            <PulseDialogAction type="button" variant="secondary" disabled={busy} onClick={close}>Cancel import</PulseDialogAction>
+            <PulseDialogAction type="button" disabled={busy || !confirmed || ["BATCH_EXPIRED", "STALE_REVISION"].includes(errorCode)} onClick={confirm}>{busy ? "Working…" : "Confirm import"}</PulseDialogAction>
+          </PulseDialogActions>
         </div>
       ) : (
         <form className="space-y-4" onSubmit={upload}>
           {accounts === null ? (
-            error ? <Button type="button" variant="secondary" onClick={loadAccounts}>Retry</Button> : <p role="status">Loading accounts…</p>
+            error ? <PulseButton type="button" variant="secondary" onClick={loadAccounts}>Retry</PulseButton> : <p role="status">Loading accounts…</p>
           ) : accounts.length === 0 ? (
-            <Button type="button" variant="secondary" onClick={onManageAccounts}>Add a financial account</Button>
+            <PulseButton type="button" variant="secondary" onClick={onManageAccounts}>Add a financial account</PulseButton>
           ) : (
             <>
               <label className="block">Financial account
-                <Select className="mt-1 block w-full px-3" required disabled={busy} value={accountId} onChange={e => setAccountId(e.target.value)}>
+                <PulseSelect className="mt-1 block w-full px-3" required disabled={busy} value={accountId} onChange={e => setAccountId(e.target.value)}>
                   <option value="">Choose an account</option>
                   {accounts.map(item => <option key={item.id} value={item.id}>{item.display_name} · {item.institution_name}</option>)}
-                </Select>
+                </PulseSelect>
               </label>
               <label className="block">Statement PDF
                 <input className="mt-1 block w-full" type="file" accept="application/pdf,.pdf" required disabled={busy} onChange={e => setFile(e.target.files?.[0] ?? null)} />
@@ -249,12 +249,12 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
             </>
           )}
           {busy && <p role="status">{progress === 1 ? "Extracting and checking balances…" : progress === null ? "Uploading…" : `Uploading… ${Math.round(progress * 100)}%`}</p>}
-          <DialogActions>
-            <DialogAction type="button" variant="secondary" disabled={busy} onClick={close}>Close</DialogAction>
-            <DialogAction disabled={busy || !accountId || !file}>Preview statement</DialogAction>
-          </DialogActions>
+          <PulseDialogActions>
+            <PulseDialogAction type="button" variant="secondary" disabled={busy} onClick={close}>Close</PulseDialogAction>
+            <PulseDialogAction disabled={busy || !accountId || !file}>Preview statement</PulseDialogAction>
+          </PulseDialogActions>
         </form>
       )}
-    </Dialog>
+    </PulseDialog>
   );
 }

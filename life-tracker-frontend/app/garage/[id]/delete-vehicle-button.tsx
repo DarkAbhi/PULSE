@@ -1,10 +1,10 @@
 "use client";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import { deleteVehicle } from "@/app/garage/[id]/actions";
 
 interface DeleteVehicleButtonProps {
@@ -36,7 +36,7 @@ export default function DeleteVehicleButton({
 
   return (
     <>
-      <Button
+      <PulseButton
         variant="outlineDanger"
         size="lg"
         shape="pill"
@@ -46,9 +46,9 @@ export default function DeleteVehicleButton({
         type="button"
       >
         <Trash2 className="size-4" aria-hidden="true" /> Delete vehicle
-      </Button>
+      </PulseButton>
 
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={isConfirmingDelete}
         onClose={() => setIsConfirmingDelete(false)}
         onConfirm={handleDelete}

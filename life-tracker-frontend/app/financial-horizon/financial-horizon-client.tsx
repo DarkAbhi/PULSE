@@ -7,14 +7,14 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 import { useCurrency } from "@/app/components/currency-provider";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState, useTransition, useEffect, useRef, type ReactNode } from "react";
 import { frame } from "@/app/components/design-system/page-frame";
 import { Compass, X } from "lucide-react";
 
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
-import Dialog, { DialogAction, DialogActions, DialogHeader } from "@/app/components/design-system/dialog";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
+import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 import TransactionDialog from "@/app/financial-horizon/transaction-dialog";
 import LinkSubscriptionPaymentDialog from "@/app/financial-horizon/link-subscription-payment-dialog";
 import CategoryDialog from "@/app/financial-horizon/category-dialog";
@@ -842,9 +842,9 @@ export default function FinancialHorizonClient({
             role="alert"
           >
             <span>{errorMsg}</span>
-            <Button variant="iconDanger" size="sm" aria-label="Dismiss error" onClick={() => setErrorMsg("")}>
+            <PulseButton variant="iconDanger" size="sm" aria-label="Dismiss error" onClick={() => setErrorMsg("")}>
               <X aria-hidden="true" className="size-4" />
-            </Button>
+            </PulseButton>
           </div>
         )}
 
@@ -977,7 +977,7 @@ export default function FinancialHorizonClient({
       </div>
 
       {/* Confirmation Dialog for Fixed Obligation Deletion */}
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={!!deductionToDelete}
         onClose={() => { setDeductionToDelete(null); setErrorMsg(""); }}
         onConfirm={handleConfirmDeleteDeduction}
@@ -991,7 +991,7 @@ export default function FinancialHorizonClient({
       />
 
       {/* Confirmation Dialog for Budget Deletion */}
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={!!budgetToDelete}
         onClose={() => setBudgetToDelete(null)}
         onConfirm={() => {
@@ -1007,7 +1007,7 @@ export default function FinancialHorizonClient({
       />
 
       {/* Confirmation Dialogs for Purchase Deletions */}
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={!!purchaseToDelete}
         onClose={() => setPurchaseToDelete(null)}
         onConfirm={() => {
@@ -1022,7 +1022,7 @@ export default function FinancialHorizonClient({
         variant="destructive"
       />
 
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={isConfirmingClearAll}
         onClose={() => setIsConfirmingClearAll(false)}
         onConfirm={handleClearAllPurchases}
@@ -1036,7 +1036,7 @@ export default function FinancialHorizonClient({
       />
 
       {/* Confirmation Dialog for Transaction Deletion */}
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={!!txToDelete}
         onClose={() => setTxToDelete(null)}
         onConfirm={handleDeleteTransaction}
@@ -1050,7 +1050,7 @@ export default function FinancialHorizonClient({
       />
 
       {/* Confirmation Dialog for Subscription Deletion */}
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={!!subToDelete}
         onClose={() => setSubToDelete(null)}
         onConfirm={() => {
@@ -1067,15 +1067,15 @@ export default function FinancialHorizonClient({
 
       {/* Subscription Linked Transactions Dialog */}
       {viewingSubTransactions && (
-        <Dialog size="wide" labelledBy="subscription-payment-history-title">
-            <DialogHeader
+        <PulseDialog size="wide" labelledBy="subscription-payment-history-title">
+            <PulseDialogHeader
               id="subscription-payment-history-title"
               description={`${subTransactionsList.length} recorded payments • Total spent: ${formatMoney(subTransactionsList.reduce((sum, t) => sum + t.amount, 0), summary.currency)}`}
               onClose={() => setViewingSubTransactions(null)}
               closeLabel="Close transactions"
             >
               {viewingSubTransactions.name} Payment History
-            </DialogHeader>
+            </PulseDialogHeader>
 
             <div className="mt-4 max-h-96 overflow-y-auto space-y-2 pr-1">
               {isLoadingSubTx ? (
@@ -1110,16 +1110,16 @@ export default function FinancialHorizonClient({
               )}
             </div>
 
-            <DialogActions>
-              <DialogAction
+            <PulseDialogActions>
+              <PulseDialogAction
                 type="button"
                 variant="secondary"
                 onClick={() => setViewingSubTransactions(null)}
               >
                 Close
-              </DialogAction>
-            </DialogActions>
-        </Dialog>
+              </PulseDialogAction>
+            </PulseDialogActions>
+        </PulseDialog>
       )}
 
       {linkingPaymentSubscription && <LinkSubscriptionPaymentDialog

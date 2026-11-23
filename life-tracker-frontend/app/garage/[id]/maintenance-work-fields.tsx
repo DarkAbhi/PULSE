@@ -1,8 +1,8 @@
 "use client";
 
 import { maintenanceField } from "@/app/garage/[id]/vehicle-detail-classes";
-import Select from "@/app/components/design-system/select";
-import Button from "@/app/components/design-system/button";
+import PulseSelect from "@/app/components/design-system/pulse-select";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import { Plus } from "lucide-react";
 import { MaintenanceAction } from "@/app/garage/[id]/types";
 
@@ -18,14 +18,14 @@ export default function MaintenanceWorkFields({ value, onChange, disabled }: { v
     <legend className="px-1 font-semibold">Work performed</legend>
     <p className="pt-1 text-sm text-muted-foreground">Log completed work here. Choose Replaced for an oil change. For a full service, choose General service and Completed. Keep requested or uncertain work in notes.</p>
     {value.map((a, i) => <div key={i} className="grid min-w-0 gap-3 rounded-lg bg-card p-3 sm:grid-cols-2">
-      <label className="text-sm font-medium">Component<Select className={maintenanceField} value={components.includes(a.component) ? a.component : "custom"} onChange={(e) => update(i, { component: e.target.value, ...(e.target.value === "general_service" ? { action: "completed" } : {}) })}>
+      <label className="text-sm font-medium">Component<PulseSelect className={maintenanceField} value={components.includes(a.component) ? a.component : "custom"} onChange={(e) => update(i, { component: e.target.value, ...(e.target.value === "general_service" ? { action: "completed" } : {}) })}>
         {components.map((c) => <option key={c} value={c}>{workLabel(c)}</option>)}<option value="custom">Other component</option>
-      </Select></label>
-      <label className="text-sm font-medium">Action<Select className={maintenanceField} value={a.action} onChange={(e) => update(i, { action: e.target.value })}>{actions.map((action) => <option key={action} value={action}>{workLabel(action)}</option>)}</Select></label>
+      </PulseSelect></label>
+      <label className="text-sm font-medium">Action<PulseSelect className={maintenanceField} value={a.action} onChange={(e) => update(i, { action: e.target.value })}>{actions.map((action) => <option key={action} value={action}>{workLabel(action)}</option>)}</PulseSelect></label>
       {!components.includes(a.component) && <label className="text-sm font-medium sm:col-span-2">Custom component<input required pattern="[a-z][a-z0-9_]{0,63}" maxLength={64} className={maintenanceField} placeholder="e.g. left_switch" value={a.component === "custom" ? "" : a.component} onChange={(e) => update(i, { component: e.target.value.toLowerCase().replaceAll(" ", "_") })} /><span className="text-xs text-muted-foreground">Letters, numbers and underscores.</span></label>}
       <label className="text-sm font-medium sm:col-span-2">Invoice wording or notes (optional)<textarea className={maintenanceField} maxLength={500} value={a.description} onChange={(e) => update(i, { description: e.target.value })} /></label>
-      <Button type="button" variant="secondary" size="sm" className="justify-self-start sm:col-span-2" onClick={() => onChange(value.filter((_, index) => index !== i))}>Remove this action</Button>
+      <PulseButton type="button" variant="secondary" size="sm" className="justify-self-start sm:col-span-2" onClick={() => onChange(value.filter((_, index) => index !== i))}>Remove this action</PulseButton>
     </div>)}
-    <Button type="button" variant="secondary" disabled={value.length >= 100} onClick={() => onChange([...value, { component: "engine_oil", action: "replaced", description: "" }])}><Plus className="size-4" aria-hidden="true" /> Add work performed</Button>
+    <PulseButton type="button" variant="secondary" disabled={value.length >= 100} onClick={() => onChange([...value, { component: "engine_oil", action: "replaced", description: "" }])}><Plus className="size-4" aria-hidden="true" /> Add work performed</PulseButton>
   </fieldset>;
 }

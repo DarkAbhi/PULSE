@@ -4,14 +4,14 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 import { useTimeZone } from "@/app/components/time-zone-provider";
 import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { CircleDot, Droplet } from "lucide-react";
 import { FuelForm, FuelFormItem } from "@/app/components/fuel-form";
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
-import Dialog, { DialogHeader } from "@/app/components/design-system/dialog";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
+import PulseDialog, { PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 import { markAirFillAction, saveFuelAction } from "@/app/garage/actions";
 import { formatVehicleLabel, getVehicleIcon, vehicleCardClassName } from "@/app/garage/vehicle-presentation";
 import FuelTypeDot from "@/app/garage/fuel-type-dot";
@@ -158,7 +158,7 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
               </div>
 
               <div className="mt-auto grid grid-cols-2 gap-2 xl:gap-3">
-                <Button
+                <PulseButton
                   variant="gradient"
                   size="lg"
                   shape="pill"
@@ -175,8 +175,8 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
                   type="button"
                 >
                   Add fuel
-                </Button>
-                <Button
+                </PulseButton>
+                <PulseButton
                   variant="outline"
                   size="lg"
                   shape="pill"
@@ -191,14 +191,14 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
                   type="button"
                 >
                   Mark airfill
-                </Button>
+                </PulseButton>
               </div>
             </PulseCard>
           );
         })}
       </div>
 
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={!!pendingAirFillVehicle}
         onClose={() => setPendingAirFillVehicle(null)}
         onConfirm={handleMarkAirFill}
@@ -216,10 +216,10 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
       />
 
       {fuelVehicle && (
-        <Dialog labelledBy="fuel-title" size="lg">
-            <DialogHeader id="fuel-title" icon={<Droplet className="size-5" />} description={fuelVehicle.name}>
+        <PulseDialog labelledBy="fuel-title" size="lg">
+            <PulseDialogHeader id="fuel-title" icon={<Droplet className="size-5" />} description={fuelVehicle.name}>
               Add fuel
-            </DialogHeader>
+            </PulseDialogHeader>
             <FuelForm
               error={fuelError}
               filledAt={fuelDateTime}
@@ -238,7 +238,7 @@ export default function VehiclesList({ vehicles }: VehiclesListProps) {
               stationName={stationName}
               submitLabel="Save fuel entry"
             />
-        </Dialog>
+        </PulseDialog>
       )}
     </>
   );

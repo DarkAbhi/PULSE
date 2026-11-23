@@ -1,6 +1,6 @@
 "use client";
 import { useId } from "react";
-export default function TimeInput({ label, value, onChange, disabled }: { label: string; value: string; onChange: (value: string) => void; disabled?: boolean }) {
+export default function PulseTimeInput({ label, value, onChange, disabled }: { label: string; value: string; onChange: (value: string) => void; disabled?: boolean }) {
   const id = useId();
   return <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-divider bg-card p-5">
     <label htmlFor={id} className="font-medium">{label}</label>

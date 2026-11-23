@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 
 export const appBarControl = "relative grid size-11 shrink-0 place-items-center rounded-full bg-card text-foreground shadow-card hover:bg-muted";
 
-export function AppBarBell({ hasUnread = false }: { hasUnread?: boolean }) {
+export function PulseAppBarBell({ hasUnread = false }: { hasUnread?: boolean }) {
   return (
     <>
       <svg className="size-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -19,17 +19,17 @@ export function AppBarBell({ hasUnread = false }: { hasUnread?: boolean }) {
   );
 }
 
-export function AppBarNotificationLink() {
+export function PulseAppBarNotificationLink() {
   return (
     <Link href="/notifications" aria-label="Notifications" className={appBarControl}>
-      <AppBarBell />
+      <PulseAppBarBell />
     </Link>
   );
 }
 
 type BackDestination = { href: string } | { onClick: () => void; disabled?: boolean };
 
-export default function AppBar({ back, backLabel, notifications, onProfilePage = false }: {
+export default function PulseAppBar({ back, backLabel, notifications, onProfilePage = false }: {
   back: BackDestination;
   backLabel: string;
   notifications: ReactNode;

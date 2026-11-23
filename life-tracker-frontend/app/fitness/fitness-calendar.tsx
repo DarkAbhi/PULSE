@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import {
   Check, ChevronLeft, ChevronRight, Clock, Dumbbell, Flame, List, Sun, Timer, Weight,
 } from "lucide-react";
-import Button from "@/app/components/design-system/button";
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import GymVisitsList, { type WorkoutGroup } from "@/app/fitness/gym-visits-list";
 import { calendarDays, shiftMonth } from "@/app/fitness/calendar-utils.mjs";
@@ -149,7 +149,7 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
         <div className="relative">
           <h1 id="fitness-title" className={styles.title}>Fitness</h1>
           <p className="mt-2 text-base font-medium sm:text-xl">Workouts, streaks &amp; stats</p>
-          <Button
+          <PulseButton
             type="button"
             className="mt-5 min-h-[clamp(2.75rem,4vw,3.5rem)] px-[clamp(1rem,2vw,1.5rem)] focus-visible:outline-white"
             shape="pill"
@@ -160,7 +160,7 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
             onClick={() => openLog(selectedDate <= today ? selectedDate : today)}
           >
             Log gym visit
-          </Button>
+          </PulseButton>
         </div>
         <div className={styles.ecg} aria-hidden="true">
           {["motion-safe:[animation-delay:-4s]", "motion-safe:[animation-delay:-2s]", ""].map((delay) => (
@@ -180,12 +180,12 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
               <span className={`${styles.muted} mt-1 block text-sm font-semibold tracking-normal`}>{month.slice(0, 4)}</span>
             </h2>
             <div className="flex gap-2">
-              <Button type="button" variant="iconSecondary" size="lg" shape="pill" aria-label="Previous month" onClick={() => navigateMonth(-1)}>
+              <PulseButton type="button" variant="iconSecondary" size="lg" shape="pill" aria-label="Previous month" onClick={() => navigateMonth(-1)}>
                 <ChevronLeft size={20} aria-hidden="true" />
-              </Button>
-              <Button type="button" variant="iconSecondary" size="lg" shape="pill" aria-label="Next month" onClick={() => navigateMonth(1)}>
+              </PulseButton>
+              <PulseButton type="button" variant="iconSecondary" size="lg" shape="pill" aria-label="Next month" onClick={() => navigateMonth(1)}>
                 <ChevronRight size={20} aria-hidden="true" />
-              </Button>
+              </PulseButton>
             </div>
           </div>
           <div role="group" aria-label="Select a date" className="grid grid-cols-7 gap-1 sm:gap-2">
@@ -234,9 +234,9 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
               )}
             </div>
             {!selectedGroup && selectedDate <= today && (
-              <Button type="button" size="lg" shape="pill" variant="gradient" className="[--button-fill:var(--fitness-gradient)] [--button-foreground:white]" disabled={isMarking} onClick={() => openLog(selectedDate)}>
+              <PulseButton type="button" size="lg" shape="pill" variant="gradient" className="[--button-fill:var(--fitness-gradient)] [--button-foreground:white]" disabled={isMarking} onClick={() => openLog(selectedDate)}>
                 Log visit
-              </Button>
+              </PulseButton>
             )}
           </div>
         </PulseCard>
@@ -252,7 +252,7 @@ export default function FitnessCalendar({ overview }: { overview: FitnessOvervie
 
       <FitnessStats cards={yearCards} />
 
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={dateToMark !== null}
         onClose={() => { setDateToMark(null); setMarkError(""); }}
         onConfirm={() => {

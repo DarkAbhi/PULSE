@@ -11,7 +11,7 @@ import { formatInstant, formatCalendarDate, dateKey, calendarDayNumber } from "@
 import { useTimeZone } from "@/app/components/time-zone-provider";
 
 import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import SectionHeader from "@/app/financial-horizon/components/SectionHeader";
 import HorizonTag from "@/app/financial-horizon/components/HorizonTag";
 import HorizonEmpty from "@/app/financial-horizon/components/HorizonEmpty";
@@ -381,39 +381,39 @@ export default function SubscriptionsTab({
                 {/* Card Footer Actions */}
                 <div className="mt-5 pt-3 border-t border-divider flex flex-wrap items-center justify-between gap-2">
                   {/* Left: Linked Transactions Trigger */}
-                  <Button variant="tertiary" size="sm"
+                  <PulseButton variant="tertiary" size="sm"
                     onClick={() => onViewTransactions(sub)}
                     title="View payment history"
                   >
                     <Icon name="receipt" className="h-3.5 w-3.5 text-action" />
                     <span>{sub.linked_transaction_count || 0} Paid</span>
-                  </Button>
+                  </PulseButton>
 
                   {/* Right Action Buttons */}
                   <div className="flex items-center gap-1">
                     {/* Log Payment Quick Button */}
-                    <Button variant="soft" size="sm"
+                    <PulseButton variant="soft" size="sm"
                       onClick={() => onLogPayment(sub)}
                       title="Log payment transaction for this subscription"
                     >
                       Log Payment
-                    </Button>
+                    </PulseButton>
 
                     {/* Edit Button */}
-                    <Button variant="iconChip" size="lg" shape="pill"
+                    <PulseButton variant="iconChip" size="lg" shape="pill"
                       onClick={() => onEditSubscription(sub)}
                       title="Edit Subscription"
                     >
                       <Icon name="edit" className="size-5" />
-                    </Button>
+                    </PulseButton>
 
                     {/* Delete Button */}
-                    <Button variant="iconChipDanger" size="lg" shape="pill"
+                    <PulseButton variant="iconChipDanger" size="lg" shape="pill"
                       onClick={() => onDeleteSubscription(sub)}
                       title="Delete Subscription"
                     >
                       <Icon name="trash" className="size-5" />
-                    </Button>
+                    </PulseButton>
                   </div>
                 </div>
               </PulseCard>

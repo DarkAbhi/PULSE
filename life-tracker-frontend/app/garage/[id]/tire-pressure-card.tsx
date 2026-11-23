@@ -1,6 +1,6 @@
 "use client";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { markAirFillAction } from "@/app/garage/actions";
 import { useRouter } from "next/navigation";
@@ -43,9 +43,9 @@ export default function TirePressureCard({
     <section id="tires-air" aria-labelledby="tires-heading" className={detail.section}>
       <div className={detail.sectionHeader}>
         <h2 id="tires-heading" className={detail.sectionTitle}><CircleDot className="size-6" aria-hidden="true" /> Tires &amp; air</h2>
-        <Button variant="chip" shape="pill" size="lg" labelStyle="strong" type="button" aria-haspopup="dialog" onClick={() => setIsOpen(true)}>
+        <PulseButton variant="chip" shape="pill" size="lg" labelStyle="strong" type="button" aria-haspopup="dialog" onClick={() => setIsOpen(true)}>
           <Pencil className="size-4" aria-hidden="true" /> {hasAnyPressure ? "Edit pressure" : "Set pressure"}
-        </Button>
+        </PulseButton>
       </div>
 
       <PulseCard as="section" aria-labelledby="pressure-heading" className={detail.card}>
@@ -89,9 +89,9 @@ export default function TirePressureCard({
               <label htmlFor={odometerId} className="text-muted-foreground mb-1.5 block text-sm font-bold">Odometer (km, optional)</label>
               <input id={odometerId} type="number" min="0" max="99999999999.9" step="0.1" value={odometer} onChange={(event) => setOdometer(event.target.value)} className={`${detail.field} rounded-control px-3.5`} />
             </div>
-            <Button variant="gradient" shape="pill" size="lg" labelStyle="strong" className="justify-self-start" type="submit" disabled={pending}>
+            <PulseButton variant="gradient" shape="pill" size="lg" labelStyle="strong" className="justify-self-start" type="submit" disabled={pending}>
               <CircleDot className="size-4" aria-hidden="true" /> {pending ? "Saving…" : "Record air fill"}
-            </Button>
+            </PulseButton>
             {error && <p role="alert" className="text-destructive text-sm">{error}</p>}
           </form>
         </PulseCard>

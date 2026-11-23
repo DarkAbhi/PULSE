@@ -1,6 +1,6 @@
 "use client";
 
-import Select from "@/app/components/design-system/select";
+import PulseSelect from "@/app/components/design-system/pulse-select";
 import type { MealKind, MealPreferences } from "@/app/meal-plan/onboarding/types";
 import { isMealTimeEnabled, standardMealKind } from "@/app/meal-plan/onboarding/questionnaire";
 
@@ -26,8 +26,8 @@ import {
   Sunrise,
   X,
 } from "lucide-react";
-import Dialog, { DialogActions, DialogAction, DialogHeader } from "@/app/components/design-system/dialog";
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import PulseDialog, { PulseDialogActions, PulseDialogAction, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import {
   MealPlan,
   MealTime,
@@ -37,7 +37,7 @@ import {
   getMealPlansAction,
   updateMealPlanConsumedAction,
 } from "@/app/meal-plan/actions";
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { MealPlate, mealSlotColors, type MealSlot } from "@/app/meal-plan/meal-visuals";
 import { RecipePicker } from "@/app/meal-plan/recipe-picker";
@@ -82,11 +82,11 @@ function MealSlotCard({ kind, icon, name, timeRange, usualTime, children, onAdd,
       </div>
       {children}
       {onAdd && (
-        <Button variant="tertiary" shape="pill" size="xl" labelStyle="strong" className={styles.slotAdd} type="button"
+        <PulseButton variant="tertiary" shape="pill" size="xl" labelStyle="strong" className={styles.slotAdd} type="button"
           onClick={onAdd} disabled={addDisabled} aria-label={`Add meal to ${name}`} icon={<Plus className="size-5" aria-hidden="true" />}
         >
           Add meal
-        </Button>
+        </PulseButton>
       )}
     </PulseCard>
   );
@@ -333,7 +333,7 @@ export default function MealPlanClient({
               {meal.name}
             </span>
           </button>
-          <Button
+          <PulseButton
             type="button"
             variant="iconChipDanger"
             shape="pill"
@@ -344,7 +344,7 @@ export default function MealPlanClient({
             disabled={isPending}
           >
             <X className="size-5" aria-hidden="true" />
-          </Button>
+          </PulseButton>
         </li>
       ))}
     </ul>
@@ -367,11 +367,11 @@ export default function MealPlanClient({
               <h1 id="meal-plan-title" className={styles.title}>Meal Plan</h1>
               <p className="mt-2 text-base font-medium sm:text-xl">Plan your week and track meals eaten</p>
               {onEditPreferences && (
-                <Button variant="secondary" shape="pill" size="xl" labelStyle="strong" className={styles.preferences} type="button"
+                <PulseButton variant="secondary" shape="pill" size="xl" labelStyle="strong" className={styles.preferences} type="button"
                   onClick={onEditPreferences} icon={<SlidersHorizontal className="size-5" aria-hidden="true" />}
                 >
                   Meal preferences
-                </Button>
+                </PulseButton>
               )}
             </div>
           </section>
@@ -385,17 +385,17 @@ export default function MealPlanClient({
                 )}
               </h2>
               <div className="flex items-center gap-2">
-                <Button variant="iconSecondary" shape="pill" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(-7)} aria-label="Previous week">
+                <PulseButton variant="iconSecondary" shape="pill" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(-7)} aria-label="Previous week">
                   <ChevronLeft className="size-5" aria-hidden="true" />
-                </Button>
-                <Button variant="gradient" shape="pill" size="xl" labelStyle="strong" className={styles.primaryAction} type="button"
+                </PulseButton>
+                <PulseButton variant="gradient" shape="pill" size="xl" labelStyle="strong" className={styles.primaryAction} type="button"
                   onClick={handleToday} disabled={isToday} icon={<LocateFixed className="size-5" aria-hidden="true" />}
                 >
                   Today
-                </Button>
-                <Button variant="iconSecondary" shape="pill" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(7)} aria-label="Next week">
+                </PulseButton>
+                <PulseButton variant="iconSecondary" shape="pill" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(7)} aria-label="Next week">
                   <ChevronRight className="size-5" aria-hidden="true" />
-                </Button>
+                </PulseButton>
               </div>
             </div>
 
@@ -438,11 +438,11 @@ export default function MealPlanClient({
                   </span>
                 </div>
               </div>
-              <Button variant="gradient" shape="pill" size="xl" labelStyle="strong" className={`${styles.primaryAction} ${styles.addMeal}`} type="button"
+              <PulseButton variant="gradient" shape="pill" size="xl" labelStyle="strong" className={`${styles.primaryAction} ${styles.addMeal}`} type="button"
                 onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek || !enabledMealTimes.length} icon={<Plus className="size-5" aria-hidden="true" />}
               >
                 Add meal
-              </Button>
+              </PulseButton>
             </div>
 
             <div className={styles.slotGrid} aria-busy={isLoadingWeek}>
@@ -486,7 +486,7 @@ export default function MealPlanClient({
 
       {/* Add meal Modal Dialog */}
       {isAddMealOpen && (
-        <Dialog
+        <PulseDialog
           labelledBy={addMealTitleId}
           onBackdropClick={(e) => {
             if (!isPending && e.target === e.currentTarget) handleCloseAddMeal();
@@ -495,7 +495,7 @@ export default function MealPlanClient({
         >
           <form onSubmit={handleSubmitAddMeal}>
             <div className="mb-5">
-              <DialogHeader
+              <PulseDialogHeader
                 id={addMealTitleId}
                 icon={<Utensils className="size-5" />}
                 description={`For ${selectedDay.dayFull}, ${parseYMD(selectedDate).toLocaleDateString("en-IN", {
@@ -505,7 +505,7 @@ export default function MealPlanClient({
                 })}`}
               >
                 Add meal
-              </DialogHeader>
+              </PulseDialogHeader>
             </div>
 
             {mealModalError && (
@@ -518,7 +518,7 @@ export default function MealPlanClient({
             )}
 
             <div className="mb-4 flex flex-wrap gap-2" aria-label="Meal source" role="group">
-              <Button
+              <PulseButton
                 type="button"
                 size="sm"
                 variant={customMeal ? "secondary" : "primary"}
@@ -527,8 +527,8 @@ export default function MealPlanClient({
                 onClick={() => { setCustomMeal(false); setMealModalError(""); }}
               >
                 Recipe catalog
-              </Button>
-              <Button
+              </PulseButton>
+              <PulseButton
                 type="button"
                 size="sm"
                 variant={customMeal ? "primary" : "secondary"}
@@ -537,7 +537,7 @@ export default function MealPlanClient({
                 onClick={() => { setCustomMeal(true); setMealModalError(""); }}
               >
                 Custom meal
-              </Button>
+              </PulseButton>
             </div>
 
             <div className="mb-4" hidden={customMeal || !!selectedRecipe}>
@@ -560,9 +560,9 @@ export default function MealPlanClient({
             ) : selectedRecipe && (
               <div className="mb-4 flex items-center justify-between gap-2">
                 <h3 className="text-base font-extrabold wrap-anywhere">{selectedRecipe.name}</h3>
-                <Button type="button" size="sm" variant="secondary" autoFocus disabled={isPending} onClick={() => setSelectedRecipe(null)}>
+                <PulseButton type="button" size="sm" variant="secondary" autoFocus disabled={isPending} onClick={() => setSelectedRecipe(null)}>
                   Change
-                </Button>
+                </PulseButton>
               </div>
             )}
 
@@ -576,7 +576,7 @@ export default function MealPlanClient({
                   Meal time
                 </label>
               </div>
-              <Select
+              <PulseSelect
                 id="meal-time-select"
                 value={selectedMealTimeID ?? ""}
                 onChange={(e) =>
@@ -590,19 +590,19 @@ export default function MealPlanClient({
                     {mt.name} ({formatTimeDisplay(mt.start_time)} – {formatTimeDisplay(mt.end_time)})
                   </option>
                 ))}
-              </Select>
+              </PulseSelect>
             </div>
 
-            <DialogActions>
-              <DialogAction
+            <PulseDialogActions>
+              <PulseDialogAction
                 type="button"
                 variant="secondary"
                 onClick={handleCloseAddMeal}
                 disabled={isPending}
               >
                 Cancel
-              </DialogAction>
-              <DialogAction
+              </PulseDialogAction>
+              <PulseDialogAction
                 type="submit"
                 variant="primary"
                 disabled={isPending || (customMeal ? !mealName.trim() : !selectedRecipe)}
@@ -614,14 +614,14 @@ export default function MealPlanClient({
                 ) : (
                   "Add meal"
                 )}
-              </DialogAction>
-            </DialogActions>
+              </PulseDialogAction>
+            </PulseDialogActions>
           </form>
-        </Dialog>
+        </PulseDialog>
       )}
 
       {/* Delete Meal Confirmation Dialog */}
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={mealToDelete !== null}
         onClose={() => setMealToDelete(null)}
         onConfirm={handleConfirmDeleteMeal}

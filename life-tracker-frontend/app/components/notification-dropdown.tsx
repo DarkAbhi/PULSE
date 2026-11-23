@@ -1,13 +1,13 @@
 "use client";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Bell, ArrowRight, X } from "lucide-react";
 import type { AppNotification } from "@/app/components/notification-list";
 import { dismissNotification } from "@/app/notifications/actions";
-import { AppBarBell, appBarControl } from "@/app/components/design-system/app-bar";
+import { PulseAppBarBell, appBarControl } from "@/app/components/design-system/pulse-app-bar";
 import LocalDate from "@/app/components/local-date";
 
 interface NotificationDropdownProps {
@@ -81,10 +81,10 @@ export default function NotificationDropdown({
           onClick={() => setOpen((value) => !value)}
           className={`${appBarControl} cursor-pointer`}
         >
-          <AppBarBell hasUnread={unreadCount > 0} />
+          <PulseAppBarBell hasUnread={unreadCount > 0} />
         </button>
       ) : (
-        <Button
+        <PulseButton
           variant="iconOverlay"
           shape="pill"
           size="lg"
@@ -105,7 +105,7 @@ export default function NotificationDropdown({
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
-        </Button>
+        </PulseButton>
       )}
 
       {/* Dropdown panel */}
@@ -126,13 +126,13 @@ export default function NotificationDropdown({
                 </p>
               )}
             </div>
-            <Button variant="icon" size="sm"
+            <PulseButton variant="icon" size="sm"
               type="button"
               aria-label="Close notifications"
               onClick={() => setOpen(false)}
             >
               <X className="h-4 w-4" />
-            </Button>
+            </PulseButton>
           </div>
 
           {/* Body */}
@@ -184,14 +184,14 @@ export default function NotificationDropdown({
                             />
                           </p>
                         </div>
-                        <Button variant="tertiary" size="sm"
+                        <PulseButton variant="tertiary" size="sm"
                           type="button"
                           aria-label={`Dismiss ${n.title}`}
                           onClick={() => handleDismiss(n.id)}
                           className="shrink-0"
                         >
                           Dismiss
-                        </Button>
+                        </PulseButton>
                       </div>
 
                     </li>

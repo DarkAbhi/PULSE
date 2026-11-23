@@ -1,11 +1,11 @@
 "use client";
 
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import ConfirmationDialog from "@/app/components/design-system/confirmation-dialog";
+import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import { deleteVisit } from "./actions";
 
 interface DeleteVisitButtonProps {
@@ -35,16 +35,16 @@ export default function DeleteVisitButton({ visitID }: DeleteVisitButtonProps) {
 
   return (
     <>
-      <Button
+      <PulseButton
         variant="destructive"
         size="md"
         onClick={() => setIsConfirmingDelete(true)}
         type="button"
       >
         <Trash2 className="h-4 w-4" /> Delete visit
-      </Button>
+      </PulseButton>
 
-      <ConfirmationDialog
+      <PulseConfirmationDialog
         isOpen={isConfirmingDelete}
         onClose={() => setIsConfirmingDelete(false)}
         onConfirm={handleDelete}

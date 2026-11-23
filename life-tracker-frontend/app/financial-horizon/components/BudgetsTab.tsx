@@ -6,7 +6,7 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 import { formatMoney } from "@/app/lib/currency.mjs";
 
 import HorizonAction from "@/app/financial-horizon/components/HorizonAction";
-import Button from "@/app/components/design-system/button";
+import PulseButton from "@/app/components/design-system/pulse-button";
 import SectionHeader from "@/app/financial-horizon/components/SectionHeader";
 import HorizonTag from "@/app/financial-horizon/components/HorizonTag";
 import HorizonEmpty from "@/app/financial-horizon/components/HorizonEmpty";
@@ -113,22 +113,22 @@ export default function BudgetsTab({
                     )}
                   </div>
                   <div className="flex flex-none gap-2 @max-[300px]:col-start-2 @max-[300px]:justify-self-end">
-                    <Button
+                    <PulseButton
                       variant="iconChip" size="lg" shape="pill"
                       onClick={() => onOpenEditBudget(budget)}
                       aria-label="Edit Budget"
                       title="Edit Budget"
                     >
                       <Icon name="edit" className="size-5" />
-                    </Button>
-                    <Button
+                    </PulseButton>
+                    <PulseButton
                       variant="iconChipDanger" size="lg" shape="pill"
                       onClick={() => onConfirmDeleteBudget(budget)}
                       aria-label="Delete Budget"
                       title="Delete Budget"
                     >
                       <Icon name="trash" className="size-5" />
-                    </Button>
+                    </PulseButton>
                   </div>
                 </header>
 

@@ -54,12 +54,17 @@ export default function FitnessCalendar({ today, workoutsByDate, summary, childr
     <div className="grid gap-6 sm:gap-8">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-6">
         <PulseCard as="section" aria-label="Workout calendar" className={`${styles.surface} min-w-0 p-3 sm:p-6`}>
-          <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 aria-live="polite" className="text-2xl leading-none font-extrabold tracking-tight sm:text-3xl">
               {monthFormatter.format(parseDate(`${month}-01`))}
               <span className={`${styles.muted} mt-1 block text-sm font-semibold tracking-normal`}>{month.slice(0, 4)}</span>
             </h2>
-            <div className="flex gap-2">
+            <div className="ml-auto flex items-center gap-2">
+              {selectedDate <= today && (
+                <PulseButton type="button" size="lg" shape="pill" variant="gradient" className="whitespace-nowrap [--button-fill:var(--fitness-gradient)] [--button-foreground:white]" disabled={isMarking} onClick={openLog}>
+                  Log Visit
+                </PulseButton>
+              )}
               <PulseButton type="button" variant="iconSecondary" size="lg" shape="pill" aria-label="Previous month" onClick={() => navigateMonth(-1)}>
                 <ChevronLeft size={20} aria-hidden="true" />
               </PulseButton>
@@ -126,13 +131,6 @@ export default function FitnessCalendar({ today, workoutsByDate, summary, childr
               </div>
             )}
           </div>
-          {selectedDate <= today && (
-            <div className="mt-3 flex justify-end">
-              <PulseButton type="button" size="lg" shape="pill" variant="gradient" className="[--button-fill:var(--fitness-gradient)] [--button-foreground:white]" disabled={isMarking} onClick={openLog}>
-                Log Visit
-              </PulseButton>
-            </div>
-          )}
         </PulseCard>
         {summary}
       </div>

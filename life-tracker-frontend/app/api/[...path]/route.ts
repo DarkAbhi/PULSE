@@ -1,3 +1,4 @@
+import { apiBaseURL } from "@/app/lib/server-api";
 import { cookies } from "next/headers";
 import { proxyAPI } from "@/app/lib/api-transport";
 
@@ -5,7 +6,7 @@ async function proxy(request: Request) {
   try {
     return await proxyAPI(
       request,
-      process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080",
+      apiBaseURL,
       (await cookies()).get("life_session")?.value,
     );
   } catch {

@@ -1,80 +1,13 @@
-"use client";
+import { redirect } from "next/navigation";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import { getSession } from "@/app/lib/session";
+import SignInForm from "@/app/login/sign-in-form";
 
-import PulseCard from "./components/design-system/pulse-card";
-
-import PulseButton from "@/app/components/design-system/pulse-button";
-
-import { SubmitEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-
-const apiBaseURL = "";
-
-export default function Home() {
-  const router = useRouter();
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
-
-  useEffect(() => {
-    async function redirectIfSignedIn() {
-      try {
-        const response = await fetch(`${apiBaseURL}/api/auth/session`, {
-          credentials: "include",
-        });
-        if (response.ok) {
-          router.replace("/dashboard");
-          router.refresh();
-          return;
-        }
-      } catch {
-        // Leave the login form available when the API cannot be reached.
-      }
-      setIsCheckingSession(false);
-    }
-
-    void redirectIfSignedIn();
-  }, [router]);
-
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    setIsSubmitting(true);
-
-    const formData = new FormData(event.currentTarget);
-    try {
-      const response = await fetch(`${apiBaseURL}/api/auth/login`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: formData.get("username"),
-          password: formData.get("password"),
-        }),
-      });
-      const body = (await response.json()) as { error?: string };
-      if (!response.ok) {
-        setError(body.error ?? "Unable to sign in. Please try again.");
-        return;
-      }
-      router.replace("/dashboard");
-      router.refresh();
-    } catch {
-      setError("Unable to reach the server. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  if (isCheckingSession) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
-        Checking your session…
-      </main>
-    );
-  }
+export default async function LoginPage() {
+  if (await getSession()) redirect("/dashboard");
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-6 py-12 text-foreground">
+    <main id="main-content" tabIndex={-1} className="flex min-h-screen items-center justify-center bg-background px-6 py-12 text-foreground">
       <PulseCard as="section" className="w-full max-w-md p-8 shadow-xl sm:p-10">
         <div className="mb-8">
           <p className="mb-2 text-sm font-semibold tracking-wide text-action">
@@ -86,53 +19,7 @@ export default function Home() {
           </p>
         </div>
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          <div>
-            <label
-              className="mb-2 block text-sm font-medium text-muted-foreground"
-              htmlFor="username"
-            >
-              Username
-            </label>
-            <input
-              autoComplete="username"
-              className="w-full rounded-lg bg-secondary px-4 py-3 text-base transition placeholder:text-muted-foreground"
-              id="username"
-              name="username"
-              defaultValue="admin"
-              placeholder="Enter your username"
-              required
-              type="text"
-            />
-          </div>
-
-          <div>
-            <label
-              className="mb-2 block text-sm font-medium text-muted-foreground"
-              htmlFor="password"
-            >
-              Password
-            </label>
-            <input
-              autoComplete="current-password"
-              className="w-full rounded-lg bg-secondary px-4 py-3 text-base transition placeholder:text-muted-foreground"
-              id="password"
-              name="password"
-              placeholder="Enter your password"
-              required
-              type="password"
-            />
-          </div>
-
-          <PulseButton variant="primary" size="lg"
-            className="w-full"
-            disabled={isSubmitting}
-            type="submit"
-          >
-            {isSubmitting ? "Signing in…" : "Continue"}
-          </PulseButton>
-          {error && <p className="text-center text-sm text-destructive" role="alert">{error}</p>}
-        </form>
+        <SignInForm />
       </PulseCard>
     </main>
   );

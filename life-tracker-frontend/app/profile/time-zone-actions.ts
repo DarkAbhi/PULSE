@@ -1,13 +1,13 @@
 "use server";
 
-import { apiFetch } from "@/app/lib/server-api";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 import { revalidatePath } from "next/cache";
 import { validTimeZone } from "@/app/lib/time-zone.mjs";
 
 export async function saveTimeZoneAction(timezone: string): Promise<{ ok: true; timezone: string } | { ok: false; error: string }> {
   if (!validTimeZone(timezone)) return { ok: false, error: "Choose a valid time zone." };
   try {
-    const response = await apiFetch(`${process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080"}/api/profile/timezone`, {
+    const response = await apiFetch(`${apiBaseURL}/api/profile/timezone`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ timezone }), cache: "no-store",
     });

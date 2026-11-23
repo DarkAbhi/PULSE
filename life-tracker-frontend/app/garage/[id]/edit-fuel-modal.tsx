@@ -1,5 +1,5 @@
 "use client";
-import { useTimeZone } from "@/app/components/time-zone-provider";
+import { useTimeZone } from "@/app/components/profile-preferences-provider";
 import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
 
 import PulseButton from "@/app/components/design-system/pulse-button";
@@ -108,7 +108,7 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
       {/* Error Toast Notification */}
       {toastError && (
         <div
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl bg-destructive/10 p-4 text-destructive shadow-xl backdrop-blur-md transition-all duration-300"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl bg-destructive/10 p-4 text-destructive shadow-xl backdrop-blur-md motion-safe:transition-opacity duration-300"
           role="alert"
         >
           <span className="text-sm font-medium">{toastError}</span>

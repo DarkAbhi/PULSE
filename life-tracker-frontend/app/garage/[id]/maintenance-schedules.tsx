@@ -4,8 +4,8 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import PulseButton from "@/app/components/design-system/pulse-button";
-import { MaintenanceInterval, MaintenanceSchedule } from "./types";
-import { saveMaintenanceSchedule } from "./actions";
+import { MaintenanceInterval, MaintenanceSchedule } from "@/app/garage/[id]/types";
+import { saveMaintenanceSchedule } from "@/app/garage/[id]/actions";
 
 const sources = [
   { key: "personal", label: "My intervals" },

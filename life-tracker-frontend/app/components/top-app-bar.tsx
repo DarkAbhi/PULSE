@@ -1,10 +1,8 @@
 import { Suspense } from "react";
-import { apiFetch } from "@/app/lib/server-api";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 import PulseAppBar, { PulseAppBarNotificationLink } from "@/app/components/design-system/pulse-app-bar";
-import NotificationDropdown from "./notification-dropdown";
-import type { AppNotification } from "./notification-list";
-
-const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
+import NotificationDropdown from "@/app/components/notification-dropdown";
+import type { AppNotification } from "@/app/components/notification-list";
 
 async function AppBarNotificationMenu() {
   try {

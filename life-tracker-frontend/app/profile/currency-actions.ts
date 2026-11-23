@@ -1,13 +1,13 @@
 "use server";
 
-import { apiFetch } from "@/app/lib/server-api";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 import { revalidatePath } from "next/cache";
 import { validCurrency } from "@/app/lib/currency.mjs";
 
 export async function saveCurrencyAction(currency: string): Promise<{ ok: true; currency: string } | { ok: false; error: string }> {
   if (!validCurrency(currency)) return { ok: false, error: "Choose a valid currency." };
   try {
-    const response = await apiFetch(`${process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080"}/api/profile/currency`, {
+    const response = await apiFetch(`${apiBaseURL}/api/profile/currency`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ currency }), cache: "no-store",
     });

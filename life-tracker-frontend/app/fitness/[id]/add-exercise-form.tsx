@@ -170,36 +170,6 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
     });
   }
 
-  function handleDialogKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    if (event.key === "Escape" && !isPending) {
-      event.preventDefault();
-      onClose();
-    }
-
-    if (event.key !== "Tab") return;
-    const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>(
-      "button:enabled, input:enabled, summary",
-    )).filter((control) => control.getClientRects().length > 0 &&
-      (!(control instanceof HTMLInputElement) || control.type !== "radio" || control.checked));
-    const first = controls[0];
-    const last = controls.at(-1);
-    if (!first) {
-      event.preventDefault();
-      return;
-    }
-
-    if (document.activeElement === event.currentTarget) {
-      event.preventDefault();
-      (event.shiftKey ? last : first)?.focus();
-    } else if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last?.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first?.focus();
-    }
-  }
-
   const form = (
     <form className="mt-6 space-y-5" onSubmit={handleSave}>
       {/* Implicit submission saves and closes, even when the footer offers both actions. */}
@@ -359,11 +329,9 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
   );
 
   return createPortal(
-    <div ref={dialogRef} tabIndex={-1} onKeyDown={handleDialogKeyDown}>
+    <div ref={dialogRef} tabIndex={-1}>
       <PulseDialog labelledBy={titleID} size="lg"
-        onBackdropClick={(event) => {
-          if (event.target === event.currentTarget && !isPending) onClose();
-        }}>
+        onDismiss={isPending ? undefined : onClose}>
         <PulseDialogHeader
           id={titleID}
           onClose={onClose}

@@ -21,7 +21,7 @@ export default function MaintenanceHistory({ records, vehicleId, currency }: { r
       <label className="relative block max-w-104">
         <span className="sr-only">Search maintenance records</span>
         <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2" aria-hidden="true" />
-        <input type="search" className={`${detail.field} rounded-full bg-card ps-11 pe-3.5`} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search component or work…" />
+        <input type="search" name="maintenance-search" aria-label="Search maintenance history" autoComplete="off" className={`${detail.field} rounded-full bg-card ps-11 pe-3.5`} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search component or work…" />
       </label>
       {matches.length === 0 ? (
         <p className={detail.empty}>{term ? "No matching maintenance records." : "No maintenance or expense records yet."}</p>

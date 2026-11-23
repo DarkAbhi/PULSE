@@ -1,9 +1,7 @@
 "use server";
 
-import { apiFetch } from "@/app/lib/server-api";
+import { apiFetch, apiBaseURL } from "@/app/lib/server-api";
 import { revalidatePath } from "next/cache";
-
-const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
 
 export async function saveNameAction(name: string) {
   try {
@@ -27,33 +25,6 @@ export async function saveNameAction(name: string) {
     return {
       ok: false,
       error: "Unable to reach the server. Please try again.",
-    };
-  }
-}
-
-export async function dismissNotificationAction(notificationID: number) {
-  try {
-    const response = await apiFetch(
-      `${apiBaseURL}/api/notifications/${notificationID}`,
-      {
-        method: "DELETE",
-      },
-    );
-
-    if (!response.ok) {
-      return {
-        ok: false,
-        error: "We couldn't dismiss that notification. Please try again.",
-      };
-    }
-
-    revalidatePath("/dashboard");
-    revalidatePath("/notifications");
-    return { ok: true };
-  } catch {
-    return {
-      ok: false,
-      error: "We couldn't reach the server. Please try again.",
     };
   }
 }

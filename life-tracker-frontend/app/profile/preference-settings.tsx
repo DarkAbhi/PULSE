@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 import { Check, type LucideIcon } from "lucide-react";
 import PulseButton from "@/app/components/design-system/pulse-button";
 import { PulseChoiceControl } from "@/app/components/design-system/pulse-choice-group";
@@ -37,7 +36,6 @@ export default function PreferenceSettings({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
-  const router = useRouter();
 
   const dialogId = `${id}-dialog-title`;
   const plural = id === "currency" ? "currencies" : "time zones";
@@ -45,35 +43,6 @@ export default function PreferenceSettings({
     .filter(choice => normalize(choice.label).includes(normalize(search))) : [];
 
   useEffect(() => { setDraft(value); }, [value]);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !pending) {
-        event.preventDefault();
-        setIsOpen(false);
-        trigger.current?.focus();
-      }
-      if (event.key !== "Tab") return;
-
-      const dialog = document.querySelector(`[aria-labelledby="${dialogId}"]`);
-      const items = dialog?.querySelectorAll<HTMLElement>('input:not(:disabled), button:not(:disabled)');
-      if (!items?.length) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [dialogId, isOpen, pending]);
 
   function open() {
     setDraft(value);
@@ -101,7 +70,6 @@ export default function PreferenceSettings({
       onSaved(result.value);
       close();
       setMessage(`${title} saved.`);
-      router.refresh();
     });
   }
 
@@ -126,7 +94,7 @@ export default function PreferenceSettings({
       </PulseButton>
 
       {isOpen && (
-        <PulseDialog labelledBy={dialogId}>
+        <PulseDialog labelledBy={dialogId} onDismiss={pending ? undefined : close}>
           <PulseDialogHeader id={dialogId} description={description} icon={<Icon className="size-5" />}>
             Change {title.toLowerCase()}
           </PulseDialogHeader>

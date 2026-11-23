@@ -1,6 +1,6 @@
 import "@/app/fitness/workout-theme.css";
 
-import { apiFetch } from "@/app/lib/server-api";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 import { getUserTimeZone } from "@/app/lib/user-time-zone";
 import { redirect } from "next/navigation";
 import { frame } from "@/app/components/design-system/page-frame";
@@ -16,8 +16,6 @@ import type { SavedExercise } from "@/app/fitness/[id]/actions";
 export const metadata = {
   title: "Fitness Workout | PULSE",
 };
-
-const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
 
 type GymVisit = {
   id: number;
@@ -101,21 +99,22 @@ function WorkoutSummary({ visit, timeZone, error }: {
 }
 
 export default async function GymVisitPage({ params }: { params: Promise<{ id: string }> }) {
-  const [{ id: visitID }, timeZone] = await Promise.all([params, getUserTimeZone()]);
-  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
-  if (!sessionResponse.ok) redirect("/");
+  const { id: visitID } = await params;
+  const timeZonePromise = getUserTimeZone();
 
   let exercises: SavedExercise[] = [];
   let visit: GymVisit | null = null;
   let error = "";
   let detailsError = "";
   let visitNotFound = false;
+  let unauthorized = false;
 
   try {
     const [exercisesResponse, visitResponse] = await Promise.all([
-      apiFetch(`${apiBaseURL}/api/gym-visits/${visitID}/exercises`),
-      apiFetch(`${apiBaseURL}/api/fitness-workouts/${visitID}`),
+      apiFetch(`${apiBaseURL}/api/gym-visits/${encodeURIComponent(visitID)}/exercises`, { signal: AbortSignal.timeout(10_000) }),
+      apiFetch(`${apiBaseURL}/api/fitness-workouts/${encodeURIComponent(visitID)}`, { signal: AbortSignal.timeout(10_000) }),
     ]);
+    unauthorized = exercisesResponse.status === 401 || visitResponse.status === 401;
     visitNotFound = exercisesResponse.status === 404 || visitResponse.status === 404;
     if (exercisesResponse.ok) {
       exercises = ((await exercisesResponse.json()) as SavedExercise[] | null) ?? [];
@@ -132,15 +131,17 @@ export default async function GymVisitPage({ params }: { params: Promise<{ id: s
     error = "We couldn't reach the server. Please try again.";
   }
 
+  if (unauthorized) redirect("/");
   if (visitNotFound) redirect("/fitness");
 
+  const timeZone = await timeZonePromise;
   const sets = exercises.flatMap((exercise) => exercise.sets);
   const volume = sets.reduce((total, set) => total + set.reps * (set.weight ?? 0), 0);
   const exerciseCount = `${exercises.length} ${exercises.length === 1 ? "exercise" : "exercises"}`;
   const setCount = `${sets.length} ${sets.length === 1 ? "set" : "sets"}`;
 
   return (
-    <main className={`${frame.page} leading-snug`}>
+    <main id="main-content" tabIndex={-1} className={`${frame.page} leading-snug`}>
       <div className={`${frame.content} grid min-w-0 gap-8`}>
         <TopAppBar backHref="/fitness" backLabel="Back to Fitness" />
         <WorkoutSummary visit={visit} timeZone={timeZone} error={detailsError} />

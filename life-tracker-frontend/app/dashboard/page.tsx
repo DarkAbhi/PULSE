@@ -1,16 +1,17 @@
 import "@/app/dashboard/dashboard-theme.css";
-import { apiFetch } from "@/app/lib/server-api";
+import { getSession } from "@/app/lib/session";
+import { getDashboardData } from "@/app/dashboard/data";
 import { frame } from "@/app/components/design-system/page-frame";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 import { UserRound } from "lucide-react";
 import GreetingHeader from "@/app/dashboard/greeting-header";
 import GymVisitCard from "@/app/dashboard/gym-visit-card";
 import NotificationDropdown from "@/app/components/notification-dropdown";
 import NamePromptDialog from "@/app/dashboard/name-prompt-dialog";
-import FinancialHorizonCard, { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
+import FinancialHorizonCard from "@/app/dashboard/financial-horizon-card";
 import SectionTiles from "@/app/dashboard/section-tiles";
-import { AppNotification } from "@/app/components/notification-list";
 
 const dashboardClass =
   "bg-background text-foreground [&_:is(a,button)]:[-webkit-tap-highlight-color:transparent] " +
@@ -21,82 +22,63 @@ export const metadata = {
   title: "Dashboard | PULSE",
 };
 
-const apiBaseURL =
-  process.env.INTERNAL_API_BASE_URL ??
-  "http://localhost:8080";
+type DashboardData = ReturnType<typeof getDashboardData>;
 
-type ProfileResponse = {
-  has_profile: boolean;
-  name?: string;
-};
+async function DashboardGreeting({ username, profile, notifications }: {
+  username: string;
+  profile: DashboardData["profile"];
+  notifications: DashboardData["notifications"];
+}) {
+  const data = await profile;
+  return (
+    <>
+      <GreetingHeader name={data?.name || username}>
+        <Suspense fallback={<Link href="/notifications" className="inline-flex min-h-11 items-center px-3">Notifications</Link>}>
+          <DashboardNotifications notifications={notifications} />
+        </Suspense>
+        <Link className="inline-flex items-center justify-center size-11 rounded-full text-inherit hover:bg-white/15" href="/profile" aria-label="Profile">
+          <UserRound className="h-5 w-5" aria-hidden="true" />
+        </Link>
+      </GreetingHeader>
+      {data?.has_profile === false && <NamePromptDialog initialDisplayName={data.name ?? ""} />}
+    </>
+  );
+}
+
+async function DashboardNotifications({ notifications }: { notifications: DashboardData["notifications"] }) {
+  return <NotificationDropdown initialNotifications={await notifications ?? []} />;
+}
+
+async function DashboardBalance({ horizon }: { horizon: DashboardData["horizon"] }) {
+  return <FinancialHorizonCard summary={await horizon} />;
+}
+
+async function DashboardWorkout({ workout }: { workout: DashboardData["workout"] }) {
+  return <GymVisitCard visited={(await workout)?.visited ?? null} />;
+}
 
 export default async function DashboardPage() {
-  // Validate session on the server
-  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
-  if (!sessionResponse.ok) {
-    redirect("/");
-  }
-  const session = (await sessionResponse.json()) as { username: string };
+  const session = await getSession();
+  if (!session) redirect("/");
 
-  let profile: ProfileResponse = { has_profile: false };
-  let gymVisited = false;
-  let notifications: AppNotification[] = [];
-  let horizonSummary: HorizonSummary | null = null;
-  let horizonError = "";
-
-  try {
-    const [profileRes, gymRes, notificationsRes, horizonRes] =
-      await Promise.all([
-        apiFetch(`${apiBaseURL}/api/profile`),
-        apiFetch(`${apiBaseURL}/api/workout/today`),
-        apiFetch(`${apiBaseURL}/api/notifications?limit=5`),
-        apiFetch(`${apiBaseURL}/api/horizon`),
-      ]);
-
-    if (!profileRes.ok) {
-      redirect("/");
-    }
-    profile = (await profileRes.json()) as ProfileResponse;
-
-    if (gymRes.ok) {
-      const gym = (await gymRes.json()) as { visited: boolean };
-      gymVisited = gym.visited;
-    }
-
-    if (notificationsRes.ok) {
-      notifications = (await notificationsRes.json()) as AppNotification[];
-    }
-
-    if (horizonRes.ok) {
-      horizonSummary = (await horizonRes.json()) as HorizonSummary;
-    } else {
-      horizonError = "We couldn't load your financial horizon.";
-    }
-  } catch {
-    redirect("/");
-  }
-
-  const username = session.username;
-  const displayName = profile.name ?? "";
-  const needsProfile = !profile.has_profile;
+  const data = getDashboardData();
 
   return (
-    <main className={`${dashboardClass} ${frame.page}`}>
+    <main id="main-content" tabIndex={-1} className={`${dashboardClass} ${frame.page}`}>
       <div className={`grid gap-6 ${frame.content}`}>
-        <GreetingHeader username={username} displayName={displayName}>
-          <NotificationDropdown initialNotifications={notifications} />
-          <Link className="inline-flex items-center justify-center size-11 rounded-full text-inherit hover:bg-white/15" href="/profile" aria-label="Profile">
-            <UserRound className="h-5 w-5" />
-          </Link>
-        </GreetingHeader>
+        <Suspense fallback={<GreetingHeader name={session.username} />}>
+          <DashboardGreeting username={session.username} profile={data.profile} notifications={data.notifications} />
+        </Suspense>
         <section className="grid gap-6 items-stretch md:grid-cols-2" aria-label="Your day at a glance">
-          <FinancialHorizonCard summary={horizonSummary} error={horizonError} />
-          <GymVisitCard visited={gymVisited} />
+          <Suspense fallback={<div className="min-h-50 rounded-card bg-card" aria-busy="true" />}>
+            <DashboardBalance horizon={data.horizon} />
+          </Suspense>
+          <Suspense fallback={<div className="min-h-50 rounded-card bg-card" aria-busy="true" />}>
+            <DashboardWorkout workout={data.workout} />
+          </Suspense>
         </section>
         <SectionTiles />
       </div>
-
-      {needsProfile && <NamePromptDialog initialDisplayName={displayName} />}
     </main>
   );
 }

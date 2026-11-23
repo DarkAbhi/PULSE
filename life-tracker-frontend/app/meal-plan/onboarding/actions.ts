@@ -1,13 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { apiFetch } from "@/app/lib/server-api";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 import type { MealPreferences, OnboardingState, PreferenceResult } from "@/app/meal-plan/onboarding/types";
 
-const base = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
 async function request(path: string, init: RequestInit = {}): Promise<PreferenceResult> {
   try {
-    const res = await apiFetch(`${base}/api/${path}?planning_slots=1`, { ...init, cache: "no-store", signal: AbortSignal.timeout(15000) });
+    const res = await apiFetch(`${apiBaseURL}/api/${path}?planning_slots=1`, { ...init, cache: "no-store", signal: AbortSignal.timeout(15000) });
     const body = await res.json();
     if (!res.ok) return { ok: false, error: res.status === 401 ? "Your session has expired. Sign in again to save your preferences." : body.error ?? "Could not save your preferences. Please try again.", state: body.state };
     return { ok: true, state: body as OnboardingState };

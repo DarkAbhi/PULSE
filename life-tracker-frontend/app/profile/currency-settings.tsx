@@ -1,6 +1,6 @@
 "use client";
 
-import { useCurrency } from "@/app/components/currency-provider";
+import { useCurrency } from "@/app/components/profile-preferences-provider";
 import { CircleDollarSign } from "lucide-react";
 import { CURRENCIES, currencyLabel, currencySymbol, formatMoney } from "@/app/lib/currency.mjs";
 import { saveCurrencyAction } from "@/app/profile/currency-actions";

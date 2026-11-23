@@ -2,7 +2,7 @@
 
 import PulseButton from "@/app/components/design-system/pulse-button";
 
-import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
+import { useEffect, useId, useOptimistic, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Bell, ArrowRight, X } from "lucide-react";
 import type { AppNotification } from "@/app/components/notification-list";
@@ -26,6 +26,7 @@ export default function NotificationDropdown({
   );
   const [, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const panelId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -46,14 +47,13 @@ export default function NotificationDropdown({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  // Close on Escape
+  function closeMenu() {
+    setOpen(false);
+    buttonRef.current?.focus();
+  }
+
   useEffect(() => {
-    if (!open) return;
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
+    if (open) panelRef.current?.focus();
   }, [open]);
 
   function handleDismiss(id: number) {
@@ -70,7 +70,12 @@ export default function NotificationDropdown({
   const unreadCount = notifications.length;
 
   return (
-    <div className="relative">
+    <div className="relative" onKeyDown={event => {
+      if (open && event.key === "Escape") {
+        event.preventDefault();
+        closeMenu();
+      }
+    }}>
       {appBar ? (
         <button
           ref={buttonRef}
@@ -78,6 +83,7 @@ export default function NotificationDropdown({
           aria-label={unreadCount ? "Notifications, unread updates" : "Notifications"}
           aria-haspopup="dialog"
           aria-expanded={open}
+          aria-controls={open ? panelId : undefined}
           onClick={() => setOpen((value) => !value)}
           className={`${appBarControl} cursor-pointer`}
         >
@@ -93,6 +99,7 @@ export default function NotificationDropdown({
           aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
           aria-haspopup="dialog"
           aria-expanded={open}
+          aria-controls={open ? panelId : undefined}
           onClick={() => setOpen((value) => !value)}
           className="relative"
         >
@@ -112,6 +119,8 @@ export default function NotificationDropdown({
       {open && (
         <div
           ref={panelRef}
+          id={panelId}
+          tabIndex={-1}
           role="dialog"
           aria-label="Notifications"
           className={`absolute right-0 top-full z-50 mt-2.5 w-90 max-w-[calc(100vw-3rem)] origin-top-right rounded-2xl bg-card shadow-xl motion-safe:animate-dropdown ${appBar ? "" : "max-compact:fixed max-compact:inset-x-4 max-compact:top-22 max-compact:mt-0 max-compact:max-h-[calc(100dvh-7rem)] max-compact:w-auto max-compact:max-w-none max-compact:overflow-y-auto"}`}
@@ -129,7 +138,7 @@ export default function NotificationDropdown({
             <PulseButton variant="icon" size="sm"
               type="button"
               aria-label="Close notifications"
-              onClick={() => setOpen(false)}
+              onClick={closeMenu}
             >
               <X className="h-4 w-4" />
             </PulseButton>

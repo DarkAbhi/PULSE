@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, ReactNode, useId } from "react";
+import { ReactNode, useId } from "react";
 import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 export interface PulseConfirmationDialogProps {
@@ -32,35 +32,17 @@ export default function PulseConfirmationDialog({
 }: PulseConfirmationDialogProps) {
   const titleId = useId();
 
-  // Escape key listener to close modal
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !isLoading) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose, isLoading]);
-
   if (!isOpen) return null;
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && !isLoading) {
-      onClose();
-    }
-  };
-
   return (
-    <PulseDialog labelledBy={titleId} onBackdropClick={handleBackdropClick}>
+    <PulseDialog labelledBy={titleId} onDismiss={isLoading ? undefined : onClose}>
         <PulseDialogHeader id={titleId}>{title}</PulseDialogHeader>
         <div className="mt-4 text-sm leading-6 text-muted-foreground">
           {description}
         </div>
 
         {error && (
-          <p className="mt-3 text-sm text-destructive animate-pulse" role="alert">
+          <p className="mt-3 text-sm text-destructive" role="alert">
             {error}
           </p>
         )}

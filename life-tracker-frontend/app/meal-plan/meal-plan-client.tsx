@@ -4,10 +4,11 @@ import PulseSelect from "@/app/components/design-system/pulse-select";
 import type { MealKind, MealPreferences } from "@/app/meal-plan/onboarding/types";
 import { isMealTimeEnabled, standardMealKind } from "@/app/meal-plan/onboarding/questionnaire";
 
-import { useTimeZone } from "@/app/components/time-zone-provider";
+import { useTimeZone } from "@/app/components/profile-preferences-provider";
 
 import { dateKey } from "@/app/lib/time-zone.mjs";
 
+import dynamic from "next/dynamic";
 import { useState, useEffect, useTransition, useId, type ReactNode } from "react";
 import { frame } from "@/app/components/design-system/page-frame";
 import {
@@ -40,14 +41,18 @@ import {
 import PulseButton from "@/app/components/design-system/pulse-button";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { MealPlate, mealSlotColors, type MealSlot } from "@/app/meal-plan/meal-visuals";
-import { RecipePicker } from "@/app/meal-plan/recipe-picker";
+import { addDays, formatYMD, getMonday, mealWeekBounds, parseYMD } from "@/app/meal-plan/week";
 import { mealPlanStyles as styles } from "@/app/meal-plan/meal-plan-classes";
+
+const RecipePicker = dynamic(() => import("@/app/meal-plan/recipe-picker").then(module => module.RecipePicker), {
+  loading: () => <p role="status">Loading recipes…</p>,
+});
 
 interface MealPlanClientProps {
   appBar: ReactNode;
   preferences?: MealPreferences | null;
   onEditPreferences?: () => void;
-  initialMeals: MealPlan[];
+  initialMeals: MealPlan[] | null;
   initialMealTimes: MealTime[];
   initialTodayStr?: string;
 }
@@ -93,32 +98,6 @@ function MealSlotCard({ kind, icon, name, timeRange, usualTime, children, onAdd,
 }
 
 
-function parseYMD(dateStr: string): Date {
-  return new Date(`${dateStr}T00:00:00Z`);
-}
-
-function formatYMD(d: Date): string {
-  const year = d.getUTCFullYear();
-  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function getMonday(d: Date): Date {
-  const date = new Date(d);
-  const day = date.getUTCDay();
-  const diff = (day === 0 ? -6 : 1) - day;
-  date.setUTCDate(date.getUTCDate() + diff);
-  date.setUTCHours(0, 0, 0, 0);
-  return date;
-}
-
-function addDays(d: Date, days: number): Date {
-  const res = new Date(d);
-  res.setUTCDate(res.getUTCDate() + days);
-  return res;
-}
-
 function formatTimeDisplay(timeStr?: string): string {
   if (!timeStr) return "";
   const parts = timeStr.split(":");
@@ -139,12 +118,10 @@ export default function MealPlanClient({
   initialTodayStr,
 }: MealPlanClientProps) {
   const { timeZone } = useTimeZone();
-  const [clock, setClock] = useState(() => ({
-    today: initialTodayStr ?? dateKey(new Date(), timeZone),
-  }));
+  const [today, setToday] = useState(() => initialTodayStr ?? dateKey(new Date(), timeZone));
   useEffect(() => {
     const update = () => {
-      setClock({ today: dateKey(new Date(), timeZone) });
+      setToday(dateKey(new Date(), timeZone));
     };
     update();
     const timer = window.setInterval(update, 60000);
@@ -154,9 +131,10 @@ export default function MealPlanClient({
   const [selectedDate, setSelectedDate] = useState(
     () => initialTodayStr ?? dateKey(new Date(), timeZone)
   );
-  const [meals, setMeals] = useState<MealPlan[]>(initialMeals);
+  const [meals, setMeals] = useState<MealPlan[]>(initialMeals ?? []);
   const mealTimes = initialMealTimes;
-  const [isLoadingWeek, setIsLoadingWeek] = useState(false);
+  const [loadedWeek, setLoadedWeek] = useState(() => initialMeals && mealWeekBounds(initialTodayStr ?? today).start);
+  const [failedWeek, setFailedWeek] = useState<string | null>(null);
 
   // Meal form state
   const [isAddMealOpen, setIsAddMealOpen] = useState(false);
@@ -184,46 +162,50 @@ export default function MealPlanClient({
       dayShort: d.toLocaleDateString("en-IN", { timeZone: "UTC", weekday: "short" }),
       dayFull: d.toLocaleDateString("en-IN", { timeZone: "UTC", weekday: "long" }),
       monthDay: d.toLocaleDateString("en-IN", { timeZone: "UTC", month: "short", day: "numeric" }),
-      isToday: dateStr === clock.today,
+      isToday: dateStr === today,
       isSelected: dateStr === selectedDate,
     };
   });
 
-  const weekStartStr = formatYMD(currentMonday);
-  const weekEndStr = formatYMD(weekEnd);
+  const { start: weekStartStr, end: weekEndStr } = mealWeekBounds(selectedDate);
+  const weekError = failedWeek === weekStartStr;
+  const isLoadingWeek = loadedWeek !== weekStartStr && !weekError;
 
   useEffect(() => {
+    if (loadedWeek === weekStartStr || weekError) return;
     let cancelled = false;
-    setIsLoadingWeek(true);
 
     getMealPlansAction(weekStartStr, weekEndStr).then((res) => {
       if (cancelled) return;
-      setIsLoadingWeek(false);
       if (res.ok && res.meals) {
         setMeals(res.meals);
+        setLoadedWeek(weekStartStr);
+      } else {
+        setFailedWeek(weekStartStr);
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [weekStartStr, weekEndStr]);
+  }, [loadedWeek, weekError, weekStartStr, weekEndStr]);
 
   const moveWeek = (days: number) => setSelectedDate((date) => formatYMD(addDays(parseYMD(date), days)));
   const handleToday = () => setSelectedDate(dateKey(new Date(), timeZone));
 
   const selectedDay = weekDays.find((day) => day.isSelected)!;
-  const dayMeals = meals.filter((meal) => meal.date === selectedDate);
+  const weekMeals = loadedWeek === weekStartStr ? meals : [];
+  const dayMeals = weekMeals.filter((meal) => meal.date === selectedDate);
   const orderedMealTimes = [...mealTimes].sort((a, b) => a.start_time.localeCompare(b.start_time));
   const enabledMealTimes = orderedMealTimes.filter(time => isMealTimeEnabled(time, preferences));
   const otherMeals = dayMeals.filter((meal) => !mealTimes.some((time) => time.id === meal.meal_time_id));
   const eatenCount = dayMeals.filter((meal) => meal.is_consumed).length;
-  const isToday = selectedDate === clock.today;
+  const isToday = selectedDate === today;
   const slotKindByID = new Map<number | undefined, MealKind | undefined>(
     mealTimes.map(time => [time.id, standardMealKind(time)])
   );
   const plannedByDay = weekDays.map(day => {
-    const items = meals.filter(meal => meal.date === day.dateStr);
+    const items = weekMeals.filter(meal => meal.date === day.dateStr);
     const slots = new Set<MealSlot>(items.map(meal => slotKindByID.get(meal.meal_time_id) ?? "custom"));
     return { count: items.length, slots };
   });
@@ -351,7 +333,7 @@ export default function MealPlanClient({
   );
 
   return (
-    <main className={`${frame.page} [&_:is(button,a):focus-visible]:outline-brand`}>
+    <main id="main-content" tabIndex={-1} className={`${frame.page} [&_:is(button,a):focus-visible]:outline-brand`}>
       <div className={frame.content} inert={isAddMealOpen || mealToDelete !== null}>
         {appBar}
 
@@ -434,17 +416,25 @@ export default function MealPlanClient({
                   <time dateTime={selectedDate}>{selectedDay.monthDay} {selectedDay.date.getUTCFullYear()}</time>
                   {isToday && <span className={styles.todayBadge}>Today</span>}
                   <span role="status">
-                    {isLoadingWeek ? "Loading meals…" : dayMeals.length ? `${eatenCount} of ${dayMeals.length} meals eaten` : "No meals planned yet"}
+                    {isLoadingWeek ? "Loading meals…" : weekError ? "Meals unavailable" : dayMeals.length ? `${eatenCount} of ${dayMeals.length} meals eaten` : "No meals planned yet"}
                   </span>
                 </div>
               </div>
               <PulseButton variant="gradient" shape="pill" size="xl" labelStyle="strong" className={`${styles.primaryAction} ${styles.addMeal}`} type="button"
-                onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek || !enabledMealTimes.length} icon={<Plus className="size-5" aria-hidden="true" />}
+                onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek || weekError || !enabledMealTimes.length} icon={<Plus className="size-5" aria-hidden="true" />}
               >
                 Add meal
               </PulseButton>
             </div>
 
+            {weekError && (
+              <div className="flex flex-wrap items-center gap-3">
+                <p role="alert" className="text-sm text-destructive">We couldn’t load meals for this week.</p>
+                <PulseButton type="button" variant="secondary" onClick={() => {
+                  setFailedWeek(null);
+                }}>Retry</PulseButton>
+              </div>
+            )}
             <div className={styles.slotGrid} aria-busy={isLoadingWeek}>
               {orderedMealTimes.map((time) => {
                 const items = dayMeals.filter(meal => meal.meal_time_id === time.id);
@@ -463,9 +453,9 @@ export default function MealPlanClient({
                     timeRange={`${formatTimeDisplay(time.start_time)} – ${formatTimeDisplay(time.end_time)}`}
                     usualTime={usualTime && formatTimeDisplay(usualTime)}
                     onAdd={enabled ? () => handleOpenAddMeal(time.id) : undefined}
-                    addDisabled={isLoadingWeek}
+                    addDisabled={isLoadingWeek || weekError}
                   >
-                    {items.length ? renderMeals(items) : !isLoadingWeek && (
+                    {items.length ? renderMeals(items) : !isLoadingWeek && !weekError && (
                       <p className={`${styles.muted} py-1 text-sm`}>Nothing planned</p>
                     )}
                   </MealSlotCard>
@@ -476,7 +466,7 @@ export default function MealPlanClient({
                   {renderMeals(otherMeals)}
                 </MealSlotCard>
               )}
-              {!isLoadingWeek && !enabledMealTimes.length && !dayMeals.length && (
+              {!isLoadingWeek && !weekError && !enabledMealTimes.length && !dayMeals.length && (
                 <p className={styles.emptyState}>No meal times available.</p>
               )}
             </div>
@@ -488,9 +478,7 @@ export default function MealPlanClient({
       {isAddMealOpen && (
         <PulseDialog
           labelledBy={addMealTitleId}
-          onBackdropClick={(e) => {
-            if (!isPending && e.target === e.currentTarget) handleCloseAddMeal();
-          }}
+          onDismiss={isPending ? undefined : handleCloseAddMeal}
           size="sm"
         >
           <form onSubmit={handleSubmitAddMeal}>
@@ -609,7 +597,7 @@ export default function MealPlanClient({
               >
                 {isPending ? (
                   <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Adding...
+                    <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> Adding…
                   </span>
                 ) : (
                   "Add meal"

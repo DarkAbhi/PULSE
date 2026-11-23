@@ -1,13 +1,15 @@
 import "@/app/profile/profile-theme.css";
 
+import { Suspense } from "react";
 import { UserRound } from "lucide-react";
 import { redirect } from "next/navigation";
 import { frame } from "@/app/components/design-system/page-frame";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import TopAppBar from "@/app/components/top-app-bar";
-import { apiFetch } from "@/app/lib/server-api";
+import { getSession } from "@/app/lib/session";
+import { getUserProfile } from "@/app/lib/user-profile";
 import AboutPulse from "@/app/profile/about-pulse";
-import APIKeys from "@/app/profile/api-keys";
+import APIKeysSection from "@/app/profile/api-keys-section";
 import ChangePasswordButton from "@/app/profile/change-password-button";
 import CurrencySettings from "@/app/profile/currency-settings";
 import ThemeSettings from "@/app/profile/theme-settings";
@@ -18,19 +20,14 @@ export const metadata = {
   title: "Profile | PULSE",
 };
 
-const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
-
 export default async function ProfilePage() {
-  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
-  if (!sessionResponse.ok) redirect("/");
-  const { username } = (await sessionResponse.json()) as { username: string };
-
-  const profileResponse = await apiFetch(`${apiBaseURL}/api/profile`);
-  if (!profileResponse.ok) redirect("/");
-  const { name } = (await profileResponse.json()) as { name?: string };
+  const [session, profile] = await Promise.all([getSession(), getUserProfile().catch(() => null)]);
+  if (!session) redirect("/");
+  const { username } = session;
+  const name = profile?.name;
 
   return (
-    <main className={frame.page}>
+    <main id="main-content" tabIndex={-1} className={frame.page}>
       <div className={`${frame.content} grid gap-8 [&>*]:min-w-0`}>
         <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" onProfilePage />
 
@@ -60,7 +57,9 @@ export default async function ProfilePage() {
           <ThemeSettings />
         </div>
 
-        <APIKeys />
+        <Suspense fallback={<PulseCard className="p-6 shadow-card" role="status">Loading API keys…</PulseCard>}>
+          <APIKeysSection />
+        </Suspense>
         <AboutPulse />
       </div>
     </main>

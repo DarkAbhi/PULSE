@@ -59,3 +59,33 @@ test("shows category paths and filters by parent or subcategory from the server"
   const parentPicker = dialog.getByLabel("Parent Category");
   await expect(parentPicker.locator("option")).toHaveText(["None (Top-level category)", "Test category"]);
 });
+
+test("Horizon sections support direct links and browser history", async ({ page, context }) => {
+  await context.addCookies([{ name: "life_session", value: "categories-test", url: "http://localhost:3107" }]);
+  await page.goto("/financial-horizon?tab=transactions");
+  const navigation = page.getByRole("navigation", { name: "Financial Horizon sections" });
+
+  await expect(navigation.getByRole("button", { name: "Transactions", exact: true })).toHaveAttribute("aria-current", "true");
+  await expect(page.getByLabel("Filter by category")).toBeVisible();
+  await navigation.getByRole("button", { name: "Budgets", exact: true }).click();
+  await expect(page).toHaveURL(/\?tab=budgets$/);
+  await page.goBack();
+  await expect(page.getByLabel("Filter by category")).toBeVisible();
+});
+
+test("the category dialog keeps keyboard focus inside and restores the trigger", async ({ page, context }) => {
+  await context.addCookies([{ name: "life_session", value: "categories-test", url: "http://localhost:3107" }]);
+  await page.goto("/financial-horizon?tab=transactions");
+  const trigger = page.getByRole("button", { name: "Add Category", exact: true });
+  await trigger.click();
+
+  const dialog = page.getByRole("dialog", { name: "Add Custom Category" });
+  await expect(dialog).toBeVisible();
+  expect(await dialog.evaluate(element => element.matches(":modal"))).toBe(true);
+  await page.keyboard.press("Tab");
+  expect(await dialog.evaluate(element => element.contains(document.activeElement))).toBe(true);
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
+});

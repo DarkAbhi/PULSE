@@ -3,8 +3,7 @@
 import { maintenanceField } from "@/app/garage/[id]/vehicle-detail-classes";
 import PulseSelect from "@/app/components/design-system/pulse-select";
 import { currencySymbol } from "@/app/lib/currency.mjs";
-import { useCurrency } from "@/app/components/currency-provider";
-import { useTimeZone } from "@/app/components/time-zone-provider";
+import { useCurrency, useTimeZone } from "@/app/components/profile-preferences-provider";
 import { dateKey, fromDateTimeInput, formatInstant } from "@/app/lib/time-zone.mjs";
 
 import PulseButton from "@/app/components/design-system/pulse-button";

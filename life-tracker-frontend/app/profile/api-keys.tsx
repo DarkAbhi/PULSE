@@ -2,9 +2,9 @@
 
 import { formatInstant } from "@/app/lib/time-zone.mjs";
 
-import { useTimeZone } from "@/app/components/time-zone-provider";
+import { useTimeZone } from "@/app/components/profile-preferences-provider";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Check, Copy, Info, KeyRound, Plus, Trash2 } from "lucide-react";
 import PulseButton from "@/app/components/design-system/pulse-button";
 import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
@@ -13,22 +13,16 @@ import { copyApiKey } from "@/app/profile/copy-api-key";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { iconTileClass, labelClass, sectionClass, sectionDescriptionClass, sectionHeadingClass } from "@/app/profile/profile-classes";
 
-type APIKey = {
-  id: number;
-  name: string;
-  token_prefix: string;
-  created_at: string;
-};
+import type { APIKey } from "@/app/profile/types";
 
 const keyTableHeadingClass = `${labelClass} px-6 py-3`;
 const keyTableCellClass = "h-[72px] px-6 py-3 max-sheet:h-auto max-sheet:min-w-0 max-sheet:p-0";
 
-export default function APIKeys() {
+export default function APIKeys({ initialKeys }: { initialKeys: APIKey[] | null }) {
   const { timeZone } = useTimeZone();
-  const [keys, setKeys] = useState<APIKey[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [keys, setKeys] = useState<APIKey[]>(initialKeys ?? []);
   const [error, setError] = useState("");
-  const [loadError, setLoadError] = useState("");
+  const loadError = initialKeys === null;
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
   const [token, setToken] = useState("");
@@ -37,19 +31,6 @@ export default function APIKeys() {
   const [revokeKey, setRevokeKey] = useState<APIKey | null>(null);
   const tokenInput = useRef<HTMLTextAreaElement>(null);
   const createTrigger = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    let active = true;
-    fetch("/api/profile/api-keys", { credentials: "include", cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Could not load API keys.");
-        return (await response.json()) as APIKey[];
-      })
-      .then((items) => { if (active) setKeys(items); })
-      .catch(() => { if (active) setLoadError("Could not load API keys."); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
 
   function closeDialog() {
     if (busy) return;
@@ -129,17 +110,16 @@ export default function APIKeys() {
           ref={createTrigger}
           type="button"
           variant="gradient" size="lg" shape="pill" labelStyle="strong"
-          disabled={loading}
           icon={<Plus className="size-5" aria-hidden="true" />}
           onClick={() => { setError(""); setIsOpen(true); }}
         >
           Create API key
         </PulseButton>
       </header>
-      {loading || keys.length === 0 ? (
+      {keys.length === 0 ? (
         <PulseCard className="grid justify-items-center gap-2.5 px-6 py-9 text-center text-muted-foreground shadow-card">
           <span className={iconTileClass} aria-hidden="true"><KeyRound /></span>
-          {loading ? <p role="status">Loading keys…</p> : !loadError && (
+          {!loadError && (
             <>
               <strong className="text-foreground">No API keys yet</strong>
               <p>Create a key to let an external service access your Pulse data.</p>

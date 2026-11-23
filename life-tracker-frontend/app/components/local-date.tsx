@@ -1,5 +1,5 @@
 "use client";
-import { useTimeZone } from "./time-zone-provider";
+import { useTimeZone } from "@/app/components/profile-preferences-provider";
 import { formatInstant, formatCalendarDate } from "@/app/lib/time-zone.mjs";
 
 interface LocalDateProps { dateString: string; options?: Intl.DateTimeFormatOptions; calendarOnly?: boolean; }

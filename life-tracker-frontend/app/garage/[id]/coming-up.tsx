@@ -2,9 +2,10 @@ import Link from "next/link";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { CircleDot, Droplet, Gauge, Plus, Wrench } from "lucide-react";
 import type { UpcomingMaintenance } from "@/app/garage/[id]/types";
+import { formatCalendarDate, formatInstant } from "@/app/lib/time-zone.mjs";
 import { detail } from "@/app/garage/[id]/vehicle-detail-classes";
 
-export default function ComingUp({ items, vehicleId }: { items: UpcomingMaintenance[]; vehicleId: string }) {
+export default function ComingUp({ items, vehicleId, timeZone }: { items: UpcomingMaintenance[]; vehicleId: string; timeZone: string }) {
   return (
     <section aria-labelledby="coming-up-heading" className={detail.section}>
       <div className={detail.sectionHeader}>
@@ -18,7 +19,7 @@ export default function ComingUp({ items, vehicleId }: { items: UpcomingMaintena
       ) : (
         <>
           <div className={detail.tiles}>
-            {items.map((item) => <ReminderCard key={item.kind} item={item} vehicleId={vehicleId} />)}
+            {items.map((item) => <ReminderCard key={item.kind} item={item} vehicleId={vehicleId} timeZone={timeZone} />)}
           </div>
           <p className="text-sm text-muted-foreground">Uses the active schedule shown for each task. Mileage uses the last recorded reading.</p>
         </>
@@ -27,7 +28,7 @@ export default function ComingUp({ items, vehicleId }: { items: UpcomingMaintena
   );
 }
 
-function ReminderCard({ item, vehicleId }: { item: UpcomingMaintenance; vehicleId: string }) {
+function ReminderCard({ item, vehicleId, timeZone }: { item: UpcomingMaintenance; vehicleId: string; timeZone: string }) {
   const pressure = item.kind === "tire_pressure";
   const oil = item.kind === "engine_oil";
   const Icon = pressure ? CircleDot : oil ? Droplet : Wrench;
@@ -57,13 +58,13 @@ function ReminderCard({ item, vehicleId }: { item: UpcomingMaintenance; vehicleI
       <div className="flex flex-col justify-center gap-2">
         <p className={`${detail.metric} ${status === "overdue" ? "text-destructive" : status === "due_soon" ? "text-warning" : ""}`}>{dueText}</p>
         {km != null && item.due_date && days !== 0 && (days == null || days > 0) && (
-          <p className="text-sm text-muted-foreground">By {item.due_date}</p>
+          <p className="text-sm text-muted-foreground">By <time dateTime={item.due_date}>{formatCalendarDate(item.due_date)}</time></p>
         )}
         {(item.distance_unavailable || item.status === "needs_odometer") && (
           <p className="text-sm text-muted-foreground">Record an odometer with this task to use its distance interval.</p>
         )}
         {pressure && item.last_at && (
-          <p className="text-sm text-muted-foreground">Last air fill: {new Date(item.last_at).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" })}</p>
+          <p className="text-sm text-muted-foreground">Last air fill: <time dateTime={item.last_at}>{formatInstant(item.last_at, timeZone, { dateStyle: "medium" })}</time></p>
         )}
         {!pressure && progress != null && (
           <div className="group h-2 overflow-hidden rounded-full bg-chip" data-status={status} role="progressbar" aria-label={`${title} interval elapsed`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress)}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, ReactNode, useContext, useEffect, useId, useRef, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import PulseButton, { type PulseButtonProps, type PulseButtonVariant } from "@/app/components/design-system/pulse-button";
@@ -23,7 +23,6 @@ export interface PulseDialogProps {
   children: ReactNode;
   labelledBy?: string;
   onDismiss?: () => void;
-  onBackdropClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
   panelClassName?: string;
   size?: keyof typeof widths;
 }
@@ -36,46 +35,49 @@ export default function PulseDialog({
   children,
   labelledBy,
   onDismiss,
-  onBackdropClick,
   panelClassName = "",
   size = "sm",
 }: PulseDialogProps) {
   const [footer, setFooter] = useState<HTMLElement | null>(null);
 
-  useEffect(() => {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const backdropPress = useRef(false);
+
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const trigger = document.activeElement;
+    dialog.showModal();
+
     if (openDialogs++ === 0) {
       previousBodyOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
     }
     return () => {
+      dialog.close();
+      if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus({ preventScroll: true });
       if (--openDialogs === 0) document.body.style.overflow = previousBodyOverflow;
     };
   }, []);
 
-  useEffect(() => {
-    if (!onDismiss) return;
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !event.defaultPrevented) {
-        event.preventDefault();
-        onDismiss?.();
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onDismiss]);
-
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       aria-labelledby={labelledBy}
       aria-modal="true"
-      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-scrim/55 backdrop-blur-xs sheet:p-3"
-      role="dialog"
+      className="fixed inset-0 m-0 h-dvh max-h-none w-full max-w-none overflow-y-auto overscroll-contain bg-transparent p-0 text-inherit backdrop:bg-scrim/55 backdrop:backdrop-blur-xs sheet:p-3"
+      onCancel={event => {
+        event.stopPropagation();
+        event.preventDefault();
+        onDismiss?.();
+      }}
     >
       <div
         className="flex min-h-full items-end justify-center sheet:items-center"
+        onPointerDown={event => { backdropPress.current = event.target === event.currentTarget; }}
         onClick={event => {
-          onBackdropClick?.(event);
-          if (event.target === event.currentTarget && !event.defaultPrevented) onDismiss?.();
+          if (backdropPress.current && event.target === event.currentTarget) onDismiss?.();
+          backdropPress.current = false;
         }}
       >
         <section
@@ -93,7 +95,7 @@ export default function PulseDialog({
           </DialogFooterContext.Provider>
         </section>
       </div>
-    </div>
+    </dialog>
   );
 }
 

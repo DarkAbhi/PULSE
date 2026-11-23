@@ -1,7 +1,5 @@
-"use client";
-
-import { useTimeZone } from "@/app/components/time-zone-provider";
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import DashboardClock from "@/app/dashboard/dashboard-clock";
 
 const orbFillClass =
   "bg-(image:--dashboard-orb-fill) shadow-(--dashboard-orb-shadow) motion-safe:animate-pulse-breathe";
@@ -19,7 +17,7 @@ const heroClass =
   "relative isolate flex min-h-90 min-w-0 flex-col justify-between gap-16 rounded-hero p-6 text-foreground " +
   "compact:min-h-100 compact:p-8 dark:text-white";
 
-export function PulseOrb() {
+function PulseOrb() {
   return (
     <div aria-hidden="true">
       {["", "[animation-delay:2s]", "[animation-delay:4s]"].map((delay) => (
@@ -30,34 +28,22 @@ export function PulseOrb() {
   );
 }
 
-export default function GreetingHeader({ username, displayName, children }: {
-  username: string;
-  displayName: string;
+interface GreetingHeaderProps {
+  name: string;
   children?: ReactNode;
-}) {
-  const { timeZone } = useTimeZone();
-  const [now, setNow] = useState<Date | null>(null);
+}
 
-  useEffect(() => {
-    const update = () => setNow(new Date());
-    update();
-    const timer = window.setInterval(update, 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-
+export default function GreetingHeader({ name, children }: GreetingHeaderProps) {
   return (
     <section className={heroClass} aria-label="Welcome">
       <div className={heroArtClass} aria-hidden="true"><PulseOrb /></div>
       <div className="flex justify-between items-start gap-2">
-        <div className="min-w-0">
-          <p data-clock="time" className="text-2xl leading-[1.25] font-bold tabular-nums compact:text-[28px]">{now ? now.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true, timeZone }).toUpperCase() : "—:—"}</p>
-          <p data-clock="date" className="mt-1 text-sm text-muted-foreground max-w-[24ch] dark:text-white/88 compact:text-base compact:max-w-none">{now ? now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short", year: "numeric", timeZone }) : "Your day at a glance"}</p>
-        </div>
+        <DashboardClock />
         <div className="flex shrink-0 gap-1">{children}</div>
       </div>
       <div className="compact:max-w-[68%]">
         <p className="dark:text-white/88 text-muted-foreground text-xl">Good to see you,</p>
-        <h1 className="mt-3 mb-7 wrap-anywhere text-[clamp(48px,6vw,72px)] leading-[1.05] font-bold tracking-[-.035em]">{displayName || username}</h1>
+        <h1 className="mt-3 mb-7 wrap-anywhere text-[clamp(48px,6vw,72px)] leading-[1.05] font-bold tracking-[-.035em]">{name}</h1>
         <p className="text-control max-w-[36ch]">A little perspective on your everyday.</p>
       </div>
     </section>

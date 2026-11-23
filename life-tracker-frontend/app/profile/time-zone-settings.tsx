@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Globe } from "lucide-react";
-import { useTimeZone } from "@/app/components/time-zone-provider";
+import { useTimeZone } from "@/app/components/profile-preferences-provider";
 import { formatInstant, timeZoneChoices } from "@/app/lib/time-zone.mjs";
 import { saveTimeZoneAction } from "@/app/profile/time-zone-actions";
 import PreferenceSettings from "@/app/profile/preference-settings";

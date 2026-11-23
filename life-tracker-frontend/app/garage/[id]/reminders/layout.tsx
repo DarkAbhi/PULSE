@@ -3,7 +3,7 @@ import { frame } from "@/app/components/design-system/page-frame";
 
 export default function RemindersLayout({ children }: { children: ReactNode }) {
   return (
-    <main className={`${frame.page} bg-background text-foreground`}>
+    <main id="main-content" tabIndex={-1} className={`${frame.page} bg-background text-foreground`}>
       <div className={frame.content}>{children}</div>
     </main>
   );

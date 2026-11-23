@@ -1,6 +1,4 @@
-"use client";
-
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { type ComponentPropsWithRef, type ReactNode } from "react";
 
 export type PulseButtonVariant =
   | "primary"
@@ -25,7 +23,7 @@ export type PulseButtonVariant =
 export type PulseButtonSize = "sm" | "md" | "lg" | "xl" | "touch";
 type PulseButtonShape = "default" | "control" | "pill";
 
-export interface PulseButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface PulseButtonProps extends ComponentPropsWithRef<"button"> {
   variant?: PulseButtonVariant;
   size?: PulseButtonSize;
   shape?: PulseButtonShape;
@@ -79,9 +77,8 @@ const shapes: Record<PulseButtonShape, string> = {
 };
 
 /** Shared button for actions. Native button props, including onClick and type, pass through. */
-const PulseButton = forwardRef<HTMLButtonElement, PulseButtonProps>(function PulseButton(
-  { children, className = "", icon, iconPosition = "start", size = "md", shape = "default", labelStyle = "default", variant = "primary", ...props },
-  ref,
+export default function PulseButton(
+  { children, className = "", icon, iconPosition = "start", size = "md", shape = "default", labelStyle = "default", variant = "primary", ...props }: PulseButtonProps,
 ) {
   const isIconButton = variant.startsWith("icon");
   const labelSize = labelStyle === "strong" ? "text-control" : size === "sm" ? "text-xs" : "text-sm";
@@ -91,7 +88,6 @@ const PulseButton = forwardRef<HTMLButtonElement, PulseButtonProps>(function Pul
   return (
     <button
       {...props}
-      ref={ref}
       className={`inline-flex items-center transition motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50 ${alignment} ${weight} ${isIconButton ? iconSizes[size] : `${sizes[size]} ${labelSize}`} ${shapes[shape]} ${variants[variant]} ${className}`}
     >
       {iconPosition === "start" && icon}
@@ -99,6 +95,4 @@ const PulseButton = forwardRef<HTMLButtonElement, PulseButtonProps>(function Pul
       {iconPosition === "end" && icon}
     </button>
   );
-});
-
-export default PulseButton;
+}

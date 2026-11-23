@@ -1,11 +1,11 @@
 "use client";
 
-import PulseCard from "./design-system/pulse-card";
+import PulseCard from "@/app/components/design-system/pulse-card";
 
 import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useRef, useState } from "react";
-import LocalDate from "./local-date";
+import LocalDate from "@/app/components/local-date";
 
 export type AppNotification = {
   id: number;
@@ -24,11 +24,13 @@ type NotificationListProps = {
 
 export function NotificationList({ notifications, onDismiss }: NotificationListProps) {
   return (
-    <div className="space-y-3">
+    <ul className="space-y-3">
       {notifications.map((notification) => (
-        <NotificationCard key={notification.id} notification={notification} onDismiss={onDismiss} />
+        <li key={notification.id} className="[content-visibility:auto] [contain-intrinsic-size:auto_9rem]">
+          <NotificationCard notification={notification} onDismiss={onDismiss} />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -49,12 +51,13 @@ function NotificationCard({ notification, onDismiss }: { notification: AppNotifi
 
   return (
     <PulseCard className="relative overflow-hidden bg-destructive">
-      <div className="absolute inset-y-0 right-0 flex w-28 items-center justify-center text-sm font-semibold text-destructive-foreground">
+      <div aria-hidden="true" className="absolute inset-y-0 right-0 flex w-28 items-center justify-center text-sm font-semibold text-destructive-foreground">
         Dismiss
       </div>
       <PulseCard as="article"
-        className="relative p-5 transition-transform"
+        className="relative touch-pan-y p-5 motion-safe:transition-transform"
         onPointerDown={(event) => {
+          if (!event.isPrimary || event.button !== 0 || isDismissing) return;
           startX.current = event.clientX;
           event.currentTarget.setPointerCapture(event.pointerId);
         }}
@@ -62,8 +65,9 @@ function NotificationCard({ notification, onDismiss }: { notification: AppNotifi
           if (startX.current === null) return;
           setDragOffset(Math.max(-140, Math.min(0, event.clientX - startX.current)));
         }}
-        onPointerUp={() => {
-          if (dragOffset <= -90) {
+        onPointerCancel={() => { startX.current = null; setDragOffset(0); }}
+        onPointerUp={(event) => {
+          if (startX.current !== null && event.clientX - startX.current <= -90) {
             void dismiss();
           } else {
             setDragOffset(0);
@@ -73,9 +77,9 @@ function NotificationCard({ notification, onDismiss }: { notification: AppNotifi
         style={{ transform: `translateX(${dragOffset}px)` }}
       >
         <div className="flex items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0 wrap-anywhere">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-action">{notification.source}</p>
-            <h3 className="mt-1 font-semibold text-foreground">{notification.title}</h3>
+            <h2 className="mt-1 font-semibold text-foreground">{notification.title}</h2>
           </div>
           <PulseButton variant="tertiary" size="sm"
             aria-label={`Dismiss ${notification.title}`}
@@ -91,7 +95,7 @@ function NotificationCard({ notification, onDismiss }: { notification: AppNotifi
             Dismiss
           </PulseButton>
         </div>
-        {notification.body && <p className="mt-2 text-sm leading-6 text-muted-foreground">{notification.body}</p>}
+        {notification.body && <p className="mt-2 text-sm leading-6 wrap-anywhere text-muted-foreground">{notification.body}</p>}
         <p className="mt-3 text-xs text-muted-foreground/80">
           <LocalDate
             dateString={notification.created_at}

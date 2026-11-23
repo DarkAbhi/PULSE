@@ -339,7 +339,7 @@
   }
 
   body {
-    @apply bg-background font-sans text-foreground transition-[background-color,color] duration-250 ease-[ease];
+    @apply bg-background font-sans text-foreground transition-[background-color,color] duration-250 ease-[ease] motion-reduce:transition-none;
   }
 
   /* Date picker calendar icon contrast styling for light and dark modes */
@@ -351,6 +351,10 @@
   }
   :is(.dark, html.dark, [data-theme="dark"]) input[type="date"]::-webkit-calendar-picker-indicator {
     @apply brightness-0! invert!;
+  }
+
+  :is(button, a, input, select, textarea) {
+    touch-action: manipulation;
   }
 
   button:not(:disabled),

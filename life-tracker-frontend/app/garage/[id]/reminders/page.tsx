@@ -1,7 +1,7 @@
 import TopAppBar from "@/app/components/top-app-bar";
 import { ChevronRight } from "lucide-react";
 import PulseCard, { PulseCardLink } from "@/app/components/design-system/pulse-card";
-import { loadReminderSettings, reminderDetails } from "./data";
+import { loadReminderSettings, reminderDetails } from "@/app/garage/[id]/reminders/data";
 
 export const metadata = { title: "Reminder settings | PULSE" };
 

@@ -1,9 +1,9 @@
 "use server";
 
-import { apiFetch } from "@/app/lib/server-api";
-import type { Account, AccountFields } from "./account-types";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
+import type { Account, AccountFields } from "@/app/financial-horizon/account-types";
 
-const accountsURL = `${process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080"}/api/horizon/accounts`;
+const accountsURL = `${apiBaseURL}/api/horizon/accounts`;
 
 async function accountRequest<T>(path: string, init?: RequestInit) {
   try {

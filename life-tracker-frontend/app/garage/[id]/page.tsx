@@ -1,4 +1,4 @@
-import { apiFetch } from "@/app/lib/server-api";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { getUserCurrency } from "@/app/lib/user-currency";
 import { formatMoney } from "@/app/lib/currency.mjs";
@@ -14,7 +14,8 @@ import MaintenanceHistory from "@/app/garage/[id]/maintenance-history";
 import MaintenanceRecordModal from "@/app/garage/[id]/maintenance-record-modal";
 import FuelEfficiencySection from "@/app/garage/[id]/fuel-efficiency-section";
 import TirePressureCard from "@/app/garage/[id]/tire-pressure-card";
-import LocalDate from "@/app/components/local-date";
+import { getUserTimeZone } from "@/app/lib/user-time-zone";
+import { formatInstant } from "@/app/lib/time-zone.mjs";
 import VehicleEditor from "@/app/garage/vehicle-editor";
 import { Bell, Fuel, Pencil, Plus, Wrench } from "lucide-react";
 import { frame } from "@/app/components/design-system/page-frame";
@@ -26,10 +27,6 @@ const vehicleTag = "inline-flex items-center gap-2 rounded-full border border-wh
 const fuelItems = "grid grid-cols-[minmax(0,1.35fr)_minmax(0,0.85fr)_minmax(0,1fr)] items-center gap-2.5 max-sheet:grid-cols-2 max-sheet:[&>:first-child]:col-span-full";
 
 export const metadata = { title: "Vehicle details | PULSE" };
-
-const apiBaseURL =
-  process.env.INTERNAL_API_BASE_URL ??
-  "http://localhost:8080";
 
 const vehicleTabs = [
   { id: "overview", label: "Overview" },
@@ -44,28 +41,27 @@ interface PageProps {
 }
 
 export default async function VehiclePage({ params, searchParams }: PageProps) {
-  const currency = await getUserCurrency();
   const { id } = await params;
-  const { tab, edit, maintenance, "edit-maintenance": editMaintenance } = await searchParams;
+  const [response, currency, timeZone, query] = await Promise.all([
+    apiFetch(`${apiBaseURL}/api/vehicles/${encodeURIComponent(id)}/history`, {
+      signal: AbortSignal.timeout(10_000),
+    }).catch(() => null),
+    getUserCurrency(),
+    getUserTimeZone(),
+    searchParams,
+  ]);
+  const { tab, edit, maintenance, "edit-maintenance": editMaintenance } = query;
+  if (response?.status === 401) redirect("/");
 
-  // Validate session on the server
-  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
-  if (!sessionResponse.ok) {
-    redirect("/");
-  }
-
-  // Load history on the server
-  const response = await apiFetch(`${apiBaseURL}/api/vehicles/${id}/history`);
-
-  if (response.status === 404) {
+  if (response?.status === 404) {
     return (
-      <main className={`${frame.page} bg-background text-foreground`}>
+      <main id="main-content" tabIndex={-1} className={`${frame.page} bg-background text-foreground`}>
         <div className={frame.content}>
           <TopAppBar backHref="/garage" backLabel="Back to Garage" />
           <PulseCard className="mt-5 p-8 text-center">
-            <h2 className="text-xl font-semibold text-foreground">
+            <h1 className="text-xl font-semibold text-foreground">
               Vehicle not found
-            </h2>
+            </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               This vehicle may have been deleted or does not exist.
             </p>
@@ -75,9 +71,9 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
     );
   }
 
-  if (!response.ok) {
+  if (!response?.ok) {
     return (
-      <main className={`${frame.page} bg-background text-foreground`}>
+      <main id="main-content" tabIndex={-1} className={`${frame.page} bg-background text-foreground`}>
         <div className={frame.content}>
           <TopAppBar backHref="/garage" backLabel="Back to Garage" />
           <PulseCard className="mt-5 p-6">
@@ -111,7 +107,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
   const detailHref = `/garage/${id}`;
 
   return (
-    <main className={frame.page}>
+    <main id="main-content" tabIndex={-1} className={frame.page}>
       <div className={`${frame.content} flex flex-col gap-5 md:gap-7`}>
         <TopAppBar backHref="/garage" backLabel="Back to Garage" />
 
@@ -165,7 +161,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
           ))}
         </nav>
 
-        {activeTab === "overview" && <ComingUp items={data.coming_up ?? []} vehicleId={id} />}
+        {activeTab === "overview" && <ComingUp items={data.coming_up ?? []} vehicleId={id} timeZone={timeZone} />}
 
         {activeTab === "fuel" && (
           <section id="fuel" aria-labelledby="fuel-heading" className={detail.section}>
@@ -173,7 +169,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
               <h2 id="fuel-heading" className={detail.sectionTitle}><Fuel className="size-6" aria-hidden="true" /> Fuel</h2>
             </div>
             <FuelEfficiencySection stats={data.fuel_efficiency} currency={currency} />
-            <FuelHistory fills={data.fuel_fillups} vehicleId={id} currency={currency} />
+            <FuelHistory fills={data.fuel_fillups} vehicleId={id} currency={currency} timeZone={timeZone} />
           </section>
         )}
 
@@ -185,7 +181,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
             rearTirePressureSolo={data.rear_tire_pressure_solo}
             vehicleId={id}
           >
-            <AirFillHistory fills={data.air_fills} vehicleId={id} />
+            <AirFillHistory fills={data.air_fills} vehicleId={id} timeZone={timeZone} />
           </TirePressureCard>
         )}
 
@@ -231,7 +227,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
   );
 }
 
-function FuelHistory({ fills, vehicleId, currency }: { fills: FuelFill[]; vehicleId: string; currency: string }) {
+function FuelHistory({ fills, vehicleId, currency, timeZone }: { fills: FuelFill[]; vehicleId: string; currency: string; timeZone: string }) {
   return (
     <section aria-labelledby="fuel-history-heading">
       <h3 id="fuel-history-heading" className={`${detail.subheading} mb-3`}>Fuel fill-ups</h3>
@@ -246,8 +242,8 @@ function FuelHistory({ fills, vehicleId, currency }: { fills: FuelFill[]; vehicl
             {fills.map((fill) => (
               <li key={fill.id} className={`${detail.row} ${detail.stackedRow}`}>
                 <div className={detail.stackAcross}>
-                  <p className="font-bold">{fill.station_name || <LocalDate dateString={fill.filled_at} />}</p>
-                  {fill.station_name && <p className="text-sm text-muted-foreground"><LocalDate dateString={fill.filled_at} /></p>}
+                  <p className="font-bold">{fill.station_name || <time dateTime={fill.filled_at}>{formatInstant(fill.filled_at, timeZone)}</time>}</p>
+                  {fill.station_name && <p className="text-sm text-muted-foreground"><time dateTime={fill.filled_at}>{formatInstant(fill.filled_at, timeZone)}</time></p>}
                 </div>
                 <div className="tabular-nums"><CellLabel>Odometer</CellLabel>{fill.odometer_km.toLocaleString("en-IN")} km</div>
                 <div className={`${detail.stackAcross} flex flex-col gap-3`} role="group" aria-label="Fuel items">
@@ -274,7 +270,7 @@ function FuelHistory({ fills, vehicleId, currency }: { fills: FuelFill[]; vehicl
   );
 }
 
-function AirFillHistory({ fills, vehicleId }: { fills: AirFill[]; vehicleId: string }) {
+function AirFillHistory({ fills, vehicleId, timeZone }: { fills: AirFill[]; vehicleId: string; timeZone: string }) {
   return (
     <PulseCard as="section" aria-labelledby="air-fill-history-heading" className={`${detail.recordList} [--history-columns:minmax(0,1.25fr)_minmax(0,1fr)_auto] [--history-actions:44px]`}>
       <h3 id="air-fill-history-heading" className={`${detail.subheading} px-garage-detail pt-garage-detail pb-3`}>Air fill history</h3>
@@ -286,7 +282,7 @@ function AirFillHistory({ fills, vehicleId }: { fills: AirFill[]; vehicleId: str
           <ul aria-labelledby="air-fill-history-heading">
             {fills.map((fill) => (
               <li key={fill.id} className={detail.row}>
-                <div className="font-bold"><LocalDate dateString={fill.filled_at} /></div>
+                <div className="font-bold"><time dateTime={fill.filled_at}>{formatInstant(fill.filled_at, timeZone)}</time></div>
                 <div className="tabular-nums"><CellLabel>Odometer</CellLabel>{fill.odometer_km == null ? "—" : `${fill.odometer_km.toLocaleString("en-IN")} km`}</div>
                 <div className={detail.rowActions}><DeleteButton vehicleId={vehicleId} recordId={fill.id} kind="air-fills" /></div>
               </li>

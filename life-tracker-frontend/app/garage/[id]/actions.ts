@@ -1,9 +1,8 @@
 "use server";
 
-import { apiFetch } from "@/app/lib/server-api";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 import { revalidatePath } from "next/cache";
 
-const apiBaseURL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:8080";
 
 export interface SaveFuelPayload {
   odometer_km: number;
@@ -30,7 +29,7 @@ export interface SaveMaintenancePayload {
   actions?: import("./types").MaintenanceAction[];
 }
 
-import { SaveTirePressurePayload } from "./types";
+import { SaveTirePressurePayload } from "@/app/garage/[id]/types";
 
 export async function deleteVehicle(vehicleId: string) {
   try {

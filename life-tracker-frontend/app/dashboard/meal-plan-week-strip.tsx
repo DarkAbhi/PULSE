@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTimeZone } from "@/app/components/time-zone-provider";
+import { useTimeZone } from "@/app/components/profile-preferences-provider";
 
 const mealDayClass =
   "grid place-items-center w-[clamp(22px,2.05cqi,26px)] aspect-square border-[1.5px] border-white/50 " +

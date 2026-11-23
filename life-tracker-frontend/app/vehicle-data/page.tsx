@@ -6,13 +6,21 @@ import PulseCard from "@/app/components/design-system/pulse-card";
 
 export const metadata = { title: "Vehicle data credits | PULSE" };
 
+// The bundled attribution is identical for every request.
+const loadAttribution = (() => {
+  let attribution: Promise<string> | undefined;
+  return () => attribution ??= readFile(path.join(process.cwd(), "app/vehicle-data/ATTRIBUTION.txt"), "utf8")
+    .then(content => content.replace(/<!--[\s\S]*?-->/g, "").trim())
+    .catch(error => {
+      attribution = undefined;
+      throw error;
+    });
+})();
+
 export default async function VehicleDataPage() {
-  const attribution = await readFile(
-    path.join(process.cwd(), "app/vehicle-data/ATTRIBUTION.txt"),
-    "utf8",
-  );
+  const attribution = await loadAttribution();
   return (
-    <main className={`${frame.page} bg-background text-foreground`}>
+    <main id="main-content" tabIndex={-1} className={`${frame.page} bg-background text-foreground`}>
       <div className={frame.content}>
         <TopAppBar backHref="/garage" backLabel="Back to Garage" />
         <h1 className="mt-5 text-3xl font-bold">Vehicle data and credits</h1>
@@ -42,7 +50,7 @@ export default async function VehicleDataPage() {
         <PulseCard as="section" className="mt-8 p-6">
           <h2 className="text-lg font-semibold">Upstream source notices</h2>
           <pre className="mt-4 whitespace-pre-wrap break-words font-sans text-sm leading-6 text-muted-foreground">
-            {attribution.replace(/<!--[\s\S]*?-->/g, "").trim()}
+            {attribution}
           </pre>
         </PulseCard>
       </div>

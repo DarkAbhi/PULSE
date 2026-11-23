@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { saveNameAction } from "./actions";
+import { saveNameAction } from "@/app/dashboard/actions";
 import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 interface NamePromptDialogProps {

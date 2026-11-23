@@ -1,71 +1,22 @@
-import { apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
 import { frame } from "@/app/components/design-system/page-frame";
 import TopAppBar from "@/app/components/top-app-bar";
-import FinancialHorizonClient, { NextMonthPurchaseItem } from "@/app/financial-horizon/financial-horizon-client";
-import { HorizonSummary } from "@/app/dashboard/financial-horizon-card";
-import type { TransactionPage } from "@/app/financial-horizon/actions";
+import FinancialHorizonClient from "@/app/financial-horizon/financial-horizon-client";
+import { loadFinancialHorizon } from "@/app/financial-horizon/data";
 
-export const metadata = {
-  title: "Financial Horizon | PULSE",
-};
-
-const apiBaseURL =
-  process.env.INTERNAL_API_BASE_URL ??
-  "http://localhost:8080";
+export const metadata = { title: "Financial Horizon | PULSE" };
 
 export default async function FinancialHorizonPage() {
-  const unavailable = (
-    <main className={`${frame.page} bg-background text-foreground`}>
-      <div className={frame.content}>
-        <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />
-        <h1 className="mt-6 text-3xl font-bold">Financial Horizon</h1>
-        <p className="mt-8 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
-          We couldn&apos;t reach your financial data. Please try again.
-        </p>
-      </div>
-    </main>
-  );
+  const { summary, purchases, transactions } = await loadFinancialHorizon();
+  if (summary.status === 401) redirect("/");
 
-  // Validate session on server
-  let sessionResponse: Response;
-  try {
-    sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`, {
-      signal: AbortSignal.timeout(10_000),
-    });
-  } catch {
-    return unavailable;
-  }
-  if (!sessionResponse.ok) {
-    redirect("/");
-  }
-
-  // Fetch financial horizon details and next month purchases in parallel
-  let horizonRes: Response, purchasesRes: Response, transactionsRes: Response;
-  try {
-    [horizonRes, purchasesRes, transactionsRes] = await Promise.all([
-      apiFetch(`${apiBaseURL}/api/horizon`, {
-        signal: AbortSignal.timeout(10_000),
-      }),
-      apiFetch(`${apiBaseURL}/api/next-month-purchases`, {
-        signal: AbortSignal.timeout(10_000),
-      }),
-      apiFetch(`${apiBaseURL}/api/horizon/transactions?page=1&page_size=10`, {
-        signal: AbortSignal.timeout(10_000),
-      }),
-    ]);
-  } catch {
-    return unavailable;
-  }
-
-  if (!horizonRes.ok) {
+  const appBar = <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />;
+  if (!summary.data) {
     return (
-      <main className={`${frame.page} bg-background text-foreground`}>
+      <main id="main-content" tabIndex={-1} className={frame.page}>
         <div className={frame.content}>
-          <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />
-          <header className="mt-6">
-            <h1 className="text-3xl font-bold text-foreground">Financial Horizon</h1>
-          </header>
+          {appBar}
+          <h1 className="mt-6 text-3xl font-bold">Financial Horizon</h1>
           <p className="mt-8 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive" role="alert">
             We couldn&apos;t load your financial horizon. Please try again.
           </p>
@@ -74,27 +25,13 @@ export default async function FinancialHorizonPage() {
     );
   }
 
-  const initialSummary = (await horizonRes.json()) as HorizonSummary;
-  const initialTransactionPage: TransactionPage = transactionsRes.ok
-    ? await transactionsRes.json()
-    : { transactions: [], page: 1, page_size: 10, total: 0, total_pages: 0 };
-
-  let initialPurchases: NextMonthPurchaseItem[] = [];
-  let initialPurchasesTotal = 0;
-
-  if (purchasesRes.ok) {
-    const purchasesData = (await purchasesRes.json()) as { items: NextMonthPurchaseItem[]; total: number };
-    initialPurchases = purchasesData.items ?? [];
-    initialPurchasesTotal = purchasesData.total ?? 0;
-  }
-
   return (
     <FinancialHorizonClient
-      appBar={<TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />}
-      initialSummary={initialSummary}
-      initialTransactionPage={initialTransactionPage}
-      initialPurchases={initialPurchases}
-      initialPurchasesTotal={initialPurchasesTotal}
+      appBar={appBar}
+      initialSummary={summary.data}
+      initialTransactionPage={transactions ?? { transactions: [], page: 1, page_size: 10, total: 0, total_pages: 0 }}
+      initialPurchases={purchases ?? []}
+      initialLoadError={purchases === null || !transactions}
     />
   );
 }

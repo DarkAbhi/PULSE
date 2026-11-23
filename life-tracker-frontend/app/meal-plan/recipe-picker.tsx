@@ -11,7 +11,7 @@ function RecipeMetadata({ recipe }: { recipe: RecipeSummary }) {
     <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
       {recipe.dish_type && <span>{recipe.dish_type}</span>}
       {recipe.is_ready_to_eat ? <span>Ready to eat</span> : !!recipe.ready_in_minutes && (
-        <span className="inline-flex items-center gap-1"><Clock className="size-3.5" />{recipe.ready_in_minutes} min</span>
+        <span className="inline-flex items-center gap-1"><Clock className="size-3.5" aria-hidden="true" />{recipe.ready_in_minutes} min</span>
       )}
     </span>
   );
@@ -51,6 +51,8 @@ export function RecipePicker({ onSelect }: { onSelect: (recipe: RecipeSummary) =
         <input
           id={field}
           type="search"
+          name="recipe-search"
+          autoComplete="off"
           value={search}
           autoFocus
           maxLength={100}

@@ -1,19 +1,9 @@
 "use server";
 
-import { apiFetch } from "@/app/lib/server-api";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
+import type { TransactionPage } from "@/app/financial-horizon/horizon-types";
 import { revalidatePath } from "next/cache";
 
-const apiBaseURL =
-  process.env.INTERNAL_API_BASE_URL ??
-  "http://localhost:8080";
-
-export type TransactionPage = {
-  transactions: unknown[];
-  page: number;
-  page_size: number;
-  total: number;
-  total_pages: number;
-};
 
 export async function getTransactionsPageAction(
   page: number,

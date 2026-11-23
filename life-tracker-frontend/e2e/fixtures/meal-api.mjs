@@ -43,8 +43,33 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/health") return send(200, {});
   if (url.pathname === "/__test/fail") { failures.set(token, body.mode); return send(200, {}); }
   if (url.pathname === "/__test/state") return send(200, { state: states.get(token) ?? pending(), writes: writes.get(token) ?? 0 });
-  if (url.pathname === "/api/auth/session") return send(200, { username: token });
-  if (url.pathname === "/api/profile") return send(200, { name: "Browser test", timezone: "Asia/Kolkata", currency: "INR" });
+  if (url.pathname === "/api/auth/login" && req.method === "POST") {
+    if (body.username !== "dashboard-test" || body.password !== "fixture-password") {
+      return send(401, { error: "Invalid username or password" });
+    }
+    res.setHeader("Set-Cookie", "life_session=dashboard-test; Path=/; HttpOnly; SameSite=Lax");
+    return send(200, { username: body.username });
+  }
+  if (url.pathname === "/api/auth/session") {
+    return token === "anonymous" || token === "expired-session"
+      ? send(401, { error: "Expired session" })
+      : send(200, { username: token });
+  }
+  if ((token === "anonymous" || token === "expired-session") && url.pathname.startsWith("/api/")) {
+    return send(401, { error: "Expired session" });
+  }
+  if (url.pathname === "/api/profile/api-keys" && req.method === "GET") return send(200, []);
+  if (url.pathname === "/api/profile") {
+    return send(200, { has_profile: true, name: "Browser test", timezone: "Asia/Kolkata", currency: "INR" });
+  }
+  if (url.pathname === "/api/workout/today") {
+    if (token === "dashboard-missing-workout") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end("{");
+      return;
+    }
+    return send(200, { visited: false });
+  }
   if (url.pathname === "/api/notifications") {
     return send(200, token === "app-bar-test" && !dismissedNotifications.has(token) ? [{
       id: 1, title: "Test reminder", body: "Check tire pressure", source: "garage",

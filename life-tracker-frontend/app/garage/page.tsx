@@ -1,54 +1,31 @@
-import { apiFetch } from "@/app/lib/server-api";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import TopAppBar from "@/app/components/top-app-bar";
 import { frame } from "@/app/components/design-system/page-frame";
 import VehicleEditor from "@/app/garage/vehicle-editor";
-import VehiclesList, { type Vehicle } from "@/app/garage/vehicles-list";
+import VehiclesList from "@/app/garage/vehicle-list";
+import type { Vehicle } from "@/app/garage/types";
 import { vehicleCardClassName } from "@/app/garage/vehicle-presentation";
 
 export const metadata = {
   title: "Garage | PULSE",
 };
 
-const apiBaseURL =
-  process.env.INTERNAL_API_BASE_URL ??
-  "http://localhost:8080";
-
 export default async function GaragePage() {
-  // Validate session on the server
-  let sessionResponse: Response | null = null;
-  let error = "";
-  try {
-    sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`, {
-      signal: AbortSignal.timeout(10_000),
-    });
-  } catch {
-    error = "We couldn't reach the server. Please try again.";
-  }
-  if (sessionResponse && !sessionResponse.ok) {
-    redirect("/");
-  }
+  const response = await apiFetch(`${apiBaseURL}/api/vehicles`, {
+    signal: AbortSignal.timeout(10_000),
+  }).catch(() => null);
+  if (response?.status === 401) redirect("/");
 
-  let vehicles: Vehicle[] = [];
-  if (!error) {
-    try {
-      const vehiclesResponse = await apiFetch(`${apiBaseURL}/api/vehicles`, {
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (!vehiclesResponse.ok) {
-        error = "We couldn't load your vehicles. Please try again.";
-      } else {
-        vehicles = (await vehiclesResponse.json()) as Vehicle[];
-      }
-    } catch {
-      error = "We couldn't reach the server. Please try again.";
-    }
-  }
+  const vehicles: Vehicle[] | null = response?.ok ? await response.json().catch(() => null) : null;
+  const error = response
+    ? "We couldn't load your vehicles. Please try again."
+    : "We couldn't reach the server. Please try again.";
 
   return (
-    <main className={frame.page}>
+    <main id="main-content" tabIndex={-1} className={frame.page}>
       <div className={frame.content}>
         <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />
 
@@ -80,7 +57,7 @@ export default async function GaragePage() {
 
         <section aria-labelledby="vehicles-title" className="mt-5 sm:mt-7">
           <h2 id="vehicles-title" className="sr-only">Your vehicles</h2>
-          {error ? (
+          {!vehicles ? (
             <PulseCard as="p" className="bg-destructive-soft px-6 py-5 text-sm text-destructive" role="alert">
               {error}
             </PulseCard>

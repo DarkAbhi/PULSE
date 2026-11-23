@@ -25,11 +25,26 @@ export function timeZoneChoices(selected, supported = Intl.supportedValuesOf("ti
   return [...new Set([DEFAULT_TIME_ZONE, selected, ...choices])].sort();
 }
 
+/** @type {Map<string, Intl.DateTimeFormat>} */
+const formatters = new Map();
+
+/** @param {string} locale @param {Intl.DateTimeFormatOptions} options */
+function dateFormatter(locale, options) {
+  const key = JSON.stringify([locale, options]);
+  const existing = formatters.get(key);
+  if (existing) return existing;
+
+  const formatter = new Intl.DateTimeFormat(locale, options);
+  if (formatters.size >= 64) formatters.delete(formatters.keys().next().value);
+  formatters.set(key, formatter);
+  return formatter;
+}
+
 /** @param {Date|string|number} value @param {string} timeZone */
 function parts(value, timeZone) {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) throw new RangeError("Choose a valid date and time.");
-  const formatter = new Intl.DateTimeFormat("en-CA", {
+  const formatter = dateFormatter("en-CA", {
     timeZone, calendar: "iso8601", numberingSystem: "latn", hourCycle: "h23",
     year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit",
   });
@@ -45,12 +60,12 @@ export function dateKey(value, timeZone) {
 /** @param {Date|string|number} value @param {string} timeZone */
 export function toDateTimeInput(value, timeZone) {
   const p = parts(value, timeZone);
-  return `${dateKey(value, timeZone)}T${p.hour}:${p.minute}`;
+  return `${p.year.padStart(4, "0")}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
 }
 
 /** @param {Date|string|number} value @param {string} timeZone @param {Intl.DateTimeFormatOptions} [options] */
 export function formatInstant(value, timeZone, options = { dateStyle: "medium", timeStyle: "short" }) {
-  return new Intl.DateTimeFormat("en-IN", { ...options, timeZone }).format(new Date(value));
+  return dateFormatter("en-IN", { ...options, timeZone }).format(new Date(value));
 }
 
 /** Date-only values are calendar coordinates, not instants to shift. @param {string} value @param {Intl.DateTimeFormatOptions} [options] */

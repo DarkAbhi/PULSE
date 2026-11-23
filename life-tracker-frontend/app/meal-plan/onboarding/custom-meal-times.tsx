@@ -107,9 +107,7 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
       {isAddMealTimeOpen && createPortal(
         <PulseDialog
           labelledBy={addMealTimeTitleId}
-          onBackdropClick={(e) => {
-            if (!isPending && e.target === e.currentTarget) handleCloseAddMealTime();
-          }}
+          onDismiss={isPending ? undefined : handleCloseAddMealTime}
           size="sm"
         >
           <form onSubmit={handleSubmitAddMealTime}>
@@ -202,7 +200,7 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
               >
                 {isPending ? (
                   <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Saving...
+                    <Loader2 className="h-4 w-4 motion-safe:animate-spin" /> Saving…
                   </span>
                 ) : (
                   "Create meal time"

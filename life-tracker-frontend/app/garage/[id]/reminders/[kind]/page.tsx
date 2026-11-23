@@ -1,7 +1,7 @@
 import TopAppBar from "@/app/components/top-app-bar";
 import { notFound } from "next/navigation";
-import MaintenanceScheduleForm from "../../maintenance-schedules";
-import { loadReminderSettings, reminderDetails } from "../data";
+import MaintenanceScheduleForm from "@/app/garage/[id]/maintenance-schedules";
+import { loadReminderSettings, reminderDetails } from "@/app/garage/[id]/reminders/data";
 
 export const metadata = { title: "Edit reminder | PULSE" };
 

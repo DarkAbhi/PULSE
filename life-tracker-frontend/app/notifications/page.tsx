@@ -1,29 +1,23 @@
-import { apiFetch } from "@/app/lib/server-api";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 import { redirect } from "next/navigation";
 import { frame } from "@/app/components/design-system/page-frame";
 import TopAppBar from "@/app/components/top-app-bar";
 import { AppNotification } from "@/app/components/notification-list";
 import NotificationsClient from "@/app/notifications/notifications-client";
 
-const apiBaseURL =
-  process.env.INTERNAL_API_BASE_URL ??
-  "http://localhost:8080";
+export const metadata = { title: "Notifications | PULSE" };
 
 export default async function NotificationsPage() {
-  // Validate session on the server
-  const sessionResponse = await apiFetch(`${apiBaseURL}/api/auth/session`);
-  if (!sessionResponse.ok) {
-    redirect("/");
-  }
-
-  // Load notifications on the server
-  const response = await apiFetch(`${apiBaseURL}/api/notifications`);
-  const notifications = response.ok ? (await response.json()) as AppNotification[] : undefined;
+  const response = await apiFetch(`${apiBaseURL}/api/notifications`, {
+    signal: AbortSignal.timeout(10_000),
+  }).catch(() => null);
+  if (response?.status === 401) redirect("/");
+  const notifications: AppNotification[] | null = response?.ok ? await response.json().catch(() => null) : null;
 
   return (
-    <main className={`${frame.page} bg-background text-foreground`}>
+    <main id="main-content" tabIndex={-1} className={`${frame.page} bg-background text-foreground`}>
       <div className={frame.content}>
-        <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" notifications={notifications} />
+        <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" notifications={notifications ?? undefined} />
         {notifications ? (
           <NotificationsClient notifications={notifications} />
         ) : (

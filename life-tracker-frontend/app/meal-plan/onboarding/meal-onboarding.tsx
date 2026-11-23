@@ -7,7 +7,7 @@ import PulseButton from "@/app/components/design-system/pulse-button";
 import { PulseChoiceControl } from "@/app/components/design-system/pulse-choice-group";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { frame } from "@/app/components/design-system/page-frame";
-import { useTimeZone } from "@/app/components/time-zone-provider";
+import { useTimeZone } from "@/app/components/profile-preferences-provider";
 import { getMealOnboardingAction, resolveMealOnboardingAction, saveMealPreferencesAction } from "@/app/meal-plan/onboarding/actions";
 import { avoidances, barriers, choiceLabel, diets, firstInvalidStep, goals, initialPreferences, mealKinds, questions, stepError, toggleChoice } from "@/app/meal-plan/onboarding/questionnaire";
 import type { MealKind, MealPreferences, OnboardingState } from "@/app/meal-plan/onboarding/types";
@@ -198,7 +198,7 @@ export default function MealOnboarding({ notifications, initial, editing = false
     }
   }
 
-  return <main className={`${frame.page} [&_:is(button,select):focus-visible]:outline-3 [&_:is(button,select):focus-visible]:outline-offset-2 [&_:is(button,select):focus-visible]:outline-brand`}>
+  return <main id="main-content" tabIndex={-1} className={`${frame.page} [&_:is(button,select):focus-visible]:outline-3 [&_:is(button,select):focus-visible]:outline-offset-2 [&_:is(button,select):focus-visible]:outline-brand`}>
     <div id="meal-setup-journey" className={`${frame.content} grid gap-5`}>
       <PulseAppBar
         back={editing ? { onClick: onCancel, disabled: busy } : { href: "/dashboard" }}

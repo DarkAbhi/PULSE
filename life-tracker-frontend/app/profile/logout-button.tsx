@@ -1,6 +1,6 @@
 "use client";
 
-import { useTimeZone } from "@/app/components/time-zone-provider";
+import { useTimeZone } from "@/app/components/profile-preferences-provider";
 import PulseButton from "@/app/components/design-system/pulse-button";
 
 import { useState } from "react";

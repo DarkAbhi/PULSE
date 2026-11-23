@@ -1,17 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState, type ReactNode } from "react";
 import PulseAppBar from "@/app/components/design-system/pulse-app-bar";
 import PulseButton from "@/app/components/design-system/pulse-button";
 import { frame } from "@/app/components/design-system/page-frame";
 import MealPlanClient from "@/app/meal-plan/meal-plan-client";
 import type { MealPlan, MealTime } from "@/app/meal-plan/actions";
-import MealOnboarding from "@/app/meal-plan/onboarding/meal-onboarding";
 import { getMealOnboardingAction } from "@/app/meal-plan/onboarding/actions";
 import { shouldShowOnboarding } from "@/app/meal-plan/onboarding/questionnaire";
 import type { OnboardingState } from "@/app/meal-plan/onboarding/types";
 
-export default function MealPlanGate({ initialState, notifications, ...plannerProps }: { notifications: ReactNode; initialState: OnboardingState | null; initialMeals: MealPlan[]; initialMealTimes: MealTime[]; initialTodayStr: string }) {
+const MealOnboarding = dynamic(() => import("@/app/meal-plan/onboarding/meal-onboarding"));
+
+export default function MealPlanGate({ initialState, notifications, ...plannerProps }: { notifications: ReactNode; initialState: OnboardingState | null; initialMeals: MealPlan[] | null; initialMealTimes: MealTime[]; initialTodayStr: string }) {
   const [state, setState] = useState(initialState);
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState("");
@@ -36,7 +38,7 @@ export default function MealPlanGate({ initialState, notifications, ...plannerPr
   />;
 
   if (!state) return (
-    <main className={`${frame.page} flex flex-col bg-background text-foreground`}>
+    <main id="main-content" tabIndex={-1} className={`${frame.page} flex flex-col bg-background text-foreground`}>
       <div className={`${frame.content} flex w-full flex-1 flex-col`}>
         {appBar}
         <div className="m-auto max-w-md py-6 text-center">

@@ -12,11 +12,16 @@ const workoutDialClass =
   "shadow-(--dashboard-fitness-dial-shadow) dark:shadow-none";
 
 interface GymVisitCardProps {
-  visited: boolean;
+  visited: boolean | null;
 }
 
 export default function GymVisitCard({ visited }: GymVisitCardProps) {
   const gradientId = useId();
+  const title = visited === null
+    ? "Workout status unavailable."
+    : visited
+      ? "Workout recorded."
+      : "No workout recorded today.";
 
   return (
     <PulseCard as="article" className="@container grid items-center bg-(--dashboard-fitness-surface) text-card-foreground" aria-label="Fitness today">
@@ -55,10 +60,10 @@ export default function GymVisitCard({ visited }: GymVisitCardProps) {
         </svg>
 
         <div className="min-w-0 wrap-anywhere">
-          <h2 className="text-[clamp(1.3rem,5.1cqi,2rem)] leading-[1.1] font-extrabold tracking-[-.025em]">{visited ? "Workout recorded." : "No workout recorded today."}</h2>
-          {!visited && <p className="mt-1.5 text-muted-foreground">A short one still counts.</p>}
+          <h2 className="text-[clamp(1.3rem,5.1cqi,2rem)] leading-[1.1] font-extrabold tracking-[-.025em]">{title}</h2>
+          {visited === false && <p className="mt-1.5 text-muted-foreground">A short one still counts.</p>}
           <Link className={workoutCtaClass} href="/fitness">
-            {visited ? "View fitness" : "Get moving"}
+            {visited === false ? "Get moving" : "View fitness"}
           </Link>
         </div>
       </div>

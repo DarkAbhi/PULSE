@@ -797,6 +797,7 @@ const docTemplate = `{
                         "SessionBearer": []
                     }
                 ],
+                "description": "Appends exercises and updates the visit classification in one transaction. Omit workout_type and workout_focus to keep the current classification. Supplying workout_type replaces both fields. An empty type clears both, and an empty or omitted focus clears the focus. Classification-only requests can omit exercises and return an empty array.",
                 "consumes": [
                     "application/json"
                 ],
@@ -806,7 +807,7 @@ const docTemplate = `{
                 "tags": [
                     "gym"
                 ],
-                "summary": "Add multiple visit exercises",
+                "summary": "Save visit exercises and optional workout classification",
                 "parameters": [
                     {
                         "minimum": 1,
@@ -827,6 +828,15 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/apidoc.Exercise"
+                            }
+                        }
+                    },
                     "201": {
                         "description": "Created",
                         "schema": {
@@ -6029,6 +6039,15 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/apidoc.ExerciseInput"
                     }
+                },
+                "workout_focus": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "example": "Shoulders"
+                },
+                "workout_type": {
+                    "type": "string",
+                    "example": "single_muscle"
                 }
             }
         },

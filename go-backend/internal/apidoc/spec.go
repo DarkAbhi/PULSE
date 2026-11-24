@@ -131,7 +131,9 @@ type ExerciseInput struct {
 	Sets              []ExerciseSetInput `json:"sets"`
 }
 type ExerciseBatchInput struct {
-	Exercises []ExerciseInput `json:"exercises"`
+	Exercises    []ExerciseInput `json:"exercises"`
+	WorkoutType  *string         `json:"workout_type,omitempty" example:"single_muscle"`
+	WorkoutFocus *string         `json:"workout_focus,omitempty" example:"Shoulders" maxLength:"120"`
 }
 type ExerciseSet struct {
 	ID        int64    `json:"id"`
@@ -823,13 +825,15 @@ func operation29() {}
 func operation30() {}
 
 // operation31 documents POST /api/gym-visits/{id}/exercises/batch.
-// @Summary Add multiple visit exercises
+// @Summary Save visit exercises and optional workout classification
+// @Description Appends exercises and updates the visit classification in one transaction. Omit workout_type and workout_focus to keep the current classification. Supplying workout_type replaces both fields. An empty type clears both, and an empty or omitted focus clears the focus. Classification-only requests can omit exercises and return an empty array.
 // @Tags gym
 // @Accept json
 // @Produce json
 // @Param id path integer true "Positive id" minimum(1)
 // @Param body body ExerciseBatchInput true "Request body"
 // @Security SessionBearer
+// @Success 200 {array} Exercise
 // @Success 201 {array} Exercise
 // @Failure 400 {object} Error
 // @Failure 401 {object} Error

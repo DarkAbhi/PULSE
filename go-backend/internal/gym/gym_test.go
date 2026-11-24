@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -252,9 +253,11 @@ func TestCreateVisitExercisesBatch(t *testing.T) {
 	if err := db.QueryRow(`INSERT INTO gym_visits (user_id) VALUES (1) RETURNING id`).Scan(&visitID); err != nil {
 		t.Fatal(err)
 	}
+	workoutType, focus := "single_muscle", "  Shoulders  "
+	classification := workoutClassification{WorkoutType: &workoutType, WorkoutFocus: &focus}
 	post := func(exercises []createExerciseBody) *httptest.ResponseRecorder {
 		t.Helper()
-		body, err := json.Marshal(createExercisesBody{Exercises: exercises})
+		body, err := json.Marshal(createExercisesBody{Exercises: exercises, workoutClassification: classification})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -281,6 +284,14 @@ func TestCreateVisitExercisesBatch(t *testing.T) {
 	if err := db.QueryRow(`SELECT COUNT(*) FROM gym_visit_exercises WHERE gym_visit_id=$1`, visitID).Scan(&count); err != nil || count != 0 {
 		t.Fatalf("invalid batch saved exercises: count=%d err=%v", count, err)
 	}
+	assertClassification := func(wantType, wantFocus string) {
+		t.Helper()
+		var gotType, gotFocus string
+		err := db.QueryRow(`SELECT COALESCE(workout_type, ''), COALESCE(workout_focus, '') FROM gym_visits WHERE id=$1`, visitID).Scan(&gotType, &gotFocus)
+		if err != nil || gotType != wantType || gotFocus != wantFocus {
+			t.Fatalf("classification = %q / %q, want %q / %q (err=%v)", gotType, gotFocus, wantType, wantFocus, err)
+		}
+	}
 	tooLarge := 1000000.0
 	exercises[1].Sets[0].Weight = &tooLarge
 	if rec := post(exercises); rec.Code != http.StatusInternalServerError {
@@ -289,6 +300,7 @@ func TestCreateVisitExercisesBatch(t *testing.T) {
 	if err := db.QueryRow(`SELECT COUNT(*) FROM gym_visit_exercises WHERE gym_visit_id=$1`, visitID).Scan(&count); err != nil || count != 0 {
 		t.Fatalf("failed batch left partial exercises: count=%d err=%v", count, err)
 	}
+	assertClassification("", "")
 	exercises[1].Sets[0].Weight = &weight
 	rec := post(exercises)
 	if rec.Code != http.StatusCreated {
@@ -303,6 +315,19 @@ func TestCreateVisitExercisesBatch(t *testing.T) {
 		*saved[0].Sets[0].Weight != weight || saved[1].Sets[0].Reps != 8 {
 		t.Fatalf("unexpected saved batch: %+v", saved)
 	}
+	assertClassification("single_muscle", "Shoulders")
+	classification = workoutClassification{}
+	if rec := post(exercises[:1]); rec.Code != http.StatusCreated {
+		t.Fatalf("exercise-only batch: status %d, body %s", rec.Code, rec.Body.String())
+	}
+	assertClassification("single_muscle", "Shoulders")
+
+	pull := "pull"
+	classification = workoutClassification{WorkoutType: &pull}
+	if rec := post(nil); rec.Code != http.StatusOK || strings.TrimSpace(rec.Body.String()) != "[]" {
+		t.Fatalf("classification-only batch: status %d, body %s", rec.Code, rec.Body.String())
+	}
+	assertClassification("pull", "")
 	var otherUserID int64
 	if err := db.QueryRow(`INSERT INTO users (username, password_hash) VALUES ('other-batch-user', 'test') RETURNING id`).Scan(&otherUserID); err != nil {
 		t.Fatal(err)

@@ -317,10 +317,14 @@ func (h *Handler) CreateVisitExercises(w http.ResponseWriter, r *http.Request) {
 		webutil.BadRequest(w, "invalid json")
 		return
 	}
-	items, err := h.service.CreateExercises(r.Context(), userID, id, body.Exercises)
+	items, err := h.service.saveWorkoutBatch(r.Context(), userID, id, body)
 	if err != nil {
 		writeError(w, r, err)
 		return
 	}
-	webutil.WriteJSON(w, http.StatusCreated, items)
+	status := http.StatusCreated
+	if len(items) == 0 {
+		status = http.StatusOK
+	}
+	webutil.WriteJSON(w, status, items)
 }

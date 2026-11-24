@@ -39,7 +39,7 @@ class LifeTrackerMCPTest(unittest.TestCase):
             self.assertIn("record_vehicle_maintenance", startup["mcp"].tools_at_startup)
             self.assertIn("configure_vehicle_reminder", startup["mcp"].tools_at_startup)
 
-        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_vehicles", "search_exercises", "add_exercises_to_workout", "get_vehicle_maintenance", "record_vehicle_maintenance", "configure_vehicle_reminder"])
+        self.assertEqual(server.mcp.tools, ["get_workout_today", "get_workout_sessions", "get_vehicles", "search_exercises", "add_exercises_to_workout", "get_vehicle_maintenance", "record_vehicle_maintenance", "configure_vehicle_reminder"])
         self.assertEqual(server.mcp.version,
                          json.loads(Path(__file__).resolve().parent.parent.joinpath("release.json").read_text())["version"])
 
@@ -63,6 +63,8 @@ class LifeTrackerMCPTest(unittest.TestCase):
                 self.assertEqual(request.get_method(), "POST")
                 self.assertEqual(json.loads(request.data), {"exercises": workout})
                 return io.BytesIO(json.dumps(workout).encode())
+            if url.endswith("/gym-visits"):
+                return io.BytesIO(b'[{"id":12,"created_at":"2026-09-29T06:00:00Z"}]')
             value = {"visited": True, "id": 12} if url.endswith("/workout/today") else [{"id": 7, "name": "Scooter"}]
             return io.BytesIO(json.dumps(value).encode())
 
@@ -76,7 +78,7 @@ class LifeTrackerMCPTest(unittest.TestCase):
                 server.add_exercises_to_workout(workout)
             with self.assertRaisesRegex(ValueError, "rep count"):
                 server.add_exercises_to_workout([{"name": "Curl", "exercise_catalog_id": None, "sets": [{"reps": 0, "weight": 10}]}], True)
-            self.assertEqual(json.loads(server.add_exercises_to_workout(workout, True)), workout)
+            self.assertEqual(json.loads(server.add_exercises_to_workout(workout, True, "2026-09-29")), workout)
 
         self.assertEqual(calls, [
             ("http://127.0.0.1:18080/api/auth/login", "POST", None, 10),
@@ -84,7 +86,7 @@ class LifeTrackerMCPTest(unittest.TestCase):
             ("http://127.0.0.1:18080/api/vehicles", "GET", "Bearer token1", 10),
             ("http://127.0.0.1:18080/api/auth/login", "POST", None, 10),
             ("http://127.0.0.1:18080/api/vehicles", "GET", "Bearer token2", 10),
-            ("http://127.0.0.1:18080/api/workout/today", "GET", "Bearer token2", 10),
+            ("http://127.0.0.1:18080/api/gym-visits", "GET", "Bearer token2", 10),
             ("http://127.0.0.1:18080/api/gym-visits/12/exercises/batch", "POST", "Bearer token2", 10),
         ])
 
@@ -123,6 +125,45 @@ class LifeTrackerMCPTest(unittest.TestCase):
                 lookup.return_value = visits + [{"id": 31, "created_at": "2026-09-29T10:00:00+05:30"}]
                 server.add_exercises_to_workout(workout, True, "2026-09-29")
             self.assertEqual(write.call_count, 1)
+
+        details = {**visits[0], "workout_type": "pull", "workout_focus": "Back"}
+        with patch.object(server, "_get", side_effect=[visits, details, workout]) as lookup:
+            self.assertEqual(json.loads(server.get_workout_sessions("2026-09-29")), {
+                "workout_date": "2026-09-29", "sessions": [{**details, "exercises": workout}],
+            })
+            self.assertEqual([call.args[0] for call in lookup.call_args_list], [
+                "/api/gym-visits", "/api/fitness-workouts/29", "/api/gym-visits/29/exercises",
+            ])
+        with patch.object(server, "_get", return_value=visits) as lookup, \
+             patch.object(server, "_request", return_value=workout) as write:
+            for invalid in [
+                {"workout_focus": "Shoulders"},
+                {"workout_type": "rest_day"},
+                {"workout_type": "single_muscle", "workout_focus": "x" * 121},
+                {"workout_type": "", "workout_focus": "Shoulders"},
+            ]:
+                with self.assertRaises(ValueError):
+                    server.add_exercises_to_workout(workout, True, "2026-09-29", **invalid)
+            lookup.assert_not_called()
+            with self.assertRaisesRegex(ValueError, "selected gym visit"):
+                server.add_exercises_to_workout(workout, True, "2026-09-29", visit_id=30)
+            write.assert_not_called()
+            lookup.return_value = visits + [{"id": 31, "created_at": "2026-09-29T10:00:00+05:30"}]
+            self.assertEqual(json.loads(server.add_exercises_to_workout(
+                workout, True, "2026-09-29", "single_muscle", " Shoulders ", visit_id=31,
+            )), {
+                "workout_date": "2026-09-29", "visit_id": 31, "workout_type": "single_muscle",
+                "workout_focus": "Shoulders", "exercises": workout,
+            })
+            write.assert_called_once_with("/api/gym-visits/31/exercises/batch", method="POST", body={
+                "exercises": workout, "workout_type": "single_muscle", "workout_focus": "Shoulders",
+            })
+            write.return_value = []
+            result = json.loads(server.add_exercises_to_workout(
+                confirmed=True, workout_date="2026-09-29", workout_type="", visit_id=31,
+            ))
+            self.assertIsNone(result["workout_type"])
+            self.assertEqual(write.call_args.kwargs["body"], {"exercises": [], "workout_type": "", "workout_focus": ""})
 
         with patch.object(server, "_get", return_value=[]) as lookup:
             response = json.loads(server.get_vehicle_maintenance(7, "clutch_cable", "replaced"))

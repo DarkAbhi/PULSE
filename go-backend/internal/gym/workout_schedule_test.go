@@ -81,3 +81,53 @@ func TestWorkoutClassificationAndScheduleRoutes(t *testing.T) {
 		t.Fatal("expected the plan and workout classification to be cleared")
 	}
 }
+
+type workoutBatchTestStore struct {
+	store
+	saved *workoutClassification
+	calls int
+}
+
+func (s *workoutBatchTestStore) HasVisit(_ context.Context, userID, visitID int64) (bool, error) {
+	return userID == 4 && visitID == 12, nil
+}
+
+func (s *workoutBatchTestStore) SaveWorkoutBatch(_ context.Context, _, _ int64, _ []createExerciseBody, classification *workoutClassification) ([]exerciseDTO, error) {
+	s.saved = classification
+	s.calls++
+	return []exerciseDTO{}, nil
+}
+
+func TestWorkoutClassificationBatchRoute(t *testing.T) {
+	data := &workoutBatchTestStore{}
+	handler := NewHandler(NewService(data), func(*http.Request) (int64, error) { return 4, nil })
+	router := chi.NewRouter()
+	handler.RegisterRoutes(router)
+
+	post := func(path, body string, status int) {
+		t.Helper()
+		recorder := httptest.NewRecorder()
+		router.ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, path, strings.NewReader(body)))
+		if recorder.Code != status {
+			t.Fatalf("%s = %d, want %d: %s", path, recorder.Code, status, recorder.Body.String())
+		}
+	}
+	const path = "/gym-visits/12/exercises/batch"
+	post(path, `{"workout_type":"rest_day"}`, http.StatusBadRequest)
+	post(path, `{"workout_focus":"Shoulders"}`, http.StatusBadRequest)
+	post(path, `{"workout_type":"", "workout_focus":"Shoulders"}`, http.StatusBadRequest)
+	post(path, `{"workout_type":"single_muscle", "exercises":[{"name":"Press","sets":[{"reps":0}]}]}`, http.StatusBadRequest)
+	post("/gym-visits/13/exercises/batch", `{"workout_type":"pull"}`, http.StatusNotFound)
+	if data.calls != 0 {
+		t.Fatal("invalid request reached the store")
+	}
+	post(path, `{"workout_type":"single_muscle", "workout_focus":"  Shoulders  "}`, http.StatusOK)
+	if data.saved == nil || data.saved.WorkoutType == nil || *data.saved.WorkoutType != "single_muscle" ||
+		data.saved.WorkoutFocus == nil || *data.saved.WorkoutFocus != "Shoulders" {
+		t.Fatalf("unexpected batch classification: %+v", data.saved)
+	}
+	post(path, `{"workout_type":""}`, http.StatusOK)
+	if data.saved == nil || data.saved.WorkoutType != nil || data.saved.WorkoutFocus != nil {
+		t.Fatalf("expected classification to be cleared: %+v", data.saved)
+	}
+}

@@ -34,7 +34,7 @@ type store interface {
 	UpdateExercise(context.Context, int64, int64, int64, createExerciseBody) error
 	HasVisit(context.Context, int64, int64) (bool, error)
 	ListExercises(context.Context, int64, int64) ([]exerciseDTO, error)
-	CreateExercises(context.Context, int64, int64, []createExerciseBody) ([]exerciseDTO, error)
+	SaveWorkoutBatch(context.Context, int64, int64, []createExerciseBody, *workoutClassification) ([]exerciseDTO, error)
 	SearchCatalog(context.Context, int64, string) ([]catalogCandidate, error)
 	GetCatalogExercise(context.Context, string) (catalogExercise, error)
 }
@@ -202,6 +202,12 @@ func validateExercise(body *createExerciseBody) error {
 func (s *Service) CreateExercises(
 	ctx context.Context, userID, visitID int64, bodies []createExerciseBody,
 ) ([]exerciseDTO, error) {
+	return s.saveWorkoutBatch(ctx, userID, visitID, createExercisesBody{Exercises: bodies})
+}
+
+func (s *Service) saveWorkoutBatch(
+	ctx context.Context, userID, visitID int64, batch createExercisesBody,
+) ([]exerciseDTO, error) {
 	hasVisit, err := s.store.HasVisit(ctx, userID, visitID)
 	if err != nil {
 		return nil, fmt.Errorf("check gym visit: %w", err)
@@ -209,7 +215,25 @@ func (s *Service) CreateExercises(
 	if !hasVisit {
 		return nil, ErrVisitNotFound
 	}
-	if len(bodies) == 0 || len(bodies) > 20 {
+	var classification *workoutClassification
+	focus := ""
+	if batch.WorkoutFocus != nil {
+		focus = *batch.WorkoutFocus
+	}
+	if batch.WorkoutType != nil {
+		if *batch.WorkoutType == "" && strings.TrimSpace(focus) != "" {
+			return nil, ValidationError{"Choose a workout type before setting a focus."}
+		}
+		validated, err := validateWorkoutClassification(*batch.WorkoutType, focus, false)
+		if err != nil {
+			return nil, err
+		}
+		classification = &validated
+	} else if batch.WorkoutFocus != nil {
+		return nil, ValidationError{"workout_type is required when setting workout_focus"}
+	}
+	bodies := batch.Exercises
+	if len(bodies) > 20 || (len(bodies) == 0 && classification == nil) {
 		return nil, ValidationError{"provide between 1 and 20 exercises"}
 	}
 	for i := range bodies {
@@ -220,9 +244,9 @@ func (s *Service) CreateExercises(
 			return nil, err
 		}
 	}
-	items, err := s.store.CreateExercises(ctx, userID, visitID, bodies)
+	items, err := s.store.SaveWorkoutBatch(ctx, userID, visitID, bodies, classification)
 	if err != nil {
-		return nil, fmt.Errorf("create gym exercises: %w", err)
+		return nil, fmt.Errorf("save workout batch: %w", err)
 	}
 	return items, nil
 }

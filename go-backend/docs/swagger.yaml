@@ -182,6 +182,13 @@ definitions:
         items:
           $ref: '#/definitions/apidoc.ExerciseInput'
         type: array
+      workout_focus:
+        example: Shoulders
+        maxLength: 120
+        type: string
+      workout_type:
+        example: single_muscle
+        type: string
     type: object
   apidoc.ExerciseInput:
     properties:
@@ -1997,6 +2004,11 @@ paths:
     post:
       consumes:
       - application/json
+      description: Appends exercises and updates the visit classification in one transaction.
+        Omit workout_type and workout_focus to keep the current classification. Supplying
+        workout_type replaces both fields. An empty type clears both, and an empty
+        or omitted focus clears the focus. Classification-only requests can omit exercises
+        and return an empty array.
       parameters:
       - description: Positive id
         in: path
@@ -2013,6 +2025,12 @@ paths:
       produces:
       - application/json
       responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/apidoc.Exercise'
+            type: array
         "201":
           description: Created
           schema:
@@ -2037,7 +2055,7 @@ paths:
             $ref: '#/definitions/apidoc.Error'
       security:
       - SessionBearer: []
-      summary: Add multiple visit exercises
+      summary: Save visit exercises and optional workout classification
       tags:
       - gym
   /api/horizon:

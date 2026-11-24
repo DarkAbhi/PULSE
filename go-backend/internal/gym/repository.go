@@ -149,8 +149,8 @@ func (r *Repository) ListExercises(ctx context.Context, userID, visitID int64) (
 	}
 	return items, nil
 }
-func (r *Repository) CreateExercises(
-	ctx context.Context, userID, visitID int64, bodies []createExerciseBody,
+func (r *Repository) SaveWorkoutBatch(
+	ctx context.Context, userID, visitID int64, bodies []createExerciseBody, classification *workoutClassification,
 ) ([]exerciseDTO, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -158,6 +158,15 @@ func (r *Repository) CreateExercises(
 	}
 	defer tx.Rollback(ctx)
 	q := r.queries.WithTx(tx)
+	if classification != nil {
+		updated, err := updateWorkoutClassification(ctx, q, userID, visitID, *classification)
+		if err != nil {
+			return nil, err
+		}
+		if !updated {
+			return nil, ErrVisitNotFound
+		}
+	}
 	items := make([]exerciseDTO, 0, len(bodies))
 	for _, body := range bodies {
 		row, err := q.CreateExercise(ctx, query.CreateExerciseParams{

@@ -20,6 +20,10 @@ _release = json.loads(_release_path.read_text())
 mcp = MCPServer("pulse", version=_release["version"])
 _session_token = None
 _india_time = timezone(timedelta(hours=5, minutes=30))
+_workout_types = {
+    "single_muscle", "double_muscle", "push", "pull", "legs", "upper_body",
+    "lower_body", "full_body", "cardio", "mobility", "other",
+}
 
 
 class ExerciseSet(TypedDict):
@@ -79,11 +83,54 @@ def _get(path):
 
 @mcp.tool()
 def get_workout_today() -> str:
-    """Check if I worked out today (India time). Read-only; returns visited and optional visit ID."""
+    """Check if I worked out today in my Pulse profile time zone. Read-only; returns visited and the latest visit ID if present."""
     result = _get("/api/workout/today")
     if not isinstance(result, dict) or not isinstance(result.get("visited"), bool):
         raise ValueError("Invalid workout response from PULSE")
     return json.dumps(result)
+
+
+def _workout_visits(workout_date: str | None) -> tuple[str, list[dict]]:
+    if workout_date is None:
+        target = datetime.now(_india_time).date()
+    else:
+        try:
+            target = date.fromisoformat(workout_date)
+            if target.isoformat() != workout_date:
+                raise ValueError
+        except (TypeError, ValueError):
+            raise ValueError("workout_date must be a valid date in YYYY-MM-DD format") from None
+    visits = _get("/api/gym-visits")
+    if not isinstance(visits, list):
+        raise ValueError("Invalid gym visit list from PULSE")
+    matches = []
+    for visit in visits:
+        if not isinstance(visit, dict) or type(visit.get("id")) is not int or not isinstance(visit.get("created_at"), str):
+            raise ValueError("Invalid gym visit list from PULSE")
+        try:
+            created_at = datetime.fromisoformat(visit["created_at"].replace("Z", "+00:00"))
+            if created_at.tzinfo is None:
+                raise ValueError
+        except ValueError:
+            raise ValueError("Invalid gym visit date from PULSE") from None
+        if created_at.astimezone(_india_time).date() == target:
+            matches.append(visit)
+    return target.isoformat(), matches
+
+
+@mcp.tool()
+def get_workout_sessions(workout_date: str | None = None) -> str:
+    """Read recorded workout sessions, type, focus, and exercises with sets for YYYY-MM-DD, or today in India time. Use before saving to confirm the date and session, and after an uncertain save to check what was recorded. If there are multiple visits, show their times and any distinguishing saved details and ask which visit to use."""
+    target, visits = _workout_visits(workout_date)
+    sessions = []
+    for visit in visits:
+        visit_id = visit["id"]
+        details = _get(f"/api/fitness-workouts/{visit_id}")
+        exercises = _get(f"/api/gym-visits/{visit_id}/exercises")
+        if not isinstance(details, dict) or details.get("id") != visit_id or not isinstance(exercises, list):
+            raise ValueError("Invalid workout session response from PULSE")
+        sessions.append({**details, "exercises": exercises})
+    return json.dumps({"workout_date": target, "sessions": sessions})
 
 
 @mcp.tool()
@@ -114,13 +161,52 @@ def search_exercises(names: list[str]) -> str:
 
 
 @mcp.tool()
-def add_exercises_to_workout(exercises: list[ExerciseInput], confirmed: bool = False,
-                             workout_date: str | None = None) -> str:
-    """Save exercises to a gym visit after search_exercises and explicit user confirmation. Preserve their original name; pass the selected exercise_catalog_id from search, or null if unmatched. Set remember_alias=true only if the user asks to remember this wording for future workouts. Show the target date, selected catalogue variants, and every kg/reps set before confirmation. Ask about ambiguous variants; never infer equipment from weights or multiply dumbbell weights. If no date is given, use today's visit in India time; otherwise pass YYYY-MM-DD in workout_date. Never infer missing numbers or retry an uncertain write. Weight is kilograms; use null only for explicitly unweighted sets."""
+def add_exercises_to_workout(exercises: list[ExerciseInput] | None = None, confirmed: bool = False,
+                             workout_date: str | None = None, workout_type: str | None = None,
+                             workout_focus: str | None = None, visit_id: int | None = None) -> str:
+    """Append exercises and/or save the type and focus of an existing gym visit, after explicit confirmation.
+
+    Use get_workout_sessions to identify the visit. Confirm the YYYY-MM-DD date
+    and session, then pass that date and visit_id. A missing date defaults to
+    today in India time. If there are multiple visits, ask the user to choose.
+    Show the proposed type and focus, selected catalogue variants, and every
+    kg/reps set before confirmation. Clarify missing numbers, ambiguous
+    exercise variants, or any requested classification that is unclear. Leave
+    both classification fields unset for exercises alone. For classification
+    alone, omit exercises.
+
+    workout_type is single_muscle, double_muscle, push, pull, legs, upper_body,
+    lower_body, full_body, cardio, mobility, or other. workout_focus is optional
+    text up to 120 characters. Sending a type replaces both fields. Carry
+    forward any saved field the user wants to keep, and confirm before clearing
+    either. Empty focus clears the focus; empty type clears both. Rest days
+    belong to the workout schedule.
+
+    Look up exercises with search_exercises first. Preserve their original
+    names, and pass the selected exercise_catalog_id or null if unmatched. Set
+    remember_alias=true only on request. Keep weights in kg exactly as reported
+    and use null only for explicitly unweighted sets. Never infer equipment
+    from weights or double dumbbell weights. After an uncertain write, check
+    get_workout_sessions before retrying.
+    """
     if confirmed is not True:
-        raise ValueError("Show the extracted exercises and sets to the user and get confirmation before saving")
-    if not isinstance(exercises, list) or not 1 <= len(exercises) <= 20:
+        raise ValueError("Show the workout changes to the user and get confirmation before saving")
+    if workout_type is not None and (not isinstance(workout_type, str) or (workout_type != "" and workout_type not in _workout_types)):
+        raise ValueError("Choose a supported workout type")
+    if workout_focus is not None:
+        if not isinstance(workout_focus, str):
+            raise ValueError("workout_focus must be text")
+        workout_focus = workout_focus.strip()
+        if len(workout_focus) > 120 or "\0" in workout_focus:
+            raise ValueError("Enter a workout focus of up to 120 characters")
+        if workout_type is None or (workout_type == "" and workout_focus):
+            raise ValueError("Provide workout_type when setting workout_focus")
+    if exercises is None:
+        exercises = []
+    if not isinstance(exercises, list) or len(exercises) > 20 or (not exercises and workout_type is None):
         raise ValueError("Provide between 1 and 20 exercises")
+    if visit_id is not None and (type(visit_id) is not int or visit_id <= 0):
+        raise ValueError("Choose a visit ID returned by get_workout_sessions")
     for exercise in exercises:
         if not isinstance(exercise, dict) or not isinstance(exercise.get("name"), str) or not exercise["name"].strip():
             raise ValueError("Each exercise needs a name")
@@ -141,42 +227,25 @@ def add_exercises_to_workout(exercises: list[ExerciseInput], confirmed: bool = F
             weight = item.get("weight")
             if "weight" not in item or (weight is not None and (type(weight) not in (int, float) or not 0 <= weight <= 999999.99)):
                 raise ValueError("Each set needs a non-negative weight in kg or explicit null")
-    if workout_date is None:
-        visit = _get("/api/workout/today")
-        if not isinstance(visit, dict) or visit.get("visited") is not True or type(visit.get("id")) is not int:
-            raise ValueError("No gym visit is recorded for today; record the visit before saving exercises")
-        visit_id = visit["id"]
-    else:
-        try:
-            target = date.fromisoformat(workout_date)
-            if target.isoformat() != workout_date:
-                raise ValueError
-        except (TypeError, ValueError):
-            raise ValueError("workout_date must be a valid date in YYYY-MM-DD format") from None
-        visits = _get("/api/gym-visits")
-        if not isinstance(visits, list):
-            raise ValueError("Invalid gym visit list from PULSE")
-        matches = []
-        for visit in visits:
-            if not isinstance(visit, dict) or type(visit.get("id")) is not int or not isinstance(visit.get("created_at"), str):
-                raise ValueError("Invalid gym visit list from PULSE")
-            try:
-                created_at = datetime.fromisoformat(visit["created_at"].replace("Z", "+00:00"))
-                if created_at.tzinfo is None:
-                    raise ValueError
-            except ValueError:
-                raise ValueError("Invalid gym visit date from PULSE") from None
-            if created_at.astimezone(_india_time).date() == target:
-                matches.append(visit["id"])
-        if not matches:
-            raise ValueError(f"No gym visit is recorded for {workout_date}")
-        if len(matches) > 1:
-            raise ValueError(f"Multiple gym visits are recorded for {workout_date}; choose a specific visit")
-        visit_id = matches[0]
-    return json.dumps(_request(f"/api/gym-visits/{visit_id}/exercises/batch",
-                               method="POST", body={"exercises": exercises}))
-
-
+    target, visits = _workout_visits(workout_date)
+    if not visits:
+        raise ValueError(f"No gym visit is recorded for {target}")
+    if visit_id is None:
+        if len(visits) > 1:
+            raise ValueError(f"Multiple gym visits are recorded for {target}; choose a specific visit")
+        visit_id = visits[0]["id"]
+    elif all(visit["id"] != visit_id for visit in visits):
+        raise ValueError(f"The selected gym visit is not recorded for {target}")
+    body = {"exercises": exercises}
+    if workout_type is not None:
+        body.update(workout_type=workout_type, workout_focus=workout_focus or "")
+    saved = _request(f"/api/gym-visits/{visit_id}/exercises/batch", method="POST", body=body)
+    if workout_type is None:
+        return json.dumps(saved)
+    return json.dumps({
+        "workout_date": target, "visit_id": visit_id, "workout_type": workout_type or None,
+        "workout_focus": workout_focus or None, "exercises": saved,
+    })
 
 
 class MaintenanceActionInput(TypedDict):

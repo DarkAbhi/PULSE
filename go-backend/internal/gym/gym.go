@@ -35,6 +35,7 @@ type createExerciseBody struct {
 
 type createExercisesBody struct {
 	Exercises []createExerciseBody `json:"exercises"`
+	workoutClassification
 }
 
 type exerciseSetDTO struct {

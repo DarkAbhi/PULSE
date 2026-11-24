@@ -83,7 +83,11 @@ func (s *Service) SaveWorkoutScheduleDay(ctx context.Context, userID int64, week
 }
 
 func (r *Repository) UpdateWorkoutClassification(ctx context.Context, userID, visitID int64, classification workoutClassification) (bool, error) {
-	count, err := r.queries.UpdateWorkoutClassification(ctx, query.UpdateWorkoutClassificationParams{
+	return updateWorkoutClassification(ctx, r.queries, userID, visitID, classification)
+}
+
+func updateWorkoutClassification(ctx context.Context, queries *query.Queries, userID, visitID int64, classification workoutClassification) (bool, error) {
+	count, err := queries.UpdateWorkoutClassification(ctx, query.UpdateWorkoutClassificationParams{
 		UserID: userID, VisitID: visitID, WorkoutType: classification.WorkoutType, WorkoutFocus: classification.WorkoutFocus,
 	})
 	return count > 0, err

@@ -30,13 +30,13 @@ func TestRepositoryScopesExerciseChildren(t *testing.T) {
 	}
 	body := createExerciseBody{Name: "private exercise", Sets: []exerciseSetInput{{Reps: 5}}}
 	second := createExerciseBody{Name: "second exercise", Sets: []exerciseSetInput{{Reps: 8}, {Reps: 10}}}
-	if _, err := repo.CreateExercises(ctx, 1, visitID, []createExerciseBody{body, second}); err != nil {
+	if _, err := repo.SaveWorkoutBatch(ctx, 1, visitID, []createExerciseBody{body, second}, nil); err != nil {
 		t.Fatal(err)
 	}
 	if items, err := repo.ListExercises(ctx, otherID, visitID); err != nil || len(items) != 0 {
 		t.Fatalf("foreign children visible: %+v %v", items, err)
 	}
-	if _, err := repo.CreateExercises(ctx, otherID, visitID, []createExerciseBody{body}); err == nil {
+	if _, err := repo.SaveWorkoutBatch(ctx, otherID, visitID, []createExerciseBody{body}, nil); err == nil {
 		t.Fatal("foreign child insert accepted")
 	}
 	items, err := repo.ListExercises(ctx, 1, visitID)

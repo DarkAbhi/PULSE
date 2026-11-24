@@ -5,7 +5,7 @@ import { frame } from "@/app/components/design-system/page-frame";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
-import { ArrowRight, Gamepad2, UserRound } from "lucide-react";
+import { ArrowRight, UserRound } from "lucide-react";
 import DashboardFrame from "@/app/dashboard/dashboard-frame";
 import GreetingHeader from "@/app/dashboard/greeting-header";
 import GymVisitCard from "@/app/dashboard/gym-visit-card";
@@ -66,8 +66,15 @@ async function DashboardWorkout({ workout }: { workout: DashboardData["workout"]
   return <GymVisitCard visited={(await workout)?.visited ?? null} />;
 }
 
-async function DashboardFitness({ fitness }: { fitness: DashboardData["fitness"] }) {
-  return <FitnessAtAGlance data={await fitness} />;
+async function DashboardFitness({ fitness, questSettings }: {
+  fitness: DashboardData["fitness"];
+  questSettings: DashboardData["questSettings"];
+}) {
+  const [data, quest] = await Promise.all([fitness, questSettings]);
+  const stepTarget = data && quest?.settings_effective && quest.settings_effective <= data.date
+    ? quest.settings?.step_target ?? null
+    : null;
+  return <FitnessAtAGlance data={data} stepTarget={stepTarget} />;
 }
 
 async function DashboardRecentActivity({ activity }: { activity: DashboardData["recentActivity"] }) {
@@ -110,30 +117,36 @@ export default async function DashboardPage() {
           </section>
           <SectionTiles />
         </div>
-        <Suspense fallback={<FitnessAtAGlanceSkeleton />}>
-          <DashboardFitness fitness={data.fitness} />
-        </Suspense>
-        <PulseCard as="section" aria-labelledby="dashboard-quest-heading"
-          className="grid min-w-0 gap-3 border border-border bg-card p-4 dashboard-compact:gap-2">
-          <header className="flex flex-wrap items-center justify-between gap-x-3">
-            <h2 id="dashboard-quest-heading" className="flex items-center gap-2.5 text-xl font-extrabold tracking-tight">
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-(--dashboard-metric-icon-surface) text-(--dashboard-metric-icon)">
-                <Gamepad2 className="size-5" aria-hidden="true" />
-              </span>
-              Quest activity
-            </h2>
-            <Link href="/quests" prefetch={false}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground">
-              View quests <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </header>
-          <Suspense fallback={<div className="h-52 rounded-lg bg-foreground/5" role="status"><span className="sr-only">Loading quest activity</span></div>}>
-            <DashboardQuestActivity activity={data.questActivity} />
+        <div className="grid min-w-0 gap-7.5 leading-[1.4]">
+          <Suspense fallback={<FitnessAtAGlanceSkeleton />}>
+            <DashboardFitness fitness={data.fitness} questSettings={data.questSettings} />
           </Suspense>
-        </PulseCard>
-        <Suspense fallback={<RecentActivitySkeleton />}>
-          <DashboardRecentActivity activity={data.recentActivity} />
-        </Suspense>
+          <PulseCard as="section" aria-labelledby="dashboard-quest-heading"
+            className="p-6 shadow-(--dashboard-activity-shadow)">
+            <header className="mb-5 flex min-h-11 items-center gap-3.5 max-[360px]:gap-2">
+              <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-[linear-gradient(135deg,#3a2cd9,#b22bd8)] text-white">
+                <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M6 11h4M8 9v4M7 6h10a4 4 0 0 1 4 4v3a3 3 0 0 1-5.4 1.8L14.5 14h-5l-1.1.8A3 3 0 0 1 3 13v-3a4 4 0 0 1 4-4Z" />
+                  <circle cx={15.2} cy={10.2} r={0.7} />
+                  <circle cx={17.6} cy={12.6} r={0.7} />
+                </svg>
+              </span>
+              <h2 id="dashboard-quest-heading" className="flex-1 text-[clamp(1.25rem,2vw,1.5rem)] font-extrabold tracking-[-.03em]">
+                Quest activity
+              </h2>
+              <Link href="/quests" prefetch={false}
+                className="group -mr-3.5 inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-3.5 font-bold text-muted-foreground transition-colors hover:bg-(--dashboard-activity-chip) hover:text-foreground max-[360px]:text-sm">
+                View quests <ArrowRight className="size-5 motion-safe:transition-transform motion-safe:group-hover:translate-x-[3px]" aria-hidden="true" />
+              </Link>
+            </header>
+            <Suspense fallback={<div className="h-40 rounded-lg bg-(--dashboard-activity-chip)" role="status"><span className="sr-only">Loading quest activity</span></div>}>
+              <DashboardQuestActivity activity={data.questActivity} />
+            </Suspense>
+          </PulseCard>
+          <Suspense fallback={<RecentActivitySkeleton />}>
+            <DashboardRecentActivity activity={data.recentActivity} />
+          </Suspense>
+        </div>
       </div>
     </DashboardFrame>
   );

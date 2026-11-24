@@ -1,153 +1,135 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { QuestActivity } from "@/app/quests/types";
 
 const daysInGraph = 365;
 const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const questColors = new Map([
-  ["gym_workout", "var(--dashboard-quest-gym)"],
-  ["daily_steps", "var(--dashboard-quest-steps)"],
-  ["activity_rings", "var(--dashboard-quest-rings)"],
-  ["sleep_goal", "var(--dashboard-quest-sleep)"],
-  ["daily_meals", "var(--dashboard-quest-meals)"],
-]);
-const monthFormat = new Intl.DateTimeFormat("en", { month: "short", timeZone: "UTC" });
-const dateFormat = new Intl.DateTimeFormat("en", { dateStyle: "full", timeZone: "UTC" });
-const emptyColor = "var(--dashboard-quest-empty)";
-const palette = Array.from(questColors.values());
+const monthFormat = new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" });
+const dateFormat = new Intl.DateTimeFormat("en-US", { dateStyle: "full", timeZone: "UTC" });
 const dayOffsets = new Map([["ArrowLeft", -7], ["ArrowRight", 7], ["ArrowUp", -1], ["ArrowDown", 1]]);
+const levels = [
+  { color: "bg-(--dashboard-activity-chip)", label: "No quests completed" },
+  { color: "bg-(--dashboard-quest-level-1)", label: "1 quest completed" },
+  { color: "bg-(--dashboard-quest-level-2)", label: "2 quests completed" },
+  { color: "bg-(--dashboard-quest-level-3)", label: "3–4 quests completed" },
+  { color: "bg-(--dashboard-quest-level-4)", label: "5 or more quests completed" },
+];
 
-function blendColors(colors: string[]) {
-  // Give each completed quest an equal share of the blend.
-  return colors.reduce((mix, color, index) =>
-    `color-mix(in oklab, ${mix}, ${color} ${100 / (index + 1)}%)`);
-}
-
-function cellColor(count: number, hue: string) {
-  if (count === 0) return emptyColor;
-  const strength = 44 + 56 * Math.min(count, palette.length) / palette.length;
-  return `color-mix(in oklab, ${emptyColor}, ${hue} ${strength}%)`;
+function questLevel(count: number) {
+  if (count <= 2) return levels[count];
+  return count <= 4 ? levels[3] : levels[4];
 }
 
 function buildCalendar({ today, days }: QuestActivity) {
-  const completions = new Map(days.map(({ date, completed_ids }) => [date, completed_ids]));
-  // These are calendar dates in the user's Pulse timezone. UTC arithmetic keeps
-  // consecutive dates evenly spaced across daylight saving changes.
+  const completions = new Map(days.map(({ date, completed_ids }) => [date, completed_ids.length]));
+  // UTC arithmetic keeps the user's calendar dates evenly spaced across DST changes.
   const first = new Date(`${today}T00:00:00Z`);
   first.setUTCDate(first.getUTCDate() - (daysInGraph - 1));
   const offset = first.getUTCDay();
   const cursor = new Date(first);
+
   return Array.from({ length: daysInGraph }, (_, index) => {
     const date = new Date(cursor);
     cursor.setUTCDate(cursor.getUTCDate() + 1);
     const key = date.toISOString().slice(0, 10);
-    const colors = (completions.get(key) ?? []).map((id) => questColors.get(id) ?? "var(--dashboard-quest-sleep)");
-    const count = colors.length;
-    const summary = `${count} ${count === 1 ? "quest" : "quests"} completed`;
+    const count = completions.get(key) ?? 0;
     return {
       date,
       key,
       week: Math.floor((index + offset) / 7),
       weekday: date.getUTCDay(),
-      summary,
-      color: count > 0 ? cellColor(count, blendColors(colors)) : emptyColor,
+      summary: count === 0 ? "No quests completed" : `${count} ${count === 1 ? "quest" : "quests"} completed`,
+      color: questLevel(count).color,
     };
   });
 }
 
-const legendHue = blendColors(palette);
-const cellClass = "aspect-square rounded-sm border border-foreground/10";
-
 export default function QuestHeatmap({ activity }: { activity: QuestActivity }) {
   const [selectedDate, setSelectedDate] = useState(activity.today);
-  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
-  const instructionsId = useId();
   const calendar = useMemo(() => buildCalendar(activity), [activity]);
   const today = calendar[calendar.length - 1];
   const selected = calendar.find(({ key }) => key === selectedDate) ?? today;
-  const active = calendar.find(({ key }) => key === hoveredDate) ?? selected;
   const weekCount = today.week + 1;
-  const months = calendar.filter(({ date }) => date.getUTCDate() === 1);
-  if (months[0].week >= 3) months.unshift(calendar[0]);
+  const months = calendar.filter(({ date, weekday }) => weekday === 0 && date.getUTCDate() <= 7);
 
   function moveFocus(event: KeyboardEvent<HTMLDivElement>) {
     const offset = dayOffsets.get(event.key);
     if (offset == null) return;
     event.preventDefault();
-    const index = calendar.indexOf(selected);
-    const next = index + offset;
-    if (next < 0 || next >= calendar.length) return;
-    if (Math.abs(offset) === 1 && calendar[next].week !== selected.week) return;
-    event.currentTarget.querySelector<HTMLButtonElement>(`button[data-date="${calendar[next].key}"]`)?.focus();
+    const next = calendar[calendar.indexOf(selected) + offset];
+    if (next) event.currentTarget.querySelector<HTMLButtonElement>(`button[data-date="${next.key}"]`)?.focus();
   }
 
   return (
     <>
-      <p id={instructionsId} className="sr-only">Use the arrow keys to explore dates.</p>
-      <div dir="rtl" className="overflow-x-auto">
+      <div dir="rtl" className="-mx-1.5 -mt-1.5 overflow-x-auto [scrollbar-width:thin]">
         <div
           dir="ltr"
           role="group"
-          aria-label="Daily quest completions"
-          aria-describedby={instructionsId}
+          aria-label="Quests completed each day over the past year. Use the arrow keys to move between days."
           onKeyDown={moveFocus}
-          onPointerLeave={() => setHoveredDate(null)}
-          className="grid items-center gap-1 p-1"
+          className="grid gap-1 px-1.5 pt-1.5 pb-2.5"
           style={{
-            gridTemplateColumns: `2rem repeat(${weekCount}, minmax(0.75rem, 1fr))`,
-            minWidth: `calc(2.5rem + ${weekCount} * 1rem)`,
+            gridTemplateColumns: `34px repeat(${weekCount}, minmax(13px, 1fr))`,
+            gridTemplateRows: "auto repeat(7, auto)",
+            minWidth: `calc(48px + ${weekCount} * 17px)`,
           }}
         >
           {months.map(({ key, date, week }) => (
             <span key={key} aria-hidden="true"
               style={{ gridRow: 1, gridColumn: `${Math.min(week, weekCount - 3) + 2} / span 3` }}
-              className={`text-xs text-muted-foreground ${week > weekCount - 3 ? "text-right" : ""}`}>
+              className={`self-end pb-1 text-[.78rem] font-semibold whitespace-nowrap text-muted-foreground ${week > weekCount - 3 ? "text-right" : ""}`}>
               {monthFormat.format(date)}
             </span>
           ))}
           {weekdayLabels.map((label, weekday) => (
             <span key={label} aria-hidden="true" style={{ gridRow: weekday + 2, gridColumn: 1 }}
-              className="sticky left-0 z-10 bg-card text-[11px] leading-none text-muted-foreground">
+              className="self-center text-[.74rem] font-semibold text-muted-foreground">
               {label}
             </span>
           ))}
-          {calendar.map(({ date, key, week, weekday, color, summary }) => (
-            <button
-              key={key}
-              type="button"
-              data-date={key}
-              aria-label={`${dateFormat.format(date)}, ${summary}`}
-              aria-current={key === activity.today ? "date" : undefined}
-              tabIndex={key === selected.key ? 0 : -1}
-              onFocus={() => {
-                setSelectedDate(key);
-                setHoveredDate(null);
-              }}
-              onClick={() => setSelectedDate(key)}
-              onPointerEnter={(event) => {
-                if (event.pointerType === "mouse") setHoveredDate(key);
-              }}
-              className={`${cellClass} w-full hover:border-foreground focus-visible:z-10 ${key === active.key ? "ring-1 ring-foreground/65" : ""}`}
-              style={{ gridRow: weekday + 2, gridColumn: week + 2, backgroundColor: color }}
-            />
-          ))}
+          {calendar.map(({ date, key, week, weekday, color, summary }) => {
+            const isSelected = key === selected.key;
+            const isToday = key === today.key;
+            const label = `${dateFormat.format(date)} · ${summary}`;
+            const outline = isSelected
+              ? "relative z-1 shadow-[0_0_0_2px_var(--card),0_0_0_4px_var(--foreground)]"
+              : isToday ? "shadow-[0_0_0_2px_var(--card),0_0_0_4px_var(--brand-pink)]" : "";
+            return (
+              <button
+                key={key}
+                type="button"
+                data-date={key}
+                aria-label={label}
+                title={label}
+                aria-current={isToday ? "date" : undefined}
+                aria-pressed={isSelected}
+                tabIndex={isSelected ? 0 : -1}
+                onFocus={() => setSelectedDate(key)}
+                onClick={() => setSelectedDate(key)}
+                className={`aspect-square w-full cursor-pointer rounded-[5px] hover:z-2 focus-visible:z-2 motion-safe:transition-transform motion-safe:hover:scale-[1.18] ${color} ${outline}`}
+                style={{ gridRow: weekday + 2, gridColumn: week + 2 }}
+              />
+            );
+          })}
         </div>
       </div>
-      <div role="group" className="flex items-center justify-end gap-1.5 whitespace-nowrap text-xs text-muted-foreground"
-        aria-label="Less to more quests completed per day">
-        <span>Less</span>
-        {Array.from({ length: palette.length + 1 }, (_, count) => (
-          <span key={count} title={`${count} ${count === 1 ? "quest" : "quests"} completed`}
-            className={`${cellClass} size-3`} style={{ backgroundColor: cellColor(count, legendHue) }} />
-        ))}
-        <span>More</span>
+      <div className="mt-3.5 flex flex-wrap items-center justify-between gap-4">
+        <p className="text-muted-foreground" aria-live="polite">
+          <strong className="font-extrabold text-foreground">{dateFormat.format(selected.date)}</strong>
+          {" · "}{selected.summary}
+        </p>
+        <div role="group" className="flex items-center gap-1.5 text-[.82rem] font-semibold whitespace-nowrap text-muted-foreground"
+          aria-label="Less to more quests completed per day">
+          <span>Less</span>
+          {levels.map(({ label, color }) => (
+            <span key={label} title={label} className={`size-3.5 rounded-sm ${color}`} />
+          ))}
+          <span>More</span>
+        </div>
       </div>
-      <p className="text-sm text-muted-foreground">
-        <strong className="font-semibold text-foreground">{dateFormat.format(active.date)}</strong>
-        {" · "}{active.summary}
-      </p>
     </>
   );
 }

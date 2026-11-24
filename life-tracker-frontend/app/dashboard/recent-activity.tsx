@@ -77,10 +77,10 @@ export type RecentActivityEntry = {
 };
 
 const number = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 3 });
-const rowClass = "group grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 lg:gap-x-4";
-const contentClass = "grid min-w-0 gap-y-0.5 border-b border-divider py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-4 sm:py-4 dashboard-compact:sm:py-3";
-const iconSizeClass = "size-12 lg:size-15 dashboard-compact:lg:size-12";
-const iconClass = `grid place-items-center self-center rounded-full bg-(--dashboard-metric-icon-surface) text-(--dashboard-metric-icon) ${iconSizeClass}`;
+const rowClass =
+  "relative grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-4 px-6 py-4 min-[561px]:grid-cols-[3rem_minmax(0,1fr)_auto] " +
+  "[&+li]:before:absolute [&+li]:before:right-6 [&+li]:before:left-22 [&+li]:before:top-0 [&+li]:before:h-px [&+li]:before:bg-divider";
+const iconClass = "grid size-12 place-items-center rounded-2xl";
 
 function dateLabel(date: string, today: string) {
   const days = calendarDayNumber(today) - calendarDayNumber(date);
@@ -161,11 +161,13 @@ function activityDetail(entry: RecentActivityEntry, currency: string, timeZone: 
 
 function ActivitySection({ children, loading }: { children: ReactNode; loading?: boolean }) {
   return (
-    <section aria-labelledby="recent-activity-heading" aria-busy={loading} className="grid gap-6">
-      <h2 id="recent-activity-heading" className="text-xl leading-tight font-extrabold tracking-tight lg:text-2xl">
-        Recent activity
-      </h2>
-      <PulseCard className="bg-(--dashboard-fitness-surface) px-4 py-2">
+    <section aria-labelledby="recent-activity-heading" aria-busy={loading} className="grid gap-5">
+      <header className="flex min-h-11 items-center">
+        <h2 id="recent-activity-heading" className="text-[clamp(1.4rem,2.4vw,1.8rem)] leading-[1.15] font-extrabold tracking-[-.035em]">
+          Recent activity
+        </h2>
+      </header>
+      <PulseCard className="overflow-hidden shadow-(--dashboard-activity-shadow)">
         {children}
       </PulseCard>
     </section>
@@ -175,17 +177,18 @@ function ActivitySection({ children, loading }: { children: ReactNode; loading?:
 export function RecentActivitySkeleton() {
   return (
     <ActivitySection loading>
-      <div className="grid gap-4 py-4" aria-hidden="true">
+      <ul aria-hidden="true">
         {[0, 1, 2].map(row => (
-          <div key={row} className="flex items-center gap-x-3 lg:gap-x-4">
-            <div className={`shrink-0 rounded-full bg-muted ${iconSizeClass}`} />
-            <div className="grid flex-1 gap-2">
+          <li key={row} className={rowClass}>
+            <div className={`${iconClass} bg-(--dashboard-activity-chip)`} />
+            <div className="grid gap-2">
               <div className="h-4 w-32 rounded bg-muted" />
               <div className="h-3 w-2/5 rounded bg-muted" />
             </div>
-          </div>
+            <div className="col-start-2 h-3 w-12 rounded bg-muted min-[561px]:col-start-3" />
+          </li>
         ))}
-      </div>
+      </ul>
     </ActivitySection>
   );
 }
@@ -208,23 +211,23 @@ export function RecentActivity({ entries, timeZone, currency }: {
             const title = entry.kind === "category_added" && entry.details.parent_name ? "Subcategory added" : event.title;
             return (
               <li key={entry.id} className={rowClass}>
-                <span className={iconClass} aria-hidden="true"><event.icon className="size-5 sm:size-6 dashboard-compact:sm:size-5" /></span>
-                <div className={`${contentClass} group-last:border-0`}>
-                  <div className="min-w-0 wrap-anywhere">
-                    <p className="font-bold leading-snug sm:text-lg">{title}</p>
-                    {detail && <p className="mt-0.5 text-sm font-medium text-muted-foreground sm:text-base dashboard-compact:sm:text-sm">{detail}</p>}
-                  </div>
-                  <time className="text-sm font-medium text-muted-foreground sm:pt-0.5"
-                    dateTime={entry.recorded_at} title={formatInstant(entry.recorded_at, timeZone)}>
-                    {dateLabel(dateKey(entry.recorded_at, timeZone), today)}
-                  </time>
+                <span className={`${iconClass} bg-[color-mix(in_srgb,var(--brand-blue)_14%,transparent)] text-(--brand-blue)`} aria-hidden="true">
+                  <event.icon className="size-5" />
+                </span>
+                <div className="min-w-0 wrap-anywhere">
+                  <p className="text-[1.05rem] font-extrabold tracking-[-.01em]">{title}</p>
+                  {detail && <p className="mt-px text-[.92rem] text-muted-foreground">{detail}</p>}
                 </div>
+                <time className="col-start-2 self-start text-[.9rem] font-semibold whitespace-nowrap text-muted-foreground min-[561px]:col-start-3 min-[561px]:mt-1"
+                  dateTime={entry.recorded_at} title={formatInstant(entry.recorded_at, timeZone)}>
+                  {dateLabel(dateKey(entry.recorded_at, timeZone), today)}
+                </time>
               </li>
             );
           })}
         </ul>
       ) : (
-        <p className="py-4 text-sm text-muted-foreground">{entries ? "No recent activity yet." : "Recent activity is unavailable."}</p>
+        <p className="p-6 text-muted-foreground">{entries ? "No recent activity yet." : "Recent activity is unavailable."}</p>
       )}
     </ActivitySection>
   );

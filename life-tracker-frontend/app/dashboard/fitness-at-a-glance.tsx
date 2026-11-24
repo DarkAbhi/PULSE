@@ -1,4 +1,4 @@
-import { ArrowRight, Flame, Footprints, Moon } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import PulseCard from "@/app/components/design-system/pulse-card";
@@ -24,72 +24,83 @@ type Ring = {
   color: string;
 };
 
-const number = new Intl.NumberFormat("en", { maximumFractionDigits: 2 });
-const gridClass = "grid grid-cols-1 gap-3 min-[28rem]:grid-cols-2 xl:grid-cols-4";
-const rowClass = "flex min-h-23 items-center gap-3 px-4 py-3 lg:min-h-27 lg:gap-4 dashboard-compact:lg:min-h-23";
-const surfaceClass = "bg-(--dashboard-fitness-surface)";
-const iconClass =
-  "grid size-12 shrink-0 place-items-center rounded-full bg-(--dashboard-metric-icon-surface) " +
-  "text-(--dashboard-metric-icon) lg:size-15 dashboard-compact:lg:size-12";
-const valueClass = "text-xl leading-tight font-extrabold tracking-tight tabular-nums lg:text-2xl";
+const number = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+const rowClass = "flex min-h-27 items-center gap-4 p-5";
+const iconClass = "grid size-14 shrink-0 place-items-center rounded-[18px]";
+const valueClass = "text-[clamp(1.6rem,2.6vw,2rem)] leading-[1.1] tracking-[-.04em] tabular-nums";
+const unitClass = "ml-1 text-[.5em] font-bold tracking-normal text-muted-foreground";
+const labelClass = "mt-0.5 font-semibold text-muted-foreground";
 
 function FitnessSection({ children, busy }: { children: ReactNode; busy?: boolean }) {
   return (
-    <section aria-labelledby="dashboard-fitness-heading" aria-busy={busy} className="grid gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-x-3">
-        <h2 id="dashboard-fitness-heading" className="text-xl leading-tight font-extrabold tracking-tight lg:text-2xl">
+    <section aria-labelledby="dashboard-fitness-heading" aria-busy={busy} className="grid gap-5">
+      <header className="flex min-h-11 items-center justify-between gap-4">
+        <h2 id="dashboard-fitness-heading" className="text-[clamp(1.4rem,2.4vw,1.8rem)] leading-[1.15] font-extrabold tracking-[-.035em]">
           Today at a glance
         </h2>
         <Link
           href="/fitness"
           aria-label="View all fitness"
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground"
+          className="group -mr-3.5 inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-3.5 font-bold text-muted-foreground transition-colors hover:bg-(--dashboard-activity-chip) hover:text-foreground"
         >
-          View all <ArrowRight className="size-4" aria-hidden="true" />
+          View all <ArrowRight className="size-5 motion-safe:transition-transform motion-safe:group-hover:translate-x-[3px]" aria-hidden="true" />
         </Link>
+      </header>
+      <div className="grid grid-cols-1 gap-5 min-[561px]:grid-cols-2 min-[1051px]:grid-cols-4">
+        {children}
       </div>
-      <div className={gridClass}>{children}</div>
     </section>
   );
 }
 
-function MetricCard({ icon, label, value }: { icon: ReactNode; label: string; value: ReactNode }) {
+function MetricCard({ icon, color, label, value, progress }: {
+  icon: ReactNode;
+  color: string;
+  label: string;
+  value: ReactNode;
+  progress?: ReactNode;
+}) {
   return (
-    <PulseCard className={`${surfaceClass} ${rowClass}`}>
-      <span className={`${iconClass} [&>svg]:size-6`} aria-hidden="true">{icon}</span>
-      <dl className="flex min-w-0 flex-col gap-0.5">
-        <dt className="order-last text-sm font-medium text-muted-foreground">{label}</dt>
-        <dd className={valueClass}>
+    <PulseCard className={`${rowClass} shadow-(--dashboard-activity-shadow)`}>
+      <span className={`${iconClass} ${color} bg-[color-mix(in_srgb,currentColor_16%,transparent)]`} aria-hidden="true">
+        <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          {icon}
+        </svg>
+      </span>
+      <dl className="flex min-w-0 flex-1 flex-col">
+        <dt className={`order-1 ${labelClass}`}>{label}</dt>
+        <dd className={`${valueClass} ${value == null ? "font-semibold text-muted-foreground" : "font-extrabold"}`}>
           {value ?? <><span aria-hidden="true">—</span><span className="sr-only">No data</span></>}
         </dd>
+        {progress && <dd className="order-2 mt-2">{progress}</dd>}
       </dl>
     </PulseCard>
   );
 }
 
+function StepProgress({ steps, goal }: { steps: number; goal: number }) {
+  const percent = Math.max(0, Math.min(100, 100 * steps / goal));
+  return (
+    <div role="img" aria-label={`${Math.round(percent)} percent of the ${number.format(goal)} step goal`}
+      className="h-1.5 overflow-hidden rounded-full bg-(--dashboard-activity-chip)">
+      <div className="h-full rounded-full bg-linear-to-r from-(--brand-cyan) to-(--brand-blue)"
+        style={{ width: `${percent}%` }} />
+    </div>
+  );
+}
+
 function ActivityRings({ rings }: { rings: Ring[] }) {
   return (
-    <svg viewBox="0 0 52 52" className="size-full" aria-hidden="true">
+    <svg viewBox="0 0 56 56" className="size-14 shrink-0" aria-hidden="true">
       {rings.map(({ label, value, goal, color }, index) => {
         const radius = 22 - index * 6;
-        const progress = value !== null && goal !== null && goal > 0 ? value / goal : 0;
-        // Completed laps share the same track. Draw only the last partial lap on top.
-        const lastLap = progress % 1;
+        const progress = value !== null && goal !== null && goal > 0 ? Math.min(1, value / goal) : 0;
         return (
-          <g key={label} className={color} fill="none" stroke="currentColor" strokeWidth={4.5}>
-            <circle cx={26} cy={26} r={radius} opacity={0.24} />
-            {progress >= 1 && <circle cx={26} cy={26} r={radius} />}
-            {lastLap > 0 && (
-              <circle
-                cx={26}
-                cy={26}
-                r={radius}
-                pathLength={1}
-                strokeDasharray={`${lastLap} 1`}
-                strokeLinecap="round"
-                transform="rotate(-90 26 26)"
-                className={progress > 1 ? "brightness-125" : undefined}
-              />
+          <g key={label} className={color} fill="none" stroke="currentColor" strokeWidth={5} strokeLinecap="round">
+            <circle cx={28} cy={28} r={radius} opacity={0.22} />
+            {progress > 0 && (
+              <circle cx={28} cy={28} r={radius} pathLength={1}
+                strokeDasharray={progress < 1 ? `${progress} 1` : undefined} transform="rotate(-90 28 28)" />
             )}
           </g>
         );
@@ -104,9 +115,9 @@ function ActivityCard({ rings }: { rings: Ring[] }) {
   const hasActivity = rings.some(({ value }) => value !== null);
 
   return (
-    <PulseCard className={`relative ${surfaceClass}`}>
+    <PulseCard className="relative shadow-(--dashboard-activity-shadow)">
       <ActivityBreakdown
-        className={`${rowClass} w-full rounded-card text-left hover:bg-foreground/5`}
+        className={`${rowClass} w-full rounded-card text-left`}
         breakdown={(
           <dl className="grid gap-2 rounded-card border border-border bg-card p-4 text-sm shadow-lg">
             {rings.map(({ label, value, goal, unit, color }) => (
@@ -123,13 +134,11 @@ function ActivityCard({ rings }: { rings: Ring[] }) {
           </dl>
         )}
       >
-        <span className={`${iconClass} p-1.5`}><ActivityRings rings={rings} /></span>
+        <ActivityRings rings={rings} />
         <span className="min-w-0">
-          <span className="block text-lg leading-tight font-extrabold tracking-tight lg:text-xl">Activity</span>
-          <span className="mt-0.5 block text-sm font-medium text-muted-foreground">
-            {goals.length > 0 ? (
-              <><strong className="font-bold text-foreground">{achieved}</strong> / {goals.length} goals</>
-            ) : hasActivity ? "No goals set" : "No data"}
+          <span className="block text-2xl leading-[1.1] font-extrabold tracking-[-.04em]">Activity</span>
+          <span className={`block ${labelClass}`}>
+            {!hasActivity ? "No data" : goals.length ? `${achieved} of 3 rings closed` : "No goals set"}
           </span>
         </span>
       </ActivityBreakdown>
@@ -137,29 +146,41 @@ function ActivityCard({ rings }: { rings: Ring[] }) {
   );
 }
 
-function formatSleep(seconds: number) {
+function SleepValue({ seconds }: { seconds: number }) {
   const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
+  return <>{Math.floor(minutes / 60)}<small className={unitClass}>h</small>{" "}{minutes % 60}<small className={unitClass}>min</small></>;
 }
 
-export function FitnessAtAGlance({ data }: { data: FitnessToday | null }) {
+export function FitnessAtAGlance({ data, stepTarget }: { data: FitnessToday | null; stepTarget: number | null }) {
   const rings: Ring[] = [
-    { label: "Move", value: data?.move_calories ?? null, goal: data?.move_calories_goal ?? null, unit: "kcal", color: "text-(--dashboard-ring-move)" },
-    { label: "Exercise", value: data?.exercise_minutes ?? null, goal: data?.exercise_minutes_goal ?? null, unit: "min", color: "text-(--dashboard-ring-exercise)" },
-    { label: "Stand", value: data?.stand_hours ?? null, goal: data?.stand_hours_goal ?? null, unit: "h", color: "text-(--dashboard-ring-stand)" },
+    { label: "Move", value: data?.move_calories ?? null, goal: data?.move_calories_goal ?? null, unit: "kcal", color: "text-(--brand-pink)" },
+    { label: "Exercise", value: data?.exercise_minutes ?? null, goal: data?.exercise_minutes_goal ?? null, unit: "min", color: "text-(--brand-gold)" },
+    { label: "Stand", value: data?.stand_hours ?? null, goal: data?.stand_hours_goal ?? null, unit: "h", color: "text-(--brand-cyan)" },
   ];
+  const steps = data?.steps_count;
   const active = data?.move_calories;
 
   return (
     <FitnessSection>
-      <MetricCard icon={<Footprints />} label="Steps" value={data?.steps_count != null ? number.format(data.steps_count) : null} />
       <MetricCard
-        icon={<Flame className="fill-current text-(--dashboard-metric-energy)" />}
-        label="Active"
-        value={active != null ? <>{number.format(active)} <span className="text-sm font-bold">kcal</span></> : null}
+        icon={<><path d="M8 4c2 0 3 2 3 4s-1 3-2.5 3S6 9 6 7s0-3 2-3ZM7.5 14h3.5v2.5a1.8 1.8 0 0 1-3.5 0Z" /><path d="M16 8c2 0 3 2 3 4s-1 3-2.5 3S14 13 14 11s0-3 2-3ZM15.5 18h3.5v1a1.8 1.8 0 0 1-3.5 0Z" /></>}
+        color="text-(--brand-purple-bright)"
+        label="Steps"
+        value={steps == null ? null : number.format(steps)}
+        progress={steps != null && stepTarget != null && stepTarget > 0 ? <StepProgress steps={steps} goal={stepTarget} /> : undefined}
       />
-      <MetricCard icon={<Moon className="fill-current" />} label="Sleep" value={data?.total_asleep_seconds != null ? formatSleep(data.total_asleep_seconds) : null} />
+      <MetricCard
+        icon={<path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.2 1 2 2 2.2C10.5 8.5 11 5.5 12 3Z" />}
+        color="text-(--brand-orange)"
+        label="Active"
+        value={active == null ? null : <>{number.format(active)}<small className={unitClass}>kcal</small></>}
+      />
+      <MetricCard
+        icon={<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z" />}
+        color="text-[#8b6cf0]"
+        label="Sleep"
+        value={data?.total_asleep_seconds == null ? null : <SleepValue seconds={data.total_asleep_seconds} />}
+      />
       <ActivityCard rings={rings} />
     </FitnessSection>
   );
@@ -169,9 +190,9 @@ export function FitnessAtAGlanceSkeleton() {
   return (
     <FitnessSection busy>
       {[0, 1, 2, 3].map((index) => (
-        <PulseCard key={index} className={`${surfaceClass} ${rowClass}`} aria-hidden="true">
-          <span className={iconClass} />
-          <span className="h-9 w-16 rounded-lg bg-foreground/5" />
+        <PulseCard key={index} className={`${rowClass} shadow-(--dashboard-activity-shadow)`} aria-hidden="true">
+          <span className={`${iconClass} bg-(--dashboard-activity-chip)`} />
+          <span className="h-9 w-16 rounded-lg bg-(--dashboard-activity-chip)" />
         </PulseCard>
       ))}
     </FitnessSection>

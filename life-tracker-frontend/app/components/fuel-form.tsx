@@ -125,7 +125,7 @@ export function FuelForm({
           </fieldset>
         ))}
         {items.length < 2 && (
-          <PulseButton variant="tertiary" size="md" icon={<Plus aria-hidden="true" className="size-4" />} onClick={() => onItemsChange([...items, newFuelItem()])} type="button">
+          <PulseButton variant="ghost" size="md" icon={<Plus aria-hidden="true" className="size-4" />} onClick={() => onItemsChange([...items, newFuelItem()])} type="button">
             Add second fuel tank
           </PulseButton>
         )}

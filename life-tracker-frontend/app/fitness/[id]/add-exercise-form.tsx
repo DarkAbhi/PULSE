@@ -240,7 +240,7 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
                 </span>
               </span>
             </label>
-            {catalogID && <PulseButton type="button" variant="tertiary" size="sm" disabled={isPending}
+            {catalogID && <PulseButton type="button" variant="ghost" size="sm" disabled={isPending}
               onClick={() => changeName(exerciseName, true)}>Search for a different exercise</PulseButton>}
           </fieldset>
         )}
@@ -297,7 +297,7 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
             )}
           </div>
         ))}
-        <PulseButton variant="chip" size="lg" labelStyle="strong"
+        <PulseButton variant="secondary" size="lg" labelStyle="strong"
           icon={<Plus size={18} aria-hidden="true" />}
           onClick={() => setSets((currentSets) => [...currentSets, newSet()])}
           type="button"

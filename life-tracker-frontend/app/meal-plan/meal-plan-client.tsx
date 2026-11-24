@@ -88,7 +88,7 @@ function MealSlotCard({ kind, icon, name, timeRange, usualTime, children, onAdd,
       </div>
       {children}
       {onAdd && (
-        <PulseButton variant="tertiary" size="xl" labelStyle="strong" className={styles.slotAdd} type="button"
+        <PulseButton variant="ghost" size="xl" labelStyle="strong" className={styles.slotAdd} type="button"
           onClick={onAdd} disabled={addDisabled} aria-label={`Add meal to ${name}`} icon={<Plus className="size-5" aria-hidden="true" />}
         >
           Add meal

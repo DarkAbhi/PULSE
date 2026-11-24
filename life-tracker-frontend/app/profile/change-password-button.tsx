@@ -17,7 +17,7 @@ export default function ChangePasswordButton() {
         <p className={labelClass}>Password</p>
         <p className={settingValueClass} aria-hidden="true">••••••••••</p>
       </div>
-      <PulseButton variant="chip" size="lg" labelStyle="strong" className={settingButtonClass}
+      <PulseButton variant="secondary" size="lg" labelStyle="strong" className={settingButtonClass}
         onClick={() => setIsDialogOpen(true)}
         type="button"
       >

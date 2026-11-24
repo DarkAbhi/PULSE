@@ -193,7 +193,7 @@ export default function APIKeys({ initialKeys }: { initialKeys: APIKey[] | null 
                   value={token}
                   onFocus={event => event.target.select()}
                 />
-                <PulseButton type="button" variant="chip" size="lg" autoFocus className="shrink-0" onClick={copyKey}>
+                <PulseButton type="button" variant="secondary" size="lg" autoFocus className="shrink-0" onClick={copyKey}>
                   {copied ? <Check className="size-4.5" aria-hidden="true" /> : <Copy className="size-4.5" aria-hidden="true" />}
                   {copied ? "Copied" : "Copy"}
                 </PulseButton>

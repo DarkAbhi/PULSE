@@ -55,7 +55,7 @@ export default function MealPlanGate({ initialState, notifications, ...plannerPr
     onDeleted={id => setMealTimes(current => current.filter(time => time.id !== id))}
   />;
   return <>
-    {notice && <div role="status" className="flex items-center justify-center gap-3 bg-success-soft px-4 py-2 text-sm text-success">{notice}<PulseButton size="sm" variant="tertiary" aria-label="Dismiss message" onClick={() => setNotice("")}>Dismiss</PulseButton></div>}
+    {notice && <div role="status" className="flex items-center justify-center gap-3 bg-success-soft px-4 py-2 text-sm text-success">{notice}<PulseButton size="sm" variant="ghost" aria-label="Dismiss message" onClick={() => setNotice("")}>Dismiss</PulseButton></div>}
     <MealPlanClient appBar={appBar} {...plannerProps} initialMealTimes={mealTimes} preferences={state.preferences} onEditPreferences={() => { setNotice(""); setEditing(true); }} />
   </>;
 }

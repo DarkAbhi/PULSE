@@ -382,7 +382,7 @@ export default function SubscriptionsTab({
                 {/* Card Footer Actions */}
                 <div className="mt-5 pt-3 border-t border-divider flex flex-wrap items-center justify-between gap-2">
                   {/* Left: Linked Transactions Trigger */}
-                  <PulseButton variant="tertiary" size="sm"
+                  <PulseButton variant="ghost" size="sm"
                     onClick={() => onViewTransactions(sub)}
                     title="View payment history"
                   >
@@ -393,7 +393,7 @@ export default function SubscriptionsTab({
                   {/* Right Action Buttons */}
                   <div className="flex items-center gap-1">
                     {/* Log Payment Quick Button */}
-                    <PulseButton variant="soft" size="sm"
+                    <PulseButton variant="secondary" size="sm"
                       onClick={() => onLogPayment(sub)}
                       title="Log payment transaction for this subscription"
                     >

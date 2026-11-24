@@ -83,7 +83,7 @@ export default function AccountsTab({ currency }: { currency: string }) {
         <HorizonAction disabled={pending} onClick={() => open()}><Icon name="plus" /> Add account</HorizonAction>
       </SectionHeader>
       {!editor && error && <p role="alert">{error}</p>}
-      {!accounts && (error ? <HorizonAction variant="chip" onClick={load}>Retry</HorizonAction> : <p role="status">Loading accounts…</p>)}
+      {!accounts && (error ? <HorizonAction variant="secondary" onClick={load}>Retry</HorizonAction> : <p role="status">Loading accounts…</p>)}
       {accounts?.length === 0 && <HorizonEmpty as="p" className="text-muted-foreground">Add a bank account or credit card to assign transactions to it.</HorizonEmpty>}
       <ul className="divide-y divide-divider">
         {accounts?.map(account => (

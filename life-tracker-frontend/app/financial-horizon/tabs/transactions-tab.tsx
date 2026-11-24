@@ -80,14 +80,14 @@ export default function TransactionsTab({
       <SectionHeader title="Transaction History" icon="receipt">
         <div className="flex flex-wrap items-center gap-2">
           {onOpenStatementUpload && (
-            <HorizonAction variant="chip"
+            <HorizonAction variant="secondary"
               onClick={onOpenStatementUpload}
               disabled={isPending}
             >
               <Icon name="upload" /> Import Statement
             </HorizonAction>
           )}
-          <HorizonAction variant="chip"
+          <HorizonAction variant="secondary"
             onClick={onOpenAddCategory}
             disabled={isPending}
           >
@@ -245,7 +245,7 @@ export default function TransactionsTab({
               </HorizonSelect>
               <nav className="flex flex-wrap items-center justify-center gap-2" aria-label="Transaction pages">
                 {Array.from({ length: transactionPage.total_pages }, (_, index) => index + 1).map((page) => (
-                <HorizonAction variant={page === transactionPage.page ? "primary" : "chip"}
+                <HorizonAction variant={page === transactionPage.page ? "primary" : "secondary"}
                   key={page}
                   type="button"
                   onClick={() => onPageChange(page)}

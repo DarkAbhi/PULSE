@@ -194,10 +194,10 @@ export default function VehicleEditor({
     <>
       <PulseButton
         id={vehicle ? undefined : "add-vehicle-button"}
-        variant="onHero"
+        variant="secondary"
         size="lg"
         labelStyle="strong"
-        className={`focus-visible:outline-white ${vehicle ? "" : "sm:min-h-12 lg:min-h-14 lg:px-6 lg:text-base xl:min-h-16"} ${triggerClassName ?? ""}`}
+        className={`[--btn-cancel-bg:white] [--btn-cancel-text:var(--on-hero-action)] [--btn-cancel-hover:var(--on-hero-hover)] focus-visible:outline-white ${vehicle ? "" : "sm:min-h-12 lg:min-h-14 lg:px-6 lg:text-base xl:min-h-16"} ${triggerClassName ?? ""}`}
         icon={vehicle ? <PencilLine className="size-4" aria-hidden="true" /> : <Plus className="size-4" aria-hidden="true" />}
         type="button"
         aria-haspopup="dialog"

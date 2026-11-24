@@ -128,10 +128,10 @@ export default function HeaderMetrics({
               autoFocus
             />
             <div className="flex gap-2">
-              <HorizonAction type="submit" variant="chip" className={poolEditAction} disabled={isPending}>
+              <HorizonAction type="submit" variant="secondary" className={poolEditAction} disabled={isPending}>
                 Save
               </HorizonAction>
-              <HorizonAction type="button" variant="chip" className={poolEditAction} onClick={() => setIsEditingBase(false)}>
+              <HorizonAction type="button" variant="secondary" className={poolEditAction} onClick={() => setIsEditingBase(false)}>
                 Cancel
               </HorizonAction>
             </div>

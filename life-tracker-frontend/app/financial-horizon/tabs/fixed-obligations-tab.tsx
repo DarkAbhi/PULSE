@@ -465,7 +465,7 @@ export default function FixedObligationsTab({
                     {sub.category_name ?? "Recurring Subscription"}
                   </span>
 
-                  <PulseButton variant="soft" size="sm"
+                  <PulseButton variant="secondary" size="sm"
                     onClick={() => {
                       if (onEditSubscription) {
                         onEditSubscription(sub);

@@ -4,8 +4,7 @@ import { fn } from "storybook/test";
 import PulseButton, { type PulseButtonVariant } from "@/app/components/design-system/pulse-button";
 
 const textVariants = [
-  "primary", "secondary", "tertiary", "soft", "chip", "outline",
-  "filledDanger", "onHero",
+  "primary", "secondary", "outline", "ghost", "destructive", "link",
 ] satisfies PulseButtonVariant[];
 
 const meta = {

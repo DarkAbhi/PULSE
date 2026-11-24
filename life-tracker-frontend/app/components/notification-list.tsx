@@ -81,7 +81,7 @@ function NotificationCard({ notification, onDismiss }: { notification: AppNotifi
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-action">{notification.source}</p>
             <h2 className="mt-1 font-semibold text-foreground">{notification.title}</h2>
           </div>
-          <PulseButton variant="tertiary" size="sm"
+          <PulseButton variant="ghost" size="sm"
             aria-label={`Dismiss ${notification.title}`}
             disabled={isDismissing}
             onClick={(event) => {

@@ -174,7 +174,7 @@ type PulseDialogActionProps = Omit<PulseButtonProps, "variant"> & {
 const actionVariants: Record<NonNullable<PulseDialogActionProps["variant"]>, PulseButtonVariant> = {
   primary: "primary",
   secondary: "outline",
-  destructive: "filledDanger",
+  destructive: "destructive",
 };
 
 export function PulseDialogAction({ className = "", variant = "primary", ...props }: PulseDialogActionProps) {

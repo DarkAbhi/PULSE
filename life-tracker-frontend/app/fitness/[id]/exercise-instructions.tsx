@@ -22,7 +22,7 @@ export default function ExerciseInstructions({ name, metadata, instructions }: {
 
   return (
     <>
-      <PulseButton type="button" variant="chip" size="lg" labelStyle="strong"
+      <PulseButton type="button" variant="secondary" size="lg" labelStyle="strong"
         aria-haspopup="dialog" onClick={() => dialogRef.current?.showModal()}
         icon={<Info size={18} aria-hidden="true" />}>
         Instructions

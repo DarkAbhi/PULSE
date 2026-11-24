@@ -193,7 +193,7 @@ export default function NotificationDropdown({
                             />
                           </p>
                         </div>
-                        <PulseButton variant="tertiary" size="sm"
+                        <PulseButton variant="ghost" size="sm"
                           type="button"
                           aria-label={`Dismiss ${n.title}`}
                           onClick={() => handleDismiss(n.id)}

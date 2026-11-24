@@ -18,12 +18,10 @@ import PulseTabs from "@/app/components/design-system/pulse-tabs";
 const buttonLabels = {
   primary: "Primary",
   secondary: "Secondary",
-  tertiary: "Tertiary",
-  soft: "Soft",
-  chip: "Chip",
   outline: "Outline",
-  filledDanger: "Filled danger",
-  onHero: "On hero",
+  ghost: "Ghost",
+  destructive: "Destructive",
+  link: "Link",
 } satisfies Record<PulseButtonVariant, string>;
 
 const iconButtonLabels = {
@@ -33,7 +31,7 @@ const iconButtonLabels = {
   danger: "Danger",
 } satisfies Record<PulseIconButtonVariant, string>;
 
-const textButtonVariants = (Object.keys(buttonLabels) as PulseButtonVariant[]).filter(variant => variant !== "onHero");
+const textButtonVariants = Object.keys(buttonLabels) as PulseButtonVariant[];
 const iconButtonVariants = Object.keys(iconButtonLabels) as PulseIconButtonVariant[];
 
 const workoutOptions = [
@@ -71,7 +69,7 @@ function ButtonsPreview() {
       </div>
       <div className="flex flex-wrap items-center gap-2.5">
         <div className="rounded-xl bg-(image:--primary-gradient) p-1.5">
-          <PulseButton type="button" variant="onHero">{buttonLabels.onHero}</PulseButton>
+          <PulseButton type="button" variant="secondary" className="[--btn-cancel-bg:white] [--btn-cancel-text:var(--on-hero-action)] [--btn-cancel-hover:var(--on-hero-hover)]">On hero</PulseButton>
         </div>
         <PulseDropdown trigger={({ isOpen, ...triggerProps }) => (
           <PulseButton {...triggerProps} type="button" variant="secondary" icon={<ChevronDown className={`size-4 transition-transform motion-reduce:transition-none ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />} iconPosition="end">
@@ -196,7 +194,7 @@ function DialogsPreview() {
     <PreviewSection title="Dialogs">
       <div className="flex flex-wrap gap-2.5">
         <PulseButton type="button" onClick={() => setDialog("settings")}>Open dialog</PulseButton>
-        <PulseButton type="button" variant="filledDanger" onClick={() => setDialog("confirmation")}>Open confirmation</PulseButton>
+        <PulseButton type="button" variant="destructive" onClick={() => setDialog("confirmation")}>Open confirmation</PulseButton>
       </div>
       <p role="status" className="text-sm text-muted-foreground">{action}</p>
       {dialog === "settings" && (

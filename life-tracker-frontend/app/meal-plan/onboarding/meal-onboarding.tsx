@@ -206,7 +206,7 @@ export default function MealOnboarding({ notifications, initial, editing = false
         notifications={notifications}
       />
       {!editing && <div className="flex justify-end">
-        <PulseButton variant="tertiary" onClick={() => void commit(true)} disabled={busy}>Skip setup</PulseButton>
+        <PulseButton variant="ghost" onClick={() => void commit(true)} disabled={busy}>Skip setup</PulseButton>
       </div>}
       {failure?.skip && <p className={errorClass} role="alert">{failure.message}</p>}
 

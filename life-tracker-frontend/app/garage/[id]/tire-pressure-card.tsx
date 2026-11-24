@@ -43,7 +43,7 @@ export default function TirePressureCard({
     <section id="tires-air" aria-labelledby="tires-heading" className={detail.section}>
       <div className={detail.sectionHeader}>
         <h2 id="tires-heading" className={detail.sectionTitle}><CircleDot className="size-6" aria-hidden="true" /> Tires &amp; air</h2>
-        <PulseButton variant="chip" size="lg" labelStyle="strong" type="button" aria-haspopup="dialog" onClick={() => setIsOpen(true)}>
+        <PulseButton variant="secondary" size="lg" labelStyle="strong" type="button" aria-haspopup="dialog" onClick={() => setIsOpen(true)}>
           <Pencil className="size-4" aria-hidden="true" /> {hasAnyPressure ? "Edit pressure" : "Set pressure"}
         </PulseButton>
       </div>

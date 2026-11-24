@@ -68,6 +68,9 @@ export async function saveWorkoutScheduleDay(weekday: number, workoutType: strin
     `fitness/workout-schedule/${encodeURIComponent(weekday)}`,
     workoutType, focus, "We couldn't save this scheduled day.",
   );
-  if (result.ok) revalidatePath("/fitness");
+  if (result.ok) {
+    revalidatePath("/fitness");
+    revalidatePath("/quests");
+  }
   return result;
 }

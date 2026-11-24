@@ -35,7 +35,7 @@ export default function QuestGoalsDialog({
           Quest goals
         </h2>
         <p className="mt-1.5 text-(--quest-muted)">
-          {configured ? "Changes take effect at your next midnight." : "Choose the quests you want to start today."}
+          {configured ? "Changes apply today and update today’s XP and hearts." : "Choose the quests you want to start today."}
         </p>
       </header>
 

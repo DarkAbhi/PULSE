@@ -54,8 +54,10 @@ func TestMealQuestUpgradeFromMigration52(t *testing.T) {
 		}
 	}
 
-	// Roll 53 back to the originally published form of 52.
-	step(-1)
+	// Start at the originally published form of 52.
+	if err := migrations.Migrate(52); err != nil {
+		t.Fatal(err)
+	}
 	exec(`
 		WITH legacy_user AS (
 			INSERT INTO users (username, password_hash) VALUES ('legacy-meal-quest', 'test') RETURNING id
@@ -171,26 +173,134 @@ func TestMealPlanDrivesDailyQuest(t *testing.T) {
 	exec("DELETE FROM meal_plans WHERE user_id = $1 AND date = $2::text::date", userID, initial.Today)
 	checkMeals(0, 0, false)
 
+	exec("INSERT INTO meal_plans (user_id, date, name, is_consumed) VALUES ($1, $2::text::date, 'Snack', true)", userID, initial.Today)
+	checkMeals(1, 1, true)
+
 	settings.DailyMeals = false
 	effective, err := repo.SaveSettings(ctx, userID, settings)
 	if err != nil {
 		t.Fatal(err)
 	}
-	today, err := time.Parse(time.DateOnly, initial.Today)
+	if effective != initial.Today {
+		t.Fatalf("opt-out takes effect on %s, want %s", effective, initial.Today)
+	}
+	checkMeals(0, 0, false)
+	if got := overview(); got.Settings.DailyMeals || len(got.TodayQuests) != 1 || got.TodayQuests[0].ID != "daily_steps" ||
+		got.Progress.TodayXP != 0 || got.Progress.LifetimeXP != 0 || got.Progress.Hearts != 0 {
+		t.Fatalf("expected only steps and no meal rewards after opting out: %+v", got)
+	}
+	exec("INSERT INTO meal_plans (user_id, date, name, is_consumed) VALUES ($1, $2::text::date, 'Dinner', true)", userID, initial.Today)
+	checkMeals(0, 0, false)
+
+	settings.DailyMeals = true
+	if _, err := repo.SaveSettings(ctx, userID, settings); err != nil {
+		t.Fatal(err)
+	}
+	checkMeals(2, 2, true)
+	if got := overview(); got.Progress.TodayXP != 20 || got.Progress.Hearts != 1 {
+		t.Fatalf("expected a single meal reward after opting back in: %+v", got.Progress)
+	}
+}
+
+func TestQuestGoalChangesReconcileToday(t *testing.T) {
+	db, dsn, stop := testhelper.StartPostgresWithDSN(t)
+	t.Cleanup(stop)
+
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := today.AddDate(0, 0, 1).Format(time.DateOnly); effective != want {
-		t.Fatalf("opt-out takes effect on %s, want %s", effective, want)
-	}
-	exec("INSERT INTO meal_plans (user_id, date, name) VALUES ($1, $2::text::date, 'Snack')", userID, initial.Today)
-	checkMeals(1, 0, false)
+	t.Cleanup(pool.Close)
+	repo := NewRepository(pool)
 
-	// Shift both revisions back one day to exercise the effective opt-out without waiting for midnight.
-	exec("UPDATE user_quest_settings SET effective_date = effective_date - 1 WHERE user_id = $1 AND daily_meals", userID)
-	exec("UPDATE user_quest_settings SET effective_date = effective_date - 1 WHERE user_id = $1 AND NOT daily_meals", userID)
-	if got := overview(); got.Settings.DailyMeals || len(got.TodayQuests) != 1 || got.TodayQuests[0].ID != "daily_steps" {
-		t.Fatalf("expected only steps after opting out: %+v", got)
+	var userID int64
+	var today string
+	if err := db.QueryRow(`
+		INSERT INTO users (username, password_hash) VALUES ('test-immediate-goals', 'test')
+		RETURNING id, (clock_timestamp() AT TIME ZONE 'UTC')::date::text
+	`).Scan(&userID, &today); err != nil {
+		t.Fatal(err)
 	}
-	checkMeals(0, 0, false)
+	exec := func(query string, args ...any) {
+		t.Helper()
+		if _, err := db.Exec(query, args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Preserve a completed day and supersede the queued change created by the old flow.
+	exec(`
+		INSERT INTO user_quest_settings (user_id, effective_date, gym_workout, activity_rings, step_target)
+		VALUES ($1, $2::text::date - 1, false, false, 4000), ($1, $2::text::date + 1, false, false, 9000)
+	`, userID, today)
+	exec("INSERT INTO quest_days (user_id, day, timezone) VALUES ($1, $2::text::date - 1, 'UTC')", userID, today)
+	exec(`
+		INSERT INTO daily_quests (user_id, day, quest_id, target, progress, xp, hearts)
+		VALUES ($1, $2::text::date - 1, 'daily_steps', 4000, 4000, 20, 1)
+	`, userID, today)
+	exec(`
+		INSERT INTO quest_reward_ledger (user_id, day, quest_id, xp, hearts)
+		VALUES ($1, $2::text::date - 1, 'daily_steps', 20, 1)
+	`, userID, today)
+	exec(`
+		INSERT INTO fitness_activity_rings (user_id, summary_date, steps_count)
+		VALUES ($1, $2::text::date, 5000)
+	`, userID, today)
+
+	save := func(settings Settings) {
+		t.Helper()
+		effective, err := repo.SaveSettings(ctx, userID, settings)
+		if err != nil || effective != today {
+			t.Fatalf("save = (%q, %v), want (%q, nil)", effective, err, today)
+		}
+	}
+	check := func(target, progress int, complete bool) {
+		t.Helper()
+		// Check storage before Overview has a chance to reconcile it.
+		var gotTarget, gotProgress int
+		var gotComplete bool
+		err := db.QueryRow(`
+			SELECT COALESCE(max(q.target), 0), COALESCE(max(q.progress), 0), count(r.quest_id) > 0
+			FROM daily_quests q LEFT JOIN quest_reward_ledger r USING (user_id, day, quest_id)
+			WHERE q.user_id = $1 AND q.day = $2::text::date AND q.quest_id = 'daily_steps'
+		`, userID, today).Scan(&gotTarget, &gotProgress, &gotComplete)
+		if err != nil || gotTarget != target || gotProgress != progress || gotComplete != complete {
+			t.Fatalf("stored steps = %d/%d (complete: %t), err = %v, want %d/%d (complete: %t)",
+				gotProgress, gotTarget, gotComplete, err, progress, target, complete)
+		}
+		overview, err := repo.Overview(ctx, userID, time.Time{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		todayXP, todayHearts := 0, 0
+		if complete {
+			todayXP, todayHearts = 20, 1
+		}
+		p := overview.Progress
+		if p.TodayXP != todayXP || p.LifetimeXP != todayXP+20 || p.Hearts != todayHearts+1 {
+			t.Fatalf("unexpected rewards with today's steps %d/%d: %+v", progress, target, p)
+		}
+		if target == 0 {
+			if overview.Settings.StepTarget != nil || len(overview.TodayQuests) != 0 {
+				t.Fatalf("expected steps disabled: %+v", overview)
+			}
+		} else if overview.Settings.StepTarget == nil || int(*overview.Settings.StepTarget) != target ||
+			len(overview.TodayQuests) != 1 || overview.TodayQuests[0].Completed != complete {
+			t.Fatalf("unexpected current quest or settings: %+v", overview)
+		}
+	}
+
+	check(4000, 4000, true)
+	higher, lower := int32(6000), int32(4500)
+	save(Settings{StepTarget: &higher})
+	check(6000, 5000, false)
+	save(Settings{StepTarget: &lower})
+	check(4500, 4500, true)
+	save(Settings{StepTarget: &lower})
+	check(4500, 4500, true)
+	save(Settings{})
+	check(0, 0, false)
+	save(Settings{StepTarget: &lower})
+	check(4500, 4500, true)
 }

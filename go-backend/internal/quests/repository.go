@@ -164,49 +164,102 @@ func (r *Repository) History(ctx context.Context, userID int64, from, to time.Ti
 }
 
 func (r *Repository) SaveSettings(ctx context.Context, userID int64, settings Settings) (string, error) {
-	var effective time.Time
-	err := pgx.BeginFunc(ctx, r.pool, func(tx pgx.Tx) error {
-		day, zone, _, err := questDate(ctx, tx, userID)
-		if err != nil {
-			return err
-		}
-		var latest time.Time
-		var matches bool
-		err = tx.QueryRow(ctx, `
-			SELECT effective_date,
-				ROW(gym_workout, step_target, activity_rings, sleep_minutes, daily_meals)
-				IS NOT DISTINCT FROM ROW($2::boolean, $3::integer, $4::boolean, $5::integer, $6::boolean)
-			FROM user_quest_settings WHERE user_id = $1 ORDER BY effective_date DESC LIMIT 1
-		`, userID, settings.GymWorkout, settings.StepTarget, settings.ActivityRings,
-			settings.SleepMinutes, settings.DailyMeals).Scan(&latest, &matches)
-		configured := err == nil
-		if !configured && !errors.Is(err, pgx.ErrNoRows) {
-			return err
-		}
-		if matches {
-			effective = latest
+	for {
+		var effective time.Time
+		err := pgx.BeginFunc(ctx, r.pool, func(tx pgx.Tx) error {
+			day, zone, reset, err := questDate(ctx, tx, userID)
+			if err != nil {
+				return err
+			}
+			effective = day
+
+			// An explicit save supersedes settings queued by the old next-day flow.
+			if _, err = tx.Exec(ctx, `
+				DELETE FROM user_quest_settings WHERE user_id = $1 AND effective_date > $2
+			`, userID, day); err != nil {
+				return err
+			}
+			if _, err = tx.Exec(ctx, `
+				INSERT INTO user_quest_settings
+					(user_id, effective_date, gym_workout, step_target, activity_rings, sleep_minutes, daily_meals)
+				VALUES ($1, $2, $3, $4, $5, $6, $7)
+				ON CONFLICT (user_id, effective_date) DO UPDATE SET
+					gym_workout = EXCLUDED.gym_workout, step_target = EXCLUDED.step_target,
+					activity_rings = EXCLUDED.activity_rings, sleep_minutes = EXCLUDED.sleep_minutes, daily_meals = EXCLUDED.daily_meals
+			`, userID, day, settings.GymWorkout, settings.StepTarget, settings.ActivityRings,
+				settings.SleepMinutes, settings.DailyMeals); err != nil {
+				return err
+			}
+			if _, err = tx.Exec(ctx, "SELECT quest_open_day($1, $2, $3)", userID, day, zone); err != nil {
+				return err
+			}
+			if err = applyTodayGoals(ctx, tx, userID, day, zone, settings); err != nil {
+				return err
+			}
+
+			// Retry if the local calendar changed during evaluation.
+			var stillToday bool
+			err = tx.QueryRow(ctx, `
+				SELECT clock_timestamp() < $3 AND quest_user_timezone($1) = $4
+				       AND (clock_timestamp() AT TIME ZONE timezone)::date = day
+				FROM quest_days WHERE user_id = $1 AND day = $2
+			`, userID, day, reset, zone).Scan(&stillToday)
+			if err != nil {
+				return err
+			}
+			if !stillToday {
+				return errQuestDayRolledOver
+			}
 			return nil
+		})
+		if !errors.Is(err, errQuestDayRolledOver) {
+			return effective.Format(time.DateOnly), err
 		}
-		effective = day
-		if configured {
-			effective = day.AddDate(0, 0, 1)
-		}
-		if _, err = tx.Exec(ctx, `
-			INSERT INTO user_quest_settings
-				(user_id, effective_date, gym_workout, step_target, activity_rings, sleep_minutes, daily_meals)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)
-			ON CONFLICT (user_id, effective_date) DO UPDATE SET
-				gym_workout = EXCLUDED.gym_workout, step_target = EXCLUDED.step_target,
-				activity_rings = EXCLUDED.activity_rings, sleep_minutes = EXCLUDED.sleep_minutes, daily_meals = EXCLUDED.daily_meals
-		`, userID, effective, settings.GymWorkout, settings.StepTarget, settings.ActivityRings,
-			settings.SleepMinutes, settings.DailyMeals); err != nil {
-			return err
-		}
-		if configured {
-			return nil
-		}
-		_, err = tx.Exec(ctx, "SELECT quest_open_day($1, $2, $3)", userID, day, zone)
+	}
+}
+
+var errQuestDayRolledOver = errors.New("quest day rolled over while saving goals")
+
+func applyTodayGoals(ctx context.Context, tx pgx.Tx, userID int64, day time.Time, zone string, settings Settings) error {
+	// A timezone change can put today's existing snapshot outside its original local
+	// day. Align that snapshot before evaluating the explicitly edited goals.
+	if _, err := tx.Exec(ctx, `
+		UPDATE quest_days SET timezone = $3
+		WHERE user_id = $1 AND day = $2 AND (clock_timestamp() AT TIME ZONE timezone)::date <> day
+	`, userID, day, zone); err != nil {
 		return err
-	})
-	return effective.Format(time.DateOnly), err
+	}
+
+	// The evaluator handles workout and meal goals from their live schedules.
+	if _, err := tx.Exec(ctx, `
+		WITH goals(quest_id, target) AS (
+			VALUES
+				('daily_steps', $3::integer),
+				('activity_rings', CASE WHEN $4::boolean THEN 3 END),
+				('sleep_goal', $5::integer * 60)
+		), removed AS (
+			DELETE FROM daily_quests q USING goals g
+			WHERE q.user_id = $1 AND q.day = $2 AND q.quest_id = g.quest_id AND g.target IS NULL
+		)
+		INSERT INTO daily_quests (user_id, day, quest_id, target, xp, hearts)
+		SELECT $1, $2, g.quest_id, g.target, d.xp, d.hearts
+		FROM goals g JOIN quest_definitions d ON d.id = g.quest_id
+		WHERE g.target IS NOT NULL
+		ON CONFLICT (user_id, day, quest_id) DO UPDATE SET target = EXCLUDED.target, progress = 0
+		WHERE daily_quests.target <> EXCLUDED.target
+	`, userID, day, settings.StepTarget, settings.ActivityRings, settings.SleepMinutes); err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec(ctx, "SELECT quest_evaluate_day($1, $2)", userID, day); err != nil {
+		return err
+	}
+	// Deletion cascades for disabled quests. An edited target can also invalidate an
+	// existing reward, but a quest that still qualifies keeps its original ledger entry.
+	_, err := tx.Exec(ctx, `
+		DELETE FROM quest_reward_ledger r USING daily_quests q
+		WHERE (r.user_id, r.day, r.quest_id) = (q.user_id, q.day, q.quest_id)
+		  AND q.user_id = $1 AND q.day = $2 AND q.progress < q.target
+	`, userID, day)
+	return err
 }

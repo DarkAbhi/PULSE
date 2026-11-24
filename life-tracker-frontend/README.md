@@ -66,6 +66,20 @@ backend. Browser E2E coverage is paused in CI; retained Playwright journeys can
 be revisited later. Maestro currently covers small native Android smoke tests;
 see [Maestro smoke tests](../maestro/README.md).
 
+## Pulse Design System Storybook
+
+From this directory, run `npm run storybook:install`, then `npm run storybook`
+and open [localhost:6006](http://localhost:6006). The component stories use
+Pulse's Tailwind styles, font, and light and dark themes. Use **Controls** to
+change props, the **Pulse theme** toolbar to switch themes, and the viewport
+toolbar to check phone, tablet, and desktop layouts. The stories use local
+examples and run without a Pulse account, backend, or database.
+
+Add new design-system stories as `*.stories.tsx` under `.storybook/stories/`.
+Import components with `@/`. Run `npm run build-storybook` for a static catalog
+in `storybook-static/`. Storybook packages are installed locally on demand.
+Run `npm run storybook:install` again after a clean `npm ci`.
+
 ## Cards
 
 Use `PulseCard` from `app/components/design-system/pulse-card` for card surfaces,

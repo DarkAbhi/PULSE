@@ -1,6 +1,6 @@
 "use client";
 
-import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 
 import { useState } from "react";
 import { Lock, Eye, EyeOff, CheckCircle2, KeyRound } from "lucide-react";
@@ -141,14 +141,14 @@ export default function ChangePasswordDialog({
                   required
                   className="w-full rounded-xl bg-secondary px-4 py-2.5 pr-10 text-sm text-foreground transition"
                 />
-                <PulseButton variant="icon" size="sm"
+                <PulseIconButton size="sm"
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                   aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
                   {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </PulseButton>
+                </PulseIconButton>
               </div>
             </div>
 
@@ -167,14 +167,14 @@ export default function ChangePasswordDialog({
                   minLength={6}
                   className="w-full rounded-xl bg-secondary px-4 py-2.5 pr-10 text-sm text-foreground transition"
                 />
-                <PulseButton variant="icon" size="sm"
+                <PulseIconButton size="sm"
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
                   aria-label={showNewPassword ? "Hide new password" : "Show new password"}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
                   {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </PulseButton>
+                </PulseIconButton>
               </div>
             </div>
 
@@ -192,14 +192,14 @@ export default function ChangePasswordDialog({
                   required
                   className="w-full rounded-xl bg-secondary px-4 py-2.5 pr-10 text-sm text-foreground transition"
                 />
-                <PulseButton variant="icon" size="sm"
+                <PulseIconButton size="sm"
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </PulseButton>
+                </PulseIconButton>
               </div>
             </div>
 

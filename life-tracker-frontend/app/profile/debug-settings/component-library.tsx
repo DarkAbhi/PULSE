@@ -4,6 +4,7 @@ import { useId, useState, type ReactNode } from "react";
 import { Plus, Settings2, Trash2, UserRound } from "lucide-react";
 import PulseAppBar, { appBarControl, PulseAppBarBell } from "@/app/components/design-system/pulse-app-bar";
 import PulseButton, { type PulseButtonVariant } from "@/app/components/design-system/pulse-button";
+import PulseIconButton, { type PulseIconButtonVariant } from "@/app/components/design-system/pulse-icon-button";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import PulseChoiceGroup, { PulseChoiceControl } from "@/app/components/design-system/pulse-choice-group";
 import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
@@ -24,15 +25,17 @@ const buttonLabels = {
   filledDanger: "Filled danger",
   onHero: "On hero",
   menuItem: "Menu item",
-  icon: "Icon",
-  iconSecondary: "Icon secondary",
-  iconOverlay: "Icon overlay",
-  iconDanger: "Icon danger",
 } satisfies Record<PulseButtonVariant, string>;
 
-const buttonVariants = Object.keys(buttonLabels) as PulseButtonVariant[];
-const textButtonVariants = buttonVariants.filter(variant => !variant.startsWith("icon") && variant !== "onHero" && variant !== "menuItem");
-const iconButtonVariants = buttonVariants.filter(variant => variant.startsWith("icon"));
+const iconButtonLabels = {
+  plain: "Plain",
+  secondary: "Secondary",
+  overlay: "Overlay",
+  danger: "Danger",
+} satisfies Record<PulseIconButtonVariant, string>;
+
+const textButtonVariants = (Object.keys(buttonLabels) as PulseButtonVariant[]).filter(variant => variant !== "onHero" && variant !== "menuItem");
+const iconButtonVariants = Object.keys(iconButtonLabels) as PulseIconButtonVariant[];
 
 const workoutOptions = [
   { value: "strength", label: "Strength" },
@@ -77,16 +80,16 @@ function ButtonsPreview() {
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {iconButtonVariants.map(variant => {
-          const Icon = variant === "iconDanger" ? Trash2 : Plus;
+          const Icon = variant === "danger" ? Trash2 : Plus;
 
           return (
             <div key={variant} className="grid justify-items-center gap-1.5 text-center">
-              <div className={variant === "iconOverlay" ? "rounded-full bg-(image:--primary-gradient) text-white" : undefined}>
-                <PulseButton type="button" variant={variant} aria-label={buttonLabels[variant]}>
+              <div className={variant === "overlay" ? "rounded-full bg-(image:--primary-gradient) text-white" : undefined}>
+                <PulseIconButton type="button" variant={variant} aria-label={iconButtonLabels[variant]}>
                   <Icon className="size-4" aria-hidden="true" />
-                </PulseButton>
+                </PulseIconButton>
               </div>
-              <span className="text-xs text-muted-foreground">{buttonLabels[variant]}</span>
+              <span className="text-xs text-muted-foreground">{iconButtonLabels[variant]}</span>
             </div>
           );
         })}

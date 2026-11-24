@@ -13,6 +13,7 @@ import { useTimeZone } from "@/app/components/profile-preferences-provider";
 import HorizonSegments from "@/app/financial-horizon/components/horizon-segments";
 import HorizonAction from "@/app/financial-horizon/components/horizon-action";
 import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 import SectionHeader from "@/app/financial-horizon/components/section-header";
 import HorizonTag from "@/app/financial-horizon/components/horizon-tag";
 import HorizonEmpty from "@/app/financial-horizon/components/horizon-empty";
@@ -376,18 +377,20 @@ export default function FixedObligationsTab({
                 )}
 
                 <div className="mt-4 flex items-center justify-end gap-2 border-t border-divider pt-3">
-                  <PulseButton variant="icon" size="lg"
+                  <PulseIconButton size="lg"
                     onClick={() => onOpenEditDeduction(item)}
                     title="Edit obligation"
+                    aria-label="Edit obligation"
                   >
                     <Icon name="edit" className="size-5" />
-                  </PulseButton>
-                  <PulseButton variant="iconDanger" size="lg"
+                  </PulseIconButton>
+                  <PulseIconButton variant="danger" size="lg"
                     onClick={() => onDeleteDeduction(item)}
                     title="Delete obligation"
+                    aria-label="Delete obligation"
                   >
                     <Icon name="trash" className="size-5" />
-                  </PulseButton>
+                  </PulseIconButton>
                 </div>
               </PulseCard>
             );

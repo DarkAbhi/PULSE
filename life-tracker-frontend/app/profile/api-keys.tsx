@@ -7,6 +7,7 @@ import { useTimeZone } from "@/app/components/profile-preferences-provider";
 import { useRef, useState } from "react";
 import { Check, Copy, Info, KeyRound, Plus, Trash2 } from "lucide-react";
 import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import { copyApiKey } from "@/app/profile/copy-api-key";
@@ -154,15 +155,15 @@ export default function APIKeys({ initialKeys }: { initialKeys: APIKey[] | null 
                     <time dateTime={key.created_at}>{formatInstant(key.created_at, timeZone, { dateStyle: "medium" })}</time>
                   </td>
                   <td role="cell" className={`${keyTableCellClass} text-right`}>
-                    <PulseButton
+                    <PulseIconButton
                       type="button"
-                      variant="iconDanger"
+                      variant="danger"
                       size="lg"
                       aria-label={`Revoke ${key.name}`}
                       onClick={() => { setError(""); setRevokeKey(key); }}
                     >
                       <Trash2 className="size-5" aria-hidden="true" />
-                    </PulseButton>
+                    </PulseIconButton>
                   </td>
                 </tr>
               ))}

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Pencil } from "lucide-react";
-import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 import AddExerciseForm from "@/app/fitness/[id]/add-exercise-form";
 import type { SavedExercise } from "@/app/fitness/[id]/actions";
 
@@ -17,11 +17,11 @@ export default function EditExerciseButton({ visitID, exercise }: { visitID: str
 
   return (
     <>
-      <PulseButton ref={triggerRef} type="button" variant="icon" size="lg"
+      <PulseIconButton ref={triggerRef} type="button" size="lg"
         aria-haspopup="dialog" aria-label={`Edit ${exercise.name}`}
         onClick={() => setIsEditing(true)}>
         <Pencil size={19} aria-hidden="true" />
-      </PulseButton>
+      </PulseIconButton>
       {isEditing && <AddExerciseForm visitID={visitID} exercise={exercise} onClose={closeEditor} />}
     </>
   );

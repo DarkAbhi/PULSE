@@ -1,6 +1,7 @@
 "use client";
 
 import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 import { createContext, useContext, useEffect, useId, useRef, useState, useTransition, type ReactNode } from "react";
@@ -288,11 +289,11 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
               value={set.weight}
             />
             {sets.length > 1 && (
-              <PulseButton type="button" variant="iconDanger"
+              <PulseIconButton type="button" variant="danger"
                 aria-label={`Remove set ${index + 1}`} disabled={isPending}
                 onClick={() => setSets((current) => current.filter((_, i) => i !== index))}>
                 <Trash2 size={18} aria-hidden="true" />
-              </PulseButton>
+              </PulseIconButton>
             )}
           </div>
         ))}

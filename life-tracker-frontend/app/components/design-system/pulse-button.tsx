@@ -11,11 +11,7 @@ export type PulseButtonVariant =
   | "outlineDanger"
   | "filledDanger"
   | "onHero"
-  | "menuItem"
-  | "icon"
-  | "iconSecondary"
-  | "iconOverlay"
-  | "iconDanger";
+  | "menuItem";
 export type PulseButtonSize = "sm" | "md" | "lg" | "xl" | "touch";
 
 export interface PulseButtonProps extends ComponentPropsWithRef<"button"> {
@@ -39,10 +35,6 @@ const variants: Record<PulseButtonVariant, string> = {
   filledDanger: "bg-destructive text-destructive-foreground enabled:hover:brightness-95",
   onHero: "bg-white text-(--on-hero-action) enabled:hover:bg-(--on-hero-hover)",
   menuItem: "w-full text-foreground enabled:hover:bg-primary/10 enabled:hover:text-action",
-  icon: "text-muted-foreground enabled:hover:bg-chip enabled:hover:text-foreground",
-  iconSecondary: "bg-secondary text-foreground enabled:hover:bg-surface-strong",
-  iconOverlay: "text-inherit enabled:hover:bg-white/15",
-  iconDanger: "text-muted-foreground enabled:hover:bg-chip enabled:hover:text-destructive",
 };
 
 const sizes: Record<PulseButtonSize, string> = {
@@ -53,19 +45,10 @@ const sizes: Record<PulseButtonSize, string> = {
   touch: "min-h-12.5 gap-2 px-3.5 py-2",
 };
 
-const iconSizes: Record<PulseButtonSize, string> = {
-  sm: "size-8",
-  md: "size-10",
-  lg: "size-11",
-  xl: "size-12",
-  touch: "size-12.5",
-};
-
-/** Shared pill-shaped button for actions. Native button props, including onClick and type, pass through. */
+/** Shared pill-shaped button for labelled actions; use PulseIconButton for icon-only actions. Native button props, including onClick and type, pass through. */
 export default function PulseButton(
   { children, className = "", icon, iconPosition = "start", size = "md", labelStyle = "default", variant = "primary", ...props }: PulseButtonProps,
 ) {
-  const isIconButton = variant.startsWith("icon");
   const labelSize = labelStyle === "strong" ? "text-control" : size === "sm" ? "text-xs" : "text-sm";
   const alignment = variant === "menuItem" ? "justify-start font-medium" : "justify-center";
   const weight = variant === "menuItem" ? "" : labelStyle === "strong" ? "font-bold" : "font-semibold";
@@ -73,7 +56,7 @@ export default function PulseButton(
   return (
     <button
       {...props}
-      className={`inline-flex items-center rounded-full transition motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50 ${alignment} ${weight} ${isIconButton ? iconSizes[size] : `${sizes[size]} ${labelSize}`} ${variants[variant]} ${className}`}
+      className={`inline-flex items-center rounded-full transition motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50 ${alignment} ${weight} ${sizes[size]} ${labelSize} ${variants[variant]} ${className}`}
     >
       {iconPosition === "start" && icon}
       {children}

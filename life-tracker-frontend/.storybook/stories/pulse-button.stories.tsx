@@ -7,16 +7,13 @@ const textVariants = [
   "primary", "secondary", "tertiary", "soft", "chip", "outline",
   "destructive", "outlineDanger", "filledDanger", "onHero", "menuItem",
 ] satisfies PulseButtonVariant[];
-const iconVariants = [
-  "icon", "iconSecondary", "iconOverlay", "iconDanger",
-] satisfies PulseButtonVariant[];
 
 const meta = {
   title: "Design System/Button",
   component: PulseButton,
   args: { children: "Save", variant: "primary", size: "md", onClick: fn() },
   argTypes: {
-    variant: { control: "select", options: [...textVariants, ...iconVariants] },
+    variant: { control: "select", options: textVariants },
     size: { control: "inline-radio", options: ["sm", "md", "lg", "xl", "touch"] },
     disabled: { control: "boolean" },
     children: { control: "text" },
@@ -40,11 +37,6 @@ export const Variants: Story = {
     <div className="flex max-w-3xl flex-wrap items-center gap-3">
       {textVariants.map(variant => (
         <PulseButton key={variant} type="button" variant={variant}>{variant}</PulseButton>
-      ))}
-      {iconVariants.map(variant => (
-        <PulseButton key={variant} type="button" variant={variant} aria-label={variant} title={variant}>
-          <Plus aria-hidden="true" className="size-4" />
-        </PulseButton>
       ))}
     </div>
   ),

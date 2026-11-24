@@ -4,6 +4,7 @@ import { createContext, ReactNode, useContext, useEffect, useLayoutEffect, useId
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import PulseButton, { type PulseButtonProps, type PulseButtonVariant } from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 
 let openDialogs = 0;
 let previousBodyOverflow = "";
@@ -128,7 +129,7 @@ export function PulseDialogHeader({
         {description && <p className="mt-1.5 text-[0.9rem] text-muted-foreground">{description}</p>}
       </div>
       {onClose && (
-        <PulseButton
+        <PulseIconButton
           aria-label={closeLabel}
           autoFocus={closeAutoFocus}
           className="shrink-0"
@@ -136,10 +137,9 @@ export function PulseDialogHeader({
           onClick={onClose}
           type="button"
           size="lg"
-          variant="icon"
         >
           <X className="size-5" aria-hidden="true" />
-        </PulseButton>
+        </PulseIconButton>
       )}
     </header>
   );

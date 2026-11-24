@@ -14,7 +14,7 @@ import { useTimeZone } from "@/app/components/profile-preferences-provider";
 
 import HorizonSegments from "@/app/financial-horizon/components/horizon-segments";
 import HorizonAction from "@/app/financial-horizon/components/horizon-action";
-import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 import SectionHeader from "@/app/financial-horizon/components/section-header";
 import HorizonTag from "@/app/financial-horizon/components/horizon-tag";
 import HorizonEmpty from "@/app/financial-horizon/components/horizon-empty";
@@ -212,18 +212,20 @@ export default function TransactionsTab({
                     {isCredit ? "+" : "-"}{formatMoney(tx.amount, summary.currency)}
                   </span>
                   <div className="flex items-center gap-1">
-                    <PulseButton variant="icon" size="lg"
+                    <PulseIconButton size="lg"
                       onClick={() => onOpenEditTransaction(tx)}
                       title="Edit transaction"
+                      aria-label="Edit transaction"
                     >
                       <Icon name="edit" className="size-5" />
-                    </PulseButton>
-                    <PulseButton variant="iconDanger" size="lg"
+                    </PulseIconButton>
+                    <PulseIconButton variant="danger" size="lg"
                       onClick={() => onConfirmDeleteTransaction(tx)}
                       title="Delete transaction"
+                      aria-label="Delete transaction"
                     >
                       <Icon name="trash" className="size-5" />
-                    </PulseButton>
+                    </PulseIconButton>
                   </div>
                 </div>
               </PulseCard>

@@ -1,6 +1,6 @@
 "use client";
 
-import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 
 import { useState, useEffect, useTransition } from "react";
 import { deleteAirFill, deleteFuelFill } from "@/app/garage/[id]/actions";
@@ -44,8 +44,8 @@ export default function DeleteButton({
 
   return (
     <>
-      <PulseButton
-        variant="iconDanger"
+      <PulseIconButton
+        variant="danger"
         size="lg"
         onClick={() => setIsOpen(true)}
         type="button"
@@ -53,7 +53,7 @@ export default function DeleteButton({
         aria-label={kind === "air-fills" ? "Delete air fill" : "Delete fuel fill-up"}
       >
         <Trash2 className="size-5" aria-hidden="true" />
-      </PulseButton>
+      </PulseIconButton>
 
       <PulseConfirmationDialog
         isOpen={isOpen}
@@ -74,13 +74,13 @@ export default function DeleteButton({
           role="alert"
         >
           <span className="text-sm font-medium">{toastError}</span>
-          <PulseButton variant="iconDanger" size="sm"
+          <PulseIconButton variant="danger" size="sm"
             onClick={() => setToastError("")}
             type="button"
             aria-label="Close"
           >
             &times;
-          </PulseButton>
+          </PulseIconButton>
         </div>
       )}
     </>

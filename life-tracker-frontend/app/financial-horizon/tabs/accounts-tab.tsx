@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import HorizonAction from "@/app/financial-horizon/components/horizon-action";
-import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { Icon } from "@/app/financial-horizon/components/horizon-icon";
 import SectionHeader from "@/app/financial-horizon/components/section-header";
@@ -99,7 +99,7 @@ export default function AccountsTab({ currency }: { currency: string }) {
               </p>
             </div>
             <div className="flex gap-2">
-              <PulseButton variant="icon" size="lg" disabled={pending} onClick={() => open(account)} aria-label={`Edit ${account.display_name}`}><Icon name="edit" className="size-5" /></PulseButton>
+              <PulseIconButton size="lg" disabled={pending} onClick={() => open(account)} aria-label={`Edit ${account.display_name}`}><Icon name="edit" className="size-5" /></PulseIconButton>
               <HorizonAction variant="outline" disabled={pending} onClick={() => archive(account)} aria-label={`${account.archived_at ? "Restore" : "Archive"} ${account.display_name}`}>
                 {account.archived_at ? "Restore" : "Archive"}
               </HorizonAction>

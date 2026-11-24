@@ -1,6 +1,6 @@
 "use client";
 
-import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
@@ -25,8 +25,8 @@ export default function MaintenanceRecordActions({ vehicleId, recordId }: { vehi
     <Link className={detail.iconLink} aria-label="Edit maintenance record" href={`/garage/${vehicleId}?edit-maintenance=${recordId}`}>
       <Pencil className="size-5" aria-hidden="true" />
     </Link>
-    <PulseButton
-      variant="iconDanger"
+    <PulseIconButton
+      variant="danger"
       size="lg"
       onClick={() => setIsOpen(true)}
       type="button"
@@ -34,7 +34,7 @@ export default function MaintenanceRecordActions({ vehicleId, recordId }: { vehi
       aria-haspopup="dialog"
     >
       <Trash2 className="size-5" aria-hidden="true" />
-    </PulseButton>
+    </PulseIconButton>
     <PulseConfirmationDialog isOpen={isOpen} onClose={() => setIsOpen(false)} onConfirm={remove} title="Delete this record?" description="This will permanently remove this maintenance or expense record." confirmText="Yes, delete" confirmLoadingText="Deleting…" isLoading={isPending} error={error} variant="destructive" />
   </>;
 }

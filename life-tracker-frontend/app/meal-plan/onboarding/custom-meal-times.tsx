@@ -4,6 +4,7 @@ import { useEffect, useId, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { Clock, Loader2, Plus, X } from "lucide-react";
 import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import { createMealTimeAction, deleteMealTimeAction, type MealTime } from "@/app/meal-plan/actions";
@@ -93,10 +94,10 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
     {times.map(time => (
       <span key={time.id} className={`${pillClass} border-transparent pr-0.5 pl-4 font-semibold wrap-anywhere ${gradientClass}`}>
         <span>{time.name}</span>
-        <PulseButton variant="icon" className="shrink-0 [--foreground:white] [--muted-foreground:white] [--secondary:transparent]" type="button" aria-label={`Delete ${time.name}`}
+        <PulseIconButton className="shrink-0 [--foreground:white] [--muted-foreground:white] [--secondary:transparent]" type="button" aria-label={`Delete ${time.name}`}
           onClick={() => { setDeleteError(""); setMealTimeToDelete(time); }}>
           <X className="size-6 rounded-full bg-white/20 p-1 stroke-3" aria-hidden="true" />
-        </PulseButton>
+        </PulseIconButton>
       </span>
     ))}
     <PulseButton variant="outline" size="lg" labelStyle="strong" className="max-w-full border-dashed text-left hover:border-(--meal-accent)" type="button"

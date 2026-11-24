@@ -2,7 +2,7 @@
 import { useTimeZone } from "@/app/components/profile-preferences-provider";
 import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
 
-import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -112,13 +112,13 @@ export default function EditFuelModal({ vehicleId, fill }: EditFuelModalProps) {
           role="alert"
         >
           <span className="text-sm font-medium">{toastError}</span>
-          <PulseButton variant="iconDanger" size="sm"
+          <PulseIconButton variant="danger" size="sm"
             onClick={() => setToastError("")}
             type="button"
             aria-label="Close"
           >
             &times;
-          </PulseButton>
+          </PulseIconButton>
         </div>
       )}
     </>

@@ -1,6 +1,7 @@
 "use client";
 
 import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 
 import { useEffect, useId, useOptimistic, useRef, useState, useTransition } from "react";
 import Link from "next/link";
@@ -90,8 +91,8 @@ export default function NotificationDropdown({
           <PulseAppBarBell hasUnread={unreadCount > 0} />
         </button>
       ) : (
-        <PulseButton
-          variant="iconOverlay"
+        <PulseIconButton
+          variant="overlay"
           size="lg"
           ref={buttonRef}
           type="button"
@@ -111,7 +112,7 @@ export default function NotificationDropdown({
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
-        </PulseButton>
+        </PulseIconButton>
       )}
 
       {/* Dropdown panel */}
@@ -134,13 +135,13 @@ export default function NotificationDropdown({
                 </p>
               )}
             </div>
-            <PulseButton variant="icon" size="sm"
+            <PulseIconButton size="sm"
               type="button"
               aria-label="Close notifications"
               onClick={closeMenu}
             >
               <X className="h-4 w-4" />
-            </PulseButton>
+            </PulseIconButton>
           </div>
 
           {/* Body */}

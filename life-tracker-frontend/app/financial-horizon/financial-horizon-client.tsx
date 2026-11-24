@@ -7,7 +7,7 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 
 import { useCurrency, useTimeZone } from "@/app/components/profile-preferences-provider";
 
-import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 
 import { useState, useTransition, useEffect, useMemo, type ReactNode } from "react";
 import dynamic from "next/dynamic";
@@ -734,9 +734,9 @@ export default function FinancialHorizonClient({
             role="alert"
           >
             <span>{errorMsg}</span>
-            <PulseButton variant="iconDanger" size="sm" aria-label="Dismiss error" onClick={() => setErrorMsg("")}>
+            <PulseIconButton variant="danger" size="sm" aria-label="Dismiss error" onClick={() => setErrorMsg("")}>
               <X aria-hidden="true" className="size-4" />
-            </PulseButton>
+            </PulseIconButton>
           </div>
         )}
 

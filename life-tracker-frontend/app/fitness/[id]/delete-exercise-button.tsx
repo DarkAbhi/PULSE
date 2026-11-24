@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
-import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import { deleteExercise } from "@/app/fitness/[id]/actions";
 
@@ -26,14 +26,14 @@ export default function DeleteExerciseButton({ visitID, exerciseID, exerciseName
 
   return (
     <>
-      <PulseButton type="button" variant="iconDanger" size="lg"
+      <PulseIconButton type="button" variant="danger" size="lg"
         title="Delete exercise"
         aria-label={`Delete ${exerciseName}`}
         disabled={isPending}
         onClick={() => { setError(""); setIsOpen(true); }}
       >
         <Trash2 aria-hidden="true" size={19} />
-      </PulseButton>
+      </PulseIconButton>
       <PulseConfirmationDialog
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}

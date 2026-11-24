@@ -4,6 +4,7 @@ import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { formatDuration } from "@/app/fitness/[id]/format-duration.mjs";
@@ -69,12 +70,12 @@ export default function FitnessCalendar({ today, workoutsByDate, schedule, summa
                   Log Visit
                 </PulseButton>
               )}
-              <PulseButton type="button" variant="iconSecondary" size="lg" aria-label="Previous month" onClick={() => navigateMonth(-1)}>
+              <PulseIconButton type="button" variant="secondary" size="lg" aria-label="Previous month" onClick={() => navigateMonth(-1)}>
                 <ChevronLeft size={20} aria-hidden="true" />
-              </PulseButton>
-              <PulseButton type="button" variant="iconSecondary" size="lg" aria-label="Next month" onClick={() => navigateMonth(1)}>
+              </PulseIconButton>
+              <PulseIconButton type="button" variant="secondary" size="lg" aria-label="Next month" onClick={() => navigateMonth(1)}>
                 <ChevronRight size={20} aria-hidden="true" />
-              </PulseButton>
+              </PulseIconButton>
             </div>
           </div>
           <div role="group" aria-label="Select a date" className="grid grid-cols-7 gap-1 sm:gap-2">

@@ -39,6 +39,7 @@ import {
   updateMealPlanConsumedAction,
 } from "@/app/meal-plan/actions";
 import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { mealSlotColors, type MealSlot } from "@/app/meal-plan/meal-visuals";
 import { addDays, formatYMD, getMonday, mealWeekBounds, parseYMD } from "@/app/meal-plan/week";
@@ -315,9 +316,9 @@ export default function MealPlanClient({
               {meal.name}
             </span>
           </button>
-          <PulseButton
+          <PulseIconButton
             type="button"
-            variant="iconDanger"
+            variant="danger"
             size="lg"
             className="shrink-0"
             onClick={() => { setDeleteError(""); setMealToDelete(meal); }}
@@ -325,7 +326,7 @@ export default function MealPlanClient({
             disabled={isPending}
           >
             <X className="size-5" aria-hidden="true" />
-          </PulseButton>
+          </PulseIconButton>
         </li>
       ))}
     </ul>
@@ -348,17 +349,17 @@ export default function MealPlanClient({
                 )}
               </h2>
               <div className="flex items-center gap-2">
-                <PulseButton variant="iconSecondary" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(-7)} aria-label="Previous week">
+                <PulseIconButton variant="secondary" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(-7)} aria-label="Previous week">
                   <ChevronLeft className="size-5" aria-hidden="true" />
-                </PulseButton>
+                </PulseIconButton>
                 <PulseButton variant="primary" size="xl" labelStyle="strong" className={styles.primaryAction} type="button"
                   onClick={handleToday} disabled={isToday} icon={<LocateFixed className="size-5" aria-hidden="true" />}
                 >
                   Today
                 </PulseButton>
-                <PulseButton variant="iconSecondary" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(7)} aria-label="Next week">
+                <PulseIconButton variant="secondary" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(7)} aria-label="Next week">
                   <ChevronRight className="size-5" aria-hidden="true" />
-                </PulseButton>
+                </PulseIconButton>
               </div>
             </div>
 

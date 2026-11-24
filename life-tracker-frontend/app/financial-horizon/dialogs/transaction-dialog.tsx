@@ -156,7 +156,7 @@ export default function TransactionDialog({
       onDismiss={isPending ? undefined : onClose}
       size="md"
     >
-        <PulseDialogHeader id={titleId} icon={<Receipt className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+        <PulseDialogHeader id={titleId} icon={<Receipt className="size-5" />}>
           {editingTransaction ? "Edit Transaction" : "Log New Transaction"}
         </PulseDialogHeader>
 

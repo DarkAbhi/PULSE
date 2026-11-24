@@ -2,9 +2,7 @@
 
 import { createContext, ReactNode, useContext, useEffect, useLayoutEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
 import PulseButton, { type PulseButtonProps, type PulseButtonVariant } from "@/app/components/design-system/pulse-button";
-import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 
 let openDialogs = 0;
 let previousBodyOverflow = "";
@@ -100,10 +98,6 @@ type PulseDialogHeaderProps = {
   children: ReactNode;
   description?: ReactNode;
   icon?: ReactNode;
-  onClose?: () => void;
-  closeDisabled?: boolean;
-  closeLabel?: string;
-  closeAutoFocus?: boolean;
 };
 
 export function PulseDialogHeader({
@@ -111,10 +105,6 @@ export function PulseDialogHeader({
   children,
   description,
   icon,
-  onClose,
-  closeDisabled,
-  closeLabel = "Close",
-  closeAutoFocus,
 }: PulseDialogHeaderProps) {
   return (
     <header className="flex items-center gap-2.5">
@@ -123,19 +113,6 @@ export function PulseDialogHeader({
         <h2 className="text-[1.6rem] leading-[1.15] font-extrabold tracking-[-0.03em]" id={id}>{children}</h2>
         {description && <p className="mt-1.5 text-[0.9rem] text-muted-foreground">{description}</p>}
       </div>
-      {onClose && (
-        <PulseIconButton
-          aria-label={closeLabel}
-          autoFocus={closeAutoFocus}
-          className="shrink-0"
-          disabled={closeDisabled}
-          onClick={onClose}
-          type="button"
-          size="lg"
-        >
-          <X className="size-5" aria-hidden="true" />
-        </PulseIconButton>
-      )}
     </header>
   );
 }

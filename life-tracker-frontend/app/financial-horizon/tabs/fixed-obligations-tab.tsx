@@ -192,8 +192,6 @@ export default function FixedObligationsTab({
           <PulseDialogHeader
             id={titleId}
             icon={<Icon name="calendar" className="size-5" />}
-            onClose={onCancelDeductionForm}
-            closeDisabled={isPending}
           >
             {editingDeductionId !== null ? "Edit Fixed Obligation" : "Add Fixed Obligation"}
           </PulseDialogHeader>

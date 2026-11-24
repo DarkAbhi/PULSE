@@ -926,12 +926,10 @@ export default function FinancialHorizonClient({
 
       {/* Subscription Linked Transactions Dialog */}
       {viewingSubTransactions && (
-        <PulseDialog size="md" labelledBy="subscription-payment-history-title">
+        <PulseDialog size="md" labelledBy="subscription-payment-history-title" onDismiss={() => setViewingSubTransactions(null)}>
             <PulseDialogHeader
               id="subscription-payment-history-title"
               description={`${subTransactionsList.length} recorded payments • Total spent: ${formatMoney(subTransactionsList.reduce((sum, t) => sum + t.amount, 0), summary.currency)}`}
-              onClose={() => setViewingSubTransactions(null)}
-              closeLabel="Close transactions"
             >
               {viewingSubTransactions.name} Payment History
             </PulseDialogHeader>

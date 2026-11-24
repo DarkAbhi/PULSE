@@ -70,7 +70,7 @@ export default function PlannedPurchaseDialog({
       labelledBy={titleId}
       onDismiss={isPending ? undefined : onClose}
     >
-        <PulseDialogHeader id={titleId} icon={<ShoppingBag className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+        <PulseDialogHeader id={titleId} icon={<ShoppingBag className="size-5" />}>
           Add Planned Purchase
         </PulseDialogHeader>
 

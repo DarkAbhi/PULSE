@@ -199,7 +199,7 @@ function DialogsPreview() {
       <p role="status" className="text-sm text-muted-foreground">{action}</p>
       {dialog === "settings" && (
         <PulseDialog labelledBy={titleId} onDismiss={close}>
-          <PulseDialogHeader id={titleId} description="Preview a dialog with a title, close button, and footer actions." icon={<Settings2 className="size-5" />} onClose={close}>Workout settings</PulseDialogHeader>
+          <PulseDialogHeader id={titleId} description="Preview a dialog with a title and footer actions." icon={<Settings2 className="size-5" />}>Workout settings</PulseDialogHeader>
           <PulseDialogActions>
             <PulseDialogAction type="button" variant="secondary" onClick={close}>Cancel</PulseDialogAction>
             <PulseDialogAction type="button" onClick={() => { setAction("Sample settings saved."); close(); }}>Save</PulseDialogAction>

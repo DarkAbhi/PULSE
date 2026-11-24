@@ -63,7 +63,7 @@ export default function CategoryDialog({
       labelledBy={titleId}
       onDismiss={isPending ? undefined : onClose}
     >
-        <PulseDialogHeader id={titleId} icon={<Tag className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+        <PulseDialogHeader id={titleId} icon={<Tag className="size-5" />}>
           Add Custom Category
         </PulseDialogHeader>
 

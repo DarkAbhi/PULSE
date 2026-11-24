@@ -157,12 +157,11 @@ export default function SubscriptionDialog({
   };
 
   return (
-    <PulseDialog labelledBy={titleId}>
+    <PulseDialog labelledBy={titleId} onDismiss={isSubmitting ? undefined : onClose}>
         <PulseDialogHeader
           id={titleId}
           icon={<CreditCard className="size-5" />}
           description="Track recurring monthly or annual payments"
-          onClose={onClose}
         >
           {editingSubscription ? "Edit Subscription" : "Add Subscription"}
         </PulseDialogHeader>

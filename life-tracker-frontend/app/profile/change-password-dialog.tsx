@@ -101,13 +101,11 @@ export default function ChangePasswordDialog({
   }
 
   return (
-    <PulseDialog labelledBy="change-password-title">
+    <PulseDialog labelledBy="change-password-title" onDismiss={isSubmitting ? undefined : handleClose}>
         <PulseDialogHeader
           id="change-password-title"
           icon={<KeyRound className="size-5" />}
           description="Update your account password below."
-          onClose={handleClose}
-          closeLabel="Close modal"
         >
           Change Password
         </PulseDialogHeader>

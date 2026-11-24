@@ -35,7 +35,7 @@ export default function WorkoutTypeDialog({ title, initialType, initialFocus, we
 
   return (
     <PulseDialog labelledBy={titleID} onDismiss={pending ? undefined : onClose}>
-      <PulseDialogHeader id={titleID} icon={<Dumbbell size={18} />} onClose={onClose} closeDisabled={pending}
+      <PulseDialogHeader id={titleID} icon={<Dumbbell size={18} />}
         description={weekday ? `Repeats every ${weekday}.` : undefined}>
         {title}
       </PulseDialogHeader>

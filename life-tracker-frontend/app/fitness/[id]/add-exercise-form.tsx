@@ -335,9 +335,6 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
         onDismiss={isPending ? undefined : onClose}>
         <PulseDialogHeader
           id={titleID}
-          onClose={onClose}
-          closeDisabled={isPending}
-          closeAutoFocus={Boolean(exercise)}
         >
           {exercise ? "Edit exercise" : "Add exercise"}
         </PulseDialogHeader>

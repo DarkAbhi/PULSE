@@ -88,8 +88,6 @@ export default function LinkSubscriptionPaymentDialog({
       <PulseDialogHeader
         id={titleId}
         description="Select an existing debit transaction, including one imported from a statement."
-        onClose={onClose}
-        closeDisabled={saving}
       >
         Log payment for {subscription.name}
       </PulseDialogHeader>

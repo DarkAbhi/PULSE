@@ -75,7 +75,7 @@ export default function BudgetDialog({
       labelledBy={titleId}
       onDismiss={isPending ? undefined : onClose}
     >
-        <PulseDialogHeader id={titleId} icon={<Target className="size-5" />} onClose={onClose} closeDisabled={isPending}>
+        <PulseDialogHeader id={titleId} icon={<Target className="size-5" />}>
           {editingBudget ? "Edit Monthly Budget" : "Create Monthly Budget"}
         </PulseDialogHeader>
 

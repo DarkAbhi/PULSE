@@ -7,7 +7,7 @@ import { currencySymbol } from "@/app/lib/currency.mjs";
 import { useTimeZone } from "@/app/components/profile-preferences-provider";
 import { toDateTimeInput, fromDateTimeInput } from "@/app/lib/time-zone.mjs";
 
-import PulseButton from "@/app/components/design-system/pulse-button";
+import PulseTabs, { type PulseTabItem } from "@/app/components/design-system/pulse-tabs";
 
 import { useState, useEffect, useId } from "react";
 import { Receipt, Wallet, ArrowDownRight, ArrowUpRight } from "lucide-react";
@@ -15,6 +15,11 @@ import type { TransactionItem, CategoryItem, BudgetItem, SubscriptionItem } from
 import { listAccounts } from "@/app/financial-horizon/accounts";
 import type { Account } from "@/app/financial-horizon/account-types";
 import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
+
+const transactionTypeTabs = [
+  { value: "debit", label: "Debit (Expense)", icon: <ArrowDownRight className="text-destructive" /> },
+  { value: "credit", label: "Credit (Income / Refund)", icon: <ArrowUpRight className="text-success" /> },
+] as const satisfies readonly PulseTabItem<"debit" | "credit">[];
 
 export interface TransactionDialogProps {
   isOpen: boolean;
@@ -164,23 +169,15 @@ export default function TransactionDialog({
 
           {/* Transaction Type Segment */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground">Transaction Type</label>
-            <div className="grid grid-cols-2 gap-2">
-              <PulseButton variant={txType === "debit" ? "soft" : "secondary"} size="md"
-                type="button"
-                onClick={() => setTxType("debit")}
-              >
-                <ArrowDownRight className="h-4 w-4 text-destructive" />
-                Debit (Expense)
-              </PulseButton>
-              <PulseButton variant={txType === "credit" ? "soft" : "secondary"} size="md"
-                type="button"
-                onClick={() => setTxType("credit")}
-              >
-                <ArrowUpRight className="h-4 w-4 text-success" />
-                Credit (Income / Refund)
-              </PulseButton>
-            </div>
+            <p aria-hidden="true" className="text-xs font-semibold text-muted-foreground">Transaction Type</p>
+            <PulseTabs
+              variant="segmented"
+              label="Transaction type"
+              items={transactionTypeTabs}
+              value={txType}
+              onChange={setTxType}
+              className="flex w-full [&>button]:min-w-0 [&>button]:flex-1 [&>button]:text-center"
+            />
           </div>
 
           <div className="space-y-1">

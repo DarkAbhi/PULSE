@@ -71,9 +71,6 @@ export default function QuestHeatmap({ activity }: { activity: QuestActivity }) 
   const weekCount = today.week + 1;
   const months = calendar.filter(({ date }) => date.getUTCDate() === 1);
   if (months[0].week >= 3) months.unshift(calendar[0]);
-  const years = calendar.filter(({ date }, index) =>
-    index === 0 || (date.getUTCMonth() === 0 && date.getUTCDate() === 1));
-  const combinedYears = years.length > 1 && years[1].week < 3;
 
   function moveFocus(event: KeyboardEvent<HTMLDivElement>) {
     const offset = dayOffsets.get(event.key);
@@ -103,26 +100,15 @@ export default function QuestHeatmap({ activity }: { activity: QuestActivity }) 
             minWidth: `calc(2.5rem + ${weekCount} * 1rem)`,
           }}
         >
-          {combinedYears ? (
-            <span aria-hidden="true" className="col-start-2 col-span-5 row-start-1 whitespace-nowrap text-xs font-semibold">
-              {years[0].date.getUTCFullYear()}–{years[1].date.getUTCFullYear()}
-            </span>
-          ) : years.map(({ key, date, week }) => (
-            <span key={key} aria-hidden="true"
-              style={{ gridRow: 1, gridColumn: `${Math.min(week, weekCount - 3) + 2} / span 3` }}
-              className={`text-xs font-semibold ${week > weekCount - 3 ? "text-right" : ""}`}>
-              {date.getUTCFullYear()}
-            </span>
-          ))}
           {months.map(({ key, date, week }) => (
             <span key={key} aria-hidden="true"
-              style={{ gridRow: 2, gridColumn: `${Math.min(week, weekCount - 3) + 2} / span 3` }}
+              style={{ gridRow: 1, gridColumn: `${Math.min(week, weekCount - 3) + 2} / span 3` }}
               className={`text-xs text-muted-foreground ${week > weekCount - 3 ? "text-right" : ""}`}>
               {monthFormat.format(date)}
             </span>
           ))}
           {weekdayLabels.map((label, weekday) => (
-            <span key={label} aria-hidden="true" style={{ gridRow: weekday + 3, gridColumn: 1 }}
+            <span key={label} aria-hidden="true" style={{ gridRow: weekday + 2, gridColumn: 1 }}
               className="sticky left-0 z-10 bg-card text-[11px] leading-none text-muted-foreground">
               {label}
             </span>
@@ -144,7 +130,7 @@ export default function QuestHeatmap({ activity }: { activity: QuestActivity }) 
                 if (event.pointerType === "mouse") setHoveredDate(key);
               }}
               className={`${cellClass} w-full hover:border-foreground focus-visible:z-10 ${key === active.key ? "ring-1 ring-foreground/65" : ""}`}
-              style={{ gridRow: weekday + 3, gridColumn: week + 2, backgroundColor: color }}
+              style={{ gridRow: weekday + 2, gridColumn: week + 2, backgroundColor: color }}
             />
           ))}
         </div>

@@ -80,7 +80,7 @@ export default function QuestSettingsButton(props: SettingsProps) {
     <>
       <PulseButton type="button" variant={props.configured ? "iconOverlay" : "primary"} shape="pill" size="lg"
         aria-label={props.configured ? "Edit quest goals" : undefined}
-        className={props.configured ? "border border-(--quest-border) bg-(--quest-panel)" : undefined}
+        className={props.configured ? "bg-(--quest-panel) text-(--quest-text) shadow-(--quest-shadow)" : undefined}
         onClick={() => setOpen(true)}
         icon={<Settings2 className="size-5" aria-hidden="true" />}>
         {!props.configured && "Set quest goals"}

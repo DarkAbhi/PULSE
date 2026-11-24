@@ -27,25 +27,27 @@ export default async function QuestPage({ searchParams }: { searchParams: Promis
 
   return (
     <main id="main-content" tabIndex={-1}
-      className={`quest-page bg-radial-[ellipse_at_top_left] from-(--quest-canvas-glow) to-(--quest-canvas) to-70% text-(--quest-text) scheme-dark ${frame.page}`}>
-      <div className={frame.content}>
+      className={`quest-page bg-(--quest-canvas) text-(--quest-text) ${frame.page}`}>
+      <div className="mx-auto max-w-[1200px]">
         <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />
         <div className="mt-5 grid gap-5 sm:mt-7">
-          <header className="flex flex-wrap items-center justify-between gap-x-5 gap-y-3">
-            <h1 className="flex items-center gap-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-              <Gamepad2 className="size-8 shrink-0 text-(--quest-violet) sm:size-10" aria-hidden="true" />
+          <header className="flex flex-wrap items-center justify-between gap-4">
+            <h1 className="flex items-center gap-3.5 text-[clamp(2rem,4.4vw,3rem)] leading-none font-extrabold tracking-[-0.045em]">
+              <span className="grid size-[clamp(44px,5vw,56px)] shrink-0 place-items-center rounded-2xl bg-(image:--quest-gradient) text-white shadow-[0_14px_28px_-14px_#5b2ce0e6]">
+                <Gamepad2 className="size-3/5" aria-hidden="true" />
+              </span>
               Pulse Quest
             </h1>
             {overview && (
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <div className="flex min-h-11 items-center gap-2 rounded-full border border-(--quest-border) bg-(--quest-panel) px-3 sm:px-4">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex min-h-11 items-center gap-2 rounded-full bg-(--quest-panel) px-3.5 font-semibold shadow-(--quest-shadow) sm:pr-[18px]">
                   <Zap className="size-5 fill-current text-(--quest-gold)" aria-hidden="true" />
-                  <span className="text-sm text-(--quest-muted)">XP</span>
+                  <span className="text-(--quest-muted)">XP</span>
                   <strong className="text-lg tabular-nums">{overview.progress.lifetime_xp.toLocaleString("en")}</strong>
                 </div>
-                <div className="flex min-h-11 items-center gap-2 rounded-full border border-pink-400/30 bg-pink-500/15 px-3 sm:px-4">
+                <div className="flex min-h-11 items-center gap-2 rounded-full bg-(--quest-panel) px-3.5 font-semibold shadow-(--quest-shadow) sm:pr-[18px]">
                   <Heart className="size-5 fill-current text-(--quest-pink)" aria-hidden="true" />
-                  <span className="text-sm text-(--quest-muted)">Hearts</span>
+                  <span className="text-(--quest-muted)">Hearts</span>
                   <strong className="text-lg tabular-nums">{overview.progress.hearts.toLocaleString("en")}</strong>
                 </div>
                 {overview.configured && <QuestSettingsButton {...overview} />}
@@ -55,21 +57,21 @@ export default async function QuestPage({ searchParams }: { searchParams: Promis
           {overview ? (
             <>
               <RefreshQuests resetAt={overview.next_reset_at} />
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[0.95fr_1.05fr_1.05fr]">
+              <div className="grid gap-5 min-[701px]:grid-cols-2 min-[1051px]:grid-cols-3">
                 <StreakCard streak={overview.progress.streak} />
                 <QuestWeek overview={overview} />
                 <TodayXP progress={overview.progress} />
               </div>
-              <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+              <div className="grid gap-5 min-[1051px]:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
                 <DailyQuests overview={overview} />
-                <aside className="grid gap-4">
+                <aside aria-label="Quest achievements" className="grid min-w-0 grid-rows-[auto_1fr] gap-5">
                   <StreakMedals bestStreak={overview.progress.best_streak} />
                   <QuestProgress overview={overview} />
                 </aside>
               </div>
             </>
           ) : (
-            <p role="alert" className="rounded-card border border-(--quest-border) bg-(--quest-panel) p-5">
+            <p role="alert" className="rounded-[28px] bg-(--quest-panel) p-6 shadow-(--quest-shadow)">
               We couldn’t load your quests. Refresh the page to try again.
             </p>
           )}

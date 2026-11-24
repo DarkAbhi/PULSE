@@ -7,11 +7,8 @@ export type PulseButtonVariant =
   | "soft"
   | "chip"
   | "outline"
-  | "destructive"
-  | "outlineDanger"
   | "filledDanger"
-  | "onHero"
-  | "menuItem";
+  | "onHero";
 export type PulseButtonSize = "sm" | "md" | "lg" | "xl" | "touch";
 
 export interface PulseButtonProps extends ComponentPropsWithRef<"button"> {
@@ -30,11 +27,8 @@ const variants: Record<PulseButtonVariant, string> = {
   soft: "bg-primary/10 text-action enabled:hover:bg-primary/20",
   chip: "bg-chip text-foreground enabled:hover:bg-divider",
   outline: "border-[1.5px] border-divider text-foreground enabled:hover:bg-chip",
-  destructive: "bg-destructive-soft text-destructive enabled:hover:bg-destructive-soft/80",
-  outlineDanger: "border border-destructive text-destructive enabled:hover:bg-destructive/10",
   filledDanger: "bg-destructive text-destructive-foreground enabled:hover:brightness-95",
   onHero: "bg-white text-(--on-hero-action) enabled:hover:bg-(--on-hero-hover)",
-  menuItem: "w-full text-foreground enabled:hover:bg-primary/10 enabled:hover:text-action",
 };
 
 const sizes: Record<PulseButtonSize, string> = {
@@ -50,13 +44,12 @@ export default function PulseButton(
   { children, className = "", icon, iconPosition = "start", size = "md", labelStyle = "default", variant = "primary", ...props }: PulseButtonProps,
 ) {
   const labelSize = labelStyle === "strong" ? "text-control" : size === "sm" ? "text-xs" : "text-sm";
-  const alignment = variant === "menuItem" ? "justify-start font-medium" : "justify-center";
-  const weight = variant === "menuItem" ? "" : labelStyle === "strong" ? "font-bold" : "font-semibold";
+  const weight = labelStyle === "strong" ? "font-bold" : "font-semibold";
 
   return (
     <button
       {...props}
-      className={`inline-flex items-center rounded-full transition motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50 ${alignment} ${weight} ${sizes[size]} ${labelSize} ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full transition motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50 ${weight} ${sizes[size]} ${labelSize} ${variants[variant]} ${className}`}
     >
       {iconPosition === "start" && icon}
       {children}

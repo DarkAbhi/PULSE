@@ -5,7 +5,7 @@ import PulseButton, { type PulseButtonVariant } from "@/app/components/design-sy
 
 const textVariants = [
   "primary", "secondary", "tertiary", "soft", "chip", "outline",
-  "destructive", "outlineDanger", "filledDanger", "onHero", "menuItem",
+  "filledDanger", "onHero",
 ] satisfies PulseButtonVariant[];
 
 const meta = {

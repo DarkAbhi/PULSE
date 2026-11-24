@@ -37,7 +37,7 @@ export default function DeleteVehicleButton({
   return (
     <>
       <PulseButton
-        variant="outlineDanger"
+        variant="filledDanger"
         size="lg"
         labelStyle="strong"
         aria-haspopup="dialog"

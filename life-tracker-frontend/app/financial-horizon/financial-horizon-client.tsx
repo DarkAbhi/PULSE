@@ -32,7 +32,6 @@ import {
   deleteDeductionAction,
   addNextMonthPurchaseHorizonAction,
   deleteNextMonthPurchaseAction,
-  clearAllNextMonthPurchasesAction,
   addBudgetAction,
   updateBudgetAction,
   deleteBudgetAction,
@@ -125,8 +124,6 @@ export default function FinancialHorizonClient({
   const [isPlannedPurchaseDialogOpen, setIsPlannedPurchaseDialogOpen] = useState(false);
   const [purchaseToDelete, setPurchaseToDelete] = useState<NextMonthPurchaseItem | null>(null);
   const [deletingPurchaseID, setDeletingPurchaseID] = useState<number | null>(null);
-  const [isConfirmingClearAll, setIsConfirmingClearAll] = useState(false);
-  const [isClearingPurchases, setIsClearingPurchases] = useState(false);
 
   const categories = summary.categories ?? [];
 
@@ -433,21 +430,6 @@ export default function FinancialHorizonClient({
         setErrorMsg(res.error ?? "Failed to delete purchase.");
       }
       setDeletingPurchaseID(null);
-    });
-  };
-
-  const handleClearAllPurchases = () => {
-    setErrorMsg("");
-    setIsClearingPurchases(true);
-    startTransition(async () => {
-      const res = await clearAllNextMonthPurchasesAction();
-      if (res.ok) {
-        setPurchases([]);
-        setIsConfirmingClearAll(false);
-      } else {
-        setErrorMsg(res.error ?? "Failed to clear purchases.");
-      }
-      setIsClearingPurchases(false);
     });
   };
 
@@ -861,9 +843,7 @@ export default function FinancialHorizonClient({
             netRemainingPool={netRemainingPool}
             onOpenAddPurchase={() => setIsPlannedPurchaseDialogOpen(true)}
             onConfirmDeletePurchase={setPurchaseToDelete}
-            onConfirmClearAllPurchases={() => setIsConfirmingClearAll(true)}
             isPending={isPending}
-            isClearingPurchases={isClearingPurchases}
           />
         )}
       </div>
@@ -910,19 +890,6 @@ export default function FinancialHorizonClient({
         confirmText="Delete purchase"
         confirmLoadingText="Deleting…"
         isLoading={deletingPurchaseID !== null}
-        error={errorMsg}
-        variant="destructive"
-      />
-
-      <PulseConfirmationDialog
-        isOpen={isConfirmingClearAll}
-        onClose={() => setIsConfirmingClearAll(false)}
-        onConfirm={handleClearAllPurchases}
-        title="Clear all next month purchases?"
-        description={`This permanently removes all ${purchases.length} planned purchase${purchases.length === 1 ? "" : "s"}.`}
-        confirmText="Clear all"
-        confirmLoadingText="Clearing…"
-        isLoading={isClearingPurchases}
         error={errorMsg}
         variant="destructive"
       />

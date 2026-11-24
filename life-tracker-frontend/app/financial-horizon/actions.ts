@@ -259,24 +259,6 @@ export async function deleteNextMonthPurchaseAction(itemID: number) {
   }
 }
 
-export async function clearAllNextMonthPurchasesAction() {
-  try {
-    const response = await apiFetch(`${apiBaseURL}/api/next-month-purchases`, {
-      method: "DELETE",
-    });
-
-    if (!response.ok) {
-      return { ok: false, error: "We couldn't clear your planned purchases. Please try again." };
-    }
-
-    revalidatePath("/dashboard");
-    revalidatePath("/financial-horizon");
-    return { ok: true };
-  } catch {
-    return { ok: false, error: "We couldn't reach the server. Please try again." };
-  }
-}
-
 // Category Actions
 export async function getHorizonCategoriesAction() {
   try {

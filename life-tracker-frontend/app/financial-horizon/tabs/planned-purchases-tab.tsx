@@ -23,9 +23,7 @@ interface PlannedPurchasesTabProps {
   netRemainingPool: number;
   onOpenAddPurchase: () => void;
   onConfirmDeletePurchase: (item: NextMonthPurchaseItem) => void;
-  onConfirmClearAllPurchases: () => void;
   isPending?: boolean;
-  isClearingPurchases?: boolean;
 }
 
 export default function PlannedPurchasesTab({
@@ -36,9 +34,7 @@ export default function PlannedPurchasesTab({
   netRemainingPool,
   onOpenAddPurchase,
   onConfirmDeletePurchase,
-  onConfirmClearAllPurchases,
   isPending = false,
-  isClearingPurchases = false,
 }: PlannedPurchasesTabProps) {
   const hasPurchases = purchases.length > 0;
 
@@ -131,15 +127,6 @@ export default function PlannedPurchasesTab({
             >
               <Icon name="plus" /> Add Planned Purchase
             </HorizonAction>
-
-            {purchases.length > 0 && (
-              <HorizonAction variant="destructive"
-                onClick={onConfirmClearAllPurchases}
-                disabled={isPending || isClearingPurchases}
-              >
-                <Icon name="trash" /> Clear All
-              </HorizonAction>
-            )}
           </div>
         </SectionHeader>
 

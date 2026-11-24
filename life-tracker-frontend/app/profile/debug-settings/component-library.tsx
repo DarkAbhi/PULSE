@@ -1,10 +1,11 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { Plus, Settings2, Trash2, UserRound } from "lucide-react";
+import { ChevronDown, Plus, Settings2, Trash2, UserRound } from "lucide-react";
 import PulseAppBar, { appBarControl, PulseAppBarBell } from "@/app/components/design-system/pulse-app-bar";
 import PulseButton, { type PulseButtonVariant } from "@/app/components/design-system/pulse-button";
 import PulseIconButton, { type PulseIconButtonVariant } from "@/app/components/design-system/pulse-icon-button";
+import PulseDropdown, { PulseDropdownItem, PulseDropdownSeparator } from "@/app/components/design-system/pulse-dropdown";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import PulseChoiceGroup, { PulseChoiceControl } from "@/app/components/design-system/pulse-choice-group";
 import PulseConfirmationDialog from "@/app/components/design-system/pulse-confirmation-dialog";
@@ -21,11 +22,8 @@ const buttonLabels = {
   soft: "Soft",
   chip: "Chip",
   outline: "Outline",
-  destructive: "Destructive",
-  outlineDanger: "Outline danger",
   filledDanger: "Filled danger",
   onHero: "On hero",
-  menuItem: "Menu item",
 } satisfies Record<PulseButtonVariant, string>;
 
 const iconButtonLabels = {
@@ -35,7 +33,7 @@ const iconButtonLabels = {
   danger: "Danger",
 } satisfies Record<PulseIconButtonVariant, string>;
 
-const textButtonVariants = (Object.keys(buttonLabels) as PulseButtonVariant[]).filter(variant => variant !== "onHero" && variant !== "menuItem");
+const textButtonVariants = (Object.keys(buttonLabels) as PulseButtonVariant[]).filter(variant => variant !== "onHero");
 const iconButtonVariants = Object.keys(iconButtonLabels) as PulseIconButtonVariant[];
 
 const workoutOptions = [
@@ -75,9 +73,15 @@ function ButtonsPreview() {
         <div className="rounded-xl bg-(image:--primary-gradient) p-1.5">
           <PulseButton type="button" variant="onHero">{buttonLabels.onHero}</PulseButton>
         </div>
-        <div className="min-w-32 rounded-xl border border-divider bg-card p-1.5">
-          <PulseButton type="button" variant="menuItem">{buttonLabels.menuItem}</PulseButton>
-        </div>
+        <PulseDropdown trigger={({ isOpen, ...triggerProps }) => (
+          <PulseButton {...triggerProps} type="button" variant="secondary" icon={<ChevronDown className={`size-4 transition-transform motion-reduce:transition-none ${isOpen ? "rotate-180" : ""}`} aria-hidden="true" />} iconPosition="end">
+            Dropdown
+          </PulseButton>
+        )}>
+          <PulseDropdownItem icon={<Plus className="size-4" aria-hidden="true" />} description="Shows a description line" onSelect={() => {}}>Menu item</PulseDropdownItem>
+          <PulseDropdownSeparator />
+          <PulseDropdownItem icon={<Settings2 className="size-4" aria-hidden="true" />} onSelect={() => {}}>Another item</PulseDropdownItem>
+        </PulseDropdown>
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {iconButtonVariants.map(variant => {
@@ -192,7 +196,7 @@ function DialogsPreview() {
     <PreviewSection title="Dialogs">
       <div className="flex flex-wrap gap-2.5">
         <PulseButton type="button" onClick={() => setDialog("settings")}>Open dialog</PulseButton>
-        <PulseButton type="button" variant="destructive" onClick={() => setDialog("confirmation")}>Open confirmation</PulseButton>
+        <PulseButton type="button" variant="filledDanger" onClick={() => setDialog("confirmation")}>Open confirmation</PulseButton>
       </div>
       <p role="status" className="text-sm text-muted-foreground">{action}</p>
       {dialog === "settings" && (

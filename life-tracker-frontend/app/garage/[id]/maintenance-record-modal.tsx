@@ -169,7 +169,7 @@ export default function MaintenanceRecordModal({ vehicleId, record }: { vehicleI
                       <span className="ml-2">{Math.max(1, Math.round(attachment.size_bytes / 1024))} KB</span>
                     </p>
                   </div>
-                  <PulseButton variant="destructive" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</PulseButton>
+                  <PulseButton variant="filledDanger" size="sm" onClick={() => void deleteAttachment(attachment.id)} type="button">Remove</PulseButton>
                 </li>
               ))}
             </ul>

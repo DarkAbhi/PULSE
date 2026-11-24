@@ -1,4 +1,5 @@
 import { Info } from "lucide-react";
+import Image from "next/image";
 import LocalDate from "@/app/components/local-date";
 import LogoutButton from "@/app/profile/logout-button";
 import PulseCard from "@/app/components/design-system/pulse-card";
@@ -17,16 +18,7 @@ export default function AboutPulse() {
       <PulseCard className="grid overflow-hidden lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] shadow-card">
         <div className="flex items-center gap-5 bg-(image:--profile-about-gradient) p-6">
           <span className="grid size-[76px] shrink-0 place-items-center rounded-3xl bg-card shadow-card">
-            <svg width="46" height="46" viewBox="0 0 34 34" fill="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="profile-pulse-logo" x1="0%" y1="100%" x2="100%" y2="0%">
-                  <stop offset="0" stopColor="var(--brand-cyan)" />
-                  <stop offset="0.5" stopColor="var(--brand-blue)" />
-                  <stop offset="1" stopColor="var(--brand-pink)" />
-                </linearGradient>
-              </defs>
-              <path d="M3 17h7l4-10 6 20 4-10h7" stroke="url(#profile-pulse-logo)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <Image src="/pulse-logo.png" alt="" width={46} height={46} />
           </span>
           <div>
             <h3 className="text-[2rem] leading-none font-extrabold tracking-[-0.04em]">Pulse</h3>

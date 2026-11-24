@@ -4,11 +4,11 @@ import { fn } from "storybook/test";
 import PulseButton, { type PulseButtonVariant } from "@/app/components/design-system/pulse-button";
 
 const textVariants = [
-  "primary", "secondary", "tertiary", "destructive", "soft", "chip", "gradient",
-  "outline", "outlineDanger", "filledDanger", "onHero", "warning", "menuItem",
+  "primary", "secondary", "tertiary", "soft", "chip", "outline",
+  "destructive", "outlineDanger", "filledDanger", "onHero", "menuItem",
 ] satisfies PulseButtonVariant[];
 const iconVariants = [
-  "icon", "iconChip", "iconChipDanger", "iconOverlay", "iconSecondary", "iconDanger",
+  "icon", "iconSecondary", "iconOverlay", "iconDanger",
 ] satisfies PulseButtonVariant[];
 
 const meta = {
@@ -18,7 +18,6 @@ const meta = {
   argTypes: {
     variant: { control: "select", options: [...textVariants, ...iconVariants] },
     size: { control: "inline-radio", options: ["sm", "md", "lg", "xl", "touch"] },
-    shape: { control: "inline-radio", options: ["default", "control", "pill"] },
     disabled: { control: "boolean" },
     children: { control: "text" },
   },

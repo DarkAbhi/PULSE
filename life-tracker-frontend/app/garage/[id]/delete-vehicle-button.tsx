@@ -39,7 +39,6 @@ export default function DeleteVehicleButton({
       <PulseButton
         variant="outlineDanger"
         size="lg"
-        shape="pill"
         labelStyle="strong"
         aria-haspopup="dialog"
         onClick={() => setIsConfirmingDelete(true)}

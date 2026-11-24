@@ -87,7 +87,7 @@ function MealSlotCard({ kind, icon, name, timeRange, usualTime, children, onAdd,
       </div>
       {children}
       {onAdd && (
-        <PulseButton variant="tertiary" shape="pill" size="xl" labelStyle="strong" className={styles.slotAdd} type="button"
+        <PulseButton variant="tertiary" size="xl" labelStyle="strong" className={styles.slotAdd} type="button"
           onClick={onAdd} disabled={addDisabled} aria-label={`Add meal to ${name}`} icon={<Plus className="size-5" aria-hidden="true" />}
         >
           Add meal
@@ -317,8 +317,7 @@ export default function MealPlanClient({
           </button>
           <PulseButton
             type="button"
-            variant="iconChipDanger"
-            shape="pill"
+            variant="iconDanger"
             size="lg"
             className="shrink-0"
             onClick={() => { setDeleteError(""); setMealToDelete(meal); }}
@@ -349,15 +348,15 @@ export default function MealPlanClient({
                 )}
               </h2>
               <div className="flex items-center gap-2">
-                <PulseButton variant="iconSecondary" shape="pill" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(-7)} aria-label="Previous week">
+                <PulseButton variant="iconSecondary" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(-7)} aria-label="Previous week">
                   <ChevronLeft className="size-5" aria-hidden="true" />
                 </PulseButton>
-                <PulseButton variant="gradient" shape="pill" size="xl" labelStyle="strong" className={styles.primaryAction} type="button"
+                <PulseButton variant="primary" size="xl" labelStyle="strong" className={styles.primaryAction} type="button"
                   onClick={handleToday} disabled={isToday} icon={<LocateFixed className="size-5" aria-hidden="true" />}
                 >
                   Today
                 </PulseButton>
-                <PulseButton variant="iconSecondary" shape="pill" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(7)} aria-label="Next week">
+                <PulseButton variant="iconSecondary" size="xl" className={styles.weekArrow} type="button" onClick={() => moveWeek(7)} aria-label="Next week">
                   <ChevronRight className="size-5" aria-hidden="true" />
                 </PulseButton>
               </div>
@@ -404,13 +403,13 @@ export default function MealPlanClient({
               </div>
               <div className="flex items-center gap-2">
                 {onEditPreferences && (
-                  <PulseButton variant="secondary" shape="pill" size="xl" labelStyle="strong" className="px-3 sm:px-4" type="button"
+                  <PulseButton variant="secondary" size="xl" labelStyle="strong" className="px-3 sm:px-4" type="button"
                     onClick={onEditPreferences} icon={<SlidersHorizontal className="size-5" aria-hidden="true" />}
                   >
                     <span className="sr-only sm:not-sr-only">Meal preferences</span>
                   </PulseButton>
                 )}
-                <PulseButton variant="gradient" shape="pill" size="xl" labelStyle="strong" className={`${styles.primaryAction} ${styles.addMeal}`} type="button"
+                <PulseButton variant="primary" size="xl" labelStyle="strong" className={`${styles.primaryAction} ${styles.addMeal}`} type="button"
                   onClick={() => handleOpenAddMeal()} disabled={isLoadingWeek || weekError || !enabledMealTimes.length} icon={<Plus className="size-5" aria-hidden="true" />}
                 >
                   Add meal

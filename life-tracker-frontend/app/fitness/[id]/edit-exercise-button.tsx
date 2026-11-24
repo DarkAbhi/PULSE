@@ -17,7 +17,7 @@ export default function EditExerciseButton({ visitID, exercise }: { visitID: str
 
   return (
     <>
-      <PulseButton ref={triggerRef} type="button" variant="iconChip" size="lg" shape="pill"
+      <PulseButton ref={triggerRef} type="button" variant="icon" size="lg"
         aria-haspopup="dialog" aria-label={`Edit ${exercise.name}`}
         onClick={() => setIsEditing(true)}>
         <Pencil size={19} aria-hidden="true" />

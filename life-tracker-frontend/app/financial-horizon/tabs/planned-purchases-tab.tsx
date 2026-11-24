@@ -182,7 +182,7 @@ export default function PlannedPurchasesTab({
                   <span className="font-bold text-foreground text-sm">
                     {formatMoney(item.price, summary.currency)}
                   </span>
-                  <PulseButton variant="iconChipDanger" size="lg" shape="pill"
+                  <PulseButton variant="iconDanger" size="lg"
                     onClick={() => onConfirmDeletePurchase(item)}
                     title="Delete purchase"
                   >

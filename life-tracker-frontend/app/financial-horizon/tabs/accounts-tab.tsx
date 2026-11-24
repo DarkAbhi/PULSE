@@ -99,7 +99,7 @@ export default function AccountsTab({ currency }: { currency: string }) {
               </p>
             </div>
             <div className="flex gap-2">
-              <PulseButton variant="iconChip" size="lg" shape="pill" disabled={pending} onClick={() => open(account)} aria-label={`Edit ${account.display_name}`}><Icon name="edit" className="size-5" /></PulseButton>
+              <PulseButton variant="icon" size="lg" disabled={pending} onClick={() => open(account)} aria-label={`Edit ${account.display_name}`}><Icon name="edit" className="size-5" /></PulseButton>
               <HorizonAction variant="outline" disabled={pending} onClick={() => archive(account)} aria-label={`${account.archived_at ? "Restore" : "Archive"} ${account.display_name}`}>
                 {account.archived_at ? "Restore" : "Archive"}
               </HorizonAction>

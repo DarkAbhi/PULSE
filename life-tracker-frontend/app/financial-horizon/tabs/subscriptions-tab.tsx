@@ -400,7 +400,7 @@ export default function SubscriptionsTab({
                     </PulseButton>
 
                     {/* Edit Button */}
-                    <PulseButton variant="iconChip" size="lg" shape="pill"
+                    <PulseButton variant="icon" size="lg"
                       onClick={() => onEditSubscription(sub)}
                       title="Edit Subscription"
                     >
@@ -408,7 +408,7 @@ export default function SubscriptionsTab({
                     </PulseButton>
 
                     {/* Delete Button */}
-                    <PulseButton variant="iconChipDanger" size="lg" shape="pill"
+                    <PulseButton variant="iconDanger" size="lg"
                       onClick={() => onDeleteSubscription(sub)}
                       title="Delete Subscription"
                     >

@@ -26,9 +26,8 @@ export default function MaintenanceRecordActions({ vehicleId, recordId }: { vehi
       <Pencil className="size-5" aria-hidden="true" />
     </Link>
     <PulseButton
-      variant="iconChipDanger"
+      variant="iconDanger"
       size="lg"
-      shape="pill"
       onClick={() => setIsOpen(true)}
       type="button"
       aria-label="Delete maintenance record"

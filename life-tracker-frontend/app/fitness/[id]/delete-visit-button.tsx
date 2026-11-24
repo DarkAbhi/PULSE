@@ -33,7 +33,7 @@ export default function DeleteVisitButton({ visitID }: DeleteVisitButtonProps) {
 
   return (
     <>
-      <PulseButton type="button" variant="outlineDanger" size="lg" shape="pill" labelStyle="strong"
+      <PulseButton type="button" variant="outlineDanger" size="lg" labelStyle="strong"
         aria-haspopup="dialog" onClick={() => { setError(""); setIsConfirmingDelete(true); }}
         icon={<Trash2 size={19} aria-hidden="true" />}>
         Delete workout

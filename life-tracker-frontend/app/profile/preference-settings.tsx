@@ -85,7 +85,7 @@ export default function PreferenceSettings({
       <PulseButton
         ref={trigger}
         type="button"
-        variant="chip" size="lg" shape="pill" labelStyle="strong"
+        variant="chip" size="lg" labelStyle="strong"
         className={settingButtonClass}
         onClick={open}
         aria-label={`Change ${title.toLowerCase()}`}

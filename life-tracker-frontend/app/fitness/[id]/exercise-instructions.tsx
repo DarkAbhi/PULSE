@@ -22,7 +22,7 @@ export default function ExerciseInstructions({ name, metadata, instructions }: {
 
   return (
     <>
-      <PulseButton type="button" variant="chip" size="lg" shape="pill" labelStyle="strong"
+      <PulseButton type="button" variant="chip" size="lg" labelStyle="strong"
         aria-haspopup="dialog" onClick={() => dialogRef.current?.showModal()}
         icon={<Info size={18} aria-hidden="true" />}>
         Instructions
@@ -46,7 +46,7 @@ export default function ExerciseInstructions({ name, metadata, instructions }: {
             </ol>
           ) : <p className="text-muted-foreground">No instructions are available for this exercise.</p>}
           <form method="dialog">
-            <PulseButton type="submit" variant="gradient" size="lg" shape="pill" labelStyle="strong" className="w-full">Got it</PulseButton>
+            <PulseButton type="submit" variant="primary" size="lg" labelStyle="strong" className="w-full">Got it</PulseButton>
           </form>
         </div>
       </dialog>

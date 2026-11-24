@@ -93,13 +93,13 @@ export default function CustomMealTimes({ times, onCreated, onDeleted }: {
     {times.map(time => (
       <span key={time.id} className={`${pillClass} border-transparent pr-0.5 pl-4 font-semibold wrap-anywhere ${gradientClass}`}>
         <span>{time.name}</span>
-        <PulseButton variant="icon" shape="pill" className="shrink-0 [--foreground:white] [--muted-foreground:white] [--secondary:transparent]" type="button" aria-label={`Delete ${time.name}`}
+        <PulseButton variant="icon" className="shrink-0 [--foreground:white] [--muted-foreground:white] [--secondary:transparent]" type="button" aria-label={`Delete ${time.name}`}
           onClick={() => { setDeleteError(""); setMealTimeToDelete(time); }}>
           <X className="size-6 rounded-full bg-white/20 p-1 stroke-3" aria-hidden="true" />
         </PulseButton>
       </span>
     ))}
-    <PulseButton variant="outline" size="lg" shape="pill" labelStyle="strong" className="max-w-full border-dashed text-left hover:border-(--meal-accent)" type="button"
+    <PulseButton variant="outline" size="lg" labelStyle="strong" className="max-w-full border-dashed text-left hover:border-(--meal-accent)" type="button"
       onClick={handleOpenAddMealTime} icon={<Plus className="size-4 shrink-0" aria-hidden="true" />}>
       Add custom meal time
     </PulseButton>

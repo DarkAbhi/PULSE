@@ -212,13 +212,13 @@ export default function TransactionsTab({
                     {isCredit ? "+" : "-"}{formatMoney(tx.amount, summary.currency)}
                   </span>
                   <div className="flex items-center gap-1">
-                    <PulseButton variant="iconChip" size="lg" shape="pill"
+                    <PulseButton variant="icon" size="lg"
                       onClick={() => onOpenEditTransaction(tx)}
                       title="Edit transaction"
                     >
                       <Icon name="edit" className="size-5" />
                     </PulseButton>
-                    <PulseButton variant="iconChipDanger" size="lg" shape="pill"
+                    <PulseButton variant="iconDanger" size="lg"
                       onClick={() => onConfirmDeleteTransaction(tx)}
                       title="Delete transaction"
                     >
@@ -242,7 +242,7 @@ export default function TransactionsTab({
               </HorizonSelect>
               <nav className="flex flex-wrap items-center justify-center gap-2" aria-label="Transaction pages">
                 {Array.from({ length: transactionPage.total_pages }, (_, index) => index + 1).map((page) => (
-                <HorizonAction variant={page === transactionPage.page ? "gradient" : "chip"}
+                <HorizonAction variant={page === transactionPage.page ? "primary" : "chip"}
                   key={page}
                   type="button"
                   onClick={() => onPageChange(page)}

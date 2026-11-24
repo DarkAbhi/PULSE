@@ -54,7 +54,7 @@ export default function LogoutButton() {
 
   return (
     <>
-        <PulseButton variant="outlineDanger" size="lg" shape="pill" labelStyle="strong"
+        <PulseButton variant="outlineDanger" size="lg" labelStyle="strong"
           onClick={() => {
             setLogoutError("");
             setIsConfirmingLogout(true);

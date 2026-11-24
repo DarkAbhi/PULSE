@@ -376,13 +376,13 @@ export default function FixedObligationsTab({
                 )}
 
                 <div className="mt-4 flex items-center justify-end gap-2 border-t border-divider pt-3">
-                  <PulseButton variant="iconChip" size="lg" shape="pill"
+                  <PulseButton variant="icon" size="lg"
                     onClick={() => onOpenEditDeduction(item)}
                     title="Edit obligation"
                   >
                     <Icon name="edit" className="size-5" />
                   </PulseButton>
-                  <PulseButton variant="iconChipDanger" size="lg" shape="pill"
+                  <PulseButton variant="iconDanger" size="lg"
                     onClick={() => onDeleteDeduction(item)}
                     title="Delete obligation"
                   >

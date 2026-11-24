@@ -299,7 +299,7 @@ export default function MealOnboarding({ notifications, initial, editing = false
             <span className="flex items-center gap-2 text-[0.88rem]/[1.2] font-semibold text-muted-foreground before:size-2 before:shrink-0 before:rounded-full before:bg-success data-[unsaved=true]:before:bg-warning" data-unsaved={unsaved} role="status">
               {unsaved ? "Unsaved changes" : initial ? "All changes saved" : "Ready to customize"}
             </span>
-            <PulseButton variant="gradient" shape="pill" size="lg" labelStyle="strong" className="whitespace-nowrap [--button-fill:var(--meal-preferences-gradient)] [--button-foreground:white]" type="submit" disabled={busy}>
+            <PulseButton variant="primary" size="lg" labelStyle="strong" className="whitespace-nowrap [--button-fill:var(--meal-preferences-gradient)] [--button-foreground:white]" type="submit" disabled={busy}>
               {busy ? "Saving…" : "Save preferences"}
             </PulseButton>
           </div>

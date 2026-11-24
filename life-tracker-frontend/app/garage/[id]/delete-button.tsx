@@ -45,9 +45,8 @@ export default function DeleteButton({
   return (
     <>
       <PulseButton
-        variant="iconChipDanger"
+        variant="iconDanger"
         size="lg"
-        shape="pill"
         onClick={() => setIsOpen(true)}
         type="button"
         aria-haspopup="dialog"

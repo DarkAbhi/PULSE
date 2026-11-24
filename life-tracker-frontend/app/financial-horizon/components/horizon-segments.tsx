@@ -22,7 +22,6 @@ export default function HorizonSegments<T extends string>({
           key={option.value}
           type="button"
           size="sm"
-          shape="pill"
           labelStyle="strong"
           variant="secondary"
           aria-pressed={value === option.value}

@@ -9,7 +9,7 @@ export default function QuestSettingsButton(props: QuestGoalsSettings) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <PulseButton type="button" variant={props.configured ? "iconOverlay" : "primary"} shape="pill" size="lg"
+      <PulseButton type="button" variant={props.configured ? "iconOverlay" : "primary"} size="lg"
         aria-label={props.configured ? "Edit quest goals" : undefined}
         className={props.configured ? "bg-(--quest-panel) text-(--quest-text) shadow-(--quest-shadow)" : undefined}
         onClick={() => setOpen(true)}

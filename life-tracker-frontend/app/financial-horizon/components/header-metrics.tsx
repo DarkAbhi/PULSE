@@ -105,7 +105,7 @@ export default function HeaderMetrics({
         description="Baseline monthly revenue stream"
         action={
           <PulseButton
-            variant="iconChip" size="lg" shape="pill"
+            variant="icon" size="lg"
             type="button"
             onClick={() => setIsEditingBase(!isEditingBase)}
             aria-label="Edit Base Income"

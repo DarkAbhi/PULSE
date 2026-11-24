@@ -16,21 +16,17 @@ const buttonLabels = {
   primary: "Primary",
   secondary: "Secondary",
   tertiary: "Tertiary",
-  gradient: "Gradient",
   soft: "Soft",
   chip: "Chip",
   outline: "Outline",
-  warning: "Warning",
   destructive: "Destructive",
   outlineDanger: "Outline danger",
   filledDanger: "Filled danger",
   onHero: "On hero",
   menuItem: "Menu item",
   icon: "Icon",
-  iconChip: "Icon chip",
-  iconChipDanger: "Icon chip danger",
-  iconOverlay: "Icon overlay",
   iconSecondary: "Icon secondary",
+  iconOverlay: "Icon overlay",
   iconDanger: "Icon danger",
 } satisfies Record<PulseButtonVariant, string>;
 
@@ -64,12 +60,11 @@ function ButtonsPreview() {
             key={variant}
             type="button"
             variant={variant}
-            className={variant === "gradient" ? "[--button-fill:var(--primary-gradient)] [--button-foreground:white]" : undefined}
           >
             {buttonLabels[variant]}
           </PulseButton>
         ))}
-        <PulseButton type="button" shape="pill" icon={<Plus className="size-4" aria-hidden="true" />}>Add workout</PulseButton>
+        <PulseButton type="button" icon={<Plus className="size-4" aria-hidden="true" />}>Add workout</PulseButton>
         <PulseButton type="button" disabled>Disabled</PulseButton>
       </div>
       <div className="flex flex-wrap items-center gap-2.5">
@@ -82,11 +77,11 @@ function ButtonsPreview() {
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {iconButtonVariants.map(variant => {
-          const Icon = variant === "iconDanger" || variant === "iconChipDanger" ? Trash2 : Plus;
+          const Icon = variant === "iconDanger" ? Trash2 : Plus;
 
           return (
             <div key={variant} className="grid justify-items-center gap-1.5 text-center">
-              <div className={variant === "iconOverlay" ? "rounded-lg bg-(image:--primary-gradient) text-white" : undefined}>
+              <div className={variant === "iconOverlay" ? "rounded-full bg-(image:--primary-gradient) text-white" : undefined}>
                 <PulseButton type="button" variant={variant} aria-label={buttonLabels[variant]}>
                   <Icon className="size-4" aria-hidden="true" />
                 </PulseButton>

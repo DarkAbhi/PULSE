@@ -40,7 +40,7 @@ export default function QuestHistorySeed() {
           Quest completions and rewards come from those records.
         </p>
       </header>
-      <PulseButton type="button" variant="gradient" size="lg" shape="pill" className="justify-self-start" onClick={seedHistory} disabled={pending}>
+      <PulseButton type="button" variant="primary" size="lg" className="justify-self-start" onClick={seedHistory} disabled={pending}>
         {pending ? "Seeding…" : "Seed history"}
       </PulseButton>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

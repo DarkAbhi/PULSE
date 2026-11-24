@@ -92,7 +92,6 @@ export default function NotificationDropdown({
       ) : (
         <PulseButton
           variant="iconOverlay"
-          shape="pill"
           size="lg"
           ref={buttonRef}
           type="button"

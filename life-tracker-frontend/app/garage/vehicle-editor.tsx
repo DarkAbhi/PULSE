@@ -195,7 +195,6 @@ export default function VehicleEditor({
       <PulseButton
         id={vehicle ? undefined : "add-vehicle-button"}
         variant="onHero"
-        shape="pill"
         size="lg"
         labelStyle="strong"
         className={`focus-visible:outline-white ${vehicle ? "" : "sm:min-h-12 lg:min-h-14 lg:px-6 lg:text-base xl:min-h-16"} ${triggerClassName ?? ""}`}

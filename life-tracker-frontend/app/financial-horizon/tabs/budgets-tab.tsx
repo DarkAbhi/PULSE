@@ -114,7 +114,7 @@ export default function BudgetsTab({
                   </div>
                   <div className="flex flex-none gap-2 @max-[300px]:col-start-2 @max-[300px]:justify-self-end">
                     <PulseButton
-                      variant="iconChip" size="lg" shape="pill"
+                      variant="icon" size="lg"
                       onClick={() => onOpenEditBudget(budget)}
                       aria-label="Edit Budget"
                       title="Edit Budget"
@@ -122,7 +122,7 @@ export default function BudgetsTab({
                       <Icon name="edit" className="size-5" />
                     </PulseButton>
                     <PulseButton
-                      variant="iconChipDanger" size="lg" shape="pill"
+                      variant="iconDanger" size="lg"
                       onClick={() => onConfirmDeleteBudget(budget)}
                       aria-label="Delete Budget"
                       title="Delete Budget"

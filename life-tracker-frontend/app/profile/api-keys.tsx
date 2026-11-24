@@ -109,7 +109,7 @@ export default function APIKeys({ initialKeys }: { initialKeys: APIKey[] | null 
         <PulseButton
           ref={createTrigger}
           type="button"
-          variant="gradient" size="lg" shape="pill" labelStyle="strong"
+          variant="primary" size="lg" labelStyle="strong"
           icon={<Plus className="size-5" aria-hidden="true" />}
           onClick={() => { setError(""); setIsOpen(true); }}
         >
@@ -156,9 +156,8 @@ export default function APIKeys({ initialKeys }: { initialKeys: APIKey[] | null 
                   <td role="cell" className={`${keyTableCellClass} text-right`}>
                     <PulseButton
                       type="button"
-                      variant="iconChipDanger"
+                      variant="iconDanger"
                       size="lg"
-                      shape="pill"
                       aria-label={`Revoke ${key.name}`}
                       onClick={() => { setError(""); setRevokeKey(key); }}
                     >
@@ -193,7 +192,7 @@ export default function APIKeys({ initialKeys }: { initialKeys: APIKey[] | null 
                   value={token}
                   onFocus={event => event.target.select()}
                 />
-                <PulseButton type="button" variant="chip" size="lg" shape="pill" autoFocus className="shrink-0" onClick={copyKey}>
+                <PulseButton type="button" variant="chip" size="lg" autoFocus className="shrink-0" onClick={copyKey}>
                   {copied ? <Check className="size-4.5" aria-hidden="true" /> : <Copy className="size-4.5" aria-hidden="true" />}
                   {copied ? "Copied" : "Copy"}
                 </PulseButton>

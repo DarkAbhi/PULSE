@@ -12,7 +12,7 @@ export default function EditWorkoutButton({ visitID, classification }: { visitID
 
   return (
     <>
-      <PulseButton type="button" variant="onHero" shape="pill" aria-haspopup="dialog" onClick={() => setOpen(true)}
+      <PulseButton type="button" variant="onHero" aria-haspopup="dialog" onClick={() => setOpen(true)}
         icon={<Pencil size={16} aria-hidden="true" />}>
         Edit workout
       </PulseButton>

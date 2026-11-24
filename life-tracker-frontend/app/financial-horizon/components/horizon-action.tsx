@@ -1,9 +1,9 @@
 import PulseButton, { type PulseButtonProps } from "@/app/components/design-system/pulse-button";
 
-type HorizonActionProps = Omit<PulseButtonProps, "size" | "shape" | "labelStyle">;
+type HorizonActionProps = Omit<PulseButtonProps, "size" | "labelStyle">;
 
 export default function HorizonAction({
-  variant = "gradient",
+  variant = "primary",
   type = "button",
   className = "",
   ...props
@@ -14,7 +14,6 @@ export default function HorizonAction({
       type={type}
       variant={variant}
       size="lg"
-      shape="pill"
       labelStyle="strong"
       className={`whitespace-nowrap enabled:active:scale-95 [&_svg]:size-5 [&_svg]:shrink-0 ${className}`}
     />

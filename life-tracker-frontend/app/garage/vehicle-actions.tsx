@@ -174,9 +174,8 @@ export function VehicleQuickActions({ vehicle }: { vehicle: ActionVehicle }) {
   return (
     <div className="mt-auto grid grid-cols-2 gap-2 xl:gap-3">
       <PulseButton
-        variant="gradient"
+        variant="primary"
         size="lg"
-        shape="pill"
         className="garage-fuel-action min-w-0 gap-1.5! px-1.5! leading-tight sm:min-h-12 lg:min-h-14"
         icon={<Droplet className="size-4 shrink-0" aria-hidden="true" />}
         aria-label={`Add fuel for ${vehicle.name}`}
@@ -189,7 +188,6 @@ export function VehicleQuickActions({ vehicle }: { vehicle: ActionVehicle }) {
       <PulseButton
         variant="outline"
         size="lg"
-        shape="pill"
         className="min-w-0 gap-1.5! px-1.5! leading-tight sm:min-h-12 lg:min-h-14"
         icon={<CircleDot className="size-4 shrink-0" aria-hidden="true" />}
         aria-label={`Mark airfill now for ${vehicle.name}`}

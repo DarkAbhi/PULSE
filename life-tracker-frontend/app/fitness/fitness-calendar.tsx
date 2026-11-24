@@ -65,14 +65,14 @@ export default function FitnessCalendar({ today, workoutsByDate, schedule, summa
             </h2>
             <div className="ml-auto flex items-center gap-2">
               {selectedDate <= today && (
-                <PulseButton type="button" size="lg" shape="pill" variant="gradient" className="whitespace-nowrap [--button-fill:var(--fitness-gradient)] [--button-foreground:white]" disabled={isMarking} onClick={openLog}>
+                <PulseButton type="button" size="lg" variant="primary" className="whitespace-nowrap [--button-fill:var(--fitness-gradient)] [--button-foreground:white]" disabled={isMarking} onClick={openLog}>
                   Log Visit
                 </PulseButton>
               )}
-              <PulseButton type="button" variant="iconSecondary" size="lg" shape="pill" aria-label="Previous month" onClick={() => navigateMonth(-1)}>
+              <PulseButton type="button" variant="iconSecondary" size="lg" aria-label="Previous month" onClick={() => navigateMonth(-1)}>
                 <ChevronLeft size={20} aria-hidden="true" />
               </PulseButton>
-              <PulseButton type="button" variant="iconSecondary" size="lg" shape="pill" aria-label="Next month" onClick={() => navigateMonth(1)}>
+              <PulseButton type="button" variant="iconSecondary" size="lg" aria-label="Next month" onClick={() => navigateMonth(1)}>
                 <ChevronRight size={20} aria-hidden="true" />
               </PulseButton>
             </div>

@@ -135,9 +135,8 @@ export function PulseDialogHeader({
           disabled={closeDisabled}
           onClick={onClose}
           type="button"
-          shape="pill"
           size="lg"
-          variant="iconChip"
+          variant="icon"
         >
           <X className="size-5" aria-hidden="true" />
         </PulseButton>
@@ -178,7 +177,7 @@ type PulseDialogActionProps = Omit<PulseButtonProps, "variant"> & {
 };
 
 const actionVariants: Record<NonNullable<PulseDialogActionProps["variant"]>, PulseButtonVariant> = {
-  primary: "gradient",
+  primary: "primary",
   secondary: "outline",
   destructive: "filledDanger",
 };
@@ -191,7 +190,6 @@ export function PulseDialogAction({ className = "", variant = "primary", ...prop
       data-variant={variant}
       {...props}
       size="touch"
-      shape="pill"
       labelStyle="strong"
       variant={actionVariants[variant]}
       form={props.form ?? (props.type !== "button" && props.type !== "reset" ? formId : undefined)}

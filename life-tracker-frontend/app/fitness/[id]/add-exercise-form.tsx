@@ -47,7 +47,7 @@ export function AddExerciseButton() {
   const openForm = useContext(OpenExerciseForm);
 
   return (
-    <PulseButton type="button" variant="gradient" size="lg" shape="pill" labelStyle="strong"
+    <PulseButton type="button" variant="primary" size="lg" labelStyle="strong"
       aria-haspopup="dialog" icon={<Plus size={20} aria-hidden="true" />}
       onClick={(event) => openForm(event.currentTarget)}>
       Add exercise
@@ -288,7 +288,7 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
               value={set.weight}
             />
             {sets.length > 1 && (
-              <PulseButton type="button" variant="iconChipDanger" shape="pill"
+              <PulseButton type="button" variant="iconDanger"
                 aria-label={`Remove set ${index + 1}`} disabled={isPending}
                 onClick={() => setSets((current) => current.filter((_, i) => i !== index))}>
                 <Trash2 size={18} aria-hidden="true" />
@@ -296,7 +296,7 @@ export default function AddExerciseForm({ visitID, exercise, onClose }: AddExerc
             )}
           </div>
         ))}
-        <PulseButton variant="chip" size="lg" shape="pill" labelStyle="strong"
+        <PulseButton variant="chip" size="lg" labelStyle="strong"
           icon={<Plus size={18} aria-hidden="true" />}
           onClick={() => setSets((currentSets) => [...currentSets, newSet()])}
           type="button"

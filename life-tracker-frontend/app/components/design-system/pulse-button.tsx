@@ -4,54 +4,45 @@ export type PulseButtonVariant =
   | "primary"
   | "secondary"
   | "tertiary"
-  | "destructive"
   | "soft"
   | "chip"
-  | "gradient"
   | "outline"
+  | "destructive"
   | "outlineDanger"
   | "filledDanger"
   | "onHero"
-  | "warning"
+  | "menuItem"
   | "icon"
-  | "iconChip"
-  | "iconChipDanger"
-  | "iconOverlay"
   | "iconSecondary"
-  | "iconDanger"
-  | "menuItem";
+  | "iconOverlay"
+  | "iconDanger";
 export type PulseButtonSize = "sm" | "md" | "lg" | "xl" | "touch";
-type PulseButtonShape = "default" | "control" | "pill";
 
 export interface PulseButtonProps extends ComponentPropsWithRef<"button"> {
   variant?: PulseButtonVariant;
   size?: PulseButtonSize;
-  shape?: PulseButtonShape;
   labelStyle?: "default" | "strong";
   icon?: ReactNode;
   iconPosition?: "start" | "end";
 }
 
 const variants: Record<PulseButtonVariant, string> = {
-  primary: "bg-primary text-primary-foreground hover:bg-primary-pressed",
-  secondary: "bg-btn-cancel-bg text-btn-cancel-text hover:bg-btn-cancel-hover",
-  tertiary: "text-action hover:bg-primary/10",
-  destructive: "bg-destructive-soft text-destructive hover:bg-destructive-soft/80",
-  soft: "bg-primary/10 text-action hover:bg-primary/20",
+  /** Gradient fill; override per feature with `--button-fill` / `--button-foreground`. */
+  primary: "[background:var(--button-fill,var(--primary-fill))] text-[color:var(--button-foreground,var(--primary-foreground))] enabled:hover:brightness-95",
+  secondary: "bg-btn-cancel-bg text-btn-cancel-text enabled:hover:bg-btn-cancel-hover",
+  tertiary: "text-action enabled:hover:bg-primary/10",
+  soft: "bg-primary/10 text-action enabled:hover:bg-primary/20",
   chip: "bg-chip text-foreground enabled:hover:bg-divider",
-  gradient: "[background:var(--button-fill,var(--primary-fill))] text-[color:var(--button-foreground,var(--primary-foreground))] enabled:hover:brightness-95",
   outline: "border-[1.5px] border-divider text-foreground enabled:hover:bg-chip",
+  destructive: "bg-destructive-soft text-destructive enabled:hover:bg-destructive-soft/80",
   outlineDanger: "border border-destructive text-destructive enabled:hover:bg-destructive/10",
   filledDanger: "bg-destructive text-destructive-foreground enabled:hover:brightness-95",
   onHero: "bg-white text-(--on-hero-action) enabled:hover:bg-(--on-hero-hover)",
-  warning: "bg-warning-soft text-warning hover:bg-warning-soft/80",
-  icon: "text-muted-foreground hover:bg-secondary hover:text-foreground",
-  iconChip: "text-muted-foreground enabled:hover:bg-chip enabled:hover:text-foreground",
+  menuItem: "w-full text-foreground enabled:hover:bg-primary/10 enabled:hover:text-action",
+  icon: "text-muted-foreground enabled:hover:bg-chip enabled:hover:text-foreground",
+  iconSecondary: "bg-secondary text-foreground enabled:hover:bg-surface-strong",
   iconOverlay: "text-inherit enabled:hover:bg-white/15",
-  iconChipDanger: "text-muted-foreground enabled:hover:bg-chip enabled:hover:text-destructive",
-  iconSecondary: "bg-secondary text-foreground hover:bg-surface-strong",
-  iconDanger: "text-destructive hover:bg-destructive/10",
-  menuItem: "w-full text-foreground hover:bg-primary/10 hover:text-action",
+  iconDanger: "text-muted-foreground enabled:hover:bg-chip enabled:hover:text-destructive",
 };
 
 const sizes: Record<PulseButtonSize, string> = {
@@ -70,15 +61,9 @@ const iconSizes: Record<PulseButtonSize, string> = {
   touch: "size-12.5",
 };
 
-const shapes: Record<PulseButtonShape, string> = {
-  default: "rounded-lg",
-  control: "rounded-control",
-  pill: "rounded-full",
-};
-
-/** Shared button for actions. Native button props, including onClick and type, pass through. */
+/** Shared pill-shaped button for actions. Native button props, including onClick and type, pass through. */
 export default function PulseButton(
-  { children, className = "", icon, iconPosition = "start", size = "md", shape = "default", labelStyle = "default", variant = "primary", ...props }: PulseButtonProps,
+  { children, className = "", icon, iconPosition = "start", size = "md", labelStyle = "default", variant = "primary", ...props }: PulseButtonProps,
 ) {
   const isIconButton = variant.startsWith("icon");
   const labelSize = labelStyle === "strong" ? "text-control" : size === "sm" ? "text-xs" : "text-sm";
@@ -88,7 +73,7 @@ export default function PulseButton(
   return (
     <button
       {...props}
-      className={`inline-flex items-center transition motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50 ${alignment} ${weight} ${isIconButton ? iconSizes[size] : `${sizes[size]} ${labelSize}`} ${shapes[shape]} ${variants[variant]} ${className}`}
+      className={`inline-flex items-center rounded-full transition motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50 ${alignment} ${weight} ${isIconButton ? iconSizes[size] : `${sizes[size]} ${labelSize}`} ${variants[variant]} ${className}`}
     >
       {iconPosition === "start" && icon}
       {children}

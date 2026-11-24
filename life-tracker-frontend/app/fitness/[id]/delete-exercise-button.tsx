@@ -26,7 +26,7 @@ export default function DeleteExerciseButton({ visitID, exerciseID, exerciseName
 
   return (
     <>
-      <PulseButton type="button" variant="iconChipDanger" size="lg" shape="pill"
+      <PulseButton type="button" variant="iconDanger" size="lg"
         title="Delete exercise"
         aria-label={`Delete ${exerciseName}`}
         disabled={isPending}

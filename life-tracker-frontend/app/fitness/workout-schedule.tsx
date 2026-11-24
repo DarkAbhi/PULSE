@@ -27,9 +27,9 @@ export default function WorkoutSchedule({ schedule, today }: { schedule: Workout
           const label = entry && workoutLabel(entry);
           return (
             <li key={day} className="min-w-0">
-              <PulseButton type="button" variant="outline" shape="control" aria-haspopup="dialog" aria-label={`Edit ${day} schedule, ${label ?? "no plan"}`}
+              <PulseButton type="button" variant="outline" aria-haspopup="dialog" aria-label={`Edit ${day} schedule, ${label ?? "no plan"}`}
                 aria-current={weekday === todayWeekday ? "date" : undefined} onClick={() => setEditing(weekday)}
-                className="h-full w-full items-start! justify-between! gap-2 px-3! py-3! text-left sm:min-h-20 aria-[current=date]:border-brand">
+                className="h-full w-full rounded-control! items-start! justify-between! gap-2 px-3! py-3! text-left sm:min-h-20 aria-[current=date]:border-brand">
                 <span className="min-w-0">
                   <span className="block font-bold">{day}</span>
                   <span className={`${entry && entry.workout_type !== "rest_day" ? "text-action" : styles.muted} mt-1 block wrap-anywhere`}>

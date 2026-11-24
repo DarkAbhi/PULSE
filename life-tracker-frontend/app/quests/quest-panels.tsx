@@ -191,7 +191,7 @@ const questContent: Record<Quest["id"], { title: string; icon: LucideIcon; descr
   daily_meals: { title: "Daily meal goal", icon: Utensils, description: q => `${q.progress} / ${q.target} planned meals marked eaten` },
 };
 
-function QuestRow({ quest, upcomingGoal }: { quest: Quest; upcomingGoal?: string }) {
+function QuestRow({ quest }: { quest: Quest }) {
   const { title, description, icon } = questContent[quest.id];
   const Icon = quest.completed ? Check : icon;
   return (
@@ -204,7 +204,6 @@ function QuestRow({ quest, upcomingGoal }: { quest: Quest; upcomingGoal?: string
       <div>
         <h3 className="font-extrabold leading-tight tracking-tight">{title}</h3>
         <p className="mt-0.5 text-sm text-(--quest-muted)">{description(quest)}</p>
-        {upcomingGoal && <p className="mt-1 text-sm font-semibold text-(--quest-blue)">{upcomingGoal}</p>}
       </div>
       <div className="col-start-2 row-start-2 flex items-center gap-3.5 text-sm font-extrabold whitespace-nowrap tabular-nums min-[701px]:col-start-3 min-[701px]:row-start-1 min-[701px]:text-base">
         <span className="inline-flex items-center gap-1.5"><Zap className="size-5 fill-current text-(--quest-gold)" aria-hidden="true" />{quest.xp} XP</span>
@@ -220,17 +219,7 @@ function QuestRow({ quest, upcomingGoal }: { quest: Quest; upcomingGoal?: string
 }
 
 export function DailyQuests({ overview }: { overview: QuestOverview }) {
-  const { today, today_quests, configured, progress, settings, settings_effective, has_workout_days } = overview;
-  const updatedGoalsDate = settings_effective && settings_effective > today
-    ? shortDate.format(new Date(settings_effective))
-    : undefined;
-  const upcomingSleepTarget = settings.sleep_minutes === null ? null : settings.sleep_minutes * 60;
-  const todaySleep = today_quests.find(quest => quest.id === "sleep_goal");
-  const upcomingSleepGoal = updatedGoalsDate && todaySleep && todaySleep.target !== upcomingSleepTarget
-    ? upcomingSleepTarget === null
-      ? `Sleep quest turns off ${updatedGoalsDate}.`
-      : `New goal: ${sleepDuration(upcomingSleepTarget)} starting ${updatedGoalsDate}.`
-    : undefined;
+  const { today_quests, configured, progress, settings, has_workout_days } = overview;
 
   return (
     <section aria-labelledby="daily-quests" className={panel}>
@@ -245,7 +234,7 @@ export function DailyQuests({ overview }: { overview: QuestOverview }) {
       {today_quests.length > 0 ? (
         <ul className="grid gap-2.5">
           {today_quests.map(quest => (
-            <QuestRow key={quest.id} quest={quest} upcomingGoal={quest.id === "sleep_goal" ? upcomingSleepGoal : undefined} />
+            <QuestRow key={quest.id} quest={quest} />
           ))}
         </ul>
       ) : (
@@ -259,11 +248,6 @@ export function DailyQuests({ overview }: { overview: QuestOverview }) {
       {configured && settings.gym_workout && !has_workout_days && (
         <p className="text-sm text-(--quest-muted)">
           <Link href="/fitness" className="font-semibold text-(--quest-blue) underline underline-offset-2">Add workout days</Link> to schedule the Gym workout quest.
-        </p>
-      )}
-      {updatedGoalsDate && (
-        <p className="text-sm text-(--quest-muted)" role="status">
-          Updated goals start {updatedGoalsDate}.
         </p>
       )}
     </section>

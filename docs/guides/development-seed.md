@@ -24,6 +24,14 @@ Useful commands from the repository root:
 | `make dev-seed-export` | Refresh the anonymized snapshot from `.env.dev` using Python 3.10+ and `psql`. The source database is read only. |
 | `python3 -m unittest discover -s scripts -p 'test_export_dev_seed.py'` | Check anonymization and export guards without a database. |
 
+In the web app, open **Profile → Debug settings → Seed history** to populate
+the signed-in user's Quest Activity Heatmap. This action is available when
+the Go API runs with `APP_ENV=development`. It fills unused past dates in the
+365-day window with workouts, meals, activity rings, steps, and sleep, then
+calculates quest completions from those records. Today's data, previously
+recorded dates, and live quest settings are preserved. The sample completions
+also contribute to quest rewards and streak history.
+
 The exporter reads all selected tables in one consistent SQL snapshot and
 writes only sanitized data. It rejects unrecognized tables, numeric fields,
 and enum values so schema changes require review. Refresh the fixture alongside

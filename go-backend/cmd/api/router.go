@@ -42,6 +42,7 @@ type API struct {
 	Profile         *profile.Handler
 	Activity        *activity.Handler
 	Quests          *quests.Handler
+	DebugSettings   bool
 	ObsConfig       observability.Config
 }
 
@@ -98,6 +99,9 @@ func (a *API) Router() http.Handler {
 		}
 		if a.Quests != nil {
 			a.Quests.RegisterRoutes(api)
+			if a.DebugSettings {
+				a.Quests.RegisterDebugRoutes(api)
+			}
 		}
 		if a.Profile != nil {
 			a.Profile.RegisterRoutes(api)

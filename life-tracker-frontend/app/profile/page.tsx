@@ -13,13 +13,22 @@ import APIKeysSection from "@/app/profile/api-keys-section";
 import ChangePasswordButton from "@/app/profile/change-password-button";
 import CurrencySettings from "@/app/profile/currency-settings";
 import DashboardViewSettings from "@/app/profile/dashboard-view-settings";
+import DebugSettingsButton from "@/app/profile/debug-settings-button";
 import ThemeSettings from "@/app/profile/theme-settings";
 import TimeZoneSettings from "@/app/profile/time-zone-settings";
 import { sectionClass, sectionHeadingClass } from "@/app/profile/profile-classes";
+import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 
 export const metadata = {
   title: "Profile | PULSE",
 };
+
+async function ProfileDebugSettings() {
+  const response = await apiFetch(`${apiBaseURL}/api/debug/settings`, {
+    signal: AbortSignal.timeout(3_000),
+  }).catch(() => null);
+  return response?.status === 204 ? <DebugSettingsButton /> : null;
+}
 
 export default async function ProfilePage() {
   const [session, profile] = await Promise.all([getSession(), getUserProfile().catch(() => null)]);
@@ -41,6 +50,9 @@ export default async function ProfilePage() {
             <h1 className="text-[clamp(2.2rem,5vw,3.6rem)] leading-none font-extrabold tracking-[-0.045em] wrap-anywhere">{name || username}</h1>
             <span className="mt-2.5 inline-block rounded-full border-[1.5px] border-white/40 bg-white/20 px-3.5 py-[5px] font-bold wrap-anywhere">@{username}</span>
           </div>
+          <Suspense fallback={null}>
+            <ProfileDebugSettings />
+          </Suspense>
         </section>
 
         <div className="grid gap-5 min-[1001px]:grid-cols-2">

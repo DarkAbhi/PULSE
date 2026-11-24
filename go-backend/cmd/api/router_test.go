@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/DarkAbhi/life-backend/internal/gym"
+	"github.com/DarkAbhi/life-backend/internal/quests"
 	"github.com/DarkAbhi/life-backend/internal/testhelper"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -117,5 +118,41 @@ func TestPulseVersion(t *testing.T) {
 	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/version", nil))
 	if rec.Code != http.StatusServiceUnavailable {
 		t.Fatalf("missing manifest code=%d", rec.Code)
+	}
+}
+
+func TestDebugSettingsRoutesRequireDevelopmentAndSession(t *testing.T) {
+	pool, err := pgxpool.New(context.Background(), "postgres://localhost/pulse")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	api := &API{DB: pool, Quests: quests.NewHandler(quests.NewRepository(pool), func(r *http.Request) (int64, error) {
+		if r.Header.Get("Authorization") == "Bearer example-session" {
+			return 1, nil
+		}
+		return 0, sql.ErrNoRows
+	})}
+	for _, tc := range []struct {
+		dev    bool
+		method string
+		path   string
+		token  string
+		status int
+	}{
+		{false, http.MethodGet, "/api/debug/settings", "Bearer example-session", http.StatusNotFound},
+		{false, http.MethodPost, "/api/debug/quest-history", "Bearer example-session", http.StatusNotFound},
+		{true, http.MethodGet, "/api/debug/settings", "", http.StatusUnauthorized},
+		{true, http.MethodGet, "/api/debug/settings", "Bearer example-session", http.StatusNoContent},
+		{true, http.MethodPost, "/api/debug/quest-history", "", http.StatusUnauthorized},
+	} {
+		api.DebugSettings = tc.dev
+		req := httptest.NewRequest(tc.method, tc.path, nil)
+		req.Header.Set("Authorization", tc.token)
+		rec := httptest.NewRecorder()
+		api.Router().ServeHTTP(rec, req)
+		if rec.Code != tc.status {
+			t.Errorf("development=%t %s %s: got %d, want %d", tc.dev, tc.method, tc.path, rec.Code, tc.status)
+		}
 	}
 }

@@ -159,6 +159,7 @@ func run(ctx context.Context) error {
 		Profile:        profile.NewHandler(profileService, sessionID),
 		Activity:       activity.NewHandler(pool, sessionID),
 		Quests:         quests.NewHandler(quests.NewRepository(pool), sessionID),
+		DebugSettings:  os.Getenv("APP_ENV") == "development",
 		ObsConfig:      obs.Config,
 	}
 	if extractorURL := os.Getenv("STATEMENT_EXTRACTOR_URL"); extractorURL != "" {

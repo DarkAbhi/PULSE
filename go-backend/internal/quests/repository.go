@@ -46,12 +46,10 @@ func (r *Repository) Overview(ctx context.Context, userID int64, selectedWeek ti
 		if err != nil {
 			return err
 		}
-		if !o.Configured {
-			o.summarize(nil, day, day)
-			return nil
-		}
-		if err = reconcile(ctx, tx, userID, day, zone); err != nil {
-			return err
+		if o.Configured {
+			if err = reconcile(ctx, tx, userID, day, zone); err != nil {
+				return err
+			}
 		}
 
 		quests, err := tx.Query(ctx, `

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
+import { parseSleepGoal, sleepGoalError } from "@/app/quests/sleep-goal";
 
 function optionalTarget(form: FormData, key: string) {
   const value = form.get(key);
@@ -12,14 +13,18 @@ function optionalTarget(form: FormData, key: string) {
 }
 
 export async function saveQuestSettings(_: string | null, form: FormData): Promise<string | null> {
+  const sleep = form.get("sleep_duration");
+  const sleepMinutes = parseSleepGoal(typeof sleep === "string" ? sleep : "");
+  if (sleepMinutes === undefined) return sleepGoalError;
+
   let settings;
   try {
     settings = {
       gym_workout: form.get("gym_workout") === "on",
       step_target: optionalTarget(form, "step_target"),
       activity_rings: form.get("activity_rings") === "on",
-      sleep_minutes: optionalTarget(form, "sleep_minutes"),
-      meal_target: optionalTarget(form, "meal_target"),
+      sleep_minutes: sleepMinutes,
+      daily_meals: form.get("daily_meals") === "on",
     };
   } catch {
     return "Quest targets must be positive whole numbers.";

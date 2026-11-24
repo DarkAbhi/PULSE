@@ -8,7 +8,7 @@ type Settings struct {
 	StepTarget    *int32 `json:"step_target"`
 	ActivityRings bool   `json:"activity_rings"`
 	SleepMinutes  *int32 `json:"sleep_minutes"`
-	MealTarget    *int32 `json:"meal_target"`
+	DailyMeals    bool   `json:"daily_meals"`
 }
 
 func (s Settings) validationError() string {
@@ -17,8 +17,6 @@ func (s Settings) validationError() string {
 		return "Enter a daily step goal between 1 and 100,000."
 	case s.SleepMinutes != nil && (*s.SleepMinutes < 1 || *s.SleepMinutes > 1440):
 		return "Enter a sleep goal between 1 and 1,440 minutes."
-	case s.MealTarget != nil && (*s.MealTarget < 1 || *s.MealTarget > 24):
-		return "Enter a daily meal goal between 1 and 24."
 	default:
 		return ""
 	}

@@ -50,7 +50,6 @@ func (r *Repository) Overview(ctx context.Context, userID int64, selectedWeek ti
 			o.summarize(nil, day, day)
 			return nil
 		}
-
 		if err = reconcile(ctx, tx, userID, day, zone); err != nil {
 			return err
 		}
@@ -90,15 +89,15 @@ func readSettings(ctx context.Context, db rowQuerier, userID int64) (SettingsVie
 	var effective *time.Time
 	err := db.QueryRow(ctx, `
 		SELECT s.effective_date, COALESCE(s.gym_workout, false), s.step_target,
-		       COALESCE(s.activity_rings, false), s.sleep_minutes, s.meal_target,
+		       COALESCE(s.activity_rings, false), s.sleep_minutes, COALESCE(s.daily_meals, false),
 		       EXISTS (SELECT 1 FROM fitness_workout_schedule WHERE user_id = $1 AND workout_type <> 'rest_day')
 		FROM (SELECT 1) base
 		LEFT JOIN LATERAL (
-			SELECT effective_date, gym_workout, step_target, activity_rings, sleep_minutes, meal_target
+			SELECT effective_date, gym_workout, step_target, activity_rings, sleep_minutes, daily_meals
 			FROM user_quest_settings WHERE user_id = $1 ORDER BY effective_date DESC LIMIT 1
 		) s ON true
 	`, userID).Scan(&effective, &view.Settings.GymWorkout, &view.Settings.StepTarget,
-		&view.Settings.ActivityRings, &view.Settings.SleepMinutes, &view.Settings.MealTarget, &view.HasWorkoutDays)
+		&view.Settings.ActivityRings, &view.Settings.SleepMinutes, &view.Settings.DailyMeals, &view.HasWorkoutDays)
 	if effective != nil {
 		view.Configured = true
 		view.SettingsEffective = effective.Format(time.DateOnly)
@@ -175,11 +174,11 @@ func (r *Repository) SaveSettings(ctx context.Context, userID int64, settings Se
 		var matches bool
 		err = tx.QueryRow(ctx, `
 			SELECT effective_date,
-				ROW(gym_workout, step_target, activity_rings, sleep_minutes, meal_target)
-				IS NOT DISTINCT FROM ROW($2::boolean, $3::integer, $4::boolean, $5::integer, $6::integer)
+				ROW(gym_workout, step_target, activity_rings, sleep_minutes, daily_meals)
+				IS NOT DISTINCT FROM ROW($2::boolean, $3::integer, $4::boolean, $5::integer, $6::boolean)
 			FROM user_quest_settings WHERE user_id = $1 ORDER BY effective_date DESC LIMIT 1
 		`, userID, settings.GymWorkout, settings.StepTarget, settings.ActivityRings,
-			settings.SleepMinutes, settings.MealTarget).Scan(&latest, &matches)
+			settings.SleepMinutes, settings.DailyMeals).Scan(&latest, &matches)
 		configured := err == nil
 		if !configured && !errors.Is(err, pgx.ErrNoRows) {
 			return err
@@ -194,13 +193,13 @@ func (r *Repository) SaveSettings(ctx context.Context, userID int64, settings Se
 		}
 		if _, err = tx.Exec(ctx, `
 			INSERT INTO user_quest_settings
-				(user_id, effective_date, gym_workout, step_target, activity_rings, sleep_minutes, meal_target)
+				(user_id, effective_date, gym_workout, step_target, activity_rings, sleep_minutes, daily_meals)
 			VALUES ($1, $2, $3, $4, $5, $6, $7)
 			ON CONFLICT (user_id, effective_date) DO UPDATE SET
 				gym_workout = EXCLUDED.gym_workout, step_target = EXCLUDED.step_target,
-				activity_rings = EXCLUDED.activity_rings, sleep_minutes = EXCLUDED.sleep_minutes, meal_target = EXCLUDED.meal_target
+				activity_rings = EXCLUDED.activity_rings, sleep_minutes = EXCLUDED.sleep_minutes, daily_meals = EXCLUDED.daily_meals
 		`, userID, effective, settings.GymWorkout, settings.StepTarget, settings.ActivityRings,
-			settings.SleepMinutes, settings.MealTarget); err != nil {
+			settings.SleepMinutes, settings.DailyMeals); err != nil {
 			return err
 		}
 		if configured {

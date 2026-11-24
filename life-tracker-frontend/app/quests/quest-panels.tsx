@@ -180,7 +180,7 @@ function sleepDuration(seconds: number) {
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const remaining = minutes % 60;
-  return hours ? `${hours} hr${remaining ? ` ${remaining} min` : ""}` : `${minutes} min`;
+  return `${hours} hr${remaining ? ` ${remaining} min` : ""}`;
 }
 
 const questContent: Record<Quest["id"], { title: string; icon: LucideIcon; description: (quest: Quest) => string }> = {
@@ -188,10 +188,10 @@ const questContent: Record<Quest["id"], { title: string; icon: LucideIcon; descr
   daily_steps: { title: "Daily step goal", icon: Footprints, description: q => `${number.format(q.progress)} / ${number.format(q.target)} steps` },
   activity_rings: { title: "Close activity rings", icon: Circle, description: q => `${q.progress} / 3 rings closed · Move, Exercise, and Stand` },
   sleep_goal: { title: "Sleep goal", icon: BedDouble, description: q => `${sleepDuration(q.progress)} of ${sleepDuration(q.target)} asleep` },
-  daily_meals: { title: "Daily meal goal", icon: Utensils, description: q => `${q.progress} / ${q.target} meals marked eaten` },
+  daily_meals: { title: "Daily meal goal", icon: Utensils, description: q => `${q.progress} / ${q.target} planned meals marked eaten` },
 };
 
-function QuestRow({ quest }: { quest: Quest }) {
+function QuestRow({ quest, upcomingGoal }: { quest: Quest; upcomingGoal?: string }) {
   const { title, description, icon } = questContent[quest.id];
   const Icon = quest.completed ? Check : icon;
   return (
@@ -204,6 +204,7 @@ function QuestRow({ quest }: { quest: Quest }) {
       <div>
         <h3 className="font-extrabold leading-tight tracking-tight">{title}</h3>
         <p className="mt-0.5 text-sm text-(--quest-muted)">{description(quest)}</p>
+        {upcomingGoal && <p className="mt-1 text-sm font-semibold text-(--quest-blue)">{upcomingGoal}</p>}
       </div>
       <div className="col-start-2 row-start-2 flex items-center gap-3.5 text-sm font-extrabold whitespace-nowrap tabular-nums min-[701px]:col-start-3 min-[701px]:row-start-1 min-[701px]:text-base">
         <span className="inline-flex items-center gap-1.5"><Zap className="size-5 fill-current text-(--quest-gold)" aria-hidden="true" />{quest.xp} XP</span>
@@ -220,6 +221,17 @@ function QuestRow({ quest }: { quest: Quest }) {
 
 export function DailyQuests({ overview }: { overview: QuestOverview }) {
   const { today, today_quests, configured, progress, settings, settings_effective, has_workout_days } = overview;
+  const updatedGoalsDate = settings_effective && settings_effective > today
+    ? shortDate.format(new Date(settings_effective))
+    : undefined;
+  const upcomingSleepTarget = settings.sleep_minutes === null ? null : settings.sleep_minutes * 60;
+  const todaySleep = today_quests.find(quest => quest.id === "sleep_goal");
+  const upcomingSleepGoal = updatedGoalsDate && todaySleep && todaySleep.target !== upcomingSleepTarget
+    ? upcomingSleepTarget === null
+      ? `Sleep quest turns off ${updatedGoalsDate}.`
+      : `New goal: ${sleepDuration(upcomingSleepTarget)} starting ${updatedGoalsDate}.`
+    : undefined;
+
   return (
     <section aria-labelledby="daily-quests" className={panel}>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -232,7 +244,9 @@ export function DailyQuests({ overview }: { overview: QuestOverview }) {
       </div>
       {today_quests.length > 0 ? (
         <ul className="grid gap-2.5">
-          {today_quests.map(quest => <QuestRow key={quest.id} quest={quest} />)}
+          {today_quests.map(quest => (
+            <QuestRow key={quest.id} quest={quest} upcomingGoal={quest.id === "sleep_goal" ? upcomingSleepGoal : undefined} />
+          ))}
         </ul>
       ) : (
         <div className="grid justify-items-start gap-3 rounded-[20px] bg-(--quest-inset) p-4">
@@ -247,9 +261,9 @@ export function DailyQuests({ overview }: { overview: QuestOverview }) {
           <Link href="/fitness" className="font-semibold text-(--quest-blue) underline underline-offset-2">Add workout days</Link> to schedule the Gym workout quest.
         </p>
       )}
-      {settings_effective && settings_effective > today && (
+      {updatedGoalsDate && (
         <p className="text-sm text-(--quest-muted)" role="status">
-          Updated goals start {shortDate.format(new Date(settings_effective))}.
+          Updated goals start {updatedGoalsDate}.
         </p>
       )}
     </section>

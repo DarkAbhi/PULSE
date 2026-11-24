@@ -123,6 +123,7 @@ export async function addMealPlanAction(date: string, name: string, mealTimeID?:
     }
 
     revalidatePath("/meal-plan");
+    revalidatePath("/quests");
     return { ok: true, meal: body as MealPlan };
   } catch {
     return { ok: false, error: "Network error while adding meal." };
@@ -141,6 +142,7 @@ export async function deleteMealPlanAction(id: number) {
     }
 
     revalidatePath("/meal-plan");
+    revalidatePath("/quests");
     return { ok: true };
   } catch {
     return { ok: false, error: "Network error while deleting meal." };
@@ -163,6 +165,7 @@ export async function updateMealPlanConsumedAction(id: number, isConsumed: boole
     }
 
     revalidatePath("/meal-plan");
+    revalidatePath("/quests");
     return { ok: true, meal: body as MealPlan };
   } catch {
     return { ok: false, error: "Network error while updating meal status." };
@@ -188,6 +191,7 @@ export async function updateMealPlanAction(
     }
 
     revalidatePath("/meal-plan");
+    revalidatePath("/quests");
     return { ok: true, meal: body as MealPlan };
   } catch {
     return { ok: false, error: "Network error while updating meal." };

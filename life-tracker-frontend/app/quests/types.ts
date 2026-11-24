@@ -3,7 +3,7 @@ export type QuestSettings = {
   step_target: number | null;
   activity_rings: boolean;
   sleep_minutes: number | null;
-  meal_target: number | null;
+  daily_meals: boolean;
 };
 
 export type Quest = {

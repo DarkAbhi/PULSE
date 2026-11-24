@@ -89,7 +89,11 @@ func (h *Handler) history(w http.ResponseWriter, r *http.Request, userID int64) 
 }
 
 func (h *Handler) saveSettings(w http.ResponseWriter, r *http.Request, userID int64) {
-	var settings *Settings
+	var settings *struct {
+		Settings
+		// Accept the old field from clients that still send it during rollout.
+		LegacyMealTarget json.RawMessage `json:"meal_target"`
+	}
 	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&settings); err != nil || settings == nil || decoder.Decode(new(any)) != io.EOF {
@@ -100,7 +104,7 @@ func (h *Handler) saveSettings(w http.ResponseWriter, r *http.Request, userID in
 		webutil.BadRequest(w, message)
 		return
 	}
-	effective, err := h.repository.SaveSettings(r.Context(), userID, *settings)
+	effective, err := h.repository.SaveSettings(r.Context(), userID, settings.Settings)
 	if err != nil {
 		webutil.ServerErrorContext(r.Context(), w, err)
 		return

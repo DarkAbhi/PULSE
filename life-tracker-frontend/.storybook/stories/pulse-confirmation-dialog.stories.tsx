@@ -17,7 +17,7 @@ const meta = {
     onConfirm: fn(),
   },
   argTypes: {
-    variant: { options: ["destructive", "positive", "amber"], control: "inline-radio" },
+    variant: { options: ["destructive", "positive"], control: "inline-radio" },
     description: { control: "text" },
     isOpen: { control: false },
     isLoading: { control: false },

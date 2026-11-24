@@ -84,7 +84,7 @@ export default function LinkSubscriptionPaymentDialog({
   };
 
   return (
-    <PulseDialog labelledBy={titleId} size="wide" onDismiss={saving ? undefined : onClose}>
+    <PulseDialog labelledBy={titleId} size="md" onDismiss={saving ? undefined : onClose}>
       <PulseDialogHeader
         id={titleId}
         description="Select an existing debit transaction, including one imported from a statement."

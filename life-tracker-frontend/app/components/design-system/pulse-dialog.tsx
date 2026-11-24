@@ -13,9 +13,8 @@ const DialogFooterContext = createContext<HTMLElement | null>(null);
 const DialogFormContext = createContext<string | undefined>(undefined);
 
 const widths = {
-  sm: "max-w-[520px]",
-  md: "max-w-lg",
-  wide: "max-w-xl",
+  sm: "max-w-130",
+  md: "max-w-xl",
   lg: "max-w-2xl",
   xl: "max-w-3xl",
 } as const;
@@ -85,11 +84,7 @@ export default function PulseDialog({
           className={`dialog-fields relative flex max-h-[calc(100dvh-1.5rem)] w-full ${widths[size]} flex-col overflow-hidden rounded-t-card bg-card p-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] text-card-foreground shadow-dialog motion-safe:animate-dialog-in max-sheet:min-w-full sheet:rounded-hero ${panelClassName}`}
         >
           <DialogFooterContext.Provider value={footer}>
-            <div
-              className={`min-h-0 overflow-y-auto ${
-                panelClassName.includes("p-0") ? "" : "-mx-1.5 -my-1 px-1.5 py-1"
-              }`}
-            >
+            <div className="-mx-1.5 -my-1 min-h-0 overflow-y-auto px-1.5 py-1">
               {children}
             </div>
             <div className="shrink-0" ref={setFooter} />
@@ -163,7 +158,7 @@ export function PulseDialogActions({ children, className = "" }: { children: Rea
 
   const actions = (
     <DialogFormContext.Provider value={formId}>
-      <div ref={actionsRef} className={`mt-5 grid grid-cols-2 gap-2.5 [&>:only-child]:col-span-full max-sm:[&>:first-child:nth-last-child(3)]:col-span-full ${className}`}>
+      <div ref={actionsRef} className={`mt-5 grid grid-cols-2 gap-2.5 *:only:col-span-full max-sm:*:first:nth-last-3:col-span-full ${className}`}>
         {children}
       </div>
     </DialogFormContext.Provider>

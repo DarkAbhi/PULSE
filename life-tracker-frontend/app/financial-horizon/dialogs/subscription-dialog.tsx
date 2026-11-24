@@ -157,7 +157,7 @@ export default function SubscriptionDialog({
   };
 
   return (
-    <PulseDialog labelledBy={titleId} size="md">
+    <PulseDialog labelledBy={titleId}>
         <PulseDialogHeader
           id={titleId}
           icon={<CreditCard className="size-5" />}

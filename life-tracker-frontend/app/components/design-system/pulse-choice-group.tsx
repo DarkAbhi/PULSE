@@ -20,7 +20,7 @@ export function PulseChoiceControl({
   return (
     <label className={`group relative cursor-pointer ${className}`}>
       <input
-        className="peer absolute inset-0 size-full cursor-inherit opacity-0 disabled:cursor-default"
+        className="peer absolute inset-0 size-full cursor-[inherit] opacity-0 disabled:cursor-default"
         type={type === "switch" ? "checkbox" : type}
         role={type === "switch" ? "switch" : undefined}
         name={name}
@@ -48,7 +48,7 @@ export default function PulseChoiceGroup(props: Props) {
     <div className={`grid gap-3 ${props.columns ? "sm:grid-cols-2" : ""}`}>
       {props.options.map(option => {
         const checked = props.multiple ? props.value.includes(option.value) : props.value === option.value;
-        return <label key={option.value} className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-xl border px-4 py-4 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring ${checked ? "border-action bg-accent text-accent-foreground" : "border-divider bg-card hover:border-action"}`}>
+        return <label key={option.value} className={`flex min-h-16 cursor-pointer items-center gap-3 rounded-xl border px-4 py-4 transition-colors has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring has-disabled:cursor-not-allowed has-disabled:opacity-50 ${checked ? "border-action bg-accent text-accent-foreground" : "border-divider bg-card hover:border-action"}`}>
           <input className="size-5 shrink-0 accent-action" type={props.multiple ? "checkbox" : "radio"} name={name} value={option.value} checked={checked} onChange={() => {
             if (props.multiple) props.onChange(checked ? props.value.filter(v => v !== option.value) : [...props.value, option.value]);
             else props.onChange(option.value);

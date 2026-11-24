@@ -187,7 +187,6 @@ export default function FixedObligationsTab({
       {isFormOpen && (
         <PulseDialog
           labelledBy={titleId}
-          size="md"
           onDismiss={isPending ? undefined : onCancelDeductionForm}
         >
           <PulseDialogHeader

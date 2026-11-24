@@ -95,7 +95,7 @@ export default function TirePressureModal({
   };
 
   return (
-    <PulseDialog labelledBy="tire-pressure-title" size="md">
+    <PulseDialog labelledBy="tire-pressure-title">
       <form onSubmit={handleSubmit}>
         <PulseDialogHeader
           id="tire-pressure-title"

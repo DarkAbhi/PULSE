@@ -83,7 +83,7 @@ export function PulseDropdownItem({ onSelect, icon, description, children }: Pul
   return (
     <button
       type="button"
-      className="flex min-h-10 w-full items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground transition enabled:hover:bg-primary/10 enabled:hover:text-action motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex min-h-10 w-full items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-foreground transition hover:bg-primary/10 hover:text-action motion-reduce:transition-none"
       onClick={() => {
         close?.();
         onSelect();

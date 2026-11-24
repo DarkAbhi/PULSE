@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useId } from "react";
+import { useId, type ReactNode } from "react";
 import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/app/components/design-system/pulse-dialog";
 
 export interface PulseConfirmationDialogProps {
@@ -13,8 +13,7 @@ export interface PulseConfirmationDialogProps {
   confirmLoadingText?: string;
   isLoading?: boolean;
   error?: string;
-  variant?: "destructive" | "positive" | "amber";
-  cancelText?: string;
+  variant?: "destructive" | "positive";
 }
 
 export default function PulseConfirmationDialog({
@@ -28,7 +27,6 @@ export default function PulseConfirmationDialog({
   isLoading = false,
   error,
   variant = "destructive",
-  cancelText = "Cancel",
 }: PulseConfirmationDialogProps) {
   const titleId = useId();
 
@@ -36,37 +34,28 @@ export default function PulseConfirmationDialog({
 
   return (
     <PulseDialog labelledBy={titleId} onDismiss={isLoading ? undefined : onClose}>
-        <PulseDialogHeader id={titleId}>{title}</PulseDialogHeader>
-        <div className="mt-4 text-sm leading-6 text-muted-foreground">
-          {description}
-        </div>
+      <PulseDialogHeader id={titleId}>{title}</PulseDialogHeader>
+      <div className="mt-4 text-sm leading-6 text-muted-foreground">{description}</div>
 
-        {error && (
-          <p className="mt-3 text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        )}
+      {error && (
+        <p className="mt-3 text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      )}
 
-        <PulseDialogActions>
-          <PulseDialogAction
-            className="w-full"
-            variant="secondary"
-            disabled={isLoading}
-            onClick={onClose}
-            type="button"
-          >
-            {cancelText}
-          </PulseDialogAction>
-          <PulseDialogAction
-            className="w-full"
-            variant={variant === "destructive" ? "destructive" : "primary"}
-            disabled={isLoading}
-            onClick={onConfirm}
-            type="button"
-          >
-            {isLoading ? confirmLoadingText ?? "Loading…" : confirmText}
-          </PulseDialogAction>
-        </PulseDialogActions>
+      <PulseDialogActions>
+        <PulseDialogAction variant="secondary" disabled={isLoading} onClick={onClose} type="button">
+          Cancel
+        </PulseDialogAction>
+        <PulseDialogAction
+          variant={variant === "destructive" ? "destructive" : "primary"}
+          disabled={isLoading}
+          onClick={onConfirm}
+          type="button"
+        >
+          {isLoading ? confirmLoadingText ?? "Loading…" : confirmText}
+        </PulseDialogAction>
+      </PulseDialogActions>
     </PulseDialog>
   );
 }

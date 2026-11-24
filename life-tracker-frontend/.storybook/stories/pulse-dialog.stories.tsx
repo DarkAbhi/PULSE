@@ -14,7 +14,7 @@ const meta = {
   subcomponents: { PulseDialogHeader, PulseDialogActions, PulseDialogAction },
   args: { size: "sm", children: "Set when Pulse should remind you to work out." },
   argTypes: {
-    size: { control: "select", options: ["sm", "md", "wide", "lg", "xl"] },
+    size: { control: "select", options: ["sm", "md", "lg", "xl"] },
     children: { control: "text" },
     labelledBy: { control: false },
   },

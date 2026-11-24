@@ -21,7 +21,7 @@ export interface PulseButtonProps extends ComponentPropsWithRef<"button"> {
 
 const variants: Record<PulseButtonVariant, string> = {
   /** Gradient fill; override per feature with `--button-fill` / `--button-foreground`. */
-  primary: "[background:var(--button-fill,var(--primary-fill))] text-[color:var(--button-foreground,var(--primary-foreground))] enabled:hover:brightness-95",
+  primary: "[background:var(--button-fill,var(--primary-fill))] text-(--button-foreground,var(--primary-foreground)) enabled:hover:brightness-95",
   secondary: "bg-btn-cancel-bg text-btn-cancel-text enabled:hover:bg-btn-cancel-hover",
   tertiary: "text-action enabled:hover:bg-primary/10",
   soft: "bg-primary/10 text-action enabled:hover:bg-primary/20",

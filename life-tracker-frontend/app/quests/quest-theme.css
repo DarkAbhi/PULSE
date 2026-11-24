@@ -1,0 +1,17 @@
+.quest-page {
+  --quest-canvas: #100a20;
+  --quest-canvas-glow: #231740;
+  --quest-panel: #221836;
+  --quest-panel-deep: #1a122c;
+  --quest-tile: #302348;
+  --quest-text: #fcf7ff;
+  --quest-muted: #cec0e6;
+  --quest-border: #a889e13d;
+  --quest-violet: #c5a5ff;
+  --quest-gold: #ffdb60;
+  --quest-pink: #ff73a8;
+  --quest-blue: #8cc7ff;
+  --quest-green: #9efaa9;
+  --quest-green-bg: #234238;
+  --quest-green-border: #5caf717a;
+}

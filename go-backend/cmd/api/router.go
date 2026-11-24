@@ -22,6 +22,7 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/observability"
 	"github.com/DarkAbhi/life-backend/internal/profile"
 	"github.com/DarkAbhi/life-backend/internal/purchase"
+	"github.com/DarkAbhi/life-backend/internal/quests"
 	"github.com/DarkAbhi/life-backend/internal/statementimport"
 	"github.com/DarkAbhi/life-backend/internal/vehicle"
 )
@@ -40,6 +41,7 @@ type API struct {
 	Auth            *auth.Handler
 	Profile         *profile.Handler
 	Activity        *activity.Handler
+	Quests          *quests.Handler
 	ObsConfig       observability.Config
 }
 
@@ -93,6 +95,9 @@ func (a *API) Router() http.Handler {
 		}
 		if a.Activity != nil {
 			a.Activity.RegisterRoutes(api)
+		}
+		if a.Quests != nil {
+			a.Quests.RegisterRoutes(api)
 		}
 		if a.Profile != nil {
 			a.Profile.RegisterRoutes(api)

@@ -5,7 +5,7 @@ import { frame } from "@/app/components/design-system/page-frame";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
-import { UserRound } from "lucide-react";
+import { ArrowRight, Gamepad2, UserRound } from "lucide-react";
 import DashboardFrame from "@/app/dashboard/dashboard-frame";
 import GreetingHeader from "@/app/dashboard/greeting-header";
 import GymVisitCard from "@/app/dashboard/gym-visit-card";
@@ -102,6 +102,17 @@ export default async function DashboardPage() {
         <Suspense fallback={<FitnessAtAGlanceSkeleton />}>
           <DashboardFitness fitness={data.fitness} />
         </Suspense>
+        <Link href="/quests" prefetch={false}
+          className="flex items-center gap-3 rounded-card border border-violet-400/35 bg-linear-to-r from-[#2d1d4d] to-[#1d1537] p-4 text-white hover:border-violet-400 dashboard-compact:py-2.5">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-400/20 text-violet-200">
+            <Gamepad2 className="size-6" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-lg font-bold leading-tight">Pulse Quest</span>
+            <span className="block text-sm text-violet-200">Today’s quests, streaks, and rewards</span>
+          </span>
+          <ArrowRight className="size-5 shrink-0 text-violet-200" aria-hidden="true" />
+        </Link>
         <Suspense fallback={<RecentActivitySkeleton />}>
           <DashboardRecentActivity activity={data.recentActivity} />
         </Suspense>

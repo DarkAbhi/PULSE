@@ -32,6 +32,7 @@ import (
 	"github.com/DarkAbhi/life-backend/internal/observability"
 	"github.com/DarkAbhi/life-backend/internal/profile"
 	"github.com/DarkAbhi/life-backend/internal/purchase"
+	"github.com/DarkAbhi/life-backend/internal/quests"
 	"github.com/DarkAbhi/life-backend/internal/statementimport"
 	"github.com/DarkAbhi/life-backend/internal/vehicle"
 )
@@ -157,6 +158,7 @@ func run(ctx context.Context) error {
 		Horizon:        horizon.NewHandler(pool, horizonService, sessionLookup),
 		Profile:        profile.NewHandler(profileService, sessionID),
 		Activity:       activity.NewHandler(pool, sessionID),
+		Quests:         quests.NewHandler(quests.NewRepository(pool), sessionID),
 		ObsConfig:      obs.Config,
 	}
 	if extractorURL := os.Getenv("STATEMENT_EXTRACTOR_URL"); extractorURL != "" {

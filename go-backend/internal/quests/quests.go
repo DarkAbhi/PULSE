@@ -76,6 +76,18 @@ type HistoryDay struct {
 	Hearts int `json:"hearts"`
 }
 
+type Activity struct {
+	Today string        `json:"today"`
+	Days  []ActivityDay `json:"days"`
+}
+
+type ActivityDay struct {
+	Date         string   `json:"date"`
+	CompletedIDs []string `json:"completed_ids"`
+}
+
+const activityDays = 365
+
 func (day HistoryDay) statusOn(today string) string {
 	switch {
 	case day.Total == 0:

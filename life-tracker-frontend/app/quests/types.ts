@@ -22,6 +22,11 @@ export type QuestDay = {
   total: number;
 };
 
+export type QuestActivity = {
+  today: string;
+  days: { date: string; completed_ids: string[] }[];
+};
+
 export type QuestOverview = {
   today: string;
   next_reset_at: string;

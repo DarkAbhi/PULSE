@@ -15,6 +15,8 @@ import FinancialHorizonCard from "@/app/dashboard/financial-horizon-card";
 import SectionTiles from "@/app/dashboard/section-tiles";
 import { FitnessAtAGlance, FitnessAtAGlanceSkeleton } from "@/app/dashboard/fitness-at-a-glance";
 import { RecentActivity, RecentActivitySkeleton } from "@/app/dashboard/recent-activity";
+import PulseCard from "@/app/components/design-system/pulse-card";
+import QuestHeatmap from "@/app/dashboard/quest-heatmap";
 import { getUserCurrency } from "@/app/lib/user-currency";
 import { getUserTimeZone } from "@/app/lib/user-time-zone";
 
@@ -73,6 +75,15 @@ async function DashboardRecentActivity({ activity }: { activity: DashboardData["
   return <RecentActivity entries={entries} currency={currency} timeZone={timeZone} />;
 }
 
+async function DashboardQuestActivity({ activity }: { activity: DashboardData["questActivity"] }) {
+  const data = await activity;
+  return data ? (
+    <QuestHeatmap activity={data} />
+  ) : (
+    <p className="text-sm text-muted-foreground">Quest history is temporarily unavailable.</p>
+  );
+}
+
 export default async function DashboardPage() {
   const session = await getSession();
   if (!session) redirect("/");
@@ -102,17 +113,24 @@ export default async function DashboardPage() {
         <Suspense fallback={<FitnessAtAGlanceSkeleton />}>
           <DashboardFitness fitness={data.fitness} />
         </Suspense>
-        <Link href="/quests" prefetch={false}
-          className="flex items-center gap-3 rounded-card border border-violet-400/35 bg-linear-to-r from-[#2d1d4d] to-[#1d1537] p-4 text-white hover:border-violet-400 dashboard-compact:py-2.5">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-400/20 text-violet-200">
-            <Gamepad2 className="size-6" aria-hidden="true" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-lg font-bold leading-tight">Pulse Quest</span>
-            <span className="block text-sm text-violet-200">Today’s quests, streaks, and rewards</span>
-          </span>
-          <ArrowRight className="size-5 shrink-0 text-violet-200" aria-hidden="true" />
-        </Link>
+        <PulseCard as="section" aria-labelledby="dashboard-quest-heading"
+          className="grid min-w-0 gap-3 border border-border bg-card p-4 dashboard-compact:gap-2">
+          <header className="flex flex-wrap items-center justify-between gap-x-3">
+            <h2 id="dashboard-quest-heading" className="flex items-center gap-2.5 text-xl font-extrabold tracking-tight">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-(--dashboard-metric-icon-surface) text-(--dashboard-metric-icon)">
+                <Gamepad2 className="size-5" aria-hidden="true" />
+              </span>
+              Quest activity
+            </h2>
+            <Link href="/quests" prefetch={false}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-md text-sm font-semibold text-muted-foreground hover:text-foreground">
+              View quests <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          </header>
+          <Suspense fallback={<div className="h-52 rounded-lg bg-foreground/5" role="status"><span className="sr-only">Loading quest activity</span></div>}>
+            <DashboardQuestActivity activity={data.questActivity} />
+          </Suspense>
+        </PulseCard>
         <Suspense fallback={<RecentActivitySkeleton />}>
           <DashboardRecentActivity activity={data.recentActivity} />
         </Suspense>

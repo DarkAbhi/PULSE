@@ -163,6 +163,37 @@ func (r *Repository) History(ctx context.Context, userID int64, from, to time.Ti
 	return history, err
 }
 
+func (r *Repository) Activity(ctx context.Context, userID int64) (Activity, error) {
+	var activity Activity
+	err := pgx.BeginFunc(ctx, r.pool, func(tx pgx.Tx) error {
+		today, zone, _, err := questDate(ctx, tx, userID)
+		if err != nil {
+			return err
+		}
+		if err = reconcile(ctx, tx, userID, today, zone); err != nil {
+			return err
+		}
+
+		activity.Today = today.Format(time.DateOnly)
+		rows, err := tx.Query(ctx, `
+			SELECT day::text, array_agg(quest_id ORDER BY quest_id)
+			FROM quest_reward_ledger
+			WHERE user_id = $1 AND day BETWEEN $2 AND $3
+			GROUP BY day ORDER BY day
+		`, userID, today.AddDate(0, 0, 1-activityDays), today)
+		if err != nil {
+			return err
+		}
+		activity.Days, err = pgx.CollectRows(rows, func(row pgx.CollectableRow) (ActivityDay, error) {
+			var day ActivityDay
+			err := row.Scan(&day.Date, &day.CompletedIDs)
+			return day, err
+		})
+		return err
+	})
+	return activity, err
+}
+
 func (r *Repository) SaveSettings(ctx context.Context, userID int64, settings Settings) (string, error) {
 	for {
 		var effective time.Time

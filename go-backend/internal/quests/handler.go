@@ -24,9 +24,19 @@ func NewHandler(repository *Repository, userID func(*http.Request) (int64, error
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Get("/quests/overview", h.authenticated(h.overview))
+	r.Get("/quests/activity", h.authenticated(h.activity))
 	r.Get("/quests/history", h.authenticated(h.history))
 	r.Get("/quests/settings", h.authenticated(h.settings))
 	r.Put("/quests/settings", h.authenticated(h.saveSettings))
+}
+
+func (h *Handler) activity(w http.ResponseWriter, r *http.Request, userID int64) {
+	activity, err := h.repository.Activity(r.Context(), userID)
+	if err != nil {
+		webutil.ServerErrorContext(r.Context(), w, err)
+		return
+	}
+	webutil.WriteJSON(w, http.StatusOK, activity)
 }
 
 func (h *Handler) authenticated(next func(http.ResponseWriter, *http.Request, int64)) http.HandlerFunc {

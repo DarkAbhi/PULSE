@@ -132,9 +132,15 @@ func TestWorkoutScheduleChangesReconcileToday(t *testing.T) {
 	save("rest_day", "")
 	check(true)
 	step(1)
-	// An upgrade also fixes an already-stale quest when today is read.
-	if got := overview(); len(got.TodayQuests) != 0 {
-		t.Fatalf("expected the stale workout quest to disappear: %+v", got.TodayQuests)
+	// The dashboard read reconciles a stale workout quest without losing past completions.
+	activity, err := repo.Activity(ctx, userID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if activity.Today != today || len(activity.Days) != 1 ||
+		activity.Days[0].Date != date.AddDate(0, 0, -7).Format(time.DateOnly) ||
+		len(activity.Days[0].CompletedIDs) != 1 || activity.Days[0].CompletedIDs[0] != "gym_workout" {
+		t.Fatalf("expected activity to include only the past workout: %+v", activity)
 	}
 	check(false)
 

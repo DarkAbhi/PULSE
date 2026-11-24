@@ -20,4 +20,3 @@ export function formatVehicleLabel(value: string) {
     : value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export const vehicleCardClassName = "rounded-garage-vehicle shadow-card";

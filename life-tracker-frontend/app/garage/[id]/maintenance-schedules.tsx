@@ -49,7 +49,7 @@ export default function MaintenanceScheduleForm({ initial, vehicleId }: { initia
               setValue((current) => ({ ...current, [key]: { ...current[key], ...patch } }));
 
             return (
-              <PulseCard as="section" key={key} aria-label={label} className="overflow-hidden rounded-xl">
+              <PulseCard as="section" key={key} aria-label={label} className="overflow-hidden">
                 <label className={`flex min-h-12 cursor-pointer items-center gap-3 border-b px-4 py-3 sm:px-5 ${active ? "border-action/25 bg-accent text-accent-foreground" : "border-divider bg-secondary/45"}`}>
                   <input
                     type="radio"

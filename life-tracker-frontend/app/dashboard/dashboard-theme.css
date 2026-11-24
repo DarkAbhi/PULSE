@@ -4,7 +4,6 @@
   --dashboard-hero-light: radial-gradient(ellipse at 85% 85%, #ff2fd059, transparent 70%), radial-gradient(ellipse at 100% 45%, #19d3f366, transparent 70%), radial-gradient(ellipse at 55% 100%, #4c6bff4d, transparent 70%);
   --dashboard-hero-dark: linear-gradient(150deg, var(--brand-indigo) 25%, var(--brand-purple) 65%, var(--brand-violet));
   --dashboard-fitness-surface: #f6f5ff;
-  --dashboard-activity-shadow: 0 1px 2px rgb(26 23 64 / 6%), 0 14px 32px -20px rgb(76 107 255 / 40%);
   --dashboard-activity-chip: rgb(26 23 64 / 7%);
   --dashboard-quest-level-1: #6fddf2;
   --dashboard-quest-level-2: var(--brand-blue);
@@ -15,8 +14,6 @@
   --dashboard-fitness-dial-shadow: 0 18px 40px -18px color-mix(in srgb, var(--brand-blue) 35%, transparent);
   --dashboard-fitness-ring: color-mix(in srgb, var(--foreground) 15%, transparent);
   --dashboard-finance-action: #fff5ce;
-  --dashboard-finance-shadow: 0 18px 40px -20px rgb(255 170 0 / 70%);
-  --dashboard-tile-shadow: 0 20px 40px -24px rgb(0 0 0 / 70%);
   --dashboard-garage-start: #2440e0;
   --dashboard-garage-end: #0f75b3;
   --dashboard-meal-start: var(--meal-pink);
@@ -27,7 +24,6 @@
   --dashboard-orb-fill: radial-gradient(circle at 35% 30%, #daf5ff, #64ccf3 20%, #446bff 40%, var(--brand-pink) 78%);
   --dashboard-orb-shadow: none;
   --dashboard-fitness-surface: #211d3c;
-  --dashboard-activity-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 14px 32px -22px rgb(0 0 0 / 80%);
   --dashboard-activity-chip: rgb(244 241 255 / 9%);
   --dashboard-quest-level-1: #4fc3da;
   --dashboard-quest-level-2: #5f7bff;
@@ -35,5 +31,4 @@
   --dashboard-quest-level-4: #e640c4;
   --dashboard-fitness-action: var(--primary-fill);
   --dashboard-fitness-ring: color-mix(in srgb, var(--foreground) 20%, transparent);
-  --dashboard-finance-shadow: none;
 }

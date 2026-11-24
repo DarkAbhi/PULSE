@@ -1,5 +1,4 @@
 export const fitnessStyles = {
-  surface: "rounded-[clamp(1.5rem,3vw,2.25rem)] shadow-(--fitness-shadow)",
   muted: "text-(--fitness-muted)",
   selectedDate: "mt-4 rounded-3xl border border-foreground/25 px-3 sm:px-4",
   timeChip:
@@ -27,9 +26,7 @@ export const fitnessStyles = {
   legendSelected:
     "bg-(image:--fitness-gradient) text-white " +
     "inline-block w-3.5 h-3.5 flex-none rounded-sm",
-  last:
-    "bg-(image:--fitness-gradient) text-white " +
-    "shadow-(--fitness-spotlight-shadow)",
+  last: "[--tile-start:var(--fitness-gradient-start)] [--tile-end:var(--fitness-gradient-end)]",
   dateBadge:
     "bg-(image:--fitness-gradient) text-white " +
     "flex flex-none flex-col items-center justify-center gap-1 w-17 h-19 rounded-[1.375rem] leading-none",
@@ -50,7 +47,7 @@ export const fitnessStyles = {
     "lg:grid-cols-3 lg:gap-6",
   recentGrid:
     "grid grid-cols-1 gap-[clamp(.75rem,1.8vw,1.5rem)] min-[641px]:grid-cols-2 min-[981px]:grid-cols-3",
-  workoutCard: "shadow-(--fitness-shadow) flex items-center gap-4 h-full p-[clamp(.875rem,1.8vw,1.375rem)] rounded-hero",
+  workoutCard: "flex items-center gap-4 h-full p-[clamp(.875rem,1.8vw,1.375rem)]",
   dateBadgeDay: "text-[1.8rem] font-extrabold tracking-[-.03em]",
   dateBadgeMonth: "text-caption font-bold uppercase",
   workoutTitle: "text-[1.25rem] font-extrabold tracking-[-.02em]",

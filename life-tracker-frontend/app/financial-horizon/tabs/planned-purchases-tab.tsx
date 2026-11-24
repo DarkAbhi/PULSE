@@ -150,7 +150,7 @@ export default function PlannedPurchasesTab({
             {purchases.map((item) => (
               <PulseCard
                 key={item.id}
-                className="flex flex-wrap items-center justify-between gap-3 bg-chip p-6"
+                className="flex flex-wrap items-center justify-between gap-3 [--card-fill:var(--chip)] p-6"
               >
                 <div className="min-w-0 flex-1">
                   <h4 className="font-semibold text-foreground text-sm truncate">{item.name}</h4>

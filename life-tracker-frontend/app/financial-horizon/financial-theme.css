@@ -2,7 +2,8 @@
   --finance-section-heading: clamp(1.3rem, 2.2vw, 1.65rem);
   --finance-pool-value-size: clamp(1.9rem, 3vw, 2.5rem);
   --finance-budget-card-max: 26.25rem;
-  --finance-pool-start-gradient: linear-gradient(135deg, var(--brand-indigo), var(--brand-purple) 60%, #9b2bd8);
+  --finance-pool-start-from: var(--brand-indigo);
+  --finance-pool-start-to: #9b2bd8;
   --finance-pool-end: #ffe08a;
   --finance-pool-end-foreground: var(--on-gold);
   --finance-warning-fill: var(--brand-gold);

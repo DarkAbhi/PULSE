@@ -50,11 +50,11 @@ function NotificationCard({ notification, onDismiss }: { notification: AppNotifi
   }
 
   return (
-    <PulseCard className="relative overflow-hidden bg-destructive">
+    <PulseCard className="relative overflow-hidden [--card-fill:var(--destructive)]">
       <div aria-hidden="true" className="absolute inset-y-0 right-0 flex w-28 items-center justify-center text-sm font-semibold text-destructive-foreground">
         Dismiss
       </div>
-      <PulseCard as="article"
+      <PulseCard as="article" elevation="flat"
         className="relative touch-pan-y p-5 motion-safe:transition-transform"
         onPointerDown={(event) => {
           if (!event.isPrimary || event.button !== 0 || isDismissing) return;

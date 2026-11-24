@@ -5,7 +5,7 @@ import { Icon, type IconName } from "@/app/financial-horizon/components/horizon-
 
 import HorizonAction from "@/app/financial-horizon/components/horizon-action";
 import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
-import PulseCard from "@/app/components/design-system/pulse-card";
+import PulseCard, { type PulseCardVariant } from "@/app/components/design-system/pulse-card";
 import type { HorizonSummary } from "@/app/financial-horizon/horizon-types";
 import { formatMoney } from "@/app/lib/currency.mjs";
 
@@ -16,24 +16,27 @@ const poolEditAction = "bg-white/20! px-3.5! text-white! enabled:hover:bg-white/
 
 const poolTypes = {
   starting: {
-    surface: "bg-(image:--finance-pool-start-gradient) text-white",
+    variant: "tile",
+    surface: "[--tile-start:var(--finance-pool-start-from)] [--tile-end:var(--finance-pool-start-to)]",
     icon: "bg-white/20",
     label: "text-white/85",
     description: "text-white/85",
   },
   committed: {
+    variant: "surface",
     surface: "",
     icon: "bg-chip",
     label: "",
     description: "text-muted-foreground",
   },
   available: {
-    surface: "bg-(--finance-pool-end) text-(--finance-pool-end-foreground)",
+    variant: "tile",
+    surface: "[--tile-start:var(--finance-pool-end)] [--tile-end:var(--finance-pool-end)] [--tile-foreground:var(--finance-pool-end-foreground)]",
     icon: "bg-(--finance-pool-end-foreground)/12",
     label: "",
     description: "opacity-85",
   },
-};
+} satisfies Record<string, { variant: PulseCardVariant; surface: string; icon: string; label: string; description: string }>;
 
 function PoolCard({
   type,
@@ -53,7 +56,7 @@ function PoolCard({
   const appearance = poolTypes[type];
 
   return (
-    <PulseCard as="article" className={`flex flex-col gap-3 p-6 lg:min-h-46 ${appearance.surface}`}>
+    <PulseCard as="article" variant={appearance.variant} className={`flex flex-col gap-3 p-6 lg:min-h-46 ${appearance.surface}`}>
       <div className="flex min-h-11 items-center gap-3">
         <span className={`grid size-10 shrink-0 place-items-center rounded-control ${appearance.icon}`}>
           <Icon name={icon} />

@@ -21,7 +21,7 @@ export default function DashboardViewSettings() {
         </h2>
         <p className={sectionDescriptionClass}>Choose how much space the home dashboard uses in this browser.</p>
       </header>
-      <PulseCard className="p-6 shadow-card">
+      <PulseCard className="p-6">
         <PulseChoiceGroup label="Dashboard view" options={options} value={view} onChange={setDashboardView} columns />
       </PulseCard>
     </section>

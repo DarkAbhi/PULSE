@@ -676,7 +676,7 @@ export default function FinancialHorizonClient({
   };
 
   return (
-    <main id="main-content" tabIndex={-1} className={`${frame.page} [&_.pulse-card]:shadow-card`}>
+    <main id="main-content" tabIndex={-1} className={`${frame.page}`}>
       <div className={`${frame.content} space-y-6 sm:space-y-7`}>
         {appBar}
         <header>

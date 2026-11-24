@@ -118,7 +118,7 @@ export default function APIKeys({ initialKeys }: { initialKeys: APIKey[] | null 
         </PulseButton>
       </header>
       {keys.length === 0 ? (
-        <PulseCard className="grid justify-items-center gap-2.5 px-6 py-9 text-center text-muted-foreground shadow-card">
+        <PulseCard className="grid justify-items-center gap-2.5 px-6 py-9 text-center text-muted-foreground">
           <span className={iconTileClass} aria-hidden="true"><KeyRound /></span>
           {!loadError && (
             <>
@@ -129,7 +129,7 @@ export default function APIKeys({ initialKeys }: { initialKeys: APIKey[] | null 
           {loadError && <p className="text-destructive" role="alert">{loadError}</p>}
         </PulseCard>
       ) : (
-        <PulseCard className="overflow-hidden shadow-card">
+        <PulseCard className="overflow-hidden">
           {error && !isOpen && !revokeKey && <p className="px-6 py-3 text-sm text-destructive" role="alert">{error}</p>}
           <table role="table" className="w-full table-fixed border-collapse text-left max-sheet:block" aria-labelledby="profile-api-keys">
             <thead role="rowgroup" className="bg-muted max-sheet:sr-only">

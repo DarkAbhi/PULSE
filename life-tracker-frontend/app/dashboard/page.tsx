@@ -122,7 +122,7 @@ export default async function DashboardPage() {
             <DashboardFitness fitness={data.fitness} questSettings={data.questSettings} />
           </Suspense>
           <PulseCard as="section" aria-labelledby="dashboard-quest-heading"
-            className="p-6 shadow-(--dashboard-activity-shadow)">
+            className="p-6">
             <header className="mb-5 flex min-h-11 items-center gap-3.5 max-[360px]:gap-2">
               <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-[linear-gradient(135deg,#3a2cd9,#b22bd8)] text-white">
                 <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

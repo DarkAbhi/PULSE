@@ -8,7 +8,7 @@ export default async function LoginPage() {
 
   return (
     <main id="main-content" tabIndex={-1} className="flex min-h-screen items-center justify-center bg-background px-6 py-12 text-foreground">
-      <PulseCard as="section" className="w-full max-w-md p-8 shadow-xl sm:p-10">
+      <PulseCard as="section" className="w-full max-w-md p-8 sm:p-10">
         <div className="mb-8">
           <p className="mb-2 text-sm font-semibold tracking-wide text-action">
             PULSE

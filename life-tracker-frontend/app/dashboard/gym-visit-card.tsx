@@ -25,7 +25,7 @@ export default function GymVisitCard({ visited }: GymVisitCardProps) {
       : "No workout recorded today.";
 
   return (
-    <PulseCard as="article" className="@container grid items-center bg-(--dashboard-fitness-surface) text-card-foreground" aria-label="Fitness today">
+    <PulseCard as="article" elevation="flat" className="@container grid items-center [--card-fill:var(--dashboard-fitness-surface)] text-card-foreground" aria-label="Fitness today">
       <div className="flex items-center justify-center gap-[clamp(16px,5cqi,36px)] p-[clamp(20px,5cqi,32px)] @max-[20rem]:flex-col @max-[20rem]:text-center dashboard-compact:gap-3 dashboard-compact:p-4 dashboard-compact:@min-[15rem]:flex-row dashboard-compact:@min-[15rem]:text-start">
         <svg
           className={workoutDialClass}

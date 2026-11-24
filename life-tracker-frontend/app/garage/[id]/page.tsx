@@ -207,7 +207,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
           </PulseCard>
         )}
 
-        <PulseCard as="section" aria-labelledby="delete-vehicle-heading" className={`${detail.card} border border-destructive/40 shadow-none! flex flex-wrap items-center justify-between gap-4`}>
+        <PulseCard as="section" aria-labelledby="delete-vehicle-heading" className={`${detail.card} flex flex-wrap items-center justify-between gap-4`}>
           <div>
             <h2 id="delete-vehicle-heading" className={`${detail.subheading} text-destructive`}>Delete vehicle</h2>
             <p className="text-muted-foreground mt-1 text-sm">Permanently removes this vehicle and its fuel, air fill and maintenance history.</p>

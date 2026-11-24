@@ -167,7 +167,7 @@ function ActivitySection({ children, loading }: { children: ReactNode; loading?:
           Recent activity
         </h2>
       </header>
-      <PulseCard className="overflow-hidden shadow-(--dashboard-activity-shadow)">
+      <PulseCard className="overflow-hidden">
         {children}
       </PulseCard>
     </section>

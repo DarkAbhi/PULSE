@@ -61,7 +61,7 @@ function MetricCard({ icon, color, label, value, progress }: {
   progress?: ReactNode;
 }) {
   return (
-    <PulseCard className={`${rowClass} shadow-(--dashboard-activity-shadow)`}>
+    <PulseCard className={`${rowClass}`}>
       <span className={`${iconClass} ${color} bg-[color-mix(in_srgb,currentColor_16%,transparent)]`} aria-hidden="true">
         <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           {icon}
@@ -115,7 +115,7 @@ function ActivityCard({ rings }: { rings: Ring[] }) {
   const hasActivity = rings.some(({ value }) => value !== null);
 
   return (
-    <PulseCard className="relative shadow-(--dashboard-activity-shadow)">
+    <PulseCard className="relative">
       <ActivityBreakdown
         className={`${rowClass} w-full rounded-card text-left`}
         breakdown={(
@@ -190,7 +190,7 @@ export function FitnessAtAGlanceSkeleton() {
   return (
     <FitnessSection busy>
       {[0, 1, 2, 3].map((index) => (
-        <PulseCard key={index} className={`${rowClass} shadow-(--dashboard-activity-shadow)`} aria-hidden="true">
+        <PulseCard key={index} className={`${rowClass}`} aria-hidden="true">
           <span className={`${iconClass} bg-(--dashboard-activity-chip)`} />
           <span className="h-9 w-16 rounded-lg bg-(--dashboard-activity-chip)" />
         </PulseCard>

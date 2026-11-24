@@ -254,11 +254,11 @@ Start with a single column on narrow screens. Add columns where they help people
 
 ## Elevation & Depth
 
-Separate the canvas, cards, and controls with tonal fills. Shared cards have a solid fill and no default outline or shadow. Use dividers between repeated records and keep card position and shadow steady on hover.
+Separate the canvas, cards, and controls with tonal fills. Cards are raised by default with the soft `shadow-card` elevation and have no outline. Cards layered on another surface or placed inside a dialog use `elevation="flat"`, never a caller-side `shadow-none`. Use dividers between repeated records and keep card position and shadow steady on hover.
 
 ## Shapes
 
-Standard buttons use an 8px radius. The shared control radius is 14px, cards use 28px and hero surfaces use 32px. Keep repeated controls and cards consistent within a screen.
+Standard buttons use an 8px radius. The shared control radius is 14px, cards use 28px and gradient tiles use 32px. Compact cards nested in a card or dialog use 14px. Screens never set their own card radius. Keep repeated controls and cards consistent within a screen.
 
 ## Motion & Micro-interaction
 
@@ -283,7 +283,11 @@ Use the `Pulse` prefix for component names and `pulse-` for component filenames 
 
 ### Cards & Elevation
 
-- **Cards.** Use `PulseCard` for content and `PulseCardLink` for cards that navigate. Set spacing and layout at the caller. Both share the surface treatment in `@app/components/design-system/pulse-card.tsx`.
+- **Cards.** Use `PulseCard` for content and `PulseCardLink` for cards that navigate. `@app/components/design-system/pulse-card.tsx` owns the radius, fill, shadow and focus ring; callers pass only spacing and layout through `className`. Choose the look with named options:
+  - `variant`: `surface` (default) is the solid themed card. `tile` is the gradient feature tile, coloured with `--tile-start` and `--tile-end`, with white text unless `--tile-foreground` is set.
+  - `elevation`: `raised` (default) or `flat` for cards layered on another surface or inside a dialog.
+  - `size`: `default` or `compact` for the smaller radius on nested cards.
+  - Tint a surface card with `--card-fill` instead of a `bg-*` class.
 - **Financial Horizon.** The dashboard summary uses `card-horizon` with a warm yellow fill and 24px padding in both modes. Its fill is defined in `@app/financial-horizon/financial-theme.css` and shared with the pool summary.
 
 ### Lists & Navigation

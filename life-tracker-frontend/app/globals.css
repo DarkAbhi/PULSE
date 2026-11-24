@@ -268,17 +268,6 @@
   }
 }
 
-@layer components {
-  /* Shared with the dashboard: soft corners and a solid themed surface, without an outline. */
-  .pulse-card {
-    @apply min-w-0 rounded-card bg-card;
-  }
-
-  .pulse-card[href]:focus-visible {
-    @apply outline-3 outline-ring outline-offset-4;
-  }
-}
-
 @layer base {
   :focus-visible {
     @apply outline-2 outline-ring outline-offset-2;

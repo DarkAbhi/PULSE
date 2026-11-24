@@ -9,9 +9,9 @@ const horizonAmountClass =
   "dashboard-compact:text-[clamp(1.75rem,12cqi,3rem)]";
 
 const horizonCardClass =
-  "@container relative isolate flex flex-col min-h-50 overflow-hidden rounded-[32px_32px_32px_clamp(56px,8vw,96px)] " +
-  "bg-(--finance-pool-end) text-(--finance-pool-end-foreground) shadow-(--dashboard-finance-shadow) " +
-  "dashboard-compact:min-h-36 dashboard-compact:rounded-card";
+  "@container relative isolate flex flex-col min-h-50 overflow-hidden " +
+  "[--tile-start:var(--finance-pool-end)] [--tile-end:var(--finance-pool-end)] [--tile-foreground:var(--finance-pool-end-foreground)] " +
+  "dashboard-compact:min-h-36";
 
 interface FinancialHorizonCardProps {
   summary: Pick<HorizonSummary, "remaining_amount" | "currency"> | null;
@@ -29,7 +29,7 @@ export default function FinancialHorizonCard({
     : null;
 
   return (
-    <PulseCardLink href="/financial-horizon" className={horizonCardClass}>
+    <PulseCardLink href="/financial-horizon" variant="tile" className={horizonCardClass}>
       <svg
         className="absolute inset-[auto_0_0] -z-1 w-full h-[33%] pointer-events-none fill-white opacity-50 motion-safe:[&_path]:animate-pulse-drift dark:opacity-35"
         aria-hidden="true"

@@ -14,12 +14,8 @@ export const mealPlanStyles = {
     "bg-(image:--meal-action-gradient) text-white " +
     "flex-none py-1 px-2.5 rounded-full text-xs font-bold",
   addMeal: "shadow-(--meal-action-shadow)",
-  calendar:
-    "shadow-(--meal-calendar-shadow) " +
-    "p-[clamp(12px,2.2vw,28px)] rounded-[clamp(26px,4vw,40px)]",
-  slotCard:
-    "shadow-(--meal-calendar-shadow) " +
-    "flex min-w-0 flex-col gap-4 rounded-4xl p-4 sm:p-5",
+  calendar: "p-[clamp(12px,2.2vw,28px)]",
+  slotCard: "flex min-w-0 flex-col gap-4 p-4 sm:p-5",
   weekDays: "grid grid-cols-7 gap-[clamp(4px,1vw,14px)]",
   day:
     "flex flex-col items-center min-w-0 min-h-20 gap-1 py-2 rounded-[clamp(11px,2.4vw,28px)] bg-(--meal-calendar-inset) " +

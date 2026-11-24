@@ -15,7 +15,7 @@ export default function AboutPulse() {
       <header>
         <h2 id="about-pulse-title" className={sectionHeadingClass}><Info aria-hidden="true" />About</h2>
       </header>
-      <PulseCard className="grid overflow-hidden lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] shadow-card">
+      <PulseCard className="grid overflow-hidden lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <div className="flex items-center gap-5 bg-(image:--profile-about-gradient) p-6">
           <span className="grid size-[76px] shrink-0 place-items-center rounded-3xl bg-card shadow-card">
             <Image src="/pulse-logo.png" alt="" width={46} height={46} />

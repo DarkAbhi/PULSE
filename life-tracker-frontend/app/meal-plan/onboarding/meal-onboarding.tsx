@@ -70,7 +70,7 @@ function UsualTime({ label, value, onChange }: { label: string; value: string; o
 function Question({ index, error, children }: { index: number; error?: string; children: ReactNode }) {
   const { title, description } = questions[index];
   const id = `meal-question-${index + 1}`;
-  return <PulseCard as="fieldset" className="grid gap-5 p-4 shadow-card sm:p-6" aria-labelledby={id} aria-describedby={`${id}-hint${error ? ` ${id}-error` : ""}`}>
+  return <PulseCard as="fieldset" className="grid gap-5 p-4 sm:p-6" aria-labelledby={id} aria-describedby={`${id}-hint${error ? ` ${id}-error` : ""}`}>
     <div className="flex items-start gap-3.5">
       <span className={`grid size-10 shrink-0 place-items-center rounded-full font-extrabold ${gradientClass}`} aria-hidden="true">{index + 1}</span>
       <div>
@@ -271,7 +271,7 @@ export default function MealOnboarding({ notifications, initial, editing = false
           </Question>
         </fieldset>
 
-        <PulseCard as="aside" className={`sticky bottom-[max(12px,env(safe-area-inset-bottom))] z-[8] flex flex-col gap-2 border border-divider bg-card p-2.5 shadow-[0_12px_30px_-10px_rgb(0_0_0/35%)] min-[1051px]:top-4 min-[1051px]:bottom-auto min-[1051px]:z-auto min-[1051px]:max-h-[calc(100dvh-32px)] min-[1051px]:gap-[18px] min-[1051px]:rounded-card min-[1051px]:border-0 min-[1051px]:p-[clamp(16px,2.4vw,24px)] min-[1051px]:shadow-card ${failure && !failure.skip ? "rounded-card" : "rounded-full"}`} aria-label="Your plan so far">
+        <aside className={`min-w-0 sticky bottom-[max(12px,env(safe-area-inset-bottom))] z-[8] flex flex-col gap-2 border border-divider bg-card p-2.5 shadow-[0_12px_30px_-10px_rgb(0_0_0/35%)] min-[1051px]:top-4 min-[1051px]:bottom-auto min-[1051px]:z-auto min-[1051px]:max-h-[calc(100dvh-32px)] min-[1051px]:gap-[18px] min-[1051px]:rounded-card min-[1051px]:border-0 min-[1051px]:p-[clamp(16px,2.4vw,24px)] min-[1051px]:shadow-card ${failure && !failure.skip ? "rounded-card" : "rounded-full"}`} aria-label="Your plan so far">
           <div className="hidden overflow-y-auto border-b border-divider pb-[18px] min-[1051px]:block [&_dt]:text-[0.72rem] [&_dt]:font-bold [&_dt]:tracking-[0.05em] [&_dt]:text-muted-foreground [&_dt]:uppercase [&_dd]:mt-[3px] [&_dd]:leading-[1.3] [&_dd]:font-bold">
             <h2 className="mb-[18px] text-[1.2rem] font-extrabold tracking-[-0.02em]">Your plan so far</h2>
             <dl className="grid gap-3.5">
@@ -303,7 +303,7 @@ export default function MealOnboarding({ notifications, initial, editing = false
               {busy ? "Saving…" : "Save preferences"}
             </PulseButton>
           </div>
-        </PulseCard>
+        </aside>
       </form>
     </div>
   </main>;

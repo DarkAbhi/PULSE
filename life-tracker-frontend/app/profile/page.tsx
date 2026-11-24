@@ -67,7 +67,7 @@ export default async function ProfilePage() {
             <header>
               <h2 id="profile-account" className={sectionHeadingClass}><UserRound aria-hidden="true" />Account</h2>
             </header>
-            <PulseCard className="flex-1 divide-y divide-divider shadow-card">
+            <PulseCard className="flex-1 divide-y divide-divider">
               <ChangePasswordButton />
               <TimeZoneSettings />
               <CurrencySettings />
@@ -79,7 +79,7 @@ export default async function ProfilePage() {
 
         <DashboardViewSettings />
 
-        <Suspense fallback={<PulseCard className="p-6 shadow-card" role="status">Loading API keys…</PulseCard>}>
+        <Suspense fallback={<PulseCard className="p-6" role="status">Loading API keys…</PulseCard>}>
           <APIKeysSection />
         </Suspense>
         <AboutPulse />

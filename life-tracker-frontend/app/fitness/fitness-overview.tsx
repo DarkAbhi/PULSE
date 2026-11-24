@@ -30,17 +30,17 @@ export function FitnessSummary({ last, streak, today, workoutDates }: {
   return (
     <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2 lg:gap-6">
       {last && (
-        <section className={`${styles.last} relative isolate flex min-h-40 flex-col justify-between gap-4 overflow-hidden rounded-4xl p-5 text-white sm:p-6`}>
+        <PulseCard as="section" variant="tile" className={`${styles.last} relative isolate flex min-h-40 flex-col justify-between gap-4 overflow-hidden p-5 sm:p-6`}>
           <h2 className="flex items-center gap-2.5 font-semibold"><Clock size={21} aria-hidden="true" />{last.label}</h2>
           <div>
             <p className={styles.summaryValue}>{last.value}</p>
             {workoutDates.size > 0 && <p className="mt-1">{last.subtitle}</p>}
           </div>
           <Dumbbell aria-hidden="true" className="pointer-events-none absolute -right-5 -bottom-7 -z-10 size-40 -rotate-12 text-white/20" strokeWidth={1.4} />
-        </section>
+        </PulseCard>
       )}
       {streak && (
-        <PulseCard as="section" className={`${styles.surface} flex flex-col justify-between gap-3 p-5 sm:p-6`}>
+        <PulseCard as="section" className={`flex flex-col justify-between gap-3 p-5 sm:p-6`}>
           <h2 className={`${styles.muted} flex items-center gap-2.5 font-semibold`}><Flame size={21} aria-hidden="true" />{streak.label}</h2>
           <div>
             <p className={styles.summaryValue}>{streak.value}</p>
@@ -77,7 +77,7 @@ export function FitnessStats({ cards }: { cards: FitnessStat[] }) {
           const Icon = icon?.icon ?? List;
           const attendance = card.id === "attendance" ? Number.parseFloat(card.value) : NaN;
           return (
-            <PulseCard as="li" key={card.id} className={`${styles.surface} flex items-center gap-4 p-4 sm:p-5`}>
+            <PulseCard as="li" key={card.id} className={`flex items-center gap-4 p-4 sm:p-5`}>
               {Number.isFinite(attendance) ? (
                 <span aria-hidden="true" className={styles.attendance} style={{ "--attendance": `${attendance}%` } as CSSProperties} />
               ) : (

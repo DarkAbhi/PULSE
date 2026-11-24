@@ -10,11 +10,9 @@ const spaceIconClass =
 
 const spaceLinkClass =
   "flex items-center gap-[clamp(10px,1.25cqi,18px)] min-h-37.5 p-[clamp(16px,2.2cqi,30px)] " +
-  "rounded-[clamp(28px,4cqi,40px)] [background:linear-gradient(135deg,var(--tile-start),var(--tile-end))] text-white " +
-  "shadow-[0_20px_40px_-22px_var(--tile-start)] dark:shadow-(--dashboard-tile-shadow) " +
   "motion-safe:[transition:transform_200ms_ease] motion-safe:active:[transform:scale(.985)] " +
   "dashboard-compact:grid dashboard-compact:grid-cols-[auto_minmax(0,1fr)_auto] " +
-  "dashboard-compact:content-center dashboard-compact:gap-3 dashboard-compact:min-h-36 dashboard-compact:rounded-card dashboard-compact:p-4";
+  "dashboard-compact:content-center dashboard-compact:gap-3 dashboard-compact:min-h-36 dashboard-compact:p-4";
 
 type SectionTileProps = {
   href: string;
@@ -28,7 +26,7 @@ type SectionTileProps = {
 
 function SectionTile({ href, title, description, icon, decor, decorClassName = "", className }: SectionTileProps) {
   return (
-    <PulseCardLink href={href} className={`${spaceLinkClass} ${className}`}>
+    <PulseCardLink href={href} variant="tile" className={`${spaceLinkClass} ${className}`}>
       <span className={spaceIconClass} aria-hidden="true">{icon}</span>
       <span className="min-w-0 flex-1 wrap-anywhere">
         <strong className="block text-[clamp(1.4rem,2.5cqi,2rem)] leading-[1.05] font-extrabold tracking-[-.03em] dashboard-compact:text-xl">{title}</strong>

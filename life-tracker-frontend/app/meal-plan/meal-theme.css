@@ -15,7 +15,6 @@
 
   --meal-calendar-inset: #f0eff4;
   --meal-calendar-outline: #b6b1c6;
-  --meal-calendar-shadow: 0 18px 40px -18px color-mix(in srgb, var(--brand-blue) 35%, transparent);
 
   --meal-breakfast: var(--brand-gold);
   --meal-lunch: var(--brand-orange);
@@ -29,5 +28,4 @@
   --meal-accent: #ff6fb5;
   --meal-calendar-inset: #2e2949;
   --meal-calendar-outline: #746d90;
-  --meal-calendar-shadow: 0 18px 40px -24px rgb(0 0 0 / 70%);
 }

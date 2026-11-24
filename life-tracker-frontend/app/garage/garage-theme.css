@@ -16,7 +16,6 @@
 
   --radius-garage-banner: clamp(1.75rem, 4.2vw, 3.75rem);
   --radius-garage-vehicle-icon: 32%;
-  --radius-garage-vehicle: clamp(1.5rem, 3.25vw, 2.75rem);
   --radius-garage-hero: clamp(1.75rem, 4vw, 2.5rem);
   --radius-garage-hero-icon: clamp(1.25rem, 3vw, 1.75rem);
   --spacing-garage-banner: clamp(1.5rem, 3.5vw, 3rem);

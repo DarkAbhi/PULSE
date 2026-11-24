@@ -1,10 +1,15 @@
-import PulseCard, { type PulseCardProps } from "@/app/components/design-system/pulse-card";
+import type { HTMLAttributes } from "react";
 
-export default function HorizonEmpty({ className = "", ...props }: PulseCardProps) {
+interface HorizonEmptyProps extends HTMLAttributes<HTMLElement> {
+  as?: "div" | "p";
+}
+
+/** Dashed placeholder for an empty list. It marks where cards will appear, so it is not a card itself. */
+export default function HorizonEmpty({ as: Component = "div", className = "", ...props }: HorizonEmptyProps) {
   return (
-    <PulseCard
+    <Component
       {...props}
-      className={`border border-dashed border-divider bg-transparent p-8 text-center shadow-none! ${className}`}
+      className={`min-w-0 rounded-card border border-dashed border-divider p-8 text-center ${className}`}
     />
   );
 }

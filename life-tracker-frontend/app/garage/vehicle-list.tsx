@@ -1,7 +1,7 @@
 import Link from "next/link";
 import PulseCard from "@/app/components/design-system/pulse-card";
 import { VehicleActionProvider, VehicleQuickActions } from "@/app/garage/vehicle-actions";
-import { formatVehicleLabel, getVehicleIcon, vehicleCardClassName } from "@/app/garage/vehicle-presentation";
+import { formatVehicleLabel, getVehicleIcon } from "@/app/garage/vehicle-presentation";
 import FuelTypeDot from "@/app/garage/fuel-type-dot";
 import type { Vehicle } from "@/app/garage/types";
 
@@ -19,7 +19,7 @@ export default function VehiclesList({ vehicles }: { vehicles: Vehicle[] }) {
             <PulseCard
               as="article"
               key={vehicle.id}
-              className={`${vehicleCardClassName} flex flex-col gap-4 p-4 sm:gap-5 sm:p-5 xl:p-7`}
+              className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-5 xl:p-7"
             >
               <Link
                 href={`/garage/${vehicle.id}`}

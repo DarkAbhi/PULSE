@@ -35,7 +35,7 @@ export default async function ReminderSettingsPage({ params }: { params: Promise
 
             return (
               <li key={setting.kind}>
-                <PulseCardLink href={`/garage/${id}/reminders/${setting.kind}`} className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 p-4 hover:bg-secondary/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto] sm:gap-x-5 sm:px-5">
+                <PulseCardLink href={`/garage/${id}/reminders/${setting.kind}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 p-4 sm:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto] sm:gap-x-5 sm:px-5">
                   <span className="col-start-1 row-span-2 row-start-1 grid size-11 place-items-center rounded-xl bg-accent text-accent-foreground sm:row-span-1">
                     <Icon className="size-5" aria-hidden="true" />
                   </span>
@@ -44,7 +44,7 @@ export default async function ReminderSettingsPage({ params }: { params: Promise
                     <p className="text-sm font-semibold tabular-nums">{limits ? `Every ${limits}` : "No interval set"}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">{fromManual ? "Vehicle manual" : "My intervals"}</p>
                   </div>
-                  <ChevronRight className="col-start-3 row-span-2 row-start-1 size-5 text-muted-foreground group-hover:text-action sm:col-start-4 sm:row-span-1" aria-hidden="true" />
+                  <ChevronRight className="col-start-3 row-span-2 row-start-1 size-5 text-muted-foreground sm:col-start-4 sm:row-span-1" aria-hidden="true" />
                 </PulseCardLink>
               </li>
             );

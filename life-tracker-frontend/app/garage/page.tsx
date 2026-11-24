@@ -6,7 +6,6 @@ import { frame } from "@/app/components/design-system/page-frame";
 import VehicleEditor from "@/app/garage/vehicle-editor";
 import VehiclesList from "@/app/garage/vehicle-list";
 import type { Vehicle } from "@/app/garage/types";
-import { vehicleCardClassName } from "@/app/garage/vehicle-presentation";
 
 export const metadata = {
   title: "Garage | PULSE",
@@ -57,11 +56,11 @@ export default async function GaragePage() {
         <section aria-labelledby="vehicles-title" className="mt-5 sm:mt-7">
           <h2 id="vehicles-title" className="sr-only">Your vehicles</h2>
           {!vehicles ? (
-            <PulseCard as="p" className="bg-destructive-soft px-6 py-5 text-sm text-destructive" role="alert">
+            <PulseCard as="p" className="[--card-fill:var(--destructive-soft)] px-6 py-5 text-sm text-destructive" role="alert">
               {error}
             </PulseCard>
           ) : vehicles.length === 0 ? (
-            <PulseCard className={`${vehicleCardClassName} px-6 py-8 sm:px-8`}>
+            <PulseCard className="px-6 py-8 sm:px-8">
               <p className="font-semibold">Your garage is empty</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Add your first vehicle to start logging fuel and tire air.

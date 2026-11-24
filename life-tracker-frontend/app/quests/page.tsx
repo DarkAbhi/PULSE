@@ -28,9 +28,9 @@ export default async function QuestPage({ searchParams }: { searchParams: Promis
   return (
     <main id="main-content" tabIndex={-1}
       className={`quest-page bg-(--quest-canvas) text-(--quest-text) ${frame.page}`}>
-      <div className="mx-auto max-w-[1200px]">
+      <div className={frame.content}>
         <TopAppBar backHref="/dashboard" backLabel="Back to Dashboard" />
-        <div className="mt-5 grid gap-5 sm:mt-7">
+        <div className="mt-3 grid gap-5">
           <header className="flex flex-wrap items-center justify-between gap-4">
             <h1 className="flex items-center gap-3.5 text-[clamp(2rem,4.4vw,3rem)] leading-none font-extrabold tracking-[-0.045em]">
               <span className="grid size-[clamp(44px,5vw,56px)] shrink-0 place-items-center rounded-2xl bg-(image:--quest-gradient) text-white shadow-[0_14px_28px_-14px_#5b2ce0e6]">

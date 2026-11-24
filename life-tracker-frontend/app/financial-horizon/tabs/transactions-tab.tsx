@@ -12,7 +12,7 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 
 import { useTimeZone } from "@/app/components/profile-preferences-provider";
 
-import HorizonSegments from "@/app/financial-horizon/components/horizon-segments";
+import PulseTabs from "@/app/components/design-system/pulse-tabs";
 import HorizonAction from "@/app/financial-horizon/components/horizon-action";
 import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
 import SectionHeader from "@/app/financial-horizon/components/section-header";
@@ -105,9 +105,10 @@ export default function TransactionsTab({
       {/* Filter and Search Bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 flex-wrap">
-          <HorizonSegments
+          <PulseTabs
+            variant="segmented"
             label="Transaction type"
-            options={transactionTypes}
+            items={transactionTypes}
             value={txTypeFilter}
             onChange={onTxTypeFilterChange}
           />

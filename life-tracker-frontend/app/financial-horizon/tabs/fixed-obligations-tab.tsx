@@ -10,7 +10,7 @@ import { formatInstant } from "@/app/lib/time-zone.mjs";
 
 import { useTimeZone } from "@/app/components/profile-preferences-provider";
 
-import HorizonSegments from "@/app/financial-horizon/components/horizon-segments";
+import PulseTabs from "@/app/components/design-system/pulse-tabs";
 import HorizonAction from "@/app/financial-horizon/components/horizon-action";
 import PulseButton from "@/app/components/design-system/pulse-button";
 import PulseIconButton from "@/app/components/design-system/pulse-icon-button";
@@ -168,12 +168,13 @@ export default function FixedObligationsTab({
         </HorizonAction>
       </SectionHeader>
 
-      <HorizonSegments
+      <PulseTabs
+        variant="segmented"
         label="Obligation category"
         className="flex-wrap"
         value={activeCategory}
         onChange={setActiveCategory}
-        options={[
+        items={[
           { value: "all", label: `All (${totalItemsCount})` },
           ...CATEGORIES.map(category => {
             const deductionCount = summary.deductions.filter(item => item.category === category.id).length;

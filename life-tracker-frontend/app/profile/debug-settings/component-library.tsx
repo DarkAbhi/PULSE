@@ -12,6 +12,7 @@ import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader }
 import PulseSelect from "@/app/components/design-system/pulse-select";
 import PulseSwitch from "@/app/components/design-system/pulse-switch";
 import PulseTimeInput from "@/app/components/design-system/pulse-time-input";
+import PulseTabs from "@/app/components/design-system/pulse-tabs";
 
 const buttonLabels = {
   primary: "Primary",
@@ -149,6 +150,38 @@ function SelectionPreview() {
   );
 }
 
+const sectionTabs = [
+  { value: "today", label: "Today" },
+  { value: "history", label: "History" },
+  { value: "goals", label: "Goals" },
+];
+
+const typeTabs = [
+  { value: "all", label: "All" },
+  { value: "debit", label: "Debit" },
+  { value: "credit", label: "Credit" },
+];
+
+function TabsPreview() {
+  const [section, setSection] = useState("today");
+  const [type, setType] = useState("all");
+
+  return (
+    <PreviewSection title="Tabs">
+      <div className="grid gap-2">
+        <h4 className="text-sm font-semibold">Primary</h4>
+        <div className="rounded-xl bg-background p-3">
+          <PulseTabs label="Sample sections" items={sectionTabs} value={section} onChange={setSection} className="sm:grid-cols-3" />
+        </div>
+      </div>
+      <div className="grid gap-2">
+        <h4 className="text-sm font-semibold">Segmented</h4>
+        <PulseTabs variant="segmented" label="Sample transaction type" items={typeTabs} value={type} onChange={setType} className="justify-self-start" />
+      </div>
+    </PreviewSection>
+  );
+}
+
 function DialogsPreview() {
   const titleId = useId();
   const [dialog, setDialog] = useState<"settings" | "confirmation" | null>(null);
@@ -224,6 +257,7 @@ export default function ComponentLibrary() {
         <ButtonsPreview />
         <InputsPreview />
         <SelectionPreview />
+        <TabsPreview />
         <div className="grid content-start gap-4">
           <PreviewSection title="Cards">
             <div className="rounded-xl bg-background p-3">

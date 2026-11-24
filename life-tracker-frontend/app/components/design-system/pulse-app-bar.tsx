@@ -27,11 +27,12 @@ export function PulseAppBarNotificationLink() {
 
 type BackDestination = { href: string } | { onClick: () => void; disabled?: boolean };
 
-export default function PulseAppBar({ back, backLabel, notifications, onProfilePage = false }: {
+export default function PulseAppBar({ back, backLabel, notifications, onProfilePage = false, profileControl }: {
   back: BackDestination;
   backLabel: string;
   notifications: ReactNode;
   onProfilePage?: boolean;
+  profileControl?: ReactNode;
 }) {
   const arrow = <ArrowLeft className="size-5" aria-hidden="true" />;
 
@@ -45,9 +46,11 @@ export default function PulseAppBar({ back, backLabel, notifications, onProfileP
         </button>
       )}
       <div className="flex shrink-0 items-center gap-2">
-        <Link href="/profile" aria-label="Profile" aria-current={onProfilePage ? "page" : undefined} className={appBarControl}>
-          <UserRound className="size-5" aria-hidden="true" />
-        </Link>
+        {profileControl ?? (
+          <Link href="/profile" aria-label="Profile" aria-current={onProfilePage ? "page" : undefined} className={appBarControl}>
+            <UserRound className="size-5" aria-hidden="true" />
+          </Link>
+        )}
         {notifications}
       </div>
     </nav>

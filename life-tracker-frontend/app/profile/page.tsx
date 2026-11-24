@@ -1,7 +1,8 @@
 import "@/app/profile/profile-theme.css";
 
 import { Suspense } from "react";
-import { UserRound } from "lucide-react";
+import { UserRound, Wrench } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { frame } from "@/app/components/design-system/page-frame";
 import PulseCard from "@/app/components/design-system/pulse-card";
@@ -13,21 +14,27 @@ import APIKeysSection from "@/app/profile/api-keys-section";
 import ChangePasswordButton from "@/app/profile/change-password-button";
 import CurrencySettings from "@/app/profile/currency-settings";
 import DashboardViewSettings from "@/app/profile/dashboard-view-settings";
-import DebugSettingsButton from "@/app/profile/debug-settings-button";
+import { getDebugSettingsStatus } from "@/app/profile/debug-settings/debug-settings";
 import ThemeSettings from "@/app/profile/theme-settings";
 import TimeZoneSettings from "@/app/profile/time-zone-settings";
 import { sectionClass, sectionHeadingClass } from "@/app/profile/profile-classes";
-import { apiBaseURL, apiFetch } from "@/app/lib/server-api";
 
 export const metadata = {
   title: "Profile | PULSE",
 };
 
-async function ProfileDebugSettings() {
-  const response = await apiFetch(`${apiBaseURL}/api/debug/settings`, {
-    signal: AbortSignal.timeout(3_000),
-  }).catch(() => null);
-  return response?.status === 204 ? <DebugSettingsButton /> : null;
+async function ProfileDebugLink() {
+  if (await getDebugSettingsStatus() !== 204) return null;
+
+  return (
+    <Link
+      href="/profile/debug-settings"
+      className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-semibold text-(--on-hero-action) transition-colors hover:bg-(--on-hero-hover) motion-reduce:transition-none min-[562px]:ms-auto"
+    >
+      <Wrench className="size-5" aria-hidden="true" />
+      Debug settings
+    </Link>
+  );
 }
 
 export default async function ProfilePage() {
@@ -51,7 +58,7 @@ export default async function ProfilePage() {
             <span className="mt-2.5 inline-block rounded-full border-[1.5px] border-white/40 bg-white/20 px-3.5 py-[5px] font-bold wrap-anywhere">@{username}</span>
           </div>
           <Suspense fallback={null}>
-            <ProfileDebugSettings />
+            <ProfileDebugLink />
           </Suspense>
         </section>
 

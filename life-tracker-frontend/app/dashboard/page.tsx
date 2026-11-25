@@ -8,11 +8,13 @@ import { Suspense } from "react";
 import { ArrowRight, UserRound } from "lucide-react";
 import DashboardFrame from "@/app/dashboard/dashboard-frame";
 import GreetingHeader from "@/app/dashboard/greeting-header";
-import GymVisitCard from "@/app/dashboard/gym-visit-card";
 import NotificationDropdown from "@/app/components/notification-dropdown";
 import NamePromptDialog from "@/app/dashboard/name-prompt-dialog";
-import FinancialHorizonCard from "@/app/dashboard/financial-horizon-card";
-import SectionTiles from "@/app/dashboard/section-tiles";
+import FinanceCard from "@/app/dashboard/quick-actions/finance-card";
+import FitnessCard from "@/app/dashboard/quick-actions/fitness-card";
+import GarageCard from "@/app/dashboard/quick-actions/garage-card";
+import MealPlanCard from "@/app/dashboard/quick-actions/meal-plan-card";
+import { QuickActionCardSkeleton } from "@/app/dashboard/quick-actions/quick-action-card";
 import { FitnessAtAGlance, FitnessAtAGlanceSkeleton } from "@/app/dashboard/fitness-at-a-glance";
 import { RecentActivity, RecentActivitySkeleton } from "@/app/dashboard/recent-activity";
 import PulseCard from "@/app/components/design-system/pulse-card";
@@ -20,18 +22,11 @@ import QuestHeatmap from "@/app/dashboard/quest-heatmap";
 import { getUserCurrency } from "@/app/lib/user-currency";
 import { getUserTimeZone } from "@/app/lib/user-time-zone";
 
-const dashboardClass =
-  "bg-background text-foreground [&_:is(a,button)]:[-webkit-tap-highlight-color:transparent] " +
-  "[&_:is(a,button):focus-visible]:outline-3 [&_:is(a,button):focus-visible]:outline-ring " +
-  "[&_:is(a,button):focus-visible]:outline-offset-4";
-
 export const metadata = {
   title: "Dashboard | PULSE",
 };
 
 type DashboardData = ReturnType<typeof getDashboardData>;
-
-const cardPlaceholderClass = "min-h-50 rounded-card bg-card dashboard-compact:min-h-36";
 
 async function DashboardGreeting({ username, profile, notifications }: {
   username: string;
@@ -56,14 +51,6 @@ async function DashboardGreeting({ username, profile, notifications }: {
 
 async function DashboardNotifications({ notifications }: { notifications: DashboardData["notifications"] }) {
   return <NotificationDropdown initialNotifications={await notifications ?? []} />;
-}
-
-async function DashboardBalance({ horizon }: { horizon: DashboardData["horizon"] }) {
-  return <FinancialHorizonCard summary={await horizon} />;
-}
-
-async function DashboardWorkout({ workout }: { workout: DashboardData["workout"] }) {
-  return <GymVisitCard visited={(await workout)?.visited ?? null} />;
 }
 
 async function DashboardFitness({ fitness, questSettings }: {
@@ -98,25 +85,24 @@ export default async function DashboardPage() {
   const data = getDashboardData();
 
   return (
-    <DashboardFrame className={`${dashboardClass} ${frame.page}`}>
+    <DashboardFrame className={`bg-background text-foreground [&_:is(a,button)]:[-webkit-tap-highlight-color:transparent] [&_:is(a,button):focus-visible]:outline-3 [&_:is(a,button):focus-visible]:outline-ring [&_:is(a,button):focus-visible]:outline-offset-4 ${frame.page}`}>
       <div className={`grid gap-6 dashboard-compact:gap-4 ${frame.content}`}>
         <Suspense fallback={<GreetingHeader name={session.username} />}>
           <DashboardGreeting username={session.username} profile={data.profile} notifications={data.notifications} />
         </Suspense>
-        <div className="@container grid gap-6 dashboard-compact:gap-3 dashboard-compact:md:auto-rows-fr dashboard-compact:xl:grid-cols-4">
-          <section
-            className="grid gap-6 items-stretch md:grid-cols-2 dashboard-compact:gap-3 dashboard-compact:xl:col-span-2 dashboard-compact:xl:grid-cols-subgrid dashboard-compact:xl:grid-rows-subgrid"
-            aria-label="Your day at a glance"
-          >
-            <Suspense fallback={<div className={cardPlaceholderClass} aria-busy="true" />}>
-              <DashboardBalance horizon={data.horizon} />
-            </Suspense>
-            <Suspense fallback={<div className={cardPlaceholderClass} aria-busy="true" />}>
-              <DashboardWorkout workout={data.workout} />
-            </Suspense>
-          </section>
-          <SectionTiles />
-        </div>
+        <section
+          className="grid gap-6 md:grid-cols-2 dashboard-compact:gap-3 dashboard-compact:md:auto-rows-fr dashboard-compact:xl:grid-cols-4"
+          aria-label="Quick actions"
+        >
+          <Suspense fallback={<QuickActionCardSkeleton />}>
+            <FinanceCard horizon={data.horizon} />
+          </Suspense>
+          <Suspense fallback={<QuickActionCardSkeleton />}>
+            <FitnessCard workout={data.workout} />
+          </Suspense>
+          <GarageCard />
+          <MealPlanCard />
+        </section>
         <div className="grid min-w-0 gap-7.5 leading-[1.4]">
           <Suspense fallback={<FitnessAtAGlanceSkeleton />}>
             <DashboardFitness fitness={data.fitness} questSettings={data.questSettings} />

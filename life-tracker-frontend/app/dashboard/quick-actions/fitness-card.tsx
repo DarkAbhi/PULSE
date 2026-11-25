@@ -1,16 +1,14 @@
 import { useId } from "react";
 import { Dumbbell } from "lucide-react";
-import QuickActionCard from "@/app/dashboard/quick-action-card";
+import QuickActionCard from "@/app/dashboard/quick-actions/quick-action-card";
 
-const workoutDialClass =
-  "block w-[clamp(64px,24cqi,112px)] aspect-square rounded-full bg-card " +
-  "shadow-[0_10px_24px_-12px_rgb(0_0_0/45%)] dark:shadow-none dashboard-compact:w-14";
-
-/** Dashed ring while today is empty; a full gradient ring once a workout is recorded. */
 function WorkoutDial({ visited }: { visited: boolean | null }) {
   const gradientId = useId();
   return (
-    <svg className={workoutDialClass} viewBox="0 0 160 160">
+    <svg
+      className="block w-[clamp(64px,24cqi,112px)] aspect-square rounded-full bg-card shadow-[0_10px_24px_-12px_rgb(0_0_0/45%)] dark:shadow-none dashboard-compact:w-14"
+      viewBox="0 0 160 160"
+    >
       <defs>
         <linearGradient id={gradientId} x2="100%" y2="100%">
           <stop offset="0%" stopColor="var(--brand-cyan)" />
@@ -41,11 +39,8 @@ function WorkoutDial({ visited }: { visited: boolean | null }) {
   );
 }
 
-interface GymVisitCardProps {
-  visited: boolean | null;
-}
-
-export default function GymVisitCard({ visited }: GymVisitCardProps) {
+export default async function FitnessCard({ workout }: { workout: Promise<{ visited: boolean } | null> }) {
+  const visited = (await workout)?.visited ?? null;
   const status = visited === null
     ? "Workout status unavailable."
     : visited

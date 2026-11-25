@@ -3,17 +3,14 @@
   --dashboard-orb-shadow: inset -20px -30px 60px #ffffff59, 0 40px 80px -30px #4c6bff99;
   --dashboard-hero-light: radial-gradient(ellipse at 85% 85%, #ff2fd059, transparent 70%), radial-gradient(ellipse at 100% 45%, #19d3f366, transparent 70%), radial-gradient(ellipse at 55% 100%, #4c6bff4d, transparent 70%);
   --dashboard-hero-dark: linear-gradient(150deg, var(--brand-indigo) 25%, var(--brand-purple) 65%, var(--brand-violet));
-  --dashboard-fitness-surface: #f6f5ff;
+  --dashboard-fitness-start: var(--brand-orange);
+  --dashboard-fitness-end: #d8336a;
   --dashboard-activity-chip: rgb(26 23 64 / 7%);
   --dashboard-quest-level-1: #6fddf2;
   --dashboard-quest-level-2: var(--brand-blue);
   --dashboard-quest-level-3: #8b3fe0;
   --dashboard-quest-level-4: #d41fb0;
-  --dashboard-fitness-action: linear-gradient(90deg, #404fce, #a31c83);
-  --dashboard-fitness-action-shadow: 0 12px 24px -10px color-mix(in srgb, var(--brand-pink) 60%, transparent);
-  --dashboard-fitness-dial-shadow: 0 18px 40px -18px color-mix(in srgb, var(--brand-blue) 35%, transparent);
   --dashboard-fitness-ring: color-mix(in srgb, var(--foreground) 15%, transparent);
-  --dashboard-finance-action: #fff5ce;
   --dashboard-garage-start: #2440e0;
   --dashboard-garage-end: #0f75b3;
   --dashboard-meal-start: var(--meal-pink);
@@ -23,12 +20,11 @@
 .dark {
   --dashboard-orb-fill: radial-gradient(circle at 35% 30%, #daf5ff, #64ccf3 20%, #446bff 40%, var(--brand-pink) 78%);
   --dashboard-orb-shadow: none;
-  --dashboard-fitness-surface: #211d3c;
   --dashboard-activity-chip: rgb(244 241 255 / 9%);
   --dashboard-quest-level-1: #4fc3da;
   --dashboard-quest-level-2: #5f7bff;
   --dashboard-quest-level-3: #9c55f0;
   --dashboard-quest-level-4: #e640c4;
-  --dashboard-fitness-action: var(--primary-fill);
   --dashboard-fitness-ring: color-mix(in srgb, var(--foreground) 20%, transparent);
+  --dashboard-fitness-end: #c42d60;
 }

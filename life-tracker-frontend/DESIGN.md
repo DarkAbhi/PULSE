@@ -283,10 +283,11 @@ Use the `Pulse` prefix for component names and `pulse-` for component filenames 
 
 ### Cards & Elevation
 
-- **Cards.** Use `PulseCard` for content and `PulseCardLink` for cards that navigate. `@app/components/design-system/pulse-card.tsx` owns the radius, fill, shadow and focus ring; callers pass only spacing and layout through `className`. Choose the look with named options:
+- **Cards.** Use `PulseCard` for content and `PulseCardLink` for cards that navigate. `@app/components/design-system/pulse-card.tsx` owns the radius, fill, shadow, padding scale and focus ring; callers pass layout through `className`. Card styles use theme tokens (`bg-card-fill`, `from-tile-start`, `shadow-tile` and so on), never arbitrary `[...]` values. Choose the look with named options:
   - `variant`: `surface` (default) is the solid themed card. `tile` is the gradient feature tile, coloured with `--tile-start` and `--tile-end`, with white text unless `--tile-foreground` is set.
   - `elevation`: `raised` (default) or `flat` for cards layered on another surface or inside a dialog.
   - `size`: `default` or `compact` for the smaller radius on nested cards.
+  - `padding`: `sm` (16px), `md` (24px) or `lg` (32px). Prefer these over a `p-*` class. `none` (default) leaves padding to the caller while screens migrate.
   - Tint a surface card with `--card-fill` instead of a `bg-*` class.
 - **Financial Horizon.** The dashboard summary uses `card-horizon` with a warm yellow fill and 24px padding in both modes. Its fill is defined in `@app/financial-horizon/financial-theme.css` and shared with the pool summary.
 

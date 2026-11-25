@@ -14,6 +14,10 @@ export type QuickActionCardProps = {
   className: string;
 };
 
+/**
+ * Dashboard feature tile. The card is the size container; the inner column steps its
+ * spacing and type up at container breakpoints, using only the shared spacing scale.
+ */
 export default function QuickActionCard({
   href,
   title,
@@ -29,39 +33,40 @@ export default function QuickActionCard({
     <PulseCardLink
       href={href}
       variant="tile"
-      className={`group @container relative isolate grid grid-cols-[auto_minmax(0,1fr)_auto] grid-rows-[auto_auto_1fr] gap-x-3 gap-y-[clamp(12px,4cqi,20px)] min-h-50 overflow-hidden p-[clamp(18px,5cqi,28px)] motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-[ease] motion-safe:active:transform-[scale(.985)] dashboard-compact:min-h-36 dashboard-compact:gap-y-2.5 dashboard-compact:p-4 ${className}`}
+      className={`group @container relative isolate flex min-h-50 overflow-hidden motion-safe:transition-transform motion-safe:duration-200 motion-safe:active:scale-99 dashboard-compact:min-h-36 ${className}`}
     >
       {backdrop && (
         <span className="pointer-events-none absolute inset-0 -z-1" aria-hidden="true">{backdrop}</span>
       )}
 
-      <span
-        className="col-start-1 row-start-1 grid place-items-center self-center aspect-square rounded-full w-[clamp(42px,12cqi,52px)] border-[1.5px] border-white/50 bg-white/22 text-white [&_svg]:size-[46%] dashboard-compact:w-10"
-        aria-hidden="true"
-      >
-        {icon}
-      </span>
-
-      <div className="col-span-3 row-start-2 min-w-0 wrap-anywhere">
-        <h2 className="text-[clamp(1.25rem,6.2cqi,1.75rem)] leading-[1.1] font-extrabold tracking-[-.03em] dashboard-compact:text-lg">
-          {title}
-        </h2>
-        <span className="mt-1 block line-clamp-2 max-w-[34ch] text-[clamp(.875rem,3.6cqi,1rem)] leading-snug font-medium opacity-85 dashboard-compact:mt-0.5 dashboard-compact:text-sm">
-          {description}
-        </span>
-      </div>
-
-      {(footer || decor) && (
-        <div className="col-span-3 row-start-3 flex items-end justify-between gap-3 self-end min-w-0 min-h-[clamp(40px,12cqi,64px)] dashboard-compact:min-h-9">
-          <div className="min-w-0 flex-1">{footer}</div>
-          {decor && <div className="flex-none" aria-hidden="true">{decor}</div>}
+      <div className="flex min-w-0 flex-1 flex-col gap-3 p-5 @sm:gap-4 @md:p-6 @lg:gap-5 @xl:p-7 dashboard-compact:gap-2 dashboard-compact:p-4">
+        <div className="flex items-center justify-between gap-3" aria-hidden="true">
+          <span className="grid size-11 place-items-center rounded-full border-2 border-white/40 bg-white/20 text-white *:size-5 @md:size-12 @md:*:size-6 dashboard-compact:size-10 dashboard-compact:*:size-5">
+            {icon}
+          </span>
+          <span className="grid size-9 place-items-center rounded-full bg-white text-tile-action shadow-tile-action *:size-4 motion-safe:transition-transform motion-safe:group-hover:translate-x-0.5 @md:size-11 @md:*:size-5 dashboard-compact:size-9 dashboard-compact:*:size-4">
+            <ArrowRight strokeWidth={2.4} />
+          </span>
         </div>
-      )}
 
-      <span className="col-start-3 row-start-1 grid place-items-center self-center aspect-square rounded-full w-[clamp(36px,10cqi,44px)] bg-white text-(--tile-action-fg,var(--tile-start)) shadow-[0_6px_14px_-6px_rgb(0_0_0/35%)] motion-safe:transition-transform motion-safe:group-hover:translate-x-0.5 dashboard-compact:w-9">
-        <ArrowRight className="size-[48%]" strokeWidth={2.4} aria-hidden="true" />
+        <div className="min-w-0 wrap-anywhere">
+          <h2 className="text-xl leading-tight font-extrabold tracking-tight @sm:text-2xl @lg:text-3xl dashboard-compact:text-lg">
+            {title}
+          </h2>
+          <span className="mt-1 block line-clamp-2 max-w-xs text-sm leading-snug font-medium opacity-85 @sm:text-base dashboard-compact:mt-0.5 dashboard-compact:text-sm">
+            {description}
+          </span>
+        </div>
+
+        {(footer || decor) && (
+          <div className="mt-auto flex min-h-10 min-w-0 items-end justify-between gap-3 @sm:min-h-12 @lg:min-h-16 dashboard-compact:min-h-9">
+            <div className="min-w-0 flex-1">{footer}</div>
+            {decor && <div className="flex-none" aria-hidden="true">{decor}</div>}
+          </div>
+        )}
+
         {actionLabel && <span className="sr-only">{actionLabel}</span>}
-      </span>
+      </div>
     </PulseCardLink>
   );
 }

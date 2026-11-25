@@ -4,6 +4,7 @@ import type { ComponentProps, HTMLAttributes } from "react";
 export type PulseCardVariant = "surface" | "tile";
 export type PulseCardElevation = "raised" | "flat";
 export type PulseCardSize = "default" | "compact";
+export type PulseCardPadding = "none" | "sm" | "md" | "lg";
 
 interface PulseCardStyleProps {
   /** `surface` for content cards; `tile` for the gradient feature tiles. */
@@ -12,6 +13,8 @@ interface PulseCardStyleProps {
   elevation?: PulseCardElevation;
   /** `compact` uses the smaller radius for cards nested inside another card or dialog. */
   size?: PulseCardSize;
+  /** Inner padding on the 4px spacing scale: `sm` 16px, `md` 24px, `lg` 32px. `none` leaves padding to the caller. */
+  padding?: PulseCardPadding;
 }
 
 export interface PulseCardProps extends HTMLAttributes<HTMLElement>, PulseCardStyleProps {
@@ -22,14 +25,14 @@ export type PulseCardLinkProps = ComponentProps<typeof Link> & PulseCardStylePro
 
 const fills: Record<PulseCardVariant, string> = {
   /** Solid themed surface. Tint a whole card with `--card-fill`. */
-  surface: "bg-(--card-fill,var(--card))",
+  surface: "bg-card-fill",
   /** 135° gradient from `--tile-start` to `--tile-end`. Text uses `--tile-foreground`, white by default. */
-  tile: "[background:linear-gradient(135deg,var(--tile-start),var(--tile-end))] text-(--tile-foreground,white)",
+  tile: "bg-linear-135/srgb from-tile-start to-tile-end text-tile-foreground",
 };
 
 const shadows: Record<PulseCardVariant, string> = {
   surface: "shadow-card",
-  tile: "shadow-[0_20px_40px_-22px_var(--tile-start)] dark:shadow-[0_20px_40px_-24px_rgb(0_0_0/70%)]",
+  tile: "shadow-tile dark:shadow-tile-dark",
 };
 
 const radii: Record<PulseCardVariant, Record<PulseCardSize, string>> = {
@@ -37,24 +40,34 @@ const radii: Record<PulseCardVariant, Record<PulseCardSize, string>> = {
   tile: { default: "rounded-hero", compact: "rounded-card" },
 };
 
-/** The full visual spec for a card. Callers pass layout and spacing only through `className`. */
-function cardClassName({ variant = "surface", elevation = "raised", size = "default" }: PulseCardStyleProps, className: string) {
+const paddings: Record<PulseCardPadding, string> = {
+  none: "",
+  sm: "p-4",
+  md: "p-6",
+  lg: "p-8",
+};
+
+/** The full visual spec for a card. Callers pass layout through `className`. */
+function cardClassName(
+  { variant = "surface", elevation = "raised", size = "default", padding = "none" }: PulseCardStyleProps,
+  className: string,
+) {
   const shadow = elevation === "raised" ? shadows[variant] : "";
   // `pulse-card` carries no styles; it is a stable hook for tests.
-  return `pulse-card min-w-0 ${radii[variant][size]} ${fills[variant]} ${shadow} ${className}`;
+  return `pulse-card min-w-0 ${radii[variant][size]} ${fills[variant]} ${shadow} ${paddings[padding]} ${className}`;
 }
 
-/** Dashboard-style card: rounded, filled and raised by default. Callers control padding and layout; the design system owns its shape. */
-export default function PulseCard({ as: Component = "div", variant, elevation, size, className = "", ...props }: PulseCardProps) {
-  return <Component {...props} className={cardClassName({ variant, elevation, size }, className)} />;
+/** Dashboard-style card: rounded, filled and raised by default. The design system owns its shape and padding scale. */
+export default function PulseCard({ as: Component = "div", variant, elevation, size, padding, className = "", ...props }: PulseCardProps) {
+  return <Component {...props} className={cardClassName({ variant, elevation, size, padding }, className)} />;
 }
 
 /** The same card with native Next.js navigation and a keyboard focus ring. */
-export function PulseCardLink({ variant, elevation, size, className = "", ...props }: PulseCardLinkProps) {
+export function PulseCardLink({ variant, elevation, size, padding, className = "", ...props }: PulseCardLinkProps) {
   return (
     <Link
       {...props}
-      className={`${cardClassName({ variant, elevation, size }, "")} focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-ring ${className}`}
+      className={`${cardClassName({ variant, elevation, size, padding }, "")} focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-ring ${className}`}
     />
   );
 }

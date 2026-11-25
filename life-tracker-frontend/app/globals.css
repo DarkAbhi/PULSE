@@ -22,6 +22,16 @@
   --shadow-card: var(--card-shadow);
   --shadow-dialog: var(--dialog-shadow);
 
+  /* Card tokens. Inlined, so each card resolves its own `--card-fill` and `--tile-*` values. */
+  --color-card-fill: var(--card-fill, var(--card));
+  --color-tile-start: var(--tile-start);
+  --color-tile-end: var(--tile-end);
+  --color-tile-foreground: var(--tile-foreground, white);
+  --color-tile-action: var(--tile-action-fg, var(--tile-start));
+  --shadow-tile: 0 20px 40px -22px var(--tile-start);
+  --shadow-tile-dark: 0 20px 40px -24px rgb(0 0 0 / 70%);
+  --shadow-tile-action: 0 6px 14px -6px rgb(0 0 0 / 35%);
+
   --color-divider: var(--divider);
   --color-background: var(--background);
   --color-foreground: var(--foreground);

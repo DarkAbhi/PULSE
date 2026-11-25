@@ -321,7 +321,8 @@ export default function FixedObligationsTab({
             return (
               <PulseCard
                 key={`deduction-${item.id}`}
-                className={`group relative p-6 ${
+                padding="md"
+                className={`group relative ${
                   item.is_active ? "" : "opacity-60"
                 }`}
               >
@@ -401,7 +402,8 @@ export default function FixedObligationsTab({
             return (
               <PulseCard
                 key={`subscription-${sub.id}`}
-                className="group relative flex flex-col justify-between p-6"
+                padding="md"
+                className="group relative flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-start justify-between">

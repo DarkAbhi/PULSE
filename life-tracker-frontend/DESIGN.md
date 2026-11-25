@@ -243,6 +243,8 @@ Give the most useful number visual priority, with its unit beside it. Use tabula
 
 ## Layout & Spacing
 
+Spacing uses Tailwind's spacing scale, from `0` up to `16` (64px). Never use arbitrary `[...]` values.
+
 Start with a single column on narrow screens. Add columns where they help people compare related content. The dashboard centers its content within 1280px and uses 16px side padding on small screens. Use compact gaps within a group and larger gaps between sections. Give long names, dates, and currency amounts room to wrap without crowding actions.
 
 | Area | Lead with | Supporting detail |
@@ -287,8 +289,9 @@ Use the `Pulse` prefix for component names and `pulse-` for component filenames 
   - `variant`: `surface` (default) is the solid themed card. `tile` is the gradient feature tile, coloured with `--tile-start` and `--tile-end`, with white text unless `--tile-foreground` is set.
   - `elevation`: `raised` (default) or `flat` for cards layered on another surface or inside a dialog.
   - `size`: `default` or `compact` for the smaller radius on nested cards.
-  - `padding`: `sm` (16px), `md` (24px) or `lg` (32px). Prefer these over a `p-*` class. `none` (default) leaves padding to the caller while screens migrate.
+  - `padding`: `sm` (p-4, 16px) for dense rows and nested cards, `md` (p-6, 24px) for content cards, or `lg` (p-8, 32px) for hero and empty-state cards. Each option is one fixed value at every breakpoint. Screens never set card padding with a `p-*` class. `none` (default) is for cards whose children own the padding, such as tables and divided lists.
   - Tint a surface card with `--card-fill` instead of a `bg-*` class.
+- **Quick-action tiles.** `@app/dashboard/quick-actions/quick-action-card.tsx` takes a `tone` (`fitness`, `garage`, `meal` or `finance`). The tones' tile colours live in `@app/dashboard/dashboard-theme.css`. Tiles step their type and decor up at container breakpoints (`@xs`, `@sm`, `@md`), never with `clamp()` or `cqi` values.
 - **Financial Horizon.** The dashboard summary uses `card-horizon` with a warm yellow fill and 24px padding in both modes. Its fill is defined in `@app/financial-horizon/financial-theme.css` and shared with the pool summary.
 
 ### Lists & Navigation

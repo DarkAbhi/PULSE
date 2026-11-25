@@ -56,11 +56,11 @@ export default async function GaragePage() {
         <section aria-labelledby="vehicles-title" className="mt-5 sm:mt-7">
           <h2 id="vehicles-title" className="sr-only">Your vehicles</h2>
           {!vehicles ? (
-            <PulseCard as="p" className="[--card-fill:var(--destructive-soft)] px-6 py-5 text-sm text-destructive" role="alert">
+            <PulseCard as="p" padding="md" className="[--card-fill:var(--destructive-soft)] text-sm text-destructive" role="alert">
               {error}
             </PulseCard>
           ) : vehicles.length === 0 ? (
-            <PulseCard className="px-6 py-8 sm:px-8">
+            <PulseCard padding="lg">
               <p className="font-semibold">Your garage is empty</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Add your first vehicle to start logging fuel and tire air.

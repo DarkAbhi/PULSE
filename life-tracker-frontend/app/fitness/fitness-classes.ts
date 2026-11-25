@@ -47,7 +47,7 @@ export const fitnessStyles = {
     "lg:grid-cols-3 lg:gap-6",
   recentGrid:
     "grid grid-cols-1 gap-[clamp(.75rem,1.8vw,1.5rem)] min-[641px]:grid-cols-2 min-[981px]:grid-cols-3",
-  workoutCard: "flex items-center gap-4 h-full p-[clamp(.875rem,1.8vw,1.375rem)]",
+  workoutCard: "flex items-center gap-4 h-full",
   dateBadgeDay: "text-[1.8rem] font-extrabold tracking-[-.03em]",
   dateBadgeMonth: "text-caption font-bold uppercase",
   workoutTitle: "text-[1.25rem] font-extrabold tracking-[-.02em]",

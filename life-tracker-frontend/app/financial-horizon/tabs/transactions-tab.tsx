@@ -167,7 +167,8 @@ export default function TransactionsTab({
             return (
               <PulseCard
                 key={tx.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-6"
+                padding="md"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div className="flex items-start gap-3.5 min-w-0">
                   <HorizonIconTile>

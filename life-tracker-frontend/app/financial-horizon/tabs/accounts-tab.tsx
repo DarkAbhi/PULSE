@@ -78,7 +78,7 @@ export default function AccountsTab({ currency }: { currency: string }) {
   const fields = editor?.fields;
 
   return (
-    <PulseCard as="section" className="space-y-4 p-6" aria-labelledby="accounts-heading">
+    <PulseCard as="section" padding="md" className="space-y-4" aria-labelledby="accounts-heading">
       <SectionHeader id="accounts-heading" title="Financial accounts" icon="bank">
         <HorizonAction disabled={pending} onClick={() => open()}><Icon name="plus" /> Add account</HorizonAction>
       </SectionHeader>

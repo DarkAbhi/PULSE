@@ -32,7 +32,7 @@ export default function QuestHistorySeed() {
   }
 
   return (
-    <PulseCard as="section" aria-labelledby="quest-history" className="grid gap-4 p-5 sm:p-7">
+    <PulseCard as="section" aria-labelledby="quest-history" padding="md" className="grid gap-4">
       <header className="space-y-2">
         <h2 id="quest-history" className="text-xl font-bold">Quest history</h2>
         <p className="max-w-prose text-sm leading-6 text-muted-foreground">

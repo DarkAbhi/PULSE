@@ -19,7 +19,8 @@ export default function VehiclesList({ vehicles }: { vehicles: Vehicle[] }) {
             <PulseCard
               as="article"
               key={vehicle.id}
-              className="flex flex-col gap-4 p-4 sm:gap-5 sm:p-5 xl:p-7"
+              padding="md"
+              className="flex flex-col gap-4 sm:gap-5"
             >
               <Link
                 href={`/garage/${vehicle.id}`}

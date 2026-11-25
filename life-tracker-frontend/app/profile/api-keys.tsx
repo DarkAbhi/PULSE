@@ -118,7 +118,7 @@ export default function APIKeys({ initialKeys }: { initialKeys: APIKey[] | null 
         </PulseButton>
       </header>
       {keys.length === 0 ? (
-        <PulseCard className="grid justify-items-center gap-2.5 px-6 py-9 text-center text-muted-foreground">
+        <PulseCard padding="lg" className="grid justify-items-center gap-2.5 text-center text-muted-foreground">
           <span className={iconTileClass} aria-hidden="true"><KeyRound /></span>
           {!loadError && (
             <>

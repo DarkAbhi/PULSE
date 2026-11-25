@@ -43,7 +43,7 @@ export default function PlannedPurchasesTab({
       {/* Pool Impact Summary */}
       <section className="grid gap-4 sm:grid-cols-2">
         {/* Pool Before Purchases */}
-        <PulseCard className="p-6">
+        <PulseCard padding="md">
           <div className="flex items-center gap-2 mb-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10 text-action">
               <Icon name="wallet" className="h-4 w-4" />
@@ -61,7 +61,7 @@ export default function PlannedPurchasesTab({
         </PulseCard>
 
         {/* Pool After Purchases */}
-        <PulseCard className={`p-6 ${
+        <PulseCard padding="md" className={`${
           !hasPurchases
             ? ""
             : netRemainingPool >= 0
@@ -110,7 +110,7 @@ export default function PlannedPurchasesTab({
 
       <div className="space-y-10">
       {/* Planned Purchases Section */}
-      <PulseCard as="section" className="space-y-6 p-6">
+      <PulseCard as="section" padding="md" className="space-y-6">
         <SectionHeader
           title="Next Month Planned Purchases"
           icon="bag"
@@ -150,7 +150,8 @@ export default function PlannedPurchasesTab({
             {purchases.map((item) => (
               <PulseCard
                 key={item.id}
-                className="flex flex-wrap items-center justify-between gap-3 [--card-fill:var(--chip)] p-6"
+                padding="md"
+                className="flex flex-wrap items-center justify-between gap-3 [--card-fill:var(--chip)]"
               >
                 <div className="min-w-0 flex-1">
                   <h4 className="font-semibold text-foreground text-sm truncate">{item.name}</h4>

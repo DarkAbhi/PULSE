@@ -42,7 +42,7 @@ export default function ExerciseCard({ visitID, exercise }: { visitID: string; e
   ];
 
   return (
-    <PulseCard as="article" className={`${muscleColorClass} grid grid-rows-[auto_auto_1fr_auto] gap-4 p-6`}>
+    <PulseCard as="article" className={`${muscleColorClass} grid grid-rows-[auto_auto_1fr_auto] gap-4`} padding="md">
       <div className="flex items-center gap-3.5">
         <span className="grid size-12 flex-none place-items-center rounded-2xl bg-(--muscle-color) text-white"><Dumbbell size={24} aria-hidden="true" /></span>
         <div>

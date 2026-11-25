@@ -6,7 +6,7 @@ function WorkoutDial({ visited }: { visited: boolean | null }) {
   const gradientId = useId();
   return (
     <svg
-      className="block w-[clamp(64px,24cqi,112px)] aspect-square rounded-full bg-card shadow-[0_10px_24px_-12px_rgb(0_0_0/45%)] dark:shadow-none dashboard-compact:w-14"
+      className="block size-16 rounded-full bg-card shadow-tile-object @xs:size-20 @sm:size-24 @md:size-28 dark:shadow-none dashboard-compact:size-14"
       viewBox="0 0 160 160"
     >
       <defs>
@@ -49,12 +49,12 @@ export default async function FitnessCard({ workout }: { workout: Promise<{ visi
 
   return (
     <QuickActionCard
+      tone="fitness"
       href="/fitness"
       title="Fitness"
       description={visited === false ? <>{status} A short one still counts.</> : status}
       icon={<Dumbbell strokeWidth={1.8} />}
       decor={<WorkoutDial visited={visited} />}
-      className="[--tile-start:var(--dashboard-fitness-start)] [--tile-end:var(--dashboard-fitness-end)]"
     />
   );
 }

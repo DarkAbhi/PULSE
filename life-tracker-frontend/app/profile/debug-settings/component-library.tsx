@@ -44,7 +44,7 @@ function PreviewSection({ title, children }: { title: string; children: ReactNod
   const headingId = useId();
 
   return (
-    <PulseCard as="section" aria-labelledby={headingId} className="grid content-start gap-4 p-5 sm:p-6">
+    <PulseCard as="section" aria-labelledby={headingId} padding="md" className="grid content-start gap-4">
       <h3 id={headingId} className="text-lg font-bold">{title}</h3>
       {children}
     </PulseCard>
@@ -263,14 +263,14 @@ export default function ComponentLibrary() {
         <div className="grid content-start gap-4">
           <PreviewSection title="Cards">
             <div className="grid gap-3 rounded-xl bg-background p-3">
-              <PulseCard as="article" className="p-4">
+              <PulseCard as="article" padding="sm">
                 <h4 className="font-semibold">Today’s workout</h4>
                 <p className="text-sm text-muted-foreground">Surface · raised</p>
-                <PulseCard size="compact" elevation="flat" className="mt-3 p-3 [--card-fill:var(--chip)]">
+                <PulseCard size="compact" elevation="flat" padding="sm" className="mt-3 [--card-fill:var(--chip)]">
                   <p className="text-sm text-muted-foreground">Compact · flat, nested</p>
                 </PulseCard>
               </PulseCard>
-              <PulseCard as="article" variant="tile" className="p-4 [--tile-start:var(--brand-indigo)] [--tile-end:var(--brand-purple)]">
+              <PulseCard as="article" variant="tile" padding="sm" className="[--tile-start:var(--brand-indigo)] [--tile-end:var(--brand-purple)]">
                 <h4 className="font-semibold">Last workout</h4>
                 <p className="text-sm opacity-85">Tile · raised</p>
               </PulseCard>

@@ -58,7 +58,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
       <main id="main-content" tabIndex={-1} className={`${frame.page} bg-background text-foreground`}>
         <div className={frame.content}>
           <TopAppBar backHref="/garage" backLabel="Back to Garage" />
-          <PulseCard className="mt-5 p-8 text-center">
+          <PulseCard padding="lg" className="mt-5 text-center">
             <h1 className="text-xl font-semibold text-foreground">
               Vehicle not found
             </h1>
@@ -76,7 +76,7 @@ export default async function VehiclePage({ params, searchParams }: PageProps) {
       <main id="main-content" tabIndex={-1} className={`${frame.page} bg-background text-foreground`}>
         <div className={frame.content}>
           <TopAppBar backHref="/garage" backLabel="Back to Garage" />
-          <PulseCard className="mt-5 p-6">
+          <PulseCard padding="md" className="mt-5">
             <p role="alert" className="text-destructive">We couldn&apos;t load this vehicle&apos;s history.</p>
           </PulseCard>
         </div>

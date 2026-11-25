@@ -38,7 +38,7 @@ export default function ThemeSettings() {
         <h2 id="profile-theme" className={sectionHeadingClass}><Sun aria-hidden="true" />Theme</h2>
         <p id="profile-theme-help" className={sectionDescriptionClass}>Choose how Pulse looks on this device.</p>
       </header>
-      <PulseCard className="grid flex-1 gap-3 p-6 sheet:grid-cols-3" role="radiogroup" aria-labelledby="profile-theme" aria-describedby="profile-theme-help">
+      <PulseCard padding="md" className="grid flex-1 gap-3 sheet:grid-cols-3" role="radiogroup" aria-labelledby="profile-theme" aria-describedby="profile-theme-help">
         {options.map(({ value, label }) => (
           <PulseChoiceControl key={value} className="block min-w-0" type="radio" name="theme" value={value} checked={mounted && theme === value} onCheckedChange={() => setTheme(value)}>
             <span className="flex h-full flex-col gap-3 rounded-[20px] border-2 border-divider p-3 transition-colors group-hover:peer-not-checked:border-[color-mix(in_srgb,var(--brand)_45%,var(--divider))] peer-checked:border-brand peer-checked:bg-brand/9 peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand motion-reduce:transition-none max-sheet:flex-row max-sheet:items-center">

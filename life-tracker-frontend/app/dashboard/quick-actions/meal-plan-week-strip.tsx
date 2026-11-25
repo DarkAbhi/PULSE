@@ -26,9 +26,9 @@ export default function MealPlanWeekStrip() {
   }, [timeZone]);
 
   return (
-    <span className="flex gap-[clamp(4px,.45cqi,6px)] dashboard-compact:grid dashboard-compact:max-w-62 dashboard-compact:grid-cols-7">
+    <span className="flex gap-1 dashboard-compact:grid dashboard-compact:max-w-64 dashboard-compact:grid-cols-7">
       {DAYS.map(([day, label]) => (
-        <span key={day} className="grid place-items-center w-[clamp(22px,2.05cqi,26px)] aspect-square border-[1.5px] border-white/50 rounded-full text-[.72rem] font-bold data-[today=true]:border-white data-[today=true]:bg-white data-[today=true]:text-(--tile-start) dashboard-compact:w-auto dashboard-compact:min-w-0" data-today={day === today}>
+        <span key={day} className="grid aspect-square w-6 place-items-center rounded-full border-2 border-white/40 text-caption font-bold data-today:border-white data-today:bg-white data-today:text-tile-start dashboard-compact:w-auto dashboard-compact:min-w-0" data-today={day === today || undefined}>
           {label}
         </span>
       ))}

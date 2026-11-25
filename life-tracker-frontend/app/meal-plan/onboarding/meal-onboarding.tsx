@@ -70,7 +70,7 @@ function UsualTime({ label, value, onChange }: { label: string; value: string; o
 function Question({ index, error, children }: { index: number; error?: string; children: ReactNode }) {
   const { title, description } = questions[index];
   const id = `meal-question-${index + 1}`;
-  return <PulseCard as="fieldset" className="grid gap-5 p-4 sm:p-6" aria-labelledby={id} aria-describedby={`${id}-hint${error ? ` ${id}-error` : ""}`}>
+  return <PulseCard as="fieldset" padding="md" className="grid gap-5" aria-labelledby={id} aria-describedby={`${id}-hint${error ? ` ${id}-error` : ""}`}>
     <div className="flex items-start gap-3.5">
       <span className={`grid size-10 shrink-0 place-items-center rounded-full font-extrabold ${gradientClass}`} aria-hidden="true">{index + 1}</span>
       <div>

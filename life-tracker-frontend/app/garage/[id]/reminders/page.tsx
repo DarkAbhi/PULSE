@@ -21,7 +21,7 @@ export default async function ReminderSettingsPage({ params }: { params: Promise
       </header>
 
       {settings.length === 0 ? (
-        <PulseCard className="mt-5 p-5 text-sm text-muted-foreground">No reminder settings are available for this vehicle.</PulseCard>
+        <PulseCard padding="sm" className="mt-5 text-sm text-muted-foreground">No reminder settings are available for this vehicle.</PulseCard>
       ) : (
         <ul className="mt-5 grid gap-3">
           {settings.map((setting) => {
@@ -35,7 +35,7 @@ export default async function ReminderSettingsPage({ params }: { params: Promise
 
             return (
               <li key={setting.kind}>
-                <PulseCardLink href={`/garage/${id}/reminders/${setting.kind}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 p-4 sm:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto] sm:gap-x-5 sm:px-5">
+                <PulseCardLink href={`/garage/${id}/reminders/${setting.kind}`} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 sm:grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto] sm:gap-x-5" padding="sm">
                   <span className="col-start-1 row-span-2 row-start-1 grid size-11 place-items-center rounded-xl bg-accent text-accent-foreground sm:row-span-1">
                     <Icon className="size-5" aria-hidden="true" />
                   </span>

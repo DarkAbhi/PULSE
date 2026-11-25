@@ -13,7 +13,11 @@ interface PulseCardStyleProps {
   elevation?: PulseCardElevation;
   /** `compact` uses the smaller radius for cards nested inside another card or dialog. */
   size?: PulseCardSize;
-  /** Inner padding on the 4px spacing scale: `sm` 16px, `md` 24px, `lg` 32px. `none` leaves padding to the caller. */
+  /**
+   * One fixed padding from Tailwind's spacing scale: `sm` (p-4, 16px) for dense rows and nested cards,
+   * `md` (p-6, 24px) for content cards, `lg` (p-8, 32px) for hero and empty-state cards.
+   * `none` is for cards whose children own the padding, such as tables.
+   */
   padding?: PulseCardPadding;
 }
 

@@ -279,7 +279,8 @@ export default function SubscriptionsTab({
             return (
               <PulseCard
                 key={sub.id}
-                className={`relative flex flex-col justify-between p-6 ${sub.status === "cancelled" ? "opacity-60" : ""}`}
+                padding="md"
+                className={`relative flex flex-col justify-between ${sub.status === "cancelled" ? "opacity-60" : ""}`}
               >
                 <div>
                   {/* Card Header: Title & Badges */}
@@ -446,7 +447,7 @@ function SubscriptionMetric({
   children: ReactNode;
 }) {
   return (
-    <PulseCard className="relative overflow-hidden p-6">
+    <PulseCard padding="md" className="relative overflow-hidden">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">{title}</span>
         <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${metricIconTones[tone]}`}>

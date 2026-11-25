@@ -16,7 +16,7 @@ interface OverviewTabProps {
 
 export default function OverviewTab({ currency, uncommittedPool }: OverviewTabProps) {
   return (
-    <PulseCard as="section" aria-labelledby="horizon-projections-title" className="p-6">
+    <PulseCard as="section" aria-labelledby="horizon-projections-title" padding="md">
       <div className="flex items-start gap-3">
         <HorizonIconTile>
           <ArrowUpRight aria-hidden="true" className="h-5 w-5" />

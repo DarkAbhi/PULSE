@@ -28,3 +28,26 @@
   --dashboard-fitness-ring: color-mix(in srgb, var(--foreground) 20%, transparent);
   --dashboard-fitness-end: #c42d60;
 }
+
+/* Quick-action tile tones, set by `QuickActionCard`'s `tone` prop. */
+[data-tone="fitness"] {
+  --tile-start: var(--dashboard-fitness-start);
+  --tile-end: var(--dashboard-fitness-end);
+}
+
+[data-tone="garage"] {
+  --tile-start: var(--dashboard-garage-start);
+  --tile-end: var(--dashboard-garage-end);
+}
+
+[data-tone="meal"] {
+  --tile-start: var(--dashboard-meal-start);
+  --tile-end: var(--dashboard-meal-end);
+}
+
+[data-tone="finance"] {
+  --tile-start: var(--finance-pool-end);
+  --tile-end: var(--finance-pool-end);
+  --tile-foreground: var(--finance-pool-end-foreground);
+  --tile-action-fg: var(--brand-gold);
+}

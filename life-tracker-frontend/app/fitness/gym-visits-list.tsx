@@ -23,6 +23,7 @@ export default function GymVisitsList({ groups }: { groups: WorkoutGroup[] }) {
         return group.workouts.map((visit) => (
           <li key={visit.id} className="min-w-0">
             <PulseCardLink
+              padding="md"
               className={styles.workoutCard}
               href={`/fitness/${visit.id}`}
             >

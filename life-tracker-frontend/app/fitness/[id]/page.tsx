@@ -187,7 +187,7 @@ export default async function GymVisitPage({ params }: { params: Promise<{ id: s
           </section>
         </AddExerciseProvider>
 
-        <PulseCard as="section" className="flex flex-wrap items-center justify-between gap-4 p-6" aria-labelledby="delete-workout-heading">
+        <PulseCard as="section" padding="md" className="flex flex-wrap items-center justify-between gap-4" aria-labelledby="delete-workout-heading">
           <div>
             <h2 id="delete-workout-heading" className="text-[1.15rem] font-extrabold text-destructive">Delete workout</h2>
             <p className={sectionDescriptionClass}>Permanently removes this workout and all of its exercises and sets.</p>

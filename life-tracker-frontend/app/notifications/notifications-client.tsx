@@ -59,7 +59,7 @@ export default function NotificationsClient({ notifications }: NotificationsClie
         ) : null}
 
         {notifications.length === 0 ? (
-          <PulseCard className="p-10 text-center">
+          <PulseCard padding="lg" className="text-center">
             <p className="text-lg font-semibold text-foreground">You&apos;re all caught up.</p>
             <p className="mt-2 text-sm text-muted-foreground">New updates from your life spaces will appear here.</p>
           </PulseCard>

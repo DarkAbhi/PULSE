@@ -17,7 +17,7 @@ export default function WorkoutSchedule({ schedule, today }: { schedule: Workout
   const editingDay = schedule.find((item) => item.weekday === editing);
 
   return (
-    <PulseCard as="section" aria-labelledby="workout-schedule-heading" className={`p-4 sm:p-6`}>
+    <PulseCard as="section" aria-labelledby="workout-schedule-heading" padding="md">
       <h2 id="workout-schedule-heading" className="text-2xl font-extrabold tracking-tight">Workout schedule</h2>
       <p className={`${styles.muted} mt-1 text-control`}>Plan your workouts and rest days for a repeating week.</p>
       <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7" role="list">

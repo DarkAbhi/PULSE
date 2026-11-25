@@ -30,7 +30,8 @@
   --color-tile-action: var(--tile-action-fg, var(--tile-start));
   --shadow-tile: 0 20px 40px -22px var(--tile-start);
   --shadow-tile-dark: 0 20px 40px -24px rgb(0 0 0 / 70%);
-  --shadow-tile-action: 0 6px 14px -6px rgb(0 0 0 / 35%);
+  /* Shadow for white controls and decor floating on a tile. */
+  --shadow-tile-object: 0 6px 14px -6px rgb(0 0 0 / 35%);
 
   --color-divider: var(--divider);
   --color-background: var(--background);

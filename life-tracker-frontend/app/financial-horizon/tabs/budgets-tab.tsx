@@ -92,7 +92,7 @@ export default function BudgetsTab({
               : "bg-(image:--finance-budget-low)";
 
             return (
-              <PulseCard as="article" key={budget.id} className="@container grid grid-rows-[auto_1fr_auto] gap-4 p-6">
+              <PulseCard as="article" key={budget.id} padding="md" className="@container grid grid-rows-[auto_1fr_auto] gap-4">
                 <header className="flex min-h-11 items-start gap-3 @max-[300px]:grid @max-[300px]:grid-cols-[auto_minmax(0,1fr)] @max-[300px]:gap-y-1">
                   <HorizonIconTile>
                     <Icon name="wallet" />

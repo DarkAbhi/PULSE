@@ -56,7 +56,7 @@ function PoolCard({
   const appearance = poolTypes[type];
 
   return (
-    <PulseCard as="article" variant={appearance.variant} className={`flex flex-col gap-3 p-6 lg:min-h-46 ${appearance.surface}`}>
+    <PulseCard as="article" variant={appearance.variant} padding="md" className={`flex flex-col gap-3 lg:min-h-46 ${appearance.surface}`}>
       <div className="flex min-h-11 items-center gap-3">
         <span className={`grid size-10 shrink-0 place-items-center rounded-control ${appearance.icon}`}>
           <Icon name={icon} />

@@ -5,12 +5,12 @@ import MealPlanWeekStrip from "@/app/dashboard/quick-actions/meal-plan-week-stri
 export default function MealPlanCard() {
   return (
     <QuickActionCard
+      tone="meal"
       href="/meal-plan"
       title="Meal Plan"
       description="Plan your week and track meals eaten"
       icon={<Utensils strokeWidth={1.8} />}
       footer={<MealPlanWeekStrip />}
-      className="[--tile-start:var(--dashboard-meal-start)] [--tile-end:var(--dashboard-meal-end)]"
     />
   );
 }

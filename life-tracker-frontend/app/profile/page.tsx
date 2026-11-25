@@ -79,7 +79,7 @@ export default async function ProfilePage() {
 
         <DashboardViewSettings />
 
-        <Suspense fallback={<PulseCard className="p-6" role="status">Loading API keys…</PulseCard>}>
+        <Suspense fallback={<PulseCard padding="md" role="status">Loading API keys…</PulseCard>}>
           <APIKeysSection />
         </Suspense>
         <AboutPulse />

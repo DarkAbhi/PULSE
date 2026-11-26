@@ -10,7 +10,9 @@ Two runners, each with its own file names:
 
 Run one file with `npm test -- lib/currency/currency.test.mjs` or `npx playwright test e2e/fitness`.
 
-`npm test` runs in CI (`.github/workflows/tests.yml`) and through `make frontend-test`. E2E runs locally only. It starts the app on port 3107 and a fake backend on port 18081 (set `PULSE_E2E_API_PORT` to use another).
+Both run in CI (`.github/workflows/tests.yml`): `npm test` in the **Frontend tests and production build** job, and E2E in **Frontend end-to-end tests**. The E2E job builds the app and serves the standalone production server, as the Docker image does. On failure, the job uploads the HTML report, traces and screenshots as the `frontend-e2e-report` artifact. `make frontend-test` runs `npm test`.
+
+E2E starts the app on port 3107 and a fake backend on port 18081 (set `PULSE_E2E_API_PORT` to use another). It uses the dev server by default. To reproduce CI, run `npm run build` and then `PULSE_E2E_PRODUCTION=1 npm run test:e2e`. It needs Google Chrome; install it with `npx playwright install chrome` if it's missing.
 
 ## Layout
 
@@ -24,6 +26,7 @@ e2e/
   auth/ dashboard/ fitness/ meal-plan/ financial-horizon/   Journeys owned by one domain
   navigation/                      Journeys across features (the app bar, back links)
   helpers/                         environment.ts (ports, URLs), session.ts (signIn)
+  scripts/                         start-production-app.mjs (serves the standalone build)
   fixtures/backend/                Fake backend: server.mjs plus one *-routes.mjs per domain
 ```
 

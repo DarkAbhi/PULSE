@@ -67,8 +67,8 @@ npm run build
 ```
 
 The Node tests cover frontend utility behavior and need no database or running
-backend. Playwright journeys (`npm run test:e2e`) run against a fake backend and
-are not run in CI. See [TESTING.md](TESTING.md) for where tests live and how to
+backend. Playwright journeys (`npm run test:e2e`) run against a fake backend,
+locally and in CI. See [TESTING.md](TESTING.md) for where tests live and how to
 add them. Maestro currently covers small native Android smoke tests;
 see [Maestro smoke tests](../maestro/README.md).
 

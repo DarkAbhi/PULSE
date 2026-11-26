@@ -2,6 +2,9 @@
   "name": "life-tracker-frontend",
   "version": "0.1.0",
   "private": true,
+  "imports": {
+    "#tests/*": "./tests/*"
+  },
   "scripts": {
     "test": "node --test",
     "test:e2e": "playwright test",

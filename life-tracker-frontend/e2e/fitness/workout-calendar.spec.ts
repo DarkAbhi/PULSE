@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "@/e2e/helpers/session";
 
 test("logs another gym visit on the same day and keeps both workout links", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "fitness-repeat-visit", url: "http://localhost:3107" }]);
+  await signIn(context, "fitness-repeat-visit");
   await page.goto("/fitness");
 
   const calendar = page.getByRole("region", { name: "Workout calendar" });
@@ -24,7 +25,7 @@ test("logs another gym visit on the same day and keeps both workout links", asyn
 });
 
 test("keeps the recurring plan separate from the completed workout type", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "fitness-workout-schedule", url: "http://localhost:3107" }]);
+  await signIn(context, "fitness-workout-schedule");
   await page.goto("/fitness");
 
   const schedule = page.getByRole("region", { name: "Workout schedule" });

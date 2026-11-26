@@ -1,10 +1,9 @@
-import { test, expect, type BrowserContext, type Page } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+import { signIn } from "@/e2e/helpers/session";
+import { API_URL, APP_URL } from "@/e2e/helpers/environment";
 
-const apiURL = `http://127.0.0.1:${process.env.PULSE_E2E_API_PORT ?? "18081"}`;
-
-async function account(context: BrowserContext, token: string) { await context.addCookies([{ name: "life_session", value: token, url: "http://localhost:3107" }]); }
-async function fixture(page: Page, user: string) { return (await page.request.get(`${apiURL}/__test/state?user=${user}`)).json(); }
-async function fail(page: Page, user: string, mode: string) { await page.request.post(`${apiURL}/__test/fail?user=${user}`, { data: { mode } }); }
+async function fixture(page: Page, user: string) { return (await page.request.get(`${API_URL}/__test/state?user=${user}`)).json(); }
+async function fail(page: Page, user: string, mode: string) { await page.request.post(`${API_URL}/__test/fail?user=${user}`, { data: { mode } }); }
 async function completeQuestions(page: Page) {
   await page.getByRole("radio", { name: "Feel full and satisfied", exact: true }).check();
   await page.getByRole("checkbox", { name: "I'm too tired to figure out meals", exact: true }).check();
@@ -24,7 +23,7 @@ async function completeQuestions(page: Page) {
 }
 
 test("partial answers, refresh, page close and a fresh browser do not dismiss onboarding", async ({ page, context, browser }) => {
-  const user = "unfinished"; await account(context, user); await page.goto("/meal-plan");
+  const user = "unfinished"; await signIn(context, user); await page.goto("/meal-plan");
   await expect(page.getByRole("heading", { name: "What's your goal?" })).toBeVisible();
   const goalHeading = page.getByRole("heading", { name: "What's your goal?" });
   await page.getByRole("button", { name: "Save preferences", exact: true }).click();
@@ -34,13 +33,13 @@ test("partial answers, refresh, page close and a fresh browser do not dismiss on
   expect((await fixture(page, user)).writes).toBe(0);
   await page.reload(); await expect(page.getByRole("heading", { name: "What's your goal?" })).toBeVisible();
   await page.close();
-  const fresh = await browser.newContext(); await account(fresh, user); const returned = await fresh.newPage(); await returned.goto("http://localhost:3107/meal-plan");
+  const fresh = await browser.newContext(); await signIn(fresh, user); const returned = await fresh.newPage(); await returned.goto(`${APP_URL}/meal-plan`);
   await expect(returned.getByRole("heading", { name: "What's your goal?" })).toBeVisible();
   expect((await fixture(returned, user)).state.status).toBe("pending"); await fresh.close();
 });
 
 test("save round-trips answers, suppresses onboarding and supports later edits", async ({ page, context, browser }) => {
-  const user = "completed"; await account(context, user); await page.goto("/meal-plan"); await completeQuestions(page);
+  const user = "completed"; await signIn(context, user); await page.goto("/meal-plan"); await completeQuestions(page);
   expect((await fixture(page, user)).writes).toBe(0);
   await expect(page.getByRole("radio", { name: "Feel full and satisfied", exact: true })).toBeChecked();
   await page.getByRole("button", { name: "Save preferences", exact: true }).click();
@@ -52,7 +51,7 @@ test("save round-trips answers, suppresses onboarding and supports later edits",
   await expect(page.getByRole("option", { name: /Breakfast/ })).toHaveCount(0);
   await expect(page.getByRole("option", { name: /Evening Snacks/ })).toHaveCount(1);
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
-  const fresh = await browser.newContext(); await account(fresh, user); const returned = await fresh.newPage(); await returned.goto("http://localhost:3107/meal-plan");
+  const fresh = await browser.newContext(); await signIn(fresh, user); const returned = await fresh.newPage(); await returned.goto(`${APP_URL}/meal-plan`);
   await expect(returned.getByRole("heading", { name: "Meal Plan", exact: true })).toBeVisible();
   await returned.getByRole("button", { name: "Meal preferences", exact: true }).click();
   await expect(returned.getByRole("radio", { name: "Feel full and satisfied", exact: true })).toBeChecked();
@@ -63,7 +62,7 @@ test("save round-trips answers, suppresses onboarding and supports later edits",
 });
 
 test("custom slots can be created and removed from the meal switches", async ({ page, context }) => {
-  await account(context, "custom-slots");
+  await signIn(context, "custom-slots");
   await page.goto("/meal-plan");
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.getByRole("button", { name: "Meal preferences" }).click();
@@ -81,18 +80,18 @@ test("custom slots can be created and removed from the meal switches", async ({ 
 });
 
 test("skip persists across sessions; account switching does not share dismissal", async ({ page, context, browser }) => {
-  const user = "skipped"; await account(context, user); await page.goto("/meal-plan");
+  const user = "skipped"; await signIn(context, user); await page.goto("/meal-plan");
   await page.getByRole("button", { name: "Skip setup", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Meal Plan", exact: true })).toBeVisible();
   expect((await fixture(page, user)).state.preferences).toBeNull();
   await page.reload(); await expect(page.getByRole("heading", { name: "Meal Plan", exact: true })).toBeVisible();
-  const fresh = await browser.newContext(); await account(fresh, user); const other = await fresh.newPage(); await other.goto("http://localhost:3107/meal-plan");
+  const fresh = await browser.newContext(); await signIn(fresh, user); const other = await fresh.newPage(); await other.goto(`${APP_URL}/meal-plan`);
   await expect(other.getByRole("heading", { name: "Meal Plan", exact: true })).toBeVisible();
-  await account(fresh, "different-account"); await other.reload(); await expect(other.getByRole("heading", { name: "What's your goal?" })).toBeVisible(); await fresh.close();
+  await signIn(fresh, "different-account"); await other.reload(); await expect(other.getByRole("heading", { name: "What's your goal?" })).toBeVisible(); await fresh.close();
 });
 
 test("read failures retry; failed skip/save retain choices; lost responses reconcile", async ({ page, context }) => {
-  const user = "failures"; await account(context, user); await fail(page, user, "read"); await page.goto("/meal-plan");
+  const user = "failures"; await signIn(context, user); await fail(page, user, "read"); await page.goto("/meal-plan");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   await fail(page, user, ""); await page.getByRole("button", { name: "Try again" }).click();
   await expect(page.getByRole("heading", { name: "What's your goal?" })).toBeVisible();
@@ -106,7 +105,7 @@ test("read failures retry; failed skip/save retain choices; lost responses recon
 });
 
 test("another tab's terminal decision is respected", async ({ page, context }) => {
-  await account(context, "two-tabs"); await page.goto("/meal-plan"); const other = await context.newPage(); await other.goto("/meal-plan");
+  await signIn(context, "two-tabs"); await page.goto("/meal-plan"); const other = await context.newPage(); await other.goto("/meal-plan");
   await page.getByRole("button", { name: "Skip setup", exact: true }).click(); await completeQuestions(other);
   await other.getByRole("button", { name: "Save preferences", exact: true }).click();
   await expect(other.getByRole("heading", { name: "Meal Plan", exact: true })).toBeVisible();
@@ -114,7 +113,7 @@ test("another tab's terminal decision is respected", async ({ page, context }) =
 });
 
 test("mobile and dark layouts keep long choices and actions reachable", async ({ page, context }) => {
-  await account(context, "mobile"); await page.setViewportSize({ width: 1440, height: 1000 }); await page.goto("/meal-plan");
+  await signIn(context, "mobile"); await page.setViewportSize({ width: 1440, height: 1000 }); await page.goto("/meal-plan");
   await page.screenshot({ path: "test-results/meal-onboarding-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 768, height: 1024 });
   await page.screenshot({ path: "test-results/meal-onboarding-tablet.png", fullPage: true });

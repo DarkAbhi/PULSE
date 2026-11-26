@@ -67,8 +67,9 @@ npm run build
 ```
 
 The Node tests cover frontend utility behavior and need no database or running
-backend. Browser E2E coverage is paused in CI; retained Playwright journeys can
-be revisited later. Maestro currently covers small native Android smoke tests;
+backend. Playwright journeys (`npm run test:e2e`) run against a fake backend and
+are not run in CI. See [TESTING.md](TESTING.md) for where tests live and how to
+add them. Maestro currently covers small native Android smoke tests;
 see [Maestro smoke tests](../maestro/README.md).
 
 ## Pulse Design System Storybook

@@ -1,4 +1,4 @@
-// Enforces the dependency rules in ARCHITECTURE.md. Runs with `npm test`.
+// Enforces the dependency and testing rules in ARCHITECTURE.md and TESTING.md. Runs with `npm test`.
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
@@ -6,7 +6,8 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const sourceRoots = ["app", "components", "features", "hooks", "lib", "providers", "stores", ".storybook"];
+const productionRoots = ["app", "components", "features", "hooks", "lib", "providers", "stores"];
+const sourceRoots = [...productionRoots, ".storybook", "tests", "e2e"];
 const sourceExtensions = /\.(ts|tsx|mjs|css)$/;
 const importPattern = /(?:\bfrom\s+|\bimport\s*\(?\s*|@import\s+)["']([^"']+)["']/g;
 
@@ -31,6 +32,10 @@ const imports = files.map((file) => ({
 }));
 
 const isTest = (file) => /\.test\.mjs$/.test(file);
+// Modules Node runs directly (no bundler, no tsconfig paths): unit tests and the fake E2E backend.
+const isNodeModule = (file) => isTest(file) || /^e2e\/fixtures\/.*\.mjs$/.test(file);
+const isTestCode = (path) => /^(tests|e2e)\//.test(path) || /\.(test|spec|fixture|factory)\.[cm]?[jt]sx?$/.test(path);
+const isProduction = (file) => productionRoots.includes(layerOf(file)) && !isTestCode(file) && !isStory(file);
 const isStory = (file) => /\.stories\.tsx$/.test(file);
 const featureOf = (path) => path.match(/^features\/([^/]+)/)?.[1];
 const layerOf = (path) => path.split("/")[0];
@@ -51,10 +56,11 @@ function violations(check) {
 
 test("application modules use the @/ alias instead of relative imports", () => {
   // Exceptions, both because the resolver does not read tsconfig paths:
-  // - Node's test runner, so tests import their colocated module relatively;
+  // - Node itself, so unit tests import their colocated module relatively (shared test helpers
+  //   use the package's `#tests/*` import) and the fake E2E backend imports its route modules;
   // - Tailwind's CSS @import inlining, so stylesheets import feature themes relatively.
   assert.deepEqual(violations((file, specifier) =>
-    specifier.startsWith(".") && !isTest(file) && !file.endsWith(".css") ? "use an @/ import" : null), []);
+    specifier.startsWith(".") && !isNodeModule(file) && !file.endsWith(".css") ? "use an @/ import" : null), []);
 });
 
 test("shared layers never depend on features or routes", () => {
@@ -109,6 +115,43 @@ test("features never import routes and cross feature boundaries only through pub
     }
     return `use @/features/${targetFeature} or @/features/${targetFeature}/server`;
   }), []);
+});
+
+test("production code never depends on test code", () => {
+  assert.deepEqual(violations((file, specifier) => {
+    if (!isProduction(file)) return null;
+    const target = aliasTarget(specifier) ?? (specifier.startsWith("#tests/") ? `tests/${specifier.slice(7)}` : specifier);
+    return isTestCode(target) ? "test code must never reach an application bundle" : null;
+  }), []);
+});
+
+test("E2E specs drive the app only through the browser and the fake backend", () => {
+  assert.deepEqual(violations((file, specifier) => {
+    if (layerOf(file) !== "e2e") return null;
+    const target = aliasTarget(specifier);
+    return target && layerOf(target) !== "e2e" ? "E2E code may import only e2e/ helpers and packages" : null;
+  }), []);
+});
+
+test("shared test infrastructure is independent of features and routes", () => {
+  assert.deepEqual(violations((file, specifier) => {
+    if (layerOf(file) !== "tests") return null;
+    const target = aliasTarget(specifier);
+    return target && ["features", "app"].includes(layerOf(target)) ? "tests/ helpers must not depend on a feature" : null;
+  }), []);
+});
+
+test("each test runner owns its file names", () => {
+  const problems = [];
+  for (const file of files) {
+    if (/\.spec\.[cm]?[jt]sx?$/.test(file) && !(layerOf(file) === "e2e" && file.endsWith(".spec.ts"))) {
+      problems.push(`${file}: browser journeys are e2e/**/*.spec.ts (Playwright)`);
+    }
+    if (/\.test\.[cm]?[jt]sx?$/.test(file) && (layerOf(file) === "e2e" || !isTest(file))) {
+      problems.push(`${file}: unit tests are colocated *.test.mjs files outside e2e/ (node --test)`);
+    }
+  }
+  assert.deepEqual(problems, []);
 });
 
 test("server entry points are guarded and client entry points do not re-export server code", () => {

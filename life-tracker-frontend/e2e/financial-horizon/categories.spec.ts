@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "@/e2e/helpers/session";
 
 test("fills the same tab cell for every selection", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "categories-test", url: "http://localhost:3107" }]);
+  await signIn(context, "categories-test");
   const navigation = page.getByRole("navigation", { name: "Financial Horizon sections" });
 
   for (const width of [1440, 390]) {
@@ -35,7 +36,7 @@ test("fills the same tab cell for every selection", async ({ page, context }) =>
 });
 
 test("shows category paths and filters by parent or subcategory from the server", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "categories-test", url: "http://localhost:3107" }]);
+  await signIn(context, "categories-test");
   await page.goto("/financial-horizon");
   await page.getByRole("button", { name: "Transactions", exact: true }).click();
 
@@ -61,7 +62,7 @@ test("shows category paths and filters by parent or subcategory from the server"
 });
 
 test("Horizon sections support direct links and browser history", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "categories-test", url: "http://localhost:3107" }]);
+  await signIn(context, "categories-test");
   await page.goto("/financial-horizon?tab=transactions");
   const navigation = page.getByRole("navigation", { name: "Financial Horizon sections" });
 
@@ -74,7 +75,7 @@ test("Horizon sections support direct links and browser history", async ({ page,
 });
 
 test("the category dialog keeps keyboard focus inside and restores the trigger", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "categories-test", url: "http://localhost:3107" }]);
+  await signIn(context, "categories-test");
   await page.goto("/financial-horizon?tab=transactions");
   const trigger = page.getByRole("button", { name: "Add Category", exact: true });
   await trigger.click();

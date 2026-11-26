@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "@/e2e/helpers/session";
 
 test.beforeEach(async ({ context }) => {
-  await context.addCookies([{ name: "life_session", value: "app-bar-navigation", url: "http://localhost:3107" }]);
+  await signIn(context, "app-bar-navigation");
 });
 
 test("screen back links go to their parent from direct entry", async ({ page }) => {
@@ -45,7 +46,7 @@ test("meal preference editing returns one level to the planner", async ({ page }
 });
 
 test("the notification indicator follows unread updates on a narrow screen", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "app-bar-test", url: "http://localhost:3107" }]);
+  await signIn(context, "app-bar-test");
   await page.setViewportSize({ width: 320, height: 800 });
   await page.goto("/garage");
   const unreadBell = page.getByRole("button", { name: "Notifications, unread updates" });

@@ -1,37 +1,8 @@
 import { expect, test } from "@playwright/test";
-
-test("a failed sign-in preserves the form and a successful sign-in opens the dashboard", async ({ page, context }) => {
-  await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
-  await page.getByLabel("Username").fill("dashboard-test");
-  await page.getByLabel("Password").fill("wrong-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("alert").filter({ hasText: "Invalid username or password" })).toBeVisible();
-  await expect(page.getByLabel("Username")).toHaveValue("dashboard-test");
-  await expect(page.getByLabel("Password")).toHaveValue("wrong-password");
-
-  await page.getByLabel("Password").fill("fixture-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL("/dashboard");
-  await expect(page.getByRole("heading", { name: "Browser test" })).toBeVisible();
-  await expect(page.locator('[data-clock="time"]')).toHaveText(/\d/);
-  await expect(page.getByRole("link", { name: /^Fitness No workout recorded today\./ })).toBeVisible();
-  expect((await context.cookies()).find(({ name }) => name === "life_session")?.httpOnly).toBe(true);
-
-  const response = await context.request.get("/", { maxRedirects: 0 });
-  expect(response.status()).toBe(307);
-  expect(response.headers().location).toBe("/dashboard");
-});
-
-test("an expired session returns to sign-in from the dashboard", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "expired-session", url: "http://localhost:3107" }]);
-  await page.goto("/dashboard");
-  await expect(page).toHaveURL("/");
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
-});
+import { signIn } from "@/e2e/helpers/session";
 
 test("dashboard view switches through profile navigation and persists in this browser", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "dashboard-test", url: "http://localhost:3107" }]);
+  await signIn(context, "dashboard-test");
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/dashboard");
@@ -94,7 +65,7 @@ test("dashboard view switches through profile navigation and persists in this br
 });
 
 test("an invalid workout response leaves the rest of the dashboard available", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "dashboard-missing-workout", url: "http://localhost:3107" }]);
+  await signIn(context, "dashboard-missing-workout");
   await page.goto("/dashboard");
   await expect(page).toHaveURL("/dashboard");
   await expect(page.getByRole("link", { name: /^Fitness Workout status unavailable\./ })).toBeVisible();

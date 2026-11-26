@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "@/e2e/helpers/session";
 
 test("the activity sections follow the reference in both dashboard sizes", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "dashboard-activity-test", url: "http://localhost:3107" }]);
+  await signIn(context, "dashboard-activity-test");
   await page.emulateMedia({ colorScheme: "light" });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/dashboard");
@@ -73,7 +74,7 @@ test("the activity sections follow the reference in both dashboard sizes", async
 });
 
 test("a new account sees the empty activity card", async ({ page, context }) => {
-  await context.addCookies([{ name: "life_session", value: "empty-activity-test", url: "http://localhost:3107" }]);
+  await signIn(context, "empty-activity-test");
   await page.goto("/dashboard");
   await expect(page.getByRole("region", { name: "Recent activity" }).getByText("No recent activity yet.")).toBeVisible();
 });

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { stubProperty } from "#tests/helpers/stub-global.mjs";
 import { commitImport, editImport, ImportError, uploadStatement } from "./statement-import-api.ts";
 
 test("uploads with a generic filename and reports progress before returning a preview", async context => {
@@ -7,12 +8,7 @@ test("uploads with a generic filename and reports progress before returning a pr
   let method;
   let path;
   const updates = [];
-  const original = Object.getOwnPropertyDescriptor(globalThis, "XMLHttpRequest");
-  context.after(() => {
-    if (original) Object.defineProperty(globalThis, "XMLHttpRequest", original);
-    else delete globalThis.XMLHttpRequest;
-  });
-  globalThis.XMLHttpRequest = class {
+  stubProperty(context, globalThis, "XMLHttpRequest", class {
     upload = {};
     response = { id: "draft-id" };
     status = 201;
@@ -28,7 +24,7 @@ test("uploads with a generic filename and reports progress before returning a pr
       this.upload.onload();
       this.onload();
     }
-  };
+  });
   await uploadStatement(new File(["%PDF"], "private-bank.pdf", { type: "application/pdf" }), 7, v => updates.push(v));
   assert.equal(method, "POST");
   assert.equal(path, "/api/horizon/statement-imports");

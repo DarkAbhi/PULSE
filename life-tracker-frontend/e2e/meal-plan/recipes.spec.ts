@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "@/e2e/helpers/session";
 
 test("selects and saves a catalog recipe by name alongside custom meals", async ({ context, page }) => {
-  await context.addCookies([{ name: "life_session", value: "recipe-test", url: "http://localhost:3107" }]);
+  await signIn(context, "recipe-test");
   await page.goto("/meal-plan");
   await page.getByRole("button", { name: "Skip setup" }).click();
 

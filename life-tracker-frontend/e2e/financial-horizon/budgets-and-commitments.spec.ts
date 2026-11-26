@@ -1,9 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
+import { signIn } from "@/e2e/helpers/session";
 
 // Each Financial Horizon subdomain owns its dialogs and mutations in a hook; these journeys cover
 // the create and delete paths that every hook wires back into the shared horizon summary.
 test.beforeEach(async ({ context, page }) => {
-  await context.addCookies([{ name: "life_session", value: "horizon-mutations", url: "http://localhost:3107" }]);
+  await signIn(context, "horizon-mutations");
   await page.goto("/financial-horizon");
 });
 

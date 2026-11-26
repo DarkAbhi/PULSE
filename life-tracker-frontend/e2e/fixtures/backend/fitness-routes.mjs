@@ -2,7 +2,7 @@
 const fitnessTestDay = "2026-01-02";
 const fitnessSchedule = new Map();
 let fitnessClassification = {};
-const initialVisits = () => [{ id: 1, time_label: "7:00 AM", duration_seconds: 4320 }];
+const initialVisits = () => [{ id: 1, time_label: "7:00 AM" }];
 const fitnessTestVisits = initialVisits();
 
 /** Restores this domain's data for one session so every test starts from the same state. */
@@ -37,7 +37,10 @@ export function route({ req, res, url, token, body, send }) {
     const group = { date: fitnessTestDay, date_label: "Friday, 2 January 2026", workouts: visits };
     return send(200, {
       today: fitnessTestDay,
-      cards: [],
+      cards: [
+        { id: "last_workout", label: "Last worked out", value: "Today", subtitle: "at gym" },
+        { id: "streak", label: "Workout streak", value: "1 week", subtitle: "with a gym visit" },
+      ],
       calendar_workouts: { [fitnessTestDay]: group },
       recent_workouts: token === "fitness-workout-schedule" ? [group] : [],
     });

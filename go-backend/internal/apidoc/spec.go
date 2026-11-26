@@ -100,9 +100,8 @@ type FitnessStatCard struct {
 }
 type FitnessOverviewWorkout struct {
 	WorkoutClassification
-	ID              int64    `json:"id"`
-	TimeLabel       string   `json:"time_label"`
-	DurationSeconds *float64 `json:"duration_seconds,omitempty"`
+	ID        int64  `json:"id"`
+	TimeLabel string `json:"time_label"`
 }
 type FitnessWorkoutGroup struct {
 	Date      string                   `json:"date"`

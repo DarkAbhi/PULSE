@@ -27,8 +27,10 @@ export function FitnessSummary({ last, streak, today, workoutDates }: {
   today: string;
   workoutDates: Set<string>;
 }) {
+  if (!last && !streak) return null;
+
   return (
-    <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-1 lg:grid-rows-2 lg:gap-6">
+    <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:auto-rows-fr lg:grid-cols-1 lg:gap-6">
       {last && (
         <PulseCard as="section" variant="tile" padding="md" className={`${styles.last} relative isolate flex min-h-40 flex-col justify-between gap-4 overflow-hidden`}>
           <h2 className="flex items-center gap-2.5 font-semibold"><Clock size={21} aria-hidden="true" />{last.label}</h2>

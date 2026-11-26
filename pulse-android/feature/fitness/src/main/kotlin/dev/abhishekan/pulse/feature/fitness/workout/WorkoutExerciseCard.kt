@@ -1,345 +1,276 @@
 package dev.abhishekan.pulse.feature.fitness.workout
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
-import dev.abhishekan.pulse.core.domain.model.WorkoutSet
 import dev.abhishekan.pulse.core.ui.PulseSpacing
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
-import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.feature.fitness.R
 import dev.abhishekan.pulse.feature.fitness.workout.editor.ExerciseInstructions
-import java.text.NumberFormat
-import dev.abhishekan.pulse.core.ui.R as PulseUiR
 
 @Composable
 internal fun WorkoutExerciseCard(
     exercise: WorkoutExercise,
-    number: Int,
-    expanded: Boolean,
     enabled: Boolean,
-    onToggle: () -> Unit,
     onEdit: () -> Unit,
     onRemove: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val colors = PulseTheme.colors
-    val shapes = PulseTheme.shapes
-    val sets = exercise.sets
-    val bodyweight = remember(sets) { sets.isNotEmpty() && sets.all { it.weight == null } }
-    val expandedLabel =
-        stringResource(
-            if (expanded) R.string.pulse_fitness_workout_exercise_expanded else R.string.pulse_fitness_workout_exercise_collapsed,
-        )
-    val toggleLabel =
-        stringResource(if (expanded) R.string.pulse_fitness_workout_collapse_exercise else R.string.pulse_fitness_workout_expand_exercise)
-    val header = remember { BringIntoViewRequester() }
-    var revealHeader by remember { mutableStateOf(false) }
-    LaunchedEffect(expanded) {
-        if (expanded && revealHeader) {
-            header.bringIntoView()
-            revealHeader = false
-        }
-    }
-
-    PulseCard(modifier.fillMaxWidth(), shape = shapes.extraLarge, contentPadding = PulseSpacing.none) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .bringIntoViewRequester(header)
-                .clickable(role = Role.Button, onClickLabel = toggleLabel) {
-                    revealHeader = !expanded
-                    onToggle()
-                }.semantics {
-                    heading()
-                    stateDescription = expandedLabel
-                }.animateContentSize(tween(PulseTokens.MOTION_MILLIS, easing = FastOutSlowInEasing))
-                .padding(start = PulseSpacing.medium, top = PulseSpacing.medium, end = PulseSpacing.medium)
-                .padding(bottom = if (expanded) PulseSpacing.tiny else PulseSpacing.medium),
-            horizontalArrangement = Arrangement.spacedBy(PulseSpacing.compact),
-        ) {
-            Box(
-                Modifier
-                    .sizeIn(minWidth = PulseSpacing.extraLarge, minHeight = PulseSpacing.extraLarge)
-                    .background(colors.primarySoft, shapes.medium)
-                    .padding(PulseSpacing.tiny),
-                contentAlignment = Alignment.Center,
-            ) {
-                PulseText(number.toString(), style = PulseTextStyle.Label, color = colors.onPrimarySoft)
-            }
-            Column(Modifier.weight(1f)) {
-                PulseText(
-                    exercise.name,
-                    style = PulseTextStyle.Title3,
-                    maxLines = if (expanded) Int.MAX_VALUE else 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                val setCount = pluralStringResource(R.plurals.pulse_fitness_workout_set_count, sets.size, sets.size)
-                PulseText(
-                    if (expanded) setCount else collapsedExerciseSummary(sets, setCount, bodyweight),
-                    style = PulseTextStyle.Body2,
-                    color = colors.textSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                val equipment = exercise.catalog?.equipment?.takeIf { it.isNotBlank() }
-                val muscles = exercise.catalog?.muscles.orEmpty()
-                val muscleLabel = remember(muscles) { muscles.filter { it.isNotBlank() }.joinToString() }
-                if (bodyweight || equipment != null || muscleLabel.isNotEmpty()) {
-                    FlowRow(
-                        Modifier.padding(top = PulseSpacing.small),
-                        horizontalArrangement = Arrangement.spacedBy(PulseSpacing.small),
-                        verticalArrangement = Arrangement.spacedBy(PulseSpacing.tiny),
-                    ) {
-                        if (bodyweight) {
-                            ExercisePill(stringResource(R.string.pulse_fitness_workout_bodyweight_equipment)) { tint ->
-                                Icon(
-                                    painterResource(PulseUiR.drawable.pulse_person),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(PulseSpacing.compact),
-                                    tint = tint,
-                                )
-                            }
-                        } else if (equipment != null) {
-                            ExercisePill(equipment) { tint ->
-                                WorkoutGlyph(WorkoutSymbol.Weight, tint, Modifier.size(PulseSpacing.compact))
-                            }
-                        }
-                        if (muscleLabel.isNotEmpty()) {
-                            ExercisePill(muscleLabel, muscle = true) { tint ->
-                                WorkoutGlyph(WorkoutSymbol.Muscle, tint, Modifier.size(PulseSpacing.compact))
-                            }
-                        }
-                    }
-                }
-            }
-            WorkoutGlyph(
-                WorkoutSymbol.ChevronDown,
-                colors.action,
-                Modifier.padding(top = PulseSpacing.small).size(PulseSpacing.comfortable).rotate(if (expanded) 180f else 0f),
-            )
-        }
-        AnimatedVisibility(
-            visible = expanded,
-            enter = expandVertically(tween(PulseTokens.MOTION_MILLIS, easing = FastOutSlowInEasing), expandFrom = Alignment.Top),
-            exit = shrinkVertically(tween(PulseTokens.MOTION_MILLIS, easing = FastOutSlowInEasing), shrinkTowards = Alignment.Top),
-        ) {
-            Column(
-                Modifier.padding(start = PulseSpacing.medium, end = PulseSpacing.medium, bottom = PulseSpacing.medium),
-                verticalArrangement = Arrangement.spacedBy(PulseSpacing.compact),
-            ) {
-                if (sets.isNotEmpty()) {
-                    val repScale = if (bodyweight) remember(sets) { sets.maxOf { it.reps }.coerceAtLeast(1) } else null
-                    Column(verticalArrangement = Arrangement.spacedBy(PulseSpacing.tiny)) {
-                        sets.forEach { WorkoutSetRow(it, repScale) }
-                    }
-                }
-                WorkoutExerciseActions(exercise, enabled && expanded, expanded, onEdit, onRemove)
-            }
-        }
-    }
-}
-
-@Composable
-private fun collapsedExerciseSummary(
-    sets: List<WorkoutSet>,
-    setCount: String,
-    bodyweight: Boolean,
-): String {
-    if (sets.isEmpty()) return setCount
-    val (minReps, maxReps) = remember(sets) { sets.minOf { it.reps } to sets.maxOf { it.reps } }
-    val reps =
-        when {
-            minReps == maxReps -> pluralStringResource(R.plurals.pulse_fitness_workout_reps, minReps, minReps)
-            bodyweight -> {
-                val locale = LocalConfiguration.current.locales[0]
-                val sequence =
-                    remember(sets, locale) {
-                        val format = NumberFormat.getIntegerInstance(locale).apply { isGroupingUsed = false }
-                        sets.joinToString(" / ") { format.format(it.reps) }
-                    }
-                stringResource(R.string.pulse_fitness_workout_reps_sequence, sequence)
-            }
-            else -> stringResource(R.string.pulse_fitness_workout_reps_range, minReps, maxReps)
-        }
-    if (bodyweight) return "$setCount · $reps"
-    val weights = remember(sets) { sets.mapNotNull { it.weight } }
-    val weight =
-        when {
-            weights.size < sets.size -> stringResource(R.string.pulse_fitness_workout_mixed_weights)
-            else -> {
-                val amount =
-                    remember(weights) {
-                        val min = weights.min()
-                        val max = weights.max()
-                        val value = min.stripTrailingZeros().toPlainString()
-                        if (min.compareTo(max) == 0) value else "$value–${max.stripTrailingZeros().toPlainString()}"
-                    }
-                stringResource(R.string.pulse_fitness_weight_kg, amount)
-            }
-        }
-    return "$setCount · $reps · $weight"
-}
-
-@Composable
-private fun ExercisePill(
-    text: String,
-    muscle: Boolean = false,
-    icon: @Composable (Color) -> Unit,
-) {
-    val colors = PulseTheme.colors
-    val tint = if (muscle) colors.error else colors.onPrimarySoft
-    Row(
-        Modifier
-            .background(if (muscle) colors.errorSoft else colors.primarySoft, PulseTheme.shapes.pill)
-            .padding(horizontal = PulseSpacing.small, vertical = PulseSpacing.tiny),
-        horizontalArrangement = Arrangement.spacedBy(PulseSpacing.tiny),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        icon(tint)
-        PulseText(text, style = PulseTextStyle.Label2, color = tint, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
-}
-
-@Composable
-private fun WorkoutSetRow(
-    set: WorkoutSet,
-    repScale: Int?,
-) {
-    val colors = PulseTheme.colors
-    val reps = pluralStringResource(R.plurals.pulse_fitness_workout_reps, set.reps, set.reps)
-    val boldValue = PulseTheme.typography.label1.copy(fontWeight = FontWeight.Bold)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = PulseSpacing.target)
-            .background(lerp(colors.surface, colors.primarySoft, 0.3f), PulseTheme.shapes.large)
-            .padding(horizontal = PulseSpacing.compact, vertical = PulseSpacing.small),
-        horizontalArrangement = Arrangement.spacedBy(PulseSpacing.compact),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            Modifier
-                .sizeIn(minWidth = PulseSpacing.large, minHeight = PulseSpacing.large)
-                .background(colors.primary, PulseTheme.shapes.pill)
-                .padding(PulseSpacing.tiny),
-            contentAlignment = Alignment.Center,
-        ) {
-            PulseText(set.number.toString(), style = PulseTextStyle.Label, color = colors.onPrimary)
-        }
-        if (repScale != null) {
-            val fraction = (set.reps.toFloat() / repScale).coerceIn(0f, 1f)
-            Box(
-                Modifier
-                    .weight(2f)
-                    .height(PulseSpacing.tiny)
-                    .background(colors.primarySoft, PulseTheme.shapes.pill),
+    val catalog = exercise.catalog
+    val muscles = catalog?.muscles.orEmpty().filter(String::isNotBlank)
+    val muscleColor = exerciseMuscleColor(muscles.firstOrNull(), colors.brand)
+    PulseCard(Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(PulseSpacing.medium)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(PulseSpacing.compact),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
-                    Modifier
-                        .fillMaxWidth(fraction)
-                        .height(PulseSpacing.tiny)
-                        .background(colors.primary, PulseTheme.shapes.pill),
-                )
+                    Modifier.size(48.dp).background(muscleColor, PulseTheme.shapes.large),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    WorkoutGlyph(WorkoutSymbol.Weight, Color.White)
+                }
+                Column(Modifier.weight(1f)) {
+                    PulseText(exercise.name, Modifier.semantics { heading() }, PulseTextStyle.Title2)
+                    catalog?.name?.takeIf { it != exercise.name }?.let {
+                        PulseText(it, style = PulseTextStyle.Body2, color = colors.textSecondary)
+                    }
+                }
             }
-            PulseText(reps, Modifier.weight(1f), style = boldValue, textAlign = TextAlign.End)
-        } else {
-            PulseText(reps, Modifier.weight(1f), PulseTextStyle.Label)
-            PulseText(
-                set.weight?.let { stringResource(R.string.pulse_fitness_weight_kg, it.stripTrailingZeros().toPlainString()) }
-                    ?: stringResource(R.string.pulse_fitness_bodyweight),
-                Modifier.weight(1f),
-                style = boldValue,
-                textAlign = TextAlign.End,
+            val weightType =
+                when {
+                    exercise.sets.isNotEmpty() && exercise.sets.all { it.weight == null } ->
+                        stringResource(R.string.pulse_fitness_workout_body_weight)
+                    catalog?.equipment == "body only" -> stringResource(R.string.pulse_fitness_workout_weighted)
+                    else -> catalog?.equipment
+                }
+            ExerciseFacts(
+                listOf(
+                    ExerciseFact(R.string.pulse_fitness_workout_category, catalog?.category),
+                    ExerciseFact(R.string.pulse_fitness_workout_weight_type, weightType),
+                    ExerciseFact(R.string.pulse_fitness_workout_body_part, muscles.joinToString(), muscleColor),
+                ),
             )
+            ExerciseSets(exercise)
+            Column(verticalArrangement = Arrangement.spacedBy(PulseSpacing.small)) {
+                HorizontalDivider(color = colors.border)
+                val hasInstructions = catalog?.instructions?.isNotEmpty() == true
+                FlowRow(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalArrangement = Arrangement.spacedBy(PulseSpacing.small),
+                ) {
+                    catalog?.takeIf { hasInstructions }?.let {
+                        ExerciseInstructions(it, Modifier.align(Alignment.CenterVertically), enabled = true)
+                    }
+                    Row(
+                        Modifier
+                            .align(
+                                Alignment.CenterVertically,
+                            ).then(if (hasInstructions) Modifier.widthIn(min = 96.dp) else Modifier.fillMaxWidth()),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        PulseButton(
+                            stringResource(R.string.pulse_fitness_workout_edit),
+                            onEdit,
+                            enabled = enabled,
+                            style = PulseButtonStyle.Icon,
+                            icon = { WorkoutGlyph(WorkoutSymbol.Edit, if (enabled) colors.action else colors.textSecondary) },
+                        )
+                        PulseButton(
+                            stringResource(R.string.pulse_fitness_workout_remove),
+                            onRemove,
+                            enabled = enabled,
+                            style = PulseButtonStyle.Icon,
+                            icon = { WorkoutGlyph(WorkoutSymbol.Delete, if (enabled) colors.error else colors.textSecondary) },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+private data class ExerciseFact(
+    val label: Int,
+    val value: String?,
+    val dot: Color? = null,
+)
+
+@Composable
+private fun ExerciseFacts(facts: List<ExerciseFact>) {
+    val colors = PulseTheme.colors
+    BoxWithConstraints(Modifier.fillMaxWidth().clip(PulseTheme.shapes.large).background(colors.surfaceMuted)) {
+        if (maxWidth >= 360.dp) {
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+                facts.forEachIndexed { index, fact ->
+                    if (index > 0) VerticalDivider(color = colors.border)
+                    ExerciseFactCell(fact, Modifier.weight(1f))
+                }
+            }
+        } else {
+            Column(Modifier.fillMaxWidth()) {
+                facts.forEachIndexed { index, fact ->
+                    if (index > 0) HorizontalDivider(color = colors.border)
+                    ExerciseFactCell(fact, Modifier.fillMaxWidth())
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun WorkoutExerciseActions(
-    exercise: WorkoutExercise,
-    enabled: Boolean,
-    expanded: Boolean,
-    onEdit: () -> Unit,
-    onRemove: () -> Unit,
+private fun ExerciseFactCell(
+    fact: ExerciseFact,
+    modifier: Modifier,
 ) {
-    val colors = PulseTheme.colors
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(PulseSpacing.small),
-        verticalAlignment = Alignment.CenterVertically,
+    val locale = LocalConfiguration.current.locales[0]
+    val value = fact.value?.takeIf { it.isNotBlank() }
+    val label = value?.split(' ')?.joinToString(" ") { word -> word.replaceFirstChar { it.titlecase(locale) } }
+    Column(
+        modifier.padding(horizontal = PulseSpacing.compact, vertical = PulseSpacing.small),
+        verticalArrangement = Arrangement.spacedBy(PulseSpacing.tiny),
     ) {
-        exercise.catalog?.takeIf { it.instructions.isNotEmpty() }?.let {
-            ExerciseInstructions(it, Modifier.weight(1f), enabled = expanded)
+        WorkoutColumnLabel(fact.label)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(PulseSpacing.small),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (value != null && fact.dot != null) {
+                Box(Modifier.size(8.dp).background(fact.dot, PulseTheme.shapes.pill))
+            }
+            PulseText(label ?: stringResource(R.string.pulse_fitness_workout_missing_value), style = PulseTextStyle.Label)
         }
-        PulseButton(
-            stringResource(R.string.pulse_fitness_workout_edit),
-            onEdit,
-            modifier = Modifier.weight(1f),
-            enabled = enabled,
-            variant = PulseButtonVariant.Secondary,
-            leadingIcon = { WorkoutGlyph(WorkoutSymbol.Edit, LocalContentColor.current, Modifier.size(PulseSpacing.medium)) },
-            contentPadding = PaddingValues(horizontal = PulseSpacing.tiny, vertical = PulseSpacing.small),
-            textAlign = TextAlign.Center,
-        )
-        PulseButton(
-            stringResource(R.string.pulse_fitness_workout_remove),
-            onRemove,
-            modifier = Modifier.background(if (enabled) colors.errorSoft else colors.surfaceMuted, PulseTheme.shapes.small),
-            enabled = enabled,
-            style = PulseButtonStyle.Icon,
-            icon = { WorkoutGlyph(WorkoutSymbol.Delete, if (enabled) colors.error else colors.textSecondary) },
-        )
     }
 }
+
+@Composable
+private fun ExerciseSets(exercise: WorkoutExercise) {
+    val sets = exercise.sets
+    Column {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PulseText(stringResource(R.string.pulse_fitness_workout_sets), style = PulseTextStyle.Label)
+            WorkoutChip(pluralStringResource(R.plurals.pulse_fitness_workout_set_count, sets.size, sets.size))
+        }
+        SetTableRow {
+            WorkoutColumnLabel(R.string.pulse_fitness_workout_set, Modifier.width(44.dp))
+            WorkoutColumnLabel(R.string.pulse_fitness_workout_reps_label, Modifier.weight(1f))
+            WorkoutColumnLabel(R.string.pulse_fitness_workout_weight, Modifier.weight(1f), TextAlign.End)
+        }
+        sets.forEach { set ->
+            HorizontalDivider(color = PulseTheme.colors.border)
+            SetTableRow {
+                Box(Modifier.width(44.dp)) { WorkoutChip(set.number.toString()) }
+                PulseText(
+                    pluralStringResource(R.plurals.pulse_fitness_workout_reps, set.reps, set.reps),
+                    Modifier.weight(1f),
+                    PulseTextStyle.Label,
+                )
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                    val weight = set.weight
+                    if (weight == null) {
+                        WorkoutChip(stringResource(R.string.pulse_fitness_workout_body_weight))
+                    } else {
+                        PulseText(
+                            stringResource(R.string.pulse_fitness_weight_kg, formatWorkoutNumber(weight, fractionDigits = 3)),
+                            style = PulseTextStyle.Label,
+                            textAlign = TextAlign.End,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SetTableRow(content: @Composable RowScope.() -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 44.dp).padding(vertical = PulseSpacing.tiny),
+        horizontalArrangement = Arrangement.spacedBy(PulseSpacing.tiny),
+        verticalAlignment = Alignment.CenterVertically,
+        content = content,
+    )
+}
+
+@Composable
+private fun WorkoutChip(text: String) {
+    PulseText(
+        text,
+        Modifier
+            .sizeIn(minWidth = 32.dp)
+            .background(PulseTheme.colors.surfaceMuted, PulseTheme.shapes.pill)
+            .padding(horizontal = PulseSpacing.small, vertical = PulseSpacing.tiny),
+        style = PulseTextStyle.Label2,
+        textAlign = TextAlign.Center,
+    )
+}
+
+@Composable
+private fun WorkoutColumnLabel(
+    label: Int,
+    modifier: Modifier = Modifier,
+    textAlign: TextAlign? = null,
+) {
+    PulseText(
+        stringResource(label).uppercase(LocalConfiguration.current.locales[0]),
+        modifier,
+        PulseTextStyle.Caption,
+        color = PulseTheme.colors.textSecondary,
+        textAlign = textAlign,
+    )
+}
+
+private fun exerciseMuscleColor(
+    muscle: String?,
+    fallback: Color,
+): Color =
+    when (muscle?.lowercase()) {
+        "shoulders" -> Color(0xFFF0603A)
+        "chest" -> Color(0xFFD91CAB)
+        "back", "lats", "middle back", "lower back" -> Color(0xFF0F86C9)
+        "biceps" -> Color(0xFF7B2CE0)
+        "triceps" -> Color(0xFF5B2CE0)
+        "legs", "quadriceps", "hamstrings", "calves", "glutes" -> Color(0xFF12A89A)
+        "abdominals", "core" -> Color(0xFFD9930A)
+        else -> fallback
+    }

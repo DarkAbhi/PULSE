@@ -7,7 +7,7 @@ import { workoutLabel, type WorkoutClassification } from "@/features/fitness/typ
 export type WorkoutGroup = {
   date: string;
   date_label: string;
-  workouts: (WorkoutClassification & { id: number; time_label: string; duration_seconds?: number | null })[];
+  workouts: (WorkoutClassification & { id: number; time_label: string })[];
 };
 
 const monthFormatter = new Intl.DateTimeFormat("en-IN", { month: "short", timeZone: "UTC" });

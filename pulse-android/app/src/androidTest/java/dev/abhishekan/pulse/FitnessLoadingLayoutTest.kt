@@ -54,7 +54,7 @@ class FitnessLoadingLayoutTest {
         compose.runOnIdle {
             state = state.copy(loadState = FitnessLoadState.Ready, overview = FitnessOverview(day, emptyList(), emptyList()))
         }
-        val calendar = compose.onNodeWithText("SELECTED DAY")
+        val calendar = compose.onNodeWithText("Workout logged")
         val beforeRefresh = calendar.getUnclippedBoundsInRoot()
         compose.onNodeWithTag("fitness-viewport").performTouchInput { swipeDown() }
         compose.runOnIdle { assertEquals(1, refreshes) }
@@ -64,7 +64,7 @@ class FitnessLoadingLayoutTest {
             state = state.copy(loadState = FitnessLoadState.Failed(Failure.Connection))
         }
         compose.onNodeWithText("Refreshing your activity").assertDoesNotExist()
-        compose.onNodeWithText("SELECTED DAY").assertExists()
+        compose.onNodeWithText("Workout logged").assertExists()
     }
 
     private fun assertLoadingCentered() {

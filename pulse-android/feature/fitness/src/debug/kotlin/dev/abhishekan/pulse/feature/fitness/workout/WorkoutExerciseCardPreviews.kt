@@ -46,19 +46,13 @@ private fun WorkoutExerciseCardPreview(
         ) {
             WorkoutExerciseCard(
                 first,
-                number = 1,
-                expanded = true,
                 enabled = true,
-                onToggle = {},
                 onEdit = {},
                 onRemove = {},
             )
             WorkoutExerciseCard(
                 second,
-                number = 2,
-                expanded = false,
                 enabled = true,
-                onToggle = {},
                 onEdit = {},
                 onRemove = {},
             )

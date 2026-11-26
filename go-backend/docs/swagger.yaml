@@ -240,8 +240,6 @@ definitions:
     type: object
   apidoc.FitnessOverviewWorkout:
     properties:
-      duration_seconds:
-        type: number
       id:
         type: integer
       time_label:

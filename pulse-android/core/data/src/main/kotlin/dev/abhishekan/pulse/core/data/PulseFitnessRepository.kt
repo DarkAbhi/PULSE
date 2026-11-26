@@ -70,7 +70,6 @@ class PulseFitnessRepository(
                                     LocalDate.parse(date),
                                     it.timeLabel,
                                     classification(it.type, it.focus),
-                                    it.duration?.takeIf(Double::isFinite)?.toLong(),
                                 )
                             }
                         }.associateBy { it.id }
@@ -86,7 +85,6 @@ class PulseFitnessRepository(
                             time.toLocalDate(),
                             time.format(DateTimeFormatter.ofPattern("h:mm a")),
                             summaries[it.id]?.classification ?: WorkoutClassification(null),
-                            summaries[it.id]?.durationSeconds,
                         )
                 }
                 FitnessOverview(
@@ -235,6 +233,7 @@ class PulseFitnessRepository(
             data?.primaryMuscles.orEmpty(),
             data?.instructions.orEmpty(),
             matchType,
+            category = data?.category,
         )
     }
 }

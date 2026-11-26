@@ -28,7 +28,6 @@ import kotlinx.serialization.json.JsonPrimitive
     @SerialName("time_label") val timeLabel: String,
     @SerialName("workout_type") val type: String? = null,
     @SerialName("workout_focus") val focus: String? = null,
-    @SerialName("duration_seconds") val duration: Double? = null,
 )
 
 @Serializable class VisitDto(
@@ -86,6 +85,7 @@ class WorkoutClassificationRequest(
 @Serializable class CatalogDataDto(
     val primaryMuscles: List<String>? = null,
     val instructions: List<String>? = null,
+    val category: String? = null,
 )
 
 @Serializable class CatalogSearchDto(

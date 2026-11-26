@@ -25,5 +25,5 @@ data class FitnessUiState(
     val error get() = loadState.error
     val needsReview get() = reviewState != FitnessReviewState.None
     val reviewReady get() = reviewState == FitnessReviewState.Ready
-    val canRecord get() = overview != null && error == null && !busy && !needsReview
+    val canRecord get() = overview != null && selected <= overview.today && error == null && !busy && !needsReview
 }

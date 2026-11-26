@@ -19,16 +19,15 @@ INSERT INTO gym_visits (user_id, created_at) VALUES ($1, $2) RETURNING id;
 SELECT id,created_at FROM gym_visits WHERE user_id=$1 ORDER BY created_at DESC,id DESC;
 
 -- name: OverviewVisits :many
-SELECT g.id, g.created_at, w.duration_seconds, g.workout_type, g.workout_focus,
+SELECT g.id, g.created_at, g.workout_type, g.workout_focus,
     COUNT(s.id)::bigint AS sets,
     COALESCE(SUM(s.reps * s.weight), 0)::double precision AS volume,
     COUNT(s.id) FILTER (WHERE s.weight IS NULL)::bigint AS unweighted_sets
 FROM gym_visits g
-LEFT JOIN fitness_workouts w ON w.id = g.fitness_workout_id AND w.user_id = g.user_id
 LEFT JOIN gym_visit_exercises e ON e.gym_visit_id = g.id
 LEFT JOIN gym_exercise_sets s ON s.gym_visit_exercise_id = e.id
 WHERE g.user_id = $1 AND g.created_at <= $2
-GROUP BY g.id, w.duration_seconds
+GROUP BY g.id
 ORDER BY g.created_at DESC, g.id DESC;
 
 -- name: OverviewSessions :many

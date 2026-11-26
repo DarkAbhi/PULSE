@@ -7,4 +7,5 @@ data class CatalogExercise(
     val muscles: List<String>,
     val instructions: List<String>,
     val matchType: String? = null,
+    val category: String? = null,
 )

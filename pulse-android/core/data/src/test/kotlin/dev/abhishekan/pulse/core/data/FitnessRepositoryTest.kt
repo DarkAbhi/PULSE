@@ -125,7 +125,7 @@ class FitnessRepositoryTest {
 """"catalog_exercise":{"id":"catalog-1",""" +
 """"name":"Squat",""" +
 """"equipment":null,""" +
-""""data":{"primaryMuscles":["quadriceps"],""" +
+""""data":{"category":"strength","primaryMuscles":["quadriceps"],""" +
 """"instructions":["Stand tall."]}},""" +
 """"sets":[{"set_number":1,""" +
 """"reps":12,""" +
@@ -217,6 +217,13 @@ class FitnessRepositoryTest {
                 assertTrue(detail.info.imported)
                 assertEquals("1800.125", detail.info.durationSeconds?.toPlainString())
                 assertNull(detail.info.calories)
+                assertEquals(
+                    "strength",
+                    detail.exercises
+                        .single()
+                        .catalog
+                        ?.category,
+                )
                 assertEquals(
                     "12.1234567890123456789",
                     detail.exercises

@@ -1,6 +1,9 @@
 package dev.abhishekan.pulse
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -38,22 +41,22 @@ class FitnessRecordConfirmationTest {
             }
         }
 
-        compose.onNodeWithText("Add workout").performScrollTo().performClick()
-        compose.onNodeWithText("Record workout?").assertIsDisplayed()
+        compose.onNodeWithText("Log workout").performScrollTo().performClick()
+        compose.onNodeWithText("Log workout?").assertIsDisplayed()
         val locale =
             InstrumentationRegistry
                 .getInstrumentation()
                 .targetContext.resources.configuration.locales[0]
         val date = day.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale))
-        compose.onNodeWithText("Record a workout for $date? You can add exercises and sets afterward.").assertIsDisplayed()
+        compose.onNodeWithText("Log a workout for $date?").assertIsDisplayed()
         compose.runOnIdle { assertEquals(0, records) }
         compose.onNodeWithText("Cancel").performClick()
-        compose.onNodeWithText("Record workout?").assertDoesNotExist()
+        compose.onNodeWithText("Log workout?").assertDoesNotExist()
         compose.runOnIdle { assertEquals(0, records) }
 
-        compose.onNodeWithText("Add workout").performScrollTo().performClick()
-        compose.onNodeWithText("Record workout").performClick()
-        compose.onNodeWithText("Record workout?").assertDoesNotExist()
+        compose.onNodeWithText("Log workout").performScrollTo().performClick()
+        compose.onNode(hasText("Log workout") and hasAnyAncestor(isDialog())).performClick()
+        compose.onNodeWithText("Log workout?").assertDoesNotExist()
         compose.runOnIdle { assertEquals(1, records) }
     }
 }

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
@@ -15,20 +14,15 @@ import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.test.platform.app.InstrumentationRegistry
 import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.domain.model.WorkoutSummary
@@ -49,9 +43,7 @@ import java.util.Locale
 class FitnessCalendarLayoutTest {
     @get:Rule val compose = createComposeRule()
 
-    @Test fun narrowPhonesUseFullWidthDateRows() = verifyFullWeek(320.dp)
-
-    @Test fun sevenColumnsFitAtTheMinimumGridWidth() = verifyFullWeek(344.dp)
+    @Test fun narrowPhonesKeepSevenColumns() = verifyFullWeek(320.dp)
 
     @Test fun allSevenColumnsFitAtS21Width() = verifyFullWeek(360.dp)
 
@@ -59,13 +51,13 @@ class FitnessCalendarLayoutTest {
 
     @Test fun calendarRendersInLightTheme() = verifyFullWeek(360.dp, dark = false)
 
-    @Test fun largeTextKeepsDateRowsAndDateSelection() = verifyFullWeek(320.dp, fontScale = 2f)
+    @Test fun largeTextKeepsSevenColumns() = verifyFullWeek(320.dp, fontScale = 2f)
 
     @Test fun monthHeightAnimatesInBothDirections() {
         val shortMonth = YearMonth.of(2026, 10)
         val tallMonth = shortMonth.plusMonths(1)
         val month = mutableStateOf(shortMonth)
-        val overview = FitnessOverview(shortMonth.atDay(1), emptyList(), emptyList())
+        val overview = FitnessOverview(tallMonth.atEndOfMonth(), emptyList(), emptyList())
         compose.setContent {
             PulseTheme(true) {
                 Box(Modifier.width(360.dp)) {
@@ -77,7 +69,7 @@ class FitnessCalendarLayoutTest {
                 }
             }
         }
-        val legend = compose.onNodeWithText("Workout recorded")
+        val legend = compose.onNodeWithText("Workout logged")
 
         fun calendarBottom() = legend.getUnclippedBoundsInRoot().top
 
@@ -88,13 +80,16 @@ class FitnessCalendarLayoutTest {
         val expanding = calendarBottom()
         compose.mainClock.advanceTimeBy(240)
         val tallHeight = calendarBottom()
-        assertTrue("Expected an intermediate height while expanding", expanding > shortHeight && expanding < tallHeight)
+        assertTrue("Calendar should pass through an intermediate height when growing", expanding > shortHeight && expanding < tallHeight)
 
         compose.runOnIdle { month.value = shortMonth }
         compose.mainClock.advanceTimeBy(96)
         val collapsing = calendarBottom()
         compose.mainClock.advanceTimeBy(240)
-        assertTrue("Expected an intermediate height while collapsing", collapsing > shortHeight && collapsing < tallHeight)
+        assertTrue(
+            "Calendar should pass through an intermediate height when shrinking",
+            collapsing > shortHeight && collapsing < tallHeight,
+        )
         assertEquals(shortHeight, calendarBottom())
     }
 
@@ -140,68 +135,30 @@ class FitnessCalendarLayoutTest {
         }
         val viewport = compose.onNodeWithTag("viewport").getUnclippedBoundsInRoot()
         val formatter = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale.getDefault())
-        val grid = width >= 344.dp
         val weeks = FitnessDates.calendar(month).chunked(7)
-        val deviceDensity =
-            InstrumentationRegistry
-                .getInstrumentation()
-                .targetContext.resources.displayMetrics.density
 
         fun dateNode(date: LocalDate) =
             compose.onNode(hasContentDescription(date.format(formatter) + ",", substring = true) and hasClickAction())
 
-        if (!grid) {
-            repeat(weeks.indexOfFirst { today in it }) {
-                compose.onNodeWithContentDescription("Previous week").performScrollTo().performClick()
-            }
-        }
-        weeks.forEachIndexed { index, week ->
+        weeks.forEach { week ->
             val bounds =
                 week.map { date ->
                     val node = dateNode(date)
                     node.performScrollTo().assertIsDisplayed()
                     val layout = node.getUnclippedBoundsInRoot()
-                    val touch = node.fetchSemanticsNode().touchBoundsInRoot
                     assertTrue("$date extends past the viewport", layout.left >= viewport.left && layout.right <= viewport.right)
-                    assertTrue(
-                        "$date needs 48 dp layout bounds",
-                        layout.right - layout.left >= 48.dp && layout.bottom - layout.top >= 48.dp,
-                    )
-                    assertTrue("$date needs 48 dp touch bounds", touch.width >= 48 * deviceDensity && touch.height >= 48 * deviceDensity)
+                    assertTrue("$date has a usable row height", layout.bottom - layout.top >= 44.dp)
                     layout
                 }
             bounds.zipWithNext().forEach { (first, second) ->
-                if (grid) {
-                    assertEquals(first.top.value, second.top.value, 0.5f)
-                    assertTrue("Day columns must not overlap", first.right <= second.left)
-                } else {
-                    assertEquals(first.left.value, second.left.value, 0.5f)
-                    assertTrue("Date rows must not overlap", first.bottom <= second.top)
-                }
+                assertEquals(first.top.value, second.top.value, 0.5f)
+                assertTrue("Day columns must not overlap", first.right <= second.left)
             }
-            val first = week.first()
-            dateNode(first).performScrollTo().performTouchInput {
-                click(if (grid) Offset(right - 2f, center.y) else Offset(center.x, bottom - 2f))
-            }
-            compose.runOnIdle { assertEquals(first, selected) }
-            if (!grid && index < weeks.lastIndex) {
-                compose.onNodeWithContentDescription("Next week").performScrollTo().performClick()
-            }
+            dateNode(week.first()).performScrollTo().performTouchInput { click(center) }
+            compose.runOnIdle { assertEquals(week.first(), selected) }
         }
-        compose.onNodeWithContentDescription("Choose date").performScrollTo()
-        if (!grid) {
-            compose.onNodeWithContentDescription("Previous week").performScrollTo().performClick()
-            compose.onNode(hasText("Today") and hasClickAction()).performScrollTo().performClick()
-            dateNode(today).performScrollTo().assertIsDisplayed()
-            compose.onNodeWithContentDescription("Choose date").performScrollTo()
-        }
-        compose.onNodeWithText("Swipe the calendar sideways", substring = true).assertDoesNotExist()
-        compose.onNodeWithContentDescription("Choose date").assertIsDisplayed()
-        if (fontScale == 2f) {
-            compose.onNodeWithContentDescription("Choose date").performClick()
-            compose.onNode(isDialog()).assertExists()
-            compose.onNode(hasSetTextAction()).assertIsDisplayed()
-            compose.onNodeWithText("Cancel").performClick()
-        }
+        compose.onNodeWithContentDescription("Previous month").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithContentDescription("Next month").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Choose date").assertDoesNotExist()
     }
 }

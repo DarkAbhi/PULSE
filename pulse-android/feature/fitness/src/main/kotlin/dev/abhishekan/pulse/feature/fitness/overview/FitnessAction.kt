@@ -13,8 +13,6 @@ sealed interface FitnessAction {
         val offset: Long,
     ) : FitnessAction
 
-    data object SelectToday : FitnessAction
-
     data object Refresh : FitnessAction
 
     data object RefreshSchedule : FitnessAction

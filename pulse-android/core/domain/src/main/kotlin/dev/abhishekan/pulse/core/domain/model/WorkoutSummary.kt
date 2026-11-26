@@ -7,5 +7,4 @@ data class WorkoutSummary(
     val date: LocalDate,
     val timeLabel: String,
     val classification: WorkoutClassification = WorkoutClassification(null),
-    val durationSeconds: Long? = null,
 )

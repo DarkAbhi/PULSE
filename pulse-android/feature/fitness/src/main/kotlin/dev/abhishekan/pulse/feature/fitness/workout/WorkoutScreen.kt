@@ -1,31 +1,26 @@
 package dev.abhishekan.pulse.feature.fitness.workout
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -39,11 +34,8 @@ import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseSpacing
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
-import dev.abhishekan.pulse.core.ui.components.PulseExtendedFloatingActionButton
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pagePadding
@@ -55,7 +47,6 @@ import dev.abhishekan.pulse.feature.fitness.R
 import dev.abhishekan.pulse.feature.fitness.shared.MutationReview
 import dev.abhishekan.pulse.feature.fitness.shared.WorkoutClassificationDialog
 import dev.abhishekan.pulse.feature.fitness.shared.fitnessFailureMessage
-import dev.abhishekan.pulse.feature.fitness.shared.label
 import java.time.ZoneId
 
 @Composable
@@ -71,20 +62,8 @@ fun WorkoutScreen(
     }
     var showClassification by rememberSaveable { mutableStateOf(false) }
     val detail = state.detail
-    val exercises = detail?.exercises.orEmpty()
-    val firstExerciseId = exercises.firstOrNull()?.id
-    val expandedSelection =
-        if (detail != null && firstExerciseId != null) {
-            rememberSaveable(detail.info.id) { mutableStateOf<Long?>(firstExerciseId) }
-        } else {
-            null
-        }
-    val expandedExerciseId =
-        expandedSelection?.value?.let { id -> if (exercises.any { it.id == id }) id else firstExerciseId }
     val tracker = rememberPullRefreshTracker(state.loading)
     val pullRefreshing = tracker.requested && state.loading
-    val scroll = rememberLazyListState()
-    var addButtonHeightPx by remember { mutableIntStateOf(0) }
     PulseAdaptiveLayout(Modifier.fillMaxSize()) { size ->
         if (state.loading && detail == null && !pullRefreshing) {
             PulseCenteredLoadingState(
@@ -97,7 +76,7 @@ fun WorkoutScreen(
         val canRefresh = !state.loading && !tracker.requested && !state.busy && state.editor == null
         val refreshLabel = stringResource(R.string.pulse_fitness_refresh_workout)
         val pagePadding = size.pagePadding
-        BoxWithConstraints(
+        Box(
             Modifier
                 .fillMaxSize()
                 .padding(LocalPulseContentPadding.current)
@@ -122,92 +101,50 @@ fun WorkoutScreen(
                 },
             contentAlignment = Alignment.TopCenter,
         ) {
-            val wide = minOf(maxWidth, PulseTokens.contentWidth) - pagePadding * 2 >= 840.dp
-            val addButtonHeight = with(LocalDensity.current) { addButtonHeightPx.toDp() }
-            val addButtonClearance = if (detail == null) PulseSpacing.none else addButtonHeight + PulseSpacing.small
-            LazyColumn(
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 440.dp),
                 modifier = Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize().testTag("workout-list"),
-                state = scroll,
-                contentPadding =
-                    PaddingValues(
-                        start = pagePadding,
-                        top = pagePadding,
-                        end = pagePadding,
-                        bottom = pagePadding + addButtonClearance,
-                    ),
+                contentPadding = PaddingValues(pagePadding),
+                horizontalArrangement = Arrangement.spacedBy(PulseSpacing.comfortable),
+                verticalArrangement = Arrangement.spacedBy(PulseSpacing.comfortable),
             ) {
                 state.error?.let {
-                    item(key = "workout-error", contentType = "error") {
-                        val gap = if (detail != null || state.needsReview) PulseSpacing.cardPadding else PulseSpacing.none
-                        Box(Modifier.padding(bottom = gap)) {
-                            PulseErrorState(fitnessFailureMessage(it), onRefresh)
-                        }
+                    item(key = "workout-error", span = { GridItemSpan(maxLineSpan) }) {
+                        PulseErrorState(fitnessFailureMessage(it), onRefresh)
                     }
                 }
                 if (state.needsReview) {
-                    item(key = "workout-review", contentType = "review") {
-                        Box(Modifier.padding(bottom = if (detail == null) PulseSpacing.none else PulseSpacing.cardPadding)) {
-                            MutationReview(
-                                state.reviewReady,
-                                state.busy,
-                                onRefresh,
-                                { onAction(WorkoutAction.AcknowledgeReview) },
-                                message = state.message,
-                            )
-                        }
+                    item(key = "workout-review", span = { GridItemSpan(maxLineSpan) }) {
+                        MutationReview(
+                            state.reviewReady,
+                            state.busy,
+                            onRefresh,
+                            { onAction(WorkoutAction.AcknowledgeReview) },
+                            message = state.message,
+                        )
                     }
                     if (detail != null) {
-                        item(key = "workout-server-exercises", contentType = "server-exercises") {
-                            Box(Modifier.padding(bottom = PulseSpacing.cardPadding)) { ServerExercises(detail.exercises) }
+                        item(key = "workout-server-exercises", span = { GridItemSpan(maxLineSpan) }) {
+                            ServerExercises(detail.exercises)
                         }
                     }
                 }
                 if (detail != null) {
-                    item(key = "workout-classification", contentType = "classification") {
-                        val type =
-                            detail.info.classification.type
-                                .label()
-                        PulseButton(
-                            stringResource(R.string.pulse_fitness_workout_classification, type),
-                            { showClassification = true },
-                            enabled = state.canChangeWorkout,
-                            style = PulseButtonStyle.Text,
-                        )
-                    }
                     workoutDetailItems(
                         detail = detail,
                         timeZone = timeZone,
                         enabled = state.canChangeWorkout,
-                        wide = wide,
-                        expandedExerciseId = expandedExerciseId,
-                        onToggle = { id -> expandedSelection?.value = id.takeUnless { it == expandedExerciseId } },
+                        onEditWorkout = { showClassification = true },
+                        onAdd = { onExercise(null) },
                         onEdit = onExercise,
                         onRemove = { confirmation = DeleteConfirmation.Exercise(it) },
                         onDelete = { confirmation = DeleteConfirmation.Workout },
                     )
                     if (state.busy && state.editor == null) {
-                        item(key = "workout-saving", contentType = "saving") {
-                            Box(Modifier.padding(top = PulseSpacing.cardPadding)) {
-                                PulseLoadingState(stringResource(R.string.pulse_fitness_saving_your_change))
-                            }
+                        item(key = "workout-saving", span = { GridItemSpan(maxLineSpan) }) {
+                            PulseLoadingState(stringResource(R.string.pulse_fitness_saving_your_change))
                         }
                     }
-                }
-            }
-            if (detail != null) {
-                Box(
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .widthIn(max = PulseTokens.contentWidth)
-                        .fillMaxWidth()
-                        .padding(pagePadding),
-                    contentAlignment = Alignment.CenterEnd,
-                ) {
-                    WorkoutAddExerciseButton(
-                        enabled = state.canChangeWorkout,
-                        onClick = { onExercise(null) },
-                        modifier = Modifier.onSizeChanged { addButtonHeightPx = it.height },
-                    )
                 }
             }
             PullToRefreshDefaults.Indicator(
@@ -219,7 +156,7 @@ fun WorkoutScreen(
     }
     if (showClassification && detail != null && state.canChangeWorkout) {
         WorkoutClassificationDialog(
-            title = stringResource(R.string.pulse_fitness_workout_type),
+            title = stringResource(R.string.pulse_fitness_edit_workout),
             initial = detail.info.classification,
             allowRest = false,
             onSave = {
@@ -230,33 +167,6 @@ fun WorkoutScreen(
         )
     }
     WorkoutDeleteDialog(confirmation, onAction, onDismiss = { confirmation = DeleteConfirmation.None })
-}
-
-@Composable
-private fun WorkoutAddExerciseButton(
-    enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val label = stringResource(R.string.pulse_fitness_add_exercise)
-    val icon: @Composable () -> Unit = { WorkoutGlyph(WorkoutSymbol.Add, LocalContentColor.current) }
-    if (enabled) {
-        PulseExtendedFloatingActionButton(
-            text = { PulseText(label, style = PulseTextStyle.Label) },
-            icon = icon,
-            onClick = onClick,
-            modifier = modifier,
-        )
-    } else {
-        PulseButton(
-            label,
-            onClick,
-            modifier.heightIn(min = PulseSpacing.target + PulseSpacing.small),
-            enabled = false,
-            leadingIcon = icon,
-            contentPadding = PaddingValues(horizontal = PulseSpacing.comfortable, vertical = PulseSpacing.small),
-        )
-    }
 }
 
 private sealed interface DeleteConfirmation {

@@ -2,6 +2,7 @@ package dev.abhishekan.pulse.feature.fitness.shared
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -14,13 +15,13 @@ import androidx.compose.ui.res.stringResource
 import dev.abhishekan.pulse.core.domain.model.WorkoutClassification
 import dev.abhishekan.pulse.core.domain.model.WorkoutType
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.components.PulseButton
-import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseSelectionField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormAction
+import dev.abhishekan.pulse.core.ui.patterns.PulseFormActions
 import dev.abhishekan.pulse.feature.fitness.R
 import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
@@ -41,10 +42,10 @@ internal fun WorkoutClassificationDialog(
         onDismissRequest = onDismiss,
         title = { PulseText(title, style = PulseTextStyle.Title) },
         confirmButton = {
-            PulseButton(stringResource(CoreUiR.string.pulse_ui_save), { onSave(draft) }, enabled = draft.validFocus)
-        },
-        dismissButton = {
-            PulseButton(stringResource(CoreUiR.string.pulse_ui_cancel), onDismiss, style = PulseButtonStyle.Text)
+            PulseFormActions(
+                primary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_save), { onSave(draft) }, enabled = draft.validFocus),
+                secondary = PulseFormAction(stringResource(CoreUiR.string.pulse_ui_cancel), onDismiss),
+            )
         },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
@@ -54,6 +55,7 @@ internal fun WorkoutClassificationDialog(
                     options = options.map { it.label() },
                     onSelect = { type = options[it] },
                     labelAbove = true,
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 if (hasFocus) {
                     PulseTextField(
@@ -61,7 +63,8 @@ internal fun WorkoutClassificationDialog(
                         onValueChange = {
                             if (draft.copy(focus = it).validFocus) focus = it
                         },
-                        label = stringResource(R.string.pulse_fitness_workout_focus),
+                        label = stringResource(R.string.pulse_fitness_workout_focus_optional),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }

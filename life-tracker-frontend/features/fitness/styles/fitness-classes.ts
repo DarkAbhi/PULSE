@@ -1,6 +1,5 @@
 export const fitnessStyles = {
   muted: "text-(--fitness-muted)",
-  selectedDate: "mt-4 rounded-3xl border border-foreground/25 px-3 sm:px-4",
   timeChip:
     "bg-(--fitness-chip) " +
     "inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-sm font-semibold",

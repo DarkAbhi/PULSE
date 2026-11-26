@@ -7,7 +7,6 @@ import PulseButton from "@/components/ui/pulse-button";
 import PulseIconButton from "@/components/ui/pulse-icon-button";
 import PulseConfirmationDialog from "@/components/ui/pulse-confirmation-dialog";
 import PulseCard from "@/components/ui/pulse-card";
-import { formatDuration } from "@/lib/utils/format-duration.mjs";
 import { workoutLabel, type WorkoutScheduleDay } from "@/features/fitness/types/workout-types";
 import type { FitnessOverview } from "@/features/fitness/types/fitness-types";
 import { calendarDays, shiftMonth } from "@/features/fitness/utils/calendar-utils.mjs";
@@ -41,9 +40,9 @@ export default function FitnessCalendar({ today, workoutsByDate, schedule, summa
   const selectedWeekday = parseDate(selectedDate).getUTCDay() || 7;
   const plan = selectedDate >= today && schedule.find((day) => day.weekday === selectedWeekday);
   const selectedDayHeading = (
-    <h3 className="text-lg leading-tight font-extrabold tracking-tight">
+    <h2 className="text-lg leading-tight font-extrabold tracking-tight">
       <time dateTime={selectedDate}>{selectedDayFormatter.format(parseDate(selectedDate))}</time>
-    </h3>
+    </h2>
   );
   function navigateMonth(offset: number) {
     const next = shiftMonth(month, offset);
@@ -57,7 +56,7 @@ export default function FitnessCalendar({ today, workoutsByDate, schedule, summa
 
   return (
     <div className="grid gap-6 sm:gap-8">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-6">
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-6">
         <PulseCard as="section" aria-label="Workout calendar" padding="md" className="min-w-0">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 aria-live="polite" className="text-2xl leading-none font-extrabold tracking-tight sm:text-3xl">
@@ -67,7 +66,7 @@ export default function FitnessCalendar({ today, workoutsByDate, schedule, summa
             <div className="ml-auto flex items-center gap-2">
               {selectedDate <= today && (
                 <PulseButton type="button" size="lg" variant="primary" className="whitespace-nowrap [--button-fill:var(--fitness-gradient)] [--button-foreground:white]" disabled={isMarking} onClick={openLog}>
-                  Log Visit
+                  Log workout
                 </PulseButton>
               )}
               <PulseIconButton type="button" variant="secondary" size="lg" aria-label="Previous month" onClick={() => navigateMonth(-1)}>
@@ -106,21 +105,23 @@ export default function FitnessCalendar({ today, workoutsByDate, schedule, summa
             <li className="flex items-center gap-1.5"><span className={styles.legendSelected} />Selected</li>
             <li className="flex items-center gap-1.5"><span className={styles.legendWorkout} />Workout logged</li>
           </ul>
-          <div aria-live="polite" className={styles.selectedDate}>
+        </PulseCard>
+        <div className="grid min-w-0 gap-4 lg:gap-6">
+          {summary}
+          <PulseCard as="section" padding="md" aria-label="Workouts for selected date" aria-live="polite" className="flex flex-col gap-3">
             {selectedVisits.length > 0 ? (
               <ul role="list" className="divide-y divide-divider">
                 {selectedVisits.map((visit, index) => {
                   const label = workoutLabel(visit);
-                  const duration = visit.duration_seconds == null ? "" : ` for ${formatDuration(visit.duration_seconds, "short")}`;
                   return (
-                    <li key={visit.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
+                    <li key={visit.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
                       <div className="min-w-32 flex-1">
                         {index === 0 && selectedDayHeading}
-                        <p className={`${styles.selectedDateDetails} tabular-nums wrap-anywhere`}>{label ?? "Gym visit"} at {visit.time_label}{duration}</p>
+                        <p className={`${styles.selectedDateDetails} tabular-nums wrap-anywhere`}>{label ?? "Gym visit"} at {visit.time_label}</p>
                       </div>
                       <Link
                         href={`/fitness/${visit.id}`}
-                        aria-label={`View workout for ${label ?? "gym visit"} at ${visit.time_label}${duration}`}
+                        aria-label={`View workout for ${label ?? "gym visit"} at ${visit.time_label}`}
                         className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-chip px-4 text-sm font-bold hover:bg-divider"
                       >
                         View workout
@@ -131,15 +132,14 @@ export default function FitnessCalendar({ today, workoutsByDate, schedule, summa
                 })}
               </ul>
             ) : (
-              <div className="py-3">
+              <div>
                 {selectedDayHeading}
                 <p className={styles.selectedDateDetails}>No workout logged</p>
               </div>
             )}
-            {plan && <p className="border-t border-divider py-2 text-control font-semibold wrap-anywhere"><span className={styles.muted}>Scheduled</span> · {workoutLabel(plan)}</p>}
-          </div>
-        </PulseCard>
-        {summary}
+            {plan && <p className="border-t border-divider pt-3 text-control font-semibold wrap-anywhere"><span className={styles.muted}>Scheduled</span> · {workoutLabel(plan)}</p>}
+          </PulseCard>
+        </div>
       </div>
 
       {children}
@@ -153,16 +153,16 @@ export default function FitnessCalendar({ today, workoutsByDate, schedule, summa
           startMarking(async () => {
             const result = await markGymVisitAction(dateToMark);
             if (!result.ok) {
-              setMarkError(result.error ?? "We couldn't save your gym visit.");
+              setMarkError(result.error ?? "We couldn't save your workout.");
               return;
             }
             setSelectedDate(dateToMark);
             setDateToMark(null);
           });
         }}
-        title="Log gym visit?"
-        description={dateToMark ? `Log a gym visit for ${dayFormatter.format(parseDate(dateToMark))}?` : ""}
-        confirmText="Log gym visit"
+        title="Log workout?"
+        description={dateToMark ? `Log a workout for ${dayFormatter.format(parseDate(dateToMark))}?` : ""}
+        confirmText="Log workout"
         confirmLoadingText="Logging…"
         isLoading={isMarking}
         error={markError}

@@ -1,7 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="pulse_fitness_stats_title">Your fitness stats</string>
-    <string name="pulse_fitness_stats_period">%1$d so far</string>
+    <string name="pulse_fitness_stats_title">Your stats</string>
     <string name="pulse_fitness_stats_coverage">Data coverage: %1$s</string>
     <string name="pulse_fitness_stats_unavailable">Stats are unavailable right now.</string>
     <string name="pulse_fitness_retry_stats">Retry stats</string>
@@ -16,11 +15,6 @@
     <string name="pulse_fitness_previous_month">"Previous month"</string>
     <string name="pulse_fitness_next_month">"Next month"</string>
     <string name="pulse_fitness_today">"Today"</string>
-    <string name="pulse_fitness_choose_date">"Choose date"</string>
-    <string name="pulse_fitness_previous_week">Previous week</string>
-    <string name="pulse_fitness_next_week">Next week</string>
-    <string name="pulse_fitness_week_position">Week %1$d of %2$d</string>
-    <string name="pulse_fitness_selected_day_summary">%1$s, %2$s</string>
     <string name="pulse_fitness_border_today_filled_selected_dot_workout_recorded">"Border: today · Filled: selected · Dot: workout recorded"</string>
     <string name="pulse_fitness_fitness">"FITNESS"</string>
     <string name="pulse_fitness_find_your_rhythm">"Find your rhythm."</string>
@@ -31,14 +25,10 @@
     <string name="pulse_fitness_today_india_time">"TODAY"</string>
     <string name="pulse_fitness_your_selected_day">"YOUR SELECTED DAY"</string>
     <string name="pulse_fitness_room_for_movement">"Room for movement."</string>
-    <string name="pulse_fitness_record_workout">"Record workout"</string>
-    <string name="pulse_fitness_confirm_record_title">Record workout?</string>
-    <string name="pulse_fitness_confirm_record_message">Record a workout for %1$s? You can add exercises and sets afterward.</string>
     <string name="pulse_fitness_record_another_workout">"Record another workout"</string>
     <string name="pulse_fitness_a_fresh_page">"A fresh page"</string>
     <string name="pulse_fitness_record_a_visit_for_this_date_then_add_your">"Record a visit for this date, then add your exercises and sets."</string>
     <string name="pulse_fitness_view_workout">"View workout"</string>
-    <string name="pulse_fitness_view_workout_1_s_2_s_3_s">"View workout %1$s, %2$s, %3$s"</string>
     <string name="pulse_fitness_open_recorded_workout">"Open recorded workout"</string>
     <string name="pulse_fitness_check_before_trying_again">"Check before trying again"</string>
     <string name="pulse_fitness_the_latest_server_records_are_shown_below_review_them">"The latest server records are shown below. Review them to avoid recording the same change twice."</string>
@@ -114,14 +104,6 @@
         <item quantity="one">"%1$s workout recorded."</item>
         <item quantity="other">"%1$s workouts recorded."</item>
     </plurals>
-    <plurals name="pulse_fitness_calendar_workouts">
-        <item quantity="one">"%1$s, %2$s workout recorded"</item>
-        <item quantity="other">"%1$s, %2$s workouts recorded"</item>
-    </plurals>
-    <plurals name="pulse_fitness_today_calendar_workouts">
-        <item quantity="one">"%1$s, today, %2$s workout recorded"</item>
-        <item quantity="other">"%1$s, today, %2$s workouts recorded"</item>
-    </plurals>
     <plurals name="pulse_fitness_duration_minutes">
         <item quantity="one">"%1$s minute"</item>
         <item quantity="other">"%1$s minutes"</item>
@@ -140,25 +122,37 @@
     </plurals>
     <string name="pulse_fitness_workout_at_time">"Workout · %1$s"</string>
     <string name="pulse_fitness_numbered_workout_at_time">"Workout %1$s · %2$s"</string>
-    <string name="pulse_fitness_selected_day">SELECTED DAY</string>
-    <string name="pulse_fitness_add_workout">Add workout</string>
     <string name="pulse_fitness_workouts_for_day">Workouts for this day</string>
-    <string name="pulse_fitness_no_workouts_for_day">No workouts logged.</string>
     <string name="pulse_fitness_workout_title">Workout</string>
-    <string name="pulse_fitness_workout_number">Workout %1$d</string>
-    <string name="pulse_fitness_workout_recorded_legend">Workout recorded</string>
-    <string name="pulse_fitness_selected_day_legend">Selected day</string>
     <plurals name="pulse_fitness_workouts_logged">
         <item quantity="one">%1$d workout logged</item>
         <item quantity="other">%1$d workouts logged</item>
     </plurals>
-    <plurals name="pulse_fitness_workout_count">
-        <item quantity="one">%1$d workout</item>
-        <item quantity="other">%1$d workouts</item>
-    </plurals>
-    <string name="pulse_fitness_workout_empty">No exercises added yet</string>
+    <string name="pulse_fitness_workout_empty">No exercises yet. Add your first exercise to start logging sets.</string>
+    <string name="pulse_fitness_workout_exercises_empty">Nothing added to this workout yet</string>
+    <string name="pulse_fitness_workout_exercises">Exercises</string>
+    <string name="pulse_fitness_workout_sets">Sets</string>
+    <string name="pulse_fitness_workout_set">Set</string>
+    <string name="pulse_fitness_workout_reps_label">Reps</string>
+    <string name="pulse_fitness_workout_weight">Weight</string>
+    <string name="pulse_fitness_workout_category">Category</string>
+    <string name="pulse_fitness_workout_weight_type">Weight type</string>
+    <string name="pulse_fitness_workout_body_part">Body part</string>
+    <string name="pulse_fitness_workout_weighted">Weighted</string>
+    <string name="pulse_fitness_workout_body_weight">Body weight</string>
+    <string name="pulse_fitness_workout_gym_visit">Gym visit</string>
+    <string name="pulse_fitness_workout_watch_sync">Synced from watch</string>
+    <string name="pulse_fitness_workout_start">Start</string>
+    <string name="pulse_fitness_workout_end">End</string>
+    <string name="pulse_fitness_workout_duration">Duration</string>
+    <string name="pulse_fitness_workout_calories">Calories burned</string>
+    <string name="pulse_fitness_workout_missing_value">—</string>
+    <string name="pulse_fitness_workout_volume">%1$s kg lifted</string>
+    <string name="pulse_fitness_edit_workout">Edit workout</string>
+    <string name="pulse_fitness_workout_focus_optional">Focus (optional)</string>
+    <plurals name="pulse_fitness_workout_exercise_count"><item quantity="one">%1$d exercise</item><item quantity="other">%1$d exercises</item></plurals>
     <string name="pulse_fitness_workout_manage">MANAGE WORKOUT</string>
-    <string name="pulse_fitness_workout_manage_description">Keep your workout data up to date or remove it if needed.</string>
+    <string name="pulse_fitness_workout_manage_description">Permanently removes this workout and all of its exercises and sets.</string>
     <string name="pulse_fitness_workout_started">Started</string>
     <string name="pulse_fitness_workout_finished">Finished</string>
     <string name="pulse_fitness_workout_duration_under_minute">&lt;1 min</string>
@@ -242,4 +236,20 @@
     <string name="pulse_fitness_queued_exercises">Exercises to save</string>
     <string name="pulse_fitness_remove_queued_exercise">Remove %1$s from batch</string>
     <string name="pulse_fitness_exercises_saved">Exercises saved</string>
+    <string name="pulse_fitness_log_workout">Log workout</string>
+    <string name="pulse_fitness_log_workout_title">Log workout?</string>
+    <string name="pulse_fitness_log_workout_message">Log a workout for %1$s?</string>
+    <string name="pulse_fitness_calendar_no_workouts">no workouts</string>
+    <plurals name="pulse_fitness_calendar_completed_workouts">
+        <item quantity="one">%1$d completed workout</item>
+        <item quantity="other">%1$d completed workouts</item>
+    </plurals>
+    <string name="pulse_fitness_calendar_selected">Selected</string>
+    <string name="pulse_fitness_calendar_workout_logged">Workout logged</string>
+    <string name="pulse_fitness_calendar_no_workout_logged">No workout logged</string>
+    <string name="pulse_fitness_calendar_gym_visit">Gym visit</string>
+    <string name="pulse_fitness_calendar_visit_time">%1$s at %2$s</string>
+    <string name="pulse_fitness_calendar_view_workout_for">View workout for %1$s</string>
+    <string name="pulse_fitness_calendar_scheduled">Scheduled · %1$s</string>
+    <string name="pulse_fitness_summary_week">Workouts in the last seven days</string>
 </resources>

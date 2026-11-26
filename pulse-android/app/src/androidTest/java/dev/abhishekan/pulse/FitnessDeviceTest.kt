@@ -7,6 +7,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.captureToImage
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isEnabled
@@ -101,7 +103,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import kotlin.math.abs
 
 /** Test-only server fixtures exercise the actual HTTP, persistence, repositories, use cases and UI. */
 class FitnessDeviceTest {
@@ -433,12 +434,16 @@ class FitnessDeviceTest {
         }
     }
 
+    private fun awaitWorkoutDetail() {
+        compose.waitUntil(15_000) { compose.onAllNodes(hasTestTag("workout-list")).fetchSemanticsNodes().isNotEmpty() }
+    }
+
     private fun tap(text: String) {
         if (text == "You") {
             compose.openProfileFromNavigation()
             return
         }
-        if (text in listOf("Previous month", "Next month", "Choose date")) {
+        if (text in listOf("Previous month", "Next month")) {
             compose
                 .onNodeWithContentDescription(
                     text,
@@ -448,11 +453,11 @@ class FitnessDeviceTest {
                 }
             return
         }
-        val button = hasText(text) and hasClickAction() and isEnabled()
-        if (text == "Edit" || text == "Delete workout") {
-            val addExercise = hasText("Add exercise") and hasClickAction() and isEnabled()
-            compose.waitUntil(15_000) { compose.onAllNodes(addExercise).fetchSemanticsNodes().isNotEmpty() }
-            compose.onNodeWithTag("workout-list").performScrollToNode(hasText(text))
+        val label = if (text == "Edit") hasContentDescription(text) else hasText(text)
+        val button = label and hasClickAction() and isEnabled()
+        if (text in listOf("Add exercise", "Edit", "Delete workout")) {
+            awaitWorkoutDetail()
+            compose.onNodeWithTag("workout-list").performScrollToNode(button)
         }
         compose.waitUntil(15_000) { compose.onAllNodes(button).fetchSemanticsNodes().isNotEmpty() }
         val node = compose.onAllNodes(button)[0]
@@ -464,7 +469,7 @@ class FitnessDeviceTest {
         val date = compose.onNodeWithContentDescription(description)
         val content =
             compose.onNode(
-                hasScrollAction() and hasAnyDescendant(hasText("SELECTED DAY")),
+                hasScrollAction() and hasAnyDescendant(hasText("Workout logged")),
             )
         val offset =
             (date.getUnclippedBoundsInRoot().top - content.getUnclippedBoundsInRoot().top).value *
@@ -491,17 +496,17 @@ class FitnessDeviceTest {
         tap("Continue")
         awaitText("Asha")
         tap("Fitness")
-        awaitText("Add workout")
+        awaitText("Log workout")
     }
 
     private fun recordAndOpen() {
-        tap("Add workout")
-        confirm("Record workout")
+        tap("Log workout")
+        confirm("Log workout")
         if (compose.onAllNodesWithContentDescription("Dismiss").fetchSemanticsNodes().isNotEmpty()) {
             compose.onNodeWithContentDescription("Dismiss").performClick()
         }
-        tap("Workout")
-        awaitText("Add exercise")
+        tap("View workout")
+        awaitWorkoutDetail()
         compose.assertNestedNavigationForLayout()
     }
 
@@ -568,72 +573,79 @@ class FitnessDeviceTest {
                         .toInstant(),
                 )
         }
-        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("SELECTED DAY"))).performTouchInput { swipeDown() }
-        awaitText("Workout")
+        compose.onNode(hasScrollAction() and hasAnyDescendant(hasText("Workout logged"))).performTouchInput { swipeDown() }
+        awaitText("View workout")
     }
 
-    @Test fun calendarSwipesAndArrowsKeepTheMonthAndSelectedDateInSync() {
+    @Test fun monthArrowsSelectFirstDayAndReturnToToday() {
         launchFitness()
-        val pager = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange))
         val month = YearMonth.from(backend.today)
-        val monthFormat = DateTimeFormatter.ofPattern("MMMM yyyy")
-        val dateFormat = DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy")
-
-        pager.performTouchInput { swipeLeft() }
+        val monthFormat = DateTimeFormatter.ofPattern("MMMM uuuu")
+        val dateFormat = DateTimeFormatter.ofPattern("EEE, d MMM")
+        tap("Next month")
         val next = month.plusMonths(1)
         compose.onNodeWithContentDescription(next.format(monthFormat)).assertIsDisplayed()
-        compose.onNodeWithContentDescription("${backend.today.format(dateFormat)}, 0 workouts").assertExists()
+        compose.onNodeWithText(next.atDay(1).format(dateFormat)).assertExists()
+        compose.onNodeWithText("Log workout").assertDoesNotExist()
 
-        pager.performTouchInput { swipeRight() }
+        tap("Previous month")
         compose.onNodeWithContentDescription(month.format(monthFormat)).assertIsDisplayed()
-
+        compose.onNodeWithText(backend.today.format(dateFormat)).assertExists()
         tap("Previous month")
         val previous = month.minusMonths(1)
         compose.onNodeWithContentDescription(previous.format(monthFormat)).assertIsDisplayed()
-        compose.onNodeWithContentDescription("${backend.today.format(dateFormat)}, 0 workouts").assertExists()
+        compose.onNodeWithText(previous.atDay(1).format(dateFormat)).assertExists()
+    }
+
+    @Test fun calendarSwipesSelectFirstDayAndReturnToToday() {
+        launchFitness()
+        val pager = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange))
+        val month = YearMonth.from(backend.today)
+        val monthFormat = DateTimeFormatter.ofPattern("MMMM uuuu")
+        val dateFormat = DateTimeFormatter.ofPattern("EEE, d MMM")
+
+        pager.performScrollTo().performTouchInput { swipeLeft() }
+        val next = month.plusMonths(1)
+        compose.onNodeWithContentDescription(next.format(monthFormat)).assertExists()
+        compose.onNodeWithText(next.atDay(1).format(dateFormat)).assertExists()
+
+        pager.performTouchInput { swipeRight() }
+        compose.onNodeWithContentDescription(month.format(monthFormat)).assertExists()
+        compose.onNodeWithText(backend.today.format(dateFormat)).assertExists()
+    }
+
+    @Test fun logVisitRemainsAvailableForAnotherWorkoutOnTheSameDay() {
+        launchFitness()
+        repeat(2) {
+            tap("Log workout")
+            confirm("Log workout")
+        }
+        val viewWorkout = hasText("View workout") and hasClickAction()
+        compose.waitUntil(15_000) { compose.onAllNodes(viewWorkout).fetchSemanticsNodes().size == 2 }
+        compose.onNodeWithText("Log workout").assertIsEnabled()
+        assertEquals(2, backend.records)
     }
 
     @Test fun calendarAndExerciseCrudRefreshHomeWithoutRestart() {
         launchFitness()
-        tap("Previous month")
-        tap("Today")
-        val monthHeading = compose.onNodeWithContentDescription(backend.today.format(DateTimeFormatter.ofPattern("MMMM yyyy")))
-        compose.scrollToDisplayed(monthHeading)
-        val monthBounds = monthHeading.getUnclippedBoundsInRoot()
-        listOf("Previous month", "Next month", "Choose date").forEach { description ->
-            val control = compose.onNodeWithContentDescription(description)
-            control.assertIsDisplayed()
-            val bounds = control.getUnclippedBoundsInRoot()
-            assertTrue(abs((bounds.top + bounds.bottom).value / 2 - (monthBounds.top + monthBounds.bottom).value / 2) < 2f)
-        }
-        val label = "${backend.today.format(
-            DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"),
-        )}, today, 0 workouts recorded"
+        val label = "${backend.today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"))}, no workouts"
         val day = compose.onNodeWithContentDescription(label)
         day.performScrollTo().assertHasClickAction()
-        val bounds = day.getUnclippedBoundsInRoot()
-        assertTrue((bounds.right - bounds.left).value >= 48f)
-        assertTrue((bounds.bottom - bounds.top).value >= 48f)
-        compose.onNodeWithText("SELECTED DAY").assertExists()
-        compose
-            .onNodeWithContentDescription(
-                "${backend.today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"))}, 0 workouts",
-            ).assertExists()
-        compose.onNodeWithText("No workouts logged.").assertExists()
+        compose.onNodeWithText("No workout logged").assertExists()
         compose.onNodeWithText("Total duration").assertDoesNotExist()
         compose.onNodeWithText("Moderate").assertDoesNotExist()
         compose.onNodeWithText("Workout streak").assertDoesNotExist()
         compose.onNodeWithText("Dates follow Asia/Kolkata.", substring = true).assertDoesNotExist()
         screenshot("overview")
-        tap("Add workout")
-        confirm("Record workout")
+        tap("Log workout")
+        confirm("Log workout")
         screenshot("day")
         tap("Home")
         awaitText("Asha")
         compose.onNodeWithText("Workout recorded").performScrollTo().assertIsDisplayed()
         tap("Fitness")
-        tap("Workout")
-        awaitText("Add exercise")
+        tap("View workout")
+        awaitWorkoutDetail()
         enterOwnExercise("Squat")
         tap("Change")
         compose
@@ -643,7 +655,7 @@ class FitnessDeviceTest {
             ).performTextReplacement("Squat")
         tap("Fixture barbell squat")
         tap("Save")
-        awaitText("Add exercise")
+        awaitWorkoutDetail()
         tap("Edit")
         compose.onNodeWithContentDescription("Edit name").performScrollTo().performClick()
         compose
@@ -659,7 +671,7 @@ class FitnessDeviceTest {
             .performTextReplacement("22.5")
         tap("Remember my name for this exercise")
         tap("Save")
-        awaitText("Add exercise")
+        awaitWorkoutDetail()
         val workoutList = compose.onNodeWithTag("workout-list")
         workoutList.performScrollToNode(hasText("8 reps"))
         compose.onNodeWithText("8 reps").assertIsDisplayed()
@@ -669,10 +681,10 @@ class FitnessDeviceTest {
         awaitText("Delete this exercise?")
         assertEquals(1, backend.exercises[100]?.size)
         confirm("Delete exercise")
-        awaitText("No exercises added yet")
+        awaitText("Nothing added to this workout yet")
         enterOwnExercise()
         tap("Save")
-        awaitText("Add exercise")
+        awaitWorkoutDetail()
         tap("Delete workout")
         awaitText("Delete this workout?")
         compose
@@ -680,7 +692,7 @@ class FitnessDeviceTest {
                 "This permanently removes this gym visit and all its exercises and sets. Any linked Apple Watch workout import and your exercise catalogue aliases are kept.",
             ).assertIsDisplayed()
         confirm("Delete workout")
-        awaitText("Add workout")
+        awaitText("Log workout")
         assertTrue(backend.visits.isEmpty())
         assertTrue(backend.exercises.isEmpty())
         tap("Home")
@@ -692,7 +704,7 @@ class FitnessDeviceTest {
         compose.onNodeWithContentDescription("Back to Spaces").assertDoesNotExist()
         tap("Home")
         tap("Fitness")
-        awaitText("Add workout")
+        awaitText("Log workout")
     }
 
     @Test fun tabNavigationReturnsOnlyAfterLeavingWorkoutAndExerciseEditor() {
@@ -708,10 +720,10 @@ class FitnessDeviceTest {
         awaitText("Save")
         compose.assertNestedNavigationForLayout()
         compose.onNodeWithContentDescription("Back to workout").performClick()
-        awaitText("Add exercise")
+        awaitWorkoutDetail()
         compose.assertNestedNavigationForLayout()
         compose.onNodeWithContentDescription("Back to Fitness").performClick()
-        awaitText("Add workout")
+        awaitText("Log workout")
         compose
             .onNode(
                 hasText("Fitness") and
@@ -731,7 +743,7 @@ class FitnessDeviceTest {
         compose.onNodeWithContentDescription("Weight (kg), set 1").assertIsFocused().performTextInput("0")
         compose.onNodeWithContentDescription("Weight (kg), set 1").performImeAction()
         scenario!!.recreate()
-        awaitText("Add exercise")
+        awaitWorkoutDetail()
         compose.onNodeWithTag("workout-list").performScrollToNode(hasText("Custom mobility"))
         compose.onNodeWithText("Custom mobility").assertIsDisplayed()
         screenshot("editor")
@@ -744,7 +756,7 @@ class FitnessDeviceTest {
         compose.onNodeWithContentDescription("Back to workout").performClick()
         awaitText("Discard exercise edits?")
         confirm("Discard edits")
-        awaitText("Add exercise")
+        awaitWorkoutDetail()
         assertEquals(0, backend.saves)
     }
 
@@ -762,7 +774,7 @@ class FitnessDeviceTest {
         tap("I’ve reviewed the latest records")
         compose.onNodeWithContentDescription("Back to workout").performClick()
         confirm("Discard edits")
-        awaitText("Add exercise")
+        awaitWorkoutDetail()
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
         assertEquals(1, backend.exercises[100]?.size)
     }
@@ -773,60 +785,50 @@ class FitnessDeviceTest {
         val date = backend.today.minusDays(1)
         val label = "${date.format(
             DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"),
-        )}, 1 workout recorded"
+        )}, 1 completed workout"
         selectCalendarDate(label)
-        tap("Workout")
-        awaitText("Linked Fitness Watch workout")
-        compose.onNodeWithText("420.5 kcal").performScrollTo().assertIsDisplayed()
+        tap("View workout")
+        awaitText("Synced from watch")
+        compose.onNodeWithTag("workout-list").performScrollToNode(hasText("420.5 kcal"))
+        compose.onNodeWithText("420.5 kcal").assertIsDisplayed()
         compose.onNodeWithText("Imported timing and energy are read-only.").assertDoesNotExist()
         screenshot("imported")
         tap("Delete workout")
         confirm("Delete workout")
-        awaitText("Add workout")
+        awaitText("Log workout")
         assertTrue(backend.imports.contains(7))
     }
 
     @Test fun uncertainVisitCreationRequiresSuccessfulRefreshBeforeAnotherRecord() {
         launchFitness()
         backend.loseRecord = true
-        tap("Add workout")
-        confirm("Record workout")
+        tap("Log workout")
+        confirm("Log workout")
         awaitText("Refresh server records")
-        compose.onNodeWithText("Add workout").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithText("Log workout").performScrollTo().assertIsNotEnabled()
         assertEquals(1, backend.records)
         backend.offlineReads = false
         tap("Refresh server records")
         awaitText("I’ve reviewed the latest records")
         tap("I’ve reviewed the latest records")
-        tap("Workout")
-        awaitText("Add exercise")
+        tap("View workout")
+        awaitWorkoutDetail()
         assertEquals(1, backend.records)
     }
 
-    @Test fun futureVisitAndDatePickerKeepTheChosenCalendarDate() {
+    @Test fun selectingAnAdjacentMonthDateMovesTheCalendar() {
         launchFitness()
+        var month = YearMonth.from(backend.today).plusMonths(1)
         tap("Next month")
-        val expected =
-            YearMonth
-                .from(backend.today)
-                .plusMonths(1)
-                .atDay(1)
-        selectCalendarDate("${expected.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"))}, 0 workouts recorded")
-        tap("Choose date")
-        compose.onNode(isDialog()).assertExists()
-        confirm("Choose date")
-        tap("Add workout")
-        confirm("Record workout")
-        tap("Workout")
-        awaitText("Add exercise")
-        assertEquals(
-            expected,
-            backend.visits[100]!!
-                .instant
-                .atZone(FitnessDates.zone)
-                .toLocalDate(),
-        )
-        assertEquals(1, backend.records)
+        if (FitnessDates.calendar(month).first().month == month.month) {
+            month = month.plusMonths(1)
+            tap("Next month")
+        }
+        val adjacent = FitnessDates.calendar(month).first()
+        selectCalendarDate("${adjacent.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy"))}, no workouts")
+        compose.onNodeWithContentDescription(adjacent.format(DateTimeFormatter.ofPattern("MMMM uuuu"))).assertIsDisplayed()
+        compose.onNodeWithText(adjacent.format(DateTimeFormatter.ofPattern("EEE, d MMM"))).assertExists()
+        assertEquals(0, backend.records)
     }
 
     @Test fun exerciseEditorUsesOneAppBarAndBackReturnsToWorkout() {
@@ -839,7 +841,7 @@ class FitnessDeviceTest {
         compose.onNodeWithContentDescription("Back").assertDoesNotExist()
         screenshot("single-editor-header")
         compose.pressSystemBack(scenario!!)
-        awaitText("No exercises added yet")
+        awaitText("Nothing added to this workout yet")
         compose.onNodeWithText("Workout").assertIsDisplayed()
         enterOwnExercise()
         compose.onNodeWithContentDescription("Back to workout").performClick()
@@ -848,7 +850,7 @@ class FitnessDeviceTest {
         compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("Back to workout").performClick()
         confirm("Discard edits")
-        awaitText("No exercises added yet")
+        awaitText("Nothing added to this workout yet")
         compose.onNodeWithText("Workout").assertIsDisplayed()
     }
 
@@ -862,7 +864,7 @@ class FitnessDeviceTest {
         compose.onNodeWithContentDescription("Weight (kg), set 2").performScrollTo().performTextInput("12.123456789")
         compose.onNodeWithContentDescription("Weight (kg), set 2").performImeAction()
         scenario!!.recreate()
-        awaitText("Add exercise")
+        awaitWorkoutDetail()
         compose.onNodeWithText("12.123456789").performScrollTo().assertIsDisplayed()
         tap("Change")
         awaitText("Choose an exercise")
@@ -899,14 +901,14 @@ class FitnessDeviceTest {
             enterOwnExercise()
             shell("wm size 2048x1800")
             shell("wm density 320")
-            awaitText("Add exercise")
+            awaitWorkoutDetail()
             compose.onNodeWithText("Custom mobility").performScrollTo().assertIsDisplayed()
             compose.onNodeWithText("20.5").performScrollTo().assertIsDisplayed()
             assertEquals(0, backend.saves)
             screenshot("resized-editor")
             tap("Save")
             compose.waitUntil(15_000) { backend.saves == 1 }
-            awaitText("Add exercise")
+            awaitWorkoutDetail()
             assertEquals(1, backend.saves)
         } finally {
             shell("wm size ${size ?: "reset"}")

@@ -2,9 +2,12 @@ package dev.abhishekan.pulse.feature.fitness.overview
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,18 +15,29 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -31,11 +45,134 @@ import dev.abhishekan.pulse.core.domain.model.FitnessMetric
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.PulseTone
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCardPadding
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.components.PulseTileCard
 import dev.abhishekan.pulse.feature.fitness.R
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import dev.abhishekan.pulse.core.ui.R as CoreUiR
+
+private val summaryMetricIds = setOf("last_workout", "streak")
+
+@Composable
+internal fun FitnessSummary(
+    overview: FitnessOverview,
+    modifier: Modifier,
+    wide: Boolean,
+) {
+    val metrics = overview.metrics.filter { it.id in summaryMetricIds }
+    if (metrics.isEmpty()) return
+
+    val workoutDates =
+        remember(overview.workouts, overview.today) {
+            overview.workouts.mapNotNull { it.date.takeIf { date -> date <= overview.today } }.toSet()
+        }
+    val colors = fitnessCalendarColors()
+    val locale = LocalConfiguration.current.locales[0]
+    val tile: @Composable (FitnessMetric, Modifier) -> Unit = { metric, tileModifier ->
+        if (metric.id == "last_workout") {
+            PulseTileCard(
+                PulseTone(fitnessCalendarGradientStops.first(), fitnessCalendarGradientStops.last()),
+                tileModifier,
+                backdrop = {
+                    Icon(
+                        painterResource(CoreUiR.drawable.pulse_fitness),
+                        contentDescription = null,
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomEnd)
+                                .offset(x = 20.dp, y = 28.dp)
+                                .size(160.dp)
+                                .rotate(-12f),
+                        tint = Color.White.copy(alpha = .2f),
+                    )
+                },
+            ) {
+                Column(Modifier.heightIn(min = 112.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        StatGlyph(metric.id, Modifier.size(21.dp), Color.White)
+                        PulseText(metric.label, style = PulseTextStyle.Label, color = Color.White)
+                    }
+                    Column {
+                        PulseText(metric.value, style = PulseTextStyle.Heading2, color = Color.White)
+                        if (workoutDates.isNotEmpty()) PulseText(metric.subtitle, color = Color.White)
+                    }
+                }
+            }
+        } else {
+            PulseCard(tileModifier, contentPadding = PulseCardPadding.medium) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    StatGlyph(metric.id, Modifier.size(21.dp), colors.muted)
+                    PulseText(metric.label, style = PulseTextStyle.Label, color = colors.muted)
+                }
+                PulseText(metric.value, style = PulseTextStyle.Heading2)
+                PulseText(metric.subtitle, color = colors.muted)
+                val dateFormat = remember(locale) { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale) }
+                val summary =
+                    (6L downTo 0L)
+                        .map { offset ->
+                            val date = overview.today.minusDays(offset)
+                            val status =
+                                stringResource(
+                                    if (date in
+                                        workoutDates
+                                    ) {
+                                        R.string.pulse_fitness_calendar_workout_logged
+                                    } else {
+                                        R.string.pulse_fitness_calendar_no_workouts
+                                    },
+                                )
+                            "${date.format(dateFormat)}, $status"
+                        }.joinToString(". ")
+                val weekLabel = stringResource(R.string.pulse_fitness_summary_week)
+                FlowRow(
+                    Modifier.clearAndSetSemantics { contentDescription = "$weekLabel. $summary" },
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    for (offset in 6L downTo 0L) {
+                        val date = overview.today.minusDays(offset)
+                        val logged = date in workoutDates
+                        Box(
+                            Modifier.size(28.dp).then(
+                                if (logged) {
+                                    Modifier.background(fitnessCalendarGradient, CircleShape)
+                                } else {
+                                    Modifier.background(colors.chip, CircleShape)
+                                },
+                            ),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            PulseText(
+                                date.dayOfWeek.getDisplayName(TextStyle.NARROW, locale),
+                                style = PulseTextStyle.Caption,
+                                color = if (logged) Color.White else colors.muted,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        if (!wide && maxWidth >= 600.dp && LocalDensity.current.fontScale < 1.5f) {
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                metrics.forEach { tile(it, Modifier.weight(1f)) }
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(if (wide) 24.dp else 16.dp)) {
+                metrics.forEach { tile(it, Modifier.fillMaxWidth()) }
+            }
+        }
+    }
+}
 
 @Composable
 internal fun FitnessStats(
@@ -43,23 +180,19 @@ internal fun FitnessStats(
     canRefresh: Boolean,
     onRefresh: () -> Unit,
 ) {
+    val metrics = overview.metrics.filterNot { it.id in summaryMetricIds }
+    if (metrics.isEmpty() && overview.metrics.isNotEmpty()) return
+
     Column(
         Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(PulseTokens.medium),
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
-            PulseText(
-                stringResource(R.string.pulse_fitness_stats_title),
-                Modifier.semantics { heading() },
-                style = PulseTextStyle.Title,
-            )
-            PulseText(
-                stringResource(R.string.pulse_fitness_stats_period, overview.today.year),
-                style = PulseTextStyle.Caption,
-                color = PulseTheme.colors.textSecondary,
-            )
-        }
-        if (overview.metrics.isEmpty()) {
+        PulseText(
+            stringResource(R.string.pulse_fitness_stats_title),
+            Modifier.semantics { heading() },
+            style = PulseTextStyle.Title,
+        )
+        if (metrics.isEmpty()) {
             PulseText(
                 stringResource(R.string.pulse_fitness_stats_unavailable),
                 color = PulseTheme.colors.textSecondary,
@@ -76,15 +209,15 @@ internal fun FitnessStats(
                 // Base columns on the actual available pane width, including split-screen windows.
                 val columns = ((maxWidth.value + 12) / (156 * fontScale + 12)).toInt().coerceIn(1, 4)
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    overview.metrics.chunked(columns).forEach { metrics ->
+                    metrics.chunked(columns).forEach { rowMetrics ->
                         Row(
                             Modifier.fillMaxWidth().height(IntrinsicSize.Min),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            metrics.forEach { metric ->
+                            rowMetrics.forEach { metric ->
                                 FitnessStatCard(metric, Modifier.weight(1f).fillMaxHeight())
                             }
-                            repeat(columns - metrics.size) { Spacer(Modifier.weight(1f)) }
+                            repeat(columns - rowMetrics.size) { Spacer(Modifier.weight(1f)) }
                         }
                     }
                 }
@@ -139,8 +272,8 @@ private fun FitnessStatCard(
 private fun StatGlyph(
     id: String,
     modifier: Modifier,
+    color: Color = PulseTheme.colors.action,
 ) {
-    val color = PulseTheme.colors.action
     Canvas(modifier) {
         val stroke = 1.8.dp.toPx()
 

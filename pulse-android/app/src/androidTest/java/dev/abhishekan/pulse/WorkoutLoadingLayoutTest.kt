@@ -68,7 +68,7 @@ class WorkoutLoadingLayoutTest {
                         ),
                 )
         }
-        val heading = compose.onNodeWithText("Timing and energy data aren’t available for this visit.")
+        val heading = compose.onNodeWithText("Gym visit")
         val addExercise = compose.onNodeWithText("Add exercise")
         heading.assertIsDisplayed()
         addExercise.assertIsDisplayed().assertIsEnabled()

@@ -76,11 +76,13 @@ class FitnessStatsTest {
 
     @Test fun allEightStatsFollowCalendarAndWorkouts() {
         show()
-        compose.onNodeWithText("SELECTED DAY").performScrollTo()
-        val workouts = compose.onNodeWithText("SELECTED DAY").getUnclippedBoundsInRoot()
-        val stats = compose.onNodeWithText("Your fitness stats").getUnclippedBoundsInRoot()
+        compose.onNodeWithText("Workout logged").performScrollTo()
+        val streak = compose.onNodeWithText("Workout streak", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val workouts = compose.onNodeWithText("No workout logged").getUnclippedBoundsInRoot()
+        assertTrue(workouts.top > streak.bottom)
+        val stats = compose.onNodeWithText("Your stats").getUnclippedBoundsInRoot()
         assertTrue(stats.top > workouts.bottom)
-        compose.onNodeWithText("Your fitness stats").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Your stats").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("20 days ago", useUnmergedTree = true).performScrollTo()
         screenshot("light-overview")
         metrics.forEach { metric ->
@@ -97,7 +99,7 @@ class FitnessStatsTest {
 
     @Test fun darkThemePreservesMissingDataAndLongValues() {
         show(dark = true)
-        compose.onNodeWithText("Your fitness stats").performScrollTo()
+        compose.onNodeWithText("Your stats").performScrollTo()
         compose.onNodeWithText("20 days ago", useUnmergedTree = true).performScrollTo()
         screenshot("dark-overview")
         compose.onNodeWithText(metrics[5].subtitle, useUnmergedTree = true).performScrollTo().assertIsDisplayed()

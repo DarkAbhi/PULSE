@@ -1,203 +1,126 @@
 package dev.abhishekan.pulse.feature.fitness.overview
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import dev.abhishekan.pulse.core.domain.model.WorkoutScheduleDay
+import dev.abhishekan.pulse.core.domain.model.WorkoutSummary
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseDialog
+import dev.abhishekan.pulse.core.ui.components.PulseCardPadding
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
-import dev.abhishekan.pulse.core.ui.pulseDescription
 import dev.abhishekan.pulse.feature.fitness.R
 import dev.abhishekan.pulse.feature.fitness.shared.label
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
 @Composable
 internal fun SelectedDay(
-    state: FitnessUiState,
-    onRecord: () -> Unit,
+    date: LocalDate,
+    visits: List<WorkoutSummary>,
+    plan: WorkoutScheduleDay?,
     onWorkout: (Long) -> Unit,
+    createdId: Long?,
+    busy: Boolean,
+    modifier: Modifier = Modifier,
 ) {
-    val overview = checkNotNull(state.overview)
+    val muted = fitnessCalendarColors().muted
+    val theme = PulseTheme.colors
     val locale = LocalConfiguration.current.locales[0]
-    val workouts = remember(overview.workouts, state.selected) { overview.workouts.filter { it.date == state.selected } }
-    val dayFormatter = remember(locale) { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale) }
-    val workoutFormatter = remember(locale) { DateTimeFormatter.ofPattern("d MMMM yyyy", locale) }
-    val dateLabel = state.selected.format(dayFormatter)
-    val countLabel = pluralStringResource(R.plurals.pulse_fitness_workout_count, workouts.size, workouts.size)
-    val selectedSummary = stringResource(R.string.pulse_fitness_selected_day_summary, dateLabel, countLabel)
-    val largeText = LocalDensity.current.fontScale >= 1.5f
-    var confirmRecord by rememberSaveable(state.selected) { mutableStateOf(false) }
-    if (confirmRecord && state.canRecord) {
-        PulseDialog(
-            title = stringResource(R.string.pulse_fitness_confirm_record_title),
-            message =
-                stringResource(
-                    R.string.pulse_fitness_confirm_record_message,
-                    dateLabel,
-                ),
-            confirmLabel = stringResource(R.string.pulse_fitness_record_workout),
-            onConfirm = {
-                confirmRecord = false
-                onRecord()
-            },
-            onDismiss = { confirmRecord = false },
-        )
+    val dateLabel = date.format(DateTimeFormatter.ofPattern("EEE, d MMM", locale))
+    val dayHeading: @Composable () -> Unit = {
+        PulseText(dateLabel, Modifier.semantics { heading() }, style = PulseTextStyle.Title3)
     }
-    Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
-        PulseCard(Modifier.fillMaxWidth(), highlighted = true) {
-            FlowRow(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
-            ) {
-                PulseText(
-                    stringResource(R.string.pulse_fitness_selected_day),
-                    Modifier.align(Alignment.CenterVertically).padding(end = PulseTokens.small),
-                    style = PulseTextStyle.Overline,
-                    color = PulseTheme.colors.action,
-                )
-                Surface(
-                    shape = CircleShape,
-                    color = PulseTheme.colors.surface,
-                    contentColor = PulseTheme.colors.action,
-                ) {
-                    PulseText(
-                        countLabel,
-                        Modifier.padding(horizontal = PulseTokens.small, vertical = PulseTokens.tiny).clearAndSetSemantics {},
-                        style = PulseTextStyle.Caption,
-                        color = PulseTheme.colors.action,
-                    )
+    PulseCard(
+        modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        contentPadding = PulseCardPadding.medium,
+    ) {
+        if (visits.isEmpty()) {
+            Column {
+                dayHeading()
+                PulseText(stringResource(R.string.pulse_fitness_calendar_no_workout_logged), color = muted)
+            }
+        }
+        visits.forEachIndexed { index, visit ->
+            if (index > 0) HorizontalDivider(color = theme.divider)
+            val label =
+                visit.classification.type?.let { type ->
+                    listOf(type.label(), visit.classification.focus).filter(String::isNotBlank).joinToString(" · ")
+                } ?: stringResource(R.string.pulse_fitness_calendar_gym_visit)
+            val details = stringResource(R.string.pulse_fitness_calendar_visit_time, label, visit.timeLabel)
+            val actionLabel = stringResource(R.string.pulse_fitness_calendar_view_workout_for, details)
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val detailsContent: @Composable (Modifier) -> Unit = { detailsModifier ->
+                    Column(detailsModifier) {
+                        if (index == 0) dayHeading()
+                        PulseText(details, color = muted)
+                    }
                 }
-            }
-            PulseText(
-                dateLabel,
-                Modifier.clearAndSetSemantics {
-                    heading()
-                    liveRegion = LiveRegionMode.Polite
-                    contentDescription = selectedSummary
-                },
-                style = PulseTextStyle.Title,
-            )
-            if (workouts.isEmpty()) {
-                PulseText(
-                    stringResource(R.string.pulse_fitness_no_workouts_for_day),
-                    Modifier.padding(vertical = PulseTokens.medium),
-                    color = PulseTheme.colors.textSecondary,
-                )
-            }
-            workouts.forEachIndexed { index, workout ->
-                Surface(
-                    onClick = { onWorkout(workout.id) },
-                    enabled = !state.busy,
-                    modifier =
-                        Modifier.fillMaxWidth().pulseDescription(
-                            stringResource(
-                                R.string.pulse_fitness_view_workout_1_s_2_s_3_s,
-                                index + 1,
-                                workout.date.format(workoutFormatter),
-                                workout.timeLabel,
-                            ),
-                        ),
-                    shape = PulseTokens.cardShape,
-                    color = PulseTheme.colors.surface,
-                    border =
-                        BorderStroke(
-                            1.dp,
-                            PulseTheme.colors.divider,
-                        ),
-                ) {
-                    Row(
-                        Modifier.padding(PulseTokens.medium),
-                        horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium),
-                        verticalAlignment = Alignment.CenterVertically,
+                val button: @Composable () -> Unit = {
+                    Surface(
+                        onClick = { onWorkout(visit.id) },
+                        enabled = !busy,
+                        modifier = Modifier.semantics { contentDescription = actionLabel },
+                        shape = CircleShape,
+                        color = theme.chip,
+                        contentColor = theme.textPrimary,
                     ) {
-                        if (!largeText) WorkoutBadge()
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
-                            PulseText(
-                                if (workouts.size == 1) {
-                                    stringResource(R.string.pulse_fitness_workout_title)
-                                } else {
-                                    stringResource(R.string.pulse_fitness_workout_number, index + 1)
-                                },
-                                style = PulseTextStyle.Label,
-                            )
-                            PulseText(workout.timeLabel, color = PulseTheme.colors.textSecondary)
-                            workout.classification.type?.let {
-                                val focus = workout.classification.focus.takeIf(String::isNotBlank)
-                                PulseText(
-                                    listOfNotNull(it.label(), focus).joinToString(" · "),
-                                    color = PulseTheme.colors.textSecondary,
-                                    style = PulseTextStyle.Caption,
-                                )
-                            }
-                            workout.durationSeconds?.takeIf { it > 0 }?.let {
-                                val minutes = (it / 60).coerceIn(1, Int.MAX_VALUE.toLong()).toInt()
-                                val duration = pluralStringResource(R.plurals.pulse_fitness_duration_minutes, minutes, minutes)
-                                PulseText(duration, color = PulseTheme.colors.textSecondary, style = PulseTextStyle.Caption)
-                            }
+                        Row(
+                            Modifier.heightIn(min = 48.dp).padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            PulseText(stringResource(R.string.pulse_fitness_view_workout), style = PulseTextStyle.Label)
+                            FitnessGlyph(FitnessSymbol.Next, theme.textPrimary, 16.dp)
                         }
-                        if (!largeText) FitnessGlyph(FitnessSymbol.Next, PulseTheme.colors.textSecondary)
+                    }
+                }
+                if (maxWidth >= 304.dp * LocalDensity.current.fontScale) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        detailsContent(Modifier.weight(1f))
+                        button()
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        detailsContent(Modifier.fillMaxWidth())
+                        button()
                     }
                 }
             }
-            PulseButton(
-                stringResource(R.string.pulse_fitness_add_workout),
-                { confirmRecord = true },
-                Modifier.fillMaxWidth().padding(top = PulseTokens.small),
-                enabled = state.canRecord,
-                loading = state.busy,
+        }
+        plan?.classification?.type?.let { type ->
+            HorizontalDivider(color = theme.divider)
+            val label = listOf(type.label(), plan.classification.focus).filter(String::isNotBlank).joinToString(" · ")
+            PulseText(
+                stringResource(R.string.pulse_fitness_calendar_scheduled, label),
+                style = PulseTextStyle.Label,
+                color = muted,
             )
         }
-        state.createdId?.takeIf { id -> workouts.none { it.id == id } }?.let { id ->
-            PulseButton(stringResource(R.string.pulse_fitness_open_recorded_workout), {
-                onWorkout(id)
-            }, Modifier.fillMaxWidth(), enabled = !state.busy)
+        // Keep the saved workout reachable if the refresh after recording failed.
+        createdId?.takeIf { id -> visits.none { it.id == id } }?.let { id ->
+            PulseButton(stringResource(R.string.pulse_fitness_open_recorded_workout), { onWorkout(id) }, enabled = !busy)
         }
-    }
-}
-
-@Composable
-private fun WorkoutBadge() {
-    Surface(
-        shape = CircleShape,
-        color = PulseTheme.colors.primarySoft,
-    ) {
-        Icon(
-            painterResource(CoreUiR.drawable.pulse_fitness),
-            contentDescription = null,
-            modifier = Modifier.padding(PulseTokens.medium),
-            tint = PulseTheme.colors.action,
-        )
     }
 }

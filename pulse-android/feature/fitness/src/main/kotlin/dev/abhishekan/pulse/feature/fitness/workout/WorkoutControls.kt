@@ -11,7 +11,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -40,19 +39,18 @@ internal fun WorkoutActionButton(
 
 internal enum class WorkoutSymbol {
     Add,
-    Play,
-    Stop,
+    Flag,
+    Timer,
+    Watch,
     Clock,
     Energy,
     Info,
     Weight,
-    Muscle,
     List,
     Edit,
     Delete,
     Refresh,
     Document,
-    ChevronDown,
 }
 
 @Composable
@@ -77,7 +75,6 @@ internal fun WorkoutGlyph(
             y: Float,
             w: Float,
             h: Float,
-            fill: Boolean = false,
         ) = drawRoundRect(
             color,
             Offset(x * u, y * u),
@@ -86,28 +83,29 @@ internal fun WorkoutGlyph(
                 h * u,
             ),
             CornerRadius(1.5f * u),
-            style = if (fill) Fill else Stroke(stroke),
+            style = Stroke(stroke),
         )
         when (symbol) {
-            WorkoutSymbol.ChevronDown -> {
-                line(5f, 9f, 12f, 16f)
-                line(12f, 16f, 19f, 9f)
-            }
             WorkoutSymbol.Add -> {
                 line(12f, 3f, 12f, 21f)
                 line(3f, 12f, 21f, 12f)
             }
-            WorkoutSymbol.Stop -> rect(5f, 5f, 14f, 14f, true)
-            WorkoutSymbol.Play ->
-                drawPath(
-                    Path().apply {
-                        moveTo(7 * u, 4 * u)
-                        lineTo(20 * u, 12 * u)
-                        lineTo(7 * u, 20 * u)
-                        close()
-                    },
-                    color,
-                )
+            WorkoutSymbol.Flag -> {
+                line(5f, 3f, 5f, 22f)
+                rect(5f, 3f, 14f, 10f)
+            }
+            WorkoutSymbol.Timer -> {
+                drawCircle(color, 8f * u, Offset(12 * u, 14 * u), style = Stroke(stroke))
+                line(9f, 2f, 15f, 2f)
+                line(12f, 9f, 12f, 14f)
+            }
+            WorkoutSymbol.Watch -> {
+                rect(6f, 6f, 12f, 12f)
+                line(9f, 2f, 9f, 6f)
+                line(15f, 2f, 15f, 6f)
+                line(9f, 18f, 9f, 22f)
+                line(15f, 18f, 15f, 22f)
+            }
             WorkoutSymbol.Clock, WorkoutSymbol.Info -> {
                 drawCircle(color, 9 * u, style = Stroke(stroke))
                 if (symbol ==
@@ -128,20 +126,15 @@ internal fun WorkoutGlyph(
                 }
             }
             WorkoutSymbol.Weight -> {
-                line(2f, 12f, 22f, 12f)
-                rect(4f, 6f, 4f, 12f, true)
-                rect(16f, 6f, 4f, 12f, true)
+                line(6.5f, 12f, 17.5f, 12f)
+                line(6.5f, 6.5f, 6.5f, 17.5f)
+                line(17.5f, 6.5f, 17.5f, 17.5f)
+                line(3.5f, 9f, 3.5f, 15f)
+                line(20.5f, 9f, 20.5f, 15f)
             }
             WorkoutSymbol.List -> for (y in listOf(6f, 12f, 18f)) {
                 drawCircle(color, 1.5f * u, Offset(4 * u, y * u))
                 line(9f, y, 21f, y)
-            }
-            WorkoutSymbol.Muscle -> {
-                line(8f, 3f, 6f, 12f)
-                line(6f, 12f, 8f, 21f)
-                line(16f, 3f, 18f, 12f)
-                line(18f, 12f, 16f, 21f)
-                line(12f, 4f, 12f, 19f)
             }
             WorkoutSymbol.Delete -> {
                 rect(6f, 7f, 12f, 14f)

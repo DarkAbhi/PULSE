@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -60,7 +61,7 @@ internal fun NotificationsScreenContent(
             contentAlignment = Alignment.TopCenter,
         ) {
             LazyColumn(
-                Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize(),
+                Modifier.widthIn(max = PulseTokens.contentWidth).fillMaxSize().testTag("notifications-list"),
                 contentPadding =
                     PaddingValues(
                         start = padding,

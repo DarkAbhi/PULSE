@@ -90,9 +90,18 @@ func readSettings(ctx context.Context, db rowQuerier, userID int64) (SettingsVie
 		       COALESCE(s.activity_rings, false), s.sleep_minutes, COALESCE(s.daily_meals, false),
 		       EXISTS (SELECT 1 FROM fitness_workout_schedule WHERE user_id = $1 AND workout_type <> 'rest_day')
 		FROM (SELECT 1) base
+		CROSS JOIN LATERAL (
+			SELECT (clock_timestamp() AT TIME ZONE quest_user_timezone($1))::date AS today
+		) local_day
 		LEFT JOIN LATERAL (
+			-- Show the settings in effect today, matching how daily quests are built. Fall back
+			-- to the earliest queued row only when nothing is in effect yet.
 			SELECT effective_date, gym_workout, step_target, activity_rings, sleep_minutes, daily_meals
-			FROM user_quest_settings WHERE user_id = $1 ORDER BY effective_date DESC LIMIT 1
+			FROM user_quest_settings WHERE user_id = $1
+			ORDER BY effective_date <= local_day.today DESC,
+			         CASE WHEN effective_date <= local_day.today THEN effective_date END DESC,
+			         effective_date
+			LIMIT 1
 		) s ON true
 	`, userID).Scan(&effective, &view.Settings.GymWorkout, &view.Settings.StepTarget,
 		&view.Settings.ActivityRings, &view.Settings.SleepMinutes, &view.Settings.DailyMeals, &view.HasWorkoutDays)

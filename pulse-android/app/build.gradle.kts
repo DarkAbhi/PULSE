@@ -81,6 +81,7 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":feature:auth"))
     implementation(project(":feature:home"))
+    implementation(project(":feature:quests"))
     implementation(project(":feature:fitness"))
     implementation(project(":feature:horizon"))
     implementation(project(":feature:garage"))

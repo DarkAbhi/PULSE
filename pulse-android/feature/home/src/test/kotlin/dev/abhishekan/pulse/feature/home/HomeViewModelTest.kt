@@ -5,6 +5,7 @@ import dev.abhishekan.pulse.core.domain.model.CatalogExercise
 import dev.abhishekan.pulse.core.domain.model.ExerciseInput
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
+import dev.abhishekan.pulse.core.domain.model.FitnessToday
 import dev.abhishekan.pulse.core.domain.model.Horizon
 import dev.abhishekan.pulse.core.domain.model.HorizonChange
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
@@ -14,14 +15,23 @@ import dev.abhishekan.pulse.core.domain.model.Notification
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.PlannedPurchases
 import dev.abhishekan.pulse.core.domain.model.Profile
+import dev.abhishekan.pulse.core.domain.model.QuestActivity
+import dev.abhishekan.pulse.core.domain.model.QuestOverview
+import dev.abhishekan.pulse.core.domain.model.QuestSettings
+import dev.abhishekan.pulse.core.domain.model.QuestSettingsView
+import dev.abhishekan.pulse.core.domain.model.RecentActivityEntry
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
+import dev.abhishekan.pulse.core.domain.model.WorkoutClassification
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
+import dev.abhishekan.pulse.core.domain.model.WorkoutScheduleDay
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
+import dev.abhishekan.pulse.core.domain.repository.DashboardFeedRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
+import dev.abhishekan.pulse.core.domain.repository.QuestRepository
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.core.ui.currencyText
 import kotlinx.coroutines.CompletableDeferred
@@ -40,6 +50,7 @@ import org.junit.Before
 import org.junit.Test
 import java.math.BigDecimal
 import java.time.Clock
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -51,6 +62,25 @@ import kotlin.coroutines.suspendCoroutine
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
+    private val feed =
+        object : DashboardFeedRepository {
+            override suspend fun fitnessToday(): Outcome<FitnessToday> = Outcome.Error(Failure.Connection)
+
+            override suspend fun recentActivity(): Outcome<List<RecentActivityEntry>> = Outcome.Success(emptyList())
+        }
+    private val quests =
+        object : QuestRepository {
+            override val changes = MutableStateFlow(0L)
+
+            override suspend fun overview(week: LocalDate?): Outcome<QuestOverview> = Outcome.Error(Failure.Connection)
+
+            override suspend fun activity(): Outcome<QuestActivity> = Outcome.Success(QuestActivity(LocalDate.EPOCH, emptyList()))
+
+            override suspend fun settings(): Outcome<QuestSettingsView> = Outcome.Error(Failure.Connection)
+
+            override suspend fun saveSettings(settings: QuestSettings): Outcome<Unit> = Outcome.Error(Failure.Connection)
+        }
+
     private val dispatcher = StandardTestDispatcher()
     private val models = ViewModelStore()
     private var notificationResult: Outcome<List<Notification>> = Outcome.Success(emptyList())
@@ -65,6 +95,23 @@ class HomeViewModelTest {
     private val fitness =
         object : FitnessRepository {
             override val changes = MutableStateFlow(0L)
+
+            override suspend fun schedule() = Outcome.Success(emptyList<WorkoutScheduleDay>())
+
+            override suspend fun saveScheduleDay(
+                day: DayOfWeek,
+                classification: WorkoutClassification,
+            ) = Outcome.Success(Unit)
+
+            override suspend fun saveExercises(
+                visitId: Long,
+                inputs: List<ExerciseInput>,
+            ) = Outcome.Success(Unit)
+
+            override suspend fun updateClassification(
+                id: Long,
+                classification: WorkoutClassification,
+            ) = Outcome.Success(Unit)
 
             override suspend fun overview(): Outcome<FitnessOverview> = error("Unused")
 
@@ -153,6 +200,8 @@ class HomeViewModelTest {
                     fitness,
                     horizon,
                     notifications,
+                    feed,
+                    quests,
                     clock = Clock.fixed(Instant.EPOCH, ZoneOffset.UTC),
                 )
             models.put("home", vm)
@@ -203,7 +252,7 @@ class HomeViewModelTest {
 
                     override suspend fun horizon() = Outcome.Error(Failure.Connection)
                 }
-            val vm = HomeViewModel(repository, fitness, horizon, notifications)
+            val vm = HomeViewModel(repository, fitness, horizon, notifications, feed, quests)
             models.put("home", vm)
             runCurrent()
             notificationResult = Outcome.Success(List(12) { Notification(it.toLong() + 1, "Update", null, null) })
@@ -252,7 +301,7 @@ class HomeViewModelTest {
                         return Outcome.Error(Failure.Connection)
                     }
                 }
-            val vm = HomeViewModel(repository, fitness, horizon, notifications)
+            val vm = HomeViewModel(repository, fitness, horizon, notifications, feed, quests)
             models.put("home", vm)
             runCurrent()
             assertEquals(Section.Loading, vm.uiState.value.workout)

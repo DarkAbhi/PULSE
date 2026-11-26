@@ -16,6 +16,7 @@ class LocalizationResourcesTest {
             "core/ui",
             "feature/auth",
             "feature/home",
+            "feature/quests",
             "feature/fitness",
             "feature/horizon",
             "feature/garage",

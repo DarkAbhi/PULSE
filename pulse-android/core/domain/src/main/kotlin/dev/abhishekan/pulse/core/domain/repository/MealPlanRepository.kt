@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.core.domain.repository
 import dev.abhishekan.pulse.core.domain.model.MealChange
+import dev.abhishekan.pulse.core.domain.model.MealRecipePage
 import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
@@ -13,6 +14,11 @@ interface MealPlanRepository {
         start: LocalDate,
         end: LocalDate,
     ): Outcome<List<PlannedMeal>>
+
+    suspend fun recipes(
+        search: String,
+        page: Int,
+    ): Outcome<MealRecipePage>
 
     suspend fun times(): Outcome<List<MealTime>>
 

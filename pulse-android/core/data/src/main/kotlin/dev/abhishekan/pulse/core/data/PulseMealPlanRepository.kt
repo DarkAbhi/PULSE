@@ -1,5 +1,7 @@
 package dev.abhishekan.pulse.core.data
 import dev.abhishekan.pulse.core.domain.model.MealChange
+import dev.abhishekan.pulse.core.domain.model.MealRecipe
+import dev.abhishekan.pulse.core.domain.model.MealRecipePage
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.repository.MealPlanRepository
 import dev.abhishekan.pulse.core.network.MealPlanApi
@@ -42,6 +44,17 @@ class PulseMealPlanRepository(
         }
     }
 
+    override suspend fun recipes(
+        search: String,
+        page: Int,
+    ) = request {
+        val result = api.recipes(search, page)
+        MealRecipePage(
+            result.recipes.map { MealRecipe(it.id, it.name, it.dishType, it.readyToEat, it.readyInMinutes) },
+            result.hasMore,
+        )
+    }
+
     override suspend fun times() = request { api.times().map { it.domain() }.sortedBy { it.start } }
 
     override suspend fun apply(change: MealChange): Outcome<Unit> =
@@ -50,7 +63,8 @@ class PulseMealPlanRepository(
                 is MealChange.Save -> {
                     val body =
                         buildJsonObject {
-                            put("name", change.name.trim())
+                            put("name", if (change.recipeId == null) change.name.trim() else "")
+                            change.recipeId?.let { put("recipe_id", it) }
                             put("date", change.date.toString())
                             // Null cannot clear an existing time in this API; UI preserves that relationship.
                             change.timeId?.let { put("meal_time_id", it) }

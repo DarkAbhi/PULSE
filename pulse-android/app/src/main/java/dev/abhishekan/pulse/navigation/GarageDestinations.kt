@@ -24,7 +24,11 @@ internal fun NavGraphBuilder.garageDestinations(
     ) { vehicle ->
         VehicleDetailRoute(
             onUnavailable = {
-                if (nav.currentBackStackEntry == vehicle) nav.popBackStack()
+                if (nav.currentBackStackEntry == vehicle) {
+                    val openedFromNotifications = nav.previousBackStackEntry?.destination?.route == AppDestination.Notifications.route
+                    val popped = nav.popBackStack()
+                    if (popped && openedFromNotifications) nav.navigateSingleTop(AppDestination.Garage.path)
+                }
             },
             backLabel = backToNotifications.value,
         )

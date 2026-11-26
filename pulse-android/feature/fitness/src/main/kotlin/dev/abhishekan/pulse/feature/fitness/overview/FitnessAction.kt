@@ -1,5 +1,7 @@
 package dev.abhishekan.pulse.feature.fitness.overview
 
+import dev.abhishekan.pulse.core.domain.model.WorkoutClassification
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 sealed interface FitnessAction {
@@ -14,6 +16,13 @@ sealed interface FitnessAction {
     data object SelectToday : FitnessAction
 
     data object Refresh : FitnessAction
+
+    data object RefreshSchedule : FitnessAction
+
+    data class SaveScheduleDay(
+        val day: DayOfWeek,
+        val classification: WorkoutClassification,
+    ) : FitnessAction
 
     data object RecordWorkout : FitnessAction
 

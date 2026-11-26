@@ -114,6 +114,7 @@ fun ProfileRoute(
             onTheme = onTheme,
             onLogout = onLogout,
             onAction = viewModel::onAction,
+            dashboardSettings = { DashboardViewSettings() },
             debugContent = debugContent,
         )
     }

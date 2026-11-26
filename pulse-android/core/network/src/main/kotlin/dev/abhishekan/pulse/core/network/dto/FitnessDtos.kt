@@ -26,6 +26,9 @@ import kotlinx.serialization.json.JsonPrimitive
 @Serializable class WorkoutSummaryDto(
     val id: Long,
     @SerialName("time_label") val timeLabel: String,
+    @SerialName("workout_type") val type: String? = null,
+    @SerialName("workout_focus") val focus: String? = null,
+    @SerialName("duration_seconds") val duration: Double? = null,
 )
 
 @Serializable class VisitDto(
@@ -41,6 +44,21 @@ import kotlinx.serialization.json.JsonPrimitive
     @SerialName("duration_seconds") val duration: JsonPrimitive? = null,
     @SerialName("calories_burned") val calories: JsonPrimitive? = null,
     @SerialName("synced_from_apple_watch") val imported: Boolean = false,
+    @SerialName("workout_type") val type: String? = null,
+    @SerialName("workout_focus") val focus: String? = null,
+)
+
+@Serializable
+class WorkoutScheduleDayDto(
+    val weekday: Int,
+    @SerialName("workout_type") val type: String? = null,
+    @SerialName("workout_focus") val focus: String? = null,
+)
+
+@Serializable
+class WorkoutClassificationRequest(
+    @SerialName("workout_type") val type: String,
+    @SerialName("workout_focus") val focus: String,
 )
 
 @Serializable class ExerciseDto(
@@ -87,6 +105,11 @@ import kotlinx.serialization.json.JsonPrimitive
     val sets: List<ExerciseSetRequest>,
     @SerialName("exercise_catalog_id") val catalogId: String?,
     @SerialName("remember_alias") val rememberAlias: Boolean,
+)
+
+@Serializable
+class ExerciseBatchRequest(
+    val exercises: List<ExerciseRequest>,
 )
 
 @Serializable class ExerciseSetRequest(

@@ -75,4 +75,7 @@
     <string name="pulse_profile_currency_explanation">One currency applies to all amounts. Changing it relabels existing amounts; it does not convert them.</string>
     <string name="pulse_profile_screen_title">You</string>
     <string name="pulse_profile_back_to_you">Back to You</string>
+    <string name="pulse_profile_dashboard_view">Dashboard view</string>
+    <string name="pulse_profile_dashboard_large">Large</string>
+    <string name="pulse_profile_dashboard_compact">Compact</string>
 </resources>

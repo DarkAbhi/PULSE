@@ -10,6 +10,7 @@ import dev.abhishekan.pulse.feature.horizon.di.horizonModule
 import dev.abhishekan.pulse.feature.mealplan.di.mealPlanModule
 import dev.abhishekan.pulse.feature.notifications.di.notificationsModule
 import dev.abhishekan.pulse.feature.profile.di.profileModule
+import dev.abhishekan.pulse.feature.quests.questModule
 
 internal val pulseModules =
     listOf(
@@ -18,6 +19,7 @@ internal val pulseModules =
         networkModule,
         authModule,
         homeModule,
+        questModule,
         fitnessModule,
         horizonModule,
         garageModule,

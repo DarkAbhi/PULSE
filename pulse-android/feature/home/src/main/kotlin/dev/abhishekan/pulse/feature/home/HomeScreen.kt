@@ -17,17 +17,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
+import dev.abhishekan.pulse.core.domain.repository.DashboardPreferencesRepository
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
@@ -42,6 +42,7 @@ import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.patterns.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 import java.time.Instant
 import java.time.ZoneId
 
@@ -53,9 +54,13 @@ fun HomeRoute(
     onNotifications: () -> Unit,
     onMissingProfile: () -> Unit = {},
     onProfile: (() -> Unit)? = null,
+    onGarage: () -> Unit = {},
+    onMealPlan: () -> Unit = {},
+    onQuests: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val currency by UserCurrency.changes.collectAsStateWithLifecycle()
+    val dashboardCompact by koinInject<DashboardPreferencesRepository>().compact.collectAsStateWithLifecycle(false)
     val timeZone by UserTimeZone.changes.collectAsStateWithLifecycle()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val now by viewModel.now.collectAsStateWithLifecycle()
@@ -80,6 +85,10 @@ fun HomeRoute(
         onProfile = onProfile,
         timeZone = timeZone,
         currency = currency,
+        onGarage = onGarage,
+        onMealPlan = onMealPlan,
+        onQuests = onQuests,
+        dashboardCompact = dashboardCompact,
     )
 }
 
@@ -95,6 +104,10 @@ fun HomeScreen(
     onProfile: (() -> Unit)? = null,
     timeZone: ZoneId = UserTimeZone.zone,
     currency: String = UserCurrency.code,
+    onGarage: () -> Unit = {},
+    onMealPlan: () -> Unit = {},
+    onQuests: () -> Unit = {},
+    dashboardCompact: Boolean = false,
 ) {
     val colors = PulseTheme.colors
     val scrollState = rememberScrollState()
@@ -110,6 +123,8 @@ fun HomeScreen(
             val compact = size == PulseWindowSize.Compact
             val stackCards = compact || LocalDensity.current.fontScale > 1.3f
             val margin = size.pagePadding
+            val wideColumns = !stackCards && size == PulseWindowSize.Expanded && LocalConfiguration.current.screenWidthDp >= 1200
+            val sectionGap = if (dashboardCompact) PulseTokens.medium else PulseTokens.cardPadding
             Column(
                 Modifier
                     .widthIn(max = PulseTokens.contentWidth)
@@ -117,11 +132,12 @@ fun HomeScreen(
                     .verticalScroll(scrollState)
                     .padding(LocalPulseContentPadding.current)
                     .padding(margin),
-                verticalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
+                verticalArrangement = Arrangement.spacedBy(sectionGap),
             ) {
                 DashboardGreeting(
                     name = state.profileName ?: username,
                     compact = stackCards,
+                    dense = dashboardCompact,
                     onNotifications = onNotifications,
                     onProfile = onProfile,
                     notificationCount = state.notificationCount,
@@ -139,34 +155,41 @@ fun HomeScreen(
                     else -> Unit
                 }
                 state.profile.refreshFailure?.let { PulseErrorState(it.message, retryProfile) }
-                DashboardCards(stackCards) {
-                    HorizonCard(state.horizon, { onAction(HomeAction.Retry(HomeSection.Horizon)) }, onHorizon, currency)
-                    WorkoutCard(state.workout, { onAction(HomeAction.Retry(HomeSection.Workout)) }, onFitness)
-                }
-                Spacer(Modifier.height(if (compact) 48.dp else 160.dp))
-            }
-        }
-    }
-}
-
-@Composable
-private fun DashboardCards(
-    stacked: Boolean,
-    content: @Composable () -> Unit,
-) {
-    Layout(content, Modifier.fillMaxWidth()) { cards, constraints ->
-        val gap = PulseTokens.cardPadding.roundToPx()
-        val width = constraints.maxWidth
-        val cardWidth = if (stacked) width else (width - gap) / 2
-        // Size both cards to the tallest content, including wrapped text and retry states.
-        val cardHeight = cards.maxOf { it.maxIntrinsicHeight(cardWidth) }
-        val placeables = cards.map { it.measure(Constraints.fixed(cardWidth, cardHeight)) }
-        layout(width, if (stacked) cardHeight * 2 + gap else cardHeight) {
-            placeables.forEachIndexed { index, card ->
-                card.placeRelative(
-                    x = if (stacked) 0 else index * (cardWidth + gap),
-                    y = if (stacked) index * (cardHeight + gap) else 0,
+                val retry = { section: HomeSection -> onAction(HomeAction.Retry(section)) }
+                // Web: one column on phones, a 2 x 2 grid of tiles and glance cards from tablet width.
+                val columns = if (stackCards) 1 else 2
+                DashboardQuickActions(
+                    state,
+                    if (dashboardCompact && wideColumns) 4 else columns,
+                    currency,
+                    timeZone,
+                    retry,
+                    onHorizon,
+                    onFitness,
+                    onGarage,
+                    onMealPlan,
+                    gap = sectionGap,
                 )
+                DashboardGlance(
+                    state.fitnessToday,
+                    if (wideColumns) 4 else columns,
+                    { retry(HomeSection.FitnessToday) },
+                    onFitness,
+                    settings = (state.questSettings.displayed as? Section.Content)?.value,
+                )
+                DashboardQuestHeatmap(state.quests, { retry(HomeSection.Quests) }, onQuests)
+                val recent = state.recentActivity.displayed
+                DashboardRecentActivity(
+                    entries =
+                        when (recent) {
+                            is Section.Content -> recent.value
+                            Section.Empty -> emptyList()
+                            else -> null
+                        },
+                    loading = recent == Section.Loading,
+                    onRetry = { retry(HomeSection.RecentActivity) },
+                )
+                Spacer(Modifier.height(if (compact) 48.dp else 160.dp))
             }
         }
     }

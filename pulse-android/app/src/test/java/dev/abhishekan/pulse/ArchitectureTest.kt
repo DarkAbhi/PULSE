@@ -17,6 +17,7 @@ class ArchitectureTest {
                     "core:ui",
                     "feature:auth",
                     "feature:home",
+                    "feature:quests",
                     "feature:profile",
                     "feature:notifications",
                     "feature:fitness",
@@ -34,6 +35,7 @@ class ArchitectureTest {
             "feature/fitness" to setOf("core:domain", "core:ui"),
             "feature/auth" to setOf("core:domain", "core:ui"),
             "feature/home" to setOf("core:domain", "core:ui"),
+            "feature/quests" to setOf("core:domain", "core:ui"),
             "feature/profile" to setOf("core:domain", "core:ui"),
             "feature/notifications" to setOf("core:domain", "core:ui"),
         )

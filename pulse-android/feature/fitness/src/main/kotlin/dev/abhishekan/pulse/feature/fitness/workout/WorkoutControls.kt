@@ -38,7 +38,22 @@ internal fun WorkoutActionButton(
     )
 }
 
-internal enum class WorkoutSymbol { Add, Play, Stop, Clock, Energy, Info, Weight, Muscle, List, Edit, Delete, Refresh, Document, ChevronDown }
+internal enum class WorkoutSymbol {
+    Add,
+    Play,
+    Stop,
+    Clock,
+    Energy,
+    Info,
+    Weight,
+    Muscle,
+    List,
+    Edit,
+    Delete,
+    Refresh,
+    Document,
+    ChevronDown,
+}
 
 @Composable
 internal fun WorkoutGlyph(

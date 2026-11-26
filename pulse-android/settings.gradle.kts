@@ -27,4 +27,4 @@ include(":app", ":feature:fitness", ":feature:horizon", ":feature:garage", ":fea
 
 include(":core:domain", ":core:data", ":core:network", ":core:ui", ":feature:auth", ":feature:home")
 
-include(":feature:profile", ":feature:notifications")
+include(":feature:profile", ":feature:notifications", ":feature:quests")

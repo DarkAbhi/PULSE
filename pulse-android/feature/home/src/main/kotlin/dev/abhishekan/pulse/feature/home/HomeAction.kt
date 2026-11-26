@@ -18,4 +18,8 @@ enum class HomeSection {
     Profile,
     Workout,
     Horizon,
+    FitnessToday,
+    Quests,
+    QuestSettings,
+    RecentActivity,
 }

@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -57,6 +56,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenu
 import dev.abhishekan.pulse.core.ui.components.PulseDropdownMenuItem
 import dev.abhishekan.pulse.core.ui.components.PulseFloatingActionButton
+import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.message
@@ -123,7 +123,7 @@ internal fun CreditCardsScreenContent(
                             ) {
                                 Column(Modifier.padding(horizontal = PulseSpacing.compact)) {
                                     accounts.forEachIndexed { index, account ->
-                                        if (index > 0) HorizontalDivider(color = PulseTheme.colors.divider)
+                                        if (index > 0) PulseHorizontalDivider(color = PulseTheme.colors.divider)
                                         key(account.id ?: index) {
                                             CreditCardRow(account, !state.busy, onAction)
                                         }

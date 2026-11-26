@@ -32,6 +32,10 @@ internal sealed interface MealPlanAction {
 
     data object AddMeal : MealPlanAction
 
+    data class AddMealTo(
+        val time: MealTime,
+    ) : MealPlanAction
+
     data class EditMeal(
         val meal: PlannedMeal,
     ) : MealPlanAction

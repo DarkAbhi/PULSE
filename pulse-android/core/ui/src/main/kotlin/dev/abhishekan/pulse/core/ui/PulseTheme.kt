@@ -6,6 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 
 private val LocalPulseColors = staticCompositionLocalOf { PulseLightColors }
+private val LocalPulseFeatureTones = staticCompositionLocalOf { PulseLightFeatureTones }
 private val LocalPulseDarkTheme = staticCompositionLocalOf { false }
 
 object PulseTheme {
@@ -13,6 +14,8 @@ object PulseTheme {
         @Composable get() = LocalPulseDarkTheme.current
     val colors: PulseColors
         @Composable get() = LocalPulseColors.current
+    val featureTones: PulseFeatureTones
+        @Composable get() = LocalPulseFeatureTones.current
     val typography = PulseTypography
     val spacing = PulseSpacing
     val shapes = PulseShapes
@@ -25,7 +28,12 @@ fun PulseTheme(
     content: @Composable () -> Unit,
 ) {
     val colors = if (darkTheme) PulseDarkColors else PulseLightColors
-    CompositionLocalProvider(LocalPulseColors provides colors, LocalPulseDarkTheme provides darkTheme) {
+    val tones = if (darkTheme) PulseDarkFeatureTones else PulseLightFeatureTones
+    CompositionLocalProvider(
+        LocalPulseColors provides colors,
+        LocalPulseFeatureTones provides tones,
+        LocalPulseDarkTheme provides darkTheme,
+    ) {
         PulseMaterialBridge(darkTheme, content)
     }
 }

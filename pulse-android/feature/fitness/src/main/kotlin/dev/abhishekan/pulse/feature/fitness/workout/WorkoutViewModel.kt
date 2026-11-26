@@ -12,6 +12,7 @@ import dev.abhishekan.pulse.core.domain.usecase.DeleteWorkout
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutDetail
 import dev.abhishekan.pulse.core.domain.usecase.SaveExercise
 import dev.abhishekan.pulse.core.domain.usecase.SearchExercises
+import dev.abhishekan.pulse.core.domain.usecase.UpdateWorkoutClassification
 import dev.abhishekan.pulse.core.ui.DraftSource
 import dev.abhishekan.pulse.core.ui.UnsavedChanges
 import dev.abhishekan.pulse.core.ui.uiText
@@ -40,6 +41,7 @@ class WorkoutViewModel(
     private val deleteWorkout: DeleteWorkout,
     private val deleteExercise: DeleteExercise,
     private val saved: SavedStateHandle,
+    private val updateClassification: UpdateWorkoutClassification,
     unsavedChanges: UnsavedChanges = UnsavedChanges(),
 ) : ViewModel() {
     private val id = checkNotNull(saved.get<Long>("id"))
@@ -73,7 +75,14 @@ class WorkoutViewModel(
             WorkoutAction.ClearMatch -> clearMatch()
             is WorkoutAction.SearchCatalogue -> searchCatalogue(action.query)
             is WorkoutAction.RememberAlias -> rememberAlias(action.value)
+            WorkoutAction.QueueExercise -> queueExercise()
+            is WorkoutAction.RemoveQueuedExercise -> removeQueuedExercise(action.index)
             WorkoutAction.SaveExercise -> save()
+            is WorkoutAction.UpdateClassification -> {
+                if (state.value.canChangeWorkout) {
+                    mutate("classification", { updateClassification(id, action.classification) }) {}
+                }
+            }
             WorkoutAction.CloseEditor -> closeEditor()
             WorkoutAction.Resume -> resume()
             WorkoutAction.DismissMessage -> consumeMessage()
@@ -175,7 +184,7 @@ class WorkoutViewModel(
         val editor = state.value.editor ?: return
         if (state.value.busy) return
         val draft = transform(editor.draft)
-        val dirty = draft != original
+        val dirty = draft != original || editor.queued.isNotEmpty()
         draftSavedState.save(draft, dirty)
         state.update {
             it.copy(editor = editor.copy(draft = draft, dirty = dirty, error = null))
@@ -311,10 +320,40 @@ class WorkoutViewModel(
         state.update { it.copy(editor = null) }
     }
 
+    private fun queueExercise() {
+        val editor = state.value.editor ?: return
+        if (!editor.canQueue || state.value.busy || state.value.needsReview || state.value.loading) return
+        searchJob?.cancel()
+        val queue = editor.queued + editor.draft
+        val draft = ExerciseDraft()
+        original = draft
+        draftSavedState.saveQueue(queue)
+        draftSavedState.save(draft, dirty = true)
+        state.update { it.copy(editor = ExerciseEditorState(draft, dirty = true, queued = queue)) }
+    }
+
+    private fun removeQueuedExercise(index: Int) {
+        val editor = state.value.editor ?: return
+        if (state.value.busy || state.value.needsReview || index !in editor.queued.indices) return
+        val queue = editor.queued.filterIndexed { current, _ -> current != index }
+        val dirty = queue.isNotEmpty() || editor.draft != original
+        draftSavedState.saveQueue(queue)
+        draftSavedState.save(editor.draft, dirty)
+        state.update { it.copy(editor = editor.copy(queued = queue, dirty = dirty)) }
+    }
+
     private fun save() {
         val editor = state.value.editor ?: return
         if (state.value.busy || state.value.needsReview || state.value.loading) return
         val draft = editor.draft
+        if (editor.queued.isNotEmpty() && editor.canSave) {
+            val drafts = editor.queued + listOf(draft).filter { it.issue == null }
+            mutate("saveBatch", { saveExercise.batch(id, drafts.map { it.input }) }) {
+                clearEditor()
+                state.update { it.copy(message = uiText(R.string.pulse_fitness_exercises_saved)) }
+            }
+            return
+        }
         val input = draft.input
         val error = draft.issue?.message()
         if (error != null) {

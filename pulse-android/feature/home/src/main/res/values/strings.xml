@@ -24,4 +24,34 @@
     <string name="pulse_home_get_moving">Let’s get moving</string>
     <string name="pulse_home_view_fitness">View fitness</string>
     <string name="pulse_home_profile">Profile</string>
+    <string name="pulse_home_whats_left">What’s left on your financial horizon</string>
+    <string name="pulse_home_fitness">Fitness</string>
+    <string name="pulse_home_fitness_empty">A short one still counts.</string>
+    <string name="pulse_home_fitness_recorded">Workout recorded today. Nice work.</string>
+    <string name="pulse_home_garage">Garage</string>
+    <string name="pulse_home_garage_summary">Vehicles, fuel &amp; maintenance</string>
+    <string name="pulse_home_meal_plan">Meal Plan</string>
+    <string name="pulse_home_meal_plan_summary">Plan your week and track meals eaten</string>
+    <string name="pulse_home_today_at_a_glance">Today at a glance</string>
+    <string name="pulse_home_view_all">View all</string>
+    <string name="pulse_home_steps">Steps</string>
+    <string name="pulse_home_active">Active</string>
+    <string name="pulse_home_kcal">kcal</string>
+    <string name="pulse_home_sleep">Sleep</string>
+    <string name="pulse_home_sleep_value">%1$dh %2$dmin</string>
+    <string name="pulse_home_activity">Activity</string>
+    <string name="pulse_home_rings_closed">%1$d of %2$d rings closed</string>
+    <string name="pulse_home_no_data">No data yet</string>
+    <string name="pulse_home_loading_today">Loading today’s activity</string>
+    <string name="pulse_home_quest_activity">Quest activity</string>
+    <string name="pulse_home_view_quests">View quests</string>
+    <string name="pulse_home_loading_quests">Loading quest activity</string>
+    <plurals name="pulse_home_quests_completed">
+        <item quantity="one">%1$d quest completed</item>
+        <item quantity="other">%1$d quests completed</item>
+    </plurals>
+    <string name="pulse_home_less">Less</string>
+    <string name="pulse_home_more">More</string>
+    <string name="pulse_home_heatmap_selected">%1$s · %2$s</string>
+    <string name="pulse_home_heatmap_day">%1$s, %2$s</string>
 </resources>

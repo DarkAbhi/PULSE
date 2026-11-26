@@ -33,10 +33,12 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -44,6 +46,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.abhishekan.pulse.core.domain.model.MealTime
+import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
@@ -60,6 +64,29 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 
+private enum class CalendarMealSlot(
+    val tint: Color,
+) {
+    Breakfast(Color(0xFFFFC83D)),
+    Lunch(Color(0xFFF0603A)),
+    EveningSnack(Color(0xFFD91CAB)),
+    Dinner(Color(0xFF5B2CE0)),
+    Custom(Color(0xFF3E59BC)),
+}
+
+private fun MealTime.calendarSlot(): CalendarMealSlot =
+    if (!isDefault) {
+        CalendarMealSlot.Custom
+    } else {
+        when (name) {
+            "Breakfast" -> CalendarMealSlot.Breakfast
+            "Lunch" -> CalendarMealSlot.Lunch
+            "Evening Snacks" -> CalendarMealSlot.EveningSnack
+            "Dinner" -> CalendarMealSlot.Dinner
+            else -> CalendarMealSlot.Custom
+        }
+    }
+
 private val firstMealWeek = LocalDate.of(1, 1, 1)
 private val mealWeekCount = ChronoUnit.WEEKS.between(firstMealWeek, LocalDate.of(9999, 12, 31).minusDays(6)).toInt() + 1
 
@@ -74,8 +101,21 @@ internal fun MealCalendar(
     select: (LocalDate) -> Unit,
     jumpToToday: () -> Unit,
     onPreferences: (() -> Unit)? = null,
+    meals: List<PlannedMeal> = emptyList(),
+    times: List<MealTime> = emptyList(),
 ) {
     val colors = PulseTheme.colors
+    val mealsByDay = remember(meals) { meals.groupBy(PlannedMeal::date) }
+    val slotsByTime = remember(times) { times.associate { it.id to it.calendarSlot() } }
+    val calendarSlots =
+        remember(meals, slotsByTime) {
+            CalendarMealSlot.entries.filter {
+                it != CalendarMealSlot.Custom ||
+                    meals.any { meal ->
+                        (slotsByTime[meal.timeId] ?: CalendarMealSlot.Custom) == CalendarMealSlot.Custom
+                    }
+            }
+        }
     var pickingDate by rememberSaveable { mutableStateOf(false) }
     val locale = LocalLocale.current.platformLocale
     val weekStartFormat = remember(locale) { DateTimeFormatter.ofPattern("d MMM", locale) }
@@ -201,11 +241,24 @@ internal fun MealCalendar(
                     repeat(7) { offset ->
                         val day = pageWeek.plusDays(offset.toLong())
                         val active = day == selected
-                        val description =
+                        val dayMeals = mealsByDay[day].orEmpty()
+                        val plannedSlots = dayMeals.map { slotsByTime[it.timeId] ?: CalendarMealSlot.Custom }.toSet()
+                        val dateDescription =
                             if (day == today) {
                                 stringResource(R.string.pulse_mealplan_today_date_description, day.format(accessibleDateFormat))
                             } else {
                                 day.format(accessibleDateFormat)
+                            }
+                        val description =
+                            if (dayMeals.isEmpty()) {
+                                dateDescription
+                            } else {
+                                pluralStringResource(
+                                    R.plurals.pulse_mealplan_day_with_meals,
+                                    dayMeals.size,
+                                    dateDescription,
+                                    dayMeals.size,
+                                )
                             }
                         Surface(
                             onClick = { select(day) },
@@ -236,6 +289,13 @@ internal fun MealCalendar(
                                     style = dayNumberStyle,
                                     maxLines = 1,
                                 )
+                                Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    calendarSlots.forEach { slot ->
+                                        val tint = if (active) colors.onPrimary else slot.tint
+                                        val dotColor = tint.copy(alpha = if (slot in plannedSlots) 1f else 0.22f)
+                                        Box(Modifier.size(3.dp).background(dotColor, CircleShape))
+                                    }
+                                }
                             }
                         }
                     }

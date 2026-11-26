@@ -67,7 +67,22 @@ internal fun DashboardGreeting(
     notificationCount: Int = 0,
     now: Instant,
     timeZone: ZoneId,
+    dense: Boolean = false,
 ) {
+    val minHeight =
+        when {
+            dense -> 215.dp
+            compact -> 360.dp
+            else -> 400.dp
+        }
+    val titleStyle =
+        with(PulseTheme.typography.heading1) {
+            when {
+                dense -> copy(fontSize = 34.sp, lineHeight = 40.sp)
+                compact -> copy(fontSize = 48.sp, lineHeight = 52.sp)
+                else -> copy(fontSize = 64.sp, lineHeight = 68.sp)
+            }
+        }
     val darkTheme = PulseTheme.isDark
     val greetingInk = if (darkTheme) Color.White else Color(0xFF191633)
     val greetingMuted = if (darkTheme) Color.White.copy(alpha = 0.85f) else Color(0xFF605C78)
@@ -81,7 +96,7 @@ internal fun DashboardGreeting(
         Column(
             Modifier
                 .fillMaxWidth()
-                .heightIn(min = if (compact) 360.dp else 400.dp)
+                .heightIn(min = minHeight)
                 .padding(if (compact) PulseTokens.cardPadding else PulseTokens.large),
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
@@ -116,18 +131,14 @@ internal fun DashboardGreeting(
                     }
                 }
             }
-            Spacer(Modifier.weight(1f).heightIn(min = 48.dp))
+            Spacer(Modifier.weight(1f).heightIn(min = if (dense) 10.dp else 48.dp))
             Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.small)) {
                 PulseText(stringResource(R.string.pulse_home_good_to_see_you), style = PulseTextStyle.Title2, color = greetingMuted)
                 PulseText(
                     name,
                     Modifier.fillMaxWidth().semantics { heading() },
                     color = greetingInk,
-                    style =
-                        PulseTheme.typography.heading1.copy(
-                            fontSize = if (compact) 48.sp else 64.sp,
-                            lineHeight = if (compact) 52.sp else 68.sp,
-                        ),
+                    style = titleStyle,
                 )
                 Spacer(Modifier.height(4.dp))
                 PulseText(

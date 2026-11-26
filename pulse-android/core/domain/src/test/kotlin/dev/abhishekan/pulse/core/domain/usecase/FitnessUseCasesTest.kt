@@ -5,13 +5,16 @@ import dev.abhishekan.pulse.core.domain.model.ExerciseSetInput
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.WorkoutClassification
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
+import dev.abhishekan.pulse.core.domain.model.WorkoutScheduleDay
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 class FitnessUseCasesTest {
@@ -20,6 +23,23 @@ class FitnessUseCasesTest {
         var calls = 0
         var input: ExerciseInput? = null
         var date: LocalDate? = null
+
+        override suspend fun schedule() = Outcome.Success(emptyList<WorkoutScheduleDay>())
+
+        override suspend fun saveScheduleDay(
+            day: DayOfWeek,
+            classification: WorkoutClassification,
+        ) = Outcome.Success(Unit)
+
+        override suspend fun saveExercises(
+            visitId: Long,
+            inputs: List<ExerciseInput>,
+        ) = Outcome.Success(Unit)
+
+        override suspend fun updateClassification(
+            id: Long,
+            classification: WorkoutClassification,
+        ) = Outcome.Success(Unit)
 
         override suspend fun overview(): Outcome<FitnessOverview> = error("Unused")
 

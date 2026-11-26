@@ -2,6 +2,7 @@ package dev.abhishekan.pulse.core.network
 import dev.abhishekan.pulse.core.network.dto.MealOnboardingDto
 import dev.abhishekan.pulse.core.network.dto.MealOnboardingInput
 import dev.abhishekan.pulse.core.network.dto.MealPreferencesDto
+import dev.abhishekan.pulse.core.network.dto.MealRecipePageDto
 import dev.abhishekan.pulse.core.network.dto.MealTimeDto
 import dev.abhishekan.pulse.core.network.dto.PlannedMealDto
 import io.ktor.client.HttpClient
@@ -42,6 +43,16 @@ class MealPlanApi(
             .get("meal-plans") {
                 parameter("start_date", start)
                 parameter("end_date", end)
+            }.body()
+
+    suspend fun recipes(
+        search: String,
+        page: Int,
+    ): MealRecipePageDto =
+        client
+            .get("meal-recipes") {
+                parameter("q", search.trim())
+                parameter("page", page)
             }.body()
 
     suspend fun times(): List<MealTimeDto> = client.get("meal-times").body()

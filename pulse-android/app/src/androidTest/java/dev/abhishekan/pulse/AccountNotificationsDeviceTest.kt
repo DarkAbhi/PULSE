@@ -32,6 +32,7 @@ import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -578,7 +579,7 @@ class AccountNotificationsDeviceTest {
         compose.onNodeWithText("Spaces").assertDoesNotExist()
         compose.onNode(items.first()).assertIsSelected()
         val actionLayouts = mutableListOf<TextLayoutResult>()
-        compose.onNodeWithText("Keep going", useUnmergedTree = true).performSemanticsAction(
+        compose.onNodeWithText("Your room to move", useUnmergedTree = true).performSemanticsAction(
             SemanticsActions.GetTextLayoutResult,
         ) { it(actionLayouts) }
         assertEquals(1, actionLayouts.single().lineCount)
@@ -805,10 +806,10 @@ class AccountNotificationsDeviceTest {
         compose.onNodeWithText("Clear all").assertDoesNotExist()
         notifications[3] = notification(3, "Fresh update", null)
         // Keep the refresh gesture away from the list's edges.
-        compose.onNode(hasScrollAction()).performTouchInput { swipeDown(startY = height * 0.25f, endY = height * 0.75f) }
+        compose.onNodeWithTag("notifications-list").performTouchInput { swipeDown(startY = height * 0.25f, endY = height * 0.75f) }
         compose.waitUntil(20_000) {
             try {
-                compose.onNode(hasScrollAction()).performScrollToNode(hasText("Fresh update"))
+                compose.onNodeWithTag("notifications-list").performScrollToNode(hasText("Fresh update"))
                 compose.onAllNodesWithText("Fresh update").fetchSemanticsNodes().isNotEmpty()
             } catch (_: AssertionError) {
                 false
@@ -821,7 +822,7 @@ class AccountNotificationsDeviceTest {
         confirm("Clear all")
         awaitText("All caught up")
         notifications[4] = notification(4, "After empty", null)
-        compose.onNode(hasScrollAction()).performTouchInput { swipeDown(startY = height * 0.25f, endY = height * 0.75f) }
+        compose.onNodeWithTag("notifications-list").performTouchInput { swipeDown(startY = height * 0.25f, endY = height * 0.75f) }
         awaitText("After empty")
     }
 
@@ -913,7 +914,7 @@ class AccountNotificationsDeviceTest {
             compose.returnHomeFromProfile()
             openNotifications()
             screenshot("large-text-notifications")
-            compose.onNode(hasScrollAction()).performTouchInput { swipeDown(startY = height * 0.25f, endY = height * 0.75f) }
+            compose.onNodeWithTag("notifications-list").performTouchInput { swipeDown(startY = height * 0.25f, endY = height * 0.75f) }
             awaitText("Vehicle care update")
         } catch (failure: Throwable) {
             screenshot("resize-failure")

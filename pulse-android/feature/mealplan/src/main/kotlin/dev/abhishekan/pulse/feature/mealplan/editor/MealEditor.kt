@@ -26,7 +26,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import dev.abhishekan.pulse.core.domain.model.MealRecipePage
 import dev.abhishekan.pulse.core.domain.model.MealTime
+import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -54,8 +56,10 @@ internal fun MealEditor(
     onUpdate: (MealDraft) -> Unit,
     onSave: () -> Unit,
     flat: Boolean = false,
+    searchRecipes: (suspend (String, Int) -> Outcome<MealRecipePage>)? = null,
 ) {
     var datePicker by rememberSaveable { mutableStateOf(false) }
+    var recipePicker by rememberSaveable { mutableStateOf(false) }
     val focus = LocalFocusManager.current
     val content: @Composable ColumnScope.() -> Unit = {
         MealEditorHeader()
@@ -63,7 +67,7 @@ internal fun MealEditor(
         PulseTextField(
             draft.name,
             {
-                onUpdate(draft.copy(name = it))
+                onUpdate(draft.copy(name = it, recipeId = null))
             },
             stringResource(R.string.pulse_mealplan_meal_name),
             Modifier.fillMaxWidth(),
@@ -77,6 +81,24 @@ internal fun MealEditor(
                 }),
             trailingIcon = { Icon(painterResource(R.drawable.meal_edit), null, Modifier.size(20.dp)) },
         )
+        if (draft.id == null && searchRecipes != null) {
+            PulseButton(
+                text =
+                    stringResource(
+                        if (draft.recipeId == null) {
+                            R.string.pulse_mealplan_recipe_catalog
+                        } else {
+                            R.string.pulse_mealplan_change_recipe
+                        },
+                    ),
+                onClick = {
+                    focus.clearFocus()
+                    recipePicker = true
+                },
+                variant = PulseButtonVariant.Secondary,
+                enabled = !busy,
+            )
+        }
         if (draft.name.isEmpty()) {
             PulseText(
                 stringResource(R.string.pulse_mealplan_name_example),
@@ -121,6 +143,16 @@ internal fun MealEditor(
         Column(modifier, verticalArrangement = Arrangement.spacedBy(PulseTokens.small), content = content)
     } else {
         PulseCard(modifier, content = content)
+    }
+    if (recipePicker && searchRecipes != null) {
+        MealRecipePicker(
+            searchRecipes,
+            onSelect = {
+                onUpdate(draft.copy(name = it.name, recipeId = it.id))
+                recipePicker = false
+            },
+            onDismiss = { recipePicker = false },
+        )
     }
     if (datePicker) {
         PulseDatePickerDialog(

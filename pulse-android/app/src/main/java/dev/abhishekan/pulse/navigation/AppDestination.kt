@@ -20,6 +20,7 @@ internal enum class AppDestination(
     WorkoutExercise("workout/{id}/exercise"),
     Vehicle("vehicle/{id}"),
     Notifications("notifications"),
+    Quests("quests"),
     Gallery("gallery"),
     ;
 
@@ -28,7 +29,7 @@ internal enum class AppDestination(
         when (this) {
             Workout, WorkoutExercise -> Fitness
             Vehicle -> Garage
-            Notifications -> Home
+            Notifications, Quests -> Home
             else -> this
         }
 

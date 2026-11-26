@@ -12,8 +12,9 @@ import androidx.compose.ui.graphics.Color
 // Material supplies interaction mechanics; every visual role comes from Pulse tokens.
 internal fun PulseColors.materialColors(dark: Boolean) =
     ColorScheme(
-        primary = action,
-        onPrimary = if (dark) onPrimary else surface,
+        // Web: primary actions and checked controls use the primary fill.
+        primary = primary,
+        onPrimary = onPrimary,
         primaryContainer = primarySoft,
         onPrimaryContainer = onPrimarySoft,
         inversePrimary = inverseAction,
@@ -40,7 +41,7 @@ internal fun PulseColors.materialColors(dark: Boolean) =
         onErrorContainer = error,
         outline = outline,
         outlineVariant = border,
-        scrim = Color.Black,
+        scrim = PulseDarkColors.background,
         surfaceBright = surface,
         surfaceDim = surfaceStrong,
         surfaceContainer = surface,

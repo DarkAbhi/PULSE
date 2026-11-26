@@ -7,6 +7,8 @@ import dev.abhishekan.pulse.core.data.AndroidReceiptFiles
 import dev.abhishekan.pulse.core.data.AndroidSessionKey
 import dev.abhishekan.pulse.core.data.EncryptedSessionStore
 import dev.abhishekan.pulse.core.data.PulseAuthRepository
+import dev.abhishekan.pulse.core.data.PulseDashboardFeedRepository
+import dev.abhishekan.pulse.core.data.PulseDashboardPreferences
 import dev.abhishekan.pulse.core.data.PulseDashboardRepository
 import dev.abhishekan.pulse.core.data.PulseFitnessRepository
 import dev.abhishekan.pulse.core.data.PulseGarageRepository
@@ -16,9 +18,12 @@ import dev.abhishekan.pulse.core.data.PulseMealPreferencesRepository
 import dev.abhishekan.pulse.core.data.PulseNotificationsRepository
 import dev.abhishekan.pulse.core.data.PulsePreferences
 import dev.abhishekan.pulse.core.data.PulseProfileRepository
+import dev.abhishekan.pulse.core.data.PulseQuestRepository
 import dev.abhishekan.pulse.core.data.ReceiptFiles
 import dev.abhishekan.pulse.core.data.preferences
 import dev.abhishekan.pulse.core.domain.repository.AuthRepository
+import dev.abhishekan.pulse.core.domain.repository.DashboardFeedRepository
+import dev.abhishekan.pulse.core.domain.repository.DashboardPreferencesRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FinancialAccountsRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
@@ -29,6 +34,7 @@ import dev.abhishekan.pulse.core.domain.repository.MealPreferencesRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
 import dev.abhishekan.pulse.core.domain.repository.PreferencesRepository
 import dev.abhishekan.pulse.core.domain.repository.ProfileRepository
+import dev.abhishekan.pulse.core.domain.repository.QuestRepository
 import dev.abhishekan.pulse.core.domain.repository.StatementImportRepository
 import dev.abhishekan.pulse.core.domain.repository.VehicleCatalogRepository
 import dev.abhishekan.pulse.core.network.SessionMaterialStore
@@ -40,6 +46,8 @@ val dataModule =
     module {
         singleOf(::PulseMealPreferencesRepository) bind MealPreferencesRepository::class
         singleOf(::PulseProfileRepository) bind ProfileRepository::class
+        singleOf(::PulseQuestRepository) bind QuestRepository::class
+        singleOf(::PulseDashboardFeedRepository) bind DashboardFeedRepository::class
         singleOf(::PulseNotificationsRepository) bind NotificationsRepository::class
         singleOf(::PulseMealPlanRepository) bind
             MealPlanRepository::class
@@ -53,6 +61,7 @@ val dataModule =
         singleOf(::PulseFitnessRepository) bind FitnessRepository::class
         single<DataStore<Preferences>> { get<Context>().preferences }
         singleOf(::PulsePreferences) bind PreferencesRepository::class
+        singleOf(::PulseDashboardPreferences) bind DashboardPreferencesRepository::class
         singleOf(::AndroidSessionKey)
         singleOf(::EncryptedSessionStore) bind SessionMaterialStore::class
         singleOf(::PulseAuthRepository) bind AuthRepository::class

@@ -1,12 +1,15 @@
 package dev.abhishekan.pulse.core.network
 import dev.abhishekan.pulse.core.network.dto.CatalogSearchDto
+import dev.abhishekan.pulse.core.network.dto.ExerciseBatchRequest
 import dev.abhishekan.pulse.core.network.dto.ExerciseDto
 import dev.abhishekan.pulse.core.network.dto.ExerciseRequest
 import dev.abhishekan.pulse.core.network.dto.FitnessOverviewDto
 import dev.abhishekan.pulse.core.network.dto.RecordVisitRequest
 import dev.abhishekan.pulse.core.network.dto.RecordVisitResponse
 import dev.abhishekan.pulse.core.network.dto.VisitDto
+import dev.abhishekan.pulse.core.network.dto.WorkoutClassificationRequest
 import dev.abhishekan.pulse.core.network.dto.WorkoutInfoDto
+import dev.abhishekan.pulse.core.network.dto.WorkoutScheduleDayDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete
@@ -25,6 +28,22 @@ class FitnessApi(
     suspend fun workout(id: Long): WorkoutInfoDto = client.get("fitness-workouts/$id").body()
 
     suspend fun exercises(id: Long): List<ExerciseDto> = client.get("gym-visits/$id/exercises").body()
+
+    suspend fun schedule(): List<WorkoutScheduleDayDto> = client.get("fitness/workout-schedule").body()
+
+    suspend fun saveScheduleDay(
+        weekday: Int,
+        classification: WorkoutClassificationRequest,
+    ) {
+        client.put("fitness/workout-schedule/$weekday") { setBody(classification) }
+    }
+
+    suspend fun updateClassification(
+        id: Long,
+        classification: WorkoutClassificationRequest,
+    ) {
+        client.put("fitness-workouts/$id/classification") { setBody(classification) }
+    }
 
     suspend fun search(query: String): CatalogSearchDto =
         client
@@ -51,6 +70,13 @@ class FitnessApi(
         } else {
             client.put("gym-visits/$visitId/exercises/$exerciseId") { setBody(request) }
         }
+    }
+
+    suspend fun saveExercises(
+        visitId: Long,
+        request: ExerciseBatchRequest,
+    ) {
+        client.post("gym-visits/$visitId/exercises/batch") { setBody(request) }
     }
 
     suspend fun deleteWorkout(id: Long) {

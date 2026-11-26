@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelStore
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.MealChange
 import dev.abhishekan.pulse.core.domain.model.MealPreferences
+import dev.abhishekan.pulse.core.domain.model.MealRecipePage
 import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
@@ -83,6 +84,11 @@ class MealPlanViewModelTest {
             return mealFailure?.let { Outcome.Error(it) }
                 ?: Outcome.Success(meals.filter { it.date in start..end })
         }
+
+        override suspend fun recipes(
+            search: String,
+            page: Int,
+        ) = Outcome.Success(MealRecipePage(emptyList(), false))
 
         override suspend fun times(): Outcome<List<MealTime>> {
             timeReads++

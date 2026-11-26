@@ -116,6 +116,8 @@ fun PulseText(
     style: TextStyle = PulseTheme.typography.body2,
     color: Color = Color.Unspecified,
     textAlign: TextAlign? = null,
+    maxLines: Int = Int.MAX_VALUE,
+    overflow: TextOverflow = TextOverflow.Clip,
 ) {
-    Text(text = text, modifier = modifier, style = style, color = color, textAlign = textAlign)
+    Text(text = text, modifier = modifier, style = style, color = color, textAlign = textAlign, maxLines = maxLines, overflow = overflow)
 }

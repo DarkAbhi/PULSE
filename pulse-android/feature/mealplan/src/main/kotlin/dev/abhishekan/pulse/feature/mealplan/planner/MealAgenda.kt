@@ -35,6 +35,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dev.abhishekan.pulse.core.domain.model.MealPreferences
+import dev.abhishekan.pulse.core.domain.model.MealTime
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -45,6 +47,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.feature.mealplan.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 
 private val mealRangeTime = DateTimeFormatter.ofPattern("h:mm a")
 
@@ -58,13 +61,27 @@ internal fun MealAgenda(
     onToggle: (PlannedMeal) -> Unit,
     onDelete: (PlannedMeal) -> Unit,
     modifier: Modifier = Modifier,
+    times: List<MealTime> = emptyList(),
+    preferences: MealPreferences? = null,
+    onAdd: ((MealTime) -> Unit)? = null,
 ) {
     BoxWithConstraints(modifier) {
         val columns = if (maxWidth / LocalDensity.current.fontScale >= 680.dp) 2 else 1
         val compact = maxWidth < 600.dp
         val compactCard = (maxWidth - 24.dp * (columns - 1)) / columns < 400.dp || LocalDensity.current.fontScale > 1.3f
+        val mealsByTime = meals.groupBy(PlannedMeal::timeId)
+        val visibleTimes = times.filter { preferences?.allows(it) != false || !mealsByTime[it.id].isNullOrEmpty() }
+        val timeIds = visibleTimes.map(MealTime::id).toSet()
+        val slots =
+            visibleTimes.map { MealAgendaSlot(it, mealsByTime[it.id].orEmpty()) } +
+                meals
+                    .filter { it.timeId !in timeIds }
+                    .sortedWith(compareBy<PlannedMeal> { it.start == null }.thenBy { it.start }.thenBy { it.id })
+                    .groupBy { Triple(it.timeId, it.start, it.end) }
+                    .values
+                    .map { MealAgendaSlot(null, it) }
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-            if (meals.isEmpty()) {
+            if (slots.isEmpty()) {
                 Column(
                     Modifier.fillMaxWidth().padding(vertical = if (compact) 8.dp else 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -91,17 +108,39 @@ internal fun MealAgenda(
                     )
                 }
             } else {
-                val sorted = meals.sortedWith(compareBy<PlannedMeal> { it.start == null }.thenBy { it.start }.thenBy { it.id })
-                // Deleted meal times can leave different saved ranges under Other meals.
-                val groups = sorted.groupBy { Triple(it.timeId, it.start, it.end) }.values.toList()
-                groups.chunked(columns).forEach { row ->
+                val locale = LocalLocale.current.platformLocale
+                Column(verticalArrangement = Arrangement.spacedBy(PulseTheme.spacing.tiny)) {
+                    PulseText(
+                        date.dayOfWeek.getDisplayName(TextStyle.FULL, locale),
+                        Modifier.semantics { heading() },
+                        style = PulseTextStyle.Heading2,
+                    )
+                    val emptyLabel = if (date == today) R.string.pulse_mealplan_empty_today else R.string.pulse_mealplan_empty_day
+                    PulseText(
+                        if (meals.isEmpty()) {
+                            stringResource(emptyLabel)
+                        } else {
+                            stringResource(R.string.pulse_mealplan_meals_eaten, meals.count(PlannedMeal::consumed), meals.size)
+                        },
+                        color = PulseTheme.colors.textSecondary,
+                    )
+                }
+                slots.chunked(columns).forEach { row ->
                     Row(
                         Modifier.fillMaxWidth().then(if (columns == 2) Modifier.height(IntrinsicSize.Min) else Modifier),
                         horizontalArrangement = Arrangement.spacedBy(24.dp),
                     ) {
-                        row.forEach { group ->
+                        row.forEach { slot ->
+                            val time = slot.time
+                            val add =
+                                if (time != null && preferences?.allows(time) != false && onAdd != null) {
+                                    { onAdd(time) }
+                                } else {
+                                    null
+                                }
                             MealIllustratedCard(
-                                group,
+                                slot,
+                                add,
                                 compactCard,
                                 enabled,
                                 onEdit,
@@ -118,9 +157,15 @@ internal fun MealAgenda(
     }
 }
 
+private data class MealAgendaSlot(
+    val time: MealTime?,
+    val meals: List<PlannedMeal>,
+)
+
 @Composable
 private fun MealIllustratedCard(
-    meals: List<PlannedMeal>,
+    slot: MealAgendaSlot,
+    add: (() -> Unit)?,
     compact: Boolean,
     enabled: Boolean,
     edit: (PlannedMeal) -> Unit,
@@ -130,8 +175,12 @@ private fun MealIllustratedCard(
 ) {
     val colors = PulseTheme.colors
     val timeFormat = mealRangeTime.withLocale(LocalLocale.current.platformLocale)
-    val meal = meals.first()
-    val hour = meal.start?.hour
+    val meals = slot.meals
+    val meal = meals.firstOrNull()
+    val start = slot.time?.start ?: meal?.start
+    val end = slot.time?.end ?: meal?.end
+    val name = slot.time?.name ?: meal?.timeName ?: stringResource(R.string.pulse_mealplan_other_meals)
+    val hour = start?.hour
     val artwork =
         when {
             hour == null -> R.drawable.meal_lunch
@@ -148,7 +197,7 @@ private fun MealIllustratedCard(
             else -> colors.coral
         }
     Surface(
-        modifier.testTag("meal-card-${meal.id}"),
+        modifier.testTag(meal?.let { "meal-card-${it.id}" } ?: "meal-slot-${slot.time?.id}"),
         shape = RoundedCornerShape(20.dp),
         color = colors.surface,
     ) {
@@ -165,9 +214,7 @@ private fun MealIllustratedCard(
                 Image(painterResource(artwork), null, Modifier.size(if (compact) 80.dp else 132.dp), contentScale = ContentScale.Fit)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                PulseText(meal.timeName ?: stringResource(R.string.pulse_mealplan_other_meals), style = PulseTextStyle.Title)
-                val start = meal.start
-                val end = meal.end
+                PulseText(name, style = PulseTextStyle.Title)
                 if (start != null && end != null) {
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(painterResource(R.drawable.meal_clock), null, Modifier.size(16.dp), tint = colors.textSecondary)
@@ -187,6 +234,13 @@ private fun MealIllustratedCard(
                             color = colors.textSecondary,
                         )
                     }
+                }
+                if (meals.isEmpty()) {
+                    PulseText(
+                        stringResource(R.string.pulse_mealplan_nothing_planned),
+                        style = PulseTextStyle.Body3,
+                        color = colors.textSecondary,
+                    )
                 }
                 meals.forEach { item ->
                     val consumptionLabel =
@@ -223,6 +277,14 @@ private fun MealIllustratedCard(
                             Icon(painterResource(R.drawable.meal_delete), null, tint = colors.error)
                         }
                     }
+                }
+                if (add != null) {
+                    PulseButton(
+                        stringResource(R.string.pulse_mealplan_add_to_slot, name),
+                        add,
+                        enabled = enabled,
+                        style = PulseButtonStyle.Text,
+                    )
                 }
             }
         }

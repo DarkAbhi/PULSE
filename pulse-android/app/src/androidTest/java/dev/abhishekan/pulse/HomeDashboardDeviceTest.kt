@@ -74,10 +74,13 @@ class HomeDashboardDeviceTest {
         }
     }
 
-    private fun assertMatchingCardHeights() {
+    private fun assertCardAlignment() {
         val finance = compose.onNodeWithContentDescription("Financial Horizon").getUnclippedBoundsInRoot()
-        val fitness = compose.onNodeWithContentDescription("FITNESS · TODAY").getUnclippedBoundsInRoot()
-        assertEquals((finance.bottom - finance.top).value, (fitness.bottom - fitness.top).value, 0.5f)
+        val fitness = compose.onNodeWithContentDescription("Fitness").getUnclippedBoundsInRoot()
+        assertEquals((finance.right - finance.left).value, (fitness.right - fitness.left).value, 0.5f)
+        if (finance.top == fitness.top) {
+            assertEquals((finance.bottom - finance.top).value, (fitness.bottom - fitness.top).value, 0.5f)
+        }
     }
 
     private fun capture(name: String) {
@@ -108,7 +111,7 @@ class HomeDashboardDeviceTest {
         compose.onNodeWithText("No workout recorded today.").assertExists()
         compose.onNodeWithText("Loading today’s workout").assertDoesNotExist()
         compose.onNodeWithText("Loading your horizon").assertDoesNotExist()
-        assertMatchingCardHeights()
+        assertCardAlignment()
         compose.runOnIdle {
             current.value = state.copy(workout = Section.RefreshFailed(Section.Empty, Failure.Connection))
         }
@@ -186,13 +189,13 @@ class HomeDashboardDeviceTest {
         compose.onNodeWithText("Pulse", substring = false).assertDoesNotExist()
         compose.onNodeWithText("Good to see you,").assertIsDisplayed()
         compose.onNodeWithText("Abhishek").assertIsDisplayed()
-        assertMatchingCardHeights()
+        assertCardAlignment()
         capture("light")
         compose.onNodeWithContentDescription("Notifications").assertHasClickAction().performClick()
         compose.onNodeWithContentDescription("Profile").assertHasClickAction().performClick()
         compose.onNodeWithText(UserCurrency.format(BigDecimal("100000.125"))).performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("Financial Horizon").performScrollTo().performClick()
-        compose.onNodeWithContentDescription("FITNESS · TODAY").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Fitness").performScrollTo().performClick()
         assertEquals(1, horizon)
         assertEquals(1, fitness)
         assertEquals(1, notifications)
@@ -228,7 +231,7 @@ class HomeDashboardDeviceTest {
 
     @Test fun darkDashboardKeepsWorkoutReadable() {
         show(dark = true)
-        assertMatchingCardHeights()
+        assertCardAlignment()
         capture("dark")
         compose.onNodeWithText("No workout recorded today.").performScrollTo().assertIsDisplayed()
     }
@@ -238,15 +241,17 @@ class HomeDashboardDeviceTest {
         compose.onNodeWithText("Abhishek").performScrollTo().assertIsDisplayed()
         capture("large-text-greeting")
         compose.onNodeWithText(UserCurrency.format(BigDecimal("100000.125"))).performScrollTo().assertIsDisplayed()
-        assertMatchingCardHeights()
+        assertCardAlignment()
         capture("large-text")
-        compose.onNodeWithText("Let’s get moving").performScrollTo().assertIsDisplayed()
+        // The dashboard stays scrollable to its later tiles and sections at 2x text.
+        compose.onNodeWithText("A short one still counts.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Plan your week and track meals eaten").performScrollTo().assertIsDisplayed()
     }
 
     @Test fun failedFinanceStillRetriesWithoutOpeningCard() {
         var retries = 0
         show(failure = true, onRetry = { retries++ })
-        assertMatchingCardHeights()
+        assertCardAlignment()
         compose.onNodeWithText("Try again").performScrollTo().performClick()
         assertEquals(1, retries)
         compose.onNodeWithText("No workout recorded today.").performScrollTo().assertIsDisplayed()

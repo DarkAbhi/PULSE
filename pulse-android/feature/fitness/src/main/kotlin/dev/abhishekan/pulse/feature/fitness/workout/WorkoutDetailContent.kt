@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -390,7 +389,7 @@ private fun WorkoutEnergy(amount: String) {
     ) {
         WorkoutMetricIcon(WorkoutSymbol.Energy, colors.warningSoft, colors.warning)
         PulseText(stringResource(R.string.pulse_fitness_workout_energy), style = PulseTextStyle.Caption, color = colors.textSecondary)
-        Text(
+        PulseText(
             buildAnnotatedString {
                 append(formatted)
                 val amountStart = formatted.indexOf(amount)

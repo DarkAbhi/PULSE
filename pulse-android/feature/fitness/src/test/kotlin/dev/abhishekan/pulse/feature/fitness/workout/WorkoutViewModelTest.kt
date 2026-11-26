@@ -12,6 +12,7 @@ import dev.abhishekan.pulse.core.domain.usecase.DeleteWorkout
 import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutDetail
 import dev.abhishekan.pulse.core.domain.usecase.SaveExercise
 import dev.abhishekan.pulse.core.domain.usecase.SearchExercises
+import dev.abhishekan.pulse.core.domain.usecase.UpdateWorkoutClassification
 import dev.abhishekan.pulse.feature.fitness.shared.FitnessTestRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +56,7 @@ class WorkoutViewModelTest {
             DeleteWorkout(repo),
             DeleteExercise(repo),
             saved,
+            UpdateWorkoutClassification(repo),
         ).also {
             models.put("workout", it)
         }

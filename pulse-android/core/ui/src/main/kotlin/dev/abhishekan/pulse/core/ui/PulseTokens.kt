@@ -24,6 +24,11 @@ object PulseShapes {
     val medium = RoundedCornerShape(12.dp)
     val large = RoundedCornerShape(16.dp)
     val extraLarge = RoundedCornerShape(20.dp)
+
+    // Web DESIGN.md "rounded": control 14px, card 28px, hero/gradient tile 32px.
+    val control = RoundedCornerShape(14.dp)
+    val card = RoundedCornerShape(28.dp)
+    val hero = RoundedCornerShape(32.dp)
     val pill = RoundedCornerShape(50)
 }
 
@@ -32,6 +37,9 @@ object PulseElevation {
     val low = 2.dp
     val medium = 4.dp
     val high = 8.dp
+
+    // Web `shadow-card`: raised cards carry a soft shadow and no outline.
+    val card = 6.dp
 }
 
 // Keep existing layout dimensions and callers stable during the theme migration.
@@ -48,8 +56,9 @@ object PulseTokens {
     val bottomSheetMaxWidth = 640.dp
     val readingWidth = 560.dp
     val contentWidth = 1280.dp
-    val cardShape = PulseShapes.large
+    val cardShape = PulseShapes.card
+    val compactCardShape = PulseShapes.control
     val controlShape = PulseShapes.small
-    val elevation = PulseElevation.none
+    val elevation = PulseElevation.card
     const val MOTION_MILLIS = 180
 }

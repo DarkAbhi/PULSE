@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse.feature.fitness.overview
 
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
+import dev.abhishekan.pulse.core.domain.model.WorkoutScheduleDay
 import dev.abhishekan.pulse.core.ui.UiText
 import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
 import dev.abhishekan.pulse.feature.fitness.shared.FitnessReviewState
@@ -16,6 +17,9 @@ data class FitnessUiState(
     val message: UiText? = null,
     val reviewState: FitnessReviewState = FitnessReviewState.None,
     val createdId: Long? = null,
+    val schedule: List<WorkoutScheduleDay> = emptyList(),
+    val scheduleState: FitnessLoadState = FitnessLoadState.Loading(),
+    val savingSchedule: Boolean = false,
 ) {
     val loading get() = loadState is FitnessLoadState.Loading
     val error get() = loadState.error

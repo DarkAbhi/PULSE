@@ -11,4 +11,5 @@ data class WorkoutInfo(
     val durationSeconds: BigDecimal?,
     val calories: BigDecimal?,
     val imported: Boolean,
+    val classification: WorkoutClassification = WorkoutClassification(null),
 )

@@ -16,7 +16,16 @@ class ApplyMealChange(
             }
         return when (change) {
             is MealChange.Save ->
-                change.name.validName(255) &&
+                (
+                    if (change.recipeId != null) {
+                        change.id == null &&
+                            change.recipeId.isNotBlank() &&
+                            change.recipeId.toByteArray().size <= 100 &&
+                            '\u0000' !in change.recipeId
+                    } else {
+                        change.name.validName(255)
+                    }
+                ) &&
                     change.date.year in 1..9999 &&
                     (change.id == null || change.id > 0) &&
                     (change.timeId != null && change.timeId > 0)

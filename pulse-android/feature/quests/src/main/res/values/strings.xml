@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pulse_quests_title">Pulse Quest</string>
+    <string name="pulse_quests_back">Back to Dashboard</string>
+    <string name="pulse_quests_loading">Loading quests…</string>
+    <string name="pulse_quests_goals">Quest goals</string>
+    <string name="pulse_quests_edit_goals">Edit goals</string>
+    <string name="pulse_quests_set_goals">Set goals</string>
+    <string name="pulse_quests_xp">%1$d XP</string>
+    <string name="pulse_quests_hearts">%1$d hearts</string>
+    <string name="pulse_quests_streak">Current streak</string>
+    <plurals name="pulse_quests_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <string name="pulse_quests_streak_description">Finish all quests on a scheduled day.</string>
+    <string name="pulse_quests_week">This week</string>
+    <string name="pulse_quests_selected_week">Quest week</string>
+    <string name="pulse_quests_previous_week">Previous week</string>
+    <string name="pulse_quests_next_week">Next week</string>
+    <string name="pulse_quests_day_status">%1$s, %2$s, %3$d of %4$d completed</string>
+    <string name="pulse_quests_complete">Complete</string>
+    <string name="pulse_quests_pending">Pending</string>
+    <string name="pulse_quests_missed">Missed</string>
+    <string name="pulse_quests_rest">Rest day</string>
+    <string name="pulse_quests_future">Upcoming</string>
+    <string name="pulse_quests_unavailable">Unavailable</string>
+    <string name="pulse_quests_today_xp">Today’s XP</string>
+    <string name="pulse_quests_level">Level %1$d</string>
+    <string name="pulse_quests_xp_progress">%1$d / %2$d XP</string>
+    <string name="pulse_quests_daily">Today’s quests</string>
+    <string name="pulse_quests_completion">%1$d / %2$d completed</string>
+    <string name="pulse_quests_no_daily">No quests scheduled for today.</string>
+    <string name="pulse_quests_setup_message">Choose the daily activities you want to track.</string>
+    <string name="pulse_quests_add_workout_days">Add workout days</string>
+    <string name="pulse_quests_workout">Gym workout</string>
+    <string name="pulse_quests_steps">Daily steps</string>
+    <string name="pulse_quests_activity_rings">Close activity rings</string>
+    <string name="pulse_quests_sleep">Sleep goal</string>
+    <string name="pulse_quests_meals">Log daily meals</string>
+    <string name="pulse_quests_progress_value">%1$d / %2$d</string>
+    <string name="pulse_quests_sleep_progress">%1$s / %2$s</string>
+    <string name="pulse_quests_duration">%1$d h %2$d min</string>
+    <string name="pulse_quests_medals">Streak medals</string>
+    <string name="pulse_quests_best_streak">Best streak %1$d</string>
+    <string name="pulse_quests_medal_earned">%1$d days ✓</string>
+    <string name="pulse_quests_medal_upcoming">%1$d days</string>
+    <string name="pulse_quests_medal_next">%1$d days · Next</string>
+    <string name="pulse_quests_week_progress">Your progress</string>
+    <string name="pulse_quests_week_active">%1$d / 7 days active</string>
+    <string name="pulse_quests_settings_effective">These goals take effect %1$s.</string>
+    <string name="pulse_quests_step_target">Daily step goal</string>
+    <string name="pulse_quests_step_hint">Enter a goal from 1 to 100,000.</string>
+    <string name="pulse_quests_sleep_hint">Enter hours or hours:minutes, for example 8 or 7:30.</string>
+    <string name="pulse_quests_sleep_error">Use a goal from 0:01 to 24:00.</string>
+</resources>

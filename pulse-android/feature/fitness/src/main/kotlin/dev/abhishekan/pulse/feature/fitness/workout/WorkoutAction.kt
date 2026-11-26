@@ -1,6 +1,7 @@
 package dev.abhishekan.pulse.feature.fitness.workout
 
 import dev.abhishekan.pulse.core.domain.model.CatalogExercise
+import dev.abhishekan.pulse.core.domain.model.WorkoutClassification
 
 sealed interface WorkoutAction {
     data object Refresh : WorkoutAction
@@ -45,6 +46,16 @@ sealed interface WorkoutAction {
 
     data class RememberAlias(
         val value: Boolean,
+    ) : WorkoutAction
+
+    data class UpdateClassification(
+        val classification: WorkoutClassification,
+    ) : WorkoutAction
+
+    data object QueueExercise : WorkoutAction
+
+    data class RemoveQueuedExercise(
+        val index: Int,
     ) : WorkoutAction
 
     data object SaveExercise : WorkoutAction

@@ -1,8 +1,12 @@
 package dev.abhishekan.pulse.feature.home
 
 import dev.abhishekan.pulse.core.domain.model.Failure
+import dev.abhishekan.pulse.core.domain.model.FitnessToday
 import dev.abhishekan.pulse.core.domain.model.Horizon
 import dev.abhishekan.pulse.core.domain.model.Profile
+import dev.abhishekan.pulse.core.domain.model.QuestActivity
+import dev.abhishekan.pulse.core.domain.model.QuestSettingsView
+import dev.abhishekan.pulse.core.domain.model.RecentActivityEntry
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
 
 sealed interface Section<out T> {
@@ -47,6 +51,10 @@ data class HomeUiState(
     val profile: Section<Profile> = Section.Loading,
     val workout: Section<WorkoutToday> = Section.Loading,
     val horizon: Section<Horizon> = Section.Loading,
+    val fitnessToday: Section<FitnessToday> = Section.Loading,
+    val quests: Section<QuestActivity> = Section.Loading,
+    val questSettings: Section<QuestSettingsView> = Section.Loading,
+    val recentActivity: Section<List<RecentActivityEntry>> = Section.Loading,
     val notificationCount: Int = 0,
 ) {
     val isInitialLoading: Boolean

@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -48,6 +46,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseNumberField
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.feature.fitness.R
@@ -282,15 +281,14 @@ private fun SetNumberField(
 ) {
     // The visible labels belong to the table. Each editor retains a set-specific TalkBack label.
     val colors = PulseTheme.colors
-    OutlinedTextField(
+    PulseNumberField(
         value,
         onValueChange,
-        modifier.semantics { contentDescription = label },
+        label,
+        modifier,
         enabled = enabled,
-        singleLine = true,
         keyboardOptions = keyboardOptions,
         keyboardActions = keyboardActions,
-        textStyle = PulseTheme.typography.title2.copy(textAlign = TextAlign.Center, fontFeatureSettings = "tnum"),
         suffix =
             if (showUnit) {
                 {
@@ -304,19 +302,5 @@ private fun SetNumberField(
             } else {
                 null
             },
-        shape = PulseTheme.shapes.medium,
-        colors =
-            OutlinedTextFieldDefaults.colors(
-                focusedTextColor = colors.textPrimary,
-                unfocusedTextColor = colors.textPrimary,
-                disabledTextColor = colors.textSecondary,
-                focusedContainerColor = colors.background,
-                unfocusedContainerColor = colors.background,
-                disabledContainerColor = colors.surfaceMuted,
-                focusedBorderColor = colors.action,
-                unfocusedBorderColor = colors.outline,
-                disabledBorderColor = colors.border,
-                cursorColor = colors.action,
-            ),
     )
 }

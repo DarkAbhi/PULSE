@@ -83,6 +83,7 @@ internal class MealPlanViewModel(
             is MealPlanAction.SelectDate -> select(action.date)
             is MealPlanAction.ShiftWeek -> shift(action.weeks)
             MealPlanAction.AddMeal -> edit(MealDraft(date = state.value.selected.toString()))
+            is MealPlanAction.AddMealTo -> edit(MealDraft(date = state.value.selected.toString(), timeId = action.time.id))
             is MealPlanAction.EditMeal -> edit(MealDraft.edit(action.meal))
             MealPlanAction.AddMealTime -> edit(MealDraft(timeForm = true))
             is MealPlanAction.UpdateDraft -> update(action.draft)
@@ -179,6 +180,11 @@ internal class MealPlanViewModel(
         resume()
         select(calendar.today())
     }
+
+    suspend fun searchRecipes(
+        search: String,
+        page: Int,
+    ) = mealPlan.recipes(search, page)
 
     private fun edit(draft: MealDraft) {
         if (state.value.canWrite &&

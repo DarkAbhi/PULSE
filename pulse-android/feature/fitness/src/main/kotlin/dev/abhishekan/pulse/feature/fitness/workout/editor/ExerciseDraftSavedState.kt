@@ -17,7 +17,8 @@ internal class ExerciseDraftSavedState(
                 catalogId = saved["catalogId"],
                 rememberAlias = saved["alias"] ?: false,
             )
-        return ExerciseEditorState(draft, dirty = saved["dirty"] ?: (draft != ExerciseDraft()))
+        val queued = saved.get<ArrayList<ArrayList<String>>>("queued").orEmpty().mapNotNull { it.toDraft() }
+        return ExerciseEditorState(draft, dirty = saved["dirty"] ?: (draft != ExerciseDraft()), queued = queued)
     }
 
     fun save(
@@ -34,8 +35,32 @@ internal class ExerciseDraftSavedState(
         saved["editing"] = true
     }
 
+    fun saveQueue(queue: List<ExerciseDraft>) {
+        saved["queued"] =
+            ArrayList(
+                queue.map { draft ->
+                    arrayListOf(draft.name, draft.catalogId.orEmpty(), draft.rememberAlias.toString()).apply {
+                        draft.sets.forEach { set ->
+                            add(set.reps)
+                            add(set.weight)
+                        }
+                    }
+                },
+            )
+    }
+
+    private fun List<String>.toDraft(): ExerciseDraft? {
+        if (size < 5 || (size - 3) % 2 != 0) return null
+        return ExerciseDraft(
+            name = this[0],
+            sets = drop(3).chunked(2).map { SetDraft(it[0], it[1]) },
+            catalogId = this[1].takeIf(String::isNotBlank),
+            rememberAlias = this[2].toBoolean(),
+        )
+    }
+
     fun clear() {
-        listOf("editing", "dirty", "exerciseId", "name", "reps", "weights", "catalogId", "alias").forEach {
+        listOf("editing", "dirty", "exerciseId", "name", "reps", "weights", "catalogId", "alias", "queued").forEach {
             saved.remove<Any?>(it)
         }
     }

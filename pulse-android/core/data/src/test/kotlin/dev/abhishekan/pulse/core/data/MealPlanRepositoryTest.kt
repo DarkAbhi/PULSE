@@ -168,6 +168,36 @@ class MealPlanRepositoryTest {
             }
         }
 
+    @Test fun recipeSearchAndCreationUseTheCatalogContract() =
+        runTest {
+            Harness().use { h ->
+                h.response =
+                    """
+                    {
+                      "recipes": [
+                        {"id":"rice-bowl","name":"Rice bowl","dish_type":"Main","is_ready_to_eat":false,"ready_in_minutes":15}
+                      ],
+                      "has_more":true
+                    }
+                    """.trimIndent()
+
+                val page = (h.repo.recipes(" Rice ", 2) as Outcome.Success).value
+                assertTrue(page.hasMore)
+                val recipe = page.recipes.single()
+                assertEquals("rice-bowl", recipe.id)
+                assertEquals(15, recipe.readyInMinutes)
+                assertEquals("GET https://meals.test/api/meal-recipes?q=Rice&page=2", h.requests.single().first)
+
+                assertEquals(Outcome.Success(Unit), h.repo.apply(MealChange.Save(null, start, recipe.name, 2, recipe.id)))
+                val (request, body) = h.requests.last()
+                assertEquals("POST https://meals.test/api/meal-plans", request)
+                val payload = Json.parseToJsonElement(body).jsonObject
+                assertEquals("rice-bowl", payload.getValue("recipe_id").jsonPrimitive.content)
+                assertEquals("", payload.getValue("name").jsonPrimitive.content)
+                assertEquals(2, payload.getValue("meal_time_id").jsonPrimitive.int)
+            }
+        }
+
     @Test fun malformedMissingFieldsOutOfRangeDatesAndBadTimesFailSafely() =
         runTest {
             Harness().use { h ->

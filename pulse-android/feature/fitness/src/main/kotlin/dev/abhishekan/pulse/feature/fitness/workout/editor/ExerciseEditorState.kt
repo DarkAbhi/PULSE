@@ -41,4 +41,8 @@ data class ExerciseEditorState(
     val searching: Boolean = false,
     val searchError: UiText? = null,
     val selectedCatalog: CatalogExercise? = null,
-)
+    val queued: List<ExerciseDraft> = emptyList(),
+) {
+    val canQueue: Boolean get() = draft.exerciseId == null && draft.issue == null && queued.size < 19
+    val canSave: Boolean get() = draft.issue == null || (queued.isNotEmpty() && draft == ExerciseDraft())
+}

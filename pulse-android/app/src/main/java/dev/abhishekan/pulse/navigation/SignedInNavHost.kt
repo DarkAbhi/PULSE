@@ -28,6 +28,7 @@ import dev.abhishekan.pulse.feature.mealplan.MealPlanRoute
 import dev.abhishekan.pulse.feature.notifications.NotificationsRoute
 import dev.abhishekan.pulse.feature.profile.ProfileRoute
 import dev.abhishekan.pulse.feature.profile.ProfileSetupPrompt
+import dev.abhishekan.pulse.feature.quests.QuestRoute
 import dev.abhishekan.pulse.shell.OnboardingPrompt
 import dev.abhishekan.pulse.shell.ShellState
 
@@ -99,6 +100,9 @@ internal fun SignedInNavHost(
                 { selectTab(AppDestination.Horizon) },
                 onFitness = { selectTab(AppDestination.Fitness) },
                 onNotifications = { nav.navigateSingleTop(AppDestination.Notifications.path) },
+                onGarage = { selectTab(AppDestination.Garage) },
+                onMealPlan = { selectTab(AppDestination.MealPlan) },
+                onQuests = { if (nav.currentBackStackEntry == home) nav.navigateSingleTop(AppDestination.Quests.path) },
                 onProfile =
                     if (tablet) {
                         null
@@ -117,6 +121,9 @@ internal fun SignedInNavHost(
                     nav.navigateSingleTop("${AppDestination.Profile.path}?editName=true")
                 }, shell::dismissOnboarding)
             }
+        }
+        composable(AppDestination.Quests.route) {
+            QuestRoute(onBack = { nav.popBackStack() }, onWorkoutDays = { selectTab(AppDestination.Fitness) })
         }
         composable(AppDestination.MealPlan.route) {
             MealPlanRoute()

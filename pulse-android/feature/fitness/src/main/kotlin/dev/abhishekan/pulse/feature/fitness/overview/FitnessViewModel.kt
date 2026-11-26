@@ -47,7 +47,12 @@ class FitnessViewModel(
             is FitnessAction.SelectDate -> select(action.date)
             is FitnessAction.ShiftMonth -> shiftMonth(action.offset)
             FitnessAction.SelectToday -> selectToday()
-            FitnessAction.Refresh -> refresh()
+            FitnessAction.Refresh -> {
+                refresh()
+                refreshSchedule()
+            }
+            FitnessAction.RefreshSchedule -> refreshSchedule()
+            is FitnessAction.SaveScheduleDay -> saveScheduleDay(action)
             FitnessAction.RecordWorkout -> recordSelected()
             FitnessAction.AcknowledgeReview -> acknowledgeReview()
             FitnessAction.Resume -> resume()
@@ -62,6 +67,7 @@ class FitnessViewModel(
     private var selectionVersion = 0L
     private var firstLoad = saved.get<String>("selected") == null
     private var loadJob: Job? = null
+    private var scheduleJob: Job? = null
     private var hasResumed = false
 
     init {
@@ -115,7 +121,39 @@ class FitnessViewModel(
     }
 
     private fun resume() {
-        if (hasResumed) refresh() else hasResumed = true
+        if (hasResumed) {
+            refresh()
+            refreshSchedule()
+        } else {
+            hasResumed = true
+        }
+    }
+
+    private fun refreshSchedule() {
+        if (state.value.savingSchedule || scheduleJob?.isActive == true) return
+        scheduleJob = viewModelScope.launch { loadSchedule() }
+    }
+
+    private suspend fun loadSchedule() {
+        state.update { it.copy(scheduleState = FitnessLoadState.Loading()) }
+        when (val result = fitness.schedule()) {
+            is Outcome.Success -> state.update { it.copy(schedule = result.value, scheduleState = FitnessLoadState.Ready) }
+            is Outcome.Error -> state.update { it.copy(scheduleState = FitnessLoadState.Failed(result.failure)) }
+        }
+    }
+
+    private fun saveScheduleDay(action: FitnessAction.SaveScheduleDay) {
+        if (state.value.savingSchedule || !action.classification.validFocus) return
+        scheduleJob?.cancel()
+        state.update { it.copy(savingSchedule = true) }
+        scheduleJob =
+            viewModelScope.launch {
+                when (val result = fitness.saveScheduleDay(action.day, action.classification)) {
+                    is Outcome.Success -> loadSchedule()
+                    is Outcome.Error -> state.update { it.copy(scheduleState = FitnessLoadState.Failed(result.failure)) }
+                }
+                state.update { it.copy(savingSchedule = false) }
+            }
     }
 
     private fun refresh(force: Boolean = false) {

@@ -22,12 +22,26 @@ data class PlannedMeal(
     val consumed: Boolean,
 )
 
+data class MealRecipe(
+    val id: String,
+    val name: String,
+    val dishType: String,
+    val readyToEat: Boolean,
+    val readyInMinutes: Int?,
+)
+
+data class MealRecipePage(
+    val recipes: List<MealRecipe>,
+    val hasMore: Boolean,
+)
+
 sealed interface MealChange {
     data class Save(
         val id: Long?,
         val date: LocalDate,
         val name: String,
         val timeId: Long?,
+        val recipeId: String? = null,
     ) : MealChange
 
     data class Delete(

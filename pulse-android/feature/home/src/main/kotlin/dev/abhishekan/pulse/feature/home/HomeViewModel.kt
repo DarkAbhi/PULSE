@@ -4,10 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.UserTimeZone
+import dev.abhishekan.pulse.core.domain.repository.DashboardFeedRepository
 import dev.abhishekan.pulse.core.domain.repository.DashboardRepository
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import dev.abhishekan.pulse.core.domain.repository.HorizonRepository
 import dev.abhishekan.pulse.core.domain.repository.NotificationsRepository
+import dev.abhishekan.pulse.core.domain.repository.QuestRepository
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -28,6 +30,8 @@ class HomeViewModel(
     private val fitness: FitnessRepository,
     private val horizon: HorizonRepository,
     private val notifications: NotificationsRepository,
+    private val feed: DashboardFeedRepository,
+    private val quests: QuestRepository,
     private val clock: Clock = Clock.systemUTC(),
 ) : ViewModel() {
     // Align the header to each minute; stop ticking when the route has no collectors.
@@ -49,7 +53,15 @@ class HomeViewModel(
     init {
         observeChanges(dashboard.changes) { refresh(HomeSection.Profile, replaceInFlight = true) }
         observeChanges(horizon.changes) { refresh(HomeSection.Horizon, replaceInFlight = true) }
-        observeChanges(fitness.changes) { refresh(HomeSection.Workout, replaceInFlight = true) }
+        observeChanges(fitness.changes) {
+            refresh(HomeSection.Workout, replaceInFlight = true)
+            refresh(HomeSection.FitnessToday, replaceInFlight = true)
+            refresh(HomeSection.RecentActivity, replaceInFlight = true)
+        }
+        observeChanges(quests.changes) {
+            refresh(HomeSection.Quests, replaceInFlight = true)
+            refresh(HomeSection.QuestSettings, replaceInFlight = true)
+        }
         HomeSection.entries.forEach { refresh(it) }
         refreshNotificationCount()
     }
@@ -73,7 +85,12 @@ class HomeViewModel(
                 HomeSection.entries.forEach { refresh(it, replaceInFlight = true) }
             }
             HomeAction.Resumed -> {
+                // Synced activity, quest progress and the feed can change while the app is away.
                 refresh(HomeSection.Workout)
+                refresh(HomeSection.FitnessToday)
+                refresh(HomeSection.Quests)
+                refresh(HomeSection.QuestSettings)
+                refresh(HomeSection.RecentActivity)
                 refreshNotificationCount()
             }
         }
@@ -110,6 +127,22 @@ class HomeViewModel(
             HomeSection.Horizon ->
                 load(section, replaceInFlight, dashboard::horizon, { false }, HomeUiState::horizon) { state, value ->
                     state.copy(horizon = value)
+                }
+            HomeSection.FitnessToday ->
+                load(section, replaceInFlight, feed::fitnessToday, { false }, HomeUiState::fitnessToday) { state, value ->
+                    state.copy(fitnessToday = value)
+                }
+            HomeSection.Quests ->
+                load(section, replaceInFlight, quests::activity, { false }, HomeUiState::quests) { state, value ->
+                    state.copy(quests = value)
+                }
+            HomeSection.QuestSettings ->
+                load(section, replaceInFlight, quests::settings, { false }, HomeUiState::questSettings) { state, value ->
+                    state.copy(questSettings = value)
+                }
+            HomeSection.RecentActivity ->
+                load(section, replaceInFlight, feed::recentActivity, { it.isEmpty() }, HomeUiState::recentActivity) { state, value ->
+                    state.copy(recentActivity = value)
                 }
         }
     }

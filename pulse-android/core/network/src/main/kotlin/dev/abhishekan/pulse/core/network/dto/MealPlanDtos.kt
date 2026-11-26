@@ -13,6 +13,21 @@ data class MealTimeDto(
 )
 
 @Serializable
+data class MealRecipeDto(
+    val id: String,
+    val name: String,
+    @SerialName("dish_type") val dishType: String,
+    @SerialName("is_ready_to_eat") val readyToEat: Boolean,
+    @SerialName("ready_in_minutes") val readyInMinutes: Int? = null,
+)
+
+@Serializable
+data class MealRecipePageDto(
+    val recipes: List<MealRecipeDto>,
+    @SerialName("has_more") val hasMore: Boolean,
+)
+
+@Serializable
 data class PlannedMealDto(
     val id: Long,
     val date: String,

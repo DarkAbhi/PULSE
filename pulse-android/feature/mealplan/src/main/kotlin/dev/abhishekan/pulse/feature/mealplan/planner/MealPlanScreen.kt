@@ -33,6 +33,8 @@ import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.MealPreferences
+import dev.abhishekan.pulse.core.domain.model.MealRecipePage
+import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.PlannedMeal
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
@@ -63,6 +65,7 @@ internal fun MealPlanScreen(
     onPreferences: (() -> Unit)? = null,
     resolvedElsewhere: Boolean = false,
     preferences: MealPreferences? = null,
+    searchRecipes: suspend (String, Int) -> Outcome<MealRecipePage>,
 ) {
     val draft = state.draft
     val selectableTimes =
@@ -166,6 +169,7 @@ internal fun MealPlanScreen(
                                     { onAction(MealPlanAction.UpdateDraft(it)) },
                                     save,
                                     flat = size != PulseWindowSize.Compact,
+                                    searchRecipes = searchRecipes,
                                 )
                             }
                         } else if (state.draft?.timeForm == true) {
@@ -188,6 +192,7 @@ internal fun MealPlanScreen(
                                 onDelete = { deletion = it },
                                 onPreferences = onPreferences,
                                 resolvedElsewhere = resolvedElsewhere,
+                                preferences = preferences,
                             )
                         }
                     }
@@ -281,6 +286,7 @@ private fun MealPlannerContent(
     onDelete: (PlannedMeal) -> Unit,
     onPreferences: (() -> Unit)?,
     resolvedElsewhere: Boolean,
+    preferences: MealPreferences?,
 ) {
     val canNavigate = state.canWrite && state.draft == null
     MealCalendar(
@@ -293,6 +299,8 @@ private fun MealPlannerContent(
         { onAction(MealPlanAction.SelectDate(it)) },
         { onAction(MealPlanAction.Today) },
         onPreferences = onPreferences,
+        meals = state.meals.value.orEmpty(),
+        times = state.times.value.orEmpty(),
     )
     if (resolvedElsewhere) PulseText(stringResource(R.string.meal_setup_elsewhere))
     state.meals.error?.let { PulseErrorState(it.message, { onAction(MealPlanAction.RefreshMeals) }) }
@@ -307,6 +315,9 @@ private fun MealPlannerContent(
             { onAction(MealPlanAction.ToggleConsumed(it)) },
             onDelete,
             Modifier.fillMaxWidth(),
+            times = state.times.value.orEmpty(),
+            preferences = preferences,
+            onAdd = { onAction(MealPlanAction.AddMealTo(it)) },
         )
     }
 }

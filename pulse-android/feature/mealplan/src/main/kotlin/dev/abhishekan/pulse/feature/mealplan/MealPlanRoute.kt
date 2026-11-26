@@ -117,6 +117,7 @@ fun MealPlanRoute() {
                         { onboarding.onAction(MealOnboardingAction.EditPreferences) },
                         preferences.resolvedElsewhere,
                         preferences.record?.preferences,
+                        searchRecipes = viewModel::searchRecipes,
                     )
                 }
             }

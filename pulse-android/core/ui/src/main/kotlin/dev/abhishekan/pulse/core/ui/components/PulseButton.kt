@@ -1,5 +1,6 @@
 package dev.abhishekan.pulse.core.ui.components
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,17 +21,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.R
 
-enum class PulseButtonVariant { Primary, Secondary, Tertiary, Destructive, Soft, DestructiveSoft }
+/**
+ * Mirrors the web `PulseButton` variants: Primary (gradient fill in light mode), Secondary
+ * (muted fill), Outline (divider border), Tertiary (web `ghost`), Destructive, plus the
+ * Android-only tonal Soft and DestructiveSoft fills.
+ */
+enum class PulseButtonVariant { Primary, Secondary, Outline, Tertiary, Destructive, Soft, DestructiveSoft }
 
 /** Presentation is independent of the action's visual emphasis ([PulseButtonVariant]). */
 enum class PulseButtonStyle { Standard, Text, Icon }
@@ -108,7 +118,7 @@ fun PulseButton(
             onClick,
             actionModifier.defaultMinSize(minHeight = PulseTokens.target),
             enabled = enabled && !loading,
-            shape = PulseTheme.shapes.small,
+            shape = PulseTheme.shapes.pill,
             colors =
                 ButtonDefaults.textButtonColors(
                     contentColor = if (variant == PulseButtonVariant.Destructive) colors.error else colors.action,
@@ -120,11 +130,28 @@ fun PulseButton(
     }
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
+    val shape = PulseTheme.shapes.pill
+    val gradient =
+        if (variant == PulseButtonVariant.Primary && !PulseTheme.isDark) {
+            Brush.horizontalGradient(listOf(colors.gradientStart, colors.gradientEnd))
+        } else {
+            null
+        }
     val container =
         when (variant) {
-            PulseButtonVariant.Primary -> if (pressed) colors.primaryPressed else colors.primary
-            PulseButtonVariant.Secondary -> colors.surface
-            PulseButtonVariant.Tertiary -> Color.Transparent
+            PulseButtonVariant.Primary ->
+                if (gradient !=
+                    null
+                ) {
+                    Color.Transparent
+                } else if (pressed) {
+                    colors.primaryPressed
+                } else {
+                    colors.primary
+                }
+            PulseButtonVariant.Secondary -> if (pressed) colors.surfaceStrong else colors.surfaceMuted
+            PulseButtonVariant.Outline -> if (pressed) colors.chip else Color.Transparent
+            PulseButtonVariant.Tertiary -> if (pressed) colors.primary.copy(alpha = 0.1f) else Color.Transparent
             PulseButtonVariant.Destructive -> colors.error
             PulseButtonVariant.Soft -> colors.primarySoft
             PulseButtonVariant.DestructiveSoft -> colors.errorSoft
@@ -132,26 +159,37 @@ fun PulseButton(
     val foreground =
         when (variant) {
             PulseButtonVariant.Primary -> colors.onPrimary
+            PulseButtonVariant.Secondary, PulseButtonVariant.Outline -> colors.textPrimary
             PulseButtonVariant.Destructive -> colors.background
             PulseButtonVariant.Soft -> colors.onPrimarySoft
             PulseButtonVariant.DestructiveSoft -> colors.error
-            else -> colors.action
+            PulseButtonVariant.Tertiary -> colors.action
         }
+    val active = enabled && !loading
+    var buttonModifier = actionModifier.defaultMinSize(minHeight = PulseTokens.target)
+    // Web: disabled buttons keep their look at 50% opacity.
+    if (!active) buttonModifier = buttonModifier.alpha(DISABLED_ALPHA)
+    if (gradient != null) {
+        buttonModifier =
+            buttonModifier.clip(shape).background(gradient).then(
+                if (pressed) Modifier.background(Color.Black.copy(alpha = 0.05f)) else Modifier,
+            )
+    }
     Button(
         onClick,
-        actionModifier.defaultMinSize(minHeight = PulseTokens.target),
-        enabled = enabled && !loading,
-        shape = PulseTheme.shapes.small,
+        buttonModifier,
+        enabled = active,
+        shape = shape,
         interactionSource = interaction,
         colors =
             ButtonDefaults.buttonColors(
                 containerColor = container,
                 contentColor = foreground,
-                disabledContainerColor = colors.surfaceMuted,
-                disabledContentColor = colors.textSecondary,
+                disabledContainerColor = container,
+                disabledContentColor = foreground,
             ),
         contentPadding = contentPadding,
-        border = if (variant == PulseButtonVariant.Secondary) BorderStroke(PulseTokens.focusWidth / 2, colors.outline) else null,
+        border = if (variant == PulseButtonVariant.Outline) BorderStroke(OUTLINE_WIDTH, colors.divider) else null,
         elevation =
             ButtonDefaults.buttonElevation(
                 defaultElevation = PulseTheme.elevation.none,
@@ -162,3 +200,6 @@ fun PulseButton(
             ),
     ) { content() }
 }
+
+private const val DISABLED_ALPHA = 0.5f
+private val OUTLINE_WIDTH = 1.5.dp

@@ -40,6 +40,7 @@ import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseSpacing
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseCard
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseExtendedFloatingActionButton
@@ -52,7 +53,9 @@ import dev.abhishekan.pulse.core.ui.patterns.PulseLoadingState
 import dev.abhishekan.pulse.core.ui.rememberPullRefreshTracker
 import dev.abhishekan.pulse.feature.fitness.R
 import dev.abhishekan.pulse.feature.fitness.shared.MutationReview
+import dev.abhishekan.pulse.feature.fitness.shared.WorkoutClassificationDialog
 import dev.abhishekan.pulse.feature.fitness.shared.fitnessFailureMessage
+import dev.abhishekan.pulse.feature.fitness.shared.label
 import java.time.ZoneId
 
 @Composable
@@ -66,6 +69,7 @@ fun WorkoutScreen(
     var confirmation by rememberSaveable(stateSaver = DeleteConfirmationSaver) {
         mutableStateOf<DeleteConfirmation>(DeleteConfirmation.None)
     }
+    var showClassification by rememberSaveable { mutableStateOf(false) }
     val detail = state.detail
     val exercises = detail?.exercises.orEmpty()
     val firstExerciseId = exercises.firstOrNull()?.id
@@ -159,6 +163,17 @@ fun WorkoutScreen(
                     }
                 }
                 if (detail != null) {
+                    item(key = "workout-classification", contentType = "classification") {
+                        val type =
+                            detail.info.classification.type
+                                .label()
+                        PulseButton(
+                            stringResource(R.string.pulse_fitness_workout_classification, type),
+                            { showClassification = true },
+                            enabled = state.canChangeWorkout,
+                            style = PulseButtonStyle.Text,
+                        )
+                    }
                     workoutDetailItems(
                         detail = detail,
                         timeZone = timeZone,
@@ -201,6 +216,18 @@ fun WorkoutScreen(
                 modifier = Modifier.align(Alignment.TopCenter),
             )
         }
+    }
+    if (showClassification && detail != null && state.canChangeWorkout) {
+        WorkoutClassificationDialog(
+            title = stringResource(R.string.pulse_fitness_workout_type),
+            initial = detail.info.classification,
+            allowRest = false,
+            onSave = {
+                onAction(WorkoutAction.UpdateClassification(it))
+                showClassification = false
+            },
+            onDismiss = { showClassification = false },
+        )
     }
     WorkoutDeleteDialog(confirmation, onAction, onDismiss = { confirmation = DeleteConfirmation.None })
 }

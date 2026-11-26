@@ -38,6 +38,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pulseDescription
 import dev.abhishekan.pulse.feature.fitness.R
+import dev.abhishekan.pulse.feature.fitness.shared.label
 import java.time.format.DateTimeFormatter
 import dev.abhishekan.pulse.core.ui.R as CoreUiR
 
@@ -152,6 +153,19 @@ internal fun SelectedDay(
                                 style = PulseTextStyle.Label,
                             )
                             PulseText(workout.timeLabel, color = PulseTheme.colors.textSecondary)
+                            workout.classification.type?.let {
+                                val focus = workout.classification.focus.takeIf(String::isNotBlank)
+                                PulseText(
+                                    listOfNotNull(it.label(), focus).joinToString(" · "),
+                                    color = PulseTheme.colors.textSecondary,
+                                    style = PulseTextStyle.Caption,
+                                )
+                            }
+                            workout.durationSeconds?.takeIf { it > 0 }?.let {
+                                val minutes = (it / 60).coerceIn(1, Int.MAX_VALUE.toLong()).toInt()
+                                val duration = pluralStringResource(R.plurals.pulse_fitness_duration_minutes, minutes, minutes)
+                                PulseText(duration, color = PulseTheme.colors.textSecondary, style = PulseTextStyle.Caption)
+                            }
                         }
                         if (!largeText) FitnessGlyph(FitnessSymbol.Next, PulseTheme.colors.textSecondary)
                     }

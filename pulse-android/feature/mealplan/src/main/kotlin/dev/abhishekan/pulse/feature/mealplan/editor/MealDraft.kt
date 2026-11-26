@@ -14,6 +14,7 @@ internal data class MealDraft(
     val start: String = "16:00",
     val end: String = "17:00",
     val dirty: Boolean = false,
+    val recipeId: String? = null,
 ) {
     fun saved() =
         arrayListOf(
@@ -26,13 +27,14 @@ internal data class MealDraft(
             start,
             end,
             dirty.toString(),
+            recipeId.orEmpty(),
         )
 
     fun change(): MealChange =
         if (timeForm) {
             MealChange.CreateTime(name, LocalTime.parse(start), LocalTime.parse(end))
         } else {
-            MealChange.Save(id, LocalDate.parse(date), name, timeId)
+            MealChange.Save(id, LocalDate.parse(date), name, timeId, recipeId)
         }
 
     companion object {
@@ -47,6 +49,7 @@ internal data class MealDraft(
                 v[6],
                 v[7],
                 v[8].toBoolean(),
+                v.getOrNull(9)?.takeIf(String::isNotBlank),
             )
 
         fun edit(meal: PlannedMeal) =

@@ -99,4 +99,23 @@
         <item quantity="one">%1$d slot</item>
         <item quantity="other">%1$d slots</item>
     </plurals>
+    <string name="pulse_mealplan_recipe_catalog">Recipe catalog</string>
+    <string name="pulse_mealplan_change_recipe">Change recipe</string>
+    <string name="pulse_mealplan_search_recipes">Search recipes</string>
+    <string name="pulse_mealplan_loading_recipes">Loading recipes…</string>
+    <string name="pulse_mealplan_recipes_unavailable">Could not load recipes.</string>
+    <string name="pulse_mealplan_retry_recipes">Retry</string>
+    <string name="pulse_mealplan_no_recipes">No recipes found.</string>
+    <string name="pulse_mealplan_previous_recipe_page">Previous</string>
+    <string name="pulse_mealplan_next_recipe_page">Next</string>
+    <string name="pulse_mealplan_recipe_page">Page %1$d</string>
+    <string name="pulse_mealplan_recipe_ready">Ready to eat</string>
+    <string name="pulse_mealplan_recipe_minutes">%1$d min</string>
+    <plurals name="pulse_mealplan_day_with_meals">
+        <item quantity="one">%1$s, %2$d meal planned</item>
+        <item quantity="other">%1$s, %2$d meals planned</item>
+    </plurals>
+    <string name="pulse_mealplan_meals_eaten">%1$d of %2$d meals eaten</string>
+    <string name="pulse_mealplan_nothing_planned">Nothing planned</string>
+    <string name="pulse_mealplan_add_to_slot">Add meal to %1$s</string>
 </resources>

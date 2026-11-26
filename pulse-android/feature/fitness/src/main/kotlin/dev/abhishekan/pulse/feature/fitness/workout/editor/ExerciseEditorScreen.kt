@@ -2,6 +2,7 @@ package dev.abhishekan.pulse.feature.fitness.workout.editor
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,11 +25,15 @@ import dev.abhishekan.pulse.core.ui.PulseAdaptiveLayout
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
+import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseHorizontalDivider
+import dev.abhishekan.pulse.core.ui.components.PulseText
+import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
 import dev.abhishekan.pulse.core.ui.patterns.PulseFormLayout
+import dev.abhishekan.pulse.feature.fitness.R
 import dev.abhishekan.pulse.feature.fitness.shared.MutationReview
 import dev.abhishekan.pulse.feature.fitness.shared.fitnessFailureMessage
 import dev.abhishekan.pulse.feature.fitness.workout.ServerExercises
@@ -79,7 +84,7 @@ fun ExerciseEditorScreen(
                                 onAction(WorkoutAction.SaveExercise)
                             },
                             Modifier.weight(3f).fillMaxHeight().heightIn(min = PulseTokens.target),
-                            enabled = editor.draft.issue == null && !state.needsReview && !busy,
+                            enabled = editor.canSave && !state.needsReview && !busy,
                             loading = state.busy || state.loading,
                             contentPadding = PaddingValues(PulseTokens.small),
                             textAlign = TextAlign.Center,
@@ -99,7 +104,31 @@ fun ExerciseEditorScreen(
                     )
                     state.detail?.let { ServerExercises(it.exercises) }
                 }
+                if (editor.queued.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.tiny)) {
+                        PulseText(stringResource(R.string.pulse_fitness_queued_exercises), style = PulseTextStyle.Label)
+                        editor.queued.forEachIndexed { index, draft ->
+                            PulseButton(
+                                stringResource(R.string.pulse_fitness_remove_queued_exercise, draft.name),
+                                { onAction(WorkoutAction.RemoveQueuedExercise(index)) },
+                                enabled = !busy && !state.needsReview,
+                                style = PulseButtonStyle.Text,
+                            )
+                        }
+                    }
+                }
                 ExerciseEditor(editor, busy, onAction)
+                if (editor.draft.exerciseId == null) {
+                    PulseButton(
+                        stringResource(R.string.pulse_fitness_queue_exercise),
+                        {
+                            keyboard?.hide()
+                            onAction(WorkoutAction.QueueExercise)
+                        },
+                        enabled = editor.canQueue && !busy && !state.needsReview,
+                        variant = PulseButtonVariant.Secondary,
+                    )
+                }
             }
         }
     }

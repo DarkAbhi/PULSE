@@ -62,6 +62,8 @@ class DesignSystemTest {
                 contrast(c.success, c.surface) >= 3f,
             )
             assertTrue("Field outlines must meet 3:1", contrast(c.outline, c.surface) >= 3f)
+            assertTrue("Filled field outlines must meet 3:1", contrast(c.outline, c.surfaceMuted) >= 3f)
+            assertTrue("Focus ring must meet 3:1", contrast(c.ring, c.surface) >= 3f)
         }
     }
 
@@ -117,12 +119,13 @@ class DesignSystemTest {
                 assertTrue(it.lineHeight >= it.fontSize)
                 assertTrue(it.fontFamily != null)
                 assertTrue(it.fontWeight != null)
-                assertTrue(it.letterSpacing.isSp)
+                assertTrue(it.letterSpacing.isSp || it.letterSpacing.isEm)
             }
         }
         assertTrue(PulseTokens.target >= 48.dp)
-        assertEquals(PulseShapes.large, PulseTokens.cardShape)
-        assertEquals(PulseElevation.none, PulseTokens.elevation)
+        assertEquals(PulseShapes.card, PulseTokens.cardShape)
+        assertEquals(PulseShapes.control, PulseTokens.compactCardShape)
+        assertEquals(PulseElevation.card, PulseTokens.elevation)
     }
 
     private fun contrast(

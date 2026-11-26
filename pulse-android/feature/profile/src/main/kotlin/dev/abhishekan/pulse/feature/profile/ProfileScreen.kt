@@ -68,6 +68,7 @@ internal fun ProfileScreen(
     onTheme: (ThemePreference) -> Unit,
     onLogout: () -> Unit,
     onAction: (ProfileAction) -> Unit,
+    dashboardSettings: @Composable () -> Unit = {},
     debugContent: @Composable () -> Unit,
 ) {
     var dialog by rememberSaveable(stateSaver = ProfileDialogSaver) { mutableStateOf<ProfileDialog?>(null) }
@@ -107,6 +108,7 @@ internal fun ProfileScreen(
         onRefresh = refresh,
         cancel = cancel,
         onShowDialog = { dialog = it },
+        dashboardSettings = dashboardSettings,
         debugContent = debugContent,
     )
     ProfileDialogs(
@@ -134,6 +136,7 @@ private fun ProfileScreenContent(
     onRefresh: () -> Unit,
     cancel: () -> Unit,
     onShowDialog: (ProfileDialog) -> Unit,
+    dashboardSettings: @Composable () -> Unit = {},
     debugContent: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -241,6 +244,7 @@ private fun ProfileScreenContent(
                                 }
                                 appearanceError?.let { PulseText(it, color = PulseTheme.colors.error) }
                             }
+                            dashboardSettings()
                         }
                     }
                     val account: @Composable () -> Unit = {

@@ -20,4 +20,14 @@ class SaveExercise(
         } else {
             repository.saveExercise(visitId, exerciseId, input.copy(name = input.name.trim()))
         }
+
+    suspend fun batch(
+        visitId: Long,
+        inputs: List<ExerciseInput>,
+    ): Outcome<Unit> =
+        if (visitId <= 0 || inputs.size !in 1..20 || inputs.any { it.issue != null }) {
+            Outcome.Error(Failure.InvalidInput)
+        } else {
+            repository.saveExercises(visitId, inputs.map { it.copy(name = it.name.trim()) })
+        }
 }

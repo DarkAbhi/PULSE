@@ -131,6 +131,9 @@ fun FitnessScreen(
                         Box(Modifier.padding(horizontal = size.pagePadding)) {
                             FitnessStats(state.overview, canRefresh, refresh)
                         }
+                        Box(Modifier.padding(horizontal = size.pagePadding)) {
+                            WorkoutScheduleCard(state, onAction)
+                        }
                     }
                 }
             }

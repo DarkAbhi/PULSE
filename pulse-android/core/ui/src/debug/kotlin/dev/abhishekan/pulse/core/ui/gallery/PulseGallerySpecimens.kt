@@ -44,6 +44,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
 import dev.abhishekan.pulse.core.ui.components.PulseButtonVariant
 import dev.abhishekan.pulse.core.ui.components.PulseCalendarDay
 import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCardElevation
 import dev.abhishekan.pulse.core.ui.components.PulseCheckbox
 import dev.abhishekan.pulse.core.ui.components.PulseDatePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
@@ -63,6 +64,7 @@ import dev.abhishekan.pulse.core.ui.components.PulseSwitch
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextField
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
+import dev.abhishekan.pulse.core.ui.components.PulseTileCard
 import dev.abhishekan.pulse.core.ui.components.PulseTimePickerDialog
 import dev.abhishekan.pulse.core.ui.components.PulseTopAppBar
 import dev.abhishekan.pulse.core.ui.label
@@ -211,6 +213,21 @@ internal fun GalleryCards() {
             }
         }
     }
+    Specimen("Flat card · nested on a surface") {
+        PulseCard(Modifier.fillMaxWidth(), elevation = PulseCardElevation.Flat, containerColor = PulseTheme.colors.surfaceMuted) {
+            PulseText("Flat cards sit inside dialogs and other cards.")
+        }
+    }
+    val tones = PulseTheme.featureTones
+    listOf("Fitness" to tones.fitness, "Garage" to tones.garage, "Meal Plan" to tones.meal, "Financial Horizon" to tones.finance)
+        .forEach { (name, tone) ->
+            Specimen("Feature tile · $name") {
+                PulseTileCard(tone, Modifier.fillMaxWidth()) {
+                    PulseText(name, style = PulseTextStyle.Title, color = tone.foreground)
+                    PulseText("Quick action tile", color = tone.foreground)
+                }
+            }
+        }
 }
 
 @Composable
@@ -506,6 +523,13 @@ internal fun GalleryFoundations() {
                 "inverseSurface" to c.inverseSurface,
                 "inverseText" to c.inverseText,
                 "inverseAction" to c.inverseAction,
+                "brand" to c.brand,
+                "ring" to c.ring,
+                "chip" to c.chip,
+                "horizonSurface" to c.horizonSurface,
+                "onHorizonSurface" to c.onHorizonSurface,
+                "gradientStart" to c.gradientStart,
+                "gradientEnd" to c.gradientEnd,
             )
         palette.forEach { (name, color) ->
             Row(horizontalArrangement = Arrangement.spacedBy(spacing.small)) {
@@ -541,6 +565,9 @@ internal fun GalleryFoundations() {
             "Medium" to shapes.medium,
             "Large" to shapes.large,
             "Extra large" to shapes.extraLarge,
+            "Control" to shapes.control,
+            "Card" to shapes.card,
+            "Hero" to shapes.hero,
             "Pill" to shapes.pill,
         ).forEach { (name, shape) ->
             Surface(shape = shape, color = c.primarySoft, contentColor = c.onPrimarySoft) {

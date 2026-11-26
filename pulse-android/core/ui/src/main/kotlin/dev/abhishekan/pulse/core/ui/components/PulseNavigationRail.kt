@@ -119,7 +119,7 @@ fun PulseNavigationRail(
                             .clip(itemShape)
                             .border(
                                 PulseTokens.focusWidth,
-                                if (focused) colors.outline else Color.Transparent,
+                                if (focused) colors.ring else Color.Transparent,
                                 itemShape,
                             ).background(
                                 if (pressed) colors.textPrimary.copy(alpha = 0.08f) else Color.Transparent,

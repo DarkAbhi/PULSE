@@ -5,10 +5,13 @@ import dev.abhishekan.pulse.core.domain.model.ExerciseInput
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.FitnessOverview
 import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.WorkoutClassification
 import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
 import dev.abhishekan.pulse.core.domain.model.WorkoutInfo
+import dev.abhishekan.pulse.core.domain.model.WorkoutScheduleDay
 import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 
@@ -34,6 +37,23 @@ internal class FitnessTestRepository : FitnessRepository {
         String,
     ) -> Outcome<List<CatalogExercise>> = { Outcome.Success(emptyList()) }
     val trace = mutableListOf<String>()
+
+    override suspend fun schedule() = Outcome.Success(emptyList<WorkoutScheduleDay>())
+
+    override suspend fun saveScheduleDay(
+        day: DayOfWeek,
+        classification: WorkoutClassification,
+    ) = Outcome.Success(Unit)
+
+    override suspend fun saveExercises(
+        visitId: Long,
+        inputs: List<ExerciseInput>,
+    ) = Outcome.Success(Unit)
+
+    override suspend fun updateClassification(
+        id: Long,
+        classification: WorkoutClassification,
+    ) = Outcome.Success(Unit)
 
     override suspend fun overview(): Outcome<FitnessOverview> {
         trace += "overview"

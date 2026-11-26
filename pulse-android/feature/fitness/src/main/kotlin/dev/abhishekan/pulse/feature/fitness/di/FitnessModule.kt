@@ -5,6 +5,7 @@ import dev.abhishekan.pulse.core.domain.usecase.GetWorkoutDetail
 import dev.abhishekan.pulse.core.domain.usecase.RecordWorkout
 import dev.abhishekan.pulse.core.domain.usecase.SaveExercise
 import dev.abhishekan.pulse.core.domain.usecase.SearchExercises
+import dev.abhishekan.pulse.core.domain.usecase.UpdateWorkoutClassification
 import dev.abhishekan.pulse.feature.fitness.overview.FitnessViewModel
 import dev.abhishekan.pulse.feature.fitness.workout.WorkoutViewModel
 import org.koin.core.module.dsl.factoryOf
@@ -18,6 +19,7 @@ val fitnessModule =
         factoryOf(::RecordWorkout)
         factoryOf(::SearchExercises)
         factoryOf(::SaveExercise)
+        factoryOf(::UpdateWorkoutClassification)
         factoryOf(::DeleteWorkout)
         factoryOf(::DeleteExercise)
         viewModelOf(::FitnessViewModel)

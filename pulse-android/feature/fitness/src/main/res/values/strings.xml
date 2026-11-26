@@ -211,4 +211,27 @@
     <string name="pulse_fitness_clear_search_glyph" translatable="false">×</string>
     <string name="pulse_fitness_open_search_glyph" translatable="false">›</string>
     <string name="pulse_fitness_back_to_workout">Back to workout</string>
+    <string name="pulse_fitness_workout_schedule">Workout schedule</string>
+    <string name="pulse_fitness_loading_schedule">Loading workout schedule…</string>
+    <string name="pulse_fitness_schedule_day">%1$s · %2$s</string>
+    <string name="pulse_fitness_workout_classification">Workout type · %1$s</string>
+    <string name="pulse_fitness_workout_type">Workout type</string>
+    <string name="pulse_fitness_workout_focus">Workout focus</string>
+    <string name="pulse_fitness_type_none">Unscheduled</string>
+    <string name="pulse_fitness_type_single_muscle">Single muscle</string>
+    <string name="pulse_fitness_type_double_muscle">Double muscle</string>
+    <string name="pulse_fitness_type_push">Push</string>
+    <string name="pulse_fitness_type_pull">Pull</string>
+    <string name="pulse_fitness_type_legs">Legs</string>
+    <string name="pulse_fitness_type_upper_body">Upper body</string>
+    <string name="pulse_fitness_type_lower_body">Lower body</string>
+    <string name="pulse_fitness_type_full_body">Full body</string>
+    <string name="pulse_fitness_type_cardio">Cardio</string>
+    <string name="pulse_fitness_type_mobility">Mobility</string>
+    <string name="pulse_fitness_type_other">Other</string>
+    <string name="pulse_fitness_type_rest_day">Rest day</string>
+    <string name="pulse_fitness_queue_exercise">Add another exercise</string>
+    <string name="pulse_fitness_queued_exercises">Exercises to save</string>
+    <string name="pulse_fitness_remove_queued_exercise">Remove %1$s from batch</string>
+    <string name="pulse_fitness_exercises_saved">Exercises saved</string>
 </resources>

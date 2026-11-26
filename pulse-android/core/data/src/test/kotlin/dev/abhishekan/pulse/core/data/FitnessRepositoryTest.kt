@@ -5,6 +5,8 @@ import dev.abhishekan.pulse.core.domain.model.ExerciseSetInput
 import dev.abhishekan.pulse.core.domain.model.Failure
 import dev.abhishekan.pulse.core.domain.model.Outcome
 import dev.abhishekan.pulse.core.domain.model.SessionState
+import dev.abhishekan.pulse.core.domain.model.WorkoutClassification
+import dev.abhishekan.pulse.core.domain.model.WorkoutType
 import dev.abhishekan.pulse.core.network.FitnessApi
 import dev.abhishekan.pulse.core.network.NetworkConfig
 import dev.abhishekan.pulse.core.network.PersistentSessionCookies
@@ -36,6 +38,7 @@ import java.io.Closeable
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.time.Clock
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -104,6 +107,8 @@ class FitnessRepositoryTest {
                         path == "/api/gym-visits" && !mutation ->
                             history
                                 ?: """[{"id":2,"created_at":"2026-10-18T18:30:00Z"},{"id":1,"created_at":"2026-10-16T18:30:00Z"}]"""
+                        path == "/api/fitness/workout-schedule" ->
+                            """[{"weekday":5,"workout_type":"push","workout_focus":"Shoulders"}]"""
                         path == "/api/fitness-workouts/1" -> (
                             """{"id":1,""" +
 """"created_at":"2026-10-16T18:30:00Z",""" +
@@ -181,6 +186,27 @@ class FitnessRepositoryTest {
                 assertEquals(setOf(1L, 2L), data.workouts.map { it.id }.toSet())
                 assertEquals(LocalDate.of(2026, 10, 18), data.workouts.first().date)
                 assertEquals(LocalDate.of(2026, 10, 16), data.workouts.last().date)
+            }
+        }
+
+    @Test fun workoutScheduleAndClassificationUseIsoWeekdaysAndCanonicalPayloads() =
+        runTest {
+            Harness().use { h ->
+                val friday = (h.repo.schedule() as Outcome.Success).value.single()
+                assertEquals(DayOfWeek.FRIDAY, friday.day)
+                assertEquals(WorkoutClassification(WorkoutType.Push, "Shoulders"), friday.classification)
+
+                assertEquals(Outcome.Success(Unit), h.repo.saveScheduleDay(DayOfWeek.SUNDAY, WorkoutClassification(WorkoutType.RestDay)))
+                assertEquals(Outcome.Success(Unit), h.repo.updateClassification(1, WorkoutClassification(WorkoutType.Pull, " Back ")))
+                assertEquals(
+                    listOf("PUT /api/fitness/workout-schedule/7", "PUT /api/fitness-workouts/1/classification"),
+                    h.writes.map { it.first },
+                )
+                val schedule = Json.parseToJsonElement(h.writes.first().second).jsonObject
+                assertEquals("rest_day", schedule.getValue("workout_type").jsonPrimitive.content)
+                val classification = Json.parseToJsonElement(h.writes.last().second).jsonObject
+                assertEquals("pull", classification.getValue("workout_type").jsonPrimitive.content)
+                assertEquals("Back", classification.getValue("workout_focus").jsonPrimitive.content)
             }
         }
 

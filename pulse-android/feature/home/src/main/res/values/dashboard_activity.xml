@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pulse_home_recent_activity">Recent activity</string>
+    <string name="pulse_home_loading_recent_activity">Loading recent activity…</string>
+    <string name="pulse_home_recent_activity_error">Recent activity is unavailable.</string>
+    <string name="pulse_home_recent_activity_empty">No recent activity yet.</string>
+    <string name="pulse_home_activity_today">Today</string>
+    <string name="pulse_home_activity_yesterday">Yesterday</string>
+    <string name="pulse_home_activity_fuel_fillup">Fuel fill-up</string>
+    <string name="pulse_home_activity_air_fill">Air fill logged</string>
+    <string name="pulse_home_activity_maintenance">Maintenance logged</string>
+    <string name="pulse_home_activity_vehicle_added">Vehicle added</string>
+    <string name="pulse_home_activity_reminder_configured">Maintenance reminder configured</string>
+    <string name="pulse_home_activity_maintenance_attachment">Maintenance attachment added</string>
+    <string name="pulse_home_activity_meal_added">Meal added</string>
+    <string name="pulse_home_activity_meal_eaten">Meal marked as eaten</string>
+    <string name="pulse_home_activity_meal_time_added">Custom meal time added</string>
+    <string name="pulse_home_activity_workout_logged">Workout logged</string>
+    <string name="pulse_home_activity_workout_synced">Workout synced from iOS</string>
+    <string name="pulse_home_activity_exercise_added">Exercise added to workout</string>
+    <string name="pulse_home_activity_sleep_synced">Sleep synced</string>
+    <string name="pulse_home_activity_daily_activity_synced">Daily activity synced</string>
+    <string name="pulse_home_activity_transaction_logged">Transaction logged</string>
+    <string name="pulse_home_activity_statement_imported">Statement imported</string>
+    <string name="pulse_home_activity_subscription_added">Subscription added</string>
+    <string name="pulse_home_activity_subscription_payment_linked">Subscription payment linked</string>
+    <string name="pulse_home_activity_budget_added">Budget added</string>
+    <string name="pulse_home_activity_obligation_added">Obligation added</string>
+    <string name="pulse_home_activity_planned_purchase_added">Planned purchase added</string>
+    <string name="pulse_home_activity_account_added">Financial account added</string>
+    <string name="pulse_home_activity_account_archived">Financial account archived</string>
+    <string name="pulse_home_activity_account_restored">Financial account restored</string>
+    <string name="pulse_home_activity_category_added">Category added</string>
+</resources>

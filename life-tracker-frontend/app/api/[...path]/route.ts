@@ -1,6 +1,6 @@
-import { apiBaseURL } from "@/app/lib/server-api";
+import { apiBaseURL } from "@/lib/api/server-api";
 import { cookies } from "next/headers";
-import { proxyAPI } from "@/app/lib/api-transport";
+import { proxyAPI } from "@/lib/api/api-transport";
 
 async function proxy(request: Request) {
   try {

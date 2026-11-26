@@ -1,7 +1,7 @@
 @import "tailwindcss";
-@import "./garage/garage-theme.css";
-@import "./meal-plan/meal-theme.css";
-@import "./financial-horizon/financial-theme.css";
+@import "../features/garage/styles/garage-theme.css";
+@import "../features/meal-plan/styles/meal-theme.css";
+@import "../features/financial-horizon/styles/financial-theme.css";
 
 @custom-variant dark (&:is(.dark *));
 @custom-variant dashboard-compact (&:where([data-dashboard-view="compact"], [data-dashboard-view="compact"] *, [data-initial-dashboard-view="compact"] [data-dashboard-view="initial"], [data-initial-dashboard-view="compact"] [data-dashboard-view="initial"] *));

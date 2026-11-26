@@ -44,4 +44,4 @@ yarn-error.log*
 next-env.d.ts
 
 # Application source, not a Python build directory.
-!/app/lib/
+!/lib/

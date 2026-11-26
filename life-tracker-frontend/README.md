@@ -16,7 +16,7 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Routes live in `app/`; page content lives in `features/<name>/screens/`. Pages auto-update as you edit them.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to optimize and self-host [Bricolage Grotesque](https://fonts.google.com/specimen/Bricolage+Grotesque).
 
@@ -48,6 +48,11 @@ once to apply it to the frontend alone. Normal page and stylesheet edits refresh
 automatically; no `make dev-down` is needed. Dependency changes require a frontend
 restart to reinstall packages.
 
+## Architecture
+
+Code is organized by feature under `features/`, with thin route files in `app/`. See
+[ARCHITECTURE.md](ARCHITECTURE.md) for the layout and the dependency rules that `npm test` enforces.
+
 ## Tests
 
 From this directory, with Node.js 24 and npm installed:
@@ -56,7 +61,7 @@ From this directory, with Node.js 24 and npm installed:
 npm ci
 npm test
 # Run one test file:
-npm test -- app/profile/copy-api-key.test.mjs
+npm test -- features/profile/utils/copy-api-key.test.mjs
 # Type-check and build:
 npm run build
 ```
@@ -82,7 +87,7 @@ Run `npm run storybook:install` again after a clean `npm ci`.
 
 ## Cards
 
-Use `PulseCard` from `app/components/design-system/pulse-card` for card surfaces,
+Use `PulseCard` from `@/components/ui/pulse-card` for card surfaces,
 including empty states. It shares the dashboard's themed background, soft corners,
 and borderless treatment. Pass `as="section"`, `as="article"`, or `as="aside"`
 when the content needs those semantics, and supply sizing, padding, and layout
@@ -97,4 +102,4 @@ applied where needed.
 
 Profile includes a searchable time zone setting shared with Android. The default is UTC. Dates and times render with the account preference, including server-rendered pages. Date/time forms convert local entries back to UTC instants; calendar-only dates retain their selected date. No extra time zone notices are shown around the app.
 
-Shared conversions and tests live in `app/lib/time-zone.mjs` and `app/lib/time-zone.test.mjs`. Run `npm test` and `npm run build` to verify changes. See [account time zones](../docs/development-history/features/user-time-zones.md) for storage, daylight-saving and deployment details.
+Shared conversions and tests live in `lib/time-zone/time-zone.mjs` and `lib/time-zone/time-zone.test.mjs`. Run `npm test` and `npm run build` to verify changes. See [account time zones](../docs/development-history/features/user-time-zones.md) for storage, daylight-saving and deployment details.

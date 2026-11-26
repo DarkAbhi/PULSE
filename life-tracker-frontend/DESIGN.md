@@ -280,27 +280,27 @@ Use the `Pulse` prefix for component names and `pulse-` for component filenames 
 
 ### Buttons & Inputs
 
-- **Buttons.** Use the shared variants in `@app/components/design-system/pulse-button.tsx`. Use the primary fill for routine actions, the gradient variant for prominent actions, and the secondary or outline variant for alternatives. Pass the shared size and shape props for pill and icon controls. The standard medium button has a 40px minimum height and 8px vertical and 16px horizontal padding.
-- **Fields.** Keep labels visible and show errors by their field. The fuel form provides the reference treatment for `input-field` in `@app/components/fuel-form.tsx`. Use shared controls such as `@app/components/design-system/pulse-select.tsx` for choices.
+- **Buttons.** Use the shared variants in `@components/ui/pulse-button.tsx`. Use the primary fill for routine actions, the gradient variant for prominent actions, and the secondary or outline variant for alternatives. Pass the shared size and shape props for pill and icon controls. The standard medium button has a 40px minimum height and 8px vertical and 16px horizontal padding.
+- **Fields.** Keep labels visible and show errors by their field. The fuel form provides the reference treatment for `input-field` in `@features/garage/components/fuel-form.tsx`. Use shared controls such as `@components/ui/pulse-select.tsx` for choices.
 
 ### Cards & Elevation
 
-- **Cards.** Use `PulseCard` for content and `PulseCardLink` for cards that navigate. `@app/components/design-system/pulse-card.tsx` owns the radius, fill, shadow, padding scale and focus ring; callers pass layout through `className`. Card styles use theme tokens (`bg-card-fill`, `from-tile-start`, `shadow-tile` and so on), never arbitrary `[...]` values. Choose the look with named options:
+- **Cards.** Use `PulseCard` for content and `PulseCardLink` for cards that navigate. `@components/ui/pulse-card.tsx` owns the radius, fill, shadow, padding scale and focus ring; callers pass layout through `className`. Card styles use theme tokens (`bg-card-fill`, `from-tile-start`, `shadow-tile` and so on), never arbitrary `[...]` values. Choose the look with named options:
   - `variant`: `surface` (default) is the solid themed card. `tile` is the gradient feature tile, coloured with `--tile-start` and `--tile-end`, with white text unless `--tile-foreground` is set.
   - `elevation`: `raised` (default) or `flat` for cards layered on another surface or inside a dialog.
   - `size`: `default` or `compact` for the smaller radius on nested cards.
   - `padding`: `sm` (p-4, 16px) for dense rows and nested cards, `md` (p-6, 24px) for content cards, or `lg` (p-8, 32px) for hero and empty-state cards. Each option is one fixed value at every breakpoint. Screens never set card padding with a `p-*` class. `none` (default) is for cards whose children own the padding, such as tables and divided lists.
   - Tint a surface card with `--card-fill` instead of a `bg-*` class.
-- **Quick-action tiles.** `@app/dashboard/quick-actions/quick-action-card.tsx` takes a `tone` (`fitness`, `garage`, `meal` or `finance`). The tones' tile colours live in `@app/dashboard/dashboard-theme.css`. Tiles step their type and decor up at container breakpoints (`@xs`, `@sm`, `@md`), never with `clamp()` or `cqi` values.
-- **Financial Horizon.** The dashboard summary uses `card-horizon` with a warm yellow fill and 24px padding in both modes. Its fill is defined in `@app/financial-horizon/financial-theme.css` and shared with the pool summary.
+- **Quick-action tiles.** `@features/dashboard/components/quick-actions/quick-action-card.tsx` takes a `tone` (`fitness`, `garage`, `meal` or `finance`). The tones' tile colours live in `@features/dashboard/styles/dashboard-theme.css`. Tiles step their type and decor up at container breakpoints (`@xs`, `@sm`, `@md`), never with `clamp()` or `cqi` values.
+- **Financial Horizon.** The dashboard summary uses `card-horizon` with a warm yellow fill and 24px padding in both modes. Its fill is defined in `@features/financial-horizon/styles/financial-theme.css` and shared with the pool summary.
 
 ### Lists & Navigation
 
-- **Vehicle rows.** The `list-item-vehicle` recipe keeps each row easy to scan and uses a muted hover fill for linked records. See `@app/garage/vehicles-list.tsx`.
+- **Vehicle rows.** The `list-item-vehicle` recipe keeps each row easy to scan and uses a muted hover fill for linked records. See `@features/garage/components/vehicle-list.tsx`.
 
 ### Dialogs
 
-- **Dialogs.** Use `@app/components/design-system/pulse-dialog.tsx` for modal flows and `@app/components/design-system/pulse-confirmation-dialog.tsx` for confirmations. Name the action and its consequence.
+- **Dialogs.** Use `@components/ui/pulse-dialog.tsx` for modal flows and `@components/ui/pulse-confirmation-dialog.tsx` for confirmations. Name the action and its consequence.
 
 ## Do's and Don'ts
 

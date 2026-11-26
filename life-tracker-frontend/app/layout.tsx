@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "@/app/globals.css";
-import ProfilePreferencesProvider from "@/app/components/profile-preferences-provider";
-import { dashboardViewStorageKey } from "@/app/lib/dashboard-view-storage";
-import { getUserCurrency } from "@/app/lib/user-currency";
-import { getUserTimeZone } from "@/app/lib/user-time-zone";
+import ProfilePreferencesProvider from "@/providers/profile-preferences-provider";
+import { dashboardViewStorageKey } from "@/features/dashboard";
+import { getUserCurrency } from "@/lib/user/user-currency";
+import { getUserTimeZone } from "@/lib/user/user-time-zone";
 
 const bricolageGrotesque = Bricolage_Grotesque({
   variable: "--font-bricolage-grotesque",

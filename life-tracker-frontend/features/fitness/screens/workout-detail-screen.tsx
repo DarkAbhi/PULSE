@@ -1,6 +1,6 @@
 import "@/features/fitness/styles/workout-theme.css";
 
-import { apiBaseURL, apiFetch } from "@/lib/api/server-api";
+import { loadWorkoutDetail } from "@/features/fitness/server/fitness-data";
 import { getUserTimeZone } from "@/lib/user/user-time-zone";
 import { redirect } from "next/navigation";
 import { frame } from "@/components/layout/page-frame";
@@ -9,21 +9,11 @@ import { TopAppBar } from "@/features/notifications/server";
 import { Clock, Dumbbell, Flag, Flame, List, Timer, Watch } from "lucide-react";
 import { AddExerciseButton, AddExerciseProvider } from "@/features/fitness/components/workout-detail/add-exercise-form";
 import EditWorkoutButton from "@/features/fitness/components/workout-detail/edit-workout-button";
-import { workoutLabel, type WorkoutClassification } from "@/features/fitness/types/workout-types";
+import { workoutLabel } from "@/features/fitness/types/workout-types";
 import DeleteVisitButton from "@/features/fitness/components/workout-detail/delete-visit-button";
 import ExerciseCard from "@/features/fitness/components/workout-detail/exercise-card";
 import { formatDuration } from "@/lib/utils/format-duration.mjs";
-import type { SavedExercise } from "@/features/fitness/api/workout-detail-actions";
-
-type GymVisit = WorkoutClassification & {
-  id: number;
-  created_at: string;
-  start_time: string | null;
-  end_time: string | null;
-  duration_seconds: number | null;
-  calories_burned: number | null;
-  synced_from_apple_watch: boolean;
-};
+import type { GymVisit } from "@/features/fitness/types/fitness-types";
 
 const numberFormat = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 });
 
@@ -107,34 +97,7 @@ function WorkoutSummary({ visit, timeZone, error }: {
 export async function WorkoutDetailScreen({ visitId: visitID }: { visitId: string }) {
   const timeZonePromise = getUserTimeZone();
 
-  let exercises: SavedExercise[] = [];
-  let visit: GymVisit | null = null;
-  let error = "";
-  let detailsError = "";
-  let visitNotFound = false;
-  let unauthorized = false;
-
-  try {
-    const [exercisesResponse, visitResponse] = await Promise.all([
-      apiFetch(`${apiBaseURL}/api/gym-visits/${encodeURIComponent(visitID)}/exercises`, { signal: AbortSignal.timeout(10_000) }),
-      apiFetch(`${apiBaseURL}/api/fitness-workouts/${encodeURIComponent(visitID)}`, { signal: AbortSignal.timeout(10_000) }),
-    ]);
-    unauthorized = exercisesResponse.status === 401 || visitResponse.status === 401;
-    visitNotFound = exercisesResponse.status === 404 || visitResponse.status === 404;
-    if (exercisesResponse.ok) {
-      exercises = ((await exercisesResponse.json()) as SavedExercise[] | null) ?? [];
-    } else {
-      error = "We couldn't load this workout's exercises. Please try again.";
-    }
-
-    if (visitResponse.ok) {
-      visit = (await visitResponse.json()) as GymVisit;
-    } else {
-      detailsError = "We couldn't load this workout's details. Please try again.";
-    }
-  } catch {
-    error = "We couldn't reach the server. Please try again.";
-  }
+  const { exercises, visit, error, detailsError, visitNotFound, unauthorized } = await loadWorkoutDetail(visitID);
 
   if (unauthorized) redirect("/");
   if (visitNotFound) redirect("/fitness");

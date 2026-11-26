@@ -1,5 +1,5 @@
 import "@/features/fitness/styles/fitness-theme.css";
-import { apiBaseURL, apiFetch } from "@/lib/api/server-api";
+import { loadFitnessOverview } from "@/features/fitness/server/fitness-data";
 import { redirect } from "next/navigation";
 import { TopAppBar } from "@/features/notifications/server";
 import { frame } from "@/components/layout/page-frame";
@@ -7,19 +7,12 @@ import FitnessCalendar from "@/features/fitness/components/fitness-calendar";
 
 import { FitnessSummary, FitnessStats, RecentWorkouts } from "@/features/fitness/components/fitness-overview";
 import WorkoutSchedule from "@/features/fitness/components/workout-schedule";
-import type { WorkoutScheduleDay } from "@/features/fitness/types/workout-types";
-import type { FitnessOverview } from "@/features/fitness/types/fitness-types";
 
 export async function FitnessScreen() {
-  const [response, scheduleResponse] = await Promise.all([
-    apiFetch(`${apiBaseURL}/api/fitness/overview`, { signal: AbortSignal.timeout(10_000) }).catch(() => null),
-    apiFetch(`${apiBaseURL}/api/fitness/workout-schedule`, { signal: AbortSignal.timeout(10_000) }).catch(() => null),
-  ]);
-  if (response?.status === 401) redirect("/");
+  const { overview: { status, data: overview }, schedule } = await loadFitnessOverview();
+  if (status === 401) redirect("/");
 
-  const overview: FitnessOverview | null = response?.ok ? await response.json().catch(() => null) : null;
-  const schedule: WorkoutScheduleDay[] | null = scheduleResponse?.ok ? await scheduleResponse.json().catch(() => null) : null;
-  const error = response
+  const error = status
     ? "We couldn't load your workouts. Please try again."
     : "We couldn't reach the server. Please try again.";
 

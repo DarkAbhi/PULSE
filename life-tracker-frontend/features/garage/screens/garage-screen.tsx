@@ -1,20 +1,16 @@
-import { apiBaseURL, apiFetch } from "@/lib/api/server-api";
+import { loadVehicles } from "@/features/garage/server/garage-data";
 import PulseCard from "@/components/ui/pulse-card";
 import { redirect } from "next/navigation";
 import { TopAppBar } from "@/features/notifications/server";
 import { frame } from "@/components/layout/page-frame";
 import VehicleEditor from "@/features/garage/components/vehicle-editor";
 import VehiclesList from "@/features/garage/components/vehicle-list";
-import type { Vehicle } from "@/features/garage/types/garage-types";
 
 export async function GarageScreen() {
-  const response = await apiFetch(`${apiBaseURL}/api/vehicles`, {
-    signal: AbortSignal.timeout(10_000),
-  }).catch(() => null);
-  if (response?.status === 401) redirect("/");
+  const { status, data: vehicles } = await loadVehicles();
+  if (status === 401) redirect("/");
 
-  const vehicles: Vehicle[] | null = response?.ok ? await response.json().catch(() => null) : null;
-  const error = response
+  const error = status
     ? "We couldn't load your vehicles. Please try again."
     : "We couldn't reach the server. Please try again.";
 

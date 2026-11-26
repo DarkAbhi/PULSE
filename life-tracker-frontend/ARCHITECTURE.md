@@ -73,6 +73,12 @@ All application imports use `@/`, with two exceptions where the tool resolves im
 
 Stories are excluded from `tsconfig.json`, because Storybook is installed with `--no-save` and is missing in CI. As a result, `.storybook/main.ts` declares the `@/` alias for Vite itself.
 
+## Data loading and shared client state
+
+- Screens never call the backend directly. A feature's `server/` loader does: either `readJSON` from `lib/api/server-api.ts`, which returns `{ status, data }` with `status` 0 when the backend is unreachable, or a loader-specific fetch when the page needs per-part errors. Redirect and not-found decisions stay in the screen.
+- A feature with one shared client state splits it by subdomain hook instead of by component. `features/financial-horizon/components/financial-horizon-client.tsx` owns the summary, the error banner and one transition, and passes them as `HorizonMutations` to `useBudgets`, `useFixedObligations`, `usePlannedPurchases`, `useSubscriptions` and `useTransactionEditor`. Every mutation therefore updates the same totals and pending state.
+- A dialog with its own form mounts only while open, so each opening starts fresh (`features/meal-plan/components/add-meal-dialog.tsx`).
+
 ## Where code goes
 
 - Used by one feature: keep it in that feature, even if several of its screens share it.

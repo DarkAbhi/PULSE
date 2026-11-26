@@ -1,21 +1,12 @@
 import "server-only";
-import { apiBaseURL, apiFetch } from "@/lib/api/server-api";
+import { readJSON } from "@/lib/api/server-api";
 import type { HorizonSummary, NextMonthPurchaseItem, TransactionPage } from "@/features/financial-horizon/types/horizon-types";
-
-async function readResource<T>(path: string): Promise<{ status: number; data: T | null }> {
-  try {
-    const response = await apiFetch(`${apiBaseURL}${path}`, { signal: AbortSignal.timeout(10_000) });
-    return { status: response.status, data: response.ok ? await response.json() : null };
-  } catch {
-    return { status: 0, data: null };
-  }
-}
 
 export async function loadFinancialHorizon() {
   const [summary, purchases, transactions] = await Promise.all([
-    readResource<HorizonSummary>("/api/horizon"),
-    readResource<{ items: NextMonthPurchaseItem[] }>("/api/next-month-purchases"),
-    readResource<TransactionPage>("/api/horizon/transactions?page=1&page_size=10"),
+    readJSON<HorizonSummary>("/api/horizon"),
+    readJSON<{ items: NextMonthPurchaseItem[] }>("/api/next-month-purchases"),
+    readJSON<TransactionPage>("/api/horizon/transactions?page=1&page_size=10"),
   ]);
 
   return { summary, purchases: purchases.data?.items ?? null, transactions: transactions.data };

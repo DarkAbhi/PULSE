@@ -1,26 +1,16 @@
 import "@/features/quests/styles/quest-theme.css";
-import { apiBaseURL, apiFetch } from "@/lib/api/server-api";
+import { loadQuestOverview } from "@/features/quests/server/quest-data";
 import { frame } from "@/components/layout/page-frame";
 import { TopAppBar } from "@/features/notifications/server";
 import QuestSettingsButton from "@/features/quests/components/quest-settings";
 import RefreshQuests from "@/features/quests/components/refresh-quests";
 import { DailyQuests, QuestProgress, QuestWeek, StreakCard, StreakMedals, TodayXP } from "@/features/quests/components/quest-panels";
-import type { QuestOverview } from "@/features/quests/types/quest-types";
 import { Gamepad2, Heart, Zap } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export async function QuestsScreen({ week }: { week?: string | string[] }) {
-  const requestWeek = typeof week === "string" && /^\d{4}-\d{2}-\d{2}$/.test(week) ? week : "";
-  const endpoint = new URL("/api/quests/overview", apiBaseURL);
-  if (requestWeek) endpoint.searchParams.set("week", requestWeek);
-
-  let response = await apiFetch(endpoint.toString(), { signal: AbortSignal.timeout(10_000) }).catch(() => null);
-  if (response?.status === 400 && requestWeek) {
-    endpoint.searchParams.delete("week");
-    response = await apiFetch(endpoint.toString(), { signal: AbortSignal.timeout(10_000) }).catch(() => null);
-  }
-  if (response?.status === 401) redirect("/");
-  const overview: QuestOverview | null = response?.ok ? await response.json().catch(() => null) : null;
+  const { status, data: overview } = await loadQuestOverview(week);
+  if (status === 401) redirect("/");
 
   return (
     <main id="main-content" tabIndex={-1}

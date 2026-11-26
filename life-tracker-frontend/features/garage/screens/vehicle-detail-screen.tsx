@@ -1,11 +1,11 @@
-import { apiBaseURL, apiFetch } from "@/lib/api/server-api";
+import { loadVehicleHistory } from "@/features/garage/server/garage-data";
 import PulseCard from "@/components/ui/pulse-card";
 import { getUserCurrency } from "@/lib/user/user-currency";
 import { formatMoney } from "@/lib/currency/currency.mjs";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { TopAppBar } from "@/features/notifications/server";
-import type { AirFill, FuelFill, VehicleHistoryData } from "@/features/garage/types/vehicle-detail-types";
+import type { AirFill, FuelFill } from "@/features/garage/types/vehicle-detail-types";
 import DeleteButton from "@/features/garage/components/vehicle-detail/delete-button";
 import DeleteVehicleButton from "@/features/garage/components/vehicle-detail/delete-vehicle-button";
 import EditFuelModal from "@/features/garage/components/vehicle-detail/edit-fuel-modal";
@@ -41,17 +41,15 @@ export interface VehicleDetailQuery {
 }
 
 export async function VehicleDetailScreen({ vehicleId: id, query }: { vehicleId: string; query: VehicleDetailQuery }) {
-  const [response, currency, timeZone] = await Promise.all([
-    apiFetch(`${apiBaseURL}/api/vehicles/${encodeURIComponent(id)}/history`, {
-      signal: AbortSignal.timeout(10_000),
-    }).catch(() => null),
+  const [{ status, data: history }, currency, timeZone] = await Promise.all([
+    loadVehicleHistory(id),
     getUserCurrency(),
     getUserTimeZone(),
   ]);
   const { tab, edit, maintenance, "edit-maintenance": editMaintenance } = query;
-  if (response?.status === 401) redirect("/");
+  if (status === 401) redirect("/");
 
-  if (response?.status === 404) {
+  if (status === 404) {
     return (
       <main id="main-content" tabIndex={-1} className={`${frame.page} bg-background text-foreground`}>
         <div className={frame.content}>
@@ -69,7 +67,7 @@ export async function VehicleDetailScreen({ vehicleId: id, query }: { vehicleId:
     );
   }
 
-  if (!response?.ok) {
+  if (!history) {
     return (
       <main id="main-content" tabIndex={-1} className={`${frame.page} bg-background text-foreground`}>
         <div className={frame.content}>
@@ -82,7 +80,7 @@ export async function VehicleDetailScreen({ vehicleId: id, query }: { vehicleId:
     );
   }
 
-  const data = (await response.json()) as VehicleHistoryData;
+  const data = history;
 
   const editingFill = edit
     ? data.fuel_fillups.find((fill) => fill.id === Number(edit))

@@ -180,7 +180,7 @@ export default function StatementUploadDialog({ categories, onClose, onManageAcc
                     <span className={fieldLabel}>Description</span>
                     <span className="relative block">
                       {/* Matching text keeps the editor tall enough as the value and width change. */}
-                      <span aria-hidden="true" className={`${descriptionClass} invisible`}>{row.description + "\u200B"}</span>
+                      <span aria-hidden="true" className={`${descriptionClass} invisible border border-transparent`}>{row.description + "\u200B"}</span>
                       <textarea className={`${descriptionClass} absolute inset-0 h-full resize-none`} aria-label={`Description for row ${row.id}`} maxLength={255} disabled={disabled} value={row.description} onChange={e => change({ id: row.id, description: e.target.value })} />
                     </span>
                     {row.warnings?.includes("POSSIBLE_MANUAL_MATCH") && (

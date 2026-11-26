@@ -1,51 +1,28 @@
 "use client";
 
-import { calculateHorizonSummary, updateHorizonSubscriptions, type HorizonUpdates } from "@/features/financial-horizon/utils/horizon-summary";
-import { formatMoney } from "@/lib/currency/currency.mjs";
-
-import { formatInstant } from "@/lib/time-zone/time-zone.mjs";
-
-import { useCurrency, useTimeZone } from "@/providers/profile-preferences-provider";
-
-import PulseIconButton from "@/components/ui/pulse-icon-button";
-
 import { useState, useTransition, useEffect, useMemo, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import { useTransactions } from "@/features/financial-horizon/transactions/use-transactions";
-import { frame } from "@/components/layout/page-frame";
 import { Compass, X } from "lucide-react";
-
+import { frame } from "@/components/layout/page-frame";
 import PulseConfirmationDialog from "@/components/ui/pulse-confirmation-dialog";
-import PulseDialog, { PulseDialogAction, PulseDialogActions, PulseDialogHeader } from "@/components/ui/pulse-dialog";
-
+import PulseIconButton from "@/components/ui/pulse-icon-button";
+import { useCurrency } from "@/providers/profile-preferences-provider";
+import { addHorizonCategoryAction, updateHorizonConfigAction } from "@/features/financial-horizon/api/horizon-actions";
+import HeaderMetrics from "@/features/financial-horizon/components/header-metrics";
 import QuickActionDropdown from "@/features/financial-horizon/components/quick-action-dropdown";
 import TabNavigation, { horizonTab, type HorizonTab } from "@/features/financial-horizon/components/tab-navigation";
-import HeaderMetrics from "@/features/financial-horizon/components/header-metrics";
+import { useBudgets } from "@/features/financial-horizon/budgets/use-budgets";
+import { useFixedObligations } from "@/features/financial-horizon/obligations/use-fixed-obligations";
 import OverviewTab from "@/features/financial-horizon/overview/overview-tab";
-
-import type { HorizonSummary, NextMonthPurchaseItem, DeductionItem, BudgetItem, CategoryItem, TransactionItem, SubscriptionItem } from "@/features/financial-horizon/types/horizon-types";
-import {
-  updateHorizonConfigAction,
-  addDeductionAction,
-  updateDeductionAction,
-  deleteDeductionAction,
-  addNextMonthPurchaseHorizonAction,
-  deleteNextMonthPurchaseAction,
-  addBudgetAction,
-  updateBudgetAction,
-  deleteBudgetAction,
-  addHorizonCategoryAction,
-  addTransactionAction,
-  updateTransactionAction,
-  deleteTransactionAction,
-  addSubscriptionAction,
-  updateSubscriptionAction,
-  deleteSubscriptionAction,
-  getSubscriptionTransactionsAction,
-  linkSubscriptionTransactionAction,
-} from "@/features/financial-horizon/api/horizon-actions";
-import type { TransactionPage } from "@/features/financial-horizon/types/horizon-types";
+import { usePlannedPurchases } from "@/features/financial-horizon/planned-purchases/use-planned-purchases";
+import SubscriptionHistoryDialog from "@/features/financial-horizon/subscriptions/subscription-history-dialog";
+import { useSubscriptions } from "@/features/financial-horizon/subscriptions/use-subscriptions";
+import { useTransactionEditor } from "@/features/financial-horizon/transactions/use-transaction-editor";
+import { useTransactions } from "@/features/financial-horizon/transactions/use-transactions";
+import type { HorizonMutations } from "@/features/financial-horizon/types/horizon-mutations";
+import type { HorizonSummary, NextMonthPurchaseItem, SubscriptionItem, TransactionPage } from "@/features/financial-horizon/types/horizon-types";
+import { calculateHorizonSummary, updateHorizonSubscriptions, type HorizonUpdates } from "@/features/financial-horizon/utils/horizon-summary";
 
 const TransactionDialog = dynamic(() => import("@/features/financial-horizon/transactions/transaction-dialog"));
 const LinkSubscriptionPaymentDialog = dynamic(() => import("@/features/financial-horizon/subscriptions/link-subscription-payment-dialog"));
@@ -69,6 +46,10 @@ interface FinancialHorizonClientProps {
   initialTransactionPage: TransactionPage;
 }
 
+/**
+ * Owns the state every tab shares: the horizon summary, the error banner and one transition.
+ * Each subdomain's dialogs and mutations live in its own hook (budgets/, obligations/, …).
+ */
 export default function FinancialHorizonClient({
   appBar,
   initialSummary,
@@ -76,9 +57,7 @@ export default function FinancialHorizonClient({
   initialPurchases,
   initialTransactionPage,
 }: FinancialHorizonClientProps) {
-  const { timeZone } = useTimeZone();
   const { currency } = useCurrency();
-  // Navigation & Active Tab State
   const activeTab = horizonTab(useSearchParams().get("tab"));
 
   function setActiveTab(tab: HorizonTab) {
@@ -88,73 +67,23 @@ export default function FinancialHorizonClient({
     if (url.href !== window.location.href) window.history.pushState(null, "", url);
   }
 
-  // Horizon Data Summary & Next Month Purchases
   const [summaryData, setSummary] = useState<HorizonSummary>({
     ...initialSummary,
     budgets: initialSummary.budgets ?? [],
   });
   const summary = useMemo(() => ({ ...summaryData, currency }), [summaryData, currency]);
-  const [purchases, setPurchases] = useState<NextMonthPurchaseItem[]>(initialPurchases);
-
-  // Base Income Editing State
-  const [isEditingBase, setIsEditingBase] = useState(false);
-  const [baseInput, setBaseInput] = useState(initialSummary.base_amount.toString());
-
-  // Fixed Deduction Category Filter State
-  const [activeCategory, setActiveCategory] = useState<string>("all");
-
-  // Budget Form & Dialog State
-  const [isBudgetDialogOpen, setIsBudgetDialogOpen] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<BudgetItem | null>(null);
-  const [budgetToDelete, setBudgetToDelete] = useState<BudgetItem | null>(null);
-  const [deletingBudgetId, setDeletingBudgetId] = useState<number | null>(null);
-
-  // Fixed Deduction Form & Confirmation State
-  const [isAddingDeduction, setIsAddingDeduction] = useState(false);
-  const [editingDeductionId, setEditingDeductionId] = useState<number | null>(null);
-  const [deductionToDelete, setDeductionToDelete] = useState<DeductionItem | null>(null);
-  const [deletingDeductionId, setDeletingDeductionId] = useState<number | null>(null);
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState<string>("housing");
-  const [dueDay, setDueDay] = useState<string>("");
-  const [selectedBudgetId, setSelectedBudgetId] = useState<number | null>(null);
-
-  // Next Month Purchase Dialog & Confirmation States
-  const [isPlannedPurchaseDialogOpen, setIsPlannedPurchaseDialogOpen] = useState(false);
-  const [purchaseToDelete, setPurchaseToDelete] = useState<NextMonthPurchaseItem | null>(null);
-  const [deletingPurchaseID, setDeletingPurchaseID] = useState<number | null>(null);
-
   const categories = summary.categories ?? [];
-
-  // Subscriptions State
   const subscriptions = summary.subscriptions ?? [];
-  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
-  const [editingSubscription, setEditingSubscription] = useState<SubscriptionItem | null>(null);
-  const [subToDelete, setSubToDelete] = useState<SubscriptionItem | null>(null);
-  const [deletingSubId, setDeletingSubId] = useState<number | null>(null);
-  const [viewingSubTransactions, setViewingSubTransactions] = useState<SubscriptionItem | null>(null);
-  const [subTransactionsList, setSubTransactionsList] = useState<TransactionItem[]>([]);
-  const [isLoadingSubTx, setIsLoadingSubTx] = useState(false);
 
   useEffect(() => {
     setSummary({ ...initialSummary, budgets: initialSummary.budgets ?? [] });
   }, [initialSummary]);
 
-  function updateSubscriptionsState(update: (items: SubscriptionItem[]) => SubscriptionItem[]) {
-    setSummary(previous => updateHorizonSubscriptions(previous, update));
-  }
-
-  // Transaction & Category Dialog State
-  const [isTransactionDialogOpen, setIsTransactionDialogOpen] = useState(false);
+  const [isEditingBase, setIsEditingBase] = useState(false);
+  const [baseInput, setBaseInput] = useState(initialSummary.base_amount.toString());
   const [isStatementUploadOpen, setIsStatementUploadOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<TransactionItem | null>(null);
-  const [paymentSubscription, setPaymentSubscription] = useState<SubscriptionItem | null>(null);
-  const [linkingPaymentSubscription, setLinkingPaymentSubscription] = useState<SubscriptionItem | null>(null);
-  const [txToDelete, setTxToDelete] = useState<TransactionItem | null>(null);
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
 
-  // Error & Transition Hook
   const [errorMsg, setErrorMsg] = useState("");
   const [isPending, startTransition] = useTransition();
   const {
@@ -164,28 +93,26 @@ export default function FinancialHorizonClient({
     loadPage: loadTransactionsPage, isPending: isLoadingTransactions,
   } = useTransactions(initialTransactionPage, setErrorMsg);
 
-  // Calculated Metrics
-  const purchasesTotal = purchases.reduce((sum, item) => sum + item.price, 0);
+  const mutations: HorizonMutations = {
+    setErrorMsg,
+    startTransition,
+    recalculateSummary: (updates: HorizonUpdates = {}) => setSummary(previous => calculateHorizonSummary(previous, updates)),
+    updateTransactions,
+    updateSubscriptionsState: (update: (items: SubscriptionItem[]) => SubscriptionItem[]) =>
+      setSummary(previous => updateHorizonSubscriptions(previous, update)),
+  };
+  const budgets = useBudgets(mutations);
+  const obligations = useFixedObligations(summary.deductions, mutations);
+  const planned = usePlannedPurchases(initialPurchases, mutations);
+  const subs = useSubscriptions(mutations);
+  const transactions = useTransactionEditor(mutations, { transactionPage, loadTransactionsPage, setTotalTransactionsCount });
+
+  // Calculated metrics
   const subscriptionBurnTotal = summary.total_subscription_burn ?? 0;
   const totalFixedObligations = summary.total_deductions + subscriptionBurnTotal;
   const uncommittedPool = summary.base_amount - totalFixedObligations;
-  const netRemainingPool = uncommittedPool - purchasesTotal;
-  const totalCommitted = totalFixedObligations + purchasesTotal;
-  const totalCommittedRatio =
-    summary.base_amount > 0
-      ? Math.round((totalCommitted / summary.base_amount) * 10000) / 100
-      : 0;
+  const netRemainingPool = uncommittedPool - planned.purchasesTotal;
 
-  // Recalculation engine preserving exact business logic
-  const recalculateSummary = ({
-    deductionsUpdater,
-    transactionsUpdater,
-    budgetsUpdater,
-  }: HorizonUpdates = {}) => {
-    setSummary(previous => calculateHorizonSummary(previous, { deductionsUpdater, transactionsUpdater, budgetsUpdater }));
-  };
-
-  // Save Base Config Handler
   const handleSaveBaseConfig = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -205,334 +132,6 @@ export default function FinancialHorizonClient({
         setIsEditingBase(false);
       } else {
         setErrorMsg(res.error ?? "Failed to update starting pool.");
-      }
-    });
-  };
-
-  // Budget Handlers
-  const handleOpenAddBudgetForm = () => {
-    setEditingBudget(null);
-    setIsBudgetDialogOpen(true);
-  };
-
-  const handleOpenEditBudgetForm = (b: BudgetItem) => {
-    setEditingBudget(b);
-    setIsBudgetDialogOpen(true);
-  };
-
-  const handleSaveBudget = async (data: { id?: number; name: string; allocatedAmount: number }) => {
-    setErrorMsg("");
-    startTransition(async () => {
-      if (data.id) {
-        const res = await updateBudgetAction(data.id, data.name, data.allocatedAmount);
-        if (res.ok && res.budget) {
-          recalculateSummary({
-            budgetsUpdater: (prev) =>
-              prev.map((b) => (b.id === data.id ? res.budget : b)),
-          });
-          setIsBudgetDialogOpen(false);
-          setEditingBudget(null);
-        } else {
-          setErrorMsg(res.error ?? "Failed to update budget.");
-        }
-      } else {
-        const res = await addBudgetAction(data.name, data.allocatedAmount);
-        if (res.ok && res.budget) {
-          recalculateSummary({
-            budgetsUpdater: (prev) => [...prev, res.budget],
-          });
-          setIsBudgetDialogOpen(false);
-        } else {
-          setErrorMsg(res.error ?? "Failed to add budget.");
-        }
-      }
-    });
-  };
-
-  const handleDeleteBudget = (id: number) => {
-    setErrorMsg("");
-    setDeletingBudgetId(id);
-    startTransition(async () => {
-      const res = await deleteBudgetAction(id);
-      if (res.ok) {
-        const unlinkBudget = (items: TransactionItem[]) =>
-          items.map(t => t.budget_id === id ? { ...t, budget_id: null, budget_name: null } : t);
-        updateTransactions(unlinkBudget);
-        recalculateSummary({
-          budgetsUpdater: (prev) => prev.filter((b) => b.id !== id),
-          deductionsUpdater: (prev) =>
-            prev.map((d) => (d.budget_id === id ? { ...d, budget_id: null } : d)),
-          transactionsUpdater: unlinkBudget,
-        });
-        setBudgetToDelete(null);
-      } else {
-        setErrorMsg(res.error ?? "Failed to delete budget.");
-      }
-      setDeletingBudgetId(null);
-    });
-  };
-
-  // Fixed Obligation Handlers
-  const handleOpenAddDeductionForm = () => {
-    setName("");
-    setAmount("");
-    setCategory("housing");
-    setDueDay("");
-    setSelectedBudgetId(null);
-    setErrorMsg("");
-    setIsAddingDeduction(true);
-    setEditingDeductionId(null);
-  };
-
-  const handleOpenEditDeductionForm = (item: DeductionItem) => {
-    setName(item.name);
-    setAmount(item.amount.toString());
-    setCategory(item.category);
-    setDueDay(item.due_day ? item.due_day.toString() : "");
-    setSelectedBudgetId(item.budget_id ?? null);
-    setErrorMsg("");
-    setEditingDeductionId(item.id);
-    setIsAddingDeduction(false);
-  };
-
-  const handleCancelDeductionForm = () => {
-    setIsAddingDeduction(false);
-    setEditingDeductionId(null);
-    setSelectedBudgetId(null);
-    setErrorMsg("");
-  };
-
-  const handleSaveDeduction = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg("");
-    const parsedAmount = parseFloat(amount);
-    if (!name.trim()) {
-      setErrorMsg("Deduction name is required.");
-      return;
-    }
-    if (isNaN(parsedAmount) || parsedAmount < 0) {
-      setErrorMsg("Please enter a valid non-negative amount.");
-      return;
-    }
-
-    const parsedDueDay = dueDay ? parseInt(dueDay, 10) : null;
-    if (parsedDueDay !== null && (parsedDueDay < 1 || parsedDueDay > 31)) {
-      setErrorMsg("Due day must be between 1 and 31.");
-      return;
-    }
-
-    startTransition(async () => {
-      if (editingDeductionId !== null) {
-        const existing = summary.deductions.find((d) => d.id === editingDeductionId);
-        const res = await updateDeductionAction(
-          editingDeductionId,
-          name,
-          category,
-          parsedAmount,
-          parsedDueDay,
-          existing ? existing.is_active : true,
-          selectedBudgetId
-        );
-        if (res.ok && res.deduction) {
-          recalculateSummary({
-            deductionsUpdater: (prev) =>
-              prev.map((d) => (d.id === editingDeductionId ? res.deduction : d)),
-          });
-          setEditingDeductionId(null);
-          setSelectedBudgetId(null);
-        } else {
-          setErrorMsg(res.error ?? "Failed to update item.");
-        }
-      } else {
-        const res = await addDeductionAction(
-          name,
-          category,
-          parsedAmount,
-          parsedDueDay,
-          selectedBudgetId
-        );
-        if (res.ok && res.deduction) {
-          recalculateSummary({
-            deductionsUpdater: (prev) => [res.deduction, ...prev],
-          });
-          setIsAddingDeduction(false);
-          setSelectedBudgetId(null);
-        } else {
-          setErrorMsg(res.error ?? "Failed to add item.");
-        }
-      }
-    });
-  };
-
-  const handleToggleDeductionActive = (item: DeductionItem) => {
-    startTransition(async () => {
-      const updatedActive = !item.is_active;
-      const res = await updateDeductionAction(
-        item.id,
-        item.name,
-        item.category,
-        item.amount,
-        item.due_day,
-        updatedActive,
-        item.budget_id ?? null
-      );
-      if (res.ok && res.deduction) {
-        recalculateSummary({
-          deductionsUpdater: (prev) =>
-            prev.map((d) => (d.id === item.id ? res.deduction : d)),
-        });
-      }
-    });
-  };
-
-  const handleConfirmDeleteDeduction = () => {
-    if (!deductionToDelete) return;
-    const id = deductionToDelete.id;
-    setDeletingDeductionId(id);
-    setErrorMsg("");
-    startTransition(async () => {
-      const res = await deleteDeductionAction(id);
-      setDeletingDeductionId(null);
-      if (res.ok) {
-        setDeductionToDelete(null);
-        recalculateSummary({
-          deductionsUpdater: (prev) => prev.filter((d) => d.id !== id),
-        });
-      } else {
-        setErrorMsg(res.error ?? "Failed to delete obligation.");
-      }
-    });
-  };
-
-  // Next Month Purchase Handlers
-  const handleSavePlannedPurchase = async (data: { name: string; price: number; url: string | null }) => {
-    setErrorMsg("");
-    startTransition(async () => {
-      const res = await addNextMonthPurchaseHorizonAction(data.name, data.price, data.url);
-      if (res.ok && res.item) {
-        setPurchases((prev) => [res.item, ...prev]);
-        setIsPlannedPurchaseDialogOpen(false);
-      } else {
-        setErrorMsg(res.error ?? "Failed to add purchase item.");
-      }
-    });
-  };
-
-  const handleDeletePurchase = (item: NextMonthPurchaseItem) => {
-    setErrorMsg("");
-    setDeletingPurchaseID(item.id);
-    startTransition(async () => {
-      const res = await deleteNextMonthPurchaseAction(item.id);
-      if (res.ok) {
-        setPurchases((prev) => prev.filter((p) => p.id !== item.id));
-        setPurchaseToDelete(null);
-      } else {
-        setErrorMsg(res.error ?? "Failed to delete purchase.");
-      }
-      setDeletingPurchaseID(null);
-    });
-  };
-
-  // Transaction & Category Handlers
-  const handleOpenAddTransaction = () => {
-    setEditingTransaction(null);
-    setPaymentSubscription(null);
-    setIsTransactionDialogOpen(true);
-  };
-
-  const handleOpenEditTransaction = (tx: TransactionItem) => {
-    setEditingTransaction(tx);
-    setPaymentSubscription(null);
-    setIsTransactionDialogOpen(true);
-  };
-
-  const handleSaveTransaction = async (data: {
-    id?: number;
-    name: string;
-    amount: number;
-    type?: "debit" | "credit";
-    transactionDate: string;
-    categoryId?: number | null;
-    budgetId?: number | null;
-    subscriptionId?: number | null;
-    notes?: string | null;
-    accountId?: number | null;
-  }) => {
-    setErrorMsg("");
-    startTransition(async () => {
-      if (data.id) {
-        const res = await updateTransactionAction(
-          data.id,
-          data.name,
-          data.amount,
-          data.type,
-          data.transactionDate,
-          data.categoryId,
-          data.budgetId,
-          data.subscriptionId,
-          data.notes,
-          data.accountId,
-        );
-        if (res.ok && res.transaction) {
-          recalculateSummary({
-            transactionsUpdater: (prev) =>
-              prev.map((t) => (t.id === data.id ? res.transaction : t)),
-          });
-          setIsTransactionDialogOpen(false);
-          setEditingTransaction(null);
-          loadTransactionsPage(transactionPage.page);
-        } else {
-          setErrorMsg(res.error ?? "Failed to update transaction.");
-        }
-      } else {
-        const res = await addTransactionAction(
-          data.name,
-          data.amount,
-          data.type,
-          data.transactionDate,
-          data.categoryId,
-          data.budgetId,
-          data.subscriptionId,
-          data.notes,
-          data.accountId,
-        );
-        if (res.ok && res.transaction) {
-          recalculateSummary({
-            transactionsUpdater: (prev) => [res.transaction, ...prev],
-          });
-          if (data.subscriptionId) {
-            updateSubscriptionsState((prev) => prev.map((sub) => sub.id === data.subscriptionId ? {
-              ...sub,
-              linked_transaction_count: sub.linked_transaction_count + 1,
-              total_spent: sub.total_spent + res.transaction.amount,
-            } : sub));
-          }
-          setTotalTransactionsCount((prev) => prev + 1);
-          setIsTransactionDialogOpen(false);
-          setPaymentSubscription(null);
-          loadTransactionsPage(1);
-        } else {
-          setErrorMsg(res.error ?? "Failed to add transaction.");
-        }
-      }
-    });
-  };
-
-  const handleDeleteTransaction = () => {
-    if (!txToDelete) return;
-    setErrorMsg("");
-    startTransition(async () => {
-      const res = await deleteTransactionAction(txToDelete.id);
-      if (res.ok) {
-        setTxToDelete(null);
-        updateTransactions(prev => prev.filter(t => t.id !== txToDelete.id));
-        recalculateSummary({
-          transactionsUpdater: (prev) => prev.filter((t) => t.id !== txToDelete.id),
-        });
-        setTotalTransactionsCount((prev) => Math.max(0, prev - 1));
-        loadTransactionsPage(transactionPage.page);
-      } else {
-        setErrorMsg(res.error ?? "Failed to delete transaction.");
       }
     });
   };
@@ -560,121 +159,6 @@ export default function FinancialHorizonClient({
     });
   };
 
-  // Subscription Handlers
-  const handleOpenAddSubscription = () => {
-    setEditingSubscription(null);
-    setIsSubscriptionDialogOpen(true);
-  };
-
-  const handleOpenEditSubscription = (sub: SubscriptionItem) => {
-    setEditingSubscription(sub);
-    setIsSubscriptionDialogOpen(true);
-  };
-
-  const handleSaveSubscription = async (data: {
-    name: string;
-    amount: number;
-    billing_cycle: string;
-    billing_day?: number | null;
-    renewal_date?: string | null;
-    status: string;
-    category_id?: number | null;
-    budget_id?: number | null;
-    notes?: string | null;
-  }) => {
-    setErrorMsg("");
-    if (editingSubscription) {
-      const res = await updateSubscriptionAction(editingSubscription.id, data);
-      if (res.ok && res.subscription) {
-        const updatedSub = res.subscription as SubscriptionItem;
-        updateSubscriptionsState((prev) =>
-          prev.map((s) => (s.id === editingSubscription.id ? updatedSub : s))
-        );
-        setIsSubscriptionDialogOpen(false);
-        setEditingSubscription(null);
-      } else {
-        throw new Error(res.error ?? "Failed to update subscription.");
-      }
-    } else {
-      const res = await addSubscriptionAction(data);
-      if (res.ok && res.subscription) {
-        const newSub = res.subscription as SubscriptionItem;
-        updateSubscriptionsState((prev) => [newSub, ...prev]);
-        setIsSubscriptionDialogOpen(false);
-      } else {
-        throw new Error(res.error ?? "Failed to add subscription.");
-      }
-    }
-  };
-
-  const handleDeleteSubscription = (id: number) => {
-    setErrorMsg("");
-    setDeletingSubId(id);
-    startTransition(async () => {
-      const res = await deleteSubscriptionAction(id);
-      if (res.ok) {
-        updateSubscriptionsState((prev) => prev.filter((s) => s.id !== id));
-        setSubToDelete(null);
-      } else {
-        setErrorMsg(res.error ?? "Failed to delete subscription.");
-      }
-      setDeletingSubId(null);
-    });
-  };
-
-  const handleToggleSubscriptionStatus = (sub: SubscriptionItem, newStatus: string) => {
-    startTransition(async () => {
-      const res = await updateSubscriptionAction(sub.id, {
-        name: sub.name,
-        amount: sub.amount,
-        billing_cycle: sub.billing_cycle,
-        billing_day: sub.billing_day,
-        renewal_date: sub.renewal_date,
-        status: newStatus,
-        category_id: sub.category_id,
-        budget_id: sub.budget_id,
-        notes: sub.notes,
-      });
-      if (res.ok && res.subscription) {
-        const updatedSub = res.subscription as SubscriptionItem;
-        updateSubscriptionsState((prev) =>
-          prev.map((s) => (s.id === sub.id ? updatedSub : s))
-        );
-      }
-    });
-  };
-
-  const handleLogSubscriptionPayment = (sub: SubscriptionItem) => {
-    setLinkingPaymentSubscription(sub);
-  };
-
-  const handleLinkSubscriptionPayment = async (transaction: TransactionItem) => {
-    if (!linkingPaymentSubscription) return;
-    const subscription = linkingPaymentSubscription;
-    const res = await linkSubscriptionTransactionAction(subscription.id, transaction.id);
-    if (!res.ok) throw new Error(res.error);
-    const linked = res.transaction as TransactionItem;
-    updateTransactions((prev) => prev.map((item) => item.id === linked.id ? linked : item));
-    updateSubscriptionsState((prev) => prev.map((item) => item.id === subscription.id ? {
-      ...item,
-      linked_transaction_count: item.linked_transaction_count + 1,
-      total_spent: item.total_spent + linked.amount,
-    } : item));
-    setLinkingPaymentSubscription(null);
-  };
-
-  const handleViewSubscriptionTransactions = async (sub: SubscriptionItem) => {
-    setViewingSubTransactions(sub);
-    setIsLoadingSubTx(true);
-    const res = await getSubscriptionTransactionsAction(sub.id);
-    if (res.ok && res.transactions) {
-      setSubTransactionsList(res.transactions as TransactionItem[]);
-    } else {
-      setSubTransactionsList([]);
-    }
-    setIsLoadingSubTx(false);
-  };
-
   return (
     <main id="main-content" tabIndex={-1} className={`${frame.page}`}>
       <div className={`${frame.content} space-y-6 sm:space-y-7`}>
@@ -690,13 +174,13 @@ export default function FinancialHorizonClient({
 
             <div className="shrink-0">
               <QuickActionDropdown
-                onLogTransaction={handleOpenAddTransaction}
+                onLogTransaction={transactions.handleOpenAddTransaction}
                 onAddFixedObligation={() => {
                   setActiveTab("fixed");
-                  handleOpenAddDeductionForm();
+                  obligations.handleOpenAddDeductionForm();
                 }}
-                onAddPlannedPurchase={() => setIsPlannedPurchaseDialogOpen(true)}
-                onAddBudget={handleOpenAddBudgetForm}
+                onAddPlannedPurchase={() => planned.setIsPlannedPurchaseDialogOpen(true)}
+                onAddBudget={budgets.handleOpenAddBudgetForm}
                 onAddCategory={openCategoryDialog}
                 isPending={isPending}
               />
@@ -704,13 +188,12 @@ export default function FinancialHorizonClient({
           </div>
         </header>
 
-        {/* Global Error Banner */}
         {initialLoadError && (
           <p className="rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">
             Some transaction or purchase data couldn’t load. Refresh this page for up-to-date totals.
           </p>
         )}
-        {errorMsg && !(activeTab === "fixed" && (isAddingDeduction || editingDeductionId !== null)) && (
+        {errorMsg && !(activeTab === "fixed" && (obligations.isAddingDeduction || obligations.editingDeductionId !== null)) && (
           <div
             className="rounded-2xl bg-destructive/10 p-4 text-sm text-destructive flex items-center justify-between shadow-xs"
             role="alert"
@@ -722,7 +205,6 @@ export default function FinancialHorizonClient({
           </div>
         )}
 
-        {/* Header Streamlined KPI Metrics Cards */}
         <HeaderMetrics
           summary={summary}
           uncommittedPool={uncommittedPool}
@@ -740,10 +222,8 @@ export default function FinancialHorizonClient({
           isPending={isPending}
         />
 
-        {/* Sub-Navigation Tabs */}
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {/* Tab Content Views */}
         {activeTab === "accounts" && <AccountsTab currency={summary.currency} />}
         {activeTab === "overview" && (
           <OverviewTab
@@ -755,9 +235,9 @@ export default function FinancialHorizonClient({
         {activeTab === "budgets" && (
           <BudgetsTab
             summary={summary}
-            onOpenAddBudget={handleOpenAddBudgetForm}
-            onOpenEditBudget={handleOpenEditBudgetForm}
-            onConfirmDeleteBudget={setBudgetToDelete}
+            onOpenAddBudget={budgets.handleOpenAddBudgetForm}
+            onOpenEditBudget={budgets.handleOpenEditBudgetForm}
+            onConfirmDeleteBudget={budgets.setBudgetToDelete}
             isPending={isPending}
           />
         )}
@@ -768,9 +248,9 @@ export default function FinancialHorizonClient({
             transactions={transactionPage.transactions}
             transactionPage={transactionPage}
             categories={categories}
-            onOpenAddTransaction={handleOpenAddTransaction}
-            onOpenEditTransaction={handleOpenEditTransaction}
-            onConfirmDeleteTransaction={setTxToDelete}
+            onOpenAddTransaction={transactions.handleOpenAddTransaction}
+            onOpenEditTransaction={transactions.handleOpenEditTransaction}
+            onConfirmDeleteTransaction={transactions.setTxToDelete}
             onOpenAddCategory={openCategoryDialog}
             onOpenStatementUpload={() => setIsStatementUploadOpen(true)}
             onPageChange={(page) => loadTransactionsPage(page)}
@@ -791,12 +271,12 @@ export default function FinancialHorizonClient({
             categories={categories}
             budgets={summary.budgets ?? []}
             currency={summary.currency}
-            onAddSubscription={handleOpenAddSubscription}
-            onEditSubscription={handleOpenEditSubscription}
-            onDeleteSubscription={setSubToDelete}
-            onToggleStatus={handleToggleSubscriptionStatus}
-            onLogPayment={handleLogSubscriptionPayment}
-            onViewTransactions={handleViewSubscriptionTransactions}
+            onAddSubscription={subs.handleOpenAddSubscription}
+            onEditSubscription={subs.handleOpenEditSubscription}
+            onDeleteSubscription={subs.setSubToDelete}
+            onToggleStatus={subs.handleToggleSubscriptionStatus}
+            onLogPayment={subs.setLinkingPaymentSubscription}
+            onViewTransactions={subs.handleViewSubscriptionTransactions}
           />
         )}
 
@@ -804,31 +284,19 @@ export default function FinancialHorizonClient({
           <FixedObligationsTab
             summary={summary}
             subscriptions={subscriptions}
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-            isAddingDeduction={isAddingDeduction}
-            editingDeductionId={editingDeductionId}
-            name={name}
-            setName={setName}
-            amount={amount}
-            setAmount={setAmount}
-            category={category}
-            setCategory={setCategory}
-            dueDay={dueDay}
-            setDueDay={setDueDay}
-            selectedBudgetId={selectedBudgetId}
-            setSelectedBudgetId={setSelectedBudgetId}
-            onOpenAddDeduction={handleOpenAddDeductionForm}
-            onOpenEditDeduction={handleOpenEditDeductionForm}
-            onCancelDeductionForm={handleCancelDeductionForm}
-            onSaveDeduction={handleSaveDeduction}
+            activeCategory={obligations.activeCategory}
+            setActiveCategory={obligations.setActiveCategory}
+            isAddingDeduction={obligations.isAddingDeduction}
+            editingDeductionId={obligations.editingDeductionId}
+            {...obligations.form}
+            onOpenAddDeduction={obligations.handleOpenAddDeductionForm}
+            onOpenEditDeduction={obligations.handleOpenEditDeductionForm}
+            onCancelDeductionForm={obligations.handleCancelDeductionForm}
+            onSaveDeduction={obligations.handleSaveDeduction}
             error={errorMsg}
-            onToggleDeductionActive={handleToggleDeductionActive}
-            onDeleteDeduction={setDeductionToDelete}
-            onEditSubscription={(sub) => {
-              setEditingSubscription(sub);
-              setIsSubscriptionDialogOpen(true);
-            }}
+            onToggleDeductionActive={obligations.handleToggleDeductionActive}
+            onDeleteDeduction={obligations.setDeductionToDelete}
+            onEditSubscription={subs.handleOpenEditSubscription}
             onNavigateToSubscriptions={() => setActiveTab("subscriptions")}
             isPending={isPending}
           />
@@ -837,69 +305,65 @@ export default function FinancialHorizonClient({
         {activeTab === "planner" && (
           <PlannedPurchasesTab
             summary={summary}
-            purchases={purchases}
-            purchasesTotal={purchasesTotal}
+            purchases={planned.purchases}
+            purchasesTotal={planned.purchasesTotal}
             uncommittedPool={uncommittedPool}
             netRemainingPool={netRemainingPool}
-            onOpenAddPurchase={() => setIsPlannedPurchaseDialogOpen(true)}
-            onConfirmDeletePurchase={setPurchaseToDelete}
+            onOpenAddPurchase={() => planned.setIsPlannedPurchaseDialogOpen(true)}
+            onConfirmDeletePurchase={planned.setPurchaseToDelete}
             isPending={isPending}
           />
         )}
       </div>
 
-      {/* Confirmation Dialog for Fixed Obligation Deletion */}
       <PulseConfirmationDialog
-        isOpen={!!deductionToDelete}
-        onClose={() => { setDeductionToDelete(null); setErrorMsg(""); }}
-        onConfirm={handleConfirmDeleteDeduction}
-        title={deductionToDelete ? `Delete "${deductionToDelete.name}"?` : ""}
+        isOpen={!!obligations.deductionToDelete}
+        onClose={() => { obligations.setDeductionToDelete(null); setErrorMsg(""); }}
+        onConfirm={obligations.handleConfirmDeleteDeduction}
+        title={obligations.deductionToDelete ? `Delete "${obligations.deductionToDelete.name}"?` : ""}
         description="This will permanently delete this fixed obligation. This action cannot be undone."
         confirmText="Delete obligation"
         confirmLoadingText="Deleting…"
-        isLoading={deletingDeductionId !== null}
+        isLoading={obligations.deletingDeductionId !== null}
         error={errorMsg}
         variant="destructive"
       />
 
-      {/* Confirmation Dialog for Budget Deletion */}
       <PulseConfirmationDialog
-        isOpen={!!budgetToDelete}
-        onClose={() => setBudgetToDelete(null)}
+        isOpen={!!budgets.budgetToDelete}
+        onClose={() => budgets.setBudgetToDelete(null)}
         onConfirm={() => {
-          if (budgetToDelete) handleDeleteBudget(budgetToDelete.id);
+          if (budgets.budgetToDelete) budgets.handleDeleteBudget(budgets.budgetToDelete.id);
         }}
-        title={budgetToDelete ? `Delete ${budgetToDelete.name}?` : ""}
+        title={budgets.budgetToDelete ? `Delete ${budgets.budgetToDelete.name}?` : ""}
         description="This will permanently delete this monthly budget. Any linked obligations will remain intact but become unbudgeted."
         confirmText="Delete budget"
         confirmLoadingText="Deleting…"
-        isLoading={deletingBudgetId !== null}
+        isLoading={budgets.deletingBudgetId !== null}
         error={errorMsg}
         variant="destructive"
       />
 
-      {/* Confirmation Dialogs for Purchase Deletions */}
       <PulseConfirmationDialog
-        isOpen={!!purchaseToDelete}
-        onClose={() => setPurchaseToDelete(null)}
+        isOpen={!!planned.purchaseToDelete}
+        onClose={() => planned.setPurchaseToDelete(null)}
         onConfirm={() => {
-          if (purchaseToDelete) handleDeletePurchase(purchaseToDelete);
+          if (planned.purchaseToDelete) planned.handleDeletePurchase(planned.purchaseToDelete);
         }}
-        title={purchaseToDelete ? `Delete ${purchaseToDelete.name}?` : ""}
+        title={planned.purchaseToDelete ? `Delete ${planned.purchaseToDelete.name}?` : ""}
         description="This permanently removes it from your next month purchases."
         confirmText="Delete purchase"
         confirmLoadingText="Deleting…"
-        isLoading={deletingPurchaseID !== null}
+        isLoading={planned.deletingPurchaseID !== null}
         error={errorMsg}
         variant="destructive"
       />
 
-      {/* Confirmation Dialog for Transaction Deletion */}
       <PulseConfirmationDialog
-        isOpen={!!txToDelete}
-        onClose={() => setTxToDelete(null)}
-        onConfirm={handleDeleteTransaction}
-        title={txToDelete ? `Delete "${txToDelete.name}"?` : ""}
+        isOpen={!!transactions.txToDelete}
+        onClose={() => transactions.setTxToDelete(null)}
+        onConfirm={transactions.handleDeleteTransaction}
+        title={transactions.txToDelete ? `Delete "${transactions.txToDelete.name}"?` : ""}
         description="This will permanently delete this transaction record."
         confirmText="Delete transaction"
         confirmLoadingText="Deleting…"
@@ -908,103 +372,50 @@ export default function FinancialHorizonClient({
         variant="destructive"
       />
 
-      {/* Confirmation Dialog for Subscription Deletion */}
       <PulseConfirmationDialog
-        isOpen={!!subToDelete}
-        onClose={() => setSubToDelete(null)}
+        isOpen={!!subs.subToDelete}
+        onClose={() => subs.setSubToDelete(null)}
         onConfirm={() => {
-          if (subToDelete) handleDeleteSubscription(subToDelete.id);
+          if (subs.subToDelete) subs.handleDeleteSubscription(subs.subToDelete.id);
         }}
-        title={subToDelete ? `Delete ${subToDelete.name}?` : ""}
+        title={subs.subToDelete ? `Delete ${subs.subToDelete.name}?` : ""}
         description="This will permanently delete this subscription. Linked past transactions will remain intact."
         confirmText="Delete subscription"
         confirmLoadingText="Deleting…"
-        isLoading={deletingSubId !== null}
+        isLoading={subs.deletingSubId !== null}
         error={errorMsg}
         variant="destructive"
       />
 
-      {/* Subscription Linked Transactions Dialog */}
-      {viewingSubTransactions && (
-        <PulseDialog size="md" labelledBy="subscription-payment-history-title" onDismiss={() => setViewingSubTransactions(null)}>
-            <PulseDialogHeader
-              id="subscription-payment-history-title"
-              description={`${subTransactionsList.length} recorded payments • Total spent: ${formatMoney(subTransactionsList.reduce((sum, t) => sum + t.amount, 0), summary.currency)}`}
-            >
-              {viewingSubTransactions.name} Payment History
-            </PulseDialogHeader>
-
-            <div className="mt-4 max-h-96 overflow-y-auto space-y-2 pr-1">
-              {isLoadingSubTx ? (
-                <div className="py-8 text-center text-xs text-muted-foreground">
-                  Loading linked transactions...
-                </div>
-              ) : subTransactionsList.length === 0 ? (
-                <div className="py-8 text-center text-xs text-muted-foreground">
-                  No linked transactions recorded for this subscription yet.
-                </div>
-              ) : (
-                subTransactionsList.map((tx) => (
-                  <div
-                    key={tx.id}
-                    className="flex items-center justify-between rounded-xl bg-background p-3 text-sm"
-                  >
-                    <div>
-                      <span className="font-semibold text-foreground">{tx.name}</span>
-                      <span className="block text-xs text-muted-foreground">
-                        {formatInstant(tx.transaction_date, timeZone, {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                    </div>
-                    <span className="font-bold text-foreground">
-                      {formatMoney(tx.amount, summary.currency)}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <PulseDialogActions>
-              <PulseDialogAction
-                type="button"
-                variant="secondary"
-                onClick={() => setViewingSubTransactions(null)}
-              >
-                Close
-              </PulseDialogAction>
-            </PulseDialogActions>
-        </PulseDialog>
+      {subs.viewingSubTransactions && (
+        <SubscriptionHistoryDialog
+          subscription={subs.viewingSubTransactions}
+          transactions={subs.subTransactionsList}
+          isLoading={subs.isLoadingSubTx}
+          currency={summary.currency}
+          onClose={() => subs.setViewingSubTransactions(null)}
+        />
       )}
 
-      {linkingPaymentSubscription && <LinkSubscriptionPaymentDialog
-        subscription={linkingPaymentSubscription}
+      {subs.linkingPaymentSubscription && <LinkSubscriptionPaymentDialog
+        subscription={subs.linkingPaymentSubscription}
         currency={summary.currency}
         transactionCount={totalTransactionsCount}
-        onClose={() => setLinkingPaymentSubscription(null)}
+        onClose={() => subs.setLinkingPaymentSubscription(null)}
         onCreateNew={() => {
-          setPaymentSubscription(linkingPaymentSubscription);
-          setEditingTransaction(null);
-          setLinkingPaymentSubscription(null);
-          setIsTransactionDialogOpen(true);
+          if (subs.linkingPaymentSubscription) transactions.handleOpenSubscriptionPayment(subs.linkingPaymentSubscription);
+          subs.setLinkingPaymentSubscription(null);
         }}
-        onLink={handleLinkSubscriptionPayment}
+        onLink={subs.handleLinkSubscriptionPayment}
       />}
 
-      {/* Transaction Entry Dialog */}
-      {isTransactionDialogOpen && (
+      {transactions.isTransactionDialogOpen && (
         <TransactionDialog
-          isOpen={isTransactionDialogOpen}
-          onClose={() => {
-            setIsTransactionDialogOpen(false);
-            setEditingTransaction(null);
-            setPaymentSubscription(null);
-          }}
-          onSave={handleSaveTransaction}
-          editingTransaction={editingTransaction}
-          paymentSubscription={paymentSubscription}
+          isOpen={transactions.isTransactionDialogOpen}
+          onClose={transactions.handleCloseTransactionDialog}
+          onSave={transactions.handleSaveTransaction}
+          editingTransaction={transactions.editingTransaction}
+          paymentSubscription={transactions.paymentSubscription}
           categories={categories}
           budgets={summary.budgets ?? []}
           subscriptions={subscriptions}
@@ -1013,23 +424,18 @@ export default function FinancialHorizonClient({
         />
       )}
 
-      {/* Subscription Entry Dialog */}
-      {isSubscriptionDialogOpen && (
+      {subs.isSubscriptionDialogOpen && (
         <SubscriptionDialog
-          isOpen={isSubscriptionDialogOpen}
-          onClose={() => {
-            setIsSubscriptionDialogOpen(false);
-            setEditingSubscription(null);
-          }}
-          onSave={handleSaveSubscription}
-          editingSubscription={editingSubscription}
+          isOpen={subs.isSubscriptionDialogOpen}
+          onClose={subs.handleCloseSubscriptionDialog}
+          onSave={subs.handleSaveSubscription}
+          editingSubscription={subs.editingSubscription}
           categories={categories}
           budgets={summary.budgets ?? []}
           currency={summary.currency}
         />
       )}
 
-      {/* Category Entry Dialog */}
       {isCategoryDialogOpen && (
         <CategoryDialog
           isOpen={isCategoryDialogOpen}
@@ -1044,33 +450,27 @@ export default function FinancialHorizonClient({
         />
       )}
 
-      {/* Budget Entry Dialog */}
-      {isBudgetDialogOpen && (
+      {budgets.isBudgetDialogOpen && (
         <BudgetDialog
-          isOpen={isBudgetDialogOpen}
-          onClose={() => {
-            setIsBudgetDialogOpen(false);
-            setEditingBudget(null);
-          }}
-          onSave={handleSaveBudget}
-          editingBudget={editingBudget}
+          isOpen={budgets.isBudgetDialogOpen}
+          onClose={budgets.handleCloseBudgetDialog}
+          onSave={budgets.handleSaveBudget}
+          editingBudget={budgets.editingBudget}
           currency={summary.currency}
           isPending={isPending}
         />
       )}
 
-      {/* Planned Purchase Dialog */}
-      {isPlannedPurchaseDialogOpen && (
+      {planned.isPlannedPurchaseDialogOpen && (
         <PlannedPurchaseDialog
-          isOpen={isPlannedPurchaseDialogOpen}
-          onClose={() => setIsPlannedPurchaseDialogOpen(false)}
-          onSave={handleSavePlannedPurchase}
+          isOpen={planned.isPlannedPurchaseDialogOpen}
+          onClose={() => planned.setIsPlannedPurchaseDialogOpen(false)}
+          onSave={planned.handleSavePlannedPurchase}
           currency={summary.currency}
           isPending={isPending}
         />
       )}
 
-      {/* Statement Upload & Extraction Dialog */}
       {isStatementUploadOpen && (
         <StatementUploadDialog
           onClose={() => setIsStatementUploadOpen(false)}

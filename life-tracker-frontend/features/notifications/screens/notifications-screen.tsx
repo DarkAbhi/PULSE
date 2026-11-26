@@ -1,16 +1,12 @@
-import { apiBaseURL, apiFetch } from "@/lib/api/server-api";
+import { loadNotifications } from "@/features/notifications/server/notification-data";
 import { redirect } from "next/navigation";
 import { frame } from "@/components/layout/page-frame";
 import TopAppBar from "@/features/notifications/components/top-app-bar";
-import { AppNotification } from "@/features/notifications/components/notification-list";
 import NotificationsClient from "@/features/notifications/components/notifications-client";
 
 export async function NotificationsScreen() {
-  const response = await apiFetch(`${apiBaseURL}/api/notifications`, {
-    signal: AbortSignal.timeout(10_000),
-  }).catch(() => null);
-  if (response?.status === 401) redirect("/");
-  const notifications: AppNotification[] | null = response?.ok ? await response.json().catch(() => null) : null;
+  const { status, data: notifications } = await loadNotifications();
+  if (status === 401) redirect("/");
 
   return (
     <main id="main-content" tabIndex={-1} className={`${frame.page} bg-background text-foreground`}>

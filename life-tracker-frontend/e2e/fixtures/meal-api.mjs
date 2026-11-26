@@ -31,6 +31,8 @@ const horizonTransactions = [
   { id: 3, name: "Test standalone expense", category_id: 3, category_name: "Test standalone" },
 ].map(tx => ({ ...tx, type: "debit", amount: 10, transaction_date: "2026-01-02T10:00:00Z" }));
 let nextTimeId = 5;
+let horizonMutationIds = 100;
+const horizonSaved = { budgets: [], deductions: [], subscriptions: [], purchases: [] };
 const pending = () => ({ status: "pending", questionnaire_version: 1, preferences: null });
 const times = [
   { id: 1, name: "Breakfast", start_time: "07:00", end_time: "10:00", is_default: true },
@@ -170,12 +172,15 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/api/fitness-workouts/1") {
     return send(200, { id: 1, created_at: "2026-01-02T10:00:00Z", ...(token === "fitness-workout-schedule" ? fitnessClassification : {}) });
   }
-  if (url.pathname === "/api/horizon") return send(200, {
-    base_amount: 0, currency: "INR", total_deductions: 0, total_transactions: 0,
-    remaining_amount: 0, committed_ratio: 0, total_budgets_allocated: 0, total_subscription_burn: 0,
-    budgets: [], deductions: [], categories: token === "categories-test" ? horizonCategories : [],
-    transactions: [], subscriptions: [], projections: [],
-  });
+  if (url.pathname === "/api/horizon") {
+    const saved = token === "horizon-mutations" ? horizonSaved : { budgets: [], deductions: [], subscriptions: [] };
+    return send(200, {
+      base_amount: 0, currency: "INR", total_deductions: saved.deductions.reduce((sum, item) => sum + item.amount, 0), total_transactions: 0,
+      remaining_amount: 0, committed_ratio: 0, total_budgets_allocated: 0, total_subscription_burn: 0,
+      budgets: saved.budgets, deductions: saved.deductions, categories: token === "categories-test" ? horizonCategories : [],
+      transactions: [], subscriptions: saved.subscriptions, projections: [],
+    });
+  }
   if (url.pathname === "/api/horizon/transactions") {
     const categoryId = Number(url.searchParams.get("category_id"));
     const transactions = token === "categories-test" ? horizonTransactions.filter(tx => {
@@ -185,6 +190,32 @@ http.createServer(async (req, res) => {
     return send(200, {
       transactions, page: 1, page_size: 10, total: transactions.length, total_pages: transactions.length ? 1 : 0,
     });
+  }
+  // Financial Horizon mutations for the "horizon-mutations" session, kept like a backend would so
+  // revalidated reads return what was saved.
+  if (token === "horizon-mutations") {
+    const collections = { "horizon/budgets": "budgets", "horizon/deductions": "deductions", "horizon/subscriptions": "subscriptions", "next-month-purchases": "purchases" };
+    const created = {
+      budgets: () => ({ name: body.name, allocated_amount: body.allocated_amount, used_amount: 0, available_amount: body.allocated_amount, usage_percentage: 0 }),
+      deductions: () => ({ name: body.name, category: body.category, amount: body.amount, due_day: body.due_day, budget_id: body.budget_id, is_active: true }),
+      subscriptions: () => ({
+        ...body, next_renewal_date: "2026-02-01", monthly_equivalent_amount: body.amount,
+        linked_transaction_count: 0, total_spent: 0, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z",
+      }),
+      purchases: () => ({ name: body.name, price: body.price, url: body.url }),
+    };
+    const match = url.pathname.match(/^\/api\/(horizon\/budgets|horizon\/deductions|horizon\/subscriptions|next-month-purchases)(?:\/(\d+))?$/);
+    const collection = match && collections[match[1]];
+    if (collection && !match[2] && req.method === "POST") {
+      const item = { id: ++horizonMutationIds, ...created[collection]() };
+      horizonSaved[collection].unshift(item);
+      return send(201, item);
+    }
+    if (collection && match[2] && req.method === "DELETE") {
+      horizonSaved[collection] = horizonSaved[collection].filter(item => item.id !== Number(match[2]));
+      return send(204);
+    }
+    if (url.pathname === "/api/next-month-purchases") return send(200, { items: horizonSaved.purchases, total: horizonSaved.purchases.length });
   }
   if (url.pathname === "/api/next-month-purchases") return send(200, { items: [], total: 0 });
   if (url.pathname === "/api/horizon/accounts") {

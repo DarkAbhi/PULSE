@@ -56,4 +56,23 @@ export const fitnessStyles = {
     "[background:conic-gradient(var(--brand-blue)_var(--attendance),var(--chip)_0)] " +
     "after:w-[72%] after:aspect-square after:rounded-full after:bg-card " +
     "sm:w-14",
+  scheduleIcon:
+    "bg-(image:--fitness-gradient) text-white shadow-tile [--tile-start:var(--fitness-gradient-start)] " +
+    "grid size-11 flex-none place-items-center rounded-control",
+  scheduleDay:
+    "group relative flex h-full w-full min-w-0 flex-col items-start gap-3 rounded-card border-2 border-transparent p-4 text-left " +
+    "transition-transform duration-150 active:scale-95 " +
+    "focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-ring " +
+    "data-[kind=workout]:bg-(--fitness-done) data-[kind=rest]:bg-(--fitness-chip) " +
+    "data-[kind=none]:border-dashed data-[kind=none]:border-divider " +
+    "aria-[current=date]:shadow-[inset_0_0_0_2.5px_var(--fitness-today)] " +
+    "motion-reduce:transition-none",
+  scheduleType:
+    "grid size-10 flex-none place-items-center rounded-control " +
+    "group-data-[kind=workout]:bg-(image:--fitness-gradient) group-data-[kind=workout]:text-white " +
+    "group-data-[kind=rest]:bg-card group-data-[kind=rest]:text-(--fitness-muted) " +
+    "group-data-[kind=none]:bg-(--fitness-chip) group-data-[kind=none]:text-(--fitness-muted)",
+  scheduleToday:
+    "bg-(image:--fitness-gradient) text-white " +
+    "rounded-full px-2 py-0.5 text-xs font-extrabold",
 };

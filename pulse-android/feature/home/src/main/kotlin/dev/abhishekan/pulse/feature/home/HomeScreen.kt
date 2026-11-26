@@ -177,7 +177,7 @@ fun HomeScreen(
                     onFitness,
                     settings = (state.questSettings.displayed as? Section.Content)?.value,
                 )
-                DashboardQuestHeatmap(state.quests, { retry(HomeSection.Quests) }, onQuests)
+                DashboardQuestHeatmap(state.quests, { retry(HomeSection.Quests) }, onQuests, compact = compact)
                 val recent = state.recentActivity.displayed
                 DashboardRecentActivity(
                     entries =

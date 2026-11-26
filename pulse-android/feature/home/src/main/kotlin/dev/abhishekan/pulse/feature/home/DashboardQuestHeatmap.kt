@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -65,6 +66,7 @@ internal fun DashboardQuestHeatmap(
     section: Section<QuestActivity>,
     onRetry: () -> Unit,
     onViewQuests: () -> Unit,
+    compact: Boolean,
 ) {
     PulseCard(Modifier.fillMaxWidth(), contentPadding = PulseCardPadding.medium) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -85,13 +87,16 @@ internal fun DashboardQuestHeatmap(
             Section.Loading -> PulseCenteredLoadingState(stringResource(R.string.pulse_home_loading_quests), Modifier.fillMaxWidth())
             is Section.Error -> PulseErrorState(displayed.failure.message, onRetry)
             Section.Empty -> Unit
-            is Section.Content -> Heatmap(displayed.value)
+            is Section.Content -> Heatmap(displayed.value, compact)
         }
     }
 }
 
 @Composable
-private fun Heatmap(activity: QuestActivity) {
+private fun Heatmap(
+    activity: QuestActivity,
+    compact: Boolean,
+) {
     val counts = activity.days.associate { it.date to it.completedIds.distinct().size }
     var selected by rememberSaveable(activity.today) { mutableStateOf(activity.today.toEpochDay()) }
     val levels = PulseTheme.featureTones.questLevels
@@ -99,12 +104,18 @@ private fun Heatmap(activity: QuestActivity) {
     val locale = Locale.getDefault()
     val dateFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale)
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val weeks = ((maxWidth - DAY_LABEL_WIDTH) / (CELL + GAP)).toInt().coerceIn(1, 53)
+        val weeks =
+            with(LocalDensity.current) {
+                ((constraints.maxWidth - DAY_LABEL_WIDTH.roundToPx()) / (CELL.roundToPx() + GAP.roundToPx())).coerceIn(1, 53)
+            }
         // Columns start on Sunday, as on the web, and end with the week containing today.
         val lastSunday = activity.today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
         val firstSunday = lastSunday.minusWeeks((weeks - 1).toLong())
         Column(verticalArrangement = Arrangement.spacedBy(GAP)) {
-            Row(Modifier.clearAndSetSemantics {}, horizontalArrangement = Arrangement.spacedBy(GAP)) {
+            Row(
+                Modifier.fillMaxWidth().clearAndSetSemantics {},
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
                 Spacer(Modifier.width(DAY_LABEL_WIDTH))
                 (0 until weeks).forEach { week ->
                     val start = firstSunday.plusWeeks(week.toLong())
@@ -123,7 +134,11 @@ private fun Heatmap(activity: QuestActivity) {
                 }
             }
             (0 until 7).forEach { weekday ->
-                Row(horizontalArrangement = Arrangement.spacedBy(GAP), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     PulseText(
                         lastSunday.plusDays(weekday.toLong()).dayOfWeek.getDisplayName(TextStyle.SHORT, locale),
                         Modifier.width(DAY_LABEL_WIDTH).clearAndSetSemantics {},
@@ -161,10 +176,11 @@ private fun Heatmap(activity: QuestActivity) {
     }
     val day = LocalDate.ofEpochDay(selected)
     val count = counts[day] ?: 0
+    val selectedDateFormat = if (compact) DateTimeFormatter.ofPattern("EEE, d MMM yyyy", locale) else dateFormat
     PulseText(
         stringResource(
             R.string.pulse_home_heatmap_selected,
-            day.format(dateFormat),
+            day.format(selectedDateFormat),
             pluralStringResource(R.plurals.pulse_home_quests_completed, count, count),
         ),
         style = PulseTextStyle.Label,

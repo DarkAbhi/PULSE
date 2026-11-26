@@ -3,6 +3,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
@@ -77,6 +78,7 @@ fun PulseTileCard(
     tone: PulseTone,
     modifier: Modifier = Modifier,
     contentPadding: Dp = PulseCardPadding.medium,
+    backdrop: @Composable (BoxScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = PulseShapes.hero
@@ -86,6 +88,7 @@ fun PulseTileCard(
             .clip(shape)
             .background(Brush.linearGradient(listOf(tone.start, tone.end))),
     ) {
+        backdrop?.invoke(this)
         CompositionLocalProvider(LocalContentColor provides tone.foreground) {
             Column(
                 Modifier.padding(contentPadding),

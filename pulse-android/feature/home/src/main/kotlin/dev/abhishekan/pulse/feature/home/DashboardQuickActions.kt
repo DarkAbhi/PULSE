@@ -1,11 +1,19 @@
 package dev.abhishekan.pulse.feature.home
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -19,11 +27,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.MotionDurationScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -35,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.Horizon
 import dev.abhishekan.pulse.core.domain.model.UserCurrency
 import dev.abhishekan.pulse.core.domain.model.WorkoutToday
+import dev.abhishekan.pulse.core.ui.PulseBrandColors
 import dev.abhishekan.pulse.core.ui.PulseShapes
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
@@ -114,8 +129,10 @@ private fun FinanceTile(
         onOpen,
         modifier,
         description = stringResource(R.string.pulse_home_financial_horizon),
+        actionColor = PulseBrandColors.gold,
+        backdrop = { FinanceWave(Modifier.matchParentSize()) },
     ) {
-        PulseText(stringResource(R.string.pulse_home_whats_left), color = tone.foreground)
+        PulseText(stringResource(R.string.pulse_home_whats_left), color = tone.foreground.copy(alpha = 0.85f))
         section.refreshFailure?.let { PulseErrorState(it.message, onRetry) }
         when (val displayed = section.displayed) {
             is Section.Content ->
@@ -127,6 +144,33 @@ private fun FinanceTile(
             is Section.Error -> PulseErrorState(displayed.failure.message, onRetry)
             Section.Empty -> PulseText(stringResource(R.string.pulse_home_no_summary_yet), color = tone.foreground)
             Section.Loading -> PulseText(stringResource(R.string.pulse_home_loading_your_horizon), color = tone.foreground)
+        }
+    }
+}
+
+@Composable
+private fun FinanceWave(modifier: Modifier) {
+    // Match the web finance card's 400 × 80 path and nine-second drift.
+    val wave = remember { PathParser().parsePathString("M-30 49Q39 -2 105 36T240 36T375 36T510 36V80H-30Z").toPath() }
+    val waveColor = Color.White.copy(alpha = if (PulseTheme.isDark) 0.35f else 0.5f)
+    val motionScale = rememberCoroutineScope().coroutineContext[MotionDurationScale]
+    val transition = rememberInfiniteTransition(label = "Finance wave")
+    val drift =
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 0.06f,
+            animationSpec = infiniteRepeatable(tween(9_000, easing = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)), RepeatMode.Reverse),
+            label = "Wave drift",
+        )
+    Canvas(modifier) {
+        val width = size.width
+        val waveHeight = size.height / 3f
+        val shift = if (motionScale?.scaleFactor == 0f) 0f else drift.value
+        withTransform({
+            translate(left = -width * shift, top = size.height - waveHeight)
+            scale(scaleX = width / 400f, scaleY = waveHeight / 80f, pivot = Offset.Zero)
+        }) {
+            drawPath(wave, waveColor)
         }
     }
 }
@@ -161,6 +205,8 @@ private fun QuickActionTile(
     onOpen: () -> Unit,
     modifier: Modifier,
     description: String = title,
+    actionColor: Color = tone.start,
+    backdrop: @Composable (BoxScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val openLabel = description
@@ -170,18 +216,22 @@ private fun QuickActionTile(
             .clip(PulseShapes.hero)
             .semantics { contentDescription = openLabel }
             .clickable(role = Role.Button, onClick = onOpen),
+        backdrop = backdrop,
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(40.dp).border(1.5.dp, tone.foreground.copy(alpha = 0.5f), CircleShape),
+                Modifier
+                    .size(40.dp)
+                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                    .border(2.dp, Color.White.copy(alpha = 0.4f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(painterResource(icon), null, Modifier.size(20.dp), tint = tone.foreground)
+                Icon(painterResource(icon), null, Modifier.size(20.dp), tint = Color.White)
             }
             Spacer(Modifier.weight(1f))
             // Web: a white action disc whose arrow takes the tile colour.
             Box(Modifier.size(36.dp).background(Color.White, CircleShape), contentAlignment = Alignment.Center) {
-                Icon(painterResource(UiR.drawable.pulse_back), null, Modifier.size(16.dp).rotate(180f), tint = tone.end)
+                Icon(painterResource(UiR.drawable.pulse_back), null, Modifier.size(16.dp).rotate(180f), tint = actionColor)
             }
         }
         Spacer(Modifier.size(PulseTokens.small))

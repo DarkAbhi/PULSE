@@ -214,6 +214,14 @@
     <string name="pulse_fitness_workout_schedule">Workout schedule</string>
     <string name="pulse_fitness_loading_schedule">Loading workout schedule…</string>
     <string name="pulse_fitness_schedule_day">%1$s · %2$s</string>
+    <string name="pulse_fitness_schedule_subtitle">Plan your workouts and rest days for a repeating week.</string>
+    <string name="pulse_fitness_schedule_no_plan">No plan</string>
+    <string name="pulse_fitness_schedule_edit_day">Edit %1$s schedule, %2$s</string>
+    <string name="pulse_fitness_schedule_edit">Edit</string>
+    <plurals name="pulse_fitness_schedule_summary">
+        <item quantity="one">%1$d workout day · %2$d rest</item>
+        <item quantity="other">%1$d workout days · %2$d rest</item>
+    </plurals>
     <string name="pulse_fitness_workout_classification">Workout type · %1$s</string>
     <string name="pulse_fitness_workout_type">Workout type</string>
     <string name="pulse_fitness_workout_focus">Workout focus</string>

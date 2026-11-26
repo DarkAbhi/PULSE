@@ -1,0 +1,22 @@
+{
+  "id": "kotak_savings_v1",
+  "institution": ["kotak mahindra bank", "kotak mahindra", "kotak"],
+  "account_type": "bank_account",
+  "account_subtype": "savings",
+  "detection": ["account statement", "kotak mahindra bank", "savings account"],
+  "currency_marker": "currency indian rupee",
+  "currency": "INR",
+  "date_format": "02 Jan 2006",
+  "decimal_separator": ".",
+  "group_separator": ",",
+  "line_tolerance": 2.5,
+  "header_anchors": ["date", "description", "chq/ref", "withdrawal", "deposit", "balance"],
+  "column_offsets": [-11, -10, -8, -10, -6, -6],
+  "summary_header": "particulars opening balance closing balance",
+  "summary_row_prefix": "savings account",
+  "opening_label": "opening balance",
+  "account_number_pattern": "(?i)account no\\.?\\s*:?\\s*[0-9Xx* -]*([0-9]{4})\\b",
+  "continuation_gap": 12,
+  "footer_pattern": "(?i)^(statement|page|end of|this is|total)\\b",
+  "sign_convention": "debit_credit"
+}

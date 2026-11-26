@@ -1,0 +1,317 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "title": "Go & Rust backends",
+      "type": "link",
+      "url": "/d/life-backend-overview",
+      "targetBlank": false
+    }
+  ],
+  "liveNow": false,
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [
+    "pulse",
+    "system-resources"
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "title": "PULSE System Resources",
+  "uid": "pulse-system-resources",
+  "description": "Resource usage for the Ubuntu Docker host and all PULSE service containers. Host metrics include activity outside PULSE.",
+  "panels": [
+    {
+      "title": "Container Resources \u2014 all PULSE services",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 13
+    },
+    {
+      "title": "Container CPU (cores)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(container_cpu_usage_seconds_total{job=\"pulse-containers\",service!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "description": "One core equals 100% of one CPU. Includes every process in each service container.",
+      "id": 14
+    },
+    {
+      "title": "Container Memory (working set)",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (container_memory_working_set_bytes{job=\"pulse-containers\",service!=\"\"})",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "id": 15
+    },
+    {
+      "title": "Container Disk I/O",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(container_fs_reads_bytes_total{job=\"pulse-containers\",service!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{service}} read"
+        },
+        {
+          "expr": "sum by (service) (rate(container_fs_writes_bytes_total{job=\"pulse-containers\",service!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{service}} write"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "id": 16
+    },
+    {
+      "title": "Container Network I/O",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "sum by (service) (rate(container_network_receive_bytes_total{job=\"pulse-containers\",service!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{service}} receive"
+        },
+        {
+          "expr": "sum by (service) (rate(container_network_transmit_bytes_total{job=\"pulse-containers\",service!=\"\"}[$__rate_interval]))",
+          "legendFormat": "{{service}} transmit"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "id": 17
+    },
+    {
+      "title": "Docker Host Resources",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 18
+    },
+    {
+      "title": "Host CPU Usage",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 10
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{job=\"pulse-host\",mode=\"idle\"}[$__rate_interval])))",
+          "legendFormat": "Docker host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "description": "Docker host overall usage, including processes outside PULSE. Docker Desktop measures its Linux VM, not macOS/Windows.",
+      "id": 19
+    },
+    {
+      "title": "Host Memory Usage",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 10
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=\"pulse-host\"} / node_memory_MemTotal_bytes{job=\"pulse-host\"})",
+          "legendFormat": "Docker host"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "id": 20
+    },
+    {
+      "title": "Host Filesystem Usage",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 10
+      },
+      "targets": [
+        {
+          "expr": "100 * (1 - node_filesystem_avail_bytes{job=\"pulse-host\",fstype!~\"tmpfs|overlay\",device!~\"shm\"} / node_filesystem_size_bytes{job=\"pulse-host\",fstype!~\"tmpfs|overlay\",device!~\"shm\"})",
+          "legendFormat": "{{mountpoint}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "id": 21
+    },
+    {
+      "title": "Host Disk I/O",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 10
+      },
+      "targets": [
+        {
+          "expr": "rate(node_disk_read_bytes_total{job=\"pulse-host\"}[$__rate_interval])",
+          "legendFormat": "{{device}} read"
+        },
+        {
+          "expr": "rate(node_disk_written_bytes_total{job=\"pulse-host\"}[$__rate_interval])",
+          "legendFormat": "{{device}} write"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "id": 22
+    },
+    {
+      "title": "Resource Exporter Scrape Health",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "targets": [
+        {
+          "expr": "up{job=~\"pulse-host|pulse-containers\"}",
+          "legendFormat": "{{job}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "description": "1 = successful scrape; 0 = failed. Container labels are required for project filtering.",
+      "id": 25
+    },
+    {
+      "id": 26,
+      "title": "Containers With Memory Metrics",
+      "type": "stat",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "targets": [
+        {
+          "expr": "count(container_memory_working_set_bytes{job=\"pulse-containers\",service!=\"\"}) or vector(0)",
+          "legendFormat": "Reporting containers"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "description": "0 means container collection or Compose label filtering is failing, even if the exporter scrape is healthy. Inspect Alloy logs; an idle container still exports memory metrics."
+    }
+  ]
+}

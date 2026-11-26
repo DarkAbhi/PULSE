@@ -1,0 +1,356 @@
+@import "tailwindcss";
+@import "../features/garage/styles/garage-theme.css";
+@import "../features/meal-plan/styles/meal-theme.css";
+@import "../features/financial-horizon/styles/financial-theme.css";
+
+@custom-variant dark (&:is(.dark *));
+@custom-variant dashboard-compact (&:where([data-dashboard-view="compact"], [data-dashboard-view="compact"] *, [data-initial-dashboard-view="compact"] [data-dashboard-view="initial"], [data-initial-dashboard-view="compact"] [data-dashboard-view="initial"] *));
+@custom-variant normal-colors (@media (forced-colors: none));
+
+@theme inline {
+  --color-chip: var(--chip);
+  --color-brand: var(--brand);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-cyan: var(--brand-cyan);
+  --color-brand-pink: var(--brand-pink);
+  --color-brand-gold: var(--brand-gold);
+  --color-on-gold: var(--on-gold);
+  --color-on-cyan: var(--on-cyan);
+  --color-brand-magenta: var(--brand-magenta);
+  --color-brand-purple-bright: var(--brand-purple-bright);
+  --color-scrim: var(--scrim);
+  --shadow-card: var(--card-shadow);
+  --shadow-dialog: var(--dialog-shadow);
+
+  /* Card tokens. Inlined, so each card resolves its own `--card-fill` and `--tile-*` values. */
+  --color-card-fill: var(--card-fill, var(--card));
+  --color-tile-start: var(--tile-start);
+  --color-tile-end: var(--tile-end);
+  --color-tile-foreground: var(--tile-foreground, white);
+  --color-tile-action: var(--tile-action-fg, var(--tile-start));
+  --shadow-tile: 0 20px 40px -22px var(--tile-start);
+  --shadow-tile-dark: 0 20px 40px -24px rgb(0 0 0 / 70%);
+  /* Shadow for white controls and decor floating on a tile. */
+  --shadow-tile-object: 0 6px 14px -6px rgb(0 0 0 / 35%);
+
+  --color-divider: var(--divider);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-bricolage-grotesque);
+  
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-primary-pressed: var(--primary-pressed);
+  --color-action: var(--action);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-surface-strong: var(--surface-strong);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-coral: var(--coral);
+  --color-sage: var(--sage);
+  --color-sky: var(--sky);
+  --color-lavender: var(--lavender);
+  --color-inverse-surface: var(--inverse-surface);
+  --color-inverse-text: var(--inverse-text);
+  --color-inverse-action: var(--inverse-action);
+  --color-btn-cancel-bg: var(--btn-cancel-bg);
+  --color-btn-cancel-text: var(--btn-cancel-text);
+  --color-btn-cancel-hover: var(--btn-cancel-hover);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  color-scheme: light;
+  --radius: 0.5rem;
+  --brand-blue: #4c6bff;
+  --brand-cyan: #19d3f3;
+  --brand-pink: #ff2fd0;
+  --brand-gold: #ffc83d;
+  --on-gold: #3a2a00;
+  --on-cyan: #06303a;
+  --brand-violet: #b22bd8;
+  --brand-indigo: #2b1b8f;
+  --brand-purple: #5b2ce0;
+  --brand-purple-bright: #7b2ce0;
+  --brand-orange: #f0603a;
+  --brand-magenta: #d91cab;
+  --purple-hero-shadow: 0 22px 44px -26px color-mix(in srgb, var(--brand-purple) 90%, transparent);
+  --on-hero-action: #5324c4;
+  --on-hero-hover: #f4eeff;
+  --brand: var(--brand-blue);
+  --light-background: #f6f7ff;
+  --dark-background: #0d0a1f;
+  --light-foreground: #1a1740;
+  --dark-foreground: #f4f1ff;
+  --light-card: #fff;
+  --dark-card: #1a1636;
+  --primary-blue: #415fe8;
+  --primary-gradient: linear-gradient(90deg, var(--primary-blue), var(--brand-violet));
+  --primary-fill: var(--primary-gradient);
+  --scrim: var(--dark-background);
+  --dialog-shadow: 0 30px 80px -20px rgb(0 0 0 / 55%);
+  --background: var(--light-background);
+  --foreground: var(--light-foreground);
+  --card: var(--light-card);
+  --muted: #f1f2fb;
+  --muted-foreground: #5e5a7d;
+  --chip: color-mix(in srgb, var(--foreground) 7%, transparent);
+  --divider: color-mix(in srgb, var(--foreground) 12%, transparent);
+  --card-shadow: 0 1px 2px rgb(26 23 64 / 6%), 0 14px 32px -20px rgb(76 107 255 / 40%);
+  --primary: var(--primary-blue);
+  --primary-pressed: #3248bb;
+  --primary-foreground: #fff;
+  --checkbox-stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8 3 3 5-6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --accent: color-mix(in srgb, var(--brand-blue) 15%, transparent);
+  --accent-foreground: #342b76;
+  --action: #4440ad;
+  --destructive: #bf2d24;
+  --destructive-foreground: #fff;
+  --destructive-soft: #fceae7;
+  --ring: #4b4bc5;
+  --surface-strong: #e6e5f5;
+  --success: #087658;
+  --success-soft: #e1f5ec;
+  --warning: #925900;
+  --warning-soft: #fff2cd;
+  --info: #3856a5;
+  --info-soft: #e8eeff;
+  --coral: #d96a4f;
+  --sage: #7e9b65;
+  --sky: #79b9d1;
+  --lavender: #a48de0;
+  --inverse-surface: #1a1740;
+  --inverse-text: #f4f1ff;
+  --inverse-action: #c1b4ff;
+}
+
+.dark {
+  color-scheme: dark;
+  --brand: #8fa2ff;
+  --primary-fill: var(--primary);
+  --background: var(--dark-background);
+  --foreground: var(--dark-foreground);
+  --card: var(--dark-card);
+  --muted: #231e45;
+  --muted-foreground: #a49ec4;
+  --chip: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --divider: color-mix(in srgb, var(--foreground) 14%, transparent);
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 14px 32px -22px rgb(0 0 0 / 80%);
+  --primary: var(--foreground);
+  --primary-pressed: #dcd5ff;
+  --primary-foreground: var(--background);
+  --checkbox-stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8 3 3 5-6' fill='none' stroke='%230d0a1f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --accent-foreground: #e5dcff;
+  --action: #c1b4ff;
+  --destructive: #ff7a6b;
+  --destructive-foreground: var(--background);
+  --destructive-soft: #492638;
+  --ring: #b6a6ff;
+  --surface-strong: #342c5d;
+  --success: #3ddca6;
+  --success-soft: #193c39;
+  --warning: var(--brand-gold);
+  --warning-soft: #3c3129;
+  --info: #adc3ff;
+  --info-soft: #263054;
+  --coral: #e88b73;
+  --sage: #9bb681;
+  --sky: #95cde1;
+  --lavender: #bd9de5;
+  --inverse-surface: #f4f1ff;
+  --inverse-text: #1a1740;
+  --inverse-action: #4440ad;
+}
+
+/* Resolve aliases in both modes so descendants pick up the active palette. */
+:root, .dark {
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+  --text-tertiary: var(--muted-foreground);
+  --btn-cancel-bg: var(--secondary);
+  --btn-cancel-text: var(--secondary-foreground);
+  --btn-cancel-hover: var(--surface-strong);
+  --chart-1: var(--brand);
+  --chart-2: var(--sage);
+  --chart-3: var(--sky);
+  --chart-4: var(--lavender);
+  --chart-5: var(--coral);
+}
+
+@theme {
+  --radius-control: 0.875rem;
+  --radius-card: 1.75rem;
+  --radius-hero: 2rem;
+  --text-caption: 0.75rem;
+  --text-section: 1.15rem;
+  --text-control: 0.9375rem;
+  --text-control--line-height: 1.2;
+  --breakpoint-compact: 37.5rem;
+  --breakpoint-sheet: 47.5625rem;
+
+  --animate-dialog-in: dialog-in 200ms ease-out;
+  --animate-gauge-ripple: gauge-ripple 6s ease-out infinite;
+  --animate-pulse-sway: pulse-sway 14s ease-in-out infinite alternate;
+  --animate-pulse-breathe: pulse-breathe 6s ease-in-out infinite;
+  --animate-pulse-ripple: pulse-ripple 6s ease-out infinite;
+  --animate-pulse-drift: pulse-drift 9s ease-in-out infinite alternate;
+  --animate-pulse-sweep: pulse-sweep 4.5s ease-in-out infinite alternate;
+  --animate-dropdown: dropdown-in 0.15s ease-out both;
+
+  @keyframes gauge-ripple {
+    from { transform: scale(.95); opacity: .45; }
+    to { transform: scale(1.5); opacity: 0; }
+  }
+
+  @keyframes pulse-breathe {
+    0%, 100% { transform: scale(.95); }
+    50% { transform: scale(1.04); }
+  }
+
+  @keyframes pulse-ripple {
+    from { transform: scale(.95); opacity: .8; }
+    to { transform: scale(1.5); opacity: 0; }
+  }
+
+  @keyframes pulse-sway { to { transform: scale(1.08) translate(-2%, 2%); } }
+
+  @keyframes pulse-drift { to { transform: translateX(-6%); } }
+
+  @keyframes pulse-sweep { from { transform: rotate(-38deg); } to { transform: rotate(30deg); } }
+
+  @keyframes dialog-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  }
+
+  @keyframes dropdown-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(-6px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+}
+
+@utility dialog-fields {
+  & :is(input, select, textarea):not(:where([type="checkbox"], [type="radio"], [type="hidden"], [type="file"], .sr-only)) {
+    @apply min-h-12 rounded-control border-[1.5px] border-divider bg-transparent text-foreground;
+  }
+}
+
+@layer base {
+  :focus-visible {
+    @apply outline-2 outline-ring outline-offset-2;
+  }
+
+  :is(button, input, select, textarea, fieldset, dialog) {
+    @apply border-0;
+  }
+
+  input[type="file"]::file-selector-button {
+    @apply border-0 rounded-[0.5rem] bg-secondary px-3 py-1.5;
+  }
+
+  input:is([type="checkbox"], [type="radio"]) {
+    @apply appearance-none shrink-0 size-4 align-middle bg-surface-strong cursor-pointer forced-colors:appearance-auto;
+  }
+
+  input[type="checkbox"] {
+    @apply rounded-[0.25rem];
+  }
+
+  input[type="radio"] {
+    @apply rounded-full;
+  }
+
+  input:is([type="checkbox"], [type="radio"]):checked {
+    @apply bg-primary;
+  }
+
+  input[type="checkbox"]:checked {
+    background: var(--primary) var(--checkbox-stroke) center / contain no-repeat;
+  }
+
+  input[type="radio"]:checked {
+    background-image: radial-gradient(circle, var(--primary-foreground) 32%, transparent 36%);
+  }
+
+  @media (forced-colors: active) {
+    input:is([type="checkbox"], [type="radio"]):checked {
+      background: revert;
+    }
+  }
+
+  input:is([type="checkbox"], [type="radio"]):disabled {
+    @apply opacity-55 cursor-default;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground transition-[background-color,color] duration-250 ease-[ease] motion-reduce:transition-none;
+  }
+
+  /* Date picker calendar icon contrast styling for light and dark modes */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    @apply cursor-pointer opacity-85 filter-none transition-opacity duration-200 ease-[ease];
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    @apply opacity-100;
+  }
+  :is(.dark, html.dark, [data-theme="dark"]) input[type="date"]::-webkit-calendar-picker-indicator {
+    @apply brightness-0! invert!;
+  }
+
+  :is(button, a, input, select, textarea) {
+    touch-action: manipulation;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    @apply cursor-pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    @apply cursor-not-allowed;
+  }
+}

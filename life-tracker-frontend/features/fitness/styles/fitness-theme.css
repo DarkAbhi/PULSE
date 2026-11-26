@@ -1,0 +1,18 @@
+:root {
+  --fitness-muted: var(--muted-foreground);
+  --fitness-chip: #eeedf6;
+  --fitness-done: #e6ebff;
+  --fitness-dot: #3e58dc;
+  --fitness-today: #dc229f;
+  --fitness-gradient-start: #3a2cd9;
+  --fitness-gradient-end: #a420bd;
+  --fitness-gradient: linear-gradient(135deg, var(--fitness-gradient-start), var(--fitness-gradient-end));
+}
+
+.dark {
+  --fitness-muted: #b7b0d1;
+  --fitness-chip: #2b2749;
+  --fitness-done: #193953;
+  --fitness-dot: #6adaf7;
+  --fitness-today: #ff55d1;
+}

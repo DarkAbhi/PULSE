@@ -1,0 +1,40 @@
+package profile
+
+import (
+	"context"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/DarkAbhi/life-backend/internal/profile/query"
+)
+
+type Repository struct {
+	queries *query.Queries
+	db      *pgxpool.Pool
+}
+
+func NewRepository(db *pgxpool.Pool) *Repository {
+	return &Repository{queries: query.New(db), db: db}
+}
+
+func (r *Repository) Name(ctx context.Context, userID int64) (string, error) {
+	return r.queries.GetDisplayName(ctx, userID)
+}
+
+func (r *Repository) Save(ctx context.Context, userID int64, name string) error {
+	return r.queries.SaveDisplayName(ctx, query.SaveDisplayNameParams{UserID: userID, DisplayName: name})
+}
+
+func (r *Repository) TimeZone(ctx context.Context, userID int64) (string, error) {
+	return r.queries.GetTimeZone(ctx, userID)
+}
+func (r *Repository) SaveTimeZone(ctx context.Context, userID int64, zone string) error {
+	return r.queries.SaveTimeZone(ctx, query.SaveTimeZoneParams{UserID: userID, Timezone: zone})
+}
+
+func (r *Repository) Currency(ctx context.Context, userID int64) (string, error) {
+	return r.queries.GetCurrency(ctx, userID)
+}
+func (r *Repository) SaveCurrency(ctx context.Context, userID int64, code string) error {
+	return r.queries.SaveCurrency(ctx, query.SaveCurrencyParams{UserID: userID, Currency: code})
+}

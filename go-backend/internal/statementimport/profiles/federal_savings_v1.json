@@ -1,0 +1,43 @@
+{
+  "id": "federal_savings_v1",
+  "layout": "bank_running_balance",
+  "account_type": "bank_account",
+  "account_subtype": "savings",
+  "currency": "INR",
+  "decimal_separator": ".",
+  "group_separator": ",",
+  "institution": [
+    "federal bank",
+    "federal"
+  ],
+  "detection": [
+    "the federal bank",
+    "savings account account number",
+    "date particulars tran id withdrawal deposits balance",
+    "grand total"
+  ],
+  "currency_marker": "inr",
+  "date_format": "02/01/2006",
+  "header_anchors": [
+    "date",
+    "particulars",
+    "tran",
+    "withdrawal",
+    "deposits",
+    "balance"
+  ],
+  "column_offsets": [
+    -12,
+    -28,
+    -39,
+    -12,
+    -13,
+    -14
+  ],
+  "line_tolerance": 2.5,
+  "continuation_gap": 10,
+  "whole_amounts": true,
+  "opening_label": "opening balance",
+  "summary_header": "grand total",
+  "account_number_pattern": "(?i)\\baccount number\\s*:\\s*[0-9xX*]*([0-9]{4})\\b"
+}

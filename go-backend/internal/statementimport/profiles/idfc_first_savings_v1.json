@@ -1,0 +1,22 @@
+{
+  "id": "idfc_first_savings_v1",
+  "layout": "ruled_grid",
+  "institution": ["idfc first bank", "idfc first", "idfc"],
+  "account_type": "bank_account",
+  "account_subtype": "savings",
+  "detection": ["idfc first bank", "date and time value date transaction details", "savings account details"],
+  "currency_marker": "currency inr",
+  "currency": "INR",
+  "date_format": "02 Jan 06",
+  "decimal_separator": ".",
+  "group_separator": ",",
+  "line_tolerance": 2.5,
+  "region_prefix": "date and time",
+  "header_anchors": ["value", "transaction", "ref/cheque", "withdrawals", "deposits", "balance"],
+  "column_offsets": [-9, -22, -6, -7, -13, -24],
+  "summary_header": "closing balance",
+  "summary_row_prefix": "opening balance",
+  "opening_label": "opening balance",
+  "account_number_pattern": "(?i)^savings account details[^0-9]*[0-9Xx* -]*([0-9]{4})$",
+  "sign_convention": "debit_credit"
+}

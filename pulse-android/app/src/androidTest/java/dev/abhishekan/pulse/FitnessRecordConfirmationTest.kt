@@ -1,0 +1,62 @@
+package dev.abhishekan.pulse
+
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.test.platform.app.InstrumentationRegistry
+import dev.abhishekan.pulse.core.domain.model.FitnessOverview
+import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessAction
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessScreen
+import dev.abhishekan.pulse.feature.fitness.overview.FitnessUiState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
+import org.junit.Assert.assertEquals
+import org.junit.Rule
+import org.junit.Test
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+
+class FitnessRecordConfirmationTest {
+    @get:Rule val compose = createComposeRule()
+
+    @Test fun recordingRequiresConfirmationAndCancelDoesNotRecord() {
+        val day = LocalDate.of(2026, 10, 20)
+        val state =
+            FitnessUiState(
+                selected = day,
+                month = YearMonth.from(day),
+                overview = FitnessOverview(day, emptyList(), emptyList()),
+                loadState = FitnessLoadState.Ready,
+            )
+        var records = 0
+        compose.setContent {
+            PulseTheme(false) {
+                FitnessScreen(state, { if (it == FitnessAction.RecordWorkout) records++ }, {})
+            }
+        }
+
+        compose.onNodeWithText("Log workout").performScrollTo().performClick()
+        compose.onNodeWithText("Log workout?").assertIsDisplayed()
+        val locale =
+            InstrumentationRegistry
+                .getInstrumentation()
+                .targetContext.resources.configuration.locales[0]
+        val date = day.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", locale))
+        compose.onNodeWithText("Log a workout for $date?").assertIsDisplayed()
+        compose.runOnIdle { assertEquals(0, records) }
+        compose.onNodeWithText("Cancel").performClick()
+        compose.onNodeWithText("Log workout?").assertDoesNotExist()
+        compose.runOnIdle { assertEquals(0, records) }
+
+        compose.onNodeWithText("Log workout").performScrollTo().performClick()
+        compose.onNode(hasText("Log workout") and hasAnyAncestor(isDialog())).performClick()
+        compose.onNodeWithText("Log workout?").assertDoesNotExist()
+        compose.runOnIdle { assertEquals(1, records) }
+    }
+}

@@ -1,0 +1,88 @@
+export type AirFill = { id: number; filled_at: string; odometer_km?: number | null };
+export type FuelItem = {
+  fuel_type: string;
+  fill_type: string;
+  quantity: number;
+  unit_price: number;
+  total_cost: number;
+};
+export type FuelFill = {
+  id: number;
+  odometer_km: number;
+  filled_at: string;
+  station_name: string | null;
+  notes: string | null;
+  items: FuelItem[];
+};
+
+export type MaintenanceAction = { component: string; action: string; description: string };
+export type MaintenanceInterval = { kilometers: number; duration: number; unit: "months" };
+export type MaintenanceSchedule = {
+  kind: "engine_oil" | "tire_pressure" | "general_service"; active_source: "personal" | "manual";
+  personal: MaintenanceInterval; manual: MaintenanceInterval; manual_reference: string;
+};
+export type UpcomingMaintenance = {
+  source?: string; distance_unavailable?: boolean;
+  kind: string; status: string; due_date: string | null; remaining_days: number | null;
+  remaining_km: number | null; progress: number | null; last_at: string | null;
+  last_recorded_odometer_km: number | null;
+};
+
+export type MaintenanceRecord = {
+  id: number;
+  category: "service" | "repair" | "insurance" | "washing" | "tyres";
+  title: string;
+  amount: number;
+  occurred_at: string;
+  odometer_km: number | null;
+  provider_name: string | null;
+  notes: string | null;
+  attachments: MaintenanceAttachment[];
+  actions?: MaintenanceAction[];
+};
+
+export type MaintenanceAttachment = {
+  id: number;
+  file_name: string;
+  content_type: string;
+  size_bytes: number;
+  created_at: string;
+};
+
+export type FuelEfficiencyStats = {
+  total_cost: number;
+  total_volume: number;
+  average_km_per_litre: number | null;
+  max_km_per_litre: number | null;
+  min_km_per_litre: number | null;
+  last_km_per_litre: number | null;
+};
+
+export type VehicleHistoryData = {
+  coming_up?: UpcomingMaintenance[];
+  maintenance_schedules?: MaintenanceSchedule[];
+  vehicle_name: string;
+  kind: string;
+  catalog_id: string | null;
+  make_name: string;
+  model_name: string;
+  fuel_types: string[];
+  front_tire_pressure_solo: number | null;
+  rear_tire_pressure_solo: number | null;
+  front_tire_pressure_pillion: number | null;
+  rear_tire_pressure_pillion: number | null;
+  front_tire_pressure?: number | null;
+  rear_tire_pressure?: number | null;
+  air_fills: AirFill[];
+  fuel_fillups: FuelFill[];
+  maintenance_records: MaintenanceRecord[];
+  fuel_efficiency: Record<string, FuelEfficiencyStats>;
+};
+
+export type SaveTirePressurePayload = {
+  front_tire_pressure_solo: number | null;
+  rear_tire_pressure_solo: number | null;
+  front_tire_pressure_pillion: number | null;
+  rear_tire_pressure_pillion: number | null;
+};
+

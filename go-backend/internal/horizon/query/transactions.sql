@@ -1,0 +1,112 @@
+-- name: ListRecentTransactions :many
+SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
+       COALESCE(p.name || ' / ' || c.name, c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
+       t.subscription_id, s.name AS subscription_name, t.notes, t.created_at, t.account_id, t.source,
+       COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = t.import_batch_id AND r.ordinal = t.import_row_ordinal), '')::text AS original_narration
+FROM financial_horizon_transactions t
+LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
+LEFT JOIN financial_horizon_categories p ON p.id = c.parent_id AND (p.user_id = t.user_id OR (p.user_id IS NULL AND p.is_default))
+LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
+LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id AND s.user_id = t.user_id
+WHERE t.user_id = $1
+ORDER BY t.transaction_date DESC, t.id DESC LIMIT $2;
+
+-- name: ListRecentTransactionsLegacy :many
+SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
+       COALESCE(p.name || ' / ' || c.name, c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
+       NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at, t.account_id, t.source,
+       COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = t.import_batch_id AND r.ordinal = t.import_row_ordinal), '')::text AS original_narration
+FROM financial_horizon_transactions t
+LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
+LEFT JOIN financial_horizon_categories p ON p.id = c.parent_id AND (p.user_id = t.user_id OR (p.user_id IS NULL AND p.is_default))
+LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
+WHERE t.user_id = $1
+ORDER BY t.transaction_date DESC, t.id DESC LIMIT $2;
+
+-- name: CountFilteredTransactions :one
+SELECT COUNT(*) FROM financial_horizon_transactions t
+LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
+WHERE t.user_id = $1
+  AND ($2::text = '' OR t.type = $2)
+  AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3)
+  AND ($4::bigint = 0 OR c.id = $4 OR c.parent_id = $4);
+
+-- name: ListFilteredTransactions :many
+SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
+       COALESCE(p.name || ' / ' || c.name, c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
+       t.subscription_id, s.name AS subscription_name, t.notes, t.created_at, t.account_id, t.source,
+       COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = t.import_batch_id AND r.ordinal = t.import_row_ordinal), '')::text AS original_narration
+FROM financial_horizon_transactions t
+LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
+LEFT JOIN financial_horizon_categories p ON p.id = c.parent_id AND (p.user_id = t.user_id OR (p.user_id IS NULL AND p.is_default))
+LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
+LEFT JOIN financial_horizon_subscriptions s ON t.subscription_id = s.id AND s.user_id = t.user_id
+WHERE t.user_id = $1
+  AND ($2::text = '' OR t.type = $2)
+  AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3)
+  AND ($4::bigint = 0 OR c.id = $4 OR c.parent_id = $4)
+ORDER BY t.transaction_date DESC, t.id DESC LIMIT $5 OFFSET $6;
+
+-- name: ListFilteredTransactionsLegacy :many
+SELECT t.id, t.name, t.amount, t.type, t.transaction_date, t.category_id,
+       COALESCE(p.name || ' / ' || c.name, c.name, t.category_name)::text AS category_name, t.budget_id, b.name AS budget_name,
+       NULL::bigint AS subscription_id, NULL::text AS subscription_name, t.notes, t.created_at, t.account_id, t.source,
+       COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = t.import_batch_id AND r.ordinal = t.import_row_ordinal), '')::text AS original_narration
+FROM financial_horizon_transactions t
+LEFT JOIN financial_horizon_categories c ON t.category_id = c.id AND (c.user_id = t.user_id OR (c.user_id IS NULL AND c.is_default))
+LEFT JOIN financial_horizon_categories p ON p.id = c.parent_id AND (p.user_id = t.user_id OR (p.user_id IS NULL AND p.is_default))
+LEFT JOIN financial_horizon_budgets b ON t.budget_id = b.id AND b.user_id = t.user_id
+WHERE t.user_id = $1
+  AND ($2::text = '' OR t.type = $2)
+  AND ($3::text = '' OR LOWER(t.name) LIKE $3 OR LOWER(t.notes) LIKE $3)
+  AND ($4::bigint = 0 OR c.id = $4 OR c.parent_id = $4)
+ORDER BY t.transaction_date DESC, t.id DESC LIMIT $5 OFFSET $6;
+
+-- name: GetUserCategoryName :one
+SELECT COALESCE(p.name || ' / ' || c.name, c.name)::varchar AS name
+FROM financial_horizon_categories c
+LEFT JOIN financial_horizon_categories p ON p.id = c.parent_id AND (p.user_id = $2 OR (p.user_id IS NULL AND p.is_default))
+WHERE c.id = $1 AND (c.user_id = $2 OR (c.user_id IS NULL AND c.is_default));
+
+-- name: CreateTransaction :one
+INSERT INTO financial_horizon_transactions (user_id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, account_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source,
+    COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = financial_horizon_transactions.import_batch_id AND r.ordinal = financial_horizon_transactions.import_row_ordinal), '')::text AS original_narration;
+
+-- name: GetSubscriptionName :one
+SELECT name FROM financial_horizon_subscriptions WHERE id = $1 AND user_id = $2;
+
+-- name: UpdateTransaction :one
+UPDATE financial_horizon_transactions
+SET name = $1, amount = $2, type = $3, transaction_date = $4, category_id = $5, category_name = $6,
+    budget_id = $7, subscription_id = $8, notes = $9,
+    account_id = CASE WHEN source = 'manual' AND sqlc.arg(set_account)::boolean THEN sqlc.narg(account_id)::bigint ELSE account_id END, updated_at = CURRENT_TIMESTAMP
+WHERE id = $10 AND user_id = $11
+RETURNING id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source,
+    COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = financial_horizon_transactions.import_batch_id AND r.ordinal = financial_horizon_transactions.import_row_ordinal), '')::text AS original_narration;
+
+-- name: DeleteTransaction :execrows
+DELETE FROM financial_horizon_transactions WHERE id = $1 AND user_id = $2;
+
+-- name: LinkSubscriptionTransaction :one
+WITH linked AS (
+    UPDATE financial_horizon_transactions
+    SET subscription_id = sqlc.arg(subscription_id)::bigint, updated_at = CURRENT_TIMESTAMP
+    WHERE financial_horizon_transactions.id = sqlc.arg(id)
+      AND financial_horizon_transactions.user_id = sqlc.arg(user_id)
+      AND financial_horizon_transactions.type = 'debit'
+      AND financial_horizon_transactions.subscription_id IS NULL
+      AND EXISTS (
+        SELECT 1 FROM financial_horizon_subscriptions s
+        WHERE s.id = sqlc.arg(subscription_id) AND s.user_id = sqlc.arg(user_id)
+      )
+    RETURNING id, user_id, name, amount, type, transaction_date, category_id, category_name,
+        budget_id, subscription_id, notes, created_at, account_id, source, import_batch_id, import_row_ordinal
+), activity AS (
+    INSERT INTO recent_activity (kind, user_id, transaction_id, payment_subscription_id)
+    SELECT 'subscription_payment_linked', user_id, id, subscription_id FROM linked
+)
+SELECT id, name, amount, type, transaction_date, category_id, category_name, budget_id, subscription_id, notes, created_at, account_id, source,
+    COALESCE((SELECT r.source->>'description' FROM statement_import_rows r WHERE r.batch_id = linked.import_batch_id AND r.ordinal = linked.import_row_ordinal), '')::text AS original_narration
+FROM linked;

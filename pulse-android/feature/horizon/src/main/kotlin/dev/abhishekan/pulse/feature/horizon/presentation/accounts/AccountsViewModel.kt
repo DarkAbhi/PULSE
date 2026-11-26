@@ -1,0 +1,289 @@
+package dev.abhishekan.pulse.feature.horizon.presentation.accounts
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.abhishekan.pulse.core.domain.model.Failure
+import dev.abhishekan.pulse.core.domain.model.FinancialAccount
+import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.repository.FinancialAccountsRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+internal class AccountsViewModel(
+    private val repository: FinancialAccountsRepository,
+) : ViewModel() {
+    private val _uiState = MutableStateFlow(AccountsState())
+    val uiState = _uiState.asStateFlow()
+
+    init {
+        onAction(AccountsAction.Refresh)
+    }
+
+    fun onAction(action: AccountsAction) {
+        if (_uiState.value.busy) return
+        when (action) {
+            AccountsAction.Refresh -> submit { load() }
+            is AccountsAction.Add ->
+                setDraft(
+                    FinancialAccount(
+                        accountType = action.type.value,
+                        bankAccountSubtype =
+                            if (action.type ==
+                                AccountType.Bank
+                            ) {
+                                "savings"
+                            } else {
+                                ""
+                            },
+                    ),
+                )
+            is AccountsAction.Edit -> setDraft(action.account)
+            AccountsAction.Cancel -> setDraft(null)
+            is AccountsAction.ChangeName ->
+                updateDraft { if (action.value.length <= 100) copy(displayName = action.value) else this }
+            is AccountsAction.ChangeInstitution ->
+                updateDraft { if (action.value.length <= 150) copy(institutionName = action.value) else this }
+            is AccountsAction.SelectType ->
+                updateDraft {
+                    if (accountType ==
+                        action.type.value
+                    ) {
+                        this
+                    } else {
+                        copy(
+                            accountType = action.type.value,
+                            bankAccountSubtype =
+                                if (action.type ==
+                                    AccountType.Bank
+                                ) {
+                                    "savings"
+                                } else {
+                                    ""
+                                },
+                            accountNumber = "",
+                            holderEmail = "",
+                            cardType = "",
+                            cardNetwork = "",
+                            creditLimit = "",
+                            statementDay = "",
+                            lastFour = "",
+                        )
+                    }
+                }
+            is AccountsAction.SelectSubtype ->
+                updateDraft { if (accountType == AccountType.Bank.value) copy(bankAccountSubtype = action.value) else this }
+            is AccountsAction.ChangeHolderName -> updateDraft { if (action.value.length <= 150) copy(holderName = action.value) else this }
+            is AccountsAction.ChangeHolderEmail ->
+                updateDraft {
+                    if (action.value.length <=
+                        254
+                    ) {
+                        copy(holderEmail = action.value)
+                    } else {
+                        this
+                    }
+                }
+            is AccountsAction.ChangeAccountNumber ->
+                updateDraft {
+                    if (action.value.length <= 34 &&
+                        action.value.all { it in '0'..'9' || it in 'A'..'Z' || it in 'a'..'z' }
+                    ) {
+                        copy(accountNumber = action.value)
+                    } else {
+                        this
+                    }
+                }
+            is AccountsAction.ChangeCardType -> updateDraft { if (action.value.length <= 150) copy(cardType = action.value) else this }
+            is AccountsAction.SelectNetwork -> updateDraft { copy(cardNetwork = action.value) }
+            is AccountsAction.ChangeCreditLimit -> updateDraft { if (action.value.length <= 32) copy(creditLimit = action.value) else this }
+            is AccountsAction.ChangeStatementDay ->
+                updateDraft {
+                    if (action.value.length <= 2 &&
+                        action.value.all { it in '0'..'9' }
+                    ) {
+                        copy(statementDay = action.value)
+                    } else {
+                        this
+                    }
+                }
+            is AccountsAction.ChangeLastFour ->
+                updateDraft {
+                    val value = action.value
+                    if (value.length <= 4 && value.all { it in '0'..'9' }) copy(lastFour = value) else this
+                }
+            AccountsAction.Save -> save()
+            is AccountsAction.SetArchived -> setArchived(action.id, action.archived)
+        }
+    }
+
+    private fun setDraft(account: FinancialAccount?) {
+        _uiState.update { it.copy(draft = account, request = AccountsState.Request.Idle) }
+    }
+
+    private inline fun updateDraft(transform: FinancialAccount.() -> FinancialAccount) {
+        _uiState.update { state ->
+            val draft = state.draft ?: return@update state
+            val updated = draft.transform()
+            if (updated == draft) state else state.copy(draft = updated, request = AccountsState.Request.Idle)
+        }
+    }
+
+    private fun save() {
+        val state = _uiState.value
+        val account = state.draft ?: return
+        if (!state.canSave) return
+        submit {
+            when (val result = repository.saveAccount(account)) {
+                is Outcome.Success -> {
+                    _uiState.update { it.copy(draft = null) }
+                    load()
+                }
+                is Outcome.Error -> fail(result.failure)
+            }
+        }
+    }
+
+    private fun setArchived(
+        id: Long,
+        archived: Boolean,
+    ) = submit {
+        when (val result = repository.archiveAccount(id, archived)) {
+            is Outcome.Success -> load()
+            is Outcome.Error -> fail(result.failure)
+        }
+    }
+
+    private fun submit(operation: suspend () -> Unit) {
+        _uiState.update { it.copy(request = AccountsState.Request.Loading) }
+        viewModelScope.launch {
+            try {
+                operation()
+            } finally {
+                _uiState.update { if (it.busy) it.copy(request = AccountsState.Request.Idle) else it }
+            }
+        }
+    }
+
+    private suspend fun load() {
+        when (val result = repository.accounts(includeArchived = true)) {
+            is Outcome.Success -> _uiState.update { it.copy(accounts = result.value) }
+            is Outcome.Error -> fail(result.failure)
+        }
+    }
+
+    private fun fail(failure: Failure) {
+        _uiState.update { it.copy(request = AccountsState.Request.Failed(failure)) }
+    }
+}
+
+internal data class AccountsState(
+    val accounts: List<FinancialAccount>? = null,
+    val draft: FinancialAccount? = null,
+    val request: Request = Request.Idle,
+) {
+    fun accountsOfType(type: AccountType): List<FinancialAccount>? = accounts?.filter { it.accountType == type.value }
+
+    val busy get() = request == Request.Loading
+
+    val canSave
+        get() =
+            !busy &&
+                draft != null &&
+                draft.displayName.isNotBlank() &&
+                draft.institutionName.isNotBlank() &&
+                draft.holderName.isNotBlank() &&
+                if (draft.accountType == AccountType.Bank.value) {
+                    draft.bankAccountSubtype in setOf("savings", "current") &&
+                        draft.holderEmail.matches(Regex("[^\\s@]+@[^\\s@]+")) &&
+                        (draft.accountNumber.isEmpty() || draft.accountNumber.length in 4..34)
+                } else {
+                    draft.cardType.isNotBlank() &&
+                        draft.cardNetwork in setOf("visa", "mastercard", "american_express", "diners_club", "rupay") &&
+                        draft.lastFour.length == 4 &&
+                        draft.creditLimit.toBigDecimalOrNull()?.let {
+                            it.signum() >= 0 && it < "1000000000000000".toBigDecimal()
+                        } == true &&
+                        draft.statementDay.toIntOrNull() in 1..31
+                }
+
+    sealed interface Request {
+        data object Idle : Request
+
+        data object Loading : Request
+
+        data class Failed(
+            val failure: Failure,
+        ) : Request
+    }
+}
+
+internal sealed interface AccountsAction {
+    data object Refresh : AccountsAction
+
+    data class Add(
+        val type: AccountType,
+    ) : AccountsAction
+
+    data class Edit(
+        val account: FinancialAccount,
+    ) : AccountsAction
+
+    data object Cancel : AccountsAction
+
+    data class ChangeName(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeInstitution(
+        val value: String,
+    ) : AccountsAction
+
+    data class SelectType(
+        val type: AccountType,
+    ) : AccountsAction
+
+    data class SelectSubtype(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeHolderName(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeHolderEmail(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeAccountNumber(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeCardType(
+        val value: String,
+    ) : AccountsAction
+
+    data class SelectNetwork(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeCreditLimit(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeStatementDay(
+        val value: String,
+    ) : AccountsAction
+
+    data class ChangeLastFour(
+        val value: String,
+    ) : AccountsAction
+
+    data object Save : AccountsAction
+
+    data class SetArchived(
+        val id: Long,
+        val archived: Boolean,
+    ) : AccountsAction
+}

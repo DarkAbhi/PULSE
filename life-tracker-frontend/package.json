@@ -1,0 +1,35 @@
+{
+  "name": "life-tracker-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "imports": {
+    "#tests/*": "./tests/*"
+  },
+  "scripts": {
+    "test": "node --test",
+    "test:e2e": "playwright test",
+    "dev": "next dev --turbopack",
+    "dev:docker": "next dev --webpack --hostname 0.0.0.0",
+    "storybook:install": "npm install --no-save storybook@10.6.8 @storybook/nextjs-vite@10.6.8 @storybook/addon-docs@10.6.8 vite@8.3.6",
+    "storybook": "storybook dev -p 6006 --host localhost",
+    "build-storybook": "storybook build",
+    "build": "tsc --noEmit && next build --turbopack",
+    "start": "next start"
+  },
+  "dependencies": {
+    "lucide-react": "^1.70.0",
+    "next": "16.4.5",
+    "next-themes": "^0.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "7.0.2"
+  }
+}

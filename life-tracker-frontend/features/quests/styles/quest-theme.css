@@ -1,0 +1,41 @@
+.quest-page {
+  --quest-canvas: #f6f7ff;
+  --quest-panel: #fff;
+  --quest-inset: #f1f2fb;
+  --quest-text: #1a1740;
+  --quest-muted: #5e5a7d;
+  --quest-border: rgb(26 23 64 / 16%);
+  --quest-chip: rgb(26 23 64 / 7%);
+  --quest-shadow: 0 1px 2px rgb(26 23 64 / 6%), 0 14px 32px -20px rgb(76 107 255 / 40%);
+  --quest-accent: #4c6bff;
+  --quest-blue: #3a51c7;
+  --quest-gold: #e8a90a;
+  --quest-amber: #b26a00;
+  --quest-pink: #e32460;
+  --quest-green: #0e8a66;
+  --quest-check: #fff;
+  --quest-gradient: linear-gradient(135deg, #3a2cd9, #b22bd8);
+}
+
+.dark .quest-page {
+  --quest-canvas: #0d0a1f;
+  --quest-panel: #1a1636;
+  --quest-inset: #231e45;
+  --quest-text: #f4f1ff;
+  --quest-muted: #a49ec4;
+  --quest-border: rgb(244 241 255 / 19%);
+  --quest-chip: rgb(244 241 255 / 10%);
+  --quest-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 14px 32px -22px rgb(0 0 0 / 80%);
+  --quest-blue: #a3afff;
+  --quest-gold: #ffc83d;
+  --quest-amber: #ffc83d;
+  --quest-pink: #ff6f9e;
+  --quest-green: #3ddca6;
+  --quest-check: #0d0a1f;
+}
+
+@keyframes quest-medal-float {
+  50% {
+    transform: translateY(-6px);
+  }
+}

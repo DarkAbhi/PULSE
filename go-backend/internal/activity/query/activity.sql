@@ -1,0 +1,89 @@
+-- name: ListRecent :many
+WITH latest AS MATERIALIZED (
+    SELECT ra.* FROM recent_activity ra
+    WHERE ra.user_id = $1
+    ORDER BY ra.recorded_at DESC, ra.id DESC
+    LIMIT 3
+)
+SELECT a.id::text AS id, a.kind, a.recorded_at,
+    (CASE a.kind
+        WHEN 'fuel_fillup' THEN jsonb_build_object('name', v.name, 'quantity', fuel.quantity,
+            'amount', fuel.amount, 'occurred_at', f.filled_at)
+        WHEN 'air_fill' THEN jsonb_build_object('name', v.name, 'odometer_km', air.odometer_km,
+            'occurred_at', air.filled_at)
+        WHEN 'maintenance' THEN jsonb_build_object('name', v.name, 'description', m.title,
+            'amount', m.amount, 'occurred_at', m.occurred_at)
+        WHEN 'vehicle_added' THEN jsonb_build_object('name', v.name)
+        WHEN 'reminder_configured' THEN jsonb_build_object('name', v.name, 'schedule_kind', schedule.kind,
+            'interval_km', CASE WHEN schedule.active_source = 'manual' THEN schedule.manual_km ELSE schedule.personal_km END,
+            'interval_duration', CASE WHEN schedule.active_source = 'manual' THEN schedule.manual_duration ELSE schedule.personal_duration END,
+            'interval_unit', CASE WHEN schedule.active_source = 'manual' THEN schedule.manual_unit ELSE schedule.personal_unit END)
+        WHEN 'maintenance_attachment' THEN jsonb_build_object('name', v.name, 'description', att.file_name)
+        WHEN 'meal_added' THEN jsonb_build_object('name', meal.name, 'meal_time', mt.name, 'date', meal.date)
+        WHEN 'meal_eaten' THEN jsonb_build_object('name', meal.name, 'meal_time', mt.name, 'date', meal.date)
+        WHEN 'meal_time_added' THEN jsonb_build_object('name', custom_time.name,
+            'start_time', TO_CHAR(custom_time.start_time, 'HH24:MI'), 'end_time', TO_CHAR(custom_time.end_time, 'HH24:MI'))
+        WHEN 'workout_logged' THEN jsonb_build_object('exercise_count', workout_counts.exercise_count,
+            'set_count', workout_counts.set_count, 'occurred_at', gym.created_at)
+        WHEN 'workout_synced' THEN jsonb_build_object('name', wt.name, 'duration_seconds', w.duration_seconds,
+            'distance_meters', w.distance_meters, 'occurred_at', w.start_time)
+        WHEN 'exercise_added' THEN jsonb_build_object('name', e.name, 'occurred_at', exercise_visit.created_at)
+        WHEN 'sleep_synced' THEN jsonb_build_object('duration_seconds', sleep.total_asleep_seconds, 'date', sleep.sleep_date)
+        WHEN 'daily_activity_synced' THEN jsonb_build_object('steps', rings.steps_count, 'move_calories', rings.move_calories,
+            'exercise_minutes', rings.exercise_minutes, 'date', rings.summary_date)
+        WHEN 'transaction_logged' THEN jsonb_build_object('name', tx.name, 'amount', tx.amount,
+            'transaction_type', tx.type, 'occurred_at', tx.transaction_date)
+        WHEN 'statement_imported' THEN jsonb_build_object('name', destination.display_name)
+        WHEN 'subscription_added' THEN jsonb_build_object('name', sub.name, 'amount', sub.amount,
+            'billing_cycle', sub.billing_cycle)
+        WHEN 'subscription_payment_linked' THEN jsonb_build_object('name', payment_sub.name, 'amount', tx.amount)
+        WHEN 'budget_added' THEN jsonb_build_object('name', budget.name, 'amount', budget.allocated_amount)
+        WHEN 'obligation_added' THEN jsonb_build_object('name', obligation.name, 'amount', obligation.amount,
+            'due_day', obligation.due_day)
+        WHEN 'planned_purchase_added' THEN jsonb_build_object('name', purchase.name, 'amount', purchase.price,
+            'date', purchase.target_month)
+        WHEN 'account_added' THEN jsonb_build_object('name', account.display_name, 'account_type', account.account_type)
+        WHEN 'account_archived' THEN jsonb_build_object('name', account.display_name)
+        WHEN 'account_restored' THEN jsonb_build_object('name', account.display_name)
+        WHEN 'category_added' THEN jsonb_build_object('name', cat.name, 'parent_name', parent.name)
+    END)::jsonb AS details
+FROM latest a
+LEFT JOIN vehicle_fuel_fillups f ON f.id = a.fuel_fillup_id AND f.user_id = a.user_id
+LEFT JOIN LATERAL (
+    SELECT SUM(quantity) AS quantity, SUM(total_cost) AS amount
+    FROM vehicle_fuel_items fi WHERE fi.fillup_id = f.id AND fi.fill_type <> 'missed'
+) fuel ON f.id IS NOT NULL
+LEFT JOIN vehicle_air_fills air ON air.id = a.air_fill_id AND air.user_id = a.user_id
+LEFT JOIN vehicle_maintenance_attachments att ON att.id = a.attachment_id AND att.user_id = a.user_id
+LEFT JOIN vehicle_maintenance_records m ON m.id = COALESCE(a.maintenance_id, att.maintenance_record_id) AND m.user_id = a.user_id
+LEFT JOIN vehicle_maintenance_schedules schedule ON schedule.vehicle_id = a.schedule_vehicle_id
+    AND schedule.kind = a.schedule_kind AND schedule.user_id = a.user_id
+LEFT JOIN vehicles v ON v.id = COALESCE(f.vehicle_id, air.vehicle_id, m.vehicle_id, schedule.vehicle_id, a.vehicle_id) AND v.user_id = a.user_id
+LEFT JOIN meal_plans meal ON meal.id = a.meal_id AND meal.user_id = a.user_id
+LEFT JOIN meal_times mt ON mt.id = meal.meal_time_id AND (mt.user_id = a.user_id OR mt.is_default)
+LEFT JOIN meal_times custom_time ON custom_time.id = a.meal_time_id AND custom_time.user_id = a.user_id
+LEFT JOIN gym_visits gym ON gym.id = a.gym_visit_id AND gym.user_id = a.user_id
+LEFT JOIN LATERAL (
+    SELECT COUNT(DISTINCT ex.id) AS exercise_count, COUNT(s.id) AS set_count
+    FROM gym_visit_exercises ex
+    LEFT JOIN gym_exercise_sets s ON s.gym_visit_exercise_id = ex.id
+    WHERE ex.gym_visit_id = gym.id
+) workout_counts ON gym.id IS NOT NULL
+LEFT JOIN (gym_visit_exercises e JOIN gym_visits exercise_visit ON exercise_visit.id = e.gym_visit_id)
+    ON e.id = a.exercise_id AND exercise_visit.user_id = a.user_id
+LEFT JOIN fitness_workouts w ON w.id = a.workout_id AND w.user_id = a.user_id
+LEFT JOIN workout_activity_types wt ON wt.id = w.activity_type_id
+LEFT JOIN fitness_sleep sleep ON sleep.user_id = a.user_id AND sleep.sleep_date = a.sleep_date
+LEFT JOIN fitness_activity_rings rings ON rings.user_id = a.user_id AND rings.summary_date = a.rings_date
+LEFT JOIN financial_horizon_transactions tx ON tx.id = a.transaction_id AND tx.user_id = a.user_id
+LEFT JOIN statement_import_batches batch ON batch.id = a.statement_id AND batch.user_id = a.user_id
+LEFT JOIN financial_accounts destination ON destination.id = batch.account_id AND destination.user_id = a.user_id
+LEFT JOIN financial_horizon_subscriptions sub ON sub.id = a.subscription_id AND sub.user_id = a.user_id
+LEFT JOIN financial_horizon_subscriptions payment_sub ON payment_sub.id = a.payment_subscription_id AND payment_sub.user_id = a.user_id
+LEFT JOIN financial_horizon_budgets budget ON budget.id = a.budget_id AND budget.user_id = a.user_id
+LEFT JOIN financial_horizon_deductions obligation ON obligation.id = a.obligation_id AND obligation.user_id = a.user_id
+LEFT JOIN next_month_purchases purchase ON purchase.id = a.purchase_id AND purchase.user_id = a.user_id
+LEFT JOIN financial_accounts account ON account.id = a.account_id AND account.user_id = a.user_id
+LEFT JOIN financial_horizon_categories cat ON cat.id = a.category_id AND cat.user_id = a.user_id
+LEFT JOIN financial_horizon_categories parent ON parent.id = cat.parent_id AND (parent.user_id = a.user_id OR parent.is_default)
+ORDER BY a.recorded_at DESC, a.id DESC;

@@ -1,0 +1,233 @@
+package dev.abhishekan.pulse.feature.fitness.overview
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dev.abhishekan.pulse.core.domain.model.FitnessDates
+import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
+import dev.abhishekan.pulse.core.domain.usecase.RecordWorkout
+import dev.abhishekan.pulse.core.ui.uiText
+import dev.abhishekan.pulse.feature.fitness.R
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessLoadState
+import dev.abhishekan.pulse.feature.fitness.shared.FitnessReviewState
+import dev.abhishekan.pulse.feature.fitness.shared.fitnessFailureMessage
+import dev.abhishekan.pulse.feature.fitness.shared.requiresFitnessReview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.time.Clock
+import java.time.LocalDate
+import java.time.YearMonth
+
+class FitnessViewModel(
+    private val fitness: FitnessRepository,
+    private val record: RecordWorkout,
+    private val saved: SavedStateHandle,
+    private val clock: Clock,
+) : ViewModel() {
+    private val selected =
+        saved.get<String>("selected")?.let(LocalDate::parse) ?: FitnessDates.today(clock)
+    private val state =
+        MutableStateFlow(
+            FitnessUiState(
+                selected,
+                YearMonth.from(selected),
+                reviewState =
+                    if (saved.get<Boolean>("pending") == true) FitnessReviewState.AwaitingRefresh else FitnessReviewState.None,
+            ),
+        )
+    val uiState = state.asStateFlow()
+
+    fun onAction(action: FitnessAction) {
+        when (action) {
+            is FitnessAction.SelectDate -> select(action.date)
+            is FitnessAction.ShiftMonth -> shiftMonth(action.offset)
+            FitnessAction.Refresh -> {
+                refresh()
+                refreshSchedule()
+            }
+            FitnessAction.RefreshSchedule -> refreshSchedule()
+            is FitnessAction.SaveScheduleDay -> saveScheduleDay(action)
+            FitnessAction.RecordWorkout -> recordSelected()
+            FitnessAction.AcknowledgeReview -> acknowledgeReview()
+            FitnessAction.Resume -> resume()
+            FitnessAction.DismissMessage -> consumeMessage()
+        }
+    }
+
+    private fun consumeMessage() {
+        state.update { it.copy(message = null) }
+    }
+
+    private var firstLoad = saved.get<String>("selected") == null
+    private var loadJob: Job? = null
+    private var scheduleJob: Job? = null
+    private var hasResumed = false
+
+    init {
+        refresh()
+        viewModelScope.launch {
+            fitness.changes.drop(1).collect { if (!state.value.busy) refresh(force = true) }
+        }
+    }
+
+    private fun select(date: LocalDate) {
+        if (state.value.busy) return
+        firstLoad = false
+        saved["selected"] = date.toString()
+        state.update {
+            it.copy(
+                selected = date,
+                month = YearMonth.from(date),
+                createdId = null,
+                message = if (it.needsReview) it.message else null,
+            )
+        }
+    }
+
+    private fun shiftMonth(offset: Long) {
+        val current = state.value
+        if (current.busy) return
+        val next = current.month.plusMonths(offset)
+        if (next == current.month || next.year !in 0..9999) return
+        val today = current.overview?.today ?: return
+        select(if (next == YearMonth.from(today)) today else next.atDay(1))
+    }
+
+    private fun resume() {
+        if (hasResumed) {
+            refresh()
+            refreshSchedule()
+        } else {
+            hasResumed = true
+        }
+    }
+
+    private fun refreshSchedule() {
+        if (state.value.savingSchedule || scheduleJob?.isActive == true) return
+        scheduleJob = viewModelScope.launch { loadSchedule() }
+    }
+
+    private suspend fun loadSchedule() {
+        state.update { it.copy(scheduleState = FitnessLoadState.Loading()) }
+        when (val result = fitness.schedule()) {
+            is Outcome.Success -> state.update { it.copy(schedule = result.value, scheduleState = FitnessLoadState.Ready) }
+            is Outcome.Error -> state.update { it.copy(scheduleState = FitnessLoadState.Failed(result.failure)) }
+        }
+    }
+
+    private fun saveScheduleDay(action: FitnessAction.SaveScheduleDay) {
+        if (state.value.savingSchedule || !action.classification.validFocus) return
+        scheduleJob?.cancel()
+        state.update { it.copy(savingSchedule = true) }
+        scheduleJob =
+            viewModelScope.launch {
+                when (val result = fitness.saveScheduleDay(action.day, action.classification)) {
+                    is Outcome.Success -> loadSchedule()
+                    is Outcome.Error -> state.update { it.copy(scheduleState = FitnessLoadState.Failed(result.failure)) }
+                }
+                state.update { it.copy(savingSchedule = false) }
+            }
+    }
+
+    private fun refresh(force: Boolean = false) {
+        if (state.value.busy || (!force && loadJob?.isActive == true)) return
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch { load() }
+    }
+
+    private suspend fun load(): Boolean {
+        state.update {
+            it.copy(
+                loadState = FitnessLoadState.Loading(it.error),
+                reviewState = it.reviewState.afterRefresh(succeeded = false),
+            )
+        }
+        return when (val result = fitness.overview()) {
+            is Outcome.Success -> {
+                state.update {
+                    it.copy(
+                        overview = result.value,
+                        loadState = FitnessLoadState.Ready,
+                        reviewState = it.reviewState.afterRefresh(succeeded = true),
+                    )
+                }
+                if (firstLoad) {
+                    firstLoad = false
+                    selectAfterRecord(result.value.today)
+                }
+                true
+            }
+            is Outcome.Error -> {
+                state.update { it.copy(loadState = FitnessLoadState.Failed(result.failure)) }
+                false
+            }
+        }
+    }
+
+    private fun acknowledgeReview() {
+        if (!state.value.reviewReady || state.value.busy) return
+        saved["pending"] = false
+        state.update { it.copy(reviewState = FitnessReviewState.None, message = null) }
+    }
+
+    private fun recordSelected() {
+        val input = state.value
+        val overview = input.overview ?: return
+        if (!input.canRecord) return
+        loadJob?.cancel()
+        val todayAction =
+            input.selected == overview.today && input.selected == FitnessDates.today(clock)
+        saved["pending"] = true
+        state.update { it.copy(busy = true, loadState = FitnessLoadState.Ready, message = null, createdId = null) }
+        viewModelScope.launch {
+            when (val result = record(if (todayAction) null else input.selected)) {
+                is Outcome.Success -> {
+                    saved["pending"] = false
+                    state.update {
+                        it.copy(
+                            createdId = result.value,
+                            message =
+                                uiText(
+                                    R.string.pulse_fitness_workout_recorded_a_little_effort_a_little_momentum,
+                                ),
+                        )
+                    }
+                    if (load() &&
+                        todayAction
+                    ) {
+                        selectAfterRecord(checkNotNull(state.value.overview).today)
+                    }
+                }
+                is Outcome.Error -> {
+                    val uncertain = result.failure.requiresFitnessReview
+                    saved["pending"] = uncertain
+                    state.update {
+                        it.copy(
+                            reviewState = if (uncertain) FitnessReviewState.AwaitingRefresh else FitnessReviewState.None,
+                            message =
+                                if (uncertain) {
+                                    uiText(
+                                        R.string.pulse_fitness_the_response_was_interrupted_refresh_and_review_your_workouts,
+                                    )
+                                } else {
+                                    fitnessFailureMessage(result.failure)
+                                },
+                        )
+                    }
+                    load()
+                }
+            }
+            state.update { it.copy(busy = false) }
+        }
+    }
+
+    private fun selectAfterRecord(date: LocalDate) {
+        saved["selected"] = date.toString()
+        state.update { it.copy(selected = date, month = YearMonth.from(date)) }
+    }
+}

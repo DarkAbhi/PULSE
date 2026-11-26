@@ -1,0 +1,26 @@
+appId: dev.abhishekan.pulse
+name: Import a synthetic bank statement
+env:
+  STATEMENT_ACCOUNT: Statement test savings
+---
+- launchApp:
+    clearState: false
+- tapOn: "^Horizon$"
+- tapOn: "^Transactions$"
+- tapOn: "^Import statement$"
+- tapOn: ".*Choose an account.*"
+- tapOn: ".*${STATEMENT_ACCOUNT}.*"
+- tapOn: "^Choose PDF$"
+- tapOn: kotak_savings_synthetic.pdf
+- extendedWaitUntil:
+    visible: ".*Balances reconciled.*"
+    timeout: 180000
+- tapOn: ".*This statement belongs to.*"
+- scrollUntilVisible:
+    element: "^Confirm import$"
+    direction: DOWN
+- tapOn: "^Confirm import$"
+- extendedWaitUntil:
+    visible: "2 imported.*"
+    timeout: 15000
+- tapOn: "^Done$"

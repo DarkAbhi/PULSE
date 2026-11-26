@@ -1,0 +1,239 @@
+package dev.abhishekan.pulse.core.data
+import dev.abhishekan.pulse.core.domain.model.CatalogExercise
+import dev.abhishekan.pulse.core.domain.model.ExerciseInput
+import dev.abhishekan.pulse.core.domain.model.FitnessDates
+import dev.abhishekan.pulse.core.domain.model.FitnessMetric
+import dev.abhishekan.pulse.core.domain.model.FitnessOverview
+import dev.abhishekan.pulse.core.domain.model.Outcome
+import dev.abhishekan.pulse.core.domain.model.WorkoutClassification
+import dev.abhishekan.pulse.core.domain.model.WorkoutDetail
+import dev.abhishekan.pulse.core.domain.model.WorkoutExercise
+import dev.abhishekan.pulse.core.domain.model.WorkoutInfo
+import dev.abhishekan.pulse.core.domain.model.WorkoutScheduleDay
+import dev.abhishekan.pulse.core.domain.model.WorkoutSet
+import dev.abhishekan.pulse.core.domain.model.WorkoutSummary
+import dev.abhishekan.pulse.core.domain.model.WorkoutType
+import dev.abhishekan.pulse.core.domain.repository.FitnessRepository
+import dev.abhishekan.pulse.core.network.FitnessApi
+import dev.abhishekan.pulse.core.network.dto.CatalogExerciseDto
+import dev.abhishekan.pulse.core.network.dto.ExerciseBatchRequest
+import dev.abhishekan.pulse.core.network.dto.ExerciseRequest
+import dev.abhishekan.pulse.core.network.dto.ExerciseSetRequest
+import dev.abhishekan.pulse.core.network.dto.WorkoutClassificationRequest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonUnquotedLiteral
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
+class PulseFitnessRepository(
+    private val api: FitnessApi,
+    private val auth: PulseAuthRepository,
+) : FitnessRepository {
+    private val revision = MutableStateFlow(0L)
+    override val changes = revision.asStateFlow()
+
+    private suspend fun <T> request(
+        mutation: Boolean = false,
+        block: suspend () -> T,
+    ): Outcome<T> =
+        auth.authenticatedRequest(
+            onResult = { if (mutation) revision.update { it + 1 } },
+        ) {
+            withContext(Dispatchers.Default) { block() }
+        }
+
+    override suspend fun overview(): Outcome<FitnessOverview> =
+        request {
+            coroutineScope {
+                val overview = async { api.overview() }
+                val visits = async { api.visits() }
+                val dto = overview.await()
+                val summaries =
+                    dto.workouts
+                        .orEmpty()
+                        .flatMap { (date, group) ->
+                            require(LocalDate.parse(date) == LocalDate.parse(group.date))
+                            group.workouts.orEmpty().map {
+                                require(it.id > 0)
+                                WorkoutSummary(
+                                    it.id,
+                                    LocalDate.parse(date),
+                                    it.timeLabel,
+                                    classification(it.type, it.focus),
+                                )
+                            }
+                        }.associateBy { it.id }
+                        .toMutableMap()
+                val history = visits.await()
+                summaries.keys.retainAll(history.map { it.id }.toSet())
+                history.forEach {
+                    require(it.id > 0)
+                    val time = Instant.parse(it.createdAt).atZone(FitnessDates.zone)
+                    summaries[it.id] =
+                        WorkoutSummary(
+                            it.id,
+                            time.toLocalDate(),
+                            time.format(DateTimeFormatter.ofPattern("h:mm a")),
+                            summaries[it.id]?.classification ?: WorkoutClassification(null),
+                        )
+                }
+                FitnessOverview(
+                    LocalDate.parse(dto.today),
+                    dto.cards.orEmpty().map {
+                        FitnessMetric(
+                            it.id,
+                            it.label,
+                            it.value,
+                            it.subtitle,
+                            it.tooltip?.takeIf(String::isNotBlank),
+                        )
+                    },
+                    history.map { checkNotNull(summaries[it.id]) },
+                )
+            }
+        }
+
+    override suspend fun workout(id: Long): Outcome<WorkoutDetail> =
+        request {
+            coroutineScope {
+                val info = async { api.workout(id) }
+                val exercises = async { api.exercises(id) }
+                val dto = info.await()
+                require(dto.id == id)
+                WorkoutDetail(
+                    WorkoutInfo(
+                        dto.id,
+                        Instant.parse(dto.createdAt),
+                        dto.start?.let(Instant::parse),
+                        dto.end?.let(Instant::parse),
+                        dto.duration?.decimal(),
+                        dto.calories?.decimal(),
+                        dto.imported,
+                        classification(dto.type, dto.focus),
+                    ),
+                    exercises.await().map { exercise ->
+                        require(exercise.id > 0 && exercise.name.isNotBlank())
+                        WorkoutExercise(
+                            exercise.id,
+                            exercise.name,
+                            exercise.catalogId,
+                            exercise.catalog?.domain(),
+                            exercise.sets.orEmpty().map {
+                                require(it.number > 0 && it.reps in 1..1000)
+                                WorkoutSet(it.number, it.reps, it.weight?.decimal())
+                            },
+                        )
+                    },
+                )
+            }
+        }
+
+    override suspend fun schedule(): Outcome<List<WorkoutScheduleDay>> =
+        request {
+            api.schedule().map { WorkoutScheduleDay(DayOfWeek.of(it.weekday), classification(it.type, it.focus)) }
+        }
+
+    override suspend fun saveScheduleDay(
+        day: DayOfWeek,
+        classification: WorkoutClassification,
+    ): Outcome<Unit> =
+        request(mutation = true) {
+            api.saveScheduleDay(day.value, classification.request())
+        }
+
+    override suspend fun updateClassification(
+        id: Long,
+        classification: WorkoutClassification,
+    ): Outcome<Unit> =
+        request(mutation = true) {
+            api.updateClassification(id, classification.request())
+        }
+
+    private fun classification(
+        type: String?,
+        focus: String?,
+    ) = WorkoutClassification(WorkoutType.entries.firstOrNull { it.apiValue == type }, focus.orEmpty())
+
+    private fun WorkoutClassification.request() = WorkoutClassificationRequest(type?.apiValue.orEmpty(), focus.trim())
+
+    override suspend fun search(query: String): Outcome<List<CatalogExercise>> =
+        request {
+            api
+                .search(query)
+                .candidates
+                .orEmpty()
+                .map { it.domain() }
+        }
+
+    override suspend fun record(date: LocalDate?): Outcome<Long> =
+        request(mutation = true) {
+            api.record(date?.toString()).id.also {
+                require(
+                    it > 0,
+                )
+            }
+        }
+
+    override suspend fun saveExercise(
+        visitId: Long,
+        exerciseId: Long?,
+        input: ExerciseInput,
+    ): Outcome<Unit> =
+        request(mutation = true) {
+            api.saveExercise(visitId, exerciseId, input.request())
+        }
+
+    override suspend fun saveExercises(
+        visitId: Long,
+        inputs: List<ExerciseInput>,
+    ): Outcome<Unit> =
+        request(mutation = true) {
+            api.saveExercises(visitId, ExerciseBatchRequest(inputs.map { it.request() }))
+        }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    private fun ExerciseInput.request() =
+        ExerciseRequest(
+            name,
+            sets.map { ExerciseSetRequest(it.reps, it.weight?.let { weight -> JsonUnquotedLiteral(weight.toString()) }) },
+            catalogId,
+            rememberAlias,
+        )
+
+    override suspend fun deleteWorkout(id: Long): Outcome<Unit> = request(mutation = true) { api.deleteWorkout(id) }
+
+    override suspend fun deleteExercise(
+        visitId: Long,
+        exerciseId: Long,
+    ): Outcome<Unit> = request(mutation = true) { api.deleteExercise(visitId, exerciseId) }
+
+    private fun JsonPrimitive.decimal() =
+        content.toBigDecimal().also {
+            require(
+                !isString && it.signum() >= 0,
+            )
+        }
+
+    private fun CatalogExerciseDto.domain(): CatalogExercise {
+        require(id.isNotBlank() && name.isNotBlank())
+        return CatalogExercise(
+            id,
+            name,
+            equipment,
+            data?.primaryMuscles.orEmpty(),
+            data?.instructions.orEmpty(),
+            matchType,
+            category = data?.category,
+        )
+    }
+}

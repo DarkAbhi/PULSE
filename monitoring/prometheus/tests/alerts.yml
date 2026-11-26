@@ -1,0 +1,51 @@
+rule_files:
+  - ../alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  - name: Successful scrape without container metrics raises an alert
+    interval: 1m
+    input_series:
+      - series: 'up{job="pulse-containers",instance="docker-host"}'
+        values: '1x5'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="ContainerMetricsMissing",alertstate="firing"}'
+        eval_time: 5m
+        exp_samples:
+          - labels: 'ALERTS{alertname="ContainerMetricsMissing",alertstate="firing",job="pulse-containers",severity="warning"}'
+            value: 1
+
+  - name: Idle containers still reporting memory do not raise the missing-metrics alert
+    interval: 1m
+    input_series:
+      - series: 'up{job="pulse-containers",instance="docker-host"}'
+        values: '1x5'
+      - series: 'container_memory_working_set_bytes{job="pulse-containers",service="Go backend"}'
+        values: '0x5'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="ContainerMetricsMissing",alertstate="firing"}'
+        eval_time: 5m
+        exp_samples: []
+
+  - name: Failed scrapes use the exporter-down alert
+    interval: 1m
+    input_series:
+      - series: 'up{job="pulse-containers",instance="docker-host"}'
+        values: '0x5'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="ContainerMetricsMissing",alertstate="firing"}'
+        eval_time: 5m
+        exp_samples: []
+
+  - name: An unavailable statement extractor raises the service-down alert
+    interval: 1m
+    input_series:
+      - series: 'up{job="statement-extractor",instance="statement-extractor:8090",service="Statement extractor"}'
+        values: '0x5'
+    promql_expr_test:
+      - expr: 'ALERTS{alertname="ServiceDown",alertstate="firing",job="statement-extractor"}'
+        eval_time: 5m
+        exp_samples:
+          - labels: 'ALERTS{alertname="ServiceDown",alertstate="firing",instance="statement-extractor:8090",job="statement-extractor",service="Statement extractor",severity="critical"}'
+            value: 1

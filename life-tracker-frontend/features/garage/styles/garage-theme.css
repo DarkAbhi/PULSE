@@ -1,0 +1,73 @@
+@theme {
+  --color-garage-fuel-other: #9086ab;
+  --color-garage-fuel-petrol: #ff8c42;
+  --color-garage-fuel-diesel: #526bff;
+  --color-garage-fuel-cng: #38b38e;
+  --color-garage-fuel-lpg: #aa6ee5;
+  --color-garage-fuel-electric: #36b4db;
+
+  --color-garage-service-violet: #7b2ce0;
+  --color-garage-service-blue: #0f86c9;
+  --color-garage-service-teal: #12a89a;
+  --color-garage-service-orange: #f0603a;
+  --color-garage-oil: #f0a020;
+  --color-garage-oil-foreground: var(--on-gold);
+  --color-garage-air-foreground: var(--on-cyan);
+
+  --radius-garage-banner: clamp(1.75rem, 4.2vw, 3.75rem);
+  --radius-garage-vehicle-icon: 32%;
+  --radius-garage-hero: clamp(1.75rem, 4vw, 2.5rem);
+  --radius-garage-hero-icon: clamp(1.25rem, 3vw, 1.75rem);
+  --spacing-garage-banner: clamp(1.5rem, 3.5vw, 3rem);
+  --spacing-garage-hero: clamp(1.25rem, 3vw, 2.25rem);
+  --spacing-garage-hero-gap: clamp(1.25rem, 3vw, 2rem);
+  --spacing-garage-hero-icon: clamp(3.5rem, 8vw, 5.5rem);
+  --spacing-garage-detail: clamp(1rem, 2.5vw, 1.5rem);
+  --text-garage-title: clamp(3.5rem, 7vw, 6.25rem);
+  --text-garage-title--line-height: 1;
+  --tracking-garage-title: -0.085em;
+  --text-garage-vehicle-title: clamp(2.125rem, 6vw, 4.5rem);
+  --text-garage-vehicle-title--line-height: 1;
+  --text-garage-section-title: clamp(1.25rem, 2.2vw, 1.625rem);
+  --text-garage-section-title--line-height: 1.2;
+  --text-garage-metric: clamp(1.5rem, 2.4vw, 2.125rem);
+  --text-garage-metric--line-height: 1.1;
+}
+
+@theme inline {
+  --background-image-garage-banner: linear-gradient(120deg, #243bd8, #0d81b4);
+  --background-image-garage-hero: linear-gradient(135deg, #2440e0, var(--color-garage-service-blue));
+  --background-image-garage-car: linear-gradient(135deg, #552bd9, #293cdb);
+  --background-image-garage-motorcycle: linear-gradient(135deg, #253bdb, #0f7eaf);
+  --background-image-garage-scooter: linear-gradient(135deg, #0e80b0, #0c8c83);
+  --background-image-garage-progress: linear-gradient(90deg, var(--brand-cyan), var(--brand-blue));
+  --background-image-garage-progress-warning: linear-gradient(90deg, var(--brand-gold), var(--color-garage-oil));
+  --shadow-garage-banner: var(--garage-banner-shadow);
+  --shadow-garage-hero: 0 22px 44px -26px rgb(36 64 224 / 90%);
+}
+
+@layer components {
+  .garage-banner {
+    --garage-gauge-offset: -1.5%;
+    --garage-banner-shadow: 0 14px 32px #263bd638;
+    --on-hero-action: #263bd1;
+    --on-hero-hover: #eef1ff;
+  }
+
+  .dark .garage-banner {
+    --garage-banner-shadow: 0 14px 38px #293ee049;
+  }
+
+  .garage-hero {
+    --on-hero-action: #1d3bd9;
+    --on-hero-hover: #eef1ff;
+  }
+
+  .garage-fuel-action {
+    --button-fill: linear-gradient(115deg, #323acb, #aa347e);
+  }
+
+  .dark .garage-fuel-action {
+    --button-fill: var(--primary-fill);
+  }
+}

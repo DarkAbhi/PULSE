@@ -1,0 +1,57 @@
+url: http://localhost:3000
+---
+- launchApp:
+    clearState: true
+
+# 1. Login
+- assertVisible: Welcome back
+- tapOn:
+    css: "#username"
+- eraseText
+- inputText: admin
+- tapOn:
+    css: "#password"
+- inputText: password
+- tapOn: Continue
+
+# 2. Dashboard
+- assertVisible: "Good to see you,"
+- assertVisible:
+    css: "section[aria-label='Welcome'] h1"
+
+# 3. Tap profile icon in top right corner
+- tapOn:
+    id: "Profile"
+
+# 4. Verify Profile page
+- assertVisible:
+    css: "section[aria-label='Your profile'] h1"
+- assertVisible: "Account"
+
+# Theme selection must carry back to the dashboard's shared palette.
+- scrollUntilVisible:
+    element:
+      css: "label:has(input[name=theme][value=light])"
+    direction: DOWN
+- tapOn:
+    css: "label:has(input[name=theme][value=light])"
+- scrollUntilVisible:
+    element: '\s*Dashboard\s*'
+    direction: UP
+- tapOn: '\s*Dashboard\s*'
+- assertVisible:
+    css: "html:not(.dark) section[aria-label='Welcome'] h1"
+- tapOn:
+    id: "Profile"
+- scrollUntilVisible:
+    element:
+      css: "label:has(input[name=theme][value=dark])"
+    direction: DOWN
+- tapOn:
+    css: "label:has(input[name=theme][value=dark])"
+- scrollUntilVisible:
+    element: '\s*Dashboard\s*'
+    direction: UP
+- tapOn: '\s*Dashboard\s*'
+- assertVisible:
+    css: "html.dark section[aria-label='Welcome'] h1"

@@ -63,6 +63,7 @@ object PulseBrandColors {
     val violet = Color(0xFFB22BD8)
     val indigo = Color(0xFF2B1B8F)
     val purple = Color(0xFF5B2CE0)
+    val purpleBright = Color(0xFF7B2CE0)
     val orange = Color(0xFFF0603A)
     val magenta = Color(0xFFD91CAB)
 }

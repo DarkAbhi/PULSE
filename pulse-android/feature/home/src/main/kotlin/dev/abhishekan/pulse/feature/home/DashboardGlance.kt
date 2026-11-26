@@ -1,5 +1,7 @@
 package dev.abhishekan.pulse.feature.home
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,13 +9,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -21,6 +27,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.FitnessToday
 import dev.abhishekan.pulse.core.domain.model.QuestSettingsView
+import dev.abhishekan.pulse.core.ui.PulseBrandColors
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
@@ -71,81 +78,142 @@ private fun GlanceGrid(
     columns: Int,
     stepTarget: Int?,
 ) {
-    val colors = PulseTheme.colors
     val numbers = NumberFormat.getIntegerInstance()
     val noData = stringResource(R.string.pulse_home_no_data)
     val rings =
         listOf(
-            today.moveCalories to today.moveCaloriesGoal,
-            today.exerciseMinutes?.toDouble() to today.exerciseMinutesGoal?.toDouble(),
-            today.standHours?.toDouble() to today.standHoursGoal?.toDouble(),
-        ).filter { (_, goal) -> goal != null && goal > 0 }
-    val closed = rings.count { (value, goal) -> value != null && value >= goal!! }
+            GlanceRing(today.moveCalories, today.moveCaloriesGoal, PulseBrandColors.pink),
+            GlanceRing(today.exerciseMinutes?.toDouble(), today.exerciseMinutesGoal?.toDouble(), PulseBrandColors.gold),
+            GlanceRing(today.standHours?.toDouble(), today.standHoursGoal?.toDouble(), PulseBrandColors.cyan),
+        )
     val stepProgress =
         stepTarget?.takeIf { it > 0 }?.let { target ->
             today.steps?.let { (it.toFloat() / target).coerceIn(0f, 1f) }
         }
     val tiles =
-        listOf(
-            GlanceTile(
-                today.steps?.let(numbers::format) ?: noData,
-                stringResource(R.string.pulse_home_steps),
-                colors.lavender,
-                progress = stepProgress,
-            ),
-            GlanceTile(
-                today.moveCalories?.let { "${numbers.format(it)} ${stringResource(R.string.pulse_home_kcal)}" } ?: noData,
-                stringResource(R.string.pulse_home_active),
-                colors.coral,
-            ),
-            GlanceTile(
-                today.asleepSeconds?.let { stringResource(R.string.pulse_home_sleep_value, (it / 3600).toInt(), (it % 3600 / 60).toInt()) }
-                    ?: noData,
-                stringResource(R.string.pulse_home_sleep),
-                colors.info,
-            ),
-            GlanceTile(
-                stringResource(R.string.pulse_home_activity),
-                if (rings.isEmpty()) noData else stringResource(R.string.pulse_home_rings_closed, closed, rings.size),
-                colors.success,
-            ),
+        listOf<@Composable () -> Unit>(
+            {
+                GlanceMetric(
+                    today.steps?.let(numbers::format) ?: noData,
+                    stringResource(R.string.pulse_home_steps),
+                    R.drawable.pulse_glance_steps,
+                    PulseBrandColors.purpleBright,
+                    progress = stepProgress,
+                )
+            },
+            {
+                GlanceMetric(
+                    today.moveCalories?.let { "${numbers.format(it)} ${stringResource(R.string.pulse_home_kcal)}" } ?: noData,
+                    stringResource(R.string.pulse_home_active),
+                    R.drawable.pulse_glance_active,
+                    PulseBrandColors.orange,
+                )
+            },
+            {
+                GlanceMetric(
+                    today.asleepSeconds?.let {
+                        stringResource(R.string.pulse_home_sleep_value, (it / 3600).toInt(), (it % 3600 / 60).toInt())
+                    } ?: noData,
+                    stringResource(R.string.pulse_home_sleep),
+                    R.drawable.pulse_glance_sleep,
+                    Color(0xFF8B6CF0),
+                )
+            },
+            {
+                val summary =
+                    when {
+                        rings.none { it.value != null } -> noData
+                        rings.none { it.goal != null && it.goal > 0 } -> stringResource(R.string.pulse_home_no_ring_goals)
+                        else -> stringResource(R.string.pulse_home_rings_closed, rings.count { it.progress == 1.0 }, rings.size)
+                    }
+                GlanceTile(stringResource(R.string.pulse_home_activity), summary, leading = { GlanceActivityRings(rings) })
+            },
         )
     Column(verticalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
         tiles.chunked(columns).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium)) {
                 row.forEach { tile ->
-                    PulseCard(Modifier.weight(1f), contentPadding = PulseCardPadding.medium) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Box(
-                                Modifier.size(48.dp).background(tile.accent.copy(alpha = 0.16f), PulseTheme.shapes.control),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Box(Modifier.size(14.dp).background(tile.accent, CircleShape))
-                            }
-                            Column {
-                                PulseText(tile.value, style = PulseTextStyle.Title)
-                                PulseText(tile.label, color = colors.textSecondary)
-                                tile.progress?.let { progress ->
-                                    PulseLinearProgressIndicator({ progress }, Modifier.fillMaxWidth(), color = tile.accent)
-                                }
-                            }
-                        }
-                    }
+                    PulseCard(Modifier.weight(1f), contentPadding = PulseCardPadding.medium) { tile() }
                 }
             }
         }
     }
 }
 
-private data class GlanceTile(
-    val value: String,
-    val label: String,
-    val accent: Color,
-    val progress: Float? = null,
-)
+@Composable
+private fun GlanceMetric(
+    value: String,
+    label: String,
+    @DrawableRes icon: Int,
+    accent: Color,
+    progress: Float? = null,
+) {
+    GlanceTile(value, label, progress = progress, progressColor = accent) {
+        Box(
+            Modifier.size(56.dp).background(accent.copy(alpha = 0.16f), RoundedCornerShape(18.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(28.dp), tint = accent)
+        }
+    }
+}
+
+@Composable
+private fun GlanceTile(
+    value: String,
+    label: String,
+    progress: Float? = null,
+    progressColor: Color = Color.Unspecified,
+    leading: @Composable () -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(PulseTokens.medium),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        leading()
+        Column {
+            PulseText(value, style = PulseTextStyle.Title)
+            PulseText(label, color = PulseTheme.colors.textSecondary)
+            progress?.let {
+                PulseLinearProgressIndicator({ it }, Modifier.fillMaxWidth(), color = progressColor)
+            }
+        }
+    }
+}
+
+private data class GlanceRing(
+    val value: Double?,
+    val goal: Double?,
+    val color: Color,
+) {
+    val progress: Double
+        get() = if (value != null && goal != null && goal > 0) (value / goal).coerceIn(0.0, 1.0) else 0.0
+}
+
+@Composable
+private fun GlanceActivityRings(rings: List<GlanceRing>) {
+    Canvas(Modifier.size(56.dp)) {
+        val stroke = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round)
+        rings.forEachIndexed { index, ring ->
+            val radius = (22 - index * 6).dp.toPx()
+            drawCircle(ring.color.copy(alpha = 0.22f), radius, style = stroke)
+            val progress = ring.progress
+            if (progress >= 1.0) {
+                drawCircle(ring.color, radius, style = stroke)
+            } else if (progress > 0.0) {
+                drawArc(
+                    color = ring.color,
+                    startAngle = -90f,
+                    sweepAngle = (360 * progress).toFloat(),
+                    useCenter = false,
+                    topLeft = center - Offset(radius, radius),
+                    size = Size(radius * 2, radius * 2),
+                    style = stroke,
+                )
+            }
+        }
+    }
+}
 
 @Composable
 internal fun DashboardSectionHeader(

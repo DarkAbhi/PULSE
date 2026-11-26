@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse.feature.horizon.presentation.overview
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,69 +9,101 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Surface
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
-import dev.abhishekan.pulse.core.domain.model.HorizonProjection
+import dev.abhishekan.pulse.core.ui.PulseBrandColors
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.core.ui.asString
+import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCardPadding
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
-import dev.abhishekan.pulse.core.ui.currencyText
-import dev.abhishekan.pulse.core.ui.patterns.PulseEmptyState
 import dev.abhishekan.pulse.feature.horizon.R
+import java.math.BigDecimal
+
+private val projectionMonths = listOf(3, 6, 12)
 
 @Composable
 internal fun ProjectionCard(data: HorizonOverview) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = PulseTheme.shapes.large,
-        color = PulseTheme.colors.surface,
-        contentColor = PulseTheme.colors.textPrimary,
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                ProjectionHeadingIcon()
-                PulseText(
-                    stringResource(R.string.pulse_horizon_future_projections),
-                    modifier = Modifier.weight(1f),
-                    style = PulseTextStyle.Title3,
-                )
+    val colors = PulseTheme.colors
+    val typography = PulseTheme.typography
+    val monthlySavings = data.remaining.max(BigDecimal.ZERO)
+    PulseCard(Modifier.fillMaxWidth(), contentPadding = PulseCardPadding.medium) {
+        Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    Modifier.size(44.dp).background(PulseBrandColors.blue.copy(alpha = 0.15f), PulseTheme.shapes.control),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painterResource(R.drawable.pulse_horizon_projection_arrow),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = PulseBrandColors.blue,
+                    )
+                }
+                Column {
+                    PulseText(
+                        stringResource(R.string.pulse_horizon_future_projections),
+                        Modifier.semantics { heading() },
+                        style = typography.title1.copy(fontWeight = FontWeight.Bold, letterSpacing = typography.heading3.letterSpacing),
+                    )
+                    PulseText(
+                        stringResource(R.string.pulse_horizon_projected_savings),
+                        style = PulseTextStyle.Body2,
+                        color = colors.textSecondary,
+                    )
+                }
             }
-            if (data.projections.isEmpty()) {
-                PulseEmptyState(
-                    stringResource(R.string.pulse_horizon_no_projections),
-                    stringResource(R.string.pulse_horizon_projections_appear_when_the_server_provides_them),
-                )
-            } else {
-                BoxWithConstraints(Modifier.fillMaxWidth()) {
-                    // Keep every period visible on phones and allow extra room for enlarged text.
-                    val tileWidth = 240.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
-                    val fitsRow = maxWidth >= tileWidth * data.projections.size + 12.dp * (data.projections.size - 1)
-                    if (fitsRow) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            data.projections.forEachIndexed { index, projection ->
-                                ProjectionTile(projection, index, Modifier.weight(1f))
-                            }
-                        }
-                    } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            data.projections.forEachIndexed { index, projection ->
-                                ProjectionTile(projection, index, Modifier.fillMaxWidth())
-                            }
-                        }
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val fitsRow = maxWidth >= 540.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
+                val tiles: @Composable (Modifier) -> Unit = { modifier ->
+                    projectionMonths.forEach { months ->
+                        ProjectionTile(
+                            months = months,
+                            amount = data.formatMoney(monthlySavings * months.toBigDecimal()),
+                            padding = if (fitsRow) 20.dp else 16.dp,
+                            modifier = modifier,
+                        )
+                    }
+                }
+                if (fitsRow) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        tiles(Modifier.weight(1f))
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        tiles(Modifier.fillMaxWidth())
+                    }
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                HorizontalDivider(color = colors.divider)
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Icon(
+                        painterResource(R.drawable.pulse_horizon_projection_info),
+                        contentDescription = null,
+                        modifier = Modifier.padding(top = 2.dp).size(16.dp),
+                        tint = colors.action,
+                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        PulseText(stringResource(R.string.pulse_horizon_projection_assumptions), style = PulseTextStyle.Label)
+                        PulseText(
+                            stringResource(R.string.pulse_horizon_projection_assumptions_description),
+                            style = PulseTextStyle.Body2,
+                            color = colors.textSecondary,
+                        )
                     }
                 }
             }
@@ -82,89 +113,28 @@ internal fun ProjectionCard(data: HorizonOverview) {
 
 @Composable
 private fun ProjectionTile(
-    projection: HorizonProjection,
-    index: Int,
-    modifier: Modifier = Modifier,
+    months: Int,
+    amount: String,
+    padding: Dp,
+    modifier: Modifier,
 ) {
-    val paletteIndex =
-        when (projection.months) {
-            3 -> 0
-            6 -> 1
-            12 -> 2
-            else -> index % 3
-        }
     val colors = PulseTheme.colors
-    val accent = listOf(colors.action, colors.info, colors.success)[paletteIndex]
-    val background = listOf(colors.primarySoft, colors.infoSoft, colors.successSoft)[paletteIndex]
+    val typography = PulseTheme.typography
     Column(
         modifier
-            .background(background, PulseTheme.shapes.large)
+            .background(colors.surfaceMuted, PulseTheme.shapes.large)
             .semantics(mergeDescendants = true) {}
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(padding),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            PulseText(projection.label, Modifier.weight(1f), PulseTextStyle.Label, accent)
-            ProjectionBars(accent)
-        }
         PulseText(
-            currencyText(projection.amount).asString(),
-            color = PulseTheme.colors.textPrimary,
-            style = PulseTextStyle.Heading3,
+            stringResource(R.string.pulse_horizon_projection_months, months),
+            style = PulseTextStyle.Label,
+            color = colors.textSecondary,
         )
         PulseText(
-            pluralStringResource(R.plurals.pulse_horizon_projection_reserve, projection.months, projection.months),
-            style = PulseTextStyle.Body3,
-            color = PulseTheme.colors.textSecondary,
+            amount,
+            Modifier.padding(top = 4.dp),
+            style = typography.heading3.copy(fontFeatureSettings = "tnum"),
         )
-    }
-}
-
-@Composable
-private fun ProjectionHeadingIcon() {
-    val ink = PulseTheme.colors.onPrimarySoft
-    Box(
-        Modifier.size(40.dp).background(PulseTheme.colors.primarySoft, PulseTheme.shapes.large),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(Modifier.size(24.dp)) {
-            val stroke = 2.dp.toPx()
-            drawLine(
-                ink,
-                Offset(size.width * .25f, size.height * .75f),
-                Offset(size.width * .75f, size.height * .25f),
-                stroke,
-                StrokeCap.Round,
-            )
-            drawLine(
-                ink,
-                Offset(size.width * .35f, size.height * .25f),
-                Offset(size.width * .75f, size.height * .25f),
-                stroke,
-                StrokeCap.Round,
-            )
-            drawLine(
-                ink,
-                Offset(size.width * .75f, size.height * .25f),
-                Offset(size.width * .75f, size.height * .65f),
-                stroke,
-                StrokeCap.Round,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ProjectionBars(accent: Color) {
-    Canvas(Modifier.size(32.dp)) {
-        repeat(3) { index ->
-            val height = size.height * (.35f + index * .22f)
-            drawRoundRect(
-                color = accent.copy(alpha = .35f + index * .15f),
-                topLeft = Offset(size.width * index / 3, size.height - height),
-                size = Size(size.width * .23f, height),
-                cornerRadius = CornerRadius(2.dp.toPx()),
-            )
-        }
     }
 }

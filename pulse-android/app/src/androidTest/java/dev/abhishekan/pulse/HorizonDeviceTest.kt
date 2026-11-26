@@ -808,11 +808,11 @@ class HorizonDeviceTest {
 
     @Test fun homeDashboardOpensFinancialHorizon() {
         launchHorizon()
-        awaitText("Starting Pool (Base Income)")
+        awaitText("STARTING POOL (BASE INCOME)")
         compose.onNodeWithContentDescription("Configure starting pool").assertHasClickAction()
         screenshot("overview-starting-pool")
-        compose.onNodeWithText("Total Committed").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Net Available Pool").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("TOTAL COMMITTED").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("NET AVAILABLE POOL").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Surplus").performScrollTo().assertIsDisplayed()
         screenshot("overview-available-pool")
         compose.onNodeWithText("Monthly commitments").assertDoesNotExist()
@@ -820,6 +820,9 @@ class HorizonDeviceTest {
         compose.onNodeWithText("Recent transaction total:", substring = true).assertDoesNotExist()
         compose.onNodeWithText("Future Horizon Projections").performScrollTo().assertIsDisplayed()
         screenshot("overview-projections")
+        compose.onNodeWithText("12 months").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(UserCurrency.format(BigDecimal("10920.00"))).assertIsDisplayed()
+        compose.onNodeWithText("Projection assumptions").performScrollTo().assertIsDisplayed()
     }
 
     @Test fun configurationBudgetsAndObligationsWorkAndHomeRefreshes() {
@@ -1950,6 +1953,6 @@ class HorizonDeviceTest {
         tap("Overview")
         backend.summaryError = false
         tap("Try again")
-        awaitText("Starting Pool (Base Income)")
+        awaitText("STARTING POOL (BASE INCOME)")
     }
 }

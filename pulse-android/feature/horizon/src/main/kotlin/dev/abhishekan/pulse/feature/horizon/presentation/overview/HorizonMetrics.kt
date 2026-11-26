@@ -1,6 +1,6 @@
 package dev.abhishekan.pulse.feature.horizon.presentation.overview
 
-import androidx.compose.foundation.Canvas
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,33 +11,37 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import dev.abhishekan.pulse.core.domain.model.HorizonOverview
+import dev.abhishekan.pulse.core.ui.PulseBrandColors
 import dev.abhishekan.pulse.core.ui.PulseTheme
-import dev.abhishekan.pulse.core.ui.asString
+import dev.abhishekan.pulse.core.ui.PulseTone
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCardPadding
 import dev.abhishekan.pulse.core.ui.components.PulseText
-import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
-import dev.abhishekan.pulse.core.ui.currencyText
+import dev.abhishekan.pulse.core.ui.components.PulseTileCard
 import dev.abhishekan.pulse.feature.horizon.R
 import java.math.RoundingMode
+
+private val startingPoolTone = PulseTone(PulseBrandColors.indigo, Color(0xFF9B2BD8))
 
 @Composable
 internal fun HorizonMetrics(
@@ -45,220 +49,154 @@ internal fun HorizonMetrics(
     enabled: Boolean,
     configure: () -> Unit,
 ) {
+    val colors = PulseTheme.colors
+    val availablePoolTone = PulseTheme.featureTones.finance
+    val warning = if (PulseTheme.isDark) colors.warning else Color(0xFFB26A00)
+    val fixed = data.formatMoney(data.deductionsTotal)
+    val subscriptions = data.formatMoney(data.subscriptionBurn)
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val fitsRow = maxWidth >= 840.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)
         val cards: @Composable (Modifier) -> Unit = { modifier ->
             HorizonMetricCard(
-                kind = MetricKind.Starting,
+                modifier = modifier.testTag("horizon-metric-starting"),
                 title = stringResource(R.string.pulse_horizon_starting_pool_title),
-                value = currencyText(data.baseAmount).asString(),
+                icon = R.drawable.pulse_horizon_wallet,
+                value = data.formatMoney(data.baseAmount),
                 description = stringResource(R.string.pulse_horizon_baseline_revenue),
-                modifier = modifier,
-                enabled = enabled,
-                configure = configure,
-            )
+                large = fitsRow,
+                tone = startingPoolTone,
+                iconBackground = Color.White.copy(alpha = 0.2f),
+                descriptionColor = Color.White.copy(alpha = 0.85f),
+                titleColor = Color.White.copy(alpha = 0.85f),
+            ) {
+                PulseButton(
+                    stringResource(R.string.pulse_horizon_configure_starting_pool),
+                    configure,
+                    enabled = enabled,
+                    style = PulseButtonStyle.Icon,
+                ) {
+                    Icon(
+                        painterResource(R.drawable.pulse_horizon_edit),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = Color.White.copy(alpha = if (enabled) 1f else 0.4f),
+                    )
+                }
+            }
             HorizonMetricCard(
-                kind = MetricKind.Committed,
+                modifier = modifier.testTag("horizon-metric-committed"),
                 title = stringResource(R.string.pulse_horizon_total_committed),
-                value = currencyText(data.deductionsTotal + data.subscriptionBurn).asString(),
-                description =
+                icon = R.drawable.pulse_horizon_lock,
+                value = data.formatMoney(data.deductionsTotal + data.subscriptionBurn),
+                description = stringResource(R.string.pulse_horizon_committed_breakdown, fixed, subscriptions),
+                large = fitsRow,
+                iconBackground = colors.chip,
+                descriptionColor = colors.textSecondary,
+            ) {
+                MetricBadge(
                     stringResource(
                         R.string.pulse_horizon_percent_of_pool,
                         data.committedPercent.setScale(1, RoundingMode.HALF_UP).toPlainString(),
                     ),
-                modifier = modifier,
-                ratio = data.committedPercent.toFloat(),
-            )
+                    PulseBrandColors.gold.copy(alpha = 0.3f),
+                    warning,
+                )
+            }
             HorizonMetricCard(
-                kind = MetricKind.Available,
+                modifier = modifier.testTag("horizon-metric-available"),
                 title = stringResource(R.string.pulse_horizon_net_available_pool),
-                value = currencyText(data.remaining).asString(),
+                icon = R.drawable.pulse_horizon_spark,
+                value = data.formatMoney(data.remaining),
                 description = stringResource(R.string.pulse_horizon_available_pool_description),
-                modifier = modifier,
-                deficit = data.isOvercommitted,
-            )
+                large = fitsRow,
+                tone = availablePoolTone,
+                iconBackground = availablePoolTone.foreground.copy(alpha = 0.12f),
+                descriptionColor = availablePoolTone.foreground.copy(alpha = 0.85f),
+            ) {
+                MetricBadge(
+                    stringResource(if (data.isOvercommitted) R.string.pulse_horizon_deficit else R.string.pulse_horizon_surplus),
+                    availablePoolTone.foreground.copy(alpha = 0.14f),
+                    availablePoolTone.foreground,
+                )
+            }
         }
         if (fitsRow) {
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                cards(Modifier.weight(1f).fillMaxHeight())
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                cards(Modifier.weight(1f).fillMaxHeight().heightIn(min = 184.dp))
             }
         } else {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
                 cards(Modifier.fillMaxWidth())
             }
         }
     }
 }
 
-private enum class MetricKind { Starting, Committed, Available }
-
 @Composable
 private fun HorizonMetricCard(
-    kind: MetricKind,
+    modifier: Modifier,
     title: String,
+    @DrawableRes icon: Int,
     value: String,
     description: String,
-    modifier: Modifier,
-    ratio: Float = 0f,
-    deficit: Boolean = false,
-    enabled: Boolean = true,
-    configure: () -> Unit = {},
+    large: Boolean,
+    iconBackground: Color,
+    descriptionColor: Color,
+    tone: PulseTone? = null,
+    titleColor: Color = Color.Unspecified,
+    action: @Composable () -> Unit,
 ) {
-    val colors = PulseTheme.colors
-    val background =
-        when (kind) {
-            MetricKind.Starting -> colors.primarySoft
-            MetricKind.Committed -> colors.warningSoft
-            MetricKind.Available -> if (deficit) colors.errorSoft else colors.successSoft
-        }
-    val accent =
-        when (kind) {
-            MetricKind.Starting -> colors.action
-            MetricKind.Committed -> colors.warning
-            MetricKind.Available -> if (deficit) colors.error else colors.success
-        }
-    val foreground =
-        when (kind) {
-            MetricKind.Starting -> colors.onPrimarySoft
-            MetricKind.Committed -> colors.warning
-            MetricKind.Available -> if (deficit) colors.error else colors.success
-        }
-    Surface(
-        modifier.testTag("horizon-metric-${kind.name.lowercase()}"),
-        shape = PulseTheme.shapes.large,
-        color = background,
-        contentColor = foreground,
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val foreground = tone?.foreground ?: PulseTheme.colors.textPrimary
+    val typography = PulseTheme.typography
+    val content: @Composable () -> Unit = {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Box(
-                    Modifier.background(accent.copy(alpha = 0.3f), PulseTheme.shapes.medium).size(36.dp),
-                    contentAlignment = Alignment.Center,
-                ) { MetricIcon(kind, foreground) }
-                PulseText(title, Modifier.weight(1f), PulseTextStyle.Label, foreground)
-                if (kind == MetricKind.Starting) {
-                    PulseButton(
-                        stringResource(R.string.pulse_horizon_configure_starting_pool),
-                        configure,
-                        enabled = enabled,
-                        style = PulseButtonStyle.Icon,
-                    ) { EditPoolIcon(foreground.copy(alpha = if (enabled) 1f else 0.4f)) }
-                }
-            }
-            // Give money the full card width, including with large fonts and long currencies.
-            PulseText(value, style = PulseTextStyle.Heading2, color = foreground)
-            Row(
-                Modifier.fillMaxWidth(),
+                Modifier.fillMaxWidth().heightIn(min = 44.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (kind == MetricKind.Available) {
-                        PulseText(
-                            stringResource(if (deficit) R.string.pulse_horizon_deficit else R.string.pulse_horizon_surplus),
-                            Modifier
-                                .background(
-                                    accent.copy(alpha = 0.25f),
-                                    PulseTheme.shapes.pill,
-                                ).padding(horizontal = 8.dp, vertical = 4.dp),
-                            PulseTextStyle.Caption,
-                            foreground,
-                        )
-                    }
-                    PulseText(description, style = PulseTextStyle.Caption, color = foreground)
+                Box(
+                    Modifier.size(40.dp).background(iconBackground, PulseTheme.shapes.control),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(painterResource(icon), contentDescription = null, Modifier.size(20.dp), tint = foreground)
                 }
-                if (kind == MetricKind.Committed) {
-                    Box(Modifier.size(64.dp), contentAlignment = Alignment.Center) {
-                        Canvas(Modifier.size(64.dp)) {
-                            val stroke = Stroke(7.dp.toPx(), cap = StrokeCap.Round)
-                            val inset = 4.dp.toPx()
-                            val ringSize = Size(size.width - inset * 2, size.height - inset * 2)
-                            drawArc(accent.copy(alpha = 0.25f), 0f, 360f, false, Offset(inset, inset), ringSize, style = stroke)
-                            drawArc(accent, -90f, ratio.coerceIn(0f, 100f) * 3.6f, false, Offset(inset, inset), ringSize, style = stroke)
-                        }
-                        PulseText(
-                            stringResource(
-                                R.string.pulse_horizon_percentage,
-                                ratio.toBigDecimal().setScale(0, RoundingMode.HALF_UP).toPlainString(),
-                            ),
-                            style = PulseTextStyle.Caption,
-                            color = foreground,
-                        )
-                    }
-                } else {
-                    Canvas(Modifier.size(44.dp)) {
-                        val bars = if (kind == MetricKind.Starting) listOf(0.45f, 0.7f, 1f) else listOf(1f, 1f)
-                        bars.forEachIndexed { index, height ->
-                            drawRoundRect(
-                                accent.copy(alpha = 0.7f),
-                                Offset(index * size.width / bars.size, size.height * (1f - height)),
-                                Size(size.width / bars.size - 4.dp.toPx(), size.height * height),
-                                CornerRadius(3.dp.toPx()),
-                            )
-                        }
-                    }
-                }
+                PulseText(
+                    title,
+                    Modifier.weight(1f),
+                    style = typography.caption.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.05.em),
+                    color = if (titleColor == Color.Unspecified) foreground else titleColor,
+                )
+                action()
             }
+            PulseText(
+                value,
+                style = (if (large) typography.displayMedium else typography.heading2).copy(fontFeatureSettings = "tnum"),
+                color = foreground,
+            )
+            PulseText(description, style = typography.body2, color = descriptionColor)
         }
+    }
+    if (tone == null) {
+        PulseCard(modifier, contentPadding = PulseCardPadding.medium) { content() }
+    } else {
+        PulseTileCard(tone, modifier) { content() }
     }
 }
 
 @Composable
-private fun MetricIcon(
-    kind: MetricKind,
-    color: Color,
+private fun MetricBadge(
+    label: String,
+    background: Color,
+    foreground: Color,
 ) {
-    Canvas(Modifier.size(20.dp)) {
-        val stroke = Stroke(1.6.dp.toPx(), cap = StrokeCap.Round)
-        val w = size.width
-        val h = size.height
-        when (kind) {
-            MetricKind.Starting -> {
-                drawRoundRect(color, Offset(w * 0.1f, h * 0.25f), Size(w * 0.8f, h * 0.6f), CornerRadius(w * 0.1f), style = stroke)
-                drawLine(color, Offset(w * 0.15f, h * 0.25f), Offset(w * 0.7f, h * 0.1f), stroke.width)
-                drawLine(color, Offset(w * 0.65f, h * 0.55f), Offset(w * 0.85f, h * 0.55f), stroke.width)
-            }
-            MetricKind.Committed -> {
-                drawRoundRect(color, Offset(w * 0.2f, h * 0.45f), Size(w * 0.6f, h * 0.45f), CornerRadius(w * 0.08f), style = stroke)
-                drawArc(color, 180f, 180f, false, Offset(w * 0.32f, h * 0.1f), Size(w * 0.36f, h * 0.65f), style = stroke)
-            }
-            MetricKind.Available -> {
-                val path =
-                    Path().apply {
-                        moveTo(w * 0.5f, h * 0.1f)
-                        lineTo(w * 0.9f, h * 0.32f)
-                        lineTo(w * 0.5f, h * 0.55f)
-                        lineTo(w * 0.1f, h * 0.32f)
-                        close()
-                        moveTo(w * 0.1f, h * 0.52f)
-                        lineTo(w * 0.5f, h * 0.75f)
-                        lineTo(w * 0.9f, h * 0.52f)
-                        moveTo(w * 0.1f, h * 0.72f)
-                        lineTo(w * 0.5f, h * 0.95f)
-                        lineTo(w * 0.9f, h * 0.72f)
-                    }
-                drawPath(path, color, style = stroke)
-            }
-        }
-    }
-}
-
-@Composable
-private fun EditPoolIcon(color: Color) {
-    Canvas(Modifier.size(20.dp)) {
-        val path =
-            Path().apply {
-                moveTo(size.width * 0.2f, size.height * 0.8f)
-                lineTo(size.width * 0.25f, size.height * 0.58f)
-                lineTo(size.width * 0.7f, size.height * 0.13f)
-                lineTo(size.width * 0.87f, size.height * 0.3f)
-                lineTo(size.width * 0.42f, size.height * 0.75f)
-                close()
-            }
-        drawPath(path, color, style = Stroke(1.6.dp.toPx()))
-    }
+    PulseText(
+        label,
+        Modifier
+            .widthIn(max = 116.dp)
+            .background(background, PulseTheme.shapes.pill)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        style = PulseTheme.typography.caption.copy(fontWeight = FontWeight.Bold, lineHeight = 15.sp),
+        color = foreground,
+    )
 }

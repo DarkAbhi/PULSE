@@ -110,12 +110,10 @@
     <string name="pulse_horizon_loading_your_horizon">"Loading your horizon"</string>
     <string name="pulse_horizon_configure_starting_pool">"Configure starting pool"</string>
     <string name="pulse_horizon_future_projections">Future Horizon Projections</string>
-    <plurals name="pulse_horizon_projection_reserve">
-        <item quantity="one">Estimated net uncommitted reserve pool over %1$d month.</item>
-        <item quantity="other">Estimated net uncommitted reserve pool over %1$d months.</item>
-    </plurals>
-    <string name="pulse_horizon_no_projections">"No projections"</string>
-    <string name="pulse_horizon_projections_appear_when_the_server_provides_them">"Projections appear when the server provides them."</string>
+    <string name="pulse_horizon_projected_savings">Estimated cash you could set aside</string>
+    <string name="pulse_horizon_projection_months">%1$d months</string>
+    <string name="pulse_horizon_projection_assumptions">Projection assumptions</string>
+    <string name="pulse_horizon_projection_assumptions_description">Estimates assume the same monthly income, fixed obligations, and subscriptions. Allow separately for day-to-day spending and planned purchases. A monthly shortfall is shown as zero savings.</string>
     <string name="pulse_horizon_over_budget">"Over budget"</string>
     <string name="pulse_horizon_available">"Available"</string>
     <string name="pulse_horizon_allocated_1_s_used_2_s">"Allocated: %1$s · Used: %2$s"</string>
@@ -208,11 +206,12 @@
     </plurals>
     <string name="pulse_horizon_obligation_status_with_due_day">"%1$s · %2$s · Due day %3$s"</string>
     <string name="pulse_horizon_currency_profile">Change your currency in Profile.</string>
-    <string name="pulse_horizon_starting_pool_title">Starting Pool (Base Income)</string>
+    <string name="pulse_horizon_starting_pool_title">STARTING POOL (BASE INCOME)</string>
     <string name="pulse_horizon_baseline_revenue">Baseline monthly revenue stream</string>
-    <string name="pulse_horizon_total_committed">Total Committed</string>
+    <string name="pulse_horizon_total_committed">TOTAL COMMITTED</string>
+    <string name="pulse_horizon_committed_breakdown">Fixed (%1$s) + Subscriptions (%2$s)</string>
     <string name="pulse_horizon_percent_of_pool">%1$s%% of pool</string>
-    <string name="pulse_horizon_net_available_pool">Net Available Pool</string>
+    <string name="pulse_horizon_net_available_pool">NET AVAILABLE POOL</string>
     <string name="pulse_horizon_available_pool_description">Uncommitted cash remaining after fixed obligations &amp; subscriptions</string>
     <string name="pulse_horizon_surplus">Surplus</string>
     <string name="pulse_horizon_deficit">Deficit</string>
@@ -283,7 +282,6 @@
     </plurals>
     <string name="pulse_horizon_purchase_summary_eyebrow">NEXT MONTH’S PLANNED PURCHASES</string>
     <string name="pulse_horizon_purchase_summary_total">Planned total %1$s</string>
-    <string name="pulse_horizon_percentage">%1$s%%</string>
     <string name="pulse_horizon_subscription_basic">Basic details</string>
     <string name="pulse_horizon_subscription_basic_hint">Name, amount and how often you’re billed.</string>
     <string name="pulse_horizon_subscription_recurring">Recurring details</string>

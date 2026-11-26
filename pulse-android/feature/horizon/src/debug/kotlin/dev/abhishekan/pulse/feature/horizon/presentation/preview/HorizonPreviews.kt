@@ -198,11 +198,11 @@ private fun DarkProjectionsPreview() {
     }
 }
 
-@Preview(name = "Projections empty", widthDp = 360)
+@Preview(name = "Projections with a monthly shortfall", widthDp = 360)
 @Composable
-private fun EmptyProjectionsPreview() {
+private fun DeficitProjectionsPreview() {
     PulseTheme(false) {
-        ProjectionCard(sample.copy(projections = emptyList()))
+        ProjectionCard(sample.copy(remaining = "-100.00".toBigDecimal()))
     }
 }
 

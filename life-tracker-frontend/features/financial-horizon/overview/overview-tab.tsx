@@ -35,12 +35,6 @@ export default function OverviewTab({ currency, uncommittedPool }: OverviewTabPr
             <dt className="text-sm font-semibold text-muted-foreground">{months} months</dt>
             <dd className="mt-1 wrap-anywhere text-2xl font-bold tracking-tight tabular-nums lg:text-3xl">
               {formatMoney(Math.max(0, uncommittedPool * months), currency)}
-              <span aria-hidden="true" className="mt-3 block h-1.5 overflow-hidden rounded-full bg-surface-strong">
-                <span
-                  className={`bg-(image:--primary-gradient) forced-colors:[background:Highlight] forced-colors:forced-color-adjust-none block h-full rounded-full`}
-                  style={{ width: `${uncommittedPool > 0 ? months / 12 * 100 : 0}%` }}
-                />
-              </span>
             </dd>
           </div>
         ))}

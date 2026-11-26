@@ -41,6 +41,7 @@
     <string name="pulse_home_sleep_value">%1$dh %2$dmin</string>
     <string name="pulse_home_activity">Activity</string>
     <string name="pulse_home_rings_closed">%1$d of %2$d rings closed</string>
+    <string name="pulse_home_no_ring_goals">No goals set</string>
     <string name="pulse_home_no_data">No data yet</string>
     <string name="pulse_home_loading_today">Loading today’s activity</string>
     <string name="pulse_home_quest_activity">Quest activity</string>

@@ -57,8 +57,6 @@ import dev.abhishekan.pulse.core.domain.model.FitnessDates
 import dev.abhishekan.pulse.core.domain.model.WorkoutSummary
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
-import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseCardPadding
 import dev.abhishekan.pulse.core.ui.components.PulseDialog
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
@@ -80,6 +78,7 @@ internal fun FitnessCalendar(
     onMonth: (Long) -> Unit,
     onRecord: () -> Unit,
     workoutsByDate: Map<LocalDate, List<WorkoutSummary>>,
+    showCard: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val overview = checkNotNull(state.overview)
@@ -127,7 +126,7 @@ internal fun FitnessCalendar(
         )
     }
 
-    PulseCard(modifier.fillMaxWidth(), contentPadding = PulseCardPadding.medium) {
+    FitnessOverviewSection(showCard, modifier) {
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val inline = maxWidth >= (if (canLog) 304 else 248).dp * LocalDensity.current.fontScale
             val title: @Composable (Modifier) -> Unit = { titleModifier ->

@@ -1,6 +1,5 @@
 package dev.abhishekan.pulse.feature.fitness.overview
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -232,15 +231,12 @@ private fun FitnessStatCard(
     modifier: Modifier = Modifier,
 ) {
     val colors = PulseTheme.colors
-    Surface(
+    PulseCard(
         modifier = modifier.semantics(mergeDescendants = true) {},
-        shape = PulseTokens.cardShape,
-        color = colors.surface,
-        contentColor = colors.textPrimary,
-        border = BorderStroke(1.dp, colors.divider),
+        contentPadding = PulseCardPadding.small,
     ) {
         Column(
-            Modifier.heightIn(min = 188.dp).padding(PulseTokens.medium),
+            Modifier.heightIn(min = 188.dp),
             verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
         ) {
             Surface(shape = PulseTokens.controlShape, color = colors.primarySoft) {

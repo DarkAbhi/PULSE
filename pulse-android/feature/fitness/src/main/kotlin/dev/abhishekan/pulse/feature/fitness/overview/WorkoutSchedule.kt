@@ -63,8 +63,6 @@ import dev.abhishekan.pulse.core.ui.PulseSpacing
 import dev.abhishekan.pulse.core.ui.PulseTheme
 import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.PulseWindowSize
-import dev.abhishekan.pulse.core.ui.components.PulseCard
-import dev.abhishekan.pulse.core.ui.components.PulseCardPadding
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
@@ -107,15 +105,16 @@ private fun scheduleColors(): ScheduleColors =
     }
 
 @Composable
-internal fun WorkoutScheduleCard(
+internal fun WorkoutSchedule(
     state: FitnessUiState,
     onAction: (FitnessAction) -> Unit,
+    showCard: Boolean,
 ) {
     var editing by rememberSaveable { mutableStateOf<DayOfWeek?>(null) }
     val locale = LocalLocale.current.platformLocale
     val byDay = state.schedule.associate { it.day to it.classification }
     val colors = scheduleColors()
-    PulseCard(Modifier.fillMaxWidth(), contentPadding = PulseCardPadding.medium) {
+    FitnessOverviewSection(showCard) {
         ScheduleHeader(state, colors)
         Spacer(Modifier.height(PulseSpacing.compact))
         when (val scheduleState = state.scheduleState) {

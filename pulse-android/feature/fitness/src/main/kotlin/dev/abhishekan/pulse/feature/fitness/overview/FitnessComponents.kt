@@ -2,7 +2,11 @@ package dev.abhishekan.pulse.feature.fitness.overview
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,11 +25,31 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.PulseTheme
+import dev.abhishekan.pulse.core.ui.PulseTokens
 import dev.abhishekan.pulse.core.ui.components.PulseButton
 import dev.abhishekan.pulse.core.ui.components.PulseButtonStyle
+import dev.abhishekan.pulse.core.ui.components.PulseCard
+import dev.abhishekan.pulse.core.ui.components.PulseCardPadding
 import dev.abhishekan.pulse.core.ui.components.PulseText
 import dev.abhishekan.pulse.core.ui.components.PulseTextStyle
 import dev.abhishekan.pulse.feature.fitness.R
+
+@Composable
+internal fun FitnessOverviewSection(
+    showCard: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    if (showCard) {
+        PulseCard(modifier.fillMaxWidth(), contentPadding = PulseCardPadding.medium, content = content)
+    } else {
+        Column(
+            modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(PulseTokens.small),
+            content = content,
+        )
+    }
+}
 
 internal val fitnessCalendarGradientStops = listOf(Color(0xFF3A2CD9), Color(0xFFA420BD))
 internal val fitnessCalendarGradient = Brush.linearGradient(fitnessCalendarGradientStops)

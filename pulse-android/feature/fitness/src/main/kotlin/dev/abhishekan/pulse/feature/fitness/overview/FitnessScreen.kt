@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.abhishekan.pulse.core.ui.LocalPulseContentPadding
 import dev.abhishekan.pulse.core.ui.PulseTokens
+import dev.abhishekan.pulse.core.ui.PulseWindowSize
 import dev.abhishekan.pulse.core.ui.pagePadding
 import dev.abhishekan.pulse.core.ui.patterns.PulseCenteredLoadingState
 import dev.abhishekan.pulse.core.ui.patterns.PulseErrorState
@@ -49,6 +50,7 @@ fun FitnessScreen(
     val onMonth = { offset: Long -> onAction(FitnessAction.ShiftMonth(offset)) }
     BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         val size = pulseWindowSize(maxWidth)
+        val showSectionCards = size != PulseWindowSize.Compact
         val wide = maxWidth >= 1024.dp && LocalDensity.current.fontScale < 1.5f
         val pullState = rememberPullToRefreshState()
         val tracker = rememberPullRefreshTracker(state.loading)
@@ -141,18 +143,34 @@ fun FitnessScreen(
                                 pagePadding,
                                 horizontalArrangement = Arrangement.spacedBy(PulseTokens.cardPadding),
                             ) {
-                                FitnessCalendar(state, onDate, onMonth, onRecord, workoutsByDate, Modifier.weight(1.2f))
+                                FitnessCalendar(
+                                    state,
+                                    onDate,
+                                    onMonth,
+                                    onRecord,
+                                    workoutsByDate,
+                                    showCard = showSectionCards,
+                                    modifier = Modifier.weight(1.2f),
+                                )
                                 details(Modifier.weight(1f))
                             }
                         } else {
-                            FitnessCalendar(state, onDate, onMonth, onRecord, workoutsByDate, pagePadding)
+                            FitnessCalendar(
+                                state,
+                                onDate,
+                                onMonth,
+                                onRecord,
+                                workoutsByDate,
+                                showCard = showSectionCards,
+                                modifier = pagePadding,
+                            )
                             details(pagePadding)
                         }
                         Box(Modifier.padding(horizontal = size.pagePadding)) {
                             FitnessStats(state.overview, canRefresh, refresh)
                         }
                         Box(Modifier.padding(horizontal = size.pagePadding)) {
-                            WorkoutScheduleCard(state, onAction)
+                            WorkoutSchedule(state, onAction, showCard = showSectionCards)
                         }
                     }
                 }

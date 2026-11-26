@@ -67,7 +67,8 @@
     <string name="pulse_fitness_muscles_1_s">"Muscles · %1$s"</string>
     <string name="pulse_fitness_hide_instructions">"Hide instructions"</string>
     <string name="pulse_fitness_exercise_instructions">"Exercise instructions"</string>
-    <string name="pulse_fitness_numbered_instruction">"%1$s. %2$s"</string>
+    <string name="pulse_fitness_no_exercise_instructions">No instructions are available for this exercise.</string>
+    <string name="pulse_fitness_instructions_got_it">Got it</string>
     <string name="pulse_fitness_latest_recorded_exercises">"Latest recorded exercises"</string>
     <string name="pulse_fitness_no_exercises_recorded">"No exercises recorded."</string>
     <string name="pulse_fitness_workout_recorded_a_little_effort_a_little_momentum">"Workout recorded. A little effort, a little momentum."</string>
@@ -160,7 +161,6 @@
     <string name="pulse_fitness_workout_duration_short_hours">%1$s h %2$s min</string>
     <string name="pulse_fitness_workout_energy">Energy</string>
     <string name="pulse_fitness_workout_kcal">%1$s kcal</string>
-    <string name="pulse_fitness_workout_equipment">Equipment</string>
     <string name="pulse_fitness_workout_exercise_expanded">Expanded</string>
     <string name="pulse_fitness_workout_exercise_collapsed">Collapsed</string>
     <string name="pulse_fitness_workout_expand_exercise">Expand exercise</string>
@@ -200,7 +200,6 @@
     <string name="pulse_fitness_editor_remember_body">Reuse it in future workouts</string>
     <string name="pulse_fitness_editor_how_to">How to do it</string>
     <string name="pulse_fitness_editor_instructions">Instructions</string>
-    <string name="pulse_fitness_editor_target_muscles">Target muscles</string>
     <string name="pulse_fitness_editor_edit_name">Edit name</string>
     <string name="pulse_fitness_clear_search_glyph" translatable="false">×</string>
     <string name="pulse_fitness_open_search_glyph" translatable="false">›</string>

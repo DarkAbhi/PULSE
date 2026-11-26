@@ -111,11 +111,28 @@ class WorkoutRedesignTest {
         showWorkoutText("Instructions")
         screenshot("workout-populated")
         compose.onNodeWithText("Instructions").performClick()
-        compose.onNodeWithText("1. ${catalog.instructions.first()}").assertIsDisplayed()
+        compose.onNodeWithText(catalog.instructions.first()).assertIsDisplayed()
+        val gotIt = compose.onNodeWithText("Got it")
+        compose.scrollToDisplayed(gotIt)
         screenshot("workout-instructions")
-        compose.onNodeWithContentDescription("Close sheet").performSemanticsAction(SemanticsActions.OnClick) { it() }
-        compose.onNodeWithText("1. ${catalog.instructions.first()}").assertDoesNotExist()
+        gotIt.performClick()
+        compose.onNodeWithText(catalog.instructions.first()).assertDoesNotExist()
         compose.onNodeWithText("Instructions").assertIsDisplayed()
+    }
+
+    @Test fun instructionsButtonFitsNextToExerciseActionsOnPhone() {
+        compose.setContent {
+            Box(Modifier.width(320.dp)) { Content(WorkoutDetail(manual, listOf(exercise))) }
+        }
+
+        showWorkoutText("Instructions")
+        val instructions = compose.onNodeWithText("Instructions")
+        val layouts = mutableListOf<TextLayoutResult>()
+        instructions.performSemanticsAction(SemanticsActions.GetTextLayoutResult) { it(layouts) }
+        assertEquals(1, layouts.single().lineCount)
+        assertFalse(layouts.single().isLineEllipsized(0))
+        val edit = compose.onNodeWithContentDescription("Edit").getUnclippedBoundsInRoot()
+        assertTrue(instructions.getUnclippedBoundsInRoot().right <= edit.left)
     }
 
     @Test fun customExerciseNeedsNoCatalogueAndRemoveStillConfirms() {

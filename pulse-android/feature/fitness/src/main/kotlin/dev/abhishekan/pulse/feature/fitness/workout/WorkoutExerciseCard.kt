@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
@@ -89,37 +87,28 @@ internal fun WorkoutExerciseCard(
             ExerciseSets(exercise)
             Column(verticalArrangement = Arrangement.spacedBy(PulseSpacing.small)) {
                 HorizontalDivider(color = colors.border)
-                val hasInstructions = catalog?.instructions?.isNotEmpty() == true
-                FlowRow(
+                Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalArrangement = Arrangement.spacedBy(PulseSpacing.small),
+                    horizontalArrangement = Arrangement.spacedBy(PulseSpacing.small, Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    catalog?.takeIf { hasInstructions }?.let {
-                        ExerciseInstructions(it, Modifier.align(Alignment.CenterVertically), enabled = true)
+                    catalog?.takeIf { it.instructions.isNotEmpty() }?.let {
+                        ExerciseInstructions(it, Modifier.weight(1f), weightType)
                     }
-                    Row(
-                        Modifier
-                            .align(
-                                Alignment.CenterVertically,
-                            ).then(if (hasInstructions) Modifier.widthIn(min = 96.dp) else Modifier.fillMaxWidth()),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        PulseButton(
-                            stringResource(R.string.pulse_fitness_workout_edit),
-                            onEdit,
-                            enabled = enabled,
-                            style = PulseButtonStyle.Icon,
-                            icon = { WorkoutGlyph(WorkoutSymbol.Edit, if (enabled) colors.action else colors.textSecondary) },
-                        )
-                        PulseButton(
-                            stringResource(R.string.pulse_fitness_workout_remove),
-                            onRemove,
-                            enabled = enabled,
-                            style = PulseButtonStyle.Icon,
-                            icon = { WorkoutGlyph(WorkoutSymbol.Delete, if (enabled) colors.error else colors.textSecondary) },
-                        )
-                    }
+                    PulseButton(
+                        stringResource(R.string.pulse_fitness_workout_edit),
+                        onEdit,
+                        enabled = enabled,
+                        style = PulseButtonStyle.Icon,
+                        icon = { WorkoutGlyph(WorkoutSymbol.Edit, if (enabled) colors.action else colors.textSecondary) },
+                    )
+                    PulseButton(
+                        stringResource(R.string.pulse_fitness_workout_remove),
+                        onRemove,
+                        enabled = enabled,
+                        style = PulseButtonStyle.Icon,
+                        icon = { WorkoutGlyph(WorkoutSymbol.Delete, if (enabled) colors.error else colors.textSecondary) },
+                    )
                 }
             }
         }

@@ -27,6 +27,8 @@ fun PulseBottomSheet(
     modifier: Modifier = Modifier,
     fullScreen: Boolean = false,
     fitContent: Boolean = false,
+    titleTextAlign: TextAlign = TextAlign.Center,
+    titleStyle: PulseTextStyle = PulseTextStyle.Title3,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = fullScreen || fitContent)
@@ -48,8 +50,8 @@ fun PulseBottomSheet(
                         horizontal = PulseTheme.spacing.medium,
                         vertical = PulseTheme.spacing.compact,
                     ).semantics { heading() },
-                PulseTextStyle.Title3,
-                textAlign = TextAlign.Center,
+                titleStyle,
+                textAlign = titleTextAlign,
             )
             if (fitContent) {
                 Column(Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()), content = content)
